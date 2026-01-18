@@ -8,7 +8,6 @@ using ArgoBooks.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Drawing;
-using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.VisualElements;
@@ -24,7 +23,6 @@ public class ChartLoaderService
 {
     // Chart text size matching WinForms version
     private const float AxisTextSize = 14f;
-    private const float LegendTextSize = 14f;
 
     // Chart colors
     private static readonly SKColor RevenueColor = SKColor.Parse("#6495ED"); // Cornflower Blue (matches WinForms)
@@ -34,7 +32,6 @@ public class ChartLoaderService
     // Theme colors (will be updated based on current theme)
     private SKColor _textColor = SKColor.Parse("#F9FAFB"); // Light text for dark theme
     private SKColor _gridColor = SKColor.Parse("#374151"); // Grid lines
-    private SKColor _backgroundColor = SKColor.Parse("#1F2937"); // Chart background
 
     /// <summary>
     /// Gets the legend text paint based on the current theme.
@@ -389,13 +386,11 @@ public class ChartLoaderService
         {
             _textColor = SKColor.Parse("#F9FAFB");
             _gridColor = SKColor.Parse("#374151");
-            _backgroundColor = SKColor.Parse("#1F2937");
         }
         else
         {
             _textColor = SKColor.Parse("#111827");
             _gridColor = SKColor.Parse("#E5E7EB");
-            _backgroundColor = SKColor.Parse("#FFFFFF");
         }
     }
 
@@ -541,128 +536,7 @@ public class ChartLoaderService
         };
     }
 
-    /// <summary>
-    /// Converts a list of ChartDataPoint objects to a LiveChartsCore series.
-    /// This enables using the shared ReportChartDataService for data fetching.
-    /// </summary>
-    /// <param name="dataPoints">The chart data points from the shared service.</param>
-    /// <param name="seriesName">The name of the series.</param>
-    /// <param name="color">The color for the series.</param>
-    /// <returns>A configured ISeries for LiveChartsCore.</returns>
-    private ISeries ConvertToSeries(List<ChartDataPoint> dataPoints, string seriesName, SKColor color)
-    {
-        if (dataPoints.Count == 0)
-        {
-            return new ColumnSeries<double> { Values = [], Name = seriesName };
-        }
-
-        // Check if we have date-based data
-        if (dataPoints.All(p => p.Date.HasValue))
-        {
-            var dates = dataPoints.Select(p => p.Date!.Value).ToArray();
-            var values = dataPoints.Select(p => p.Value).ToArray();
-            return CreateDateTimeSeries(dates, values, seriesName, color);
-        }
-
-        // Use categorical (label-based) series
-        var categoryValues = dataPoints.Select(p => p.Value).ToArray();
-        return CreateTimeSeries(categoryValues, seriesName, color);
-    }
-
-    /// <summary>
-    /// Converts a list of ChartDataPoint objects to a pie chart series.
-    /// </summary>
-    /// <param name="dataPoints">The chart data points from the shared service.</param>
-    /// <returns>A collection of PieSeries for LiveChartsCore.</returns>
-    public ObservableCollection<ISeries> ConvertToPieSeries(List<ChartDataPoint> dataPoints)
-    {
-        var series = new ObservableCollection<ISeries>();
-
-        if (dataPoints.Count == 0)
-            return series;
-
-        var colors = GetDistributionColors();
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var point = dataPoints[i];
-            var color = !string.IsNullOrEmpty(point.Color)
-                ? SKColor.Parse(point.Color)
-                : colors[i % colors.Length];
-
-            series.Add(new PieSeries<double>
-            {
-                Values = [point.Value],
-                Name = TruncateLegendLabel(point.Label),
-                Fill = new SolidColorPaint(color),
-                DataLabelsSize = LegendTextSize,
-                DataLabelsPaint = new SolidColorPaint(_textColor),
-                DataLabelsPosition = PolarLabelsPosition.Outer
-            });
-        }
-
-        return series;
-    }
-
-    /// <summary>
-    /// Converts multi-series chart data to LiveChartsCore series.
-    /// Used for charts like Sales vs Expenses.
-    /// </summary>
-    /// <param name="seriesDataList">The multi-series data from the shared service.</param>
-    /// <returns>A collection of ISeries for LiveChartsCore.</returns>
-    public ObservableCollection<ISeries> ConvertMultiSeriesToLiveCharts(List<ChartSeriesData> seriesDataList)
-    {
-        var series = new ObservableCollection<ISeries>();
-
-        foreach (var seriesData in seriesDataList)
-        {
-            var color = SKColor.Parse(seriesData.Color);
-            series.Add(ConvertToSeries(seriesData.DataPoints, seriesData.Name, color));
-        }
-
-        return series;
-    }
-
-    /// <summary>
-    /// Gets an array of colors for distribution charts.
-    /// </summary>
-    private static SKColor[] GetDistributionColors()
-    {
-        // Predefined colors for distribution charts (matching WinForms/dashboard style)
-        return
-        [
-            SKColor.Parse("#6495ED"), // Cornflower Blue
-            SKColor.Parse("#22C55E"), // Green
-            SKColor.Parse("#F59E0B"), // Amber
-            SKColor.Parse("#EF4444"), // Red
-            SKColor.Parse("#8B5CF6"), // Violet
-            SKColor.Parse("#EC4899"), // Pink
-            SKColor.Parse("#06B6D4"), // Cyan
-            SKColor.Parse("#84CC16"), // Lime
-            SKColor.Parse("#F97316"), // Orange
-            SKColor.Parse("#6366F1")  // Indigo
-        ];
-    }
-
     #endregion
-
-    /// <summary>
-    /// Creates the tooltip paint for charts.
-    /// </summary>
-    /// <returns>Tooltip paint configuration.</returns>
-    public SolidColorPaint CreateTooltipTextPaint()
-    {
-        return new SolidColorPaint(_textColor);
-    }
-
-    /// <summary>
-    /// Creates the tooltip background paint for charts.
-    /// </summary>
-    /// <returns>Tooltip background paint configuration.</returns>
-    public SolidColorPaint CreateTooltipBackgroundPaint()
-    {
-        return new SolidColorPaint(_backgroundColor);
-    }
 
     /// <summary>
     /// Loads expenses overview chart data as a column series.
@@ -671,16 +545,14 @@ public class ChartLoaderService
     /// <param name="companyData">The company data to load from.</param>
     /// <param name="startDate">Optional start date filter.</param>
     /// <param name="endDate">Optional end date filter.</param>
-    /// <returns>A tuple containing the series collection, X-axis labels, dates for proportional spacing, and total expenses.</returns>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalExpenses) LoadExpensesOverviewChart(
+    /// <returns>A tuple containing the series collection and dates for proportional spacing.</returns>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadExpensesOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
-        decimal totalExpenses = 0;
 
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
@@ -697,13 +569,12 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             });
-            return (series, labels, dates, totalExpenses);
+            return (series, dates);
         }
 
-        labels = dataPoints.Select(p => p.Label).ToArray();
+        var labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        totalExpenses = dataService.GetTotalExpenses();
 
         series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
 
@@ -714,27 +585,22 @@ public class ChartLoaderService
             Labels = labels,
             Values = values,
             SeriesName = "Expenses",
-            TotalValue = (double)totalExpenses,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
         });
 
-        return (series, labels, dates, totalExpenses);
+        return (series, dates);
     }
 
     /// <summary>
     /// Loads revenue overview chart data as a column series.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalRevenue) LoadRevenueOverviewChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadRevenueOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
-        decimal totalRevenue = 0;
 
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
@@ -751,13 +617,12 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Revenue"
             });
-            return (series, labels, dates, totalRevenue);
+            return (series, dates);
         }
 
-        labels = dataPoints.Select(p => p.Label).ToArray();
+        var labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        totalRevenue = dataService.GetTotalRevenue();
 
         series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
 
@@ -768,12 +633,9 @@ public class ChartLoaderService
             Labels = labels,
             Values = values,
             SeriesName = "Revenue",
-            TotalValue = (double)totalRevenue,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
         });
 
-        return (series, labels, dates, totalRevenue);
+        return (series, dates);
     }
 
     /// <summary>
@@ -826,9 +688,6 @@ public class ChartLoaderService
             Labels = labels,
             Values = values,
             SeriesName = "Profit",
-            TotalValue = (double)totalProfit,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
         });
 
         return (series, labels, dates, totalProfit);
@@ -838,13 +697,12 @@ public class ChartLoaderService
     /// Loads expenses vs revenue comparison chart as a multi-series column chart.
     /// Uses ReportChartDataService for data fetching with daily granularity.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadSalesVsExpensesChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadSalesVsExpensesChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -862,7 +720,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             };
-            return (series, labels, dates);
+            return (series, dates);
         }
 
         var revenueData = seriesData.FirstOrDefault(s => s.Name == "Revenue");
@@ -878,7 +736,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             };
-            return (series, labels, dates);
+            return (series, dates);
         }
 
         // Filter to only include days with data (at least one non-zero value)
@@ -901,10 +759,10 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             };
-            return (series, labels, dates);
+            return (series, dates);
         }
 
-        labels = indicesWithData.Select(i => revenueData.DataPoints[i].Label).ToArray();
+        var labels = indicesWithData.Select(i => revenueData.DataPoints[i].Label).ToArray();
         dates = indicesWithData.Where(i => revenueData.DataPoints[i].Date.HasValue).Select(i => revenueData.DataPoints[i].Date!.Value).ToArray();
         var revenueValues = indicesWithData.Select(i => revenueData.DataPoints[i].Value).ToArray();
         var expenseValues = indicesWithData.Select(i => expenseData.DataPoints[i].Value).ToArray();
@@ -924,12 +782,9 @@ public class ChartLoaderService
             Labels = labels,
             Values = expenseValues,
             SeriesName = "Expenses",
-            AdditionalSeries = [("Revenue", revenueValues)],
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            AdditionalSeries = [("Revenue", revenueValues)]        };
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
@@ -949,7 +804,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
@@ -959,11 +813,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
         _chartExportDataByTitle["Revenue Distribution"] = exportData;
 
         return (series, legend);
@@ -989,7 +839,6 @@ public class ChartLoaderService
             return ([], []);
         }
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
@@ -999,11 +848,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
 
         // Also store by title for chart-specific retrieval (various UI titles)
         _chartExportDataByTitle["Expense Distribution"] = PieChartExportData;
@@ -1055,10 +900,7 @@ public class ChartLoaderService
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = values,
-            SeriesName = "Growth Rate %",
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Growth Rate %"        };
 
         return (series, labels);
     }
@@ -1067,13 +909,12 @@ public class ChartLoaderService
     /// Loads average transaction value chart with daily granularity.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadAverageTransactionValueChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadAverageTransactionValueChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -1086,9 +927,9 @@ public class ChartLoaderService
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
 
         if (filteredData.Count == 0)
-            return (series, labels, dates);
+            return (series, dates);
 
-        labels = filteredData.Select(p => p.Label).ToArray();
+        var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var avgValues = filteredData.Select(p => p.Value).ToArray();
 
@@ -1104,25 +945,21 @@ public class ChartLoaderService
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = avgValues,
-            SeriesName = "Avg Transaction",
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Avg Transaction"        };
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
     /// Loads total transactions count chart with daily granularity.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadTotalTransactionsChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadTotalTransactionsChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -1135,9 +972,9 @@ public class ChartLoaderService
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
 
         if (filteredData.Count == 0)
-            return (series, labels, dates);
+            return (series, dates);
 
-        labels = filteredData.Select(p => p.Label).ToArray();
+        var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var countValues = filteredData.Select(p => p.Value).ToArray();
 
@@ -1153,25 +990,21 @@ public class ChartLoaderService
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = countValues,
-            SeriesName = "Transactions",
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Transactions"        };
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
     /// Loads average shipping costs chart with daily granularity.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadAverageShippingCostsChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadAverageShippingCostsChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -1183,9 +1016,9 @@ public class ChartLoaderService
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
 
         if (filteredData.Count == 0)
-            return (series, labels, dates);
+            return (series, dates);
 
-        labels = filteredData.Select(p => p.Label).ToArray();
+        var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var avgShipping = filteredData.Select(p => p.Value).ToArray();
 
@@ -1201,12 +1034,9 @@ public class ChartLoaderService
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = avgShipping,
-            SeriesName = "Avg Shipping",
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Avg Shipping"        };
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
@@ -1226,7 +1056,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1236,11 +1065,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
 
         return (series, legend);
     }
@@ -1263,7 +1088,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1273,11 +1097,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
 
         return (series, legend);
     }
@@ -1299,7 +1119,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1309,11 +1128,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
 
         return (series, legend);
     }
@@ -1335,7 +1150,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1345,11 +1159,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
 
         return (series, legend);
     }
@@ -1371,7 +1181,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
@@ -1381,11 +1190,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Count",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Count"        };
         _chartExportDataByTitle["Transactions by Accountant"] = exportData;
         _chartExportDataByTitle["Workload Distribution"] = exportData;
 
@@ -1409,7 +1214,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1419,11 +1223,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Count",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Count"        };
 
         return (series, legend);
     }
@@ -1445,7 +1245,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1455,11 +1254,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Count",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Count"        };
 
         return (series, legend);
     }
@@ -1482,8 +1277,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = (int)dataPoints.Sum(p => p.Value);
-
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1493,11 +1286,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Count",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Count"        };
 
         return (series, legend);
     }
@@ -1520,8 +1309,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
-
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1531,11 +1318,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Amount"        };
 
         return (series, legend);
     }
@@ -1565,7 +1348,6 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        var totalReturns = (int)values.Sum();
 
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
@@ -1576,11 +1358,7 @@ public class ChartLoaderService
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
-            SeriesName = "Returns",
-            TotalValue = totalReturns,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Returns"        };
 
         return (series, labels, dates);
     }
@@ -1603,8 +1381,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = (int)dataPoints.Sum(p => p.Value);
-
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1614,11 +1390,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Count",
-            TotalValue = total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Count"        };
         _chartExportDataByTitle["Return Reasons"] = exportData;
         _chartExportDataByTitle["Returns by Category"] = exportData;
 
@@ -1629,13 +1401,12 @@ public class ChartLoaderService
     /// Loads return financial impact chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadReturnFinancialImpactChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadReturnFinancialImpactChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -1648,12 +1419,11 @@ public class ChartLoaderService
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
 
         if (filteredData.Count == 0)
-            return (series, labels, dates);
+            return (series, dates);
 
-        labels = filteredData.Select(p => p.Label).ToArray();
+        var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var impactValues = filteredData.Select(p => p.Value).ToArray();
-        var totalImpact = impactValues.Sum();
 
         if (dates.Length > 0)
         {
@@ -1667,13 +1437,9 @@ public class ChartLoaderService
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = impactValues,
-            SeriesName = "Refunds",
-            TotalValue = totalImpact,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Refunds"        };
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
@@ -1701,7 +1467,6 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        var totalLosses = (int)values.Sum();
 
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
 
@@ -1712,11 +1477,7 @@ public class ChartLoaderService
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
-            SeriesName = "Losses",
-            TotalValue = totalLosses,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Losses"        };
 
         return (series, labels, dates);
     }
@@ -1725,13 +1486,12 @@ public class ChartLoaderService
     /// Loads loss financial impact chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadLossFinancialImpactChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadLossFinancialImpactChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -1744,12 +1504,11 @@ public class ChartLoaderService
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
 
         if (filteredData.Count == 0)
-            return (series, labels, dates);
+            return (series, dates);
 
-        labels = filteredData.Select(p => p.Label).ToArray();
+        var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var impactValues = filteredData.Select(p => p.Value).ToArray();
-        var totalImpact = impactValues.Sum();
 
         if (dates.Length > 0)
         {
@@ -1763,13 +1522,9 @@ public class ChartLoaderService
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = impactValues,
-            SeriesName = "Value Lost",
-            TotalValue = totalImpact,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
-        };
+            SeriesName = "Value Lost"        };
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
@@ -2140,20 +1895,17 @@ public class ChartLoaderService
 /// </summary>
 public class ChartExportData
 {
-    public string ChartTitle { get; set; } = string.Empty;
-    public ChartType ChartType { get; set; }
-    public string[] Labels { get; set; } = [];
-    public double[] Values { get; set; } = [];
-    public string SeriesName { get; set; } = string.Empty;
-    public double? TotalValue { get; set; }
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
+    public string ChartTitle { get; init; } = string.Empty;
+    public ChartType ChartType { get; init; }
+    public string[] Labels { get; init; } = [];
+    public double[] Values { get; init; } = [];
+    public string SeriesName { get; init; } = string.Empty;
 
     /// <summary>
     /// Additional series for multi-series charts (e.g., Sales vs Expenses).
     /// Each entry contains a series name and its values.
     /// </summary>
-    public List<(string Name, double[] Values)> AdditionalSeries { get; set; } = [];
+    public List<(string Name, double[] Values)> AdditionalSeries { get; init; } = [];
 
     /// <summary>
     /// Returns true if this chart has multiple series.

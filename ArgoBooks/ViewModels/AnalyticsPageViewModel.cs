@@ -1392,7 +1392,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpensesTrendsChart(CompanyData data)
     {
-        var (series, labels, dates, _) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
         ExpensesTrendsSeries = series;
         ExpensesTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1409,7 +1409,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadRevenueTrendsChart(CompanyData data)
     {
-        var (series, labels, dates, _) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
         RevenueTrendsSeries = series;
         RevenueTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1435,7 +1435,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadSalesVsExpensesChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
         SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1513,7 +1513,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAvgTransactionValueChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
         AvgTransactionValueSeries = series;
         AvgTransactionValueXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgTransactionValueYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1522,7 +1522,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadTotalTransactionsChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
         TotalTransactionsSeries = series;
         TotalTransactionsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         TotalTransactionsYAxes = _chartLoaderService.CreateNumberYAxes();
@@ -1531,7 +1531,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAvgShippingCostsChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
         AvgShippingCostsSeries = series;
         AvgShippingCostsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgShippingCostsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1574,7 +1574,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnFinancialImpactChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
         ReturnFinancialImpactSeries = series;
         ReturnFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1592,7 +1592,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossFinancialImpactChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
         LossFinancialImpactSeries = series;
         LossFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
