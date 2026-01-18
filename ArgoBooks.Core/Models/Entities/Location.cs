@@ -3,7 +3,7 @@ using ArgoBooks.Core.Models.Common;
 namespace ArgoBooks.Core.Models.Entities;
 
 /// <summary>
-/// Represents a warehouse or storage location.
+/// Represents a warehouse or building.
 /// </summary>
 public class Location
 {

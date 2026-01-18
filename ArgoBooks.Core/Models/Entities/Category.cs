@@ -3,7 +3,7 @@ using ArgoBooks.Core.Enums;
 namespace ArgoBooks.Core.Models.Entities;
 
 /// <summary>
-/// Represents a category for organizing products, purchases, or rentals.
+/// Represents a category for organizing products.
 /// </summary>
 public class Category
 {

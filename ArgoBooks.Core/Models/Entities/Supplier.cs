@@ -3,7 +3,7 @@ using ArgoBooks.Core.Models.Common;
 namespace ArgoBooks.Core.Models.Entities;
 
 /// <summary>
-/// Represents a supplier/vendor.
+/// Represents a supplier.
 /// </summary>
 public class Supplier : BaseEntity
 {
