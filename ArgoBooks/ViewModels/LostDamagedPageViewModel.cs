@@ -32,6 +32,64 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showTypeColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showReasonColumn = true;
+
+    [ObservableProperty]
+    private bool _showStaffColumn = true;
+
+    [ObservableProperty]
+    private bool _showLossColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
+    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
+    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
+    partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
+    partial void OnShowStaffColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Staff", value);
+    partial void OnShowLossColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Loss", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Statistics
 
     [ObservableProperty]

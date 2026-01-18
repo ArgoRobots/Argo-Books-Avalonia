@@ -167,10 +167,11 @@
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,0"
-                                    MinHeight="40">
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
                                 <StackPanel Orientation="Horizontal">
                                     <!-- Product Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ProductColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Product">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -206,7 +207,7 @@
                                     </Panel>
 
                                     <!-- SKU Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.SkuColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.SkuColumnWidth}" IsVisible="{Binding ShowSkuColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Sku">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -242,7 +243,7 @@
                                     </Panel>
 
                                     <!-- Category Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.CategoryColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.CategoryColumnWidth}" IsVisible="{Binding ShowCategoryColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Category">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -278,7 +279,7 @@
                                     </Panel>
 
                                     <!-- Location Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}" IsVisible="{Binding ShowLocationColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Location">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -314,7 +315,7 @@
                                     </Panel>
 
                                     <!-- In Stock Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.InStockColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.InStockColumnWidth}" IsVisible="{Binding ShowInStockColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="InStock">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -350,7 +351,7 @@
                                     </Panel>
 
                                     <!-- Reserved Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReservedColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ReservedColumnWidth}" IsVisible="{Binding ShowReservedColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Reserved">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -386,7 +387,7 @@
                                     </Panel>
 
                                     <!-- Available Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.AvailableColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.AvailableColumnWidth}" IsVisible="{Binding ShowAvailableColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Available">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -422,7 +423,7 @@
                                     </Panel>
 
                                     <!-- Reorder Point Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReorderPointColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ReorderPointColumnWidth}" IsVisible="{Binding ShowReorderPointColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="ReorderPoint">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -458,7 +459,7 @@
                                     </Panel>
 
                                     <!-- Status Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Status">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -520,7 +521,8 @@
                                                         MinHeight="52">
                                                     <StackPanel Orientation="Horizontal">
                                                         <!-- Product Name with SKU -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowProductColumn}">
                                                             <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                 <TextBlock Text="{Binding ProductName}"
                                                                            FontSize="14"
@@ -535,7 +537,8 @@
                                                         </Panel>
 
                                                         <!-- SKU -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.SkuColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.SkuColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowSkuColumn}">
                                                             <TextBlock Text="{Binding Sku}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -546,7 +549,8 @@
                                                         </Panel>
 
                                                         <!-- Category -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowCategoryColumn}">
                                                             <TextBlock Text="{Binding CategoryName}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -557,7 +561,8 @@
                                                         </Panel>
 
                                                         <!-- Location -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowLocationColumn}">
                                                             <TextBlock Text="{Binding LocationName}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -568,7 +573,8 @@
                                                         </Panel>
 
                                                         <!-- In Stock -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.InStockColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.InStockColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowInStockColumn}">
                                                             <TextBlock Text="{Binding InStock}"
                                                                        FontSize="14"
                                                                        FontWeight="Medium"
@@ -579,7 +585,8 @@
                                                         </Panel>
 
                                                         <!-- Reserved -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.ReservedColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.ReservedColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowReservedColumn}">
                                                             <TextBlock Text="{Binding Reserved}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -589,7 +596,8 @@
                                                         </Panel>
 
                                                         <!-- Available -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.AvailableColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.AvailableColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowAvailableColumn}">
                                                             <TextBlock Text="{Binding Available}"
                                                                        FontSize="14"
                                                                        FontWeight="Medium"
@@ -600,7 +608,8 @@
                                                         </Panel>
 
                                                         <!-- Reorder Point -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.ReorderPointColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.ReorderPointColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowReorderPointColumn}">
                                                             <TextBlock Text="{Binding ReorderPoint}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -610,7 +619,8 @@
                                                         </Panel>
 
                                                         <!-- Status Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).ShowStatusColumn}">
                                                             <Border VerticalAlignment="Center"
                                                                     HorizontalAlignment="Left"
                                                                     Padding="8,4"
@@ -763,6 +773,26 @@
             </Border>
             </Grid>
         </Grid>
+
+        <!-- Column Visibility Menu -->
+        <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                        MenuX="{Binding ColumnMenuX}"
+                                        MenuY="{Binding ColumnMenuY}"
+                                        CloseCommand="{Binding CloseColumnMenuCommand}">
+            <controls:ColumnVisibilityMenu.ColumnsContent>
+                <StackPanel Spacing="4">
+                    <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowSkuColumn}" Content="{loc:Loc SKU}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowCategoryColumn}" Content="{loc:Loc Category}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowLocationColumn}" Content="{loc:Loc Location}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowInStockColumn}" Content="{loc:Loc 'In Stock'}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowReservedColumn}" Content="{loc:Loc Reserved}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="{loc:Loc Available}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowReorderPointColumn}" Content="{loc:Loc 'Reorder Point'}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+                </StackPanel>
+            </controls:ColumnVisibilityMenu.ColumnsContent>
+        </controls:ColumnVisibilityMenu>
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
