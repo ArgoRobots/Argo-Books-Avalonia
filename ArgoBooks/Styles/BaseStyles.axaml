@@ -255,5 +255,8 @@
     <Style Selector="DatePicker.form-datepicker /template/ Button:pointerover">
         <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
     </Style>
+    <Style Selector="DatePicker.form-datepicker /template/ Button TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
 
 </Styles>
