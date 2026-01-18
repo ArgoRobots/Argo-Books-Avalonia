@@ -61,6 +61,12 @@ public partial class ResponsiveHeaderHelper : ObservableObject
     [ObservableProperty]
     private Thickness _headerPadding = new(24, 20);
 
+    /// <summary>
+    /// Minimum height for the search box to match button heights.
+    /// </summary>
+    [ObservableProperty]
+    private double _searchBoxMinHeight = 40;
+
     partial void OnHeaderWidthChanged(double value)
     {
         UpdateResponsiveValues(value);
@@ -77,6 +83,7 @@ public partial class ResponsiveHeaderHelper : ObservableObject
             SearchBoxWidth = 200;
             HeaderSpacing = 6;
             HeaderPadding = new Thickness(24, 12);
+            SearchBoxMinHeight = 30;
         }
         else if (width < MediumBreakpoint)
         {
@@ -88,6 +95,7 @@ public partial class ResponsiveHeaderHelper : ObservableObject
             HeaderSpacing = 8;
             SearchIconMargin = new Thickness(12, 0, 20, 0);
             HeaderPadding = new Thickness(24, 16);
+            SearchBoxMinHeight = 30;
         }
         else
         {
@@ -99,6 +107,7 @@ public partial class ResponsiveHeaderHelper : ObservableObject
             HeaderSpacing = 12;
             SearchIconMargin = new Thickness(12, 0, 8, 0);
             HeaderPadding = new Thickness(24, 20);
+            SearchBoxMinHeight = 36;
         }
     }
 }
