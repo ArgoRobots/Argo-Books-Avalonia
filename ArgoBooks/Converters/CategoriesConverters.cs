@@ -198,6 +198,17 @@ public static class BoolConverters
     public static readonly IValueConverter ToScrollBarVisibility =
         new FuncValueConverter<bool, Avalonia.Controls.Primitives.ScrollBarVisibility>(value =>
             value ? Avalonia.Controls.Primitives.ScrollBarVisibility.Auto : Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled);
+
+    /// <summary>
+    /// Returns the ConverterParameter when the bool value is true, null otherwise.
+    /// Useful for conditionally showing tooltips only in compact mode.
+    /// </summary>
+    public static readonly IValueConverter ToParameterWhenTrue = new BoolToParameterConverter(true);
+
+    /// <summary>
+    /// Returns the ConverterParameter when the bool value is false, null otherwise.
+    /// </summary>
+    public static readonly IValueConverter ToParameterWhenFalse = new BoolToParameterConverter(false);
 }
 
 /// <summary>
@@ -582,6 +593,33 @@ public class BoolToTabForegroundConverter : IValueConverter
             return brush;
         }
         return new SolidColorBrush(Color.Parse("#6B7280"));
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converter that returns the parameter when the bool matches the expected value.
+/// </summary>
+public class BoolToParameterConverter : IValueConverter
+{
+    private readonly bool _returnWhen;
+
+    public BoolToParameterConverter(bool returnWhen)
+    {
+        _returnWhen = returnWhen;
+    }
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue && boolValue == _returnWhen)
+        {
+            return parameter;
+        }
+        return null;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

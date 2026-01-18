@@ -131,6 +131,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="MinHeight" Value="32" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton#PART_IncreaseButton">
         <Setter Property="MinWidth" Value="16" />
@@ -242,6 +243,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="MinHeight" Value="36" />
+        <Setter Property="MinWidth" Value="0" />
     </Style>
     <Style Selector="DatePicker.form-datepicker /template/ Button">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -249,9 +251,13 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Padding" Value="10,6" />
+        <Setter Property="MinWidth" Value="0" />
     </Style>
     <Style Selector="DatePicker.form-datepicker /template/ Button:pointerover">
         <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+    </Style>
+    <Style Selector="DatePicker.form-datepicker /template/ Button TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
 </Styles>
