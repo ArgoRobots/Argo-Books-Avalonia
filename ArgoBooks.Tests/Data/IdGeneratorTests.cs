@@ -125,8 +125,8 @@ public class IdGeneratorTests
     #region Category ID Generation Tests
 
     [Theory]
-    [InlineData(CategoryType.Sales, "CAT-SAL-001")]
-    [InlineData(CategoryType.Purchase, "CAT-PUR-001")]
+    [InlineData(CategoryType.Revenue, "CAT-SAL-001")]
+    [InlineData(CategoryType.Expense, "CAT-PUR-001")]
     [InlineData(CategoryType.Rental, "CAT-RNT-001")]
     public void NextCategoryId_GeneratesCorrectPrefixForType(CategoryType type, string expectedId)
     {
@@ -144,8 +144,8 @@ public class IdGeneratorTests
         var companyData = CreateCompanyData();
         var generator = new IdGenerator(companyData);
 
-        var salesId = generator.NextCategoryId(CategoryType.Sales);
-        var purchaseId = generator.NextCategoryId(CategoryType.Purchase);
+        var salesId = generator.NextCategoryId(CategoryType.Revenue);
+        var purchaseId = generator.NextCategoryId(CategoryType.Expense);
         var rentalId = generator.NextCategoryId(CategoryType.Rental);
 
         Assert.Equal("CAT-SAL-001", salesId);
@@ -158,24 +158,24 @@ public class IdGeneratorTests
     #region Transaction ID Generation Tests
 
     [Fact]
-    public void NextSaleId_IncludesYear()
+    public void NextRevenueId_IncludesYear()
     {
         var companyData = CreateCompanyData();
         var generator = new IdGenerator(companyData);
 
-        var id = generator.NextSaleId();
+        var id = generator.NextRevenueId();
 
         Assert.Contains(DateTime.UtcNow.Year.ToString(), id);
         Assert.Matches(@"^SAL-\d{4}-\d{5}$", id);
     }
 
     [Fact]
-    public void NextPurchaseId_IncludesYear()
+    public void NextExpenseId_IncludesYear()
     {
         var companyData = CreateCompanyData();
         var generator = new IdGenerator(companyData);
 
-        var id = generator.NextPurchaseId();
+        var id = generator.NextExpenseId();
 
         Assert.Contains(DateTime.UtcNow.Year.ToString(), id);
         Assert.Matches(@"^PUR-\d{4}-\d{5}$", id);

@@ -1250,7 +1250,7 @@ public class ReportRenderer : IDisposable
         // Get sales (Revenue)
         if (transactionType == TransactionType.Revenue || transactionType == TransactionType.Both)
         {
-            foreach (var sale in _companyData.Sales)
+            foreach (var sale in _companyData.Revenues)
             {
                 var customerName = _companyData.Customers.FirstOrDefault(c => c.Id == sale.CustomerId)?.Name ?? "N/A";
                 var productName = sale.LineItems.FirstOrDefault()?.Description ?? sale.Description;
@@ -1262,7 +1262,7 @@ public class ReportRenderer : IDisposable
         // Get purchases (Expenses)
         if (transactionType == TransactionType.Expenses || transactionType == TransactionType.Both)
         {
-            foreach (var purchase in _companyData.Purchases)
+            foreach (var purchase in _companyData.Expenses)
             {
                 var supplierName = _companyData.Suppliers.FirstOrDefault(s => s.Id == purchase.SupplierId)?.Name ?? "N/A";
                 var productName = purchase.LineItems.FirstOrDefault()?.Description ?? purchase.Description;
@@ -1846,16 +1846,16 @@ public class ReportRenderer : IDisposable
 
         return summary.TransactionType switch
         {
-            TransactionType.Revenue => _companyData.Sales
+            TransactionType.Revenue => _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
                 .Sum(s => s.Total),
-            TransactionType.Expenses => _companyData.Purchases
+            TransactionType.Expenses => _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
                 .Sum(p => p.Total) ,
-            _ => (_companyData.Sales
+            _ => (_companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
                 .Sum(s => s.Total) ) -
-                 (_companyData.Purchases
+                 (_companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
                 .Sum(p => p.Total) )
         };
@@ -1869,12 +1869,12 @@ public class ReportRenderer : IDisposable
 
         return summary.TransactionType switch
         {
-            TransactionType.Revenue => _companyData.Sales
+            TransactionType.Revenue => _companyData.Revenues
                 .Count(s => s.Date >= startDate && s.Date <= endDate),
-            TransactionType.Expenses => _companyData.Purchases
+            TransactionType.Expenses => _companyData.Expenses
                 .Count(p => p.Date >= startDate && p.Date <= endDate),
-            _ => _companyData.Sales.Count(s => s.Date >= startDate && s.Date <= endDate) +
-                 _companyData.Purchases.Count(p => p.Date >= startDate && p.Date <= endDate)
+            _ => _companyData.Revenues.Count(s => s.Date >= startDate && s.Date <= endDate) +
+                 _companyData.Expenses.Count(p => p.Date >= startDate && p.Date <= endDate)
         };
     }
 
@@ -1888,7 +1888,7 @@ public class ReportRenderer : IDisposable
 
         if (summary.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            var sales = _companyData.Sales
+            var sales = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
                 .Select(s => s.Total);
             totals.AddRange(sales);
@@ -1896,7 +1896,7 @@ public class ReportRenderer : IDisposable
 
         if (summary.TransactionType is TransactionType.Expenses or TransactionType.Both)
         {
-            var purchases = _companyData.Purchases
+            var purchases = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
                 .Select(p => p.Total);
             totals.AddRange(purchases);
@@ -1924,34 +1924,34 @@ public class ReportRenderer : IDisposable
 
         if (summary.TransactionType == TransactionType.Revenue)
         {
-            currentPeriod = _companyData.Sales
+            currentPeriod = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
                 .Sum(s => s.Total);
-            previousPeriod = _companyData.Sales
+            previousPeriod = _companyData.Revenues
                 .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
                 .Sum(s => s.Total);
         }
         else if (summary.TransactionType == TransactionType.Expenses)
         {
-            currentPeriod = _companyData.Purchases
+            currentPeriod = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
                 .Sum(p => p.Total);
-            previousPeriod = _companyData.Purchases
+            previousPeriod = _companyData.Expenses
                 .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
                 .Sum(p => p.Total);
         }
         else
         {
-            currentPeriod = _companyData.Sales
+            currentPeriod = _companyData.Revenues
                     .Where(s => s.Date >= startDate && s.Date <= endDate)
                     .Sum(s => s.Total) -
-                _companyData.Purchases
+                _companyData.Expenses
                     .Where(p => p.Date >= startDate && p.Date <= endDate)
                     .Sum(p => p.Total);
-            previousPeriod = _companyData.Sales
+            previousPeriod = _companyData.Revenues
                      .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
                      .Sum(s => s.Total) -
-                 _companyData.Purchases
+                 _companyData.Expenses
                      .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
                      .Sum(p => p.Total);
         }

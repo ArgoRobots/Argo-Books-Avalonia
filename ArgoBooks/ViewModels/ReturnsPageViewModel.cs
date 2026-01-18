@@ -399,7 +399,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
         if (returnRecord.ReturnType == "Expense")
         {
             // For expense returns, look up the supplier from the original purchase
-            var purchase = companyData.Purchases.FirstOrDefault(p => p.Id == returnRecord.OriginalTransactionId);
+            var purchase = companyData.Expenses.FirstOrDefault(p => p.Id == returnRecord.OriginalTransactionId);
             if (purchase != null)
             {
                 var supplier = companyData.GetSupplier(purchase.SupplierId ?? "");

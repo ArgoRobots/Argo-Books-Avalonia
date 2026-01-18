@@ -345,9 +345,9 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private void SaveNewOrder(CompanyData companyData, decimal shipping)
     {
         // Generate ID
-        companyData.IdCounters.PurchaseOrder++;
-        var orderId = $"PO-{companyData.IdCounters.PurchaseOrder:D5}";
-        var poNumber = $"#PO-{DateTime.Now.Year}-{companyData.IdCounters.PurchaseOrder:D3}";
+        companyData.IdCounters.ExpenseOrder++;
+        var orderId = $"PO-{companyData.IdCounters.ExpenseOrder:D5}";
+        var poNumber = $"#PO-{DateTime.Now.Year}-{companyData.IdCounters.ExpenseOrder:D3}";
 
         // Create line items
         var lineItems = LineItems.Select(li => new PurchaseOrderLineItem

@@ -717,12 +717,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
         // Calculate current period revenue (using USD for consistent calculations)
-        var currentRevenueUSD = data.Sales
+        var currentRevenueUSD = data.Revenues
             .Where(s => s.Date >= StartDate && s.Date <= EndDate)
             .Sum(s => s.EffectiveTotalUSD);
 
         // Calculate previous period revenue for comparison
-        var prevRevenueUSD = data.Sales
+        var prevRevenueUSD = data.Revenues
             .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
             .Sum(s => s.EffectiveTotalUSD);
 
@@ -731,12 +731,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
         // Calculate current period expenses (using USD for consistent calculations)
-        var currentExpensesUSD = data.Purchases
+        var currentExpensesUSD = data.Expenses
             .Where(p => p.Date >= StartDate && p.Date <= EndDate)
             .Sum(p => p.EffectiveTotalUSD);
 
         // Calculate previous period expenses for comparison
-        var prevExpensesUSD = data.Purchases
+        var prevExpensesUSD = data.Expenses
             .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
             .Sum(p => p.EffectiveTotalUSD);
 
@@ -774,7 +774,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var recentItems = new List<RecentTransactionItem>();
 
         // Get recent sales (no status badge needed for completed transactions)
-        var recentSales = data.Sales
+        var recentSales = data.Revenues
             .OrderByDescending(s => s.Date)
             .Take(10)
             .Select(s => new RecentTransactionItem
@@ -795,7 +795,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         recentItems.AddRange(recentSales);
 
         // Get recent purchases/expenses (no status badge needed for completed transactions)
-        var recentPurchases = data.Purchases
+        var recentPurchases = data.Expenses
             .OrderByDescending(p => p.Date)
             .Take(10)
             .Select(p => new RecentTransactionItem

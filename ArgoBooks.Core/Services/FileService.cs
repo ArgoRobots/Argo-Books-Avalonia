@@ -50,8 +50,8 @@ public class FileService(
             await WriteJsonAsync(companyDir, "categories.json", companyData.Categories, cancellationToken);
             await WriteJsonAsync(companyDir, "accountants.json", companyData.Accountants, cancellationToken);
             await WriteJsonAsync(companyDir, "locations.json", companyData.Locations, cancellationToken);
-            await WriteJsonAsync(companyDir, "sales.json", companyData.Sales, cancellationToken);
-            await WriteJsonAsync(companyDir, "purchases.json", companyData.Purchases, cancellationToken);
+            await WriteJsonAsync(companyDir, "revenues.json", companyData.Revenues, cancellationToken);
+            await WriteJsonAsync(companyDir, "expenses.json", companyData.Expenses, cancellationToken);
             await WriteJsonAsync(companyDir, "invoices.json", companyData.Invoices, cancellationToken);
             await WriteJsonAsync(companyDir, "payments.json", companyData.Payments, cancellationToken);
             await WriteJsonAsync(companyDir, "recurringInvoices.json", companyData.RecurringInvoices, cancellationToken);
@@ -260,8 +260,8 @@ public class FileService(
             Categories = await ReadJsonAsync<List<Models.Entities.Category>>(tempDirectory, "categories.json", cancellationToken) ?? [],
             Accountants = await ReadJsonAsync<List<Models.Entities.Accountant>>(tempDirectory, "accountants.json", cancellationToken) ?? [],
             Locations = await ReadJsonAsync<List<Models.Entities.Location>>(tempDirectory, "locations.json", cancellationToken) ?? [],
-            Sales = await ReadJsonAsync<List<Models.Transactions.Revenue>>(tempDirectory, "sales.json", cancellationToken) ?? [],
-            Purchases = await ReadJsonAsync<List<Models.Transactions.Expense>>(tempDirectory, "purchases.json", cancellationToken) ?? [],
+            Sales = await ReadJsonAsync<List<Models.Transactions.Revenue>>(tempDirectory, "revenues.json", cancellationToken) ?? [],
+            Purchases = await ReadJsonAsync<List<Models.Transactions.Expense>>(tempDirectory, "expenses.json", cancellationToken) ?? [],
             Invoices = await ReadJsonAsync<List<Models.Transactions.Invoice>>(tempDirectory, "invoices.json", cancellationToken) ?? [],
             Payments = await ReadJsonAsync<List<Models.Transactions.Payment>>(tempDirectory, "payments.json", cancellationToken) ?? [],
             RecurringInvoices = await ReadJsonAsync<List<Models.Transactions.RecurringInvoice>>(tempDirectory, "recurringInvoices.json", cancellationToken) ?? [],
@@ -290,7 +290,7 @@ public class FileService(
     private static void MigrateCurrencyData(CompanyData data)
     {
         // Migrate Sales
-        foreach (var sale in data.Sales)
+        foreach (var sale in data.Revenues)
         {
             if (sale.TotalUSD == 0 && sale.Total != 0)
             {
@@ -305,7 +305,7 @@ public class FileService(
         }
 
         // Migrate Purchases
-        foreach (var purchase in data.Purchases)
+        foreach (var purchase in data.Expenses)
         {
             if (purchase.TotalUSD == 0 && purchase.Total != 0)
             {
@@ -362,8 +362,8 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "categories.json", data.Categories, cancellationToken);
         await WriteJsonAsync(companyDirectory, "accountants.json", data.Accountants, cancellationToken);
         await WriteJsonAsync(companyDirectory, "locations.json", data.Locations, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "sales.json", data.Sales, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "purchases.json", data.Purchases, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "revenues.json", data.Revenues, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "expenses.json", data.Expenses, cancellationToken);
         await WriteJsonAsync(companyDirectory, "invoices.json", data.Invoices, cancellationToken);
         await WriteJsonAsync(companyDirectory, "payments.json", data.Payments, cancellationToken);
         await WriteJsonAsync(companyDirectory, "recurringInvoices.json", data.RecurringInvoices, cancellationToken);

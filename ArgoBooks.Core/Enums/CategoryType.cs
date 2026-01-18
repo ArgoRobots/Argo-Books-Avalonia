@@ -5,11 +5,11 @@ namespace ArgoBooks.Core.Enums;
 /// </summary>
 public enum CategoryType
 {
-    /// <summary>Category for sales/revenue items.</summary>
-    Sales,
+    /// <summary>Category for revenue items.</summary>
+    Revenue,
 
-    /// <summary>Category for purchases/expenses.</summary>
-    Purchase,
+    /// <summary>Category for expense items.</summary>
+    Expense,
 
     /// <summary>Category for rental items.</summary>
     Rental

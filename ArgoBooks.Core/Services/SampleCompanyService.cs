@@ -206,8 +206,8 @@ public class SampleCompanyService
     {
         var dates = new List<DateTime>();
 
-        dates.AddRange(data.Sales.Select(s => s.Date));
-        dates.AddRange(data.Purchases.Select(p => p.Date));
+        dates.AddRange(data.Revenues.Select(s => s.Date));
+        dates.AddRange(data.Expenses.Select(p => p.Date));
         dates.AddRange(data.Invoices.Select(i => i.IssueDate));
         dates.AddRange(data.Payments.Select(p => p.Date));
         dates.AddRange(data.Rentals.Select(r => r.StartDate));
@@ -244,14 +244,14 @@ public class SampleCompanyService
             catch (ArgumentOutOfRangeException) { return dt; }
         }
 
-        foreach (var sale in data.Sales)
+        foreach (var sale in data.Revenues)
         {
             sale.Date = Shift(sale.Date);
             sale.CreatedAt = Shift(sale.CreatedAt);
             sale.UpdatedAt = Shift(sale.UpdatedAt);
         }
 
-        foreach (var purchase in data.Purchases)
+        foreach (var purchase in data.Expenses)
         {
             purchase.Date = Shift(purchase.Date);
             purchase.CreatedAt = Shift(purchase.CreatedAt);

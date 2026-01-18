@@ -299,10 +299,10 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         Expenses.Clear();
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Purchases == null)
+        if (companyData?.Expenses == null)
             return;
 
-        _allExpenses.AddRange(companyData.Purchases);
+        _allExpenses.AddRange(companyData.Expenses);
         UpdateStatistics();
         FilterExpenses();
     }
@@ -617,7 +617,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     {
         var companyData = App.CompanyManager?.CompanyData;
 
-        var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == expenseId);
+        var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == expenseId);
         if (expense == null || string.IsNullOrEmpty(expense.ReceiptId)) return null;
 
         var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);

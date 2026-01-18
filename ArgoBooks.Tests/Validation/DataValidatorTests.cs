@@ -283,7 +283,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidateProduct_ValidCategory_ReturnsSuccess()
     {
-        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Sales });
+        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Revenue });
         var product = new Product { Id = "PRD-001", Name = "Widget", CategoryId = "CAT-001" };
 
         var result = _validator.ValidateProduct(product);
@@ -506,7 +506,7 @@ public class DataValidatorTests
         {
             Id = "CAT-001",
             Name = "Electronics",
-            Type = CategoryType.Sales,
+            Type = CategoryType.Revenue,
             DefaultTaxRate = 0.08m
         };
 
@@ -518,7 +518,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidateCategory_EmptyName_ReturnsError()
     {
-        var category = new Category { Id = "CAT-001", Name = "", Type = CategoryType.Sales };
+        var category = new Category { Id = "CAT-001", Name = "", Type = CategoryType.Revenue };
 
         var result = _validator.ValidateCategory(category);
 
@@ -535,7 +535,7 @@ public class DataValidatorTests
         {
             Id = "CAT-001",
             Name = "Electronics",
-            Type = CategoryType.Sales,
+            Type = CategoryType.Revenue,
             DefaultTaxRate = taxRate
         };
 
@@ -548,8 +548,8 @@ public class DataValidatorTests
     [Fact]
     public void ValidateCategory_DuplicateNameSameType_ReturnsError()
     {
-        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Sales });
-        var category = new Category { Id = "CAT-002", Name = "Electronics", Type = CategoryType.Sales };
+        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Revenue });
+        var category = new Category { Id = "CAT-002", Name = "Electronics", Type = CategoryType.Revenue };
 
         var result = _validator.ValidateCategory(category);
 
@@ -559,8 +559,8 @@ public class DataValidatorTests
     [Fact]
     public void ValidateCategory_DuplicateNameDifferentType_IsAllowed()
     {
-        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Sales });
-        var category = new Category { Id = "CAT-002", Name = "Electronics", Type = CategoryType.Purchase };
+        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Revenue });
+        var category = new Category { Id = "CAT-002", Name = "Electronics", Type = CategoryType.Expense };
 
         var result = _validator.ValidateCategory(category);
 
@@ -574,7 +574,7 @@ public class DataValidatorTests
         {
             Id = "CAT-001",
             Name = "Smartphones",
-            Type = CategoryType.Sales,
+            Type = CategoryType.Revenue,
             ParentId = "CAT-999"
         };
 
@@ -587,12 +587,12 @@ public class DataValidatorTests
     [Fact]
     public void ValidateCategory_ParentDifferentType_ReturnsError()
     {
-        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Sales });
+        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Revenue });
         var category = new Category
         {
             Id = "CAT-002",
             Name = "Office Supplies",
-            Type = CategoryType.Purchase,
+            Type = CategoryType.Expense,
             ParentId = "CAT-001"
         };
 
@@ -609,7 +609,7 @@ public class DataValidatorTests
         {
             Id = "CAT-001",
             Name = "Electronics",
-            Type = CategoryType.Sales,
+            Type = CategoryType.Revenue,
             ParentId = "CAT-001"
         };
         _companyData.Categories.Add(category);
@@ -623,12 +623,12 @@ public class DataValidatorTests
     [Fact]
     public void ValidateCategory_ValidParent_ReturnsSuccess()
     {
-        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Sales });
+        _companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Revenue });
         var category = new Category
         {
             Id = "CAT-002",
             Name = "Smartphones",
-            Type = CategoryType.Sales,
+            Type = CategoryType.Revenue,
             ParentId = "CAT-001"
         };
 
@@ -814,7 +814,7 @@ public class DataValidatorTests
     #region Sale Validation Tests
 
     [Fact]
-    public void ValidateSale_ValidSale_ReturnsSuccess()
+    public void ValidateRevenue_ValidSale_ReturnsSuccess()
     {
         var sale = new Revenue
         {
@@ -823,24 +823,24 @@ public class DataValidatorTests
             Total = 100
         };
 
-        var result = _validator.ValidateSale(sale);
+        var result = _validator.ValidateRevenue(sale);
 
         Assert.True(result.IsValid);
     }
 
     [Fact]
-    public void ValidateSale_EmptyLineItems_ReturnsError()
+    public void ValidateRevenue_EmptyLineItems_ReturnsError()
     {
         var sale = new Revenue { Id = "SAL-001", LineItems = [] };
 
-        var result = _validator.ValidateSale(sale);
+        var result = _validator.ValidateRevenue(sale);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "LineItems");
     }
 
     [Fact]
-    public void ValidateSale_NegativeTotal_ReturnsError()
+    public void ValidateRevenue_NegativeTotal_ReturnsError()
     {
         var sale = new Revenue
         {
@@ -849,14 +849,14 @@ public class DataValidatorTests
             Total = -10
         };
 
-        var result = _validator.ValidateSale(sale);
+        var result = _validator.ValidateRevenue(sale);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Total");
     }
 
     [Fact]
-    public void ValidateSale_NonExistentCustomer_ReturnsError()
+    public void ValidateRevenue_NonExistentCustomer_ReturnsError()
     {
         var sale = new Revenue
         {
@@ -865,14 +865,14 @@ public class DataValidatorTests
             LineItems = [new LineItem { Description = "Product", Quantity = 1, UnitPrice = 50 }]
         };
 
-        var result = _validator.ValidateSale(sale);
+        var result = _validator.ValidateRevenue(sale);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "CustomerId");
     }
 
     [Fact]
-    public void ValidateSale_ValidCustomer_ReturnsSuccess()
+    public void ValidateRevenue_ValidCustomer_ReturnsSuccess()
     {
         _companyData.Customers.Add(new Customer { Id = "CUS-001", Name = "John Doe" });
         var sale = new Revenue
@@ -883,7 +883,7 @@ public class DataValidatorTests
             Total = 50
         };
 
-        var result = _validator.ValidateSale(sale);
+        var result = _validator.ValidateRevenue(sale);
 
         Assert.True(result.IsValid);
     }
@@ -893,7 +893,7 @@ public class DataValidatorTests
     #region Purchase Validation Tests
 
     [Fact]
-    public void ValidatePurchase_ValidPurchase_ReturnsSuccess()
+    public void ValidateExpense_ValidPurchase_ReturnsSuccess()
     {
         var purchase = new Expense
         {
@@ -902,35 +902,35 @@ public class DataValidatorTests
             Amount = 200
         };
 
-        var result = _validator.ValidatePurchase(purchase);
+        var result = _validator.ValidateExpense(purchase);
 
         Assert.True(result.IsValid);
     }
 
     [Fact]
-    public void ValidatePurchase_EmptyDescription_ReturnsError()
+    public void ValidateExpense_EmptyDescription_ReturnsError()
     {
         var purchase = new Expense { Id = "PUR-001", Description = "" };
 
-        var result = _validator.ValidatePurchase(purchase);
+        var result = _validator.ValidateExpense(purchase);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Description");
     }
 
     [Fact]
-    public void ValidatePurchase_NegativeAmount_ReturnsError()
+    public void ValidateExpense_NegativeAmount_ReturnsError()
     {
         var purchase = new Expense { Id = "PUR-001", Description = "Office Supplies", Amount = -50 };
 
-        var result = _validator.ValidatePurchase(purchase);
+        var result = _validator.ValidateExpense(purchase);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Amount");
     }
 
     [Fact]
-    public void ValidatePurchase_NonExistentSupplier_ReturnsError()
+    public void ValidateExpense_NonExistentSupplier_ReturnsError()
     {
         var purchase = new Expense
         {
@@ -939,14 +939,14 @@ public class DataValidatorTests
             SupplierId = "SUP-999"
         };
 
-        var result = _validator.ValidatePurchase(purchase);
+        var result = _validator.ValidateExpense(purchase);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "SupplierId");
     }
 
     [Fact]
-    public void ValidatePurchase_ValidSupplier_ReturnsSuccess()
+    public void ValidateExpense_ValidSupplier_ReturnsSuccess()
     {
         _companyData.Suppliers.Add(new Supplier { Id = "SUP-001", Name = "Acme Corp" });
         var purchase = new Expense
@@ -957,7 +957,7 @@ public class DataValidatorTests
             Amount = 200
         };
 
-        var result = _validator.ValidatePurchase(purchase);
+        var result = _validator.ValidateExpense(purchase);
 
         Assert.True(result.IsValid);
     }

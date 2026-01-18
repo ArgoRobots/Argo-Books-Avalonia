@@ -63,18 +63,18 @@ public class ForecastAccuracyService : IForecastAccuracyService
         foreach (var record in unvalidatedRecords)
         {
             // Calculate actual values for the forecast period
-            var actualRevenue = companyData.Sales
+            var actualRevenue = companyData.Revenues
                 .Where(s => s.Date >= record.PeriodStartDate && s.Date <= record.PeriodEndDate)
                 .Sum(s => s.EffectiveTotalUSD);
 
-            var actualExpenses = companyData.Purchases
+            var actualExpenses = companyData.Expenses
                 .Where(p => p.Date >= record.PeriodStartDate && p.Date <= record.PeriodEndDate)
                 .Sum(p => p.EffectiveTotalUSD);
 
             var actualProfit = actualRevenue - actualExpenses;
 
             // Calculate actual new customers (first purchase within the period)
-            var firstPurchaseByCustomer = companyData.Sales
+            var firstPurchaseByCustomer = companyData.Revenues
                 .GroupBy(s => s.CustomerId)
                 .Select(g => new { CustomerId = g.Key, FirstPurchase = g.Min(s => s.Date) })
                 .ToList();
@@ -183,8 +183,8 @@ public class ForecastAccuracyService : IForecastAccuracyService
     public bool ShouldRunBacktest(CompanyData companyData, CompanySettings settings, int minMonths = 4)
     {
         // Get all months with transaction data
-        var allDates = companyData.Sales.Select(s => s.Date)
-            .Concat(companyData.Purchases.Select(p => p.Date))
+        var allDates = companyData.Revenues.Select(s => s.Date)
+            .Concat(companyData.Expenses.Select(p => p.Date))
             .ToList();
 
         if (allDates.Count == 0)
@@ -324,12 +324,12 @@ public class ForecastAccuracyService : IForecastAccuracyService
     private List<MonthlyAggregate> GetMonthlyAggregates(CompanyData companyData)
     {
         // Aggregate sales by month
-        var salesByMonth = companyData.Sales
+        var salesByMonth = companyData.Revenues
             .GroupBy(s => new DateTime(s.Date.Year, s.Date.Month, 1))
             .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveTotalUSD));
 
         // Aggregate purchases by month
-        var purchasesByMonth = companyData.Purchases
+        var purchasesByMonth = companyData.Expenses
             .GroupBy(p => new DateTime(p.Date.Year, p.Date.Month, 1))
             .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveTotalUSD));
 

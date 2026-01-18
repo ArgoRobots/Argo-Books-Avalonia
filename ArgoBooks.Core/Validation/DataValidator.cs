@@ -232,48 +232,48 @@ public partial class DataValidator(CompanyData companyData)
     }
 
     /// <summary>
-    /// Validates a sale.
+    /// Validates a revenue transaction.
     /// </summary>
-    public ValidationResult ValidateSale(Revenue sale)
+    public ValidationResult ValidateRevenue(Revenue revenue)
     {
         var result = new ValidationResult();
 
-        if (sale.LineItems.Count == 0)
-            result.AddError(nameof(sale.LineItems), "Sale must have at least one line item.");
+        if (revenue.LineItems.Count == 0)
+            result.AddError(nameof(revenue.LineItems), "Revenue must have at least one line item.");
 
-        foreach (var item in sale.LineItems)
+        foreach (var item in revenue.LineItems)
         {
             result.Merge(ValidateLineItem(item));
         }
 
-        if (sale.Total < 0)
-            result.AddError(nameof(sale.Total), "Total cannot be negative.");
+        if (revenue.Total < 0)
+            result.AddError(nameof(revenue.Total), "Total cannot be negative.");
 
         // Validate customer exists if specified
-        if (!string.IsNullOrWhiteSpace(sale.CustomerId) &&
-            companyData.GetCustomer(sale.CustomerId) == null)
-            result.AddError(nameof(sale.CustomerId), "Customer not found.");
+        if (!string.IsNullOrWhiteSpace(revenue.CustomerId) &&
+            companyData.GetCustomer(revenue.CustomerId) == null)
+            result.AddError(nameof(revenue.CustomerId), "Customer not found.");
 
         return result;
     }
 
     /// <summary>
-    /// Validates a purchase.
+    /// Validates an expense transaction.
     /// </summary>
-    public ValidationResult ValidatePurchase(Expense purchase)
+    public ValidationResult ValidateExpense(Expense expense)
     {
         var result = new ValidationResult();
 
-        if (string.IsNullOrWhiteSpace(purchase.Description))
-            result.AddError(nameof(purchase.Description), "Description is required.");
+        if (string.IsNullOrWhiteSpace(expense.Description))
+            result.AddError(nameof(expense.Description), "Description is required.");
 
-        if (purchase.Amount < 0)
-            result.AddError(nameof(purchase.Amount), "Amount cannot be negative.");
+        if (expense.Amount < 0)
+            result.AddError(nameof(expense.Amount), "Amount cannot be negative.");
 
         // Validate supplier exists if specified
-        if (!string.IsNullOrWhiteSpace(purchase.SupplierId) &&
-            companyData.GetSupplier(purchase.SupplierId) == null)
-            result.AddError(nameof(purchase.SupplierId), "Supplier not found.");
+        if (!string.IsNullOrWhiteSpace(expense.SupplierId) &&
+            companyData.GetSupplier(expense.SupplierId) == null)
+            result.AddError(nameof(expense.SupplierId), "Supplier not found.");
 
         return result;
     }

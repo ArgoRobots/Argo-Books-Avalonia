@@ -34,12 +34,12 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     public List<TransactionTableRow> GetSalesTableData(TableReportElement tableConfig)
     {
-        if (companyData?.Sales == null)
+        if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var query = companyData.Sales
+        var query = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate);
 
         // Apply data selection
@@ -66,32 +66,32 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             query = query.Take(tableConfig.MaxRows);
         }
 
-        return query.Select(CreateSalesRow).ToList();
+        return query.Select(CreateRevenueRow).ToList();
     }
 
-    private TransactionTableRow CreateSalesRow(Revenue sale)
+    private TransactionTableRow CreateRevenueRow(Revenue revenue)
     {
-        var customer = companyData?.GetCustomer(sale.CustomerId ?? "");
-        var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
-        var primaryItem = sale.LineItems.FirstOrDefault();
+        var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");
+        var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
+        var primaryItem = revenue.LineItems.FirstOrDefault();
         var product = primaryItem != null ? companyData?.GetProduct(primaryItem.ProductId ?? "") : null;
 
         return new TransactionTableRow
         {
-            Id = sale.Id,
-            TransactionId = sale.ReferenceNumber,
-            Date = sale.Date,
-            TransactionType = "Sale",
+            Id = revenue.Id,
+            TransactionId = revenue.ReferenceNumber,
+            Date = revenue.Date,
+            TransactionType = "Revenue",
             CompanyName = customer?.Name ?? "Unknown",
-            ProductName = product?.Description ?? (sale.LineItems.Count > 1 ? $"Multiple ({sale.LineItems.Count} items)" : sale.Description),
-            Quantity = (int)(sale.LineItems.Sum(i => i.Quantity)),
-            UnitPrice = primaryItem?.UnitPrice ?? sale.UnitPrice,
-            Total = sale.Total,
-            Status = sale.PaymentStatus,
+            ProductName = product?.Description ?? (revenue.LineItems.Count > 1 ? $"Multiple ({revenue.LineItems.Count} items)" : revenue.Description),
+            Quantity = (int)(revenue.LineItems.Sum(i => i.Quantity)),
+            UnitPrice = primaryItem?.UnitPrice ?? revenue.UnitPrice,
+            Total = revenue.Total,
+            Status = revenue.PaymentStatus,
             AccountantName = accountant?.Name ?? "Unknown",
-            ShippingCost = sale.ShippingCost,
+            ShippingCost = revenue.ShippingCost,
             Country = customer?.Address.Country ?? "",
-            Notes = sale.Notes
+            Notes = revenue.Notes
         };
     }
 
@@ -104,12 +104,12 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     public List<TransactionTableRow> GetPurchasesTableData(TableReportElement tableConfig)
     {
-        if (companyData?.Purchases == null)
+        if (companyData?.Expenses == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var query = companyData.Purchases
+        var query = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate);
 
         // Apply data selection
@@ -136,30 +136,30 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             query = query.Take(tableConfig.MaxRows);
         }
 
-        return query.Select(CreatePurchaseRow).ToList();
+        return query.Select(CreateExpenseRow).ToList();
     }
 
-    private TransactionTableRow CreatePurchaseRow(Expense purchase)
+    private TransactionTableRow CreateExpenseRow(Expense expense)
     {
-        var supplier = companyData?.GetSupplier(purchase.SupplierId ?? "");
-        var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
+        var supplier = companyData?.GetSupplier(expense.SupplierId ?? "");
+        var accountant = companyData?.GetAccountant(expense.AccountantId ?? "");
 
         return new TransactionTableRow
         {
-            Id = purchase.Id,
-            TransactionId = purchase.ReferenceNumber,
-            Date = purchase.Date,
-            TransactionType = "Purchase",
+            Id = expense.Id,
+            TransactionId = expense.ReferenceNumber,
+            Date = expense.Date,
+            TransactionType = "Expense",
             CompanyName = supplier?.Name ?? "Unknown",
-            ProductName = purchase.Description,
-            Quantity = (int)purchase.Quantity,
-            UnitPrice = purchase.UnitPrice,
-            Total = purchase.Total,
+            ProductName = expense.Description,
+            Quantity = (int)expense.Quantity,
+            UnitPrice = expense.UnitPrice,
+            Total = expense.Total,
             Status = "Completed",
             AccountantName = accountant?.Name ?? "Unknown",
-            ShippingCost = purchase.ShippingCost,
+            ShippingCost = expense.ShippingCost,
             Country = supplier?.Address.Country ?? "",
-            Notes = purchase.Notes
+            Notes = expense.Notes
         };
     }
 
@@ -341,10 +341,10 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         };
 
         // Calculate revenue statistics
-        if (companyData?.Sales != null &&
+        if (companyData?.Revenues != null &&
             filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            var sales = companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate).ToList();
+            var sales = companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate).ToList();
             stats.TotalRevenue = sales.Sum(s => s.Total);
             stats.RevenueTransactionCount = sales.Count;
             stats.AverageRevenueTransaction = sales.Count > 0 ? stats.TotalRevenue / sales.Count : 0;
@@ -353,10 +353,10 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         }
 
         // Calculate expense statistics
-        if (companyData?.Purchases != null &&
+        if (companyData?.Expenses != null &&
             filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
         {
-            var purchases = companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
+            var purchases = companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
             stats.TotalExpenses = purchases.Sum(p => p.Total);
             stats.ExpenseTransactionCount = purchases.Count;
             stats.AverageExpenseTransaction = purchases.Count > 0 ? stats.TotalExpenses / purchases.Count : 0;
@@ -392,11 +392,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         {
             var shippingCosts = new List<decimal>();
 
-            shippingCosts.AddRange(companyData.Sales
+            shippingCosts.AddRange(companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
                 .Select(s => s.ShippingCost));
 
-            shippingCosts.AddRange(companyData.Purchases
+            shippingCosts.AddRange(companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
                 .Select(p => p.ShippingCost));
 
@@ -412,18 +412,18 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     private decimal CalculateGrowthRate(DateTime startDate, DateTime endDate)
     {
-        if (companyData?.Sales == null)
+        if (companyData?.Revenues == null)
             return 0;
 
         var periodLength = (endDate - startDate).Days;
         var previousStartDate = startDate.AddDays(-periodLength);
         var previousEndDate = startDate.AddDays(-1);
 
-        var currentRevenue = companyData.Sales
+        var currentRevenue = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .Sum(s => s.Total);
 
-        var previousRevenue = companyData.Sales
+        var previousRevenue = companyData.Revenues
             .Where(s => s.Date >= previousStartDate && s.Date <= previousEndDate)
             .Sum(s => s.Total);
 
@@ -442,12 +442,12 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     public List<ProductAnalysisRow> GetTopProductsByRevenue(int count = 10)
     {
-        if (companyData?.Sales == null)
+        if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var productSales = companyData.Sales
+        var productSales = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .SelectMany(s => s.LineItems)
             .GroupBy(i => i.ProductId)
@@ -479,12 +479,12 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     public List<CustomerAnalysisRow> GetTopCustomersByRevenue(int count = 10)
     {
-        if (companyData?.Sales == null)
+        if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var customerSales = companyData.Sales
+        var customerSales = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.CustomerId)
             .Select(g =>
@@ -515,12 +515,12 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     public List<SupplierAnalysisRow> GetTopSuppliersByVolume(int count = 10)
     {
-        if (companyData?.Purchases == null)
+        if (companyData?.Expenses == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var supplierPurchases = companyData.Purchases
+        var supplierPurchases = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.SupplierId)
             .Select(g =>
@@ -556,26 +556,26 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        var accountantData = new Dictionary<string, (decimal Sales, decimal Purchases, int Count)>();
+        var accountantData = new Dictionary<string, (decimal Revenues, decimal Expenses, int Count)>();
 
-        foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
+        foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            var accountantId = sale.AccountantId ?? "";
+            var accountantId = revenue.AccountantId ?? "";
             if (!accountantData.ContainsKey(accountantId))
                 accountantData[accountantId] = (0, 0, 0);
 
             var current = accountantData[accountantId];
-            accountantData[accountantId] = (current.Sales + sale.Total, current.Purchases, current.Count + 1);
+            accountantData[accountantId] = (current.Revenues + revenue.Total, current.Expenses, current.Count + 1);
         }
 
-        foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
+        foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
-            var accountantId = purchase.AccountantId ?? "";
+            var accountantId = expense.AccountantId ?? "";
             if (!accountantData.ContainsKey(accountantId))
                 accountantData[accountantId] = (0, 0, 0);
 
             var current = accountantData[accountantId];
-            accountantData[accountantId] = (current.Sales, current.Purchases + purchase.Total, current.Count + 1);
+            accountantData[accountantId] = (current.Revenues, current.Expenses + expense.Total, current.Count + 1);
         }
 
         return accountantData
@@ -586,9 +586,9 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 {
                     AccountantId = kvp.Key,
                     AccountantName = accountant?.Name ?? "Unknown",
-                    TotalSales = kvp.Value.Sales,
-                    TotalPurchases = kvp.Value.Purchases,
-                    TotalVolume = kvp.Value.Sales + kvp.Value.Purchases,
+                    TotalSales = kvp.Value.Revenues,
+                    TotalPurchases = kvp.Value.Expenses,
+                    TotalVolume = kvp.Value.Revenues + kvp.Value.Expenses,
                     TransactionCount = kvp.Value.Count
                 };
             })

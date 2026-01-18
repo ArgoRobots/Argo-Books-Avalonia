@@ -362,7 +362,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterCategories()
     {
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
+        var targetType = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue;
         var targetCollection = IsExpensesTabSelected ? ExpenseCategories : RevenueCategories;
 
         targetCollection.Clear();
@@ -542,7 +542,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         {
             Id = newId,
             Name = ModalCategoryName.Trim(),
-            Type = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales,
+            Type = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue,
             ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
@@ -916,7 +916,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         else
         {
             // Check for duplicate names within the same type
-            var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
+            var targetType = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue;
             var existingWithSameName = _allCategories.Any(c =>
                 c.Type == targetType &&
                 c.Name.Equals(ModalCategoryName.Trim(), StringComparison.OrdinalIgnoreCase) &&

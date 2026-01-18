@@ -47,7 +47,7 @@ public class Product
     /// Product type (Sales/Revenue, Purchase/Expenses, Rental).
     /// </summary>
     [JsonPropertyName("type")]
-    public CategoryType Type { get; set; } = CategoryType.Sales;
+    public CategoryType Type { get; set; } = CategoryType.Revenue;
 
     /// <summary>
     /// Selling price per unit.

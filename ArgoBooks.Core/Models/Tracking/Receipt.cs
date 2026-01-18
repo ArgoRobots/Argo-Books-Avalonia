@@ -56,7 +56,7 @@ public class Receipt
     public DateTime Date { get; set; }
 
     /// <summary>
-    /// Supplier/merchant name.
+    /// Supplier name.
     /// </summary>
     [JsonPropertyName("supplier")]
     public string Supplier { get; set; } = string.Empty;

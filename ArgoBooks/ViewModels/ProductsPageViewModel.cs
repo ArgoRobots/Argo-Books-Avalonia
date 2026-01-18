@@ -557,12 +557,12 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Count expense vs revenue products based on category type
         var expenseCategoryIds = companyData.Categories
-            .Where(c => c.Type == CategoryType.Purchase)
+            .Where(c => c.Type == CategoryType.Expense)
             .Select(c => c.Id)
             .ToHashSet();
 
         var revenueCategoryIds = companyData.Categories
-            .Where(c => c.Type == CategoryType.Sales)
+            .Where(c => c.Type == CategoryType.Revenue)
             .Select(c => c.Id)
             .ToHashSet();
 
@@ -586,7 +586,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         AvailableCategories.Clear();
         AvailableCategories.Add(new CategoryOption { Id = null, Name = "All Categories" });
 
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
+        var targetType = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue;
         var categories = companyData.Categories
             .Where(c => c.Type == targetType)
             .OrderBy(c => c.Name);
@@ -643,7 +643,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterProducts()
     {
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
+        var targetType = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue;
         var targetCollection = IsExpensesTabSelected ? ExpenseProducts : RevenueProducts;
 
         targetCollection.Clear();

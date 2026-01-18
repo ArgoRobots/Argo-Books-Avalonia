@@ -19,7 +19,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     protected override string TransactionTypeName => "Revenue";
     protected override string CounterpartyName => "Customer";
-    protected override CategoryType CategoryTypeFilter => CategoryType.Sales;
+    protected override CategoryType CategoryTypeFilter => CategoryType.Revenue;
     protected override bool UseCostPrice => false;
 
     #endregion
@@ -171,7 +171,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     {
         if (item == null) return;
 
-        var sale = App.CompanyManager?.CompanyData?.Sales.FirstOrDefault(s => s.Id == item.Id);
+        var sale = App.CompanyManager?.CompanyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         LoadCounterpartyOptions();
@@ -213,7 +213,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var sale = companyData?.Sales.FirstOrDefault(s => s.Id == item.Id);
+        var sale = companyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         // Find and remove associated receipt
@@ -233,20 +233,20 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             $"Delete sale {sale.Id}",
             () =>
             {
-                companyData?.Sales.Add(deletedSale);
+                companyData?.Revenues.Add(deletedSale);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
             },
             () =>
             {
-                companyData?.Sales.Remove(deletedSale);
+                companyData?.Revenues.Remove(deletedSale);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Remove(capturedReceipt);
                 RaiseTransactionDeleted();
             });
 
-        companyData?.Sales.Remove(sale);
+        companyData?.Revenues.Remove(sale);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
@@ -307,7 +307,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             return;
         }
 
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == ItemStatusItem.Id);
+        var sale = companyData.Revenues.FirstOrDefault(s => s.Id == ItemStatusItem.Id);
         if (sale == null)
         {
             CloseItemStatusModal();
@@ -410,8 +410,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     protected override void SaveNewTransaction(CompanyData companyData)
     {
-        companyData.IdCounters.Sale++;
-        var saleId = $"SAL-{DateTime.Now:yyyy}-{companyData.IdCounters.Sale:D5}";
+        companyData.IdCounters.Revenue++;
+        var saleId = $"SAL-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
 
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
@@ -452,8 +452,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             $"Add sale {saleId}",
             () =>
             {
-                companyData.Sales.Remove(sale);
-                companyData.IdCounters.Sale--;
+                companyData.Revenues.Remove(sale);
+                companyData.IdCounters.Revenue--;
                 if (capturedReceipt != null)
                 {
                     companyData.Receipts.Remove(capturedReceipt);
@@ -463,8 +463,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             },
             () =>
             {
-                companyData.Sales.Add(sale);
-                companyData.IdCounters.Sale++;
+                companyData.Revenues.Add(sale);
+                companyData.IdCounters.Revenue++;
                 if (capturedReceipt != null)
                 {
                     companyData.Receipts.Add(capturedReceipt);
@@ -473,7 +473,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 RaiseTransactionSaved();
             });
 
-        companyData.Sales.Add(sale);
+        companyData.Revenues.Add(sale);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
@@ -481,7 +481,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     protected override void SaveEditedTransaction(CompanyData companyData)
     {
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == EditingTransactionId);
+        var sale = companyData.Revenues.FirstOrDefault(s => s.Id == EditingTransactionId);
         if (sale == null) return;
 
         // Store original values for undo

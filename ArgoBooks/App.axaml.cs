@@ -1924,8 +1924,8 @@ public class App : Application
             data.Departments,
             data.Categories,
             data.Locations,
-            data.Sales,
-            data.Purchases,
+            data.Revenues,
+            data.Expenses,
             data.Invoices,
             data.Payments,
             data.RecurringInvoices,
@@ -1976,14 +1976,14 @@ public class App : Application
                 data.IdCounters.Department = restoredCounters.Department;
                 data.IdCounters.Category = restoredCounters.Category;
                 data.IdCounters.Location = restoredCounters.Location;
-                data.IdCounters.Sale = restoredCounters.Sale;
-                data.IdCounters.Purchase = restoredCounters.Purchase;
+                data.IdCounters.Revenue = restoredCounters.Sale;
+                data.IdCounters.Expense = restoredCounters.Purchase;
                 data.IdCounters.Invoice = restoredCounters.Invoice;
                 data.IdCounters.Payment = restoredCounters.Payment;
                 data.IdCounters.RecurringInvoice = restoredCounters.RecurringInvoice;
                 data.IdCounters.InventoryItem = restoredCounters.InventoryItem;
                 data.IdCounters.StockAdjustment = restoredCounters.StockAdjustment;
-                data.IdCounters.PurchaseOrder = restoredCounters.PurchaseOrder;
+                data.IdCounters.ExpenseOrder = restoredCounters.PurchaseOrder;
                 data.IdCounters.RentalItem = restoredCounters.RentalItem;
                 data.IdCounters.Rental = restoredCounters.Rental;
             }
@@ -1997,8 +1997,8 @@ public class App : Application
         RestoreList(data.Departments, "Departments");
         RestoreList(data.Categories, "Categories");
         RestoreList(data.Locations, "Locations");
-        RestoreList(data.Sales, "Sales");
-        RestoreList(data.Purchases, "Purchases");
+        RestoreList(data.Revenues, "Sales");
+        RestoreList(data.Expenses, "Purchases");
         RestoreList(data.Invoices, "Invoices");
         RestoreList(data.Payments, "Payments");
         RestoreList(data.RecurringInvoices, "RecurringInvoices");

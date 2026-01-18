@@ -284,10 +284,10 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         Revenue.Clear();
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Sales == null)
+        if (companyData?.Revenues == null)
             return;
 
-        _allRevenue.AddRange(companyData.Sales);
+        _allRevenue.AddRange(companyData.Revenues);
         UpdateStatistics();
         FilterRevenue();
     }
@@ -599,7 +599,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
 
-        var sale = companyData?.Sales.FirstOrDefault(s => s.Id == saleId);
+        var sale = companyData?.Revenues.FirstOrDefault(s => s.Id == saleId);
         if (sale == null || string.IsNullOrEmpty(sale.ReceiptId)) return null;
 
         var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
