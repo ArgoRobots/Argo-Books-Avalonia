@@ -6,9 +6,9 @@ namespace ArgoBooks.Core.Models.AI;
 public class ReceiptAnalysisRequest
 {
     /// <summary>
-    /// Vendor name extracted from receipt.
+    /// Supplier name extracted from receipt.
     /// </summary>
-    public string VendorName { get; set; } = string.Empty;
+    public string SupplierName { get; set; } = string.Empty;
 
     /// <summary>
     /// Raw OCR text from receipt.

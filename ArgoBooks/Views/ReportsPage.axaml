@@ -1200,7 +1200,7 @@
                                               SelectedItem="{Binding SelectedSummaryElement.TransactionType}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <CheckBox Content="{loc:Loc 'Show Total Sales'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalSales}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Revenue'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalRevenue}" />
                                 <CheckBox Content="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
                                 <CheckBox Content="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
                                 <CheckBox Content="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />

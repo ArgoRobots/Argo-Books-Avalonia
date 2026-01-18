@@ -56,10 +56,10 @@ public class Receipt
     public DateTime Date { get; set; }
 
     /// <summary>
-    /// Vendor/merchant name.
+    /// Supplier name.
     /// </summary>
-    [JsonPropertyName("vendor")]
-    public string Vendor { get; set; } = string.Empty;
+    [JsonPropertyName("supplier")]
+    public string Supplier { get; set; } = string.Empty;
 
     /// <summary>
     /// Source of the receipt (Manual, AI Scanned).

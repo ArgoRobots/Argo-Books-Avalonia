@@ -60,7 +60,7 @@ public class CompanyData
     public List<Department> Departments { get; init; } = [];
 
     /// <summary>
-    /// All categories (sales, purchase, rental).
+    /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]
     public List<Category> Categories { get; init; } = [];
@@ -82,16 +82,16 @@ public class CompanyData
     #region Transactions
 
     /// <summary>
-    /// All sales/revenue transactions.
+    /// All revenue transactions.
     /// </summary>
-    [JsonPropertyName("sales")]
-    public List<Sale> Sales { get; init; } = [];
+    [JsonPropertyName("revenues")]
+    public List<Revenue> Revenues { get; init; } = [];
 
     /// <summary>
-    /// All purchases/expense transactions.
+    /// All expense transactions.
     /// </summary>
-    [JsonPropertyName("purchases")]
-    public List<Purchase> Purchases { get; init; } = [];
+    [JsonPropertyName("expenses")]
+    public List<Expense> Expenses { get; init; } = [];
 
     /// <summary>
     /// All invoices.
@@ -314,11 +314,11 @@ public class IdCounters
     [JsonPropertyName("location")]
     public int Location { get; set; }
 
-    [JsonPropertyName("sale")]
-    public int Sale { get; set; }
+    [JsonPropertyName("revenue")]
+    public int Revenue { get; set; }
 
-    [JsonPropertyName("purchase")]
-    public int Purchase { get; set; }
+    [JsonPropertyName("expense")]
+    public int Expense { get; set; }
 
     [JsonPropertyName("invoice")]
     public int Invoice { get; set; }

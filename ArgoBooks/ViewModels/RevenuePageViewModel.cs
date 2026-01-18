@@ -11,7 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for the Revenue page displaying sale/revenue transactions.
+/// ViewModel for the Revenue page displaying revenue transactions.
 /// </summary>
 public partial class RevenuePageViewModel : SortablePageViewModelBase
 {
@@ -156,7 +156,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     #region Revenue Collection
 
-    private readonly List<Sale> _allRevenue = [];
+    private readonly List<Revenue> _allRevenue = [];
 
     public ObservableCollection<RevenueDisplayItem> Revenue { get; } = [];
 
@@ -284,10 +284,10 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         Revenue.Clear();
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Sales == null)
+        if (companyData?.Revenues == null)
             return;
 
-        _allRevenue.AddRange(companyData.Sales);
+        _allRevenue.AddRange(companyData.Revenues);
         UpdateStatistics();
         FilterRevenue();
     }
@@ -338,7 +338,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             filtered = filtered
                 .Select(s => new
                 {
-                    Sale = s,
+                    Revenue = s,
                     IdScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, s.Id),
                     DescScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, s.Description),
                     CustomerScore = LevenshteinDistance.ComputeSearchScore(SearchQuery,
@@ -346,7 +346,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 })
                 .Where(x => x.IdScore >= 0 || x.DescScore >= 0 || x.CustomerScore >= 0)
                 .OrderByDescending(x => Math.Max(Math.Max(x.IdScore, x.DescScore), x.CustomerScore))
-                .Select(x => x.Sale)
+                .Select(x => x.Revenue)
                 .ToList();
         }
 
@@ -362,10 +362,15 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(s => s.CustomerId == FilterCustomerId).ToList();
         }
 
-        // Apply category filter
+        // Apply category filter (via line item product category)
         if (!string.IsNullOrEmpty(FilterCategoryId))
         {
-            filtered = filtered.Where(s => s.CategoryId == FilterCategoryId).ToList();
+            filtered = filtered.Where(s =>
+            {
+                var productId = s.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData?.GetProduct(productId) : null;
+                return product?.CategoryId == FilterCategoryId;
+            }).ToList();
         }
 
         // Apply amount filter
@@ -389,46 +394,49 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
 
         // Create display items
-        var displayItems = filtered.Select(sale =>
+        var displayItems = filtered.Select(revenue =>
         {
-            var customer = companyData?.GetCustomer(sale.CustomerId ?? "");
-            var category = companyData?.GetCategory(sale.CategoryId ?? "");
-            var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
-            var statusDisplay = GetStatusDisplay(sale, companyData);
+            var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");
+            var productId = revenue.LineItems.FirstOrDefault()?.ProductId;
+            var product = productId != null ? companyData?.GetProduct(productId) : null;
+            var categoryId = product?.CategoryId;
+            var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
+            var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
+            var statusDisplay = GetStatusDisplay(revenue, companyData);
 
-            var hasReceipt = !string.IsNullOrEmpty(sale.ReceiptId);
-            var receiptFilePath = sale.ReferenceNumber;
+            var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
+            var receiptFilePath = revenue.ReferenceNumber;
 
             return new RevenueDisplayItem
             {
-                Id = sale.Id,
+                Id = revenue.Id,
                 AccountantName = accountant?.Name ?? "System",
                 CustomerName = customer?.Name ?? "-",
-                ProductDescription = sale.Description,
+                ProductDescription = revenue.Description,
                 CategoryName = category?.Name ?? "-",
-                Date = sale.Date,
-                Total = sale.Total,
-                TotalUSD = sale.EffectiveTotalUSD,
-                AmountUSD = sale.Amount > 0 ? sale.EffectiveTotalUSD * (sale.Amount / sale.Total) : 0,
-                TaxAmountUSD = sale.TaxAmountUSD > 0 ? sale.TaxAmountUSD : sale.TaxAmount,
-                ShippingCostUSD = sale.EffectiveShippingCostUSD,
-                DiscountUSD = sale.DiscountUSD > 0 ? sale.DiscountUSD : sale.Discount,
-                UnitPriceUSD = sale.EffectiveUnitPriceUSD,
+                Date = revenue.Date,
+                Total = revenue.Total,
+                TotalUSD = revenue.EffectiveTotalUSD,
+                AmountUSD = revenue.Amount > 0 ? revenue.EffectiveTotalUSD * (revenue.Amount / revenue.Total) : 0,
+                TaxAmountUSD = revenue.TaxAmountUSD > 0 ? revenue.TaxAmountUSD : revenue.TaxAmount,
+                ShippingCostUSD = revenue.EffectiveShippingCostUSD,
+                DiscountUSD = revenue.DiscountUSD > 0 ? revenue.DiscountUSD : revenue.Discount,
+                UnitPriceUSD = revenue.EffectiveUnitPriceUSD,
                 StatusDisplay = statusDisplay,
-                Notes = sale.Notes,
-                CustomerId = sale.CustomerId,
-                CategoryId = sale.CategoryId,
-                Amount = sale.Amount,
-                TaxAmount = sale.TaxAmount,
-                TaxRate = sale.TaxRate,
-                ShippingCost = sale.ShippingCost,
-                Discount = sale.Discount,
-                Quantity = (int)sale.Quantity,
-                UnitPrice = sale.UnitPrice,
-                PaymentMethod = sale.PaymentMethod,
+                Notes = revenue.Notes,
+                CustomerId = revenue.CustomerId,
+                CategoryId = categoryId,
+                Amount = revenue.Amount,
+                TaxAmount = revenue.TaxAmount,
+                TaxRate = revenue.TaxRate,
+                ShippingCost = revenue.ShippingCost,
+                Discount = revenue.Discount,
+                Quantity = (int)revenue.Quantity,
+                UnitPrice = revenue.UnitPrice,
+                PaymentMethod = revenue.PaymentMethod,
                 HasReceipt = hasReceipt,
                 ReceiptFilePath = receiptFilePath,
-                IsHighlighted = sale.Id == HighlightTransactionId
+                IsHighlighted = revenue.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -475,17 +483,17 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
     }
 
-    private static string GetStatusDisplay(Sale sale, Core.Data.CompanyData? companyData)
+    private static string GetStatusDisplay(Revenue revenue, Core.Data.CompanyData? companyData)
     {
-        // Check for lost/damaged related to this sale
-        var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
+        // Check for lost/damaged related to this revenue
+        var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == revenue.Id);
         if (relatedLostDamaged != null)
         {
             return "Lost/Damaged";
         }
 
-        // Check for returns related to this sale
-        var relatedReturn = companyData?.Returns.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
+        // Check for returns related to this revenue
+        var relatedReturn = companyData?.Returns.FirstOrDefault(r => r.OriginalTransactionId == revenue.Id);
 
         if (relatedReturn is { Status: ReturnStatus.Completed })
         {
@@ -512,7 +520,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private void UpdatePaginationText(int totalCount)
     {
         PaginationText = PaginationTextHelper.FormatPaginationText(
-            totalCount, CurrentPage, PageSize, TotalPages, "sale");
+            totalCount, CurrentPage, PageSize, TotalPages, "revenue");
     }
 
     #endregion
@@ -586,15 +594,15 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         App.ReceiptViewerModal?.Show(receiptPath, item.Id);
     }
 
-    private static string? GetReceiptImagePath(string saleId)
+    private static string? GetReceiptImagePath(string revenueId)
     {
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
 
-        var sale = companyData?.Sales.FirstOrDefault(s => s.Id == saleId);
-        if (sale == null || string.IsNullOrEmpty(sale.ReceiptId)) return null;
+        var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == revenueId);
+        if (revenue == null || string.IsNullOrEmpty(revenue.ReceiptId)) return null;
 
-        var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
+        var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId);
         if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
 
         try

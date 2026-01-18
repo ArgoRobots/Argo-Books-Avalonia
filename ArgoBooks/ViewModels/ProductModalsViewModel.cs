@@ -496,7 +496,7 @@ public partial class ProductModalsViewModel : ObservableObject
             return;
 
         AvailableCategories.Clear();
-        var targetType = _isExpensesTab ? CategoryType.Purchase : CategoryType.Sales;
+        var targetType = _isExpensesTab ? CategoryType.Expense : CategoryType.Revenue;
         var categories = companyData.Categories
             .Where(c => c.Type == targetType)
             .OrderBy(c => c.Name);

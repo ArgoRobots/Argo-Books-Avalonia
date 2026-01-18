@@ -157,7 +157,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string? _receiptImagePath;
 
     [ObservableProperty]
-    private string _extractedVendor = string.Empty;
+    private string _extractedSupplier = string.Empty;
 
     [ObservableProperty]
     private DateTimeOffset? _extractedDate;
@@ -398,7 +398,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private async void PopulateScanResults(ReceiptScanResult result)
     {
-        ExtractedVendor = result.VendorName ?? string.Empty;
+        ExtractedSupplier = result.SupplierName ?? string.Empty;
         ExtractedDate = result.TransactionDate.HasValue
             ? new DateTimeOffset(result.TransactionDate.Value)
             : DateTimeOffset.Now;
@@ -542,8 +542,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedTax, out var taxAmount);
 
         // Create expense
-        companyData.IdCounters.Purchase++;
-        var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Purchase:D5}";
+        companyData.IdCounters.Expense++;
+        var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
 
         // Create line items
         var lineItems = LineItems.Select(li =>
@@ -559,13 +559,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             };
         }).Where(li => !string.IsNullOrWhiteSpace(li.Description) || li.ProductId != null).ToList();
 
-        var expense = new Purchase
+        var expense = new Expense
         {
             Id = expenseId,
             Date = ExtractedDate?.DateTime ?? DateTime.Now,
             SupplierId = SelectedSupplier?.Id,
-            CategoryId = SelectedCategory?.Id,
-            Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedVendor,
+            Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedSupplier,
             LineItems = lineItems,
             Quantity = lineItems.Sum(li => li.Quantity),
             UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
@@ -600,7 +599,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             FileData = fileData,
             Amount = total,
             Date = ExtractedDate?.DateTime ?? DateTime.Now,
-            Vendor = ExtractedVendor,
+            Supplier = ExtractedSupplier,
             Source = "AI Scanned",
             OcrData = CreateOcrData(),
             CreatedAt = DateTime.Now
@@ -615,22 +614,22 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             $"AI scan receipt {receiptId}",
             () =>
             {
-                companyData.Purchases.Remove(capturedExpense);
+                companyData.Expenses.Remove(capturedExpense);
                 companyData.Receipts.Remove(capturedReceipt);
-                companyData.IdCounters.Purchase--;
+                companyData.IdCounters.Expense--;
                 companyData.IdCounters.Receipt--;
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Purchases.Add(capturedExpense);
+                companyData.Expenses.Add(capturedExpense);
                 companyData.Receipts.Add(capturedReceipt);
-                companyData.IdCounters.Purchase++;
+                companyData.IdCounters.Expense++;
                 companyData.IdCounters.Receipt++;
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
-        companyData.Purchases.Add(expense);
+        companyData.Expenses.Add(expense);
         companyData.Receipts.Add(receipt);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
@@ -681,7 +680,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Create new product with default purchase category
         var newId = Guid.NewGuid().ToString();
         var defaultCategory = companyData.Categories?
-            .FirstOrDefault(c => c.Type == CategoryType.Purchase);
+            .FirstOrDefault(c => c.Type == CategoryType.Expense);
 
         var newProduct = new Product
         {
@@ -741,7 +740,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (!openAiService.IsConfigured)
         {
             // Fall back to basic matching
-            TryBasicSupplierMatch(result.VendorName);
+            TryBasicSupplierMatch(result.SupplierName);
             return;
         }
 
@@ -755,13 +754,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var companyData = App.CompanyManager?.CompanyData;
             if (companyData == null)
             {
-                TryBasicSupplierMatch(result.VendorName);
+                TryBasicSupplierMatch(result.SupplierName);
                 return;
             }
 
             var request = new ReceiptAnalysisRequest
             {
-                VendorName = result.VendorName ?? string.Empty,
+                SupplierName = result.SupplierName ?? string.Empty,
                 RawText = result.RawText,
                 LineItemDescriptions = result.LineItems.Select(li => li.Description).ToList(),
                 TotalAmount = result.TotalAmount ?? 0,
@@ -771,7 +770,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     Name = s.Name
                 }).ToList() ?? [],
                 ExistingCategories = companyData.Categories?
-                    .Where(c => c.Type == CategoryType.Purchase)
+                    .Where(c => c.Type == CategoryType.Expense)
                     .Select(c => new ExistingCategoryInfo
                     {
                         Id = c.Id,
@@ -789,13 +788,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             else
             {
                 // AI failed, fall back to basic matching
-                TryBasicSupplierMatch(result.VendorName);
+                TryBasicSupplierMatch(result.SupplierName);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"AI suggestion failed: {ex.Message}");
-            TryBasicSupplierMatch(result.VendorName);
+            TryBasicSupplierMatch(result.SupplierName);
         }
         finally
         {
@@ -860,14 +859,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// <summary>
     /// Falls back to basic string matching for supplier.
     /// </summary>
-    private void TryBasicSupplierMatch(string? vendorName)
+    private void TryBasicSupplierMatch(string? supplierName)
     {
-        if (string.IsNullOrEmpty(vendorName))
+        if (string.IsNullOrEmpty(supplierName))
             return;
 
         var matchedSupplier = SupplierOptions.FirstOrDefault(s =>
-            s.Name.Contains(vendorName, StringComparison.OrdinalIgnoreCase) ||
-            vendorName.Contains(s.Name, StringComparison.OrdinalIgnoreCase));
+            s.Name.Contains(supplierName, StringComparison.OrdinalIgnoreCase) ||
+            supplierName.Contains(s.Name, StringComparison.OrdinalIgnoreCase));
 
         if (matchedSupplier != null)
         {
@@ -970,7 +969,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var newCategory = new Category
         {
             Id = newId,
-            Type = CategoryType.Purchase,
+            Type = CategoryType.Expense,
             Name = SuggestedCategoryName,
             Description = AiSuggestion.NewCategory.Description,
             ItemType = AiSuggestion.NewCategory.ItemType
@@ -1018,7 +1017,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasScanResult = false;
         ScanErrorMessage = string.Empty;
         ReceiptImagePath = null;
-        ExtractedVendor = string.Empty;
+        ExtractedSupplier = string.Empty;
         ExtractedDate = DateTimeOffset.Now;
         ExtractedSubtotal = string.Empty;
         ExtractedTax = string.Empty;
@@ -1070,7 +1069,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (companyData?.Categories == null) return;
 
         foreach (var category in companyData.Categories
-            .Where(c => c.Type == CategoryType.Purchase)
+            .Where(c => c.Type == CategoryType.Expense)
             .OrderBy(c => c.Name))
         {
             CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });
@@ -1087,7 +1086,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             // Filter to purchase-type products (for expense receipts)
             var category = companyData.Categories?.FirstOrDefault(c => c.Id == product.CategoryId);
-            if (category?.Type == CategoryType.Sales)
+            if (category?.Type == CategoryType.Revenue)
                 continue;
 
             ProductOptions.Add(new ProductOption
@@ -1114,7 +1113,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         return new OcrData
         {
-            ExtractedVendor = ExtractedVendor,
+            ExtractedSupplier = ExtractedSupplier,
             ExtractedDate = ExtractedDate?.DateTime,
             ExtractedAmount = total,
             ExtractedSubtotal = subtotal,

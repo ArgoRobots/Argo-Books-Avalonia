@@ -114,8 +114,8 @@ public partial class ExportAsModalViewModel : ViewModelBase
         AddDataItem(new ExportDataItem { Name = "Locations", Key = "Locations", RecordCount = 0, IsSelected = true });
 
         // Transactions
-        AddDataItem(new ExportDataItem { Name = "Revenue (Sales)", Key = "Sales", RecordCount = 0, IsSelected = true });
-        AddDataItem(new ExportDataItem { Name = "Expenses (Purchases)", Key = "Purchases", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Revenue", Key = "Revenue", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Expenses", Key = "Expenses", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Invoices", Key = "Invoices", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Payments", Key = "Payments", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Recurring Invoices", Key = "Recurring Invoices", RecordCount = 0, IsSelected = true });
@@ -172,8 +172,8 @@ public partial class ExportAsModalViewModel : ViewModelBase
                 "Departments" => companyData.Departments.Count,
                 "Employees" => companyData.Employees.Count,
                 "Locations" => companyData.Locations.Count,
-                "Sales" => companyData.Sales.Count,
-                "Purchases" => companyData.Purchases.Count,
+                "Revenue" => companyData.Revenues.Count,
+                "Expenses" => companyData.Expenses.Count,
                 "Invoices" => companyData.Invoices.Count,
                 "Payments" => companyData.Payments.Count,
                 "Recurring Invoices" => companyData.RecurringInvoices.Count,

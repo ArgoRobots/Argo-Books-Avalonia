@@ -1,9 +1,9 @@
 namespace ArgoBooks.Core.Models.Transactions;
 
 /// <summary>
-/// Represents a sale/revenue transaction.
+/// Represents a revenue transaction.
 /// </summary>
-public class Sale : Transaction
+public class Revenue : Transaction
 {
     /// <summary>
     /// Customer ID.

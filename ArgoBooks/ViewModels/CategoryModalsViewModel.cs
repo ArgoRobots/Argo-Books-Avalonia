@@ -181,13 +181,12 @@ public partial class CategoryModalsViewModel : ObservableObject
         {
             Id = newId,
             Name = ModalCategoryName.Trim(),
-            Type = _isExpensesTab ? CategoryType.Purchase : CategoryType.Sales,
+            Type = _isExpensesTab ? CategoryType.Expense : CategoryType.Revenue,
             ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
             Color = "#4A90D9",
-            Icon = ModalSelectedIconOption?.Icon ?? "📦",
-            CreatedAt = DateTime.UtcNow
+            Icon = ModalSelectedIconOption?.Icon ?? "📦"
         };
 
         companyData.Categories.Add(newCategory);
@@ -444,7 +443,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        var targetType = _isExpensesTab ? CategoryType.Purchase : CategoryType.Sales;
+        var targetType = _isExpensesTab ? CategoryType.Expense : CategoryType.Revenue;
         var topLevelCategories = companyData.Categories
             .Where(c => c.Type == targetType && string.IsNullOrEmpty(c.ParentId))
             .OrderBy(c => c.Name);
@@ -490,7 +489,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         else
         {
             var companyData = App.CompanyManager?.CompanyData;
-            var targetType = _isExpensesTab ? CategoryType.Purchase : CategoryType.Sales;
+            var targetType = _isExpensesTab ? CategoryType.Expense : CategoryType.Revenue;
             var existingWithSameName = companyData?.Categories.Any(c =>
                 c.Type == targetType &&
                 c.Name.Equals(ModalCategoryName.Trim(), StringComparison.OrdinalIgnoreCase) &&

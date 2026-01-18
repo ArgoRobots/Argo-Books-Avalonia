@@ -112,8 +112,8 @@ public class InsightsService : IInsightsService
         // For forecasting, we need historical data - not data from the future date range
         // Use all historical data (up to today) for sufficiency checks
         var today = DateTime.Today;
-        var sales = companyData.Sales.Where(s => s.Date <= today).ToList();
-        var purchases = companyData.Purchases.Where(p => p.Date <= today).ToList();
+        var sales = companyData.Revenues.Where(s => s.Date <= today).ToList();
+        var purchases = companyData.Expenses.Where(p => p.Date <= today).ToList();
 
         var totalTransactions = sales.Count + purchases.Count;
 
@@ -151,19 +151,19 @@ public class InsightsService : IInsightsService
         // Map future date ranges to equivalent historical periods
         var (currentPeriod, previousPeriod) = GetHistoricalAnalysisPeriods(dateRange);
 
-        var currentSales = companyData.Sales
+        var currentSales = companyData.Revenues
             .Where(s => s.Date >= currentPeriod.StartDate && s.Date <= currentPeriod.EndDate)
             .ToList();
 
-        var previousSales = companyData.Sales
+        var previousSales = companyData.Revenues
             .Where(s => s.Date >= previousPeriod.StartDate && s.Date <= previousPeriod.EndDate)
             .ToList();
 
-        var currentPurchases = companyData.Purchases
+        var currentPurchases = companyData.Expenses
             .Where(p => p.Date >= currentPeriod.StartDate && p.Date <= currentPeriod.EndDate)
             .ToList();
 
-        var previousPurchases = companyData.Purchases
+        var previousPurchases = companyData.Expenses
             .Where(p => p.Date >= previousPeriod.StartDate && p.Date <= previousPeriod.EndDate)
             .ToList();
 
@@ -227,7 +227,7 @@ public class InsightsService : IInsightsService
         }
 
         // Seasonal pattern (if we have enough months)
-        var seasonalInsight = AnalyzeSeasonalPattern(companyData.Sales, dateRange);
+        var seasonalInsight = AnalyzeSeasonalPattern(companyData.Revenues, dateRange);
         if (seasonalInsight != null)
         {
             insights.Add(seasonalInsight);
@@ -253,7 +253,7 @@ public class InsightsService : IInsightsService
     private InsightItem? AnalyzeMLTrend(CompanyData companyData)
     {
         // Get monthly revenue data for ML trend analysis
-        var monthlyRevenue = GetMonthlyTotals(companyData.Sales, s => s.EffectiveTotalUSD);
+        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveTotalUSD);
 
         if (monthlyRevenue.Count < 3) return null;
 
@@ -293,7 +293,7 @@ public class InsightsService : IInsightsService
         };
     }
 
-    private InsightItem? AnalyzeDayOfWeekPattern(List<Sale> sales)
+    private InsightItem? AnalyzeDayOfWeekPattern(List<Revenue> sales)
     {
         if (sales.Count < 14) return null;
 
@@ -326,7 +326,7 @@ public class InsightsService : IInsightsService
         return null;
     }
 
-    private InsightItem? AnalyzeSeasonalPattern(List<Sale> allSales, AnalysisDateRange dateRange)
+    private InsightItem? AnalyzeSeasonalPattern(List<Revenue> allSales, AnalysisDateRange dateRange)
     {
         // Get monthly revenue data for ML analysis
         var monthlyData = allSales
@@ -479,7 +479,7 @@ public class InsightsService : IInsightsService
     {
         // Get weekly expense data for the past 12 weeks
         var twelveWeeksAgo = dateRange.EndDate.AddDays(-84);
-        var weeklyExpenses = companyData.Purchases
+        var weeklyExpenses = companyData.Expenses
             .Where(p => p.Date >= twelveWeeksAgo && p.Date <= dateRange.EndDate)
             .GroupBy(p => GetWeekNumber(p.Date))
             .Select(g => g.Sum(p => p.EffectiveTotalUSD))
@@ -487,7 +487,7 @@ public class InsightsService : IInsightsService
 
         if (weeklyExpenses.Count < 4) return null;
 
-        var currentWeekExpenses = companyData.Purchases
+        var currentWeekExpenses = companyData.Expenses
             .Where(p => p.Date >= dateRange.EndDate.AddDays(-7) && p.Date <= dateRange.EndDate)
             .Sum(p => p.EffectiveTotalUSD);
 
@@ -522,7 +522,7 @@ public class InsightsService : IInsightsService
             .Where(r => r.ReturnDate >= dateRange.StartDate && r.ReturnDate <= dateRange.EndDate)
             .ToList();
 
-        var currentSales = companyData.Sales
+        var currentSales = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .ToList();
 
@@ -538,7 +538,7 @@ public class InsightsService : IInsightsService
             .Where(r => r.ReturnDate >= sixMonthsAgo && r.ReturnDate < dateRange.StartDate)
             .Count();
 
-        var historicalSales = companyData.Sales
+        var historicalSales = companyData.Revenues
             .Where(s => s.Date >= sixMonthsAgo && s.Date < dateRange.StartDate)
             .Count();
 
@@ -588,7 +588,7 @@ public class InsightsService : IInsightsService
 
         var historicalStart = dateRange.StartDate.AddDays(-periodDays * 3); // 3x the period for baseline
 
-        var historicalData = companyData.Sales
+        var historicalData = companyData.Revenues
             .Where(s => s.Date >= historicalStart && s.Date < dateRange.StartDate)
             .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
             .Select(g => g.Sum(s => s.EffectiveTotalUSD))
@@ -599,7 +599,7 @@ public class InsightsService : IInsightsService
         var stats = CalculateStatistics(historicalData.Select(x => (double)x).ToList());
 
         // Check current period data points
-        var currentData = companyData.Sales
+        var currentData = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
             .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
@@ -634,7 +634,7 @@ public class InsightsService : IInsightsService
 
     private InsightItem? DetectLargeTransactionAnomaly(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        var currentSales = companyData.Sales
+        var currentSales = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .ToList();
 
@@ -642,25 +642,25 @@ public class InsightsService : IInsightsService
 
         var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveTotalUSD).ToList());
 
-        var largestSale = currentSales.OrderByDescending(s => s.EffectiveTotalUSD).First();
+        var largestRevenue = currentSales.OrderByDescending(s => s.EffectiveTotalUSD).First();
 
         if (stats.StandardDeviation > 0)
         {
-            var zScore = ((double)largestSale.EffectiveTotalUSD - stats.Mean) / stats.StandardDeviation;
+            var zScore = ((double)largestRevenue.EffectiveTotalUSD - stats.Mean) / stats.StandardDeviation;
 
             if (zScore > 3.0) // Very unusual
             {
-                var customer = companyData.GetCustomer(largestSale.CustomerId ?? "");
+                var customer = companyData.GetCustomer(largestRevenue.CustomerId ?? "");
                 var customerName = customer?.Name ?? "a customer";
 
                 return new InsightItem
                 {
                     Title = "Unusually Large Transaction",
-                    Description = $"A sale of {FormatCurrency(largestSale.EffectiveTotalUSD)} to {customerName} on {largestSale.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
+                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveTotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
                     Recommendation = "Verify this transaction is correct and consider nurturing this high-value customer relationship.",
                     Severity = InsightSeverity.Info,
                     Category = InsightCategory.Anomaly,
-                    MetricValue = largestSale.EffectiveTotalUSD
+                    MetricValue = largestRevenue.EffectiveTotalUSD
                 };
             }
         }
@@ -681,8 +681,8 @@ public class InsightsService : IInsightsService
         forecast.PeriodMonths = periodMonths;
 
         // Get monthly data for forecasting
-        var monthlyRevenue = GetMonthlyTotals(companyData.Sales, s => s.EffectiveTotalUSD);
-        var monthlyExpenses = GetMonthlyTotals(companyData.Purchases, p => p.EffectiveTotalUSD);
+        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveTotalUSD);
+        var monthlyExpenses = GetMonthlyTotals(companyData.Expenses, p => p.EffectiveTotalUSD);
 
         forecast.DataMonthsUsed = Math.Max(monthlyRevenue.Count, monthlyExpenses.Count);
 
@@ -940,7 +940,7 @@ public class InsightsService : IInsightsService
 
         // Calculate average daily sales per product over the last 30 days
         var thirtyDaysAgo = dateRange.EndDate.AddDays(-30);
-        var recentSales = companyData.Sales
+        var recentSales = companyData.Revenues
             .Where(s => s.Date >= thirtyDaysAgo && s.Date <= dateRange.EndDate)
             .SelectMany(s => s.LineItems)
             .GroupBy(li => li.ProductId)
@@ -1025,7 +1025,7 @@ public class InsightsService : IInsightsService
 
     private InsightItem? AnalyzeTopProducts(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        var productSales = companyData.Sales
+        var productSales = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .SelectMany(s => s.LineItems)
             .GroupBy(li => li.ProductId)
@@ -1067,7 +1067,7 @@ public class InsightsService : IInsightsService
     {
         var inactivityThreshold = 60; // days
 
-        var lastPurchaseByCustomer = companyData.Sales
+        var lastPurchaseByCustomer = companyData.Revenues
             .GroupBy(s => s.CustomerId)
             .Select(g => new { CustomerId = g.Key, LastPurchase = g.Max(s => s.Date) })
             .ToList();
@@ -1080,7 +1080,7 @@ public class InsightsService : IInsightsService
         var previouslyActiveCount = 0;
         foreach (var inactive in inactiveCustomers)
         {
-            var purchaseCount = companyData.Sales.Count(s => s.CustomerId == inactive.CustomerId);
+            var purchaseCount = companyData.Revenues.Count(s => s.CustomerId == inactive.CustomerId);
             if (purchaseCount >= 2)
             {
                 previouslyActiveCount++;
@@ -1126,7 +1126,7 @@ public class InsightsService : IInsightsService
     private InsightItem? AnalyzeSupplierOptimization(CompanyData companyData, AnalysisDateRange dateRange)
     {
         // Analyze purchase patterns by supplier
-        var supplierPurchases = companyData.Purchases
+        var supplierPurchases = companyData.Expenses
             .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)
             .GroupBy(p => p.SupplierId)
             .Select(g => new
@@ -1168,7 +1168,7 @@ public class InsightsService : IInsightsService
 
     private InsightItem? AnalyzeCustomerConcentration(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        var customerRevenue = companyData.Sales
+        var customerRevenue = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .GroupBy(s => s.CustomerId)
             .Select(g => new { CustomerId = g.Key, Revenue = g.Sum(s => s.EffectiveTotalUSD) })
@@ -1204,11 +1204,11 @@ public class InsightsService : IInsightsService
 
     private InsightItem? AnalyzeProfitMargins(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        var totalRevenue = companyData.Sales
+        var totalRevenue = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .Sum(s => s.EffectiveTotalUSD);
 
-        var totalExpenses = companyData.Purchases
+        var totalExpenses = companyData.Expenses
             .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)
             .Sum(p => p.EffectiveTotalUSD);
 
@@ -1262,7 +1262,7 @@ public class InsightsService : IInsightsService
 
     private List<int> GetMonthlyNewCustomers(CompanyData companyData)
     {
-        var firstPurchaseByCustomer = companyData.Sales
+        var firstPurchaseByCustomer = companyData.Revenues
             .GroupBy(s => s.CustomerId)
             .Select(g => new { CustomerId = g.Key, FirstPurchase = g.Min(s => s.Date) })
             .ToList();

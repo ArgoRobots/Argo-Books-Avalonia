@@ -261,12 +261,12 @@ public class SpreadsheetExportService
         {
             "Customers" => GetCustomersData(data),
             "Invoices" => GetInvoicesData(data, startDate, endDate),
-            "Expenses" or "Purchases" => GetPurchasesData(data, startDate, endDate),
+            "Expenses" or "Purchases" => GetExpensesData(data, startDate, endDate),
             "Products" => GetProductsData(data),
             "Inventory" => GetInventoryData(data),
             "Payments" => GetPaymentsData(data, startDate, endDate),
             "Suppliers" => GetSuppliersData(data),
-            "Revenue" or "Sales" => GetSalesData(data, startDate, endDate),
+            "Revenue" or "Sales" => GetRevenueData(data, startDate, endDate),
             "Rental Inventory" => GetRentalInventoryData(data),
             "Rental Records" => GetRentalRecordsData(data, startDate, endDate),
             "Categories" => GetCategoriesData(data),
@@ -322,10 +322,10 @@ public class SpreadsheetExportService
         return (headers, rows);
     }
 
-    private (string[] Headers, List<object[]> Rows) GetPurchasesData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    private (string[] Headers, List<object[]> Rows) GetExpensesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
         var headers = new[] { "ID", "Date", "Supplier ID", "Product", "Amount", "Tax", "Total", "Reference", "Payment Method" };
-        var filtered = data.Purchases.Where(p => IsInDateRange(p.Date, startDate, endDate));
+        var filtered = data.Expenses.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
@@ -350,8 +350,8 @@ public class SpreadsheetExportService
             p.Name,
             p.Type switch
             {
-                CategoryType.Sales => "Revenue",
-                CategoryType.Purchase => "Expenses",
+                CategoryType.Revenue => "Revenue",
+                CategoryType.Expense => "Expenses",
                 _ => p.Type.ToString()
             },
             p.ItemType,
@@ -419,10 +419,10 @@ public class SpreadsheetExportService
         return (headers, rows);
     }
 
-    private (string[] Headers, List<object[]> Rows) GetSalesData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    private (string[] Headers, List<object[]> Rows) GetRevenueData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
         var headers = new[] { "ID", "Date", "Customer ID", "Product", "Amount", "Tax", "Total", "Reference", "Payment Status" };
-        var filtered = data.Sales.Where(s => IsInDateRange(s.Date, startDate, endDate));
+        var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {
             s.Id,
@@ -485,8 +485,8 @@ public class SpreadsheetExportService
             c.Name,
             c.Type switch
             {
-                CategoryType.Sales => "Revenue",
-                CategoryType.Purchase => "Expenses",
+                CategoryType.Revenue => "Revenue",
+                CategoryType.Expense => "Expenses",
                 _ => c.Type.ToString()
             },
             c.ParentId ?? "",

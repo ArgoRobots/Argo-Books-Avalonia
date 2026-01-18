@@ -20,7 +20,7 @@ public class ProductTests
         Assert.Equal(string.Empty, product.Name);
         Assert.Equal(string.Empty, product.Sku);
         Assert.Equal("Product", product.ItemType);
-        Assert.Equal(CategoryType.Sales, product.Type);
+        Assert.Equal(CategoryType.Revenue, product.Type);
         Assert.Equal(0m, product.UnitPrice);
         Assert.Equal(0m, product.CostPrice);
         Assert.Equal(0m, product.TaxRate);

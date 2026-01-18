@@ -11,7 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for the Expenses page displaying purchase/expense transactions.
+/// ViewModel for the Expenses page displaying expense transactions.
 /// </summary>
 public partial class ExpensesPageViewModel : SortablePageViewModelBase
 {
@@ -166,7 +166,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     #region Expenses Collection
 
-    private readonly List<Purchase> _allExpenses = [];
+    private readonly List<Expense> _allExpenses = [];
 
     public ObservableCollection<ExpenseDisplayItem> Expenses { get; } = [];
 
@@ -299,10 +299,10 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         Expenses.Clear();
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Purchases == null)
+        if (companyData?.Expenses == null)
             return;
 
-        _allExpenses.AddRange(companyData.Purchases);
+        _allExpenses.AddRange(companyData.Expenses);
         UpdateStatistics();
         FilterExpenses();
     }
@@ -349,7 +349,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             filtered = filtered
                 .Select(p => new
                 {
-                    Purchase = p,
+                    Expense = p,
                     IdScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, p.Id),
                     DescScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, p.Description),
                     SupplierScore = LevenshteinDistance.ComputeSearchScore(SearchQuery,
@@ -357,7 +357,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 })
                 .Where(x => x.IdScore >= 0 || x.DescScore >= 0 || x.SupplierScore >= 0)
                 .OrderByDescending(x => Math.Max(Math.Max(x.IdScore, x.DescScore), x.SupplierScore))
-                .Select(x => x.Purchase)
+                .Select(x => x.Expense)
                 .ToList();
         }
 
@@ -373,10 +373,15 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.SupplierId == FilterSupplierId).ToList();
         }
 
-        // Apply category filter
+        // Apply category filter (via line item product category)
         if (!string.IsNullOrEmpty(FilterCategoryId))
         {
-            filtered = filtered.Where(p => p.CategoryId == FilterCategoryId).ToList();
+            filtered = filtered.Where(p =>
+            {
+                var productId = p.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData?.GetProduct(productId) : null;
+                return product?.CategoryId == FilterCategoryId;
+            }).ToList();
         }
 
         // Apply amount filter
@@ -414,7 +419,10 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var displayItems = filtered.Select(purchase =>
         {
             var supplier = companyData?.GetSupplier(purchase.SupplierId ?? "");
-            var category = companyData?.GetCategory(purchase.CategoryId ?? "");
+            var productId = purchase.LineItems.FirstOrDefault()?.ProductId;
+            var product = productId != null ? companyData?.GetProduct(productId) : null;
+            var categoryId = product?.CategoryId;
+            var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(purchase, companyData);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
@@ -440,7 +448,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 StatusDisplay = statusDisplay,
                 Notes = purchase.Notes,
                 SupplierId = purchase.SupplierId,
-                CategoryId = purchase.CategoryId,
+                CategoryId = categoryId,
                 Amount = purchase.Amount,
                 TaxAmount = purchase.TaxAmount,
                 TaxRate = purchase.TaxRate,
@@ -496,7 +504,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         }
     }
 
-    private static string GetStatusDisplay(Purchase purchase, Core.Data.CompanyData? companyData)
+    private static string GetStatusDisplay(Expense purchase, Core.Data.CompanyData? companyData)
     {
         // Check for lost/damaged related to this purchase
         var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
@@ -609,7 +617,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     {
         var companyData = App.CompanyManager?.CompanyData;
 
-        var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == expenseId);
+        var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == expenseId);
         if (expense == null || string.IsNullOrEmpty(expense.ReceiptId)) return null;
 
         var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);

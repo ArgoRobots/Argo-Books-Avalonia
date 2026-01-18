@@ -112,7 +112,7 @@ public class ChartExcelExportService
     }
 
     /// <summary>
-    /// Exports multi-series chart data to an Excel file with an embedded chart (e.g., Sales vs Expenses).
+    /// Exports multi-series chart data to an Excel file with an embedded chart (e.g., Revenue vs Expenses).
     /// </summary>
     /// <param name="filePath">The path to save the Excel file.</param>
     /// <param name="chartTitle">The title of the chart.</param>

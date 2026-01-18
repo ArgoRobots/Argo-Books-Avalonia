@@ -331,9 +331,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var category = companyData.Categories?.FirstOrDefault(c => c.Id == product.CategoryId);
 
             // Skip products that don't match our category type
-            if (CategoryTypeFilter == CategoryType.Purchase && category?.Type == CategoryType.Sales)
+            if (CategoryTypeFilter == CategoryType.Expense && category?.Type == CategoryType.Revenue)
                 continue;
-            if (CategoryTypeFilter == CategoryType.Sales && category?.Type == CategoryType.Purchase)
+            if (CategoryTypeFilter == CategoryType.Revenue && category?.Type == CategoryType.Expense)
                 continue;
 
             ProductOptions.Add(new ProductOption
@@ -401,7 +401,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected void PopulateFormFromTransaction(Transaction transaction)
     {
         ModalDate = new DateTimeOffset(transaction.Date);
-        SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == transaction.CategoryId);
+        var productId = transaction.LineItems.FirstOrDefault()?.ProductId;
+        var product = productId != null ? App.CompanyManager?.CompanyData?.GetProduct(productId) : null;
+        SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == product?.CategoryId);
         ModalTaxRate = transaction.TaxAmount;
         ModalShipping = transaction.ShippingCost;
         ModalDiscount = transaction.Discount;
@@ -681,7 +683,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected void NavigateToCreateCategory()
     {
         IsAddEditModalOpen = false;
-        var tabIndex = CategoryTypeFilter == CategoryType.Purchase ? 0 : 1;
+        var tabIndex = CategoryTypeFilter == CategoryType.Expense ? 0 : 1;
         App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", tabIndex } });
     }
 
@@ -689,7 +691,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected void NavigateToCreateProduct()
     {
         IsAddEditModalOpen = false;
-        var tabIndex = CategoryTypeFilter == CategoryType.Purchase ? 0 : 1;
+        var tabIndex = CategoryTypeFilter == CategoryType.Expense ? 0 : 1;
         App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", tabIndex } });
     }
 

@@ -50,7 +50,7 @@ public partial class ElementToolbox : UserControl
         {
             Width = 300,
             Height = 200,
-            ShowTotalSales = true,
+            ShowTotalRevenue = true,
             ShowTotalTransactions = true,
             ShowAverageValue = true,
             ShowGrowthRate = true

@@ -86,14 +86,14 @@ public class OpenAiService : IOpenAiService
         return $@"You are an AI assistant helping categorize business expenses. Analyze the receipt data and suggest the best matching supplier and category.
 
 ## Receipt Data
-- Vendor Name: ""{request.VendorName}""
+- Supplier Name: ""{request.SupplierName}""
 - Line Items: {lineItemsText}
 - Total Amount: {request.TotalAmount:F2}
 
 ## Existing Suppliers
 {suppliersJson}
 
-## Existing Categories (Purchase/Expense type)
+## Existing Categories (Expense type)
 {categoriesJson}
 
 ## Instructions
@@ -104,7 +104,7 @@ public class OpenAiService : IOpenAiService
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a clean supplier name
 
 2. CATEGORY: Find the best matching category based on:
-   - What the vendor typically sells
+   - What the supplier typically sells
    - Line item descriptions if available
    - Common business expense categories
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest an appropriate category
@@ -226,11 +226,11 @@ Respond with JSON only.";
 
                     if (supplier.TryGetProperty("newName", out var newName) && newName.ValueKind != JsonValueKind.Null)
                     {
-                        result.NewSupplier.Name = newName.GetString() ?? request.VendorName;
+                        result.NewSupplier.Name = newName.GetString() ?? request.SupplierName;
                     }
                     else
                     {
-                        result.NewSupplier.Name = request.VendorName;
+                        result.NewSupplier.Name = request.SupplierName;
                     }
 
                     if (supplier.TryGetProperty("newNotes", out var newNotes) && newNotes.ValueKind != JsonValueKind.Null)

@@ -478,24 +478,24 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
-    #region Sales vs Expenses Chart
+    #region Revenue vs Expenses Chart
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _salesVsExpensesSeries = [];
+    private ObservableCollection<ISeries> _revenueVsExpensesSeries = [];
 
     [ObservableProperty]
-    private Axis[] _salesVsExpensesXAxes = [];
+    private Axis[] _revenueVsExpensesXAxes = [];
 
     [ObservableProperty]
-    private Axis[] _salesVsExpensesYAxes = [];
+    private Axis[] _revenueVsExpensesYAxes = [];
 
     [ObservableProperty]
-    private bool _hasSalesVsExpensesData;
+    private bool _hasRevenueVsExpensesData;
 
     /// <summary>
     /// Gets the visual title element for the expenses vs revenue chart.
     /// </summary>
-    public LabelVisual SalesVsExpensesChartTitle => ChartLoaderService.CreateChartTitle(ChartDataType.SalesVsExpenses.GetDisplayName());
+    public LabelVisual RevenueVsExpensesChartTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueVsExpenses.GetDisplayName());
 
     #endregion
 
@@ -525,7 +525,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             LoadDashboardData();
             // Notify chart titles that have static text (no backing field changes during load)
-            OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
+            OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
         };
 
         // Subscribe to date format changes to refresh charts and transaction dates
@@ -638,7 +638,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         LoadDashboardData();
 
         // Notify computed chart title properties to refresh
-        OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
+        OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
 
         // Refresh welcome subtitle for translation
         OnPropertyChanged(nameof(WelcomeSubtitle));
@@ -684,7 +684,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
         LoadProfitsChart(data);
-        LoadSalesVsExpensesChart(data);
+        LoadRevenueVsExpensesChart(data);
     }
 
     /// <summary>
@@ -717,12 +717,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
         // Calculate current period revenue (using USD for consistent calculations)
-        var currentRevenueUSD = data.Sales
+        var currentRevenueUSD = data.Revenues
             .Where(s => s.Date >= StartDate && s.Date <= EndDate)
             .Sum(s => s.EffectiveTotalUSD);
 
         // Calculate previous period revenue for comparison
-        var prevRevenueUSD = data.Sales
+        var prevRevenueUSD = data.Revenues
             .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
             .Sum(s => s.EffectiveTotalUSD);
 
@@ -731,12 +731,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
         // Calculate current period expenses (using USD for consistent calculations)
-        var currentExpensesUSD = data.Purchases
+        var currentExpensesUSD = data.Expenses
             .Where(p => p.Date >= StartDate && p.Date <= EndDate)
             .Sum(p => p.EffectiveTotalUSD);
 
         // Calculate previous period expenses for comparison
-        var prevExpensesUSD = data.Purchases
+        var prevExpensesUSD = data.Expenses
             .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
             .Sum(p => p.EffectiveTotalUSD);
 
@@ -774,14 +774,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var recentItems = new List<RecentTransactionItem>();
 
         // Get recent sales (no status badge needed for completed transactions)
-        var recentSales = data.Sales
+        var recentSales = data.Revenues
             .OrderByDescending(s => s.Date)
             .Take(10)
             .Select(s => new RecentTransactionItem
             {
                 Id = s.Id,
-                Type = "Sale",
-                Description = string.IsNullOrEmpty(s.Description) ? "Sale Transaction" : s.Description,
+                Type = "Revenue",
+                Description = string.IsNullOrEmpty(s.Description) ? "Revenue Transaction" : s.Description,
                 Amount = FormatCurrencyFromUSD(s.EffectiveTotalUSD, s.Date),
                 AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveTotalUSD, s.Date),
                 Date = s.Date,
@@ -795,7 +795,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         recentItems.AddRange(recentSales);
 
         // Get recent purchases/expenses (no status badge needed for completed transactions)
-        var recentPurchases = data.Purchases
+        var recentPurchases = data.Expenses
             .OrderByDescending(p => p.Date)
             .Take(10)
             .Select(p => new RecentTransactionItem
@@ -877,16 +877,16 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
 
-    private void LoadSalesVsExpensesChart(CompanyData data)
+    private void LoadRevenueVsExpensesChart(CompanyData data)
     {
         // Update theme colors based on current theme
         ChartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        var (series, dates) = ChartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
-        SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
-        SalesVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        HasSalesVsExpensesData = series.Count > 0 && dates.Length > 0;
+        var (series, dates) = ChartLoaderService.LoadRevenueVsExpensesChart(data, StartDate, EndDate);
+        RevenueVsExpensesSeries = series;
+        RevenueVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
+        RevenueVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        HasRevenueVsExpensesData = series.Count > 0 && dates.Length > 0;
     }
 
     #endregion
@@ -1065,7 +1065,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     protected override void OnResetChartZoom()
     {
         ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
-        ChartLoaderService.ResetZoom(SalesVsExpensesXAxes, SalesVsExpensesYAxes);
+        ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
     }
 
     /// <summary>

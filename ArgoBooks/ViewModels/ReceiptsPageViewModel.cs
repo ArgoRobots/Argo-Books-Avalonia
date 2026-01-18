@@ -219,8 +219,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (receipt == null) return;
 
         var title = $"Receipt #{receipt.Id}";
-        if (!string.IsNullOrEmpty(receipt.Vendor))
-            title += $"\n{receipt.Vendor}";
+        if (!string.IsNullOrEmpty(receipt.Supplier))
+            title += $"\n{receipt.Supplier}";
 
         App.ReceiptViewerModal?.Show(receipt.ImagePath ?? string.Empty, receipt.Id, title);
     }
@@ -244,7 +244,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
-    private bool _showVendorColumn = true;
+    private bool _showSupplierColumn = true;
 
     [ObservableProperty]
     private bool _showDateColumn = true;
@@ -260,9 +260,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         ColumnWidths.SetColumnVisibility("Id", value);
     }
 
-    partial void OnShowVendorColumnChanged(bool value)
+    partial void OnShowSupplierColumnChanged(bool value)
     {
-        ColumnWidths.SetColumnVisibility("Vendor", value);
+        ColumnWidths.SetColumnVisibility("Supplier", value);
     }
 
     partial void OnShowDateColumnChanged(bool value)
@@ -469,7 +469,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             var query = SearchQuery.ToLowerInvariant();
             filtered = filtered.Where(r =>
                 r.Id.ToLowerInvariant().Contains(query) ||
-                r.Vendor.ToLowerInvariant().Contains(query) ||
+                r.Supplier.ToLowerInvariant().Contains(query) ||
                 r.FileName.ToLowerInvariant().Contains(query) ||
                 r.TransactionId.ToLowerInvariant().Contains(query)
             ).ToList();
@@ -537,7 +537,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             FileSize = receipt.FileSize,
             Amount = receipt.Amount,
             Date = receipt.Date,
-            Vendor = receipt.Vendor,
+            Supplier = receipt.Supplier,
             Source = receipt.Source,
             IsAiScanned = receipt.IsAiScanned,
             CreatedAt = receipt.CreatedAt,
@@ -840,7 +840,7 @@ public partial class ReceiptDisplayItem : ObservableObject
     private DateTime _date;
 
     [ObservableProperty]
-    private string _vendor = string.Empty;
+    private string _supplier = string.Empty;
 
     [ObservableProperty]
     private string _source = string.Empty;

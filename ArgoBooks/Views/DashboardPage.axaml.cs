@@ -196,7 +196,7 @@ public partial class DashboardPage : UserControl
             // Export based on chart type
             if (e.IsMultiSeries)
             {
-                // Multi-series chart (e.g., Sales vs Expenses)
+                // Multi-series chart (e.g., Revenue vs Expenses)
                 var seriesData = new Dictionary<string, double[]>
                 {
                     { e.SeriesName, e.Values }

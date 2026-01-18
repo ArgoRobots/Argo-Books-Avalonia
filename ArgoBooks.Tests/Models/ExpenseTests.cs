@@ -6,16 +6,16 @@ using Xunit;
 namespace ArgoBooks.Tests.Models;
 
 /// <summary>
-/// Tests for the Purchase model.
+/// Tests for the Expense model.
 /// </summary>
-public class PurchaseTests
+public class ExpenseTests
 {
     #region Default Value Tests
 
     [Fact]
-    public void Purchase_DefaultValues_AreCorrect()
+    public void Expense_DefaultValues_AreCorrect()
     {
-        var purchase = new Purchase();
+        var purchase = new Expense();
 
         Assert.Equal(string.Empty, purchase.Id);
         Assert.Null(purchase.SupplierId);
@@ -34,9 +34,9 @@ public class PurchaseTests
     #region Supplier Association Tests
 
     [Fact]
-    public void Purchase_SupplierAssociation_WorksCorrectly()
+    public void Expense_SupplierAssociation_WorksCorrectly()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-2024-00001",
             SupplierId = "SUP-001"
@@ -47,9 +47,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_WithoutSupplier_IsValid()
+    public void Expense_WithoutSupplier_IsValid()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-2024-00001",
             SupplierId = null,
@@ -65,9 +65,9 @@ public class PurchaseTests
     #region Calculation Tests
 
     [Fact]
-    public void Purchase_LineItemTotals_CalculateCorrectly()
+    public void Expense_LineItemTotals_CalculateCorrectly()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             LineItems =
             [
@@ -85,9 +85,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_WithShipping_CalculatesCorrectly()
+    public void Expense_WithShipping_CalculatesCorrectly()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Amount = 500.00m,
             ShippingCost = 25.00m,
@@ -100,9 +100,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_WithDiscount_CalculatesCorrectly()
+    public void Expense_WithDiscount_CalculatesCorrectly()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Amount = 1000.00m,
             Discount = 100.00m,  // 10% discount
@@ -119,17 +119,17 @@ public class PurchaseTests
     #region Currency Tests
 
     [Fact]
-    public void Purchase_Currency_DefaultsToUSD()
+    public void Expense_Currency_DefaultsToUSD()
     {
-        var purchase = new Purchase();
+        var purchase = new Expense();
 
         Assert.Equal("USD", purchase.OriginalCurrency);
     }
 
     [Fact]
-    public void Purchase_EffectiveTotalUSD_ReturnsConvertedValueWhenSet()
+    public void Expense_EffectiveTotalUSD_ReturnsConvertedValueWhenSet()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             OriginalCurrency = "EUR",
             Total = 1000.00m,
@@ -140,9 +140,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_EffectiveTotalUSD_FallsBackToTotalWhenNotSet()
+    public void Expense_EffectiveTotalUSD_FallsBackToTotalWhenNotSet()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Total = 1000.00m,
             TotalUSD = 0m
@@ -152,9 +152,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_EffectiveUnitPriceUSD_FallsBackToUnitPriceWhenNotSet()
+    public void Expense_EffectiveUnitPriceUSD_FallsBackToUnitPriceWhenNotSet()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             UnitPrice = 50.00m,
             UnitPriceUSD = 0m
@@ -164,9 +164,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_EffectiveShippingCostUSD_FallsBackToShippingCostWhenNotSet()
+    public void Expense_EffectiveShippingCostUSD_FallsBackToShippingCostWhenNotSet()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             ShippingCost = 25.00m,
             ShippingCostUSD = 0m
@@ -180,9 +180,9 @@ public class PurchaseTests
     #region Receipt Association Tests
 
     [Fact]
-    public void Purchase_ReceiptAssociation_WorksCorrectly()
+    public void Expense_ReceiptAssociation_WorksCorrectly()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-2024-00001",
             ReceiptId = "RCP-001"
@@ -192,9 +192,9 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void Purchase_WithoutReceipt_IsValid()
+    public void Expense_WithoutReceipt_IsValid()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-2024-00001",
             ReceiptId = null
@@ -208,9 +208,9 @@ public class PurchaseTests
     #region Reference Number Tests
 
     [Fact]
-    public void Purchase_ReferenceNumber_WorksCorrectly()
+    public void Expense_ReferenceNumber_WorksCorrectly()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             ReferenceNumber = "INV-SUP-2024-001"
         };
@@ -222,9 +222,9 @@ public class PurchaseTests
     [InlineData("PO-12345")]
     [InlineData("VENDOR-INV-001")]
     [InlineData("2024/Q1/001")]
-    public void Purchase_ReferenceNumber_SupportsVariousFormats(string refNumber)
+    public void Expense_ReferenceNumber_SupportsVariousFormats(string refNumber)
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             ReferenceNumber = refNumber
         };
@@ -237,10 +237,10 @@ public class PurchaseTests
     #region Timestamp Tests
 
     [Fact]
-    public void Purchase_Timestamps_AreSetCorrectly()
+    public void Expense_Timestamps_AreSetCorrectly()
     {
         var before = DateTime.UtcNow;
-        var purchase = new Purchase();
+        var purchase = new Expense();
         var after = DateTime.UtcNow;
 
         Assert.InRange(purchase.CreatedAt, before, after);

@@ -19,7 +19,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     protected override string TransactionTypeName => "Revenue";
     protected override string CounterpartyName => "Customer";
-    protected override CategoryType CategoryTypeFilter => CategoryType.Sales;
+    protected override CategoryType CategoryTypeFilter => CategoryType.Revenue;
     protected override bool UseCostPrice => false;
 
     #endregion
@@ -171,20 +171,20 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     {
         if (item == null) return;
 
-        var sale = App.CompanyManager?.CompanyData?.Sales.FirstOrDefault(s => s.Id == item.Id);
-        if (sale == null) return;
+        var revenue = App.CompanyManager?.CompanyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
+        if (revenue == null) return;
 
         LoadCounterpartyOptions();
         LoadCategoryOptions();
         LoadProductOptions();
 
-        EditingTransactionId = sale.Id;
+        EditingTransactionId = revenue.Id;
         IsEditMode = true;
-        ModalTitle = $"Edit Sale {sale.Id}";
+        ModalTitle = $"Edit Revenue {revenue.Id}";
         SaveButtonText = "Save Changes";
 
-        SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == sale.CustomerId);
-        PopulateFormFromTransaction(sale);
+        SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == revenue.CustomerId);
+        PopulateFormFromTransaction(revenue);
 
         IsAddEditModalOpen = true;
     }
@@ -213,40 +213,40 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var sale = companyData?.Sales.FirstOrDefault(s => s.Id == item.Id);
-        if (sale == null) return;
+        var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
+        if (revenue == null) return;
 
         // Find and remove associated receipt
         Receipt? deletedReceipt = null;
-        if (!string.IsNullOrEmpty(sale.ReceiptId))
+        if (!string.IsNullOrEmpty(revenue.ReceiptId))
         {
-            deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
+            deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId);
             if (deletedReceipt != null)
             {
                 companyData?.Receipts.Remove(deletedReceipt);
             }
         }
 
-        var deletedSale = sale;
+        var deletedRevenue = revenue;
         var capturedReceipt = deletedReceipt;
         var action = new DelegateAction(
-            $"Delete sale {sale.Id}",
+            $"Delete revenue {revenue.Id}",
             () =>
             {
-                companyData?.Sales.Add(deletedSale);
+                companyData?.Revenues.Add(deletedRevenue);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
             },
             () =>
             {
-                companyData?.Sales.Remove(deletedSale);
+                companyData?.Revenues.Remove(deletedRevenue);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Remove(capturedReceipt);
                 RaiseTransactionDeleted();
             });
 
-        companyData?.Sales.Remove(sale);
+        companyData?.Revenues.Remove(revenue);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
@@ -307,8 +307,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             return;
         }
 
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == ItemStatusItem.Id);
-        if (sale == null)
+        var revenue = companyData.Revenues.FirstOrDefault(s => s.Id == ItemStatusItem.Id);
+        if (revenue == null)
         {
             CloseItemStatusModal();
             return;
@@ -317,16 +317,16 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         switch (ItemStatusAction)
         {
             case "LostDamaged":
-                CreateLostDamagedRecord(companyData, sale);
+                CreateLostDamagedRecord(companyData, revenue);
                 break;
             case "Returned":
-                CreateReturnRecord(companyData, sale);
+                CreateReturnRecord(companyData, revenue);
                 break;
             case "UndoLostDamaged":
-                RemoveLostDamagedRecord(companyData, sale);
+                RemoveLostDamagedRecord(companyData, revenue);
                 break;
             case "UndoReturned":
-                RemoveReturnRecord(companyData, sale);
+                RemoveReturnRecord(companyData, revenue);
                 break;
         }
 
@@ -335,22 +335,22 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionSaved();
     }
 
-    private void CreateLostDamagedRecord(CompanyData companyData, Sale sale)
+    private void CreateLostDamagedRecord(CompanyData companyData, Revenue revenue)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
-        var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
-        var valueLost = sale.Total;
+        var productId = revenue.LineItems.FirstOrDefault()?.ProductId ?? "";
+        var valueLost = revenue.Total;
 
         var lostDamaged = new LostDamaged
         {
             Id = $"LOST-{++companyData.IdCounters.LostDamaged:D3}",
             ProductId = productId,
-            InventoryItemId = sale.Id,
-            Quantity = (int)sale.Quantity,
+            InventoryItemId = revenue.Id,
+            Quantity = (int)revenue.Quantity,
             Reason = reason,
             DateDiscovered = DateTime.UtcNow,
             ValueLost = valueLost,
-            Notes = $"From sale {sale.Id}. {ItemStatusNotes}".Trim(),
+            Notes = $"From revenue {revenue.Id}. {ItemStatusNotes}".Trim(),
             InsuranceClaim = false,
             CreatedAt = DateTime.UtcNow
         };
@@ -358,48 +358,48 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         companyData.LostDamaged.Add(lostDamaged);
     }
 
-    private void CreateReturnRecord(CompanyData companyData, Sale sale)
+    private void CreateReturnRecord(CompanyData companyData, Revenue revenue)
     {
-        var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
+        var productId = revenue.LineItems.FirstOrDefault()?.ProductId ?? "";
 
         var returnRecord = new Return
         {
             Id = $"RET-{++companyData.IdCounters.Return:D3}",
-            OriginalTransactionId = sale.Id,
+            OriginalTransactionId = revenue.Id,
             ReturnType = "Customer",
             SupplierId = "",
-            CustomerId = sale.CustomerId ?? "",
+            CustomerId = revenue.CustomerId ?? "",
             ReturnDate = DateTime.UtcNow,
             Items =
             [
                 new ReturnItem
                 {
                     ProductId = productId,
-                    Quantity = (int)sale.Quantity,
+                    Quantity = (int)revenue.Quantity,
                     Reason = SelectedItemStatusReason ?? "Other"
                 }
             ],
-            RefundAmount = sale.Total,
+            RefundAmount = revenue.Total,
             RestockingFee = 0,
             Status = ReturnStatus.Completed,
             Notes = ItemStatusNotes,
-            ProcessedBy = sale.AccountantId ?? "",
+            ProcessedBy = revenue.AccountantId ?? "",
             CreatedAt = DateTime.UtcNow
         };
 
         companyData.Returns.Add(returnRecord);
     }
 
-    private static void RemoveLostDamagedRecord(CompanyData companyData, Sale sale)
+    private static void RemoveLostDamagedRecord(CompanyData companyData, Revenue revenue)
     {
-        var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
+        var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == revenue.Id);
         if (record != null)
             companyData.LostDamaged.Remove(record);
     }
 
-    private static void RemoveReturnRecord(CompanyData companyData, Sale sale)
+    private static void RemoveReturnRecord(CompanyData companyData, Revenue revenue)
     {
-        var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
+        var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == revenue.Id);
         if (record != null)
             companyData.Returns.Remove(record);
     }
@@ -410,18 +410,17 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     protected override void SaveNewTransaction(CompanyData companyData)
     {
-        companyData.IdCounters.Sale++;
-        var saleId = $"SAL-{DateTime.Now:yyyy}-{companyData.IdCounters.Sale:D5}";
+        companyData.IdCounters.Revenue++;
+        var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
 
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
 
-        var sale = new Sale
+        var revenue = new Revenue
         {
-            Id = saleId,
+            Id = revenueId,
             Date = ModalDate?.DateTime ?? DateTime.Now,
             CustomerId = SelectedCustomer?.Id,
-            CategoryId = SelectedCategory?.Id,
             Description = description,
             LineItems = modelLineItems,
             Quantity = totalQuantity,
@@ -443,18 +442,18 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         Receipt? receipt = null;
         if (!string.IsNullOrEmpty(ReceiptFilePath))
         {
-            receipt = CreateReceipt(companyData, saleId, "Revenue", SelectedCustomer?.Name ?? "");
-            sale.ReceiptId = receipt.Id;
+            receipt = CreateReceipt(companyData, revenueId, "Revenue", SelectedCustomer?.Name ?? "");
+            revenue.ReceiptId = receipt.Id;
             companyData.Receipts.Add(receipt);
         }
 
         var capturedReceipt = receipt;
         var action = new DelegateAction(
-            $"Add sale {saleId}",
+            $"Add revenue {revenueId}",
             () =>
             {
-                companyData.Sales.Remove(sale);
-                companyData.IdCounters.Sale--;
+                companyData.Revenues.Remove(revenue);
+                companyData.IdCounters.Revenue--;
                 if (capturedReceipt != null)
                 {
                     companyData.Receipts.Remove(capturedReceipt);
@@ -464,8 +463,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             },
             () =>
             {
-                companyData.Sales.Add(sale);
-                companyData.IdCounters.Sale++;
+                companyData.Revenues.Add(revenue);
+                companyData.IdCounters.Revenue++;
                 if (capturedReceipt != null)
                 {
                     companyData.Receipts.Add(capturedReceipt);
@@ -474,7 +473,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 RaiseTransactionSaved();
             });
 
-        companyData.Sales.Add(sale);
+        companyData.Revenues.Add(revenue);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
@@ -482,49 +481,48 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     protected override void SaveEditedTransaction(CompanyData companyData)
     {
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == EditingTransactionId);
-        if (sale == null) return;
+        var revenue = companyData.Revenues.FirstOrDefault(s => s.Id == EditingTransactionId);
+        if (revenue == null) return;
 
         // Store original values for undo
-        var original = CaptureTransactionState(sale);
+        var original = CaptureTransactionState(revenue);
 
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
 
         // Apply changes
-        sale.Date = ModalDate?.DateTime ?? DateTime.Now;
-        sale.CustomerId = SelectedCustomer?.Id;
-        sale.CategoryId = SelectedCategory?.Id;
-        sale.Description = description;
-        sale.LineItems = modelLineItems;
-        sale.Quantity = totalQuantity;
-        sale.UnitPrice = averageUnitPrice;
-        sale.Amount = Subtotal;
-        sale.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;
-        sale.TaxAmount = TaxAmount;
-        sale.ShippingCost = ModalShipping;
-        sale.Discount = ModalDiscount;
-        sale.Total = Total;
-        sale.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
-        sale.Notes = ModalNotes;
-        sale.ReferenceNumber = ReceiptFilePath ?? string.Empty;
-        sale.UpdatedAt = DateTime.Now;
+        revenue.Date = ModalDate?.DateTime ?? DateTime.Now;
+        revenue.CustomerId = SelectedCustomer?.Id;
+        revenue.Description = description;
+        revenue.LineItems = modelLineItems;
+        revenue.Quantity = totalQuantity;
+        revenue.UnitPrice = averageUnitPrice;
+        revenue.Amount = Subtotal;
+        revenue.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;
+        revenue.TaxAmount = TaxAmount;
+        revenue.ShippingCost = ModalShipping;
+        revenue.Discount = ModalDiscount;
+        revenue.Total = Total;
+        revenue.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
+        revenue.Notes = ModalNotes;
+        revenue.ReferenceNumber = ReceiptFilePath ?? string.Empty;
+        revenue.UpdatedAt = DateTime.Now;
 
         // Handle receipt
         Receipt? newReceipt = null;
         if (!string.IsNullOrEmpty(ReceiptFilePath) && string.IsNullOrEmpty(original.ReceiptId))
         {
-            newReceipt = CreateReceipt(companyData, sale.Id, "Revenue", SelectedCustomer?.Name ?? "");
-            sale.ReceiptId = newReceipt.Id;
+            newReceipt = CreateReceipt(companyData, revenue.Id, "Revenue", SelectedCustomer?.Name ?? "");
+            revenue.ReceiptId = newReceipt.Id;
             companyData.Receipts.Add(newReceipt);
         }
 
         var capturedNewReceipt = newReceipt;
         var action = new DelegateAction(
-            $"Edit sale {EditingTransactionId}",
+            $"Edit revenue {EditingTransactionId}",
             () =>
             {
-                RestoreTransactionState(sale, original);
+                RestoreTransactionState(revenue, original);
                 if (capturedNewReceipt != null)
                 {
                     companyData.Receipts.Remove(capturedNewReceipt);
@@ -534,25 +532,24 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             },
             () =>
             {
-                sale.Date = ModalDate?.DateTime ?? DateTime.Now;
-                sale.CustomerId = SelectedCustomer?.Id;
-                sale.CategoryId = SelectedCategory?.Id;
-                sale.Description = description;
-                sale.LineItems = modelLineItems;
-                sale.Quantity = totalQuantity;
-                sale.UnitPrice = averageUnitPrice;
-                sale.Amount = Subtotal;
-                sale.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;
-                sale.TaxAmount = TaxAmount;
-                sale.ShippingCost = ModalShipping;
-                sale.Discount = ModalDiscount;
-                sale.Total = Total;
-                sale.PaymentMethod = pm;
-                sale.Notes = ModalNotes;
-                sale.ReferenceNumber = ReceiptFilePath ?? string.Empty;
+                revenue.Date = ModalDate?.DateTime ?? DateTime.Now;
+                revenue.CustomerId = SelectedCustomer?.Id;
+                revenue.Description = description;
+                revenue.LineItems = modelLineItems;
+                revenue.Quantity = totalQuantity;
+                revenue.UnitPrice = averageUnitPrice;
+                revenue.Amount = Subtotal;
+                revenue.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;
+                revenue.TaxAmount = TaxAmount;
+                revenue.ShippingCost = ModalShipping;
+                revenue.Discount = ModalDiscount;
+                revenue.Total = Total;
+                revenue.PaymentMethod = pm;
+                revenue.Notes = ModalNotes;
+                revenue.ReferenceNumber = ReceiptFilePath ?? string.Empty;
                 if (capturedNewReceipt != null)
                 {
-                    sale.ReceiptId = capturedNewReceipt.Id;
+                    revenue.ReceiptId = capturedNewReceipt.Id;
                     companyData.Receipts.Add(capturedNewReceipt);
                     companyData.IdCounters.Receipt++;
                 }
@@ -564,7 +561,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionSaved();
     }
 
-    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
+    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
     {
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
@@ -598,55 +595,53 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             OriginalFilePath = ReceiptFilePath,
             Amount = Total,
             Date = ModalDate?.DateTime ?? DateTime.Now,
-            Vendor = vendor,
+            Supplier = supplier,
             Source = "Manual",
             CreatedAt = DateTime.Now
         };
     }
 
-    private static TransactionState CaptureTransactionState(Sale sale)
+    private static TransactionState CaptureTransactionState(Revenue revenue)
     {
         return new TransactionState
         {
-            Date = sale.Date,
-            CounterpartyId = sale.CustomerId,
-            CategoryId = sale.CategoryId,
-            Description = sale.Description,
-            LineItems = sale.LineItems.ToList(),
-            Quantity = sale.Quantity,
-            UnitPrice = sale.UnitPrice,
-            Amount = sale.Amount,
-            TaxRate = sale.TaxRate,
-            TaxAmount = sale.TaxAmount,
-            ShippingCost = sale.ShippingCost,
-            Discount = sale.Discount,
-            Total = sale.Total,
-            PaymentMethod = sale.PaymentMethod,
-            Notes = sale.Notes,
-            ReferenceNumber = sale.ReferenceNumber,
-            ReceiptId = sale.ReceiptId
+            Date = revenue.Date,
+            CounterpartyId = revenue.CustomerId,
+            Description = revenue.Description,
+            LineItems = revenue.LineItems.ToList(),
+            Quantity = revenue.Quantity,
+            UnitPrice = revenue.UnitPrice,
+            Amount = revenue.Amount,
+            TaxRate = revenue.TaxRate,
+            TaxAmount = revenue.TaxAmount,
+            ShippingCost = revenue.ShippingCost,
+            Discount = revenue.Discount,
+            Total = revenue.Total,
+            PaymentMethod = revenue.PaymentMethod,
+            Notes = revenue.Notes,
+            ReferenceNumber = revenue.ReferenceNumber,
+            ReceiptId = revenue.ReceiptId
         };
     }
 
-    private static void RestoreTransactionState(Sale sale, TransactionState state)
+    private static void RestoreTransactionState(Revenue revenue, TransactionState state)
     {
-        sale.Date = state.Date;
-        sale.CustomerId = state.CounterpartyId;
-        sale.CategoryId = state.CategoryId;
-        sale.Description = state.Description;
-        sale.LineItems = state.LineItems;
-        sale.Quantity = state.Quantity;
-        sale.UnitPrice = state.UnitPrice;
-        sale.Amount = state.Amount;
-        sale.TaxRate = state.TaxRate;
-        sale.TaxAmount = state.TaxAmount;
-        sale.ShippingCost = state.ShippingCost;
-        sale.Discount = state.Discount;
-        sale.Total = state.Total;
-        sale.PaymentMethod = state.PaymentMethod;
-        sale.Notes = state.Notes;
-        sale.ReferenceNumber = state.ReferenceNumber;
-        sale.ReceiptId = state.ReceiptId;
+        revenue.Date = state.Date;
+        revenue.CustomerId = state.CounterpartyId;
+        revenue.Description = state.Description;
+        revenue.LineItems = state.LineItems;
+        revenue.Quantity = state.Quantity;
+        revenue.UnitPrice = state.UnitPrice;
+        revenue.Amount = state.Amount;
+        revenue.TaxRate = state.TaxRate;
+        revenue.TaxAmount = state.TaxAmount;
+        revenue.ShippingCost = state.ShippingCost;
+        revenue.Discount = state.Discount;
+        revenue.Total = state.Total;
+        revenue.PaymentMethod = state.PaymentMethod;
+        revenue.Notes = state.Notes;
+        revenue.ReferenceNumber = state.ReferenceNumber;
+        revenue.ReceiptId = state.ReceiptId;
     }
 
     #endregion
@@ -660,7 +655,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 }
 
 /// <summary>
-/// Line item for revenue/sale form.
+/// Line item for revenue form.
 /// </summary>
 public class RevenueLineItem : TransactionLineItemBase
 {

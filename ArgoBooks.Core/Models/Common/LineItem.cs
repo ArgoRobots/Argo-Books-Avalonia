@@ -2,7 +2,7 @@
 namespace ArgoBooks.Core.Models.Common;
 
 /// <summary>
-/// Represents a line item in a transaction (sale, invoice, purchase order, etc.).
+/// Represents a line item in a transaction (revenue, invoice, expense order, etc.).
 /// </summary>
 public class LineItem
 {

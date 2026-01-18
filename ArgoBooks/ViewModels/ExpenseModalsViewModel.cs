@@ -20,7 +20,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     protected override string TransactionTypeName => "Expense";
     protected override string CounterpartyName => "Supplier";
-    protected override CategoryType CategoryTypeFilter => CategoryType.Purchase;
+    protected override CategoryType CategoryTypeFilter => CategoryType.Expense;
     protected override bool UseCostPrice => true;
 
     #endregion
@@ -177,7 +177,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     {
         if (item == null) return;
 
-        var expense = App.CompanyManager?.CompanyData?.Purchases.FirstOrDefault(p => p.Id == item.Id);
+        var expense = App.CompanyManager?.CompanyData?.Expenses.FirstOrDefault(p => p.Id == item.Id);
         if (expense == null) return;
 
         LoadCounterpartyOptions();
@@ -219,7 +219,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == item.Id);
+        var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == item.Id);
         if (expense == null) return;
 
         // Find and remove associated receipt
@@ -239,20 +239,20 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             $"Delete expense {expense.Id}",
             () =>
             {
-                companyData?.Purchases.Add(deletedExpense);
+                companyData?.Expenses.Add(deletedExpense);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
             },
             () =>
             {
-                companyData?.Purchases.Remove(deletedExpense);
+                companyData?.Expenses.Remove(deletedExpense);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Remove(capturedReceipt);
                 RaiseTransactionDeleted();
             });
 
-        companyData?.Purchases.Remove(expense);
+        companyData?.Expenses.Remove(expense);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
@@ -323,7 +323,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             return;
         }
 
-        var purchase = companyData.Purchases.FirstOrDefault(p => p.Id == ItemStatusItem.Id);
+        var purchase = companyData.Expenses.FirstOrDefault(p => p.Id == ItemStatusItem.Id);
         if (purchase == null)
         {
             CloseItemStatusModal();
@@ -351,7 +351,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private void CreateLostDamagedRecord(CompanyData companyData, Purchase purchase)
+    private void CreateLostDamagedRecord(CompanyData companyData, Expense purchase)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -374,7 +374,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         companyData.LostDamaged.Add(lostDamaged);
     }
 
-    private void CreateReturnRecord(CompanyData companyData, Purchase purchase)
+    private void CreateReturnRecord(CompanyData companyData, Expense purchase)
     {
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -406,14 +406,14 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         companyData.Returns.Add(returnRecord);
     }
 
-    private static void RemoveLostDamagedRecord(CompanyData companyData, Purchase purchase)
+    private static void RemoveLostDamagedRecord(CompanyData companyData, Expense purchase)
     {
         var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
         if (record != null)
             companyData.LostDamaged.Remove(record);
     }
 
-    private static void RemoveReturnRecord(CompanyData companyData, Purchase purchase)
+    private static void RemoveReturnRecord(CompanyData companyData, Expense purchase)
     {
         var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
         if (record != null)
@@ -426,18 +426,17 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     protected override void SaveNewTransaction(CompanyData companyData)
     {
-        companyData.IdCounters.Purchase++;
-        var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Purchase:D5}";
+        companyData.IdCounters.Expense++;
+        var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
 
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
 
-        var expense = new Purchase
+        var expense = new Expense
         {
             Id = expenseId,
             Date = ModalDate?.DateTime ?? DateTime.Now,
             SupplierId = SelectedSupplier?.Id,
-            CategoryId = SelectedCategory?.Id,
             Description = description,
             LineItems = modelLineItems,
             Quantity = totalQuantity,
@@ -469,8 +468,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             $"Add expense {expenseId}",
             () =>
             {
-                companyData.Purchases.Remove(expense);
-                companyData.IdCounters.Purchase--;
+                companyData.Expenses.Remove(expense);
+                companyData.IdCounters.Expense--;
                 if (capturedReceipt != null)
                 {
                     companyData.Receipts.Remove(capturedReceipt);
@@ -480,8 +479,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             },
             () =>
             {
-                companyData.Purchases.Add(expense);
-                companyData.IdCounters.Purchase++;
+                companyData.Expenses.Add(expense);
+                companyData.IdCounters.Expense++;
                 if (capturedReceipt != null)
                 {
                     companyData.Receipts.Add(capturedReceipt);
@@ -490,7 +489,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 RaiseTransactionSaved();
             });
 
-        companyData.Purchases.Add(expense);
+        companyData.Expenses.Add(expense);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
@@ -498,7 +497,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     protected override void SaveEditedTransaction(CompanyData companyData)
     {
-        var expense = companyData.Purchases.FirstOrDefault(p => p.Id == EditingTransactionId);
+        var expense = companyData.Expenses.FirstOrDefault(p => p.Id == EditingTransactionId);
         if (expense == null) return;
 
         // Store original values for undo
@@ -510,7 +509,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         // Apply changes
         expense.Date = ModalDate?.DateTime ?? DateTime.Now;
         expense.SupplierId = SelectedSupplier?.Id;
-        expense.CategoryId = SelectedCategory?.Id;
         expense.Description = description;
         expense.LineItems = modelLineItems;
         expense.Quantity = totalQuantity;
@@ -552,7 +550,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             {
                 expense.Date = ModalDate?.DateTime ?? DateTime.Now;
                 expense.SupplierId = SelectedSupplier?.Id;
-                expense.CategoryId = SelectedCategory?.Id;
                 expense.Description = description;
                 expense.LineItems = modelLineItems;
                 expense.Quantity = totalQuantity;
@@ -580,7 +577,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
+    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
     {
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
@@ -614,19 +611,18 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             OriginalFilePath = ReceiptFilePath,
             Amount = Total,
             Date = ModalDate?.DateTime ?? DateTime.Now,
-            Vendor = vendor,
+            Supplier = supplier,
             Source = "Manual",
             CreatedAt = DateTime.Now
         };
     }
 
-    private static TransactionState CaptureTransactionState(Purchase expense)
+    private static TransactionState CaptureTransactionState(Expense expense)
     {
         return new TransactionState
         {
             Date = expense.Date,
             CounterpartyId = expense.SupplierId,
-            CategoryId = expense.CategoryId,
             Description = expense.Description,
             LineItems = expense.LineItems.ToList(),
             Quantity = expense.Quantity,
@@ -644,11 +640,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
     }
 
-    private static void RestoreTransactionState(Purchase expense, TransactionState state)
+    private static void RestoreTransactionState(Expense expense, TransactionState state)
     {
         expense.Date = state.Date;
         expense.SupplierId = state.CounterpartyId;
-        expense.CategoryId = state.CategoryId;
         expense.Description = state.Description;
         expense.LineItems = state.LineItems;
         expense.Quantity = state.Quantity;

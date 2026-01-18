@@ -61,8 +61,8 @@ public class IdGenerator(CompanyData companyData)
         companyData.IdCounters.Category++;
         var typePrefix = type switch
         {
-            CategoryType.Sales => "SAL",
-            CategoryType.Purchase => "PUR",
+            CategoryType.Revenue => "REV",
+            CategoryType.Expense => "EXP",
             CategoryType.Rental => "RNT",
             _ => "GEN"
         };
@@ -88,21 +88,21 @@ public class IdGenerator(CompanyData companyData)
     }
 
     /// <summary>
-    /// Generates a new sale ID (SAL-2024-00001).
+    /// Generates a new revenue ID (REV-2024-00001).
     /// </summary>
-    public string NextSaleId()
+    public string NextRevenueId()
     {
-        companyData.IdCounters.Sale++;
-        return $"SAL-{DateTime.UtcNow.Year}-{companyData.IdCounters.Sale:D5}";
+        companyData.IdCounters.Revenue++;
+        return $"REV-{DateTime.UtcNow.Year}-{companyData.IdCounters.Revenue:D5}";
     }
 
     /// <summary>
-    /// Generates a new purchase ID (PUR-2024-00001).
+    /// Generates a new expense ID (EXP-2024-00001).
     /// </summary>
-    public string NextPurchaseId()
+    public string NextExpenseId()
     {
-        companyData.IdCounters.Purchase++;
-        return $"PUR-{DateTime.UtcNow.Year}-{companyData.IdCounters.Purchase:D5}";
+        companyData.IdCounters.Expense++;
+        return $"EXP-{DateTime.UtcNow.Year}-{companyData.IdCounters.Expense:D5}";
     }
 
     /// <summary>

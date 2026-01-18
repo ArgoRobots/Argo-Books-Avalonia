@@ -164,9 +164,9 @@ public class PaginationTextHelperTests
     public void FormatPaginationText_SinglePageWithExactPageSize_ReturnsSimpleCount()
     {
         // 10 items on a page of 10 = 1 page total
-        var result = PaginationTextHelper.FormatPaginationText(10, 1, 10, 1, "sale", "sales");
+        var result = PaginationTextHelper.FormatPaginationText(10, 1, 10, 1, "revenue", "revenues");
 
-        Assert.Equal("10 sales", result);
+        Assert.Equal("10 revenues", result);
     }
 
     [Fact]

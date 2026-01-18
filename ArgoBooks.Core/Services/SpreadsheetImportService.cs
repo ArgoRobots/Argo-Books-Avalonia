@@ -217,7 +217,7 @@ public class SpreadsheetImportService
                 break;
             case "Expenses":
             case "Purchases":
-                ValidatePurchaseReferences(rows, headers, data, importedIds, result);
+                ValidateExpenseReferences(rows, headers, data, importedIds, result);
                 break;
             case "Inventory":
                 ValidateInventoryReferences(rows, headers, data, importedIds, result);
@@ -227,7 +227,7 @@ public class SpreadsheetImportService
                 break;
             case "Revenue":
             case "Sales":
-                ValidateSaleReferences(rows, headers, data, importedIds, result);
+                ValidateRevenueReferences(rows, headers, data, importedIds, result);
                 break;
             case "Rental Records":
                 ValidateRentalRecordReferences(rows, headers, data, importedIds, result);
@@ -245,7 +245,7 @@ public class SpreadsheetImportService
                 ValidateStockAdjustmentReferences(rows, headers, data, importedIds, result);
                 break;
             case "Purchase Orders":
-                ValidatePurchaseOrderReferences(rows, headers, data, importedIds, result);
+                ValidateExpenseOrderReferences(rows, headers, data, importedIds, result);
                 break;
         }
     }
@@ -261,10 +261,10 @@ public class SpreadsheetImportService
             "Locations" => data.Locations.Select(l => l.Id).ToHashSet(),
             "Departments" => data.Departments.Select(d => d.Id).ToHashSet(),
             "Invoices" => data.Invoices.Select(i => i.Id).ToHashSet(),
-            "Expenses" or "Purchases" => data.Purchases.Select(p => p.Id).ToHashSet(),
+            "Expenses" or "Purchases" => data.Expenses.Select(p => p.Id).ToHashSet(),
             "Inventory" => data.Inventory.Select(i => i.Id).ToHashSet(),
             "Payments" => data.Payments.Select(p => p.Id).ToHashSet(),
-            "Revenue" or "Sales" => data.Sales.Select(s => s.Id).ToHashSet(),
+            "Revenue" or "Sales" => data.Revenues.Select(s => s.Id).ToHashSet(),
             "Rental Inventory" => data.RentalInventory.Select(r => r.Id).ToHashSet(),
             "Rental Records" => data.Rentals.Select(r => r.Id).ToHashSet(),
             "Employees" => data.Employees.Select(e => e.Id).ToHashSet(),
@@ -327,7 +327,7 @@ public class SpreadsheetImportService
         }
     }
 
-    private void ValidatePurchaseReferences(
+    private void ValidateExpenseReferences(
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -421,7 +421,7 @@ public class SpreadsheetImportService
         }
     }
 
-    private void ValidateSaleReferences(
+    private void ValidateRevenueReferences(
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -578,7 +578,7 @@ public class SpreadsheetImportService
         }
     }
 
-    private void ValidatePurchaseOrderReferences(
+    private void ValidateExpenseOrderReferences(
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -637,7 +637,7 @@ public class SpreadsheetImportService
                     {
                         Id = id,
                         Name = $"[Imported] {id}",
-                        Type = CategoryType.Sales,
+                        Type = CategoryType.Revenue,
                         ItemType = "Product",
                         Icon = "📦"
                     });
@@ -674,7 +674,7 @@ public class SpreadsheetImportService
                     {
                         Id = id,
                         Name = $"[Imported] {id}",
-                        Type = CategoryType.Sales,
+                        Type = CategoryType.Revenue,
                         ItemType = "Product"
                     });
                 }
@@ -688,7 +688,7 @@ public class SpreadsheetImportService
                     {
                         Id = newId,
                         Name = id,
-                        Type = CategoryType.Sales,
+                        Type = CategoryType.Revenue,
                         ItemType = "Product"
                     });
                 }
@@ -1018,14 +1018,14 @@ public class SpreadsheetImportService
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
-            var existing = data.Purchases.FirstOrDefault(p => p.Id == id);
+            var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
-            var purchase = existing ?? new Purchase();
+            var purchase = existing ?? new Expense();
             purchase.Id = id;
             purchase.Date = GetDateTime(row, headers, "Date");
             purchase.SupplierId = GetNullableString(row, headers, "Supplier ID");
@@ -1059,7 +1059,7 @@ public class SpreadsheetImportService
             }
 
             if (existing == null)
-                data.Purchases.Add(purchase);
+                data.Expenses.Add(purchase);
         }
     }
 
@@ -1073,10 +1073,10 @@ public class SpreadsheetImportService
             var typeStr = GetString(row, headers, "Type");
             var productType = typeStr.ToLowerInvariant() switch
             {
-                "revenue" or "sales" => CategoryType.Sales,
-                "expenses" or "purchase" => CategoryType.Purchase,
+                "revenue" or "sales" => CategoryType.Revenue,
+                "expenses" or "purchase" => CategoryType.Expense,
                 "rental" => CategoryType.Rental,
-                _ => CategoryType.Sales
+                _ => CategoryType.Revenue
             };
 
             var itemTypeRaw = GetString(row, headers, "Item Type");
@@ -1186,31 +1186,31 @@ public class SpreadsheetImportService
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
-            var existing = data.Sales.FirstOrDefault(s => s.Id == id);
+            var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
-            var sale = existing ?? new Sale();
-            sale.Id = id;
-            sale.Date = GetDateTime(row, headers, "Date");
-            sale.CustomerId = GetNullableString(row, headers, "Customer ID");
-            sale.Description = description;
-            sale.Amount = GetDecimal(row, headers, "Amount");
-            sale.TaxAmount = GetDecimal(row, headers, "Tax");
-            sale.Total = GetDecimal(row, headers, "Total");
-            sale.ReferenceNumber = GetString(row, headers, "Reference");
-            sale.PaymentStatus = GetString(row, headers, "Payment Status");
+            var revenue = existing ?? new Revenue();
+            revenue.Id = id;
+            revenue.Date = GetDateTime(row, headers, "Date");
+            revenue.CustomerId = GetNullableString(row, headers, "Customer ID");
+            revenue.Description = description;
+            revenue.Amount = GetDecimal(row, headers, "Amount");
+            revenue.TaxAmount = GetDecimal(row, headers, "Tax");
+            revenue.Total = GetDecimal(row, headers, "Total");
+            revenue.ReferenceNumber = GetString(row, headers, "Reference");
+            revenue.PaymentStatus = GetString(row, headers, "Payment Status");
 
             // Set USD values (assume imported data is in USD)
-            sale.OriginalCurrency = "USD";
-            sale.TotalUSD = sale.Total;
-            sale.TaxAmountUSD = sale.TaxAmount;
+            revenue.OriginalCurrency = "USD";
+            revenue.TotalUSD = revenue.Total;
+            revenue.TaxAmountUSD = revenue.TaxAmount;
 
-            if (string.IsNullOrEmpty(sale.PaymentStatus))
-                sale.PaymentStatus = "Paid";
+            if (string.IsNullOrEmpty(revenue.PaymentStatus))
+                revenue.PaymentStatus = "Paid";
 
             // Link product by looking up by name and creating a LineItem
             if (!string.IsNullOrEmpty(description))
@@ -1223,14 +1223,14 @@ public class SpreadsheetImportService
                     ProductId = product?.Id,
                     Description = description,
                     Quantity = 1,
-                    UnitPrice = sale.Amount,
-                    TaxRate = sale.Amount > 0 ? sale.TaxAmount / sale.Amount : 0
+                    UnitPrice = revenue.Amount,
+                    TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
                 };
-                sale.LineItems = [lineItem];
+                revenue.LineItems = [lineItem];
             }
 
             if (existing == null)
-                data.Sales.Add(sale);
+                data.Revenues.Add(revenue);
         }
     }
 
@@ -1294,10 +1294,10 @@ public class SpreadsheetImportService
             var typeStr = GetString(row, headers, "Type");
             var categoryType = typeStr.ToLowerInvariant() switch
             {
-                "revenue" or "sales" => CategoryType.Sales,
-                "expenses" or "purchase" => CategoryType.Purchase,
+                "revenue" or "sales" => CategoryType.Revenue,
+                "expenses" or "purchase" => CategoryType.Expense,
                 "rental" => CategoryType.Rental,
-                _ => CategoryType.Sales
+                _ => CategoryType.Revenue
             };
 
             var category = existing ?? new Category();
@@ -1484,8 +1484,8 @@ public class SpreadsheetImportService
         data.IdCounters.Department = GetMaxIdNumber(data.Departments.Select(d => d.Id), "DEP-");
         data.IdCounters.Category = GetMaxIdNumber(data.Categories.Select(c => c.Id), "CAT-");
         data.IdCounters.Location = GetMaxIdNumber(data.Locations.Select(l => l.Id), "LOC-");
-        data.IdCounters.Sale = GetMaxIdNumber(data.Sales.Select(s => s.Id), "SAL-");
-        data.IdCounters.Purchase = GetMaxIdNumber(data.Purchases.Select(p => p.Id), "PUR-");
+        data.IdCounters.Revenue = GetMaxIdNumber(data.Revenues.Select(s => s.Id), "SAL-");
+        data.IdCounters.Expense = GetMaxIdNumber(data.Expenses.Select(p => p.Id), "PUR-");
         data.IdCounters.Invoice = GetMaxIdNumber(data.Invoices.Select(i => i.Id), "INV-");
         data.IdCounters.Payment = GetMaxIdNumber(data.Payments.Select(p => p.Id), "PAY-");
         data.IdCounters.RecurringInvoice = GetMaxIdNumber(data.RecurringInvoices.Select(r => r.Id), "REC-INV-");

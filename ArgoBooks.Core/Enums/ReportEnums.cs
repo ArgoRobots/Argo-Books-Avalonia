@@ -104,7 +104,7 @@ public enum ChartDataType
 
     // Financial charts
     TotalProfits,
-    SalesVsExpenses,
+    RevenueVsExpenses,
     GrowthRates,
 
     // Transaction charts
@@ -137,7 +137,7 @@ public enum ChartDataType
     ReturnFinancialImpact,
     ReturnsByCategory,
     ReturnsByProduct,
-    PurchaseVsSaleReturns,
+    ExpenseVsRevenueReturns,
 
     // Losses charts
     LossesOverTime,
@@ -145,7 +145,7 @@ public enum ChartDataType
     LossFinancialImpact,
     LossesByCategory,
     LossesByProduct,
-    PurchaseVsSaleLosses
+    ExpenseVsRevenueLosses
 }
 
 /// <summary>
@@ -202,7 +202,7 @@ public static class ReportEnumExtensions
 
             // Financial charts
             ChartDataType.TotalProfits => "Profit Over Time",
-            ChartDataType.SalesVsExpenses => "Expenses vs Revenue",
+            ChartDataType.RevenueVsExpenses => "Expenses vs Revenue",
             ChartDataType.GrowthRates => "Growth Rates",
 
             // Transaction charts
@@ -235,7 +235,7 @@ public static class ReportEnumExtensions
             ChartDataType.ReturnFinancialImpact => "Financial Impact of Returns",
             ChartDataType.ReturnsByCategory => "Returns by Category",
             ChartDataType.ReturnsByProduct => "Returns by Product",
-            ChartDataType.PurchaseVsSaleReturns => "Purchase vs Sale Returns",
+            ChartDataType.ExpenseVsRevenueReturns => "Expense vs Revenue Returns",
 
             // Losses charts
             ChartDataType.LossesOverTime => "Losses Over Time",
@@ -243,7 +243,7 @@ public static class ReportEnumExtensions
             ChartDataType.LossFinancialImpact => "Financial Impact of Losses",
             ChartDataType.LossesByCategory => "Losses by Category",
             ChartDataType.LossesByProduct => "Losses by Product",
-            ChartDataType.PurchaseVsSaleLosses => "Purchase vs Sale Losses",
+            ChartDataType.ExpenseVsRevenueLosses => "Expense vs Revenue Losses",
 
             _ => chartType.ToString()
         };

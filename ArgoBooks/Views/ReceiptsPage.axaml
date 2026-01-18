@@ -358,8 +358,8 @@
                                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                                         </Grid>
 
-                                                        <!-- Vendor Name -->
-                                                        <TextBlock Text="{Binding Vendor}"
+                                                        <!-- Supplier Name -->
+                                                        <TextBlock Text="{Binding Supplier}"
                                                                    FontSize="13"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    TextTrimming="CharacterEllipsis"
@@ -449,14 +449,14 @@
                                                         <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
                                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
-                                                    <!-- Vendor -->
-                                                    <Panel Width="{Binding ColumnWidths.VendorColumnWidth}" IsVisible="{Binding ShowVendorColumn}">
-                                                        <TextBlock Text="{loc:Loc 'Vendor'}" FontSize="12" FontWeight="SemiBold"
+                                                    <!-- Supplier -->
+                                                    <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
+                                                        <TextBlock Text="{loc:Loc 'Supplier'}" FontSize="12" FontWeight="SemiBold"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                                    Margin="8,12,8,12" />
                                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        <controls:ColumnResizeGripper ColumnName="Vendor" ColumnWidths="{Binding ColumnWidths}"
+                                                        <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
                                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
                                                     <!-- Date -->
@@ -546,10 +546,10 @@
                                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                                         </Panel>
 
-                                                                        <!-- Vendor -->
-                                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ColumnWidths.VendorColumnWidth}"
-                                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowVendorColumn}">
-                                                                            <TextBlock Text="{Binding Vendor}"
+                                                                        <!-- Supplier -->
+                                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
+                                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowSupplierColumn}">
+                                                                            <TextBlock Text="{Binding Supplier}"
                                                                                        FontSize="14"
                                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                        VerticalAlignment="Center"
@@ -776,7 +776,7 @@
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'Receipt #'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowVendorColumn}" Content="{loc:Loc 'Vendor'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc 'Supplier'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc 'Date'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc 'Type'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="{loc:Loc 'Amount'}" Classes="column-toggle" />
