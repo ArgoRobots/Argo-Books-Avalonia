@@ -584,6 +584,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _companyManager = companyManager;
         LoadDashboardData();
 
+        // Load quick action visibility settings
+        LoadQuickActionsSettings();
+
         // Notify welcome subtitle since it depends on company manager
         OnPropertyChanged(nameof(WelcomeSubtitle));
 
@@ -592,6 +595,17 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to language changes to refresh translated chart titles
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+
+        // Subscribe to quick actions settings changes
+        if (App.QuickActionsSettingsModalViewModel != null)
+        {
+            App.QuickActionsSettingsModalViewModel.SettingsSaved += OnQuickActionsSettingsSaved;
+        }
+    }
+
+    private void OnQuickActionsSettingsSaved(object? sender, EventArgs e)
+    {
+        LoadQuickActionsSettings();
     }
 
     /// <summary>
@@ -610,6 +624,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Unsubscribe from language changes
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+
+        // Unsubscribe from quick actions settings changes
+        if (App.QuickActionsSettingsModalViewModel != null)
+        {
+            App.QuickActionsSettingsModalViewModel.SettingsSaved -= OnQuickActionsSettingsSaved;
+        }
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
@@ -1055,13 +1075,147 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Quick Actions Visibility
+
+    // Primary actions
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewInvoice = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewExpense = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewRevenue = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showScanReceipt = true;
+
+    // Contact actions
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewCustomer;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewSupplier;
+
+    // Product & Inventory actions
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewProduct;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showRecordPayment;
+
+    // Rental actions
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewRentalItem;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewRentalRecord = true;
+
+    // Organization actions
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewCategory;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewDepartment;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewLocation;
+
+    // Order & Stock actions
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewPurchaseOrder;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewStockAdjustment;
+
+    /// <summary>
+    /// Gets whether at least one quick action is visible.
+    /// </summary>
+    public bool HasVisibleQuickActions =>
+        ShowNewInvoice || ShowNewExpense || ShowNewRevenue || ShowScanReceipt ||
+        ShowNewCustomer || ShowNewSupplier || ShowNewProduct || ShowRecordPayment ||
+        ShowNewRentalItem || ShowNewRentalRecord ||
+        ShowNewCategory || ShowNewDepartment || ShowNewLocation ||
+        ShowNewPurchaseOrder || ShowNewStockAdjustment;
+
+    /// <summary>
+    /// Loads quick action visibility settings from global settings.
+    /// </summary>
+    public void LoadQuickActionsSettings()
+    {
+        var globalSettings = App.SettingsService?.GlobalSettings;
+        if (globalSettings != null)
+        {
+            var qa = globalSettings.Ui.QuickActions;
+
+            // Primary actions
+            ShowNewInvoice = qa.ShowNewInvoice;
+            ShowNewExpense = qa.ShowNewExpense;
+            ShowNewRevenue = qa.ShowNewRevenue;
+            ShowScanReceipt = qa.ShowScanReceipt;
+
+            // Contact actions
+            ShowNewCustomer = qa.ShowNewCustomer;
+            ShowNewSupplier = qa.ShowNewSupplier;
+
+            // Product & Inventory actions
+            ShowNewProduct = qa.ShowNewProduct;
+            ShowRecordPayment = qa.ShowRecordPayment;
+
+            // Rental actions
+            ShowNewRentalItem = qa.ShowNewRentalItem;
+            ShowNewRentalRecord = qa.ShowNewRentalRecord;
+
+            // Organization actions
+            ShowNewCategory = qa.ShowNewCategory;
+            ShowNewDepartment = qa.ShowNewDepartment;
+            ShowNewLocation = qa.ShowNewLocation;
+
+            // Order & Stock actions
+            ShowNewPurchaseOrder = qa.ShowNewPurchaseOrder;
+            ShowNewStockAdjustment = qa.ShowNewStockAdjustment;
+        }
+    }
+
+    /// <summary>
+    /// Opens the quick actions settings modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenQuickActionsSettings()
+    {
+        App.QuickActionsSettingsModalViewModel?.OpenCommand.Execute(null);
+    }
+
+    #endregion
+
     #region Quick Actions
+
+    [RelayCommand]
+    private void NewInvoice()
+    {
+        App.NavigationService?.NavigateTo("Invoices");
+        App.InvoiceModalsViewModel?.OpenCreateModal();
+    }
 
     [RelayCommand]
     private void AddExpense()
     {
         App.NavigationService?.NavigateTo("Expenses");
-        // Open the add expense modal after navigation
         App.ExpenseModalsViewModel?.OpenAddModal();
     }
 
@@ -1069,24 +1223,91 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void RecordSale()
     {
         App.NavigationService?.NavigateTo("Revenue");
-        // Open the add revenue modal after navigation
         App.RevenueModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
-    private void CreateInvoice()
+    private void ScanReceipt()
     {
-        App.NavigationService?.NavigateTo("Invoices");
-        // Open the create invoice modal after navigation
-        App.InvoiceModalsViewModel?.OpenCreateModal();
+        App.NavigationService?.NavigateTo("Receipts");
+        // Note: Scan modal requires a file path, so just navigate to receipts page
+    }
+
+    [RelayCommand]
+    private void NewCustomer()
+    {
+        App.NavigationService?.NavigateTo("Customers");
+        App.CustomerModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewSupplier()
+    {
+        App.NavigationService?.NavigateTo("Suppliers");
+        App.SupplierModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewProduct()
+    {
+        App.NavigationService?.NavigateTo("Products");
+        App.ProductModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void RecordPayment()
+    {
+        App.NavigationService?.NavigateTo("Payments");
+        App.PaymentModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewRentalItem()
+    {
+        App.NavigationService?.NavigateTo("RentalInventory");
+        App.RentalInventoryModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
     private void NewRental()
     {
         App.NavigationService?.NavigateTo("RentalRecords");
-        // Open the add rental modal after navigation
         App.RentalRecordsModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewCategory()
+    {
+        App.NavigationService?.NavigateTo("Categories");
+        App.CategoryModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewDepartment()
+    {
+        App.NavigationService?.NavigateTo("Departments");
+        App.DepartmentModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewLocation()
+    {
+        App.NavigationService?.NavigateTo("Locations");
+        App.LocationsModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewPurchaseOrder()
+    {
+        App.NavigationService?.NavigateTo("PurchaseOrders");
+        App.PurchaseOrdersModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NewStockAdjustment()
+    {
+        App.NavigationService?.NavigateTo("Adjustments");
+        App.StockAdjustmentsModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]

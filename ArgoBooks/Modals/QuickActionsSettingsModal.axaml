@@ -1,0 +1,428 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.QuickActionsSettingsModal"
+             x:DataType="vm:QuickActionsSettingsModalViewModel">
+
+    <Design.DataContext>
+        <vm:QuickActionsSettingsModalViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <!-- Animated Toggle Item Style -->
+        <Style Selector="Border.toggle-item">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateX(0)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.toggle-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Modal Backdrop with fade animation -->
+        <Border Background="#80000000">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
+
+        <!-- Modal Container with scale animation -->
+        <Border x:Name="ModalBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="500"
+                MaxHeight="700"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000"
+                Focusable="True"
+                KeyDown="Modal_KeyDown"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Modal Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="{loc:Loc 'Quick Actions Settings'}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Choose which quick actions to display on the dashboard'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                VerticalAlignment="Top"
+                                Command="{Binding CloseCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Modal Body - Scrollable -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="24,20" Spacing="20">
+
+                        <!-- Primary Actions -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Primary Actions'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <!-- New Invoice -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Invoice'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Create a new invoice'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewInvoice}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Expense -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource DangerIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource DangerBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Expense'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Record an expense'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewExpense}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Revenue -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource SuccessIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Revenue'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Record a sale'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewRevenue}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Scan Receipt -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource InfoIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'Scan Receipt'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Import with AI'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowScanReceipt}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Contacts -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Contacts'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <!-- New Customer -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Customer'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add a customer'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewCustomer}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Supplier -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Supplier'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add a supplier'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewSupplier}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Products & Payments -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Products &amp; Payments'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <!-- New Product -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource SuccessIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Product'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add a product'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewProduct}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Record Payment -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource SuccessIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'Record Payment'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Log a payment'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowRecordPayment}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Rentals -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Rentals'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <!-- New Rental Item -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource InfoIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Rental Item'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add rental inventory'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewRentalItem}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Rental Record -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource InfoIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Rental Record'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Start a rental'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewRentalRecord}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Organization -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Organization'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <!-- New Category -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Category'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add a category'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewCategory}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Department -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Department'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add a department'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewDepartment}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Location -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Location'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Add a location'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewLocation}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Orders & Stock -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Orders &amp; Stock'}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <!-- New Purchase Order -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Purchase Order'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Create an order'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewPurchaseOrder}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- New Stock Adjustment -->
+                            <Border Classes="toggle-item">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
+                                            Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
+                                        <PathIcon Data="M19 3H14.82C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{loc:Loc 'New Stock Adjustment'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Adjust inventory'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding ShowNewStockAdjustment}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Modal Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Reset All Button (Left) -->
+                        <Button Grid.Column="0"
+                                Classes="secondary-button"
+                                Content="{loc:Loc 'Reset All'}"
+                                Command="{Binding ResetAllCommand}" />
+
+                        <!-- Cancel and Save Buttons (Right) -->
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="{loc:Loc Cancel}"
+                                    Command="{Binding CloseCommand}" />
+                            <Button Classes="primary-button"
+                                    Content="{loc:Loc 'Save Changes'}"
+                                    Command="{Binding SaveCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</UserControl>
