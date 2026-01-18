@@ -13,8 +13,9 @@
         <vm:ConfirmationDialogViewModel />
     </Design.DataContext>
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
-        <!-- Modal Content -->
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <!-- Modal Content -->
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
@@ -75,5 +76,6 @@
                 </Border>
             </Grid>
         </Border>
-    </controls:ModalOverlay>
+        </controls:ModalOverlay>
+    </Panel>
 </UserControl>

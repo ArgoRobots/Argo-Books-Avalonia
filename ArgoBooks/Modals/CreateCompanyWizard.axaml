@@ -13,9 +13,10 @@
         <vm:CreateCompanyViewModel />
     </Design.DataContext>
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
-        <!-- Wizard Container -->
-        <Border Background="{DynamicResource SurfaceBrush}"
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <!-- Wizard Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
@@ -295,6 +296,7 @@
                     </Grid>
                 </Border>
             </Grid>
-        </Border>
-    </controls:ModalOverlay>
+            </Border>
+        </controls:ModalOverlay>
+    </Panel>
 </UserControl>

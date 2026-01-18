@@ -24,8 +24,9 @@
         <converters:ChangeTypeToVisibilityConverter x:Key="IsDeletedConverter" TargetType="Deleted" />
     </UserControl.Resources>
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}" CloseOnBackdropClick="False">
-        <!-- Modal Content -->
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}" CloseOnBackdropClick="False">
+            <!-- Modal Content -->
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
@@ -247,7 +248,8 @@
                 </Border>
             </Grid>
         </Border>
-    </controls:ModalOverlay>
+        </controls:ModalOverlay>
+    </Panel>
 
     <UserControl.Styles>
         <!-- Category Header Button -->

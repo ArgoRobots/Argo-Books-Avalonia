@@ -17,8 +17,9 @@
         <vm:ReceiptViewerModalViewModel />
     </Design.DataContext>
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
-        <!-- Modal Content -->
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <!-- Modal Content -->
         <Border Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
                 Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
@@ -161,5 +162,6 @@
                 </Border>
             </Grid>
         </Border>
-    </controls:ModalOverlay>
+        </controls:ModalOverlay>
+    </Panel>
 </UserControl>
