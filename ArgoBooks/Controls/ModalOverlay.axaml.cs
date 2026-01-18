@@ -116,6 +116,8 @@ public partial class ModalOverlay : UserControl
         _backdrop = this.FindControl<Border>("Backdrop");
         _contentContainer = this.FindControl<Border>("ContentContainer");
         _modalContentPresenter = this.FindControl<ContentPresenter>("ModalContentPresenter");
+
+        System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Initialized - OverlayPanel: {_overlayPanel != null}, ContentPresenter: {_modalContentPresenter != null}");
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -163,9 +165,12 @@ public partial class ModalOverlay : UserControl
 
     private void OnIsOpenChanged(bool isOpen)
     {
+        System.Diagnostics.Debug.WriteLine($"[ModalOverlay] OnIsOpenChanged: isOpen={isOpen}, _overlayPanel={_overlayPanel != null}");
+
         if (_overlayPanel != null)
         {
             _overlayPanel.IsVisible = isOpen;
+            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set _overlayPanel.IsVisible = {isOpen}");
         }
 
         if (isOpen)
