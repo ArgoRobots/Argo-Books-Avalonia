@@ -8,7 +8,6 @@ using ArgoBooks.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Drawing;
-using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.VisualElements;
@@ -24,7 +23,6 @@ public class ChartLoaderService
 {
     // Chart text size matching WinForms version
     private const float AxisTextSize = 14f;
-    private const float LegendTextSize = 14f;
 
     // Chart colors
     private static readonly SKColor RevenueColor = SKColor.Parse("#6495ED"); // Cornflower Blue (matches WinForms)
@@ -34,7 +32,6 @@ public class ChartLoaderService
     // Theme colors (will be updated based on current theme)
     private SKColor _textColor = SKColor.Parse("#F9FAFB"); // Light text for dark theme
     private SKColor _gridColor = SKColor.Parse("#374151"); // Grid lines
-    private SKColor _backgroundColor = SKColor.Parse("#1F2937"); // Chart background
 
     /// <summary>
     /// Gets the legend text paint based on the current theme.
@@ -389,13 +386,11 @@ public class ChartLoaderService
         {
             _textColor = SKColor.Parse("#F9FAFB");
             _gridColor = SKColor.Parse("#374151");
-            _backgroundColor = SKColor.Parse("#1F2937");
         }
         else
         {
             _textColor = SKColor.Parse("#111827");
             _gridColor = SKColor.Parse("#E5E7EB");
-            _backgroundColor = SKColor.Parse("#FFFFFF");
         }
     }
 
@@ -539,34 +534,6 @@ public class ChartLoaderService
             IncludeReturns = true,
             IncludeLosses = true
         };
-    }
-
-    /// <summary>
-    /// Converts a list of ChartDataPoint objects to a LiveChartsCore series.
-    /// This enables using the shared ReportChartDataService for data fetching.
-    /// </summary>
-    /// <param name="dataPoints">The chart data points from the shared service.</param>
-    /// <param name="seriesName">The name of the series.</param>
-    /// <param name="color">The color for the series.</param>
-    /// <returns>A configured ISeries for LiveChartsCore.</returns>
-    private ISeries ConvertToSeries(List<ChartDataPoint> dataPoints, string seriesName, SKColor color)
-    {
-        if (dataPoints.Count == 0)
-        {
-            return new ColumnSeries<double> { Values = [], Name = seriesName };
-        }
-
-        // Check if we have date-based data
-        if (dataPoints.All(p => p.Date.HasValue))
-        {
-            var dates = dataPoints.Select(p => p.Date!.Value).ToArray();
-            var values = dataPoints.Select(p => p.Value).ToArray();
-            return CreateDateTimeSeries(dates, values, seriesName, color);
-        }
-
-        // Use categorical (label-based) series
-        var categoryValues = dataPoints.Select(p => p.Value).ToArray();
-        return CreateTimeSeries(categoryValues, seriesName, color);
     }
 
     #endregion
