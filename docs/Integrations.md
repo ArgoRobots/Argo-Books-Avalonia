@@ -1,6 +1,6 @@
 # Integrations
 
-Argo Books integrates with external services to provide AI-powered features, cloud sync, and real-time data.
+Argo Books integrates with external services to provide AI-powered features and real-time data.
 
 ## Overview
 
@@ -38,12 +38,7 @@ Argo Books integrates with external services to provide AI-powered features, clo
 
 AI-powered OCR for receipt processing.
 
-| Component | Location |
-|-----------|----------|
-| Interface | `ArgoBooks.Core/Services/IReceiptScannerService.cs` |
-| Implementation | `ArgoBooks.Core/Services/AzureReceiptScannerService.cs` |
-| Model | `ArgoBooks.Core/Models/OcrData.cs` |
-| Model | `ArgoBooks.Core/Models/ReceiptAnalysisRequest.cs` |
+
 
 ### Features
 - Azure Cognitive Services Form Recognizer
@@ -102,11 +97,6 @@ AI-powered OCR for receipt processing.
 
 AI-powered business insights and suggestions.
 
-| Component | Location |
-|-----------|----------|
-| Interface | `ArgoBooks.Core/Services/IOpenAiService.cs` |
-| Implementation | `ArgoBooks.Core/Services/OpenAiService.cs` |
-
 ### Features
 - Business insights generation
 - Natural language analysis
@@ -156,11 +146,6 @@ AI-powered business insights and suggestions.
 ## Google Sheets Integration
 
 Cloud sync and data backup via Google Sheets.
-
-| Component | Location |
-|-----------|----------|
-| Service | `ArgoBooks.Core/Services/GoogleSheetsService.cs` |
-| Credentials | `ArgoBooks.Core/Services/GoogleCredentialsManager.cs` |
 
 ### Features
 - OAuth 2.0 authentication
@@ -216,13 +201,6 @@ Cloud sync and data backup via Google Sheets.
 
 Real-time currency conversion.
 
-| Component | Location |
-|-----------|----------|
-| Service | `ArgoBooks.Core/Services/ExchangeRateService.cs` |
-| Cache | `ArgoBooks.Core/Services/ExchangeRateCache.cs` |
-| Model | `ArgoBooks.Core/Models/CurrencyInfo.cs` |
-| Model | `ArgoBooks.Core/Models/MonetaryValue.cs` |
-
 ### Features
 - Real-time exchange rates
 - Multiple currency support
@@ -271,86 +249,3 @@ Real-time currency conversion.
 │  Include: Cache hit/miss paths, TTL refresh                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
-
-## Spreadsheet Import/Export
-
-Data exchange via Excel and CSV files.
-
-| Component | Location |
-|-----------|----------|
-| Import | `ArgoBooks.Core/Services/SpreadsheetImportService.cs` |
-| Export | `ArgoBooks.Core/Services/SpreadsheetExportService.cs` |
-| Chart Export | `ArgoBooks.Core/Services/ChartExcelExportService.cs` |
-| Validation | `ArgoBooks.Core/Models/ImportValidationResult.cs` |
-
-### Features
-- Excel (.xlsx) import/export
-- CSV import/export
-- Bulk data operations
-- Import validation with error reporting
-- Chart data export
-
-### Import Validation Flow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    DIAGRAM PLACEHOLDER                          │
-│                                                                 │
-│  Import Validation Flow (ImportValidation.svg)                  │
-│                                                                 │
-│  ┌─────────────────┐                                           │
-│  │ Select File     │                                           │
-│  │ (.xlsx / .csv)  │                                           │
-│  └────────┬────────┘                                           │
-│           │                                                     │
-│           ▼                                                     │
-│  ┌─────────────────┐                                           │
-│  │ Parse File      │                                           │
-│  │ Structure       │                                           │
-│  └────────┬────────┘                                           │
-│           │                                                     │
-│           ▼                                                     │
-│  ┌─────────────────┐                                           │
-│  │ Validate Each   │                                           │
-│  │ Row             │                                           │
-│  └────────┬────────┘                                           │
-│           │                                                     │
-│    ┌──────┴──────┐                                             │
-│    ▼             ▼                                             │
-│  ┌─────────┐  ┌─────────────┐                                 │
-│  │ Valid   │  │ Has Errors  │                                 │
-│  │ Rows    │  │ (Skip/Fix)  │                                 │
-│  └────┬────┘  └──────┬──────┘                                 │
-│       │              │                                         │
-│       ▼              ▼                                         │
-│  ┌───────────────────────────┐                                 │
-│  │  ImportValidationResult   │                                 │
-│  │  • ValidRows[]            │                                 │
-│  │  • Errors[]               │                                 │
-│  │  • Warnings[]             │                                 │
-│  └───────────────────────────┘                                 │
-│              │                                                  │
-│              ▼                                                  │
-│  ┌─────────────────┐                                           │
-│  │ Preview &       │                                           │
-│  │ Confirm Import  │                                           │
-│  └─────────────────┘                                           │
-│                                                                 │
-│  Show: Validation workflow with error handling                  │
-│  Include: Row-level validation, result structure                │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Configuration
-
-API keys and credentials are stored in a `.env` file:
-
-```
-AZURE_FORM_RECOGNIZER_ENDPOINT=...
-AZURE_FORM_RECOGNIZER_KEY=...
-OPENAI_API_KEY=...
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-```
-
-> **Note**: The `.env` file is not committed to source control and must be obtained separately.
