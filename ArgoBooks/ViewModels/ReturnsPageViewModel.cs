@@ -30,6 +30,60 @@ public partial class ReturnsPageViewModel : ViewModelBase
     /// </summary>
     public ReturnsTableColumnWidths ColumnWidths => App.ReturnsColumnWidths;
 
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductColumn = true;
+
+    [ObservableProperty]
+    private bool _showSupplierCustomerColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showReasonColumn = true;
+
+    [ObservableProperty]
+    private bool _showProcessedColumn = true;
+
+    [ObservableProperty]
+    private bool _showRefundColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
+    partial void OnShowSupplierCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("SupplierCustomer", value);
+    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
+    partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
+    partial void OnShowProcessedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Processed", value);
+    partial void OnShowRefundColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Refund", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
     #endregion
 
     #region Statistics

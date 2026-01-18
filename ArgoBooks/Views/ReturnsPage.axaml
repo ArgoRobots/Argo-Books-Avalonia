@@ -138,10 +138,11 @@
                                         Padding="24,0"
                                         MinHeight="40"
                                         BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
+                                        BorderThickness="0,0,0,1"
+                                        PointerPressed="OnTableHeaderPointerPressed">
                                     <StackPanel Orientation="Horizontal">
                                         <!-- ID Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.IdColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
                                             <TextBlock Text="{loc:Loc 'ID'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
@@ -149,7 +150,7 @@
                                         </Panel>
 
                                         <!-- Product Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ProductColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
                                             <TextBlock Text="{loc:Loc 'Product'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
@@ -157,7 +158,7 @@
                                         </Panel>
 
                                         <!-- Supplier/Customer Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.SupplierCustomerColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.SupplierCustomerColumnWidth}" IsVisible="{Binding ShowSupplierCustomerColumn}">
                                             <TextBlock FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}">
@@ -171,7 +172,7 @@
                                         </Panel>
 
                                         <!-- Date Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.DateColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
                                             <TextBlock Text="{loc:Loc 'Date'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
@@ -179,7 +180,7 @@
                                         </Panel>
 
                                         <!-- Reason Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}" IsVisible="{Binding ShowReasonColumn}">
                                             <TextBlock Text="{loc:Loc 'Reason'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Reason" ColumnWidths="{Binding ColumnWidths}"
@@ -187,7 +188,7 @@
                                         </Panel>
 
                                         <!-- Processed Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ProcessedColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.ProcessedColumnWidth}" IsVisible="{Binding ShowProcessedColumn}">
                                             <TextBlock Text="{loc:Loc 'Processed'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Processed" ColumnWidths="{Binding ColumnWidths}"
@@ -195,7 +196,7 @@
                                         </Panel>
 
                                         <!-- Refund Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.RefundColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.RefundColumnWidth}" IsVisible="{Binding ShowRefundColumn}">
                                             <TextBlock Text="{loc:Loc 'Refund'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Refund" ColumnWidths="{Binding ColumnWidths}"
@@ -203,7 +204,7 @@
                                         </Panel>
 
                                         <!-- Status Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
+                                        <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
                                             <TextBlock Text="{loc:Loc 'Status'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
@@ -240,7 +241,8 @@
                                                         </Border.Styles>
                                                         <StackPanel Orientation="Horizontal">
                                                             <!-- Transaction ID -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowIdColumn}">
                                                                 <TextBlock Text="{Binding Id}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
@@ -252,7 +254,8 @@
                                                             </Panel>
 
                                                             <!-- Product -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowProductColumn}">
                                                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                     <TextBlock Text="{Binding ProductNames}"
                                                                                FontSize="12"
@@ -266,7 +269,8 @@
                                                             </Panel>
 
                                                             <!-- Supplier/Customer -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.SupplierCustomerColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.SupplierCustomerColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowSupplierCustomerColumn}">
                                                                 <TextBlock Text="{Binding SupplierOrCustomerName}"
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -277,7 +281,8 @@
                                                             </Panel>
 
                                                             <!-- Return Date -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowDateColumn}">
                                                                 <TextBlock Text="{Binding DateFormatted}"
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -287,7 +292,8 @@
                                                             </Panel>
 
                                                             <!-- Reason -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowReasonColumn}">
                                                                 <TextBlock Text="{Binding Reason}"
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -298,7 +304,8 @@
                                                             </Panel>
 
                                                             <!-- Processed By -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProcessedColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProcessedColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowProcessedColumn}">
                                                                 <TextBlock Text="{Binding ProcessedBy}"
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -309,7 +316,8 @@
                                                             </Panel>
 
                                                             <!-- Refund Amount -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.RefundColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.RefundColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowRefundColumn}">
                                                                 <TextBlock Text="{Binding RefundAmountFormatted}"
                                                                            FontSize="12"
                                                                            FontWeight="SemiBold"
@@ -320,7 +328,8 @@
                                                             </Panel>
 
                                                             <!-- Status Badge -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowStatusColumn}">
                                                                 <Border CornerRadius="4"
                                                                         Padding="6,3"
                                                                         Background="{Binding StatusBadgeBackground}"
@@ -701,6 +710,25 @@
                 </Grid>
             </Border>
         </Border>
+
+        <!-- Column Visibility Menu -->
+        <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                        MenuX="{Binding ColumnMenuX}"
+                                        MenuY="{Binding ColumnMenuY}"
+                                        CloseCommand="{Binding CloseColumnMenuCommand}">
+            <controls:ColumnVisibilityMenu.ColumnsContent>
+                <StackPanel Spacing="4">
+                    <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc ID}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowSupplierCustomerColumn}" Content="{loc:Loc 'Supplier/Customer'}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowProcessedColumn}" Content="{loc:Loc Processed}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowRefundColumn}" Content="{loc:Loc Refund}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+                </StackPanel>
+            </controls:ColumnVisibilityMenu.ColumnsContent>
+        </controls:ColumnVisibilityMenu>
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
