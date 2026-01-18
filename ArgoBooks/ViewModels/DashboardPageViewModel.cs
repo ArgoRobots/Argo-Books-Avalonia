@@ -1230,7 +1230,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void ScanReceipt()
     {
         App.NavigationService?.NavigateTo("Receipts");
-        App.ReceiptsModalsViewModel?.OpenScanModal();
+        // Note: Scan modal requires a file path, so just navigate to receipts page
     }
 
     [RelayCommand]
