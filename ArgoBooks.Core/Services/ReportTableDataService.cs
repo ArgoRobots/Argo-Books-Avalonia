@@ -32,7 +32,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets sales transaction data for table display.
     /// </summary>
-    public List<TransactionTableRow> GetSalesTableData(TableReportElement tableConfig)
+    public List<TransactionTableRow> GetRevenueTableData(TableReportElement tableConfig)
     {
         if (companyData?.Revenues == null)
             return [];
@@ -102,7 +102,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets purchase transaction data for table display.
     /// </summary>
-    public List<TransactionTableRow> GetPurchasesTableData(TableReportElement tableConfig)
+    public List<TransactionTableRow> GetExpensesTableData(TableReportElement tableConfig)
     {
         if (companyData?.Expenses == null)
             return [];
@@ -180,11 +180,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         };
 
         var sales = filters.TransactionType is TransactionType.Revenue or TransactionType.Both
-            ? GetSalesTableData(noMaxConfig)
+            ? GetRevenueTableData(noMaxConfig)
             : [];
 
         var purchases = filters.TransactionType is TransactionType.Expenses or TransactionType.Both
-            ? GetPurchasesTableData(noMaxConfig)
+            ? GetExpensesTableData(noMaxConfig)
             : [];
 
         var combined = sales.Concat(purchases).ToList();
@@ -256,7 +256,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             Id = returnRecord.Id,
             ReturnDate = returnRecord.ReturnDate,
             OriginalTransactionId = returnRecord.OriginalTransactionId,
-            ReturnType = "Sale", // Returns are from sales
+            ReturnType = "Revenue", // Returns are from revenue transactions
             ProductName = product?.Name ?? (returnRecord.Items.Count > 1 ? $"Multiple ({returnRecord.Items.Count} items)" : "Unknown"),
             CategoryName = category?.Name ?? "Unknown",
             Quantity = returnRecord.Items.Sum(i => i.Quantity),
@@ -348,8 +348,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             stats.TotalRevenue = sales.Sum(s => s.Total);
             stats.RevenueTransactionCount = sales.Count;
             stats.AverageRevenueTransaction = sales.Count > 0 ? stats.TotalRevenue / sales.Count : 0;
-            stats.LargestSale = sales.Count > 0 ? sales.Max(s => s.Total) : 0;
-            stats.SmallestSale = sales.Count > 0 ? sales.Min(s => s.Total) : 0;
+            stats.LargestRevenue = sales.Count > 0 ? sales.Max(s => s.Total) : 0;
+            stats.SmallestRevenue = sales.Count > 0 ? sales.Min(s => s.Total) : 0;
         }
 
         // Calculate expense statistics
@@ -586,7 +586,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 {
                     AccountantId = kvp.Key,
                     AccountantName = accountant?.Name ?? "Unknown",
-                    TotalSales = kvp.Value.Revenues,
+                    TotalRevenue = kvp.Value.Revenues,
                     TotalPurchases = kvp.Value.Expenses,
                     TotalVolume = kvp.Value.Revenues + kvp.Value.Expenses,
                     TransactionCount = kvp.Value.Count
@@ -670,8 +670,8 @@ public class ReportSummaryStatistics
     public decimal TotalRevenue { get; set; }
     public int RevenueTransactionCount { get; set; }
     public decimal AverageRevenueTransaction { get; set; }
-    public decimal LargestSale { get; set; }
-    public decimal SmallestSale { get; set; }
+    public decimal LargestRevenue { get; set; }
+    public decimal SmallestRevenue { get; set; }
 
     // Expenses
     public decimal TotalExpenses { get; set; }
@@ -750,7 +750,7 @@ public class AccountantAnalysisRow
 {
     public string AccountantId { get; set; } = string.Empty;
     public string AccountantName { get; set; } = string.Empty;
-    public decimal TotalSales { get; set; }
+    public decimal TotalRevenue { get; set; }
     public decimal TotalPurchases { get; set; }
     public decimal TotalVolume { get; set; }
     public int TransactionCount { get; set; }

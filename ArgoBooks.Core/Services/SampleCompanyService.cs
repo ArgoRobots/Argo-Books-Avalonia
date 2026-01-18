@@ -244,18 +244,18 @@ public class SampleCompanyService
             catch (ArgumentOutOfRangeException) { return dt; }
         }
 
-        foreach (var sale in data.Revenues)
+        foreach (var revenue in data.Revenues)
         {
-            sale.Date = Shift(sale.Date);
-            sale.CreatedAt = Shift(sale.CreatedAt);
-            sale.UpdatedAt = Shift(sale.UpdatedAt);
+            revenue.Date = Shift(revenue.Date);
+            revenue.CreatedAt = Shift(revenue.CreatedAt);
+            revenue.UpdatedAt = Shift(revenue.UpdatedAt);
         }
 
-        foreach (var purchase in data.Expenses)
+        foreach (var expense in data.Expenses)
         {
-            purchase.Date = Shift(purchase.Date);
-            purchase.CreatedAt = Shift(purchase.CreatedAt);
-            purchase.UpdatedAt = Shift(purchase.UpdatedAt);
+            expense.Date = Shift(expense.Date);
+            expense.CreatedAt = Shift(expense.CreatedAt);
+            expense.UpdatedAt = Shift(expense.UpdatedAt);
         }
 
         foreach (var invoice in data.Invoices)

@@ -93,7 +93,7 @@ public class OpenAiService : IOpenAiService
 ## Existing Suppliers
 {suppliersJson}
 
-## Existing Categories (Purchase/Expense type)
+## Existing Categories (Expense type)
 {categoriesJson}
 
 ## Instructions

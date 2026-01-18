@@ -642,25 +642,25 @@ public class InsightsService : IInsightsService
 
         var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveTotalUSD).ToList());
 
-        var largestSale = currentSales.OrderByDescending(s => s.EffectiveTotalUSD).First();
+        var largestRevenue = currentSales.OrderByDescending(s => s.EffectiveTotalUSD).First();
 
         if (stats.StandardDeviation > 0)
         {
-            var zScore = ((double)largestSale.EffectiveTotalUSD - stats.Mean) / stats.StandardDeviation;
+            var zScore = ((double)largestRevenue.EffectiveTotalUSD - stats.Mean) / stats.StandardDeviation;
 
             if (zScore > 3.0) // Very unusual
             {
-                var customer = companyData.GetCustomer(largestSale.CustomerId ?? "");
+                var customer = companyData.GetCustomer(largestRevenue.CustomerId ?? "");
                 var customerName = customer?.Name ?? "a customer";
 
                 return new InsightItem
                 {
                     Title = "Unusually Large Transaction",
-                    Description = $"A sale of {FormatCurrency(largestSale.EffectiveTotalUSD)} to {customerName} on {largestSale.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
+                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveTotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
                     Recommendation = "Verify this transaction is correct and consider nurturing this high-value customer relationship.",
                     Severity = InsightSeverity.Info,
                     Category = InsightCategory.Anomaly,
-                    MetricValue = largestSale.EffectiveTotalUSD
+                    MetricValue = largestRevenue.EffectiveTotalUSD
                 };
             }
         }

@@ -30,7 +30,7 @@ public class ChartDataPoint
 
 /// <summary>
 /// Represents a series of data points for multi-series charts.
-/// Used for charts like Sales vs Expenses that have multiple data series.
+/// Used for charts like Revenue vs Expenses that have multiple data series.
 /// </summary>
 public class ChartSeriesData
 {

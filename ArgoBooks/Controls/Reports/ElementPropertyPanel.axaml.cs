@@ -736,20 +736,20 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-label" }
         });
 
-        var totalSalesCheck = new CheckBox
+        var totalRevenueCheck = new CheckBox
         {
             Content = Tr("Total Sales"),
             Classes = { "property-checkbox" },
-            IsChecked = summary.ShowTotalSales
+            IsChecked = summary.ShowTotalRevenue
         };
-        totalSalesCheck.IsCheckedChanged += (_, _) =>
+        totalRevenueCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
-            var oldValue = summary.ShowTotalSales;
-            summary.ShowTotalSales = totalSalesCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowTotalSales), oldValue, summary.ShowTotalSales);
+            var oldValue = summary.ShowTotalRevenue;
+            summary.ShowTotalRevenue = totalRevenueCheck.IsChecked ?? true;
+            OnPropertyChanged(summary, nameof(summary.ShowTotalRevenue), oldValue, summary.ShowTotalRevenue);
         };
-        panel.Children.Add(totalSalesCheck);
+        panel.Children.Add(totalRevenueCheck);
 
         var transactionCountCheck = new CheckBox
         {

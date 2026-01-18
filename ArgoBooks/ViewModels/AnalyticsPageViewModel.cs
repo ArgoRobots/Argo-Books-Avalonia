@@ -371,13 +371,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private string? _purchasesChangeText;
 
     [ObservableProperty]
-    private string _totalSales = "$0.00";
+    private string _totalRevenue = "$0.00";
 
     [ObservableProperty]
-    private double? _salesChangeValue;
+    private double? _revenueChangeValue;
 
     [ObservableProperty]
-    private string? _salesChangeText;
+    private string? _revenueChangeText;
 
     [ObservableProperty]
     private string _netProfit = "$0.00";
@@ -720,16 +720,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private bool _hasProfitTrendsData;
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _salesVsExpensesSeries = [];
+    private ObservableCollection<ISeries> _revenueVsExpensesSeries = [];
 
     [ObservableProperty]
-    private Axis[] _salesVsExpensesXAxes = [];
+    private Axis[] _revenueVsExpensesXAxes = [];
 
     [ObservableProperty]
-    private Axis[] _salesVsExpensesYAxes = [];
+    private Axis[] _revenueVsExpensesYAxes = [];
 
     [ObservableProperty]
-    private bool _hasSalesVsExpensesData;
+    private bool _hasRevenueVsExpensesData;
 
     #endregion
 
@@ -959,11 +959,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     // Dashboard Tab Chart Titles
     public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalProfits.GetDisplayName());
-    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.SalesVsExpenses.GetDisplayName());
-    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalRevenue.GetDisplayName());
-    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueDistribution.GetDisplayName());
-    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalExpenses.GetDisplayName());
-    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpensesDistribution.GetDisplayName());
+    public LabelVisual RevenueVsExpensesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueVsExpenses.GetDisplayName());
+    public LabelVisual RevenueTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalRevenue.GetDisplayName());
+    public LabelVisual RevenueDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueDistribution.GetDisplayName());
+    public LabelVisual ExpenseTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalExpenses.GetDisplayName());
+    public LabelVisual ExpenseDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpensesDistribution.GetDisplayName());
 
     // Geographic Tab Chart Titles
     public LabelVisual CountriesOfOriginTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CountriesOfOrigin.GetDisplayName());
@@ -996,7 +996,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public LabelVisual FinancialImpactOfReturnsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnFinancialImpact.GetDisplayName());
     public LabelVisual ReturnsByCategoryTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnsByCategory.GetDisplayName());
     public LabelVisual ReturnsByProductTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnsByProduct.GetDisplayName());
-    public LabelVisual PurchaseVsSaleReturnsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.PurchaseVsSaleReturns.GetDisplayName());
+    public LabelVisual ExpenseVsRevenueReturnsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpenseVsRevenueReturns.GetDisplayName());
 
     // Losses Tab Chart Titles
     public LabelVisual LossesOverTimeTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesOverTime.GetDisplayName());
@@ -1004,15 +1004,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public LabelVisual FinancialImpactOfLossesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossFinancialImpact.GetDisplayName());
     public LabelVisual LossesByCategoryTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesByCategory.GetDisplayName());
     public LabelVisual LossesByProductTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesByProduct.GetDisplayName());
-    public LabelVisual PurchaseVsSaleLossesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.PurchaseVsSaleLosses.GetDisplayName());
+    public LabelVisual ExpenseVsRevenueLossesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpenseVsRevenueLosses.GetDisplayName());
 
     /// <summary>
     /// Chart title property names for batch notification.
     /// </summary>
     private static readonly string[] ChartTitlePropertyNames =
     [
-        nameof(ProfitOverTimeTitle), nameof(SalesVsExpensesTitle), nameof(SalesTrendsTitle),
-        nameof(SalesDistributionTitle), nameof(PurchaseTrendsTitle), nameof(PurchaseDistributionTitle),
+        nameof(ProfitOverTimeTitle), nameof(RevenueVsExpensesTitle), nameof(RevenueTrendsTitle),
+        nameof(RevenueDistributionTitle), nameof(ExpenseTrendsTitle), nameof(ExpenseDistributionTitle),
         nameof(CountriesOfOriginTitle), nameof(CompaniesOfOriginTitle), nameof(CountriesOfDestinationTitle),
         nameof(CompaniesOfDestinationTitle), nameof(WorldMapOverviewTitle), nameof(TransactionsByAccountantTitle),
         nameof(WorkloadDistributionTitle), nameof(AverageTransactionValueTitle),
@@ -1020,9 +1020,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         nameof(TopCustomersByRevenueTitle), nameof(CustomerPaymentStatusTitle), nameof(CustomerGrowthTitle),
         nameof(CustomerLifetimeValueTitle), nameof(ActiveVsInactiveCustomersTitle), nameof(RentalsPerCustomerTitle),
         nameof(ReturnsOverTimeTitle), nameof(ReturnReasonsTitle), nameof(FinancialImpactOfReturnsTitle),
-        nameof(ReturnsByCategoryTitle), nameof(ReturnsByProductTitle), nameof(PurchaseVsSaleReturnsTitle),
+        nameof(ReturnsByCategoryTitle), nameof(ReturnsByProductTitle), nameof(ExpenseVsRevenueReturnsTitle),
         nameof(LossesOverTimeTitle), nameof(LossReasonsTitle), nameof(FinancialImpactOfLossesTitle),
-        nameof(LossesByCategoryTitle), nameof(LossesByProductTitle), nameof(PurchaseVsSaleLossesTitle)
+        nameof(LossesByCategoryTitle), nameof(LossesByProductTitle), nameof(ExpenseVsRevenueLossesTitle)
     ];
 
     /// <summary>
@@ -1356,7 +1356,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadRevenueTrendsChart(data);
         LoadRevenueDistributionChart(data);
         LoadProfitTrendsChart(data);
-        LoadSalesVsExpensesChart(data);
+        LoadRevenueVsExpensesChart(data);
 
         // Geographic charts
         LoadCountriesOfOriginChart(data);
@@ -1433,13 +1433,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         HasProfitTrendsData = series.Count > 0;
     }
 
-    private void LoadSalesVsExpensesChart(CompanyData data)
+    private void LoadRevenueVsExpensesChart(CompanyData data)
     {
-        var (series, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
-        SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        HasSalesVsExpensesData = series.Count > 0;
+        var (series, dates) = _chartLoaderService.LoadRevenueVsExpensesChart(data, StartDate, EndDate);
+        RevenueVsExpensesSeries = series;
+        RevenueVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
+        RevenueVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        HasRevenueVsExpensesData = series.Count > 0;
     }
 
     private void LoadCountriesOfOriginChart(CompanyData data)
@@ -1656,9 +1656,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Calculate totals
         var totalPurchasesAmount = purchases.Sum(p => p.Total);
-        var totalSalesAmount = sales.Sum(s => s.Total);
-        var netProfit = totalSalesAmount - totalPurchasesAmount;
-        var margin = totalSalesAmount > 0 ? (netProfit / totalSalesAmount) * 100 : 0;
+        var totalRevenueAmount = sales.Sum(s => s.Total);
+        var netProfit = totalRevenueAmount - totalPurchasesAmount;
+        var margin = totalRevenueAmount > 0 ? (netProfit / totalRevenueAmount) * 100 : 0;
 
         // Calculate previous period for comparison
         var periodLength = EndDate - StartDate;
@@ -1675,7 +1675,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Calculate change percentages (only meaningful if there's previous data)
         var purchasesChange = prevPurchases > 0 ? ((totalPurchasesAmount - prevPurchases) / prevPurchases) * 100 : 0;
-        var salesChange = prevSales > 0 ? ((totalSalesAmount - prevSales) / prevSales) * 100 : 0;
+        var revenueChange = prevSales > 0 ? ((totalRevenueAmount - prevSales) / prevSales) * 100 : 0;
         var profitChange = prevNetProfit != 0 ? ((netProfit - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
         var marginChange = margin - prevMargin;
 
@@ -1684,9 +1684,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         PurchasesChangeValue = hasPrevPeriodData && prevPurchases > 0 ? (double)purchasesChange : null;
         PurchasesChangeText = hasPrevPeriodData && prevPurchases > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
 
-        TotalSales = CurrencyService.FormatWholeNumber(totalSalesAmount);
-        SalesChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)salesChange : null;
-        SalesChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(salesChange):F1}%" : null;
+        TotalRevenue = CurrencyService.FormatWholeNumber(totalRevenueAmount);
+        RevenueChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)revenueChange : null;
+        RevenueChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(revenueChange):F1}%" : null;
 
         NetProfit = CurrencyService.FormatWholeNumber(netProfit);
         ProfitChangeValue = hasPrevPeriodData && prevNetProfit != 0 ? (double)profitChange : null;

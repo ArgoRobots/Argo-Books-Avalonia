@@ -11,7 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for the Expenses page displaying purchase/expense transactions.
+/// ViewModel for the Expenses page displaying expense transactions.
 /// </summary>
 public partial class ExpensesPageViewModel : SortablePageViewModelBase
 {

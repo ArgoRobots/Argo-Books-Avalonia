@@ -24,7 +24,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<ReportTemplateOption> ReportTemplateOptions { get; } =
     [
-        new(ReportTemplateFactory.TemplateNames.MonthlySales, "Monthly Sales", "Summarize monthly sales data",
+        new(ReportTemplateFactory.TemplateNames.MonthlyRevenue, "Monthly Sales", "Summarize monthly revenue data",
             "M3 13.125C3 12.504 3.504 12 4.125 12H6.375C6.996 12 7.5 12.504 7.5 13.125V19.875C7.5 20.496 6.996 21 6.375 21H4.125C3.504 21 3 20.496 3 19.875V13.125ZM9.75 8.625C9.75 8.004 10.254 7.5 10.875 7.5H13.125C13.746 7.5 14.25 8.004 14.25 8.625V19.875C14.25 20.496 13.746 21 13.125 21H10.875C10.254 21 9.75 20.496 9.75 19.875V8.625ZM16.5 4.125C16.5 3.504 17.004 3 17.625 3H19.875C20.496 3 21 3.504 21 4.125V19.875C21 20.496 20.496 21 19.875 21H17.625C17.004 21 16.5 20.496 16.5 19.875V4.125Z",
             "#2196F3", "#E3F2FD"),
         new(ReportTemplateFactory.TemplateNames.FinancialOverview, "Financial Overview", "Full financial breakdown",
@@ -1945,7 +1945,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         var financialCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.TotalProfits, "Total Profits", "Profit over time", "Financial", trendUpIcon, financialColor, financialLight),
-            new(ChartDataType.SalesVsExpenses, "Expenses vs Revenue", "Compare revenue and costs", "Financial", compareIcon, financialColor, financialLight),
+            new(ChartDataType.RevenueVsExpenses, "Expenses vs Revenue", "Compare revenue and costs", "Financial", compareIcon, financialColor, financialLight),
             new(ChartDataType.GrowthRates, "Growth Rates", "Period-over-period growth", "Financial", growthIcon, financialColor, financialLight)
         };
 
@@ -1993,7 +1993,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             new(ChartDataType.ReturnFinancialImpact, "Return Financial Impact", "Financial impact of returns", "Returns", impactIcon, returnColor, returnLight),
             new(ChartDataType.ReturnsByCategory, "Returns by Category", "Returns by category", "Returns", categoryIcon, returnColor, returnLight),
             new(ChartDataType.ReturnsByProduct, "Returns by Product", "Returns by product", "Returns", productIcon, returnColor, returnLight),
-            new(ChartDataType.PurchaseVsSaleReturns, "Purchase vs Sale Returns", "Purchase vs sale returns", "Returns", vsIcon, returnColor, returnLight)
+            new(ChartDataType.ExpenseVsRevenueReturns, "Expense vs Revenue Returns", "Expense vs revenue returns", "Returns", vsIcon, returnColor, returnLight)
         };
 
         // Loss charts
@@ -2004,7 +2004,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             new(ChartDataType.LossFinancialImpact, "Loss Financial Impact", "Financial impact of losses", "Losses", impactIcon, lossColor, lossLight),
             new(ChartDataType.LossesByCategory, "Losses by Category", "Losses by category", "Losses", categoryIcon, lossColor, lossLight),
             new(ChartDataType.LossesByProduct, "Losses by Product", "Losses by product", "Losses", productIcon, lossColor, lossLight),
-            new(ChartDataType.PurchaseVsSaleLosses, "Purchase vs Sale Losses", "Purchase vs sale losses", "Losses", vsIcon, lossColor, lossLight)
+            new(ChartDataType.ExpenseVsRevenueLosses, "Expense vs Revenue Losses", "Expense vs revenue losses", "Losses", vsIcon, lossColor, lossLight)
         };
 
         // Add all charts to AvailableCharts (flat list for backward compatibility)

@@ -811,19 +811,19 @@ public class DataValidatorTests
 
     #endregion
 
-    #region Sale Validation Tests
+    #region Revenue Validation Tests
 
     [Fact]
-    public void ValidateRevenue_ValidSale_ReturnsSuccess()
+    public void ValidateRevenue_ValidRevenue_ReturnsSuccess()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
-            Id = "SAL-001",
+            Id = "REV-001",
             LineItems = [new LineItem { Description = "Product", Quantity = 2, UnitPrice = 50 }],
             Total = 100
         };
 
-        var result = _validator.ValidateRevenue(sale);
+        var result = _validator.ValidateRevenue(revenue);
 
         Assert.True(result.IsValid);
     }
@@ -831,9 +831,9 @@ public class DataValidatorTests
     [Fact]
     public void ValidateRevenue_EmptyLineItems_ReturnsError()
     {
-        var sale = new Revenue { Id = "SAL-001", LineItems = [] };
+        var revenue = new Revenue { Id = "REV-001", LineItems = [] };
 
-        var result = _validator.ValidateRevenue(sale);
+        var result = _validator.ValidateRevenue(revenue);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "LineItems");
@@ -842,14 +842,14 @@ public class DataValidatorTests
     [Fact]
     public void ValidateRevenue_NegativeTotal_ReturnsError()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
-            Id = "SAL-001",
+            Id = "REV-001",
             LineItems = [new LineItem { Description = "Product", Quantity = 1, UnitPrice = 50 }],
             Total = -10
         };
 
-        var result = _validator.ValidateRevenue(sale);
+        var result = _validator.ValidateRevenue(revenue);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Total");
@@ -858,14 +858,14 @@ public class DataValidatorTests
     [Fact]
     public void ValidateRevenue_NonExistentCustomer_ReturnsError()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
-            Id = "SAL-001",
+            Id = "REV-001",
             CustomerId = "CUS-999",
             LineItems = [new LineItem { Description = "Product", Quantity = 1, UnitPrice = 50 }]
         };
 
-        var result = _validator.ValidateRevenue(sale);
+        var result = _validator.ValidateRevenue(revenue);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "CustomerId");
@@ -875,34 +875,34 @@ public class DataValidatorTests
     public void ValidateRevenue_ValidCustomer_ReturnsSuccess()
     {
         _companyData.Customers.Add(new Customer { Id = "CUS-001", Name = "John Doe" });
-        var sale = new Revenue
+        var revenue = new Revenue
         {
-            Id = "SAL-001",
+            Id = "REV-001",
             CustomerId = "CUS-001",
             LineItems = [new LineItem { Description = "Product", Quantity = 1, UnitPrice = 50 }],
             Total = 50
         };
 
-        var result = _validator.ValidateRevenue(sale);
+        var result = _validator.ValidateRevenue(revenue);
 
         Assert.True(result.IsValid);
     }
 
     #endregion
 
-    #region Purchase Validation Tests
+    #region Expense Validation Tests
 
     [Fact]
-    public void ValidateExpense_ValidPurchase_ReturnsSuccess()
+    public void ValidateExpense_ValidExpense_ReturnsSuccess()
     {
-        var purchase = new Expense
+        var expense = new Expense
         {
-            Id = "PUR-001",
+            Id = "EXP-001",
             Description = "Office Supplies",
             Amount = 200
         };
 
-        var result = _validator.ValidateExpense(purchase);
+        var result = _validator.ValidateExpense(expense);
 
         Assert.True(result.IsValid);
     }
@@ -910,9 +910,9 @@ public class DataValidatorTests
     [Fact]
     public void ValidateExpense_EmptyDescription_ReturnsError()
     {
-        var purchase = new Expense { Id = "PUR-001", Description = "" };
+        var expense = new Expense { Id = "EXP-001", Description = "" };
 
-        var result = _validator.ValidateExpense(purchase);
+        var result = _validator.ValidateExpense(expense);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Description");
@@ -921,9 +921,9 @@ public class DataValidatorTests
     [Fact]
     public void ValidateExpense_NegativeAmount_ReturnsError()
     {
-        var purchase = new Expense { Id = "PUR-001", Description = "Office Supplies", Amount = -50 };
+        var expense = new Expense { Id = "EXP-001", Description = "Office Supplies", Amount = -50 };
 
-        var result = _validator.ValidateExpense(purchase);
+        var result = _validator.ValidateExpense(expense);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Amount");
@@ -932,14 +932,14 @@ public class DataValidatorTests
     [Fact]
     public void ValidateExpense_NonExistentSupplier_ReturnsError()
     {
-        var purchase = new Expense
+        var expense = new Expense
         {
-            Id = "PUR-001",
+            Id = "EXP-001",
             Description = "Office Supplies",
             SupplierId = "SUP-999"
         };
 
-        var result = _validator.ValidateExpense(purchase);
+        var result = _validator.ValidateExpense(expense);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "SupplierId");
@@ -949,15 +949,15 @@ public class DataValidatorTests
     public void ValidateExpense_ValidSupplier_ReturnsSuccess()
     {
         _companyData.Suppliers.Add(new Supplier { Id = "SUP-001", Name = "Acme Corp" });
-        var purchase = new Expense
+        var expense = new Expense
         {
-            Id = "PUR-001",
+            Id = "EXP-001",
             Description = "Office Supplies",
             SupplierId = "SUP-001",
             Amount = 200
         };
 
-        var result = _validator.ValidateExpense(purchase);
+        var result = _validator.ValidateExpense(expense);
 
         Assert.True(result.IsValid);
     }

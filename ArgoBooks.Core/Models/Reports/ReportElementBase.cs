@@ -848,8 +848,8 @@ public class SummaryReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = true;
 
-    [JsonPropertyName("showTotalSales")]
-    public bool ShowTotalSales
+    [JsonPropertyName("showTotalRevenue")]
+    public bool ShowTotalRevenue
     {
         get;
         set => SetField(ref field, value);
@@ -942,7 +942,7 @@ public class SummaryReportElement : ReportElementBase
             TransactionType = TransactionType,
             IncludeReturns = IncludeReturns,
             IncludeLosses = IncludeLosses,
-            ShowTotalSales = ShowTotalSales,
+            ShowTotalRevenue = ShowTotalRevenue,
             ShowTotalTransactions = ShowTotalTransactions,
             ShowAverageValue = ShowAverageValue,
             ShowGrowthRate = ShowGrowthRate,

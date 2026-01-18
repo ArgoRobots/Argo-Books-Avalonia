@@ -14,7 +14,7 @@ public static class ReportTemplateFactory
     public static class TemplateNames
     {
         public const string Custom = "Custom Report";
-        public const string MonthlySales = "Monthly Sales Report";
+        public const string MonthlyRevenue = "Monthly Revenue Report";
         public const string FinancialOverview = "Financial Overview";
         public const string PerformanceAnalysis = "Performance Analysis";
         public const string ReturnsAnalysis = "Returns Analysis";
@@ -30,7 +30,7 @@ public static class ReportTemplateFactory
         return
         [
             TemplateNames.Custom,
-            TemplateNames.MonthlySales,
+            TemplateNames.MonthlyRevenue,
             TemplateNames.FinancialOverview,
             TemplateNames.PerformanceAnalysis,
             TemplateNames.ReturnsAnalysis,
@@ -48,7 +48,7 @@ public static class ReportTemplateFactory
             return false;
 
         return templateName == TemplateNames.Custom ||
-               templateName == TemplateNames.MonthlySales ||
+               templateName == TemplateNames.MonthlyRevenue ||
                templateName == TemplateNames.FinancialOverview ||
                templateName == TemplateNames.PerformanceAnalysis ||
                templateName == TemplateNames.ReturnsAnalysis ||
@@ -63,7 +63,7 @@ public static class ReportTemplateFactory
     {
         return templateName switch
         {
-            TemplateNames.MonthlySales => CreateMonthlySalesTemplate(),
+            TemplateNames.MonthlyRevenue => CreateMonthlyRevenueTemplate(),
             TemplateNames.FinancialOverview => CreateFinancialOverviewTemplate(),
             TemplateNames.PerformanceAnalysis => CreatePerformanceAnalysisTemplate(),
             TemplateNames.ReturnsAnalysis => CreateReturnsAnalysisTemplate(),
@@ -74,13 +74,13 @@ public static class ReportTemplateFactory
     }
 
     /// <summary>
-    /// Creates a monthly sales report template.
+    /// Creates a monthly revenue report template.
     /// </summary>
-    public static ReportConfiguration CreateMonthlySalesTemplate()
+    public static ReportConfiguration CreateMonthlyRevenueTemplate()
     {
         var config = new ReportConfiguration
         {
-            Title = "Monthly Sales Report",
+            Title = "Monthly Revenue Report",
             PageSize = PageSize.A4,
             PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
@@ -129,7 +129,7 @@ public static class ReportTemplateFactory
         [
             ChartDataType.TotalRevenue,
             ChartDataType.TotalExpenses,
-            ChartDataType.SalesVsExpenses,
+            ChartDataType.RevenueVsExpenses,
             ChartDataType.TotalProfits
         ]);
 
@@ -335,7 +335,7 @@ public static class ReportTemplateFactory
 
         config.AddElement(new ChartReportElement
         {
-            ChartType = ChartDataType.SalesVsExpenses,
+            ChartType = ChartDataType.RevenueVsExpenses,
             X = grid[0, 0].X,
             Y = grid[0, 0].Y,
             Width = grid[0, 0].Width,

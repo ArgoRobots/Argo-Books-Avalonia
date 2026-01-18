@@ -399,9 +399,9 @@ public class ReportRenderer : IDisposable
     /// </summary>
     private static bool IsMultiSeriesChart(ChartDataType chartType)
     {
-        return chartType is ChartDataType.SalesVsExpenses
-            or ChartDataType.PurchaseVsSaleReturns
-            or ChartDataType.PurchaseVsSaleLosses;
+        return chartType is ChartDataType.RevenueVsExpenses
+            or ChartDataType.ExpenseVsRevenueReturns
+            or ChartDataType.ExpenseVsRevenueLosses;
     }
 
     /// <summary>
@@ -912,7 +912,7 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
-    /// Renders a multi-series bar chart (e.g., Sales vs Expenses).
+    /// Renders a multi-series bar chart (e.g., Revenue vs Expenses).
     /// </summary>
     private void RenderMultiSeriesBarChart(SKCanvas canvas, SKRect chartArea, List<ChartSeriesData> seriesData, ChartReportElement chart)
     {
@@ -1247,27 +1247,27 @@ public class ReportRenderer : IDisposable
         // Build a list of transaction records
         var transactions = new List<(DateTime Date, string Id, string Company, string Product, decimal Qty, decimal UnitPrice, decimal Total, string Status, string Accountant, decimal Shipping)>();
 
-        // Get sales (Revenue)
+        // Get revenue transactions
         if (transactionType == TransactionType.Revenue || transactionType == TransactionType.Both)
         {
-            foreach (var sale in _companyData.Revenues)
+            foreach (var revenue in _companyData.Revenues)
             {
-                var customerName = _companyData.Customers.FirstOrDefault(c => c.Id == sale.CustomerId)?.Name ?? "N/A";
-                var productName = sale.LineItems.FirstOrDefault()?.Description ?? sale.Description;
-                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == sale.AccountantId)?.Name ?? "";
-                transactions.Add((sale.Date, sale.Id, customerName, productName, sale.Quantity, sale.UnitPrice, sale.Total, sale.PaymentStatus, accountantName, sale.ShippingCost));
+                var customerName = _companyData.Customers.FirstOrDefault(c => c.Id == revenue.CustomerId)?.Name ?? "N/A";
+                var productName = revenue.LineItems.FirstOrDefault()?.Description ?? revenue.Description;
+                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == revenue.AccountantId)?.Name ?? "";
+                transactions.Add((revenue.Date, revenue.Id, customerName, productName, revenue.Quantity, revenue.UnitPrice, revenue.Total, revenue.PaymentStatus, accountantName, revenue.ShippingCost));
             }
         }
 
-        // Get purchases (Expenses)
+        // Get expense transactions
         if (transactionType == TransactionType.Expenses || transactionType == TransactionType.Both)
         {
-            foreach (var purchase in _companyData.Expenses)
+            foreach (var expense in _companyData.Expenses)
             {
-                var supplierName = _companyData.Suppliers.FirstOrDefault(s => s.Id == purchase.SupplierId)?.Name ?? "N/A";
-                var productName = purchase.LineItems.FirstOrDefault()?.Description ?? purchase.Description;
-                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == purchase.AccountantId)?.Name ?? "";
-                transactions.Add((purchase.Date, purchase.Id, supplierName, productName, purchase.Quantity, purchase.UnitPrice, purchase.Total, "Paid", accountantName, purchase.ShippingCost));
+                var supplierName = _companyData.Suppliers.FirstOrDefault(s => s.Id == expense.SupplierId)?.Name ?? "N/A";
+                var productName = expense.LineItems.FirstOrDefault()?.Description ?? expense.Description;
+                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == expense.AccountantId)?.Name ?? "";
+                transactions.Add((expense.Date, expense.Id, supplierName, productName, expense.Quantity, expense.UnitPrice, expense.Total, "Paid", accountantName, expense.ShippingCost));
             }
         }
 
@@ -1531,9 +1531,9 @@ public class ReportRenderer : IDisposable
 
         var lines = new List<string>();
 
-        if (summary.ShowTotalSales)
+        if (summary.ShowTotalRevenue)
         {
-            var total = CalculateTotalSales(summary);
+            var total = CalculateTotalRevenue(summary);
             var label = summary.TransactionType == TransactionType.Expenses ? Tr("Total Expenses") : Tr("Total Revenue");
             lines.Add($"{label}: ${total:N2}");
         }
@@ -1838,7 +1838,7 @@ public class ReportRenderer : IDisposable
 
     #region Statistics Calculation
 
-    private decimal CalculateTotalSales(SummaryReportElement summary)
+    private decimal CalculateTotalRevenue(SummaryReportElement summary)
     {
         if (_companyData == null) return 0;
 

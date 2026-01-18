@@ -289,32 +289,32 @@ public class FileService(
     /// </summary>
     private static void MigrateCurrencyData(CompanyData data)
     {
-        // Migrate Sales
-        foreach (var sale in data.Revenues)
+        // Migrate Revenues
+        foreach (var revenue in data.Revenues)
         {
-            if (sale.TotalUSD == 0 && sale.Total != 0)
+            if (revenue.TotalUSD == 0 && revenue.Total != 0)
             {
                 // Legacy data - assume amounts are in USD
-                sale.OriginalCurrency = "USD";
-                sale.TotalUSD = sale.Total;
-                sale.UnitPriceUSD = sale.UnitPrice;
-                sale.ShippingCostUSD = sale.ShippingCost;
-                sale.TaxAmountUSD = sale.TaxAmount;
-                sale.DiscountUSD = sale.Discount;
+                revenue.OriginalCurrency = "USD";
+                revenue.TotalUSD = revenue.Total;
+                revenue.UnitPriceUSD = revenue.UnitPrice;
+                revenue.ShippingCostUSD = revenue.ShippingCost;
+                revenue.TaxAmountUSD = revenue.TaxAmount;
+                revenue.DiscountUSD = revenue.Discount;
             }
         }
 
-        // Migrate Purchases
-        foreach (var purchase in data.Expenses)
+        // Migrate Expenses
+        foreach (var expense in data.Expenses)
         {
-            if (purchase.TotalUSD == 0 && purchase.Total != 0)
+            if (expense.TotalUSD == 0 && expense.Total != 0)
             {
-                purchase.OriginalCurrency = "USD";
-                purchase.TotalUSD = purchase.Total;
-                purchase.UnitPriceUSD = purchase.UnitPrice;
-                purchase.ShippingCostUSD = purchase.ShippingCost;
-                purchase.TaxAmountUSD = purchase.TaxAmount;
-                purchase.DiscountUSD = purchase.Discount;
+                expense.OriginalCurrency = "USD";
+                expense.TotalUSD = expense.Total;
+                expense.UnitPriceUSD = expense.UnitPrice;
+                expense.ShippingCostUSD = expense.ShippingCost;
+                expense.TaxAmountUSD = expense.TaxAmount;
+                expense.DiscountUSD = expense.Discount;
             }
         }
 

@@ -258,9 +258,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets sales vs expenses comparison data.
+    /// Gets revenue vs expenses comparison data.
     /// </summary>
-    public List<ChartSeriesData> GetSalesVsExpenses()
+    public List<ChartSeriesData> GetRevenueVsExpenses()
     {
         if (companyData == null)
             return [];
@@ -269,14 +269,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allMonths = GetMonthsBetween(startDate, endDate).ToList();
 
-        // Filter to only months that have actual sales or purchase data
+        // Filter to only months that have actual revenue or expense data
         var monthsWithData = allMonths.Where(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            var hasSales = companyData.Revenues.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
-            var hasPurchases = companyData.Expenses.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
-            return hasSales || hasPurchases;
+            var hasRevenue = companyData.Revenues.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            var hasExpenses = companyData.Expenses.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
+            return hasRevenue || hasExpenses;
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -320,9 +320,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets sales vs expenses data grouped by day for granular display.
+    /// Gets revenue vs expenses data grouped by day for granular display.
     /// </summary>
-    public List<ChartSeriesData> GetSalesVsExpensesDaily()
+    public List<ChartSeriesData> GetRevenueVsExpensesDaily()
     {
         if (companyData == null)
             return [];
@@ -711,12 +711,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            foreach (var sale in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
+            foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
             {
-                var date = sale.Date.Date;
+                var date = revenue.Date.Date;
                 if (!transactionsByDate.ContainsKey(date))
                     transactionsByDate[date] = [];
-                transactionsByDate[date].Add(sale.EffectiveTotalUSD);
+                transactionsByDate[date].Add(revenue.EffectiveTotalUSD);
             }
         }
 
@@ -756,9 +756,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            foreach (var sale in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
+            foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
             {
-                var date = sale.Date.Date;
+                var date = revenue.Date.Date;
                 countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
             }
         }
@@ -790,16 +790,16 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets sales by customer country.
     /// </summary>
-    public List<ChartDataPoint> GetSalesByCountryOfOrigin()
+    public List<ChartDataPoint> GetRevenueByCountryOfOrigin()
     {
-        return GetSalesByCustomerCountry();
+        return GetRevenueByCustomerCountry();
     }
 
     /// <summary>
     /// Gets sales grouped by customer country.
     /// Used for geographic distribution charts showing where customers are located.
     /// </summary>
-    public List<ChartDataPoint> GetSalesByCustomerCountry()
+    public List<ChartDataPoint> GetRevenueByCustomerCountry()
     {
         if (companyData?.Revenues == null)
             return [];
@@ -872,7 +872,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets purchases by supplier country.
     /// </summary>
-    public List<ChartDataPoint> GetPurchasesByCountryOfDestination()
+    public List<ChartDataPoint> GetExpensesByCountryOfDestination()
     {
         if (companyData?.Expenses == null)
             return [];
@@ -899,7 +899,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets purchases by supplier company name.
     /// </summary>
-    public List<ChartDataPoint> GetPurchasesBySupplierCompany()
+    public List<ChartDataPoint> GetExpensesBySupplierCompany()
     {
         if (companyData?.Expenses == null)
             return [];
@@ -923,7 +923,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets sales by customer.
     /// </summary>
-    public List<ChartDataPoint> GetSalesByCompanyOfOrigin()
+    public List<ChartDataPoint> GetRevenueByCompanyOfOrigin()
     {
         if (companyData?.Revenues == null)
             return [];
@@ -947,7 +947,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets sales by customer company (destination companies).
     /// Only includes customers with CompanyName set.
     /// </summary>
-    public List<ChartDataPoint> GetSalesByCompanyOfDestination()
+    public List<ChartDataPoint> GetRevenueByCompanyOfDestination()
     {
         if (companyData?.Revenues == null)
             return [];
@@ -956,13 +956,13 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
-            .Select(s => new { Sale = s, Customer = companyData.GetCustomer(s.CustomerId ?? "") })
+            .Select(s => new { Revenue = s, Customer = companyData.GetCustomer(s.CustomerId ?? "") })
             .Where(x => x.Customer != null && !string.IsNullOrEmpty(x.Customer.CompanyName))
             .GroupBy(x => x.Customer!.CompanyName)
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key!,
-                Value = (double)g.Sum(x => x.Sale.EffectiveTotalUSD)
+                Value = (double)g.Sum(x => x.Revenue.EffectiveTotalUSD)
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -1029,12 +1029,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var shippingByDate = new Dictionary<DateTime, List<decimal>>();
 
-        foreach (var sale in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
+        foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            var date = sale.Date.Date;
+            var date = revenue.Date.Date;
             if (!shippingByDate.ContainsKey(date))
                 shippingByDate[date] = [];
-            shippingByDate[date].Add(sale.ShippingCost);
+            shippingByDate[date].Add(revenue.ShippingCost);
         }
 
         foreach (var purchase in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
@@ -1072,18 +1072,18 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var accountantData = new Dictionary<string, int>();
 
-        // Sales by accountant
-        foreach (var sale in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
+        // Revenue by accountant
+        foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            var accountantName = companyData.GetAccountant(sale.AccountantId ?? "")?.Name ?? "Unknown";
+            var accountantName = companyData.GetAccountant(revenue.AccountantId ?? "")?.Name ?? "Unknown";
             accountantData.TryAdd(accountantName, 0);
             accountantData[accountantName] += 1;
         }
 
-        // Purchases by accountant
-        foreach (var purchase in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
+        // Expenses by accountant
+        foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
-            var accountantName = companyData.GetAccountant(purchase.AccountantId ?? "")?.Name ?? "Unknown";
+            var accountantName = companyData.GetAccountant(expense.AccountantId ?? "")?.Name ?? "Unknown";
             accountantData.TryAdd(accountantName, 0);
             accountantData[accountantName] += 1;
         }
@@ -1166,13 +1166,13 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        // Group customers by their first purchase date (approximated by earliest sale)
-        var customerFirstPurchase = companyData.Revenues
+        // Group customers by their first transaction date (approximated by earliest revenue)
+        var customerFirstTransaction = companyData.Revenues
             .Where(s => !string.IsNullOrEmpty(s.CustomerId))
             .GroupBy(s => s.CustomerId)
             .ToDictionary(g => g.Key!, g => g.Min(s => s.Date));
 
-        return customerFirstPurchase
+        return customerFirstTransaction
             .Where(kvp => kvp.Value >= startDate && kvp.Value <= endDate)
             .GroupBy(kvp => new DateTime(kvp.Value.Year, kvp.Value.Month, 1))
             .OrderBy(g => g.Key)
@@ -1436,9 +1436,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Gets returns comparison over time.
-    /// Note: Current model only tracks sale returns (returns from customers).
+    /// Note: Current model only tracks revenue returns (returns from customers).
     /// </summary>
-    public List<ChartSeriesData> GetPurchaseVsSaleReturns()
+    public List<ChartSeriesData> GetExpenseVsRevenueReturns()
     {
         if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
@@ -1458,8 +1458,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         if (monthsWithData.Count == 0)
             return [];
 
-        // Current Return model represents returns from sales (customer returns)
-        var saleReturns = monthsWithData.Select(month =>
+        // Current Return model represents returns from revenue (customer returns)
+        var revenueReturns = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1473,8 +1473,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             };
         }).ToList();
 
-        // No purchase returns in current model - return empty series
-        var purchaseReturns = monthsWithData.Select(month => new ChartDataPoint
+        // No expense returns in current model - return empty series
+        var expenseReturns = monthsWithData.Select(month => new ChartDataPoint
         {
             Label = month.ToString("MMM yyyy"),
             Value = 0,
@@ -1483,8 +1483,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return
         [
-            new ChartSeriesData { Name = "Sale Returns", Color = "#EF4444", DataPoints = saleReturns },
-            new ChartSeriesData { Name = "Purchase Returns", Color = "#F59E0B", DataPoints = purchaseReturns }
+            new ChartSeriesData { Name = "Revenue Returns", Color = "#EF4444", DataPoints = revenueReturns },
+            new ChartSeriesData { Name = "Expense Returns", Color = "#F59E0B", DataPoints = expenseReturns }
         ];
     }
 
@@ -1638,7 +1638,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets losses by reason type over time.
     /// Note: Current model tracks inventory losses by reason (Lost, Damaged, Stolen, Expired, Other).
     /// </summary>
-    public List<ChartSeriesData> GetPurchaseVsSaleLosses()
+    public List<ChartSeriesData> GetExpenseVsRevenueLosses()
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
@@ -1796,7 +1796,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             // Financial charts
             ChartDataType.TotalProfits => GetProfitOverTime(),
-            ChartDataType.SalesVsExpenses => GetSalesVsExpenses(),
+            ChartDataType.RevenueVsExpenses => GetRevenueVsExpenses(),
             ChartDataType.GrowthRates => GetGrowthRates(),
 
             // Transaction charts
@@ -1807,10 +1807,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             // Geographic charts
             ChartDataType.WorldMap => GetWorldMapData(),
-            ChartDataType.CountriesOfOrigin => GetSalesByCountryOfOrigin(),
-            ChartDataType.CountriesOfDestination => GetPurchasesByCountryOfDestination(),
-            ChartDataType.CompaniesOfOrigin => GetSalesByCompanyOfOrigin(),
-            ChartDataType.CompaniesOfDestination => GetSalesByCompanyOfDestination(),
+            ChartDataType.CountriesOfOrigin => GetRevenueByCountryOfOrigin(),
+            ChartDataType.CountriesOfDestination => GetExpensesByCountryOfDestination(),
+            ChartDataType.CompaniesOfOrigin => GetRevenueByCompanyOfOrigin(),
+            ChartDataType.CompaniesOfDestination => GetRevenueByCompanyOfDestination(),
 
             // Accountant charts
             ChartDataType.AccountantsTransactions => GetTransactionsByAccountant(),
@@ -1829,7 +1829,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.ReturnFinancialImpact => GetReturnFinancialImpact(),
             ChartDataType.ReturnsByCategory => GetReturnsByCategory(),
             ChartDataType.ReturnsByProduct => GetReturnsByProduct(),
-            ChartDataType.PurchaseVsSaleReturns => GetPurchaseVsSaleReturns(),
+            ChartDataType.ExpenseVsRevenueReturns => GetExpenseVsRevenueReturns(),
 
             // Losses charts
             ChartDataType.LossesOverTime => GetLossesOverTime(),
@@ -1837,7 +1837,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.LossFinancialImpact => GetLossFinancialImpact(),
             ChartDataType.LossesByCategory => GetLossesByCategory(),
             ChartDataType.LossesByProduct => GetLossesByProduct(),
-            ChartDataType.PurchaseVsSaleLosses => GetPurchaseVsSaleLosses(),
+            ChartDataType.ExpenseVsRevenueLosses => GetExpenseVsRevenueLosses(),
 
             _ => new List<ChartDataPoint>()
         };

@@ -697,7 +697,7 @@ public class ChartLoaderService
     /// Loads expenses vs revenue comparison chart as a multi-series column chart.
     /// Uses ReportChartDataService for data fetching with daily granularity.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadSalesVsExpensesChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadRevenueVsExpensesChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
@@ -708,7 +708,7 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var seriesData = dataService.GetSalesVsExpensesDaily();
+        var seriesData = dataService.GetRevenueVsExpensesDaily();
 
         if (seriesData.Count < 2)
         {
@@ -1051,7 +1051,7 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetPurchasesByCountryOfDestination().ToList();
+        var dataPoints = dataService.GetExpensesByCountryOfDestination().ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
@@ -1083,7 +1083,7 @@ public class ChartLoaderService
         var dataService = new ReportChartDataService(companyData, filters);
 
         // Use sales with customer country lookup - destination is where products are shipped to (customer location)
-        var dataPoints = dataService.GetSalesByCustomerCountry().ToList();
+        var dataPoints = dataService.GetRevenueByCustomerCountry().ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
@@ -1114,7 +1114,7 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetPurchasesBySupplierCompany().ToList();
+        var dataPoints = dataService.GetExpensesBySupplierCompany().ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
@@ -1145,7 +1145,7 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetSalesByCompanyOfDestination().ToList();
+        var dataPoints = dataService.GetRevenueByCompanyOfDestination().ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
@@ -1659,11 +1659,11 @@ public class ChartLoaderService
             // Returns tab charts that share data with other charts
             "Returns by Category" => "Return Reasons",
             "Returns by Product" => "Expense Distribution",
-            "Purchase vs Sale Returns" => "Expenses vs Revenue",
+            "Expense vs Revenue Returns" => "Expenses vs Revenue",
 
             // Losses tab charts that share data with other charts
             "Losses by Category" => "Loss Reasons",
-            "Purchase vs Sale Losses" => "Expenses vs Revenue",
+            "Expense vs Revenue Losses" => "Expenses vs Revenue",
 
             // Legacy Dashboard page chart identifiers
             "ExpenseDistributionChart" => "Expense Distribution",
@@ -1902,7 +1902,7 @@ public class ChartExportData
     public string SeriesName { get; init; } = string.Empty;
 
     /// <summary>
-    /// Additional series for multi-series charts (e.g., Sales vs Expenses).
+    /// Additional series for multi-series charts (e.g., Revenue vs Expenses).
     /// Each entry contains a series name and its values.
     /// </summary>
     public List<(string Name, double[] Values)> AdditionalSeries { get; init; } = [];

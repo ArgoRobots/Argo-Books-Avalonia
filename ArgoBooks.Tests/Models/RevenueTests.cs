@@ -15,20 +15,20 @@ public class RevenueTests
     [Fact]
     public void Revenue_DefaultValues_AreCorrect()
     {
-        var sale = new Revenue();
+        var revenue = new Revenue();
 
-        Assert.Equal(string.Empty, sale.Id);
-        Assert.Null(sale.CustomerId);
-        Assert.Equal(0m, sale.Subtotal);
-        Assert.Equal("Paid", sale.PaymentStatus);
-        Assert.Equal(0m, sale.Amount);
-        Assert.Equal(0m, sale.Total);
-        Assert.Equal(0m, sale.TaxAmount);
-        Assert.Equal(0m, sale.TaxRate);
-        Assert.Equal(0m, sale.Discount);
-        Assert.Equal(0m, sale.ShippingCost);
-        Assert.Empty(sale.LineItems);
-        Assert.Equal("USD", sale.OriginalCurrency);
+        Assert.Equal(string.Empty, revenue.Id);
+        Assert.Null(revenue.CustomerId);
+        Assert.Equal(0m, revenue.Subtotal);
+        Assert.Equal("Paid", revenue.PaymentStatus);
+        Assert.Equal(0m, revenue.Amount);
+        Assert.Equal(0m, revenue.Total);
+        Assert.Equal(0m, revenue.TaxAmount);
+        Assert.Equal(0m, revenue.TaxRate);
+        Assert.Equal(0m, revenue.Discount);
+        Assert.Equal(0m, revenue.ShippingCost);
+        Assert.Empty(revenue.LineItems);
+        Assert.Equal("USD", revenue.OriginalCurrency);
     }
 
     #endregion
@@ -38,28 +38,28 @@ public class RevenueTests
     [Fact]
     public void Revenue_CustomerAssociation_WorksCorrectly()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             Id = "SAL-2024-00001",
             CustomerId = "CUST-001"
         };
 
-        Assert.Equal("SAL-2024-00001", sale.Id);
-        Assert.Equal("CUST-001", sale.CustomerId);
+        Assert.Equal("SAL-2024-00001", revenue.Id);
+        Assert.Equal("CUST-001", revenue.CustomerId);
     }
 
     [Fact]
     public void Revenue_WithoutCustomer_IsValid()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             Id = "SAL-2024-00001",
             CustomerId = null,
             Total = 100.00m
         };
 
-        Assert.Null(sale.CustomerId);
-        Assert.Equal(100.00m, sale.Total);
+        Assert.Null(revenue.CustomerId);
+        Assert.Equal(100.00m, revenue.Total);
     }
 
     #endregion
@@ -73,12 +73,12 @@ public class RevenueTests
     [InlineData("Overdue")]
     public void Revenue_PaymentStatus_SupportsExpectedValues(string status)
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             PaymentStatus = status
         };
 
-        Assert.Equal(status, sale.PaymentStatus);
+        Assert.Equal(status, revenue.PaymentStatus);
     }
 
     #endregion
@@ -88,7 +88,7 @@ public class RevenueTests
     [Fact]
     public void Revenue_LineItemTotals_CalculateCorrectly()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             LineItems =
             [
@@ -101,15 +101,15 @@ public class RevenueTests
             Total = 88.00m
         };
 
-        Assert.Equal(2, sale.LineItems.Count);
-        Assert.Equal(80.00m, sale.LineItems.Sum(li => li.Amount));
-        Assert.Equal(sale.Subtotal, sale.LineItems.Sum(li => li.Amount));
+        Assert.Equal(2, revenue.LineItems.Count);
+        Assert.Equal(80.00m, revenue.LineItems.Sum(li => li.Amount));
+        Assert.Equal(revenue.Subtotal, revenue.LineItems.Sum(li => li.Amount));
     }
 
     [Fact]
     public void Revenue_WithDiscount_CalculatesCorrectly()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             Subtotal = 100.00m,
             Discount = 10.00m,
@@ -117,14 +117,14 @@ public class RevenueTests
             Total = 99.00m
         };
 
-        Assert.Equal(10.00m, sale.Discount);
-        Assert.Equal(99.00m, sale.Total);
+        Assert.Equal(10.00m, revenue.Discount);
+        Assert.Equal(99.00m, revenue.Total);
     }
 
     [Fact]
     public void Revenue_WithShipping_CalculatesCorrectly()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             Subtotal = 100.00m,
             ShippingCost = 15.00m,
@@ -132,8 +132,8 @@ public class RevenueTests
             Total = 125.00m
         };
 
-        Assert.Equal(15.00m, sale.ShippingCost);
-        Assert.Equal(125.00m, sale.Total);
+        Assert.Equal(15.00m, revenue.ShippingCost);
+        Assert.Equal(125.00m, revenue.Total);
     }
 
     #endregion
@@ -143,9 +143,9 @@ public class RevenueTests
     [Fact]
     public void Revenue_Currency_DefaultsToUSD()
     {
-        var sale = new Revenue();
+        var revenue = new Revenue();
 
-        Assert.Equal("USD", sale.OriginalCurrency);
+        Assert.Equal("USD", revenue.OriginalCurrency);
     }
 
     [Theory]
@@ -155,40 +155,40 @@ public class RevenueTests
     [InlineData("CAD")]
     public void Revenue_SupportsDifferentCurrencies(string currency)
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             OriginalCurrency = currency,
             Total = 100.00m,
             TotalUSD = currency == "USD" ? 100.00m : 85.00m
         };
 
-        Assert.Equal(currency, sale.OriginalCurrency);
+        Assert.Equal(currency, revenue.OriginalCurrency);
     }
 
     [Fact]
     public void Revenue_EffectiveTotalUSD_ReturnsConvertedValueWhenSet()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             OriginalCurrency = "EUR",
             Total = 100.00m,
             TotalUSD = 110.00m
         };
 
-        Assert.Equal(110.00m, sale.EffectiveTotalUSD);
+        Assert.Equal(110.00m, revenue.EffectiveTotalUSD);
     }
 
     [Fact]
     public void Revenue_EffectiveTotalUSD_FallsBackToTotalWhenNotSet()
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             OriginalCurrency = "USD",
             Total = 100.00m,
             TotalUSD = 0m
         };
 
-        Assert.Equal(100.00m, sale.EffectiveTotalUSD);
+        Assert.Equal(100.00m, revenue.EffectiveTotalUSD);
     }
 
     #endregion
@@ -205,12 +205,12 @@ public class RevenueTests
     [InlineData(PaymentMethod.Other)]
     public void Revenue_PaymentMethod_SupportsAllValues(PaymentMethod method)
     {
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             PaymentMethod = method
         };
 
-        Assert.Equal(method, sale.PaymentMethod);
+        Assert.Equal(method, revenue.PaymentMethod);
     }
 
     #endregion
@@ -221,23 +221,23 @@ public class RevenueTests
     public void Revenue_Timestamps_AreSetCorrectly()
     {
         var before = DateTime.UtcNow;
-        var sale = new Revenue();
+        var revenue = new Revenue();
         var after = DateTime.UtcNow;
 
-        Assert.InRange(sale.CreatedAt, before, after);
-        Assert.InRange(sale.UpdatedAt, before, after);
+        Assert.InRange(revenue.CreatedAt, before, after);
+        Assert.InRange(revenue.UpdatedAt, before, after);
     }
 
     [Fact]
     public void Revenue_Date_CanBeSet()
     {
         var saleDate = new DateTime(2024, 6, 15, 14, 30, 0);
-        var sale = new Revenue
+        var revenue = new Revenue
         {
             Date = saleDate
         };
 
-        Assert.Equal(saleDate, sale.Date);
+        Assert.Equal(saleDate, revenue.Date);
     }
 
     #endregion

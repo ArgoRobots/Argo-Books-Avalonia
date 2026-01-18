@@ -15,7 +15,7 @@ public class Return
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Original sale transaction ID.
+    /// Original revenue transaction ID.
     /// </summary>
     [JsonPropertyName("originalTransactionId")]
     public string OriginalTransactionId { get; set; } = string.Empty;
