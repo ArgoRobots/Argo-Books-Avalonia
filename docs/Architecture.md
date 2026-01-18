@@ -41,4 +41,4 @@ The application follows the [Model-View-ViewModel (MVVM)](https://docs.avaloniau
 4. **In-Memory Data** - Fast operations with full data loaded in memory
 5. **File-Based Storage** - Portable `.argo` files instead of database
 6. **Compiled Bindings** - Performance-optimized data binding
-7. **Singleton Services** - App-wide service instances via DI
+7. **Singleton Services** - App-wide service instances via dependency injection
