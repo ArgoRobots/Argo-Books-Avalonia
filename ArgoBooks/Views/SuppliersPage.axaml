@@ -19,6 +19,7 @@
         <vm:SuppliersPageViewModel />
     </Design.DataContext>
 
+    <Panel>
     <Grid RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
@@ -127,10 +128,11 @@
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,0"
-                                    MinHeight="40">
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
                                 <StackPanel Orientation="Horizontal">
                                 <!-- Supplier Column Header -->
-                                <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Name">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -166,7 +168,7 @@
                                 </Panel>
 
                                 <!-- Contact Column Header -->
-                                <Panel Width="{Binding ColumnWidths.ContactColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.ContactColumnWidth}" IsVisible="{Binding ShowContactColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Contact">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -202,7 +204,7 @@
                                 </Panel>
 
                                 <!-- Country Column Header -->
-                                <Panel Width="{Binding ColumnWidths.CountryColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.CountryColumnWidth}" IsVisible="{Binding ShowCountryColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Country">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -238,7 +240,7 @@
                                 </Panel>
 
                                 <!-- Products Column Header -->
-                                <Panel Width="{Binding ColumnWidths.ProductsColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.ProductsColumnWidth}" IsVisible="{Binding ShowProductsColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Products">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -274,7 +276,7 @@
                                 </Panel>
 
                                 <!-- Status Column Header -->
-                                <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Status">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -335,7 +337,8 @@
                                             MinHeight="52">
                                         <StackPanel Orientation="Horizontal">
                                             <!-- Supplier Name with Avatar -->
-                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}">
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowSupplierColumn}">
                                                 <StackPanel Orientation="Horizontal" Spacing="12" Margin="8,0">
                                                     <Border Width="40" Height="40"
                                                             CornerRadius="8"
@@ -362,7 +365,8 @@
                                             </Panel>
 
                                             <!-- Contact Person -->
-                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ContactColumnWidth}">
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ContactColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowContactColumn}">
                                                 <TextBlock Text="{Binding ContactPerson, TargetNullValue='-', FallbackValue='-'}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -373,7 +377,8 @@
                                             </Panel>
 
                                             <!-- Country -->
-                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.CountryColumnWidth}">
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.CountryColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowCountryColumn}">
                                                 <TextBlock Text="{Binding Country, TargetNullValue='-', FallbackValue='-'}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -383,7 +388,8 @@
                                             </Panel>
 
                                             <!-- Product Count -->
-                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ProductsColumnWidth}">
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ProductsColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowProductsColumn}">
                                                 <TextBlock Text="{Binding ProductCount}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -393,7 +399,8 @@
                                             </Panel>
 
                                             <!-- Status Badge -->
-                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}">
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowStatusColumn}">
                                                 <Border VerticalAlignment="Center"
                                                         HorizontalAlignment="Left"
                                                         Padding="8,4"
@@ -563,6 +570,23 @@
                 </Grid>
             </Border>
     </Grid>
+
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnMenuX}"
+                                    MenuY="{Binding ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc Supplier}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowContactColumn}" Content="{loc:Loc Contact}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowCountryColumn}" Content="{loc:Loc Country}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductsColumn}" Content="{loc:Loc Products}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
+    </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

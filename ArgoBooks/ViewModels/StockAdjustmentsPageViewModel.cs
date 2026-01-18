@@ -49,6 +49,68 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showReferenceColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductColumn = true;
+
+    [ObservableProperty]
+    private bool _showLocationColumn = true;
+
+    [ObservableProperty]
+    private bool _showTypeColumn = true;
+
+    [ObservableProperty]
+    private bool _showQuantityColumn = true;
+
+    [ObservableProperty]
+    private bool _showPreviousColumn = true;
+
+    [ObservableProperty]
+    private bool _showNewColumn = true;
+
+    [ObservableProperty]
+    private bool _showReasonColumn = true;
+
+    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
+    partial void OnShowReferenceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reference", value);
+    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
+    partial void OnShowLocationColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Location", value);
+    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
+    partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
+    partial void OnShowPreviousColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Previous", value);
+    partial void OnShowNewColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("New", value);
+    partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Tabs
 
     [ObservableProperty]

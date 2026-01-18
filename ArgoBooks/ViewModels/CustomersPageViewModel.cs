@@ -48,6 +48,52 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showCustomerColumn = true;
+
+    [ObservableProperty]
+    private bool _showEmailColumn = true;
+
+    [ObservableProperty]
+    private bool _showPhoneColumn = true;
+
+    [ObservableProperty]
+    private bool _showAddressColumn = true;
+
+    [ObservableProperty]
+    private bool _showLastRentalColumn = true;
+
+    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
+    partial void OnShowEmailColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Email", value);
+    partial void OnShowPhoneColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Phone", value);
+    partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
+    partial void OnShowLastRentalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("LastRental", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]

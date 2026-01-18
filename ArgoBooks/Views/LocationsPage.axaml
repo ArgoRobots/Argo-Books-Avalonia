@@ -132,10 +132,11 @@
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,0"
-                                    MinHeight="40">
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                     <!-- Location Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}" IsVisible="{Binding ShowLocationColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Location">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -171,7 +172,7 @@
                                     </Panel>
 
                                     <!-- Type Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Type">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -207,7 +208,7 @@
                                     </Panel>
 
                                     <!-- Address Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.AddressColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.AddressColumnWidth}" IsVisible="{Binding ShowAddressColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Address">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -243,7 +244,7 @@
                                     </Panel>
 
                                     <!-- Manager Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ManagerColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ManagerColumnWidth}" IsVisible="{Binding ShowManagerColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Manager">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -279,7 +280,7 @@
                                     </Panel>
 
                                     <!-- Status Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Status">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -341,7 +342,8 @@
                                                         MinHeight="52">
                                                     <StackPanel Orientation="Horizontal">
                                                         <!-- Location Name -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowLocationColumn}">
                                                             <TextBlock Text="{Binding Name}"
                                                                        FontSize="14"
                                                                        FontWeight="Medium"
@@ -353,7 +355,8 @@
                                                         </Panel>
 
                                                         <!-- Type -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowTypeColumn}">
                                                             <TextBlock Text="{Binding Type, Converter={StaticResource TranslateConverter}}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -364,7 +367,8 @@
                                                         </Panel>
 
                                                         <!-- Address -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowAddressColumn}">
                                                             <TextBlock Text="{Binding Address}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -375,7 +379,8 @@
                                                         </Panel>
 
                                                         <!-- Manager -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.ManagerColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.ManagerColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowManagerColumn}">
                                                             <TextBlock Text="{Binding Manager}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -386,7 +391,8 @@
                                                         </Panel>
 
                                                         <!-- Status -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowStatusColumn}">
                                                             <Border Background="{Binding StatusBackground}"
                                                                     CornerRadius="4"
                                                                     Padding="8,4"
@@ -557,6 +563,22 @@
             </Border>
             </Grid>
         </Grid>
+
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnMenuX}"
+                                    MenuY="{Binding ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowLocationColumn}" Content="{loc:Loc Location}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAddressColumn}" Content="{loc:Loc Address}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowManagerColumn}" Content="{loc:Loc Manager}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->

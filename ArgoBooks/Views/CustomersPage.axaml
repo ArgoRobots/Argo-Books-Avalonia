@@ -19,6 +19,7 @@
         <vm:CustomersPageViewModel />
     </Design.DataContext>
 
+    <Panel>
     <Grid RowDefinitions="*">
         <!-- Main Content -->
         <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
@@ -125,10 +126,11 @@
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,0"
-                                    MinHeight="40">
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                 <!-- Customer Name Column Header -->
-                                <Panel Width="{Binding ColumnWidths.CustomerColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.CustomerColumnWidth}" IsVisible="{Binding ShowCustomerColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Name">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -164,7 +166,7 @@
                                 </Panel>
 
                                 <!-- Email Column Header -->
-                                <Panel Width="{Binding ColumnWidths.EmailColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.EmailColumnWidth}" IsVisible="{Binding ShowEmailColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Email">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -200,7 +202,7 @@
                                 </Panel>
 
                                 <!-- Phone Column Header -->
-                                <Panel Width="{Binding ColumnWidths.PhoneColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.PhoneColumnWidth}" IsVisible="{Binding ShowPhoneColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Phone">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -236,7 +238,7 @@
                                 </Panel>
 
                                 <!-- Address Column Header -->
-                                <Panel Width="{Binding ColumnWidths.AddressColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.AddressColumnWidth}" IsVisible="{Binding ShowAddressColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Address">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -272,7 +274,7 @@
                                 </Panel>
 
                                 <!-- Last Rental Column Header -->
-                                <Panel Width="{Binding ColumnWidths.LastRentalColumnWidth}">
+                                <Panel Width="{Binding ColumnWidths.LastRentalColumnWidth}" IsVisible="{Binding ShowLastRentalColumn}">
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="LastRental">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -334,7 +336,8 @@
                                                     MinHeight="52">
                                                 <StackPanel Orientation="Horizontal">
                                                     <!-- Customer Name with Avatar and ID -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}">
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowCustomerColumn}">
                                                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Margin="8,0">
                                                             <Border Width="40" Height="40"
                                                                     CornerRadius="20"
@@ -361,7 +364,8 @@
                                                     </Panel>
 
                                                     <!-- Email -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.EmailColumnWidth}">
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.EmailColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowEmailColumn}">
                                                         <TextBlock Text="{Binding Email}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -372,7 +376,8 @@
                                                     </Panel>
 
                                                     <!-- Phone -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.PhoneColumnWidth}">
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.PhoneColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowPhoneColumn}">
                                                         <TextBlock Text="{Binding Phone}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -382,7 +387,8 @@
                                                     </Panel>
 
                                                     <!-- Address -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}">
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowAddressColumn}">
                                                         <TextBlock Text="{Binding Address}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -393,7 +399,8 @@
                                                     </Panel>
 
                                                     <!-- Last Rental -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.LastRentalColumnWidth}">
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.LastRentalColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowLastRentalColumn}">
                                                         <TextBlock Text="{Binding LastRentalFormatted}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -567,6 +574,23 @@
 
         <!-- Note: Modals are now rendered at AppShell level for full-screen coverage -->
     </Grid>
+
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnMenuX}"
+                                    MenuY="{Binding ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="{loc:Loc Customer}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowEmailColumn}" Content="{loc:Loc Email}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPhoneColumn}" Content="{loc:Loc Phone}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAddressColumn}" Content="{loc:Loc Address}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowLastRentalColumn}" Content="{loc:Loc 'Last Rental'}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
+    </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

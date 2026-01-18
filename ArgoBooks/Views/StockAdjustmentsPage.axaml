@@ -145,10 +145,11 @@
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,0"
-                                    MinHeight="40">
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                     <!-- Date Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.DateColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Date">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -184,7 +185,7 @@
                                     </Panel>
 
                                     <!-- Reference Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReferenceColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ReferenceColumnWidth}" IsVisible="{Binding ShowReferenceColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Reference">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -220,7 +221,7 @@
                                     </Panel>
 
                                     <!-- Product Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ProductColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Product">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -256,7 +257,7 @@
                                     </Panel>
 
                                     <!-- Location Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}" IsVisible="{Binding ShowLocationColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Location">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -292,7 +293,7 @@
                                     </Panel>
 
                                     <!-- Type Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Type">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -328,7 +329,7 @@
                                     </Panel>
 
                                     <!-- Quantity Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Quantity">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -364,7 +365,7 @@
                                     </Panel>
 
                                     <!-- Previous Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.PreviousColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.PreviousColumnWidth}" IsVisible="{Binding ShowPreviousColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Previous">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -400,7 +401,7 @@
                                     </Panel>
 
                                     <!-- New Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.NewColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.NewColumnWidth}" IsVisible="{Binding ShowNewColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="New">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -436,7 +437,7 @@
                                     </Panel>
 
                                     <!-- Reason Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}" IsVisible="{Binding ShowReasonColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Reason">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -498,7 +499,8 @@
                                                         MinHeight="52">
                                                     <StackPanel Orientation="Horizontal">
                                                         <!-- Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowDateColumn}">
                                                             <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                 <TextBlock Text="{Binding DateDisplay}"
                                                                            FontSize="14"
@@ -511,7 +513,8 @@
                                                         </Panel>
 
                                                         <!-- Reference -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReferenceColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReferenceColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowReferenceColumn}">
                                                             <TextBlock Text="{Binding Id}"
                                                                        FontSize="13"
                                                                        FontFamily="Consolas, monospace"
@@ -523,7 +526,8 @@
                                                         </Panel>
 
                                                         <!-- Product -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowProductColumn}">
                                                             <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                 <TextBlock Text="{Binding ProductName}"
                                                                            FontSize="14"
@@ -538,7 +542,8 @@
                                                         </Panel>
 
                                                         <!-- Location -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowLocationColumn}">
                                                             <TextBlock Text="{Binding LocationName}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -549,7 +554,8 @@
                                                         </Panel>
 
                                                         <!-- Type Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowTypeColumn}">
                                                             <Border Background="{Binding TypeBackground}"
                                                                     CornerRadius="4"
                                                                     Padding="8,4"
@@ -565,7 +571,8 @@
                                                         </Panel>
 
                                                         <!-- Quantity -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowQuantityColumn}">
                                                             <TextBlock Text="{Binding QuantityDisplay}"
                                                                        FontSize="14"
                                                                        FontWeight="SemiBold"
@@ -577,7 +584,8 @@
                                                         </Panel>
 
                                                         <!-- Previous Stock -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.PreviousColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.PreviousColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowPreviousColumn}">
                                                             <TextBlock Text="{Binding PreviousStock}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -588,7 +596,8 @@
                                                         </Panel>
 
                                                         <!-- New Stock -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.NewColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.NewColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowNewColumn}">
                                                             <TextBlock Text="{Binding NewStock}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -599,7 +608,8 @@
                                                         </Panel>
 
                                                         <!-- Reason -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowReasonColumn}">
                                                             <TextBlock Text="{Binding Reason}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -765,6 +775,26 @@
             </Border>
             </Grid>
         </Grid>
+
+        <!-- Column Visibility Menu -->
+        <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                        MenuX="{Binding ColumnMenuX}"
+                                        MenuY="{Binding ColumnMenuY}"
+                                        CloseCommand="{Binding CloseColumnMenuCommand}">
+            <controls:ColumnVisibilityMenu.ColumnsContent>
+                <StackPanel Spacing="4">
+                    <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowReferenceColumn}" Content="{loc:Loc Reference}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowLocationColumn}" Content="{loc:Loc Location}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc Qty}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowPreviousColumn}" Content="{loc:Loc Before}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowNewColumn}" Content="{loc:Loc After}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
+                </StackPanel>
+            </controls:ColumnVisibilityMenu.ColumnsContent>
+        </controls:ColumnVisibilityMenu>
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
