@@ -61,6 +61,45 @@
                               HorizontalScrollBarVisibility="Disabled"
                               MaxHeight="380">
                     <StackPanel Spacing="0">
+                        <!-- Top Results Section (shown when searching with strong matches) -->
+                        <StackPanel IsVisible="{Binding HasTopResults}">
+                            <TextBlock Text="{loc:Loc 'Top Results'}"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Margin="16,12,16,8" />
+                            <ItemsControl ItemsSource="{Binding TopResults}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickActionItem">
+                                        <Button Classes="action-item"
+                                                Command="{Binding $parent[UserControl].((vm:QuickActionsViewModel)DataContext).ExecuteActionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Background="{DynamicResource PrimaryIconBgBrush}"
+                                                        Margin="0,0,12,0">
+                                                    <PathIcon Data="{Binding IconData}"
+                                                              Width="18" Height="18"
+                                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Title, Converter={StaticResource TranslateConverter}}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description, Converter={StaticResource TranslateConverter}}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
                         <!-- Quick Actions Section -->
                         <StackPanel IsVisible="{Binding HasQuickActions}">
                             <TextBlock Text="{loc:Loc 'Quick Actions'}"

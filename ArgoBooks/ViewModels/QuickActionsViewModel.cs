@@ -51,6 +51,16 @@ public partial class QuickActionsViewModel : ViewModelBase
     public ObservableCollection<QuickActionItem> ToolsItems { get; } = [];
 
     /// <summary>
+    /// Top results with strong matches (shown first when searching).
+    /// </summary>
+    public ObservableCollection<QuickActionItem> TopResults { get; } = [];
+
+    /// <summary>
+    /// Gets whether there are any top results visible.
+    /// </summary>
+    public bool HasTopResults => TopResults.Count > 0;
+
+    /// <summary>
     /// Gets whether there are any quick actions visible.
     /// </summary>
     public bool HasQuickActions => QuickActions.Count > 0;
@@ -68,7 +78,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     /// <summary>
     /// Gets whether there are any results at all.
     /// </summary>
-    public bool HasResults => HasQuickActions || HasNavigationItems || HasToolsItems;
+    public bool HasResults => HasTopResults || HasQuickActions || HasNavigationItems || HasToolsItems;
 
     #endregion
 
@@ -197,6 +207,12 @@ public partial class QuickActionsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Minimum score threshold for a "strong" match (prefix, word-start, or substring).
+    /// Items with title scores at or above this threshold appear in Top Results.
+    /// </summary>
+    private const double StrongMatchThreshold = 0.8;
+
+    /// <summary>
     /// Filters all action lists based on query using fuzzy matching.
     /// </summary>
     private void FilterActions(string? query)
@@ -204,40 +220,95 @@ public partial class QuickActionsViewModel : ViewModelBase
         QuickActions.Clear();
         NavigationItems.Clear();
         ToolsItems.Clear();
+        TopResults.Clear();
 
-        IEnumerable<(QuickActionItem Item, double Score)> scoredItems;
+        IEnumerable<(QuickActionItem Item, double Score, double TitleScore)> scoredItems;
 
         if (string.IsNullOrWhiteSpace(query))
         {
-            // No query - show all items with score 1
-            scoredItems = _allActions.Select(a => (a, 1.0));
+            // No query - show all items with score 1, no title score tracking needed
+            scoredItems = _allActions.Select(a => (a, 1.0, 0.0));
         }
         else
         {
-            // Use Levenshtein-based fuzzy search
+            // Use Levenshtein-based fuzzy search with title prioritization
             scoredItems = _allActions
                 .Select(a =>
                 {
-                    // Get best score from title or description
                     var titleScore = LevenshteinDistance.ComputeSearchScore(query, a.Title);
                     var descScore = LevenshteinDistance.ComputeSearchScore(query, a.Description);
-                    return (Item: a, Score: Math.Max(titleScore, descScore));
+
+                    // Title matches are prioritized:
+                    // - Strong title match (>= 0.8): use title score with small desc boost
+                    // - Weak title match with strong desc match: boost slightly but less than title match
+                    // - Both weak: use max
+                    double finalScore;
+                    if (titleScore >= StrongMatchThreshold)
+                    {
+                        // Strong title match - prioritize heavily
+                        finalScore = titleScore + (descScore > 0 ? descScore * 0.05 : 0);
+                    }
+                    else if (descScore >= StrongMatchThreshold && titleScore < StrongMatchThreshold)
+                    {
+                        // Strong description match but weak/no title match - reduce score
+                        // This prevents "Scan Receipt" (desc contains "import") from ranking high for "export"
+                        finalScore = descScore * 0.75;
+                    }
+                    else
+                    {
+                        // Both are fuzzy/weak matches - use max
+                        finalScore = Math.Max(titleScore, descScore);
+                    }
+
+                    return (Item: a, Score: finalScore, TitleScore: titleScore);
                 })
                 .Where(x => x.Score > 0) // Only include matches
                 .OrderByDescending(x => x.Score);
         }
 
-        var filteredItems = scoredItems.Select(x => x.Item).ToList();
+        var filteredList = scoredItems.ToList();
 
-        foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
-            QuickActions.Add(item);
+        // When searching, put strong title matches in Top Results section
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var topResultItems = new HashSet<QuickActionItem>();
+            foreach (var (item, _, titleScore) in filteredList.Where(x => x.TitleScore >= StrongMatchThreshold).Take(4))
+            {
+                TopResults.Add(item);
+                topResultItems.Add(item);
+            }
 
-        foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.Navigation).Take(8))
-            NavigationItems.Add(item);
+            // Exclude top results from other categories to avoid duplication
+            var remainingItems = filteredList
+                .Where(x => !topResultItems.Contains(x.Item))
+                .Select(x => x.Item)
+                .ToList();
 
-        foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.Tools).Take(4))
-            ToolsItems.Add(item);
+            foreach (var item in remainingItems.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
+                QuickActions.Add(item);
 
+            foreach (var item in remainingItems.Where(a => a.Type == QuickActionType.Navigation).Take(8))
+                NavigationItems.Add(item);
+
+            foreach (var item in remainingItems.Where(a => a.Type == QuickActionType.Tools).Take(4))
+                ToolsItems.Add(item);
+        }
+        else
+        {
+            // No query - normal category grouping
+            var items = filteredList.Select(x => x.Item).ToList();
+
+            foreach (var item in items.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
+                QuickActions.Add(item);
+
+            foreach (var item in items.Where(a => a.Type == QuickActionType.Navigation).Take(8))
+                NavigationItems.Add(item);
+
+            foreach (var item in items.Where(a => a.Type == QuickActionType.Tools).Take(4))
+                ToolsItems.Add(item);
+        }
+
+        OnPropertyChanged(nameof(HasTopResults));
         OnPropertyChanged(nameof(HasQuickActions));
         OnPropertyChanged(nameof(HasNavigationItems));
         OnPropertyChanged(nameof(HasToolsItems));
@@ -326,7 +397,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void MoveUp()
     {
-        var totalCount = QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
+        var totalCount = TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
         if (totalCount == 0) return;
         SelectedIndex = (SelectedIndex - 1 + totalCount) % totalCount;
     }
@@ -337,7 +408,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void MoveDown()
     {
-        var totalCount = QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
+        var totalCount = TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
         if (totalCount == 0) return;
         SelectedIndex = (SelectedIndex + 1) % totalCount;
     }
@@ -348,7 +419,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void ExecuteSelected()
     {
-        var allItems = QuickActions.Concat(NavigationItems).Concat(ToolsItems).ToList();
+        var allItems = TopResults.Concat(QuickActions).Concat(NavigationItems).Concat(ToolsItems).ToList();
         if (SelectedIndex >= 0 && SelectedIndex < allItems.Count)
         {
             ExecuteAction(allItems[SelectedIndex]);
