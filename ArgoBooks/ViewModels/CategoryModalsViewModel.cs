@@ -186,8 +186,7 @@ public partial class CategoryModalsViewModel : ObservableObject
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
             Color = "#4A90D9",
-            Icon = ModalSelectedIconOption?.Icon ?? "📦",
-            CreatedAt = DateTime.UtcNow
+            Icon = ModalSelectedIconOption?.Icon ?? "📦"
         };
 
         companyData.Categories.Add(newCategory);

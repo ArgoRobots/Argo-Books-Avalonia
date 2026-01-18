@@ -1976,8 +1976,8 @@ public class App : Application
                 data.IdCounters.Department = restoredCounters.Department;
                 data.IdCounters.Category = restoredCounters.Category;
                 data.IdCounters.Location = restoredCounters.Location;
-                data.IdCounters.Revenue = restoredCounters.Sale;
-                data.IdCounters.Expense = restoredCounters.Purchase;
+                data.IdCounters.Revenue = restoredCounters.Revenue;
+                data.IdCounters.Expense = restoredCounters.Expense;
                 data.IdCounters.Invoice = restoredCounters.Invoice;
                 data.IdCounters.Payment = restoredCounters.Payment;
                 data.IdCounters.RecurringInvoice = restoredCounters.RecurringInvoice;

@@ -402,7 +402,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     {
         ModalDate = new DateTimeOffset(transaction.Date);
         var productId = transaction.LineItems.FirstOrDefault()?.ProductId;
-        var product = productId != null ? App.CompanyManager?.GetCompanyData?.GetProduct(productId) : null;
+        var product = productId != null ? App.CompanyManager?.CompanyData?.GetProduct(productId) : null;
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == product?.CategoryId);
         ModalTaxRate = transaction.TaxAmount;
         ModalShipping = transaction.ShippingCost;
