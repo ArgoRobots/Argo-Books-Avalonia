@@ -1409,7 +1409,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadRevenueTrendsChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
         RevenueTrendsSeries = series;
         RevenueTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);

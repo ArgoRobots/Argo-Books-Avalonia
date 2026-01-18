@@ -569,100 +569,7 @@ public class ChartLoaderService
         return CreateTimeSeries(categoryValues, seriesName, color);
     }
 
-    /// <summary>
-    /// Converts a list of ChartDataPoint objects to a pie chart series.
-    /// </summary>
-    /// <param name="dataPoints">The chart data points from the shared service.</param>
-    /// <returns>A collection of PieSeries for LiveChartsCore.</returns>
-    public ObservableCollection<ISeries> ConvertToPieSeries(List<ChartDataPoint> dataPoints)
-    {
-        var series = new ObservableCollection<ISeries>();
-
-        if (dataPoints.Count == 0)
-            return series;
-
-        var colors = GetDistributionColors();
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var point = dataPoints[i];
-            var color = !string.IsNullOrEmpty(point.Color)
-                ? SKColor.Parse(point.Color)
-                : colors[i % colors.Length];
-
-            series.Add(new PieSeries<double>
-            {
-                Values = [point.Value],
-                Name = TruncateLegendLabel(point.Label),
-                Fill = new SolidColorPaint(color),
-                DataLabelsSize = LegendTextSize,
-                DataLabelsPaint = new SolidColorPaint(_textColor),
-                DataLabelsPosition = PolarLabelsPosition.Outer
-            });
-        }
-
-        return series;
-    }
-
-    /// <summary>
-    /// Converts multi-series chart data to LiveChartsCore series.
-    /// Used for charts like Sales vs Expenses.
-    /// </summary>
-    /// <param name="seriesDataList">The multi-series data from the shared service.</param>
-    /// <returns>A collection of ISeries for LiveChartsCore.</returns>
-    public ObservableCollection<ISeries> ConvertMultiSeriesToLiveCharts(List<ChartSeriesData> seriesDataList)
-    {
-        var series = new ObservableCollection<ISeries>();
-
-        foreach (var seriesData in seriesDataList)
-        {
-            var color = SKColor.Parse(seriesData.Color);
-            series.Add(ConvertToSeries(seriesData.DataPoints, seriesData.Name, color));
-        }
-
-        return series;
-    }
-
-    /// <summary>
-    /// Gets an array of colors for distribution charts.
-    /// </summary>
-    private static SKColor[] GetDistributionColors()
-    {
-        // Predefined colors for distribution charts (matching WinForms/dashboard style)
-        return
-        [
-            SKColor.Parse("#6495ED"), // Cornflower Blue
-            SKColor.Parse("#22C55E"), // Green
-            SKColor.Parse("#F59E0B"), // Amber
-            SKColor.Parse("#EF4444"), // Red
-            SKColor.Parse("#8B5CF6"), // Violet
-            SKColor.Parse("#EC4899"), // Pink
-            SKColor.Parse("#06B6D4"), // Cyan
-            SKColor.Parse("#84CC16"), // Lime
-            SKColor.Parse("#F97316"), // Orange
-            SKColor.Parse("#6366F1")  // Indigo
-        ];
-    }
-
     #endregion
-
-    /// <summary>
-    /// Creates the tooltip paint for charts.
-    /// </summary>
-    /// <returns>Tooltip paint configuration.</returns>
-    public SolidColorPaint CreateTooltipTextPaint()
-    {
-        return new SolidColorPaint(_textColor);
-    }
-
-    /// <summary>
-    /// Creates the tooltip background paint for charts.
-    /// </summary>
-    /// <returns>Tooltip background paint configuration.</returns>
-    public SolidColorPaint CreateTooltipBackgroundPaint()
-    {
-        return new SolidColorPaint(_backgroundColor);
-    }
 
     /// <summary>
     /// Loads expenses overview chart data as a column series.
@@ -720,13 +627,12 @@ public class ChartLoaderService
     /// Loads revenue overview chart data as a column series.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadRevenueOverviewChart(
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadRevenueOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -744,10 +650,10 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Revenue"
             });
-            return (series, labels, dates);
+            return (series, dates);
         }
 
-        labels = dataPoints.Select(p => p.Label).ToArray();
+        var labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
@@ -762,7 +668,7 @@ public class ChartLoaderService
             SeriesName = "Revenue",
         });
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
