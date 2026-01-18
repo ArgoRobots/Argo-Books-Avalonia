@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Transformation;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -150,6 +151,13 @@ public partial class ModalOverlay : UserControl
         else
         {
             Closed?.Invoke(this, EventArgs.Empty);
+
+            // Return focus to parent shell so keyboard shortcuts (like Ctrl+K) work again
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                var parent = this.FindAncestorOfType<UserControl>();
+                parent?.Focus();
+            }, Avalonia.Threading.DispatcherPriority.Background);
         }
     }
 
