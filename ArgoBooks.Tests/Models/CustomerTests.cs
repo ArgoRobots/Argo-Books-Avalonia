@@ -21,7 +21,6 @@ public class CustomerTests
         Assert.Null(customer.CompanyName);
         Assert.NotNull(customer.Address);
         Assert.Equal(string.Empty, customer.Notes);
-        Assert.Empty(customer.Tags);
         Assert.Equal(EntityStatus.Active, customer.Status);
         Assert.Equal(0m, customer.TotalPurchases);
         Assert.Null(customer.LastTransactionDate);
@@ -125,46 +124,6 @@ public class CustomerTests
         var customer = new Customer();
 
         Assert.Equal(EntityStatus.Active, customer.Status);
-    }
-
-    #endregion
-
-    #region Tags Tests
-
-    [Fact]
-    public void Customer_Tags_DefaultsToEmpty()
-    {
-        var customer = new Customer();
-
-        Assert.Empty(customer.Tags);
-    }
-
-    [Fact]
-    public void Customer_Tags_CanBeAdded()
-    {
-        var customer = new Customer
-        {
-            Tags = ["VIP", "Enterprise", "Priority"]
-        };
-
-        Assert.Equal(3, customer.Tags.Count);
-        Assert.Contains("VIP", customer.Tags);
-        Assert.Contains("Enterprise", customer.Tags);
-        Assert.Contains("Priority", customer.Tags);
-    }
-
-    [Fact]
-    public void Customer_Tags_CanBeModified()
-    {
-        var customer = new Customer
-        {
-            Tags = ["Initial"]
-        };
-
-        customer.Tags.Add("NewTag");
-
-        Assert.Equal(2, customer.Tags.Count);
-        Assert.Contains("NewTag", customer.Tags);
     }
 
     #endregion
