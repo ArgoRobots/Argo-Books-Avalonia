@@ -193,7 +193,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
                 switch (fieldName)
                 {
                     case "MerchantName":
-                        scanResult.VendorName = fieldValue.Content;
+                        scanResult.SupplierName = fieldValue.Content;
                         break;
 
                     case "TransactionDate":

@@ -15,7 +15,7 @@ public interface IOpenAiService
     /// <summary>
     /// Gets AI suggestions for supplier and category based on receipt data.
     /// </summary>
-    /// <param name="request">Receipt analysis request with vendor info and existing data.</param>
+    /// <param name="request">Receipt analysis request with supplier info and existing data.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Supplier and category suggestions.</returns>
     Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(

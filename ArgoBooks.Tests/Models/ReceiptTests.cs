@@ -23,7 +23,7 @@ public class ReceiptTests
         Assert.Equal(string.Empty, receipt.FileType);
         Assert.Equal(0L, receipt.FileSize);
         Assert.Equal(0m, receipt.Amount);
-        Assert.Equal(string.Empty, receipt.Vendor);
+        Assert.Equal(string.Empty, receipt.Supplier);
         Assert.Equal("Manual", receipt.Source);
         Assert.Null(receipt.FileData);
         Assert.Null(receipt.OriginalFilePath);
@@ -76,7 +76,7 @@ public class ReceiptTests
             Source = "AI Scanned",
             OcrData = new OcrData
             {
-                ExtractedVendor = "Test Vendor",
+                ExtractedSupplier = "Test Supplier",
                 ExtractedAmount = 100.00m,
                 Confidence = 0.95
             }
@@ -140,7 +140,7 @@ public class ReceiptTests
     {
         var ocrData = new OcrData();
 
-        Assert.Null(ocrData.ExtractedVendor);
+        Assert.Null(ocrData.ExtractedSupplier);
         Assert.Null(ocrData.ExtractedDate);
         Assert.Null(ocrData.ExtractedAmount);
         Assert.Null(ocrData.ExtractedSubtotal);
@@ -157,7 +157,7 @@ public class ReceiptTests
     {
         var ocrData = new OcrData
         {
-            ExtractedVendor = "Acme Corp",
+            ExtractedSupplier = "Acme Corp",
             ExtractedDate = new DateTime(2024, 1, 15),
             ExtractedAmount = 125.50m,
             ExtractedSubtotal = 115.00m,
@@ -166,7 +166,7 @@ public class ReceiptTests
             Confidence = 0.92
         };
 
-        Assert.Equal("Acme Corp", ocrData.ExtractedVendor);
+        Assert.Equal("Acme Corp", ocrData.ExtractedSupplier);
         Assert.Equal(new DateTime(2024, 1, 15), ocrData.ExtractedDate);
         Assert.Equal(125.50m, ocrData.ExtractedAmount);
         Assert.Equal(115.00m, ocrData.ExtractedSubtotal);

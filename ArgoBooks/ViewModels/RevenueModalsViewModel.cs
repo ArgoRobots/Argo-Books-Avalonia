@@ -561,7 +561,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionSaved();
     }
 
-    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
+    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
     {
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
@@ -595,7 +595,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             OriginalFilePath = ReceiptFilePath,
             Amount = Total,
             Date = ModalDate?.DateTime ?? DateTime.Now,
-            Vendor = vendor,
+            Supplier = supplier,
             Source = "Manual",
             CreatedAt = DateTime.Now
         };

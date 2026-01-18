@@ -157,7 +157,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string? _receiptImagePath;
 
     [ObservableProperty]
-    private string _extractedVendor = string.Empty;
+    private string _extractedSupplier = string.Empty;
 
     [ObservableProperty]
     private DateTimeOffset? _extractedDate;
@@ -398,7 +398,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private async void PopulateScanResults(ReceiptScanResult result)
     {
-        ExtractedVendor = result.VendorName ?? string.Empty;
+        ExtractedSupplier = result.SupplierName ?? string.Empty;
         ExtractedDate = result.TransactionDate.HasValue
             ? new DateTimeOffset(result.TransactionDate.Value)
             : DateTimeOffset.Now;
@@ -564,7 +564,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Id = expenseId,
             Date = ExtractedDate?.DateTime ?? DateTime.Now,
             SupplierId = SelectedSupplier?.Id,
-            Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedVendor,
+            Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedSupplier,
             LineItems = lineItems,
             Quantity = lineItems.Sum(li => li.Quantity),
             UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
@@ -599,7 +599,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             FileData = fileData,
             Amount = total,
             Date = ExtractedDate?.DateTime ?? DateTime.Now,
-            Vendor = ExtractedVendor,
+            Supplier = ExtractedSupplier,
             Source = "AI Scanned",
             OcrData = CreateOcrData(),
             CreatedAt = DateTime.Now
@@ -740,7 +740,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (!openAiService.IsConfigured)
         {
             // Fall back to basic matching
-            TryBasicSupplierMatch(result.VendorName);
+            TryBasicSupplierMatch(result.SupplierName);
             return;
         }
 
@@ -754,13 +754,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var companyData = App.CompanyManager?.CompanyData;
             if (companyData == null)
             {
-                TryBasicSupplierMatch(result.VendorName);
+                TryBasicSupplierMatch(result.SupplierName);
                 return;
             }
 
             var request = new ReceiptAnalysisRequest
             {
-                VendorName = result.VendorName ?? string.Empty,
+                SupplierName = result.SupplierName ?? string.Empty,
                 RawText = result.RawText,
                 LineItemDescriptions = result.LineItems.Select(li => li.Description).ToList(),
                 TotalAmount = result.TotalAmount ?? 0,
@@ -788,13 +788,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             else
             {
                 // AI failed, fall back to basic matching
-                TryBasicSupplierMatch(result.VendorName);
+                TryBasicSupplierMatch(result.SupplierName);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"AI suggestion failed: {ex.Message}");
-            TryBasicSupplierMatch(result.VendorName);
+            TryBasicSupplierMatch(result.SupplierName);
         }
         finally
         {
@@ -859,14 +859,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// <summary>
     /// Falls back to basic string matching for supplier.
     /// </summary>
-    private void TryBasicSupplierMatch(string? vendorName)
+    private void TryBasicSupplierMatch(string? supplierName)
     {
-        if (string.IsNullOrEmpty(vendorName))
+        if (string.IsNullOrEmpty(supplierName))
             return;
 
         var matchedSupplier = SupplierOptions.FirstOrDefault(s =>
-            s.Name.Contains(vendorName, StringComparison.OrdinalIgnoreCase) ||
-            vendorName.Contains(s.Name, StringComparison.OrdinalIgnoreCase));
+            s.Name.Contains(supplierName, StringComparison.OrdinalIgnoreCase) ||
+            supplierName.Contains(s.Name, StringComparison.OrdinalIgnoreCase));
 
         if (matchedSupplier != null)
         {
@@ -1017,7 +1017,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasScanResult = false;
         ScanErrorMessage = string.Empty;
         ReceiptImagePath = null;
-        ExtractedVendor = string.Empty;
+        ExtractedSupplier = string.Empty;
         ExtractedDate = DateTimeOffset.Now;
         ExtractedSubtotal = string.Empty;
         ExtractedTax = string.Empty;
@@ -1113,7 +1113,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         return new OcrData
         {
-            ExtractedVendor = ExtractedVendor,
+            ExtractedSupplier = ExtractedSupplier,
             ExtractedDate = ExtractedDate?.DateTime,
             ExtractedAmount = total,
             ExtractedSubtotal = subtotal,

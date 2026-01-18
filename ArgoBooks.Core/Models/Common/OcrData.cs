@@ -6,10 +6,10 @@ namespace ArgoBooks.Core.Models.Common;
 public class OcrData
 {
     /// <summary>
-    /// Vendor/merchant name extracted from receipt.
+    /// Supplier/merchant name extracted from receipt.
     /// </summary>
-    [JsonPropertyName("extractedVendor")]
-    public string? ExtractedVendor { get; set; }
+    [JsonPropertyName("extractedSupplier")]
+    public string? ExtractedSupplier { get; set; }
 
     /// <summary>
     /// Date extracted from receipt.

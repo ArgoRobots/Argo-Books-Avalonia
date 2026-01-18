@@ -16,9 +16,9 @@ public class ReceiptScanResult
     public string? ErrorMessage { get; set; }
 
     /// <summary>
-    /// Extracted vendor/merchant name.
+    /// Extracted supplier/merchant name.
     /// </summary>
-    public string? VendorName { get; set; }
+    public string? SupplierName { get; set; }
 
     /// <summary>
     /// Extracted transaction date.
