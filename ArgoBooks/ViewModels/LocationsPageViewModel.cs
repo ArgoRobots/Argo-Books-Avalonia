@@ -45,6 +45,52 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showLocationColumn = true;
+
+    [ObservableProperty]
+    private bool _showTypeColumn = true;
+
+    [ObservableProperty]
+    private bool _showAddressColumn = true;
+
+    [ObservableProperty]
+    private bool _showManagerColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    partial void OnShowLocationColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Location", value);
+    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
+    partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
+    partial void OnShowManagerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Manager", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]

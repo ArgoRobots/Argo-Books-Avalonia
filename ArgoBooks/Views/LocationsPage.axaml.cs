@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 
 namespace ArgoBooks.Views;
 
@@ -10,6 +11,20 @@ public partial class LocationsPage : UserControl
     public LocationsPage()
     {
         InitializeComponent();
+    }
+
+    private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+        {
+            if (DataContext is ViewModels.LocationsPageViewModel viewModel)
+            {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
+                viewModel.IsColumnMenuOpen = true;
+            }
+        }
     }
 
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
