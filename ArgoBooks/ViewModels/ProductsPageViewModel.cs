@@ -34,6 +34,64 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showNameColumn = true;
+
+    [ObservableProperty]
+    private bool _showTypeColumn = true;
+
+    [ObservableProperty]
+    private bool _showDescriptionColumn = true;
+
+    [ObservableProperty]
+    private bool _showCategoryColumn = true;
+
+    [ObservableProperty]
+    private bool _showSupplierColumn = true;
+
+    [ObservableProperty]
+    private bool _showCountryColumn = true;
+
+    [ObservableProperty]
+    private bool _showReorderColumn = true;
+
+    [ObservableProperty]
+    private bool _showOverstockColumn = true;
+
+    partial void OnShowNameColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Name", value);
+    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
+    partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
+    partial void OnShowCategoryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Category", value);
+    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
+    partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
+    partial void OnShowReorderColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reorder", value);
+    partial void OnShowOverstockColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Overstock", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Tab Selection
 
     [ObservableProperty]
