@@ -81,9 +81,15 @@ public partial class QuickActionsPanel : UserControl
                                 ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
                             }
 
-                            // Return focus to parent shell so Ctrl+K works again
-                            var parent = this.FindAncestorOfType<UserControl>();
-                            parent?.Focus();
+                            // Return focus to AppShell so Ctrl+K works again
+                            var topLevel = TopLevel.GetTopLevel(this);
+                            if (topLevel != null)
+                            {
+                                var appShell = topLevel.GetVisualDescendants()
+                                    .OfType<UserControl>()
+                                    .FirstOrDefault(x => x.GetType().Name == "AppShell");
+                                appShell?.Focus();
+                            }
                         }, DispatcherPriority.Background);
                     }
                 }

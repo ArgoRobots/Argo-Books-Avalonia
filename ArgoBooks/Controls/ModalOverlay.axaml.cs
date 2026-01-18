@@ -152,11 +152,18 @@ public partial class ModalOverlay : UserControl
         {
             Closed?.Invoke(this, EventArgs.Empty);
 
-            // Return focus to parent shell so keyboard shortcuts (like Ctrl+K) work again
+            // Return focus to AppShell so keyboard shortcuts (like Ctrl+K) work again
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                var parent = this.FindAncestorOfType<UserControl>();
-                parent?.Focus();
+                // Find AppShell in the visual tree and focus it
+                var topLevel = TopLevel.GetTopLevel(this);
+                if (topLevel != null)
+                {
+                    var appShell = topLevel.GetVisualDescendants()
+                        .OfType<UserControl>()
+                        .FirstOrDefault(x => x.GetType().Name == "AppShell");
+                    appShell?.Focus();
+                }
             }, Avalonia.Threading.DispatcherPriority.Background);
         }
     }
