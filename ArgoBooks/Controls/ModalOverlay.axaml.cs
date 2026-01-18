@@ -170,22 +170,29 @@ public partial class ModalOverlay : UserControl
     private void OnIsOpenChanged(bool isOpen)
     {
         System.Diagnostics.Debug.WriteLine($"[ModalOverlay] OnIsOpenChanged: isOpen={isOpen}, _overlayPanel={_overlayPanel != null}");
+        System.Diagnostics.Debug.WriteLine($"[ModalOverlay] This.Bounds: {Bounds}, This.IsVisible: {IsVisible}");
 
         if (_overlayPanel != null)
         {
             _overlayPanel.IsVisible = isOpen;
-            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set _overlayPanel.IsVisible = {isOpen}");
+            _overlayPanel.InvalidateMeasure();
+            _overlayPanel.InvalidateArrange();
+            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set _overlayPanel.IsVisible = {isOpen}, Bounds: {_overlayPanel.Bounds}");
         }
 
         if (isOpen)
         {
             // Ensure elements are visible (no animation for now to debug)
             if (_backdrop != null)
+            {
                 _backdrop.Opacity = 1;
+                System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Backdrop.Bounds: {_backdrop.Bounds}");
+            }
             if (_contentContainer != null)
             {
                 _contentContainer.Opacity = 1;
                 _contentContainer.RenderTransform = null;
+                System.Diagnostics.Debug.WriteLine($"[ModalOverlay] ContentContainer.Bounds: {_contentContainer.Bounds}");
             }
 
             Focus();
