@@ -18,6 +18,14 @@
         <Border Background="{DynamicResource BackgroundSecondaryBrush}"
                 Opacity="0.5" />
 
+        <!-- Window Drag Region (at top, behind content but interactive) -->
+        <Border x:Name="TitleBarDragRegion"
+                Height="40"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                IsHitTestVisible="True"
+                ZIndex="1" />
+
         <!-- Main Content -->
         <ScrollViewer x:Name="MainScrollViewer"
                       HorizontalScrollBarVisibility="Disabled"

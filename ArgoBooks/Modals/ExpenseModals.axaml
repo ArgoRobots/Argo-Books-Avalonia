@@ -582,7 +582,7 @@
                     <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
                             <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseItemStatusModalCommand}" />
-                            <Button Classes="warning-button" Content="{Binding ItemStatusSaveButtonText}" Command="{Binding ConfirmItemStatusCommand}" />
+                            <Button Classes="primary-button" Content="{Binding ItemStatusSaveButtonText}" Command="{Binding ConfirmItemStatusCommand}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
