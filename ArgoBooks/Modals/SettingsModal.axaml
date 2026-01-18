@@ -14,19 +14,11 @@
         <vm:SettingsModalViewModel />
     </Design.DataContext>
 
-    <Panel IsVisible="{Binding IsOpen}">
-        <!-- Modal Backdrop -->
-        <Border Background="#80000000">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
-        <!-- Modal Container -->
-        <Border x:Name="ModalBorder"
-                Background="{DynamicResource SurfaceBrush}"
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <!-- Modal Container -->
+                <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
@@ -34,20 +26,7 @@
                 Height="700"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                BoxShadow="0 8 32 0 #40000000"
-                Focusable="True"
-                KeyDown="Modal_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                BoxShadow="0 8 32 0 #40000000">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
@@ -659,12 +638,14 @@
                     </StackPanel>
                 </Border>
             </Grid>
-        </Border>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Add Password Modal -->
-        <Panel IsVisible="{Binding IsAddPasswordModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsAddPasswordModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -727,13 +708,14 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Change Password Modal -->
-        <Panel IsVisible="{Binding IsChangePasswordModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsChangePasswordModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -814,13 +796,14 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Remove Password Modal -->
-        <Panel IsVisible="{Binding IsRemovePasswordModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsRemovePasswordModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -865,8 +848,9 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>

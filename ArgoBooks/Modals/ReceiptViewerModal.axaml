@@ -5,7 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks.Converters"
-             xmlns:helpers="using:ArgoBooks.Helpers"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.ReceiptViewerModal"
              x:DataType="vm:ReceiptViewerModalViewModel"
@@ -17,16 +17,11 @@
         <vm:ReceiptViewerModalViewModel />
     </Design.DataContext>
 
-    <!-- Modal Overlay -->
-    <Grid IsVisible="{Binding IsOpen}">
-        <!-- Backdrop -->
-        <Border Classes="modal-backdrop" />
-
-        <!-- Modal Content -->
-        <Border Classes="modal-animated"
-                helpers:ModalAnimationBehavior.IsEnabled="True"
-                helpers:ModalAnimationBehavior.OpenPropertyName="IsOpen"
-                Background="{DynamicResource SurfaceBrush}"
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <!-- Modal Content -->
+                <Border Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
                 Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
                 Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}}"
@@ -167,6 +162,8 @@
                     </Grid>
                 </Border>
             </Grid>
-        </Border>
-    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
 </UserControl>

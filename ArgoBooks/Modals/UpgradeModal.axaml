@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.UpgradeModal"
              x:DataType="vm:UpgradeModalViewModel">
@@ -14,39 +15,14 @@
 
     <Panel>
         <!-- Upgrade Modal -->
-        <Panel IsVisible="{Binding IsOpen}">
-            <!-- Backdrop with fade animation -->
-            <Border Background="#80000000">
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                    </Transitions>
-                </Border.Transitions>
-            </Border>
-
-            <!-- Modal with scale animation -->
-            <Border x:Name="ModalBorder"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}" CloseOnBackdropClick="False">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
                     Width="680"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    KeyDown="Modal_KeyDown"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    BoxShadow="0 8 32 0 #40000000">
 
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
@@ -332,24 +308,19 @@
                         </Button>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Enter Key Modal -->
-        <Panel IsVisible="{Binding IsEnterKeyModalOpen}">
-            <Border Background="#80000000" />
-
-            <Border x:Name="EnterKeyModalBorder"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsEnterKeyModalOpen}" CloseOnBackdropClick="False">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
                     Width="420"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    KeyDown="Modal_KeyDown">
+                    BoxShadow="0 8 32 0 #40000000">
 
                 <Panel>
                     <!-- Normal Entry View -->
@@ -512,8 +483,9 @@
                         </Panel>
                     </StackPanel>
                 </Panel>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>

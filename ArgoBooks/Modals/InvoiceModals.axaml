@@ -6,12 +6,9 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.InvoiceModals"
-             x:DataType="vm:InvoiceModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:InvoiceModalsViewModel">
 
     <Design.DataContext>
         <vm:InvoiceModalsViewModel />
@@ -19,12 +16,9 @@
 
     <Panel>
         <!-- ======================= CREATE / EDIT INVOICE MODAL ======================= -->
-        <Panel IsVisible="{Binding IsCreateEditModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsCreateEditModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="750"
                     MaxHeight="700"
@@ -331,20 +325,18 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- ======================= FILTER MODAL ======================= -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="700"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="700"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -473,21 +465,19 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- ======================= HISTORY MODAL ======================= -->
-        <Panel IsVisible="{Binding IsHistoryModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsHistoryModalOpen"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="600"
-                    MaxHeight="500"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="600"
+                        MaxHeight="500"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -565,21 +555,19 @@
                     </ScrollViewer>
                 </Grid>
             </Border>
-        </Panel>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- ======================= PREVIEW MODAL ======================= -->
-        <Panel IsVisible="{Binding IsPreviewModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsPreviewModalOpen"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="700"
-                    MaxHeight="600"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+        <controls:ModalOverlay IsOpen="{Binding IsPreviewModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="700"
+                        MaxHeight="600"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -690,7 +678,8 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>

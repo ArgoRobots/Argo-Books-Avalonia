@@ -1,9 +1,9 @@
-using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Data;
 using Avalonia.Input;
-using Avalonia.Media.Transformation;
-using CommunityToolkit.Mvvm.Input;
+using ArgoBooks.Utilities;
 
 namespace ArgoBooks.Controls;
 
@@ -12,45 +12,39 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ModalOverlay : UserControl
 {
+    private Panel? _overlayPanel;
+    private ContentPresenter? _modalContentPresenter;
+
     #region Styled Properties
 
     public static readonly StyledProperty<bool> IsOpenProperty =
-        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(IsOpen));
+        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(IsOpen), defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<bool> CloseOnBackdropClickProperty =
-        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnBackdropClick), true);
+        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnBackdropClick));
 
     public static readonly StyledProperty<bool> CloseOnEscapeProperty =
         AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnEscape), true);
 
-    public new static readonly StyledProperty<object?> ContentProperty =
-        AvaloniaProperty.Register<ModalOverlay, object?>(nameof(Content));
+    public static readonly StyledProperty<object?> ModalContentProperty =
+        AvaloniaProperty.Register<ModalOverlay, object?>(nameof(ModalContent));
 
     #endregion
 
     #region Properties
 
-    /// <summary>
-    /// Gets or sets whether the modal is open.
-    /// </summary>
     public bool IsOpen
     {
         get => GetValue(IsOpenProperty);
         set => SetValue(IsOpenProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether clicking the backdrop closes the modal.
-    /// </summary>
     public bool CloseOnBackdropClick
     {
         get => GetValue(CloseOnBackdropClickProperty);
         set => SetValue(CloseOnBackdropClickProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether pressing Escape closes the modal.
-    /// </summary>
     public bool CloseOnEscape
     {
         get => GetValue(CloseOnEscapeProperty);
@@ -58,44 +52,43 @@ public partial class ModalOverlay : UserControl
     }
 
     /// <summary>
-    /// Gets or sets the modal content.
+    /// Gets or sets the modal content. Use ModalOverlay.ModalContent property element syntax in XAML.
     /// </summary>
-    public new object? Content
+    public object? ModalContent
     {
-        get => GetValue(ContentProperty);
-        set => SetValue(ContentProperty, value);
+        get => GetValue(ModalContentProperty);
+        set => SetValue(ModalContentProperty, value);
     }
-
-    /// <summary>
-    /// Command executed when backdrop is clicked.
-    /// </summary>
-    public ICommand BackdropClickCommand { get; }
 
     #endregion
 
     #region Events
 
-    /// <summary>
-    /// Event raised when the modal is opened.
-    /// </summary>
     public event EventHandler? Opened;
-
-    /// <summary>
-    /// Event raised when the modal is closed.
-    /// </summary>
     public event EventHandler? Closed;
-
-    /// <summary>
-    /// Event raised when close is requested (can be cancelled).
-    /// </summary>
     public event EventHandler<ModalClosingEventArgs>? Closing;
 
     #endregion
 
     public ModalOverlay()
     {
-        BackdropClickCommand = new RelayCommand(OnBackdropClick);
         InitializeComponent();
+        _overlayPanel = this.FindControl<Panel>("OverlayPanel");
+        _modalContentPresenter = this.FindControl<ContentPresenter>("ModalContentPresenter");
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (_modalContentPresenter != null)
+            _modalContentPresenter.Content = ModalContent;
+
+        if (_overlayPanel != null)
+        {
+            _overlayPanel.Opacity = IsOpen ? 1 : 0;
+            _overlayPanel.IsHitTestVisible = IsOpen;
+        }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -105,6 +98,10 @@ public partial class ModalOverlay : UserControl
         if (change.Property == IsOpenProperty)
         {
             OnIsOpenChanged(IsOpen);
+        }
+        else if (change.Property == ModalContentProperty && _modalContentPresenter != null)
+        {
+            _modalContentPresenter.Content = ModalContent;
         }
     }
 
@@ -121,89 +118,41 @@ public partial class ModalOverlay : UserControl
 
     private void OnIsOpenChanged(bool isOpen)
     {
+        if (_overlayPanel != null)
+        {
+            _overlayPanel.Opacity = isOpen ? 1 : 0;
+            _overlayPanel.IsHitTestVisible = isOpen;
+        }
+
         if (isOpen)
         {
-            // Set initial state before animation
-            if (Backdrop != null)
-                Backdrop.Opacity = 0;
-            if (ContentContainer != null)
-            {
-                ContentContainer.Opacity = 0;
-                ContentContainer.RenderTransform = TransformOperations.Parse("scale(0.95)");
-            }
-
-            // Trigger animation to final state (on next frame so transitions kick in)
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                if (Backdrop != null)
-                    Backdrop.Opacity = 1;
-                if (ContentContainer != null)
-                {
-                    ContentContainer.Opacity = 1;
-                    ContentContainer.RenderTransform = TransformOperations.Parse("scale(1)");
-                }
-            }, Avalonia.Threading.DispatcherPriority.Render);
-
             Focus();
             Opened?.Invoke(this, EventArgs.Empty);
         }
         else
         {
             Closed?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    private void OnBackdropClick()
-    {
-        if (CloseOnBackdropClick)
-        {
-            RequestClose();
+            ModalHelper.ReturnFocusToAppShell(this);
         }
     }
 
     private void OnBackdropPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        OnBackdropClick();
+        if (CloseOnBackdropClick)
+            RequestClose();
     }
 
-    /// <summary>
-    /// Requests to close the modal. Can be cancelled via Closing event.
-    /// </summary>
     public void RequestClose()
     {
         var args = new ModalClosingEventArgs();
         Closing?.Invoke(this, args);
 
         if (!args.Cancel)
-        {
             IsOpen = false;
-        }
-    }
-
-    /// <summary>
-    /// Opens the modal.
-    /// </summary>
-    public void Open()
-    {
-        IsOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the modal without raising the Closing event.
-    /// </summary>
-    public void Close()
-    {
-        IsOpen = false;
     }
 }
 
-/// <summary>
-/// Event arguments for modal closing event.
-/// </summary>
 public class ModalClosingEventArgs : EventArgs
 {
-    /// <summary>
-    /// Gets or sets whether to cancel the close operation.
-    /// </summary>
     public bool Cancel { get; set; }
 }

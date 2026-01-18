@@ -6,26 +6,20 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
-             x:DataType="vm:ReceiptsModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:ReceiptsModalsViewModel">
 
     <Panel>
         <!-- Filter Modal -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Width="480"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        Width="480"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0"
@@ -168,15 +162,13 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- ======================= AI SCAN REVIEW MODAL ======================= -->
-        <Panel IsVisible="{Binding IsScanReviewModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsScanReviewModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsScanReviewModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="950"
                     MaxHeight="750"
@@ -753,6 +745,7 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>
