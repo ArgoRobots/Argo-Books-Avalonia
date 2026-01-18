@@ -153,9 +153,6 @@ public partial class DataValidator(CompanyData companyData)
         if (string.IsNullOrWhiteSpace(category.Name))
             result.AddError(nameof(category.Name), "Category name is required.");
 
-        if (category.DefaultTaxRate < 0 || category.DefaultTaxRate > 1)
-            result.AddError(nameof(category.DefaultTaxRate), "Tax rate must be between 0 and 1.");
-
         // Check for duplicate name within same type (excluding self)
         if (companyData.Categories.Any(c => c.Id != category.Id &&
             c.Type == category.Type &&

@@ -172,8 +172,8 @@ public class IdGenerator(CompanyData companyData)
     /// </summary>
     public string NextPurchaseOrderId()
     {
-        companyData.IdCounters.ExpenseOrder++;
-        return $"PO-{companyData.IdCounters.ExpenseOrder:D3}";
+        companyData.IdCounters.PurchaseOrder++;
+        return $"PO-{companyData.IdCounters.PurchaseOrder:D3}";
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public class IdGenerator(CompanyData companyData)
     /// </summary>
     public string NextPurchaseOrderNumber()
     {
-        return $"#PO-{DateTime.UtcNow.Year}-{companyData.IdCounters.ExpenseOrder:D3}";
+        return $"#PO-{DateTime.UtcNow.Year}-{companyData.IdCounters.PurchaseOrder:D3}";
     }
 
     /// <summary>

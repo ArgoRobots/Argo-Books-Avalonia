@@ -1983,7 +1983,7 @@ public class App : Application
                 data.IdCounters.RecurringInvoice = restoredCounters.RecurringInvoice;
                 data.IdCounters.InventoryItem = restoredCounters.InventoryItem;
                 data.IdCounters.StockAdjustment = restoredCounters.StockAdjustment;
-                data.IdCounters.ExpenseOrder = restoredCounters.PurchaseOrder;
+                data.IdCounters.PurchaseOrder = restoredCounters.PurchaseOrder;
                 data.IdCounters.RentalItem = restoredCounters.RentalItem;
                 data.IdCounters.Rental = restoredCounters.Rental;
             }
