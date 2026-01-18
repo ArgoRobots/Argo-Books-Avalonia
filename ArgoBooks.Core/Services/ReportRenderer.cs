@@ -553,11 +553,6 @@ public class ReportRenderer : IDisposable
         barPaint.Style = SKPaintStyle.Fill;
         barPaint.IsAntialias = true;
 
-        using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
-        using var xLabelPaint = new SKPaint();
-        xLabelPaint.Color = ChartAxisColor;
-        xLabelPaint.IsAntialias = true;
-
         // Draw bars
         for (int i = 0; i < dataPoints.Count; i++)
         {
@@ -569,32 +564,36 @@ public class ReportRenderer : IDisposable
             var barHeight = chartArea.Height * Math.Abs(valueRatio);
 
             // Handle positive vs negative values
-            var barRect = point.Value >= 0 
-                ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY) 
+            var barRect = point.Value >= 0
+                ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY)
                 : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
             canvas.DrawRect(barRect, barPaint);
+        }
 
-            // Draw X-axis label (rotate if many bars)
-            // Use formatted date if available, otherwise fall back to Label
+        // Draw X-axis labels - dynamically based on date range and available width
+        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelPaint = new SKPaint();
+        xLabelPaint.Color = ChartAxisColor;
+        xLabelPaint.IsAntialias = true;
+
+        var labelIndices = GetXAxisLabelIndices(dataPoints, chartArea.Width, _renderScale);
+        var labelY = chartArea.Bottom + 18 * _renderScale;
+
+        for (int idx = 0; idx < labelIndices.Length; idx++)
+        {
+            var i = labelIndices[idx];
+            var point = dataPoints[i];
+            var x = startX + (i * (barWidth + barSpacing));
             var label = FormatXAxisLabel(point);
-            if (label.Length > 10) label = label[..10] + "...";
-
             var labelX = x + barWidth / 2;
-            var labelY = chartArea.Bottom + 15 * _renderScale;
 
-            // Rotate labels if there are many bars
-            if (barCount > 6)
-            {
-                canvas.Save();
-                canvas.RotateDegrees(-45, labelX, labelY);
-                canvas.DrawText(label, labelX, labelY, SKTextAlign.Right, xLabelFont, xLabelPaint);
-                canvas.Restore();
-            }
-            else
-            {
-                canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, xLabelFont, xLabelPaint);
-            }
+            // Left-align first label, right-align last label, center others
+            var align = idx == 0 ? SKTextAlign.Left
+                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
+                      : SKTextAlign.Center;
+
+            canvas.DrawText(label, labelX, labelY, align, xLabelFont, xLabelPaint);
         }
     }
 
@@ -677,13 +676,31 @@ public class ReportRenderer : IDisposable
         // Render based on chart style
         if (chart.ChartStyle == ReportChartStyle.Area)
         {
-            // Draw filled area under line
+            // Draw filled area under line using spline curve
             using var path = new SKPath();
             path.MoveTo(points[0].X, baselineY);
-            foreach (var point in points)
+            path.LineTo(points[0].X, points[0].Y);
+
+            // Use cubic Bezier curves for smooth spline
+            for (int i = 0; i < points.Length - 1; i++)
             {
-                path.LineTo(point.X, point.Y);
+                var p0 = i > 0 ? points[i - 1] : points[i];
+                var p1 = points[i];
+                var p2 = points[i + 1];
+                var p3 = i < points.Length - 2 ? points[i + 2] : points[i + 1];
+
+                // Calculate control points for cubic Bezier (Catmull-Rom to Bezier conversion)
+                var tension = 0.5f;
+                var cp1 = new SKPoint(
+                    p1.X + (p2.X - p0.X) * tension / 3,
+                    p1.Y + (p2.Y - p0.Y) * tension / 3);
+                var cp2 = new SKPoint(
+                    p2.X - (p3.X - p1.X) * tension / 3,
+                    p2.Y - (p3.Y - p1.Y) * tension / 3);
+
+                path.CubicTo(cp1, cp2, p2);
             }
+
             path.LineTo(points[^1].X, baselineY);
             path.Close();
 
@@ -719,10 +736,24 @@ public class ReportRenderer : IDisposable
             }
             else
             {
-                // Regular line
-                for (int i = 1; i < points.Length; i++)
+                // Smooth spline using cubic Bezier curves (Catmull-Rom style)
+                for (int i = 0; i < points.Length - 1; i++)
                 {
-                    linePath.LineTo(points[i]);
+                    var p0 = i > 0 ? points[i - 1] : points[i];
+                    var p1 = points[i];
+                    var p2 = points[i + 1];
+                    var p3 = i < points.Length - 2 ? points[i + 2] : points[i + 1];
+
+                    // Calculate control points for cubic Bezier
+                    var tension = 0.5f;
+                    var cp1 = new SKPoint(
+                        p1.X + (p2.X - p0.X) * tension / 3,
+                        p1.Y + (p2.Y - p0.Y) * tension / 3);
+                    var cp2 = new SKPoint(
+                        p2.X - (p3.X - p1.X) * tension / 3,
+                        p2.Y - (p3.Y - p1.Y) * tension / 3);
+
+                    linePath.CubicTo(cp1, cp2, p2);
                 }
             }
 
@@ -741,32 +772,27 @@ public class ReportRenderer : IDisposable
             canvas.DrawCircle(point, pointRadius, pointPaint);
         }
 
-        // Draw X-axis labels
-        using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
+        // Draw X-axis labels - dynamically based on date range and available width
+        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
 
-        for (int i = 0; i < pointCount; i++)
+        var labelIndices = GetXAxisLabelIndices(dataPoints, chartArea.Width, _renderScale);
+        var labelY = chartArea.Bottom + 18 * _renderScale;
+
+        for (int idx = 0; idx < labelIndices.Length; idx++)
         {
-            // Use formatted date if available, otherwise fall back to Label
+            var i = labelIndices[idx];
             var label = FormatXAxisLabel(dataPoints[i]);
-            if (label.Length > 10) label = label[..10] + "...";
-
             var labelX = points[i].X;
-            var labelY = chartArea.Bottom + 15 * _renderScale;
 
-            if (pointCount > 6)
-            {
-                canvas.Save();
-                canvas.RotateDegrees(-45, labelX, labelY);
-                canvas.DrawText(label, labelX, labelY, SKTextAlign.Right, xLabelFont, xLabelPaint);
-                canvas.Restore();
-            }
-            else
-            {
-                canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, xLabelFont, xLabelPaint);
-            }
+            // Left-align first label, right-align last label, center others
+            var align = idx == 0 ? SKTextAlign.Left
+                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
+                      : SKTextAlign.Center;
+
+            canvas.DrawText(label, labelX, labelY, align, xLabelFont, xLabelPaint);
         }
     }
 
@@ -949,11 +975,6 @@ public class ReportRenderer : IDisposable
         var totalBarSpacePerCategory = categoryWidth * 0.8f; // Use 80% of category width for bars
         var barWidth = Math.Min(maxBarWidth, (totalBarSpacePerCategory - (barSpacing * (seriesCount - 1))) / seriesCount);
 
-        using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
-        using var xLabelPaint = new SKPaint();
-        xLabelPaint.Color = ChartAxisColor;
-        xLabelPaint.IsAntialias = true;
-
         // Draw bars for each category
         for (int categoryIndex = 0; categoryIndex < categoryCount; categoryIndex++)
         {
@@ -980,31 +1001,35 @@ public class ReportRenderer : IDisposable
                 barPaint.IsAntialias = true;
 
                 SKRect barRect;
-                barRect = point.Value >= 0 
-                    ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY) 
+                barRect = point.Value >= 0
+                    ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY)
                     : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
                 canvas.DrawRect(barRect, barPaint);
             }
+        }
 
-            // Draw X-axis label
+        // Draw X-axis labels - dynamically based on date range and available width
+        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelPaint = new SKPaint();
+        xLabelPaint.Color = ChartAxisColor;
+        xLabelPaint.IsAntialias = true;
+
+        var labelIndices = GetXAxisLabelIndices(firstSeriesPoints, chartArea.Width, _renderScale);
+        var labelY = chartArea.Bottom + 18 * _renderScale;
+
+        for (int idx = 0; idx < labelIndices.Length; idx++)
+        {
+            var categoryIndex = labelIndices[idx];
+            var categoryCenterX = chartArea.Left + (categoryIndex * categoryWidth) + (categoryWidth / 2);
             var label = labels[categoryIndex];
-            if (label.Length > 10) label = label[..10] + "...";
 
-            var labelX = categoryCenterX;
-            var labelY = chartArea.Bottom + 15 * _renderScale;
+            // Left-align first label, right-align last label, center others
+            var align = idx == 0 ? SKTextAlign.Left
+                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
+                      : SKTextAlign.Center;
 
-            if (categoryCount > 6)
-            {
-                canvas.Save();
-                canvas.RotateDegrees(-45, labelX, labelY);
-                canvas.DrawText(label, labelX, labelY, SKTextAlign.Right, xLabelFont, xLabelPaint);
-                canvas.Restore();
-            }
-            else
-            {
-                canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, xLabelFont, xLabelPaint);
-            }
+            canvas.DrawText(label, categoryCenterX, labelY, align, xLabelFont, xLabelPaint);
         }
     }
 
@@ -1639,6 +1664,46 @@ public class ReportRenderer : IDisposable
             return point.Date.Value.ToString(dateFormat);
         }
         return point.Label;
+    }
+
+    /// <summary>
+    /// Calculates which indices should have X-axis labels displayed.
+    /// Calculates how many labels fit based on available width and distributes them evenly,
+    /// matching how LiveCharts handles axis labels.
+    /// </summary>
+    private static int[] GetXAxisLabelIndices(List<ChartDataPoint> dataPoints, float chartWidth, float renderScale)
+    {
+        var totalCount = dataPoints.Count;
+        if (totalCount == 0) return [];
+        if (totalCount == 1) return [0];
+        if (totalCount == 2) return [0, 1];
+
+        // Estimate label width (date format like "MM-dd-yyyy" ~85px at base size)
+        var estimatedLabelWidth = 85 * renderScale;
+
+        // Calculate how many labels can fit with spacing
+        var maxLabels = Math.Max(2, (int)(chartWidth / estimatedLabelWidth));
+
+        // Don't show more labels than data points
+        if (maxLabels >= totalCount)
+        {
+            return Enumerable.Range(0, totalCount).ToArray();
+        }
+
+        // Distribute maxLabels evenly across the data points
+        var indices = new List<int>();
+        var step = (double)(totalCount - 1) / (maxLabels - 1);
+
+        for (int i = 0; i < maxLabels; i++)
+        {
+            var index = (int)Math.Round(i * step);
+            if (!indices.Contains(index))
+            {
+                indices.Add(index);
+            }
+        }
+
+        return indices.OrderBy(x => x).ToArray();
     }
 
     private static SKColor ParseColor(string colorString)

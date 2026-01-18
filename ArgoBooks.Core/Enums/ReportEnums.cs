@@ -182,11 +182,11 @@ public static class ReportEnumExtensions
     {
         return chartType switch
         {
-            ChartDataType.TotalRevenue => "Total Revenue",
+            ChartDataType.TotalRevenue => "Revenue Trends",
             ChartDataType.RevenueDistribution => "Revenue Distribution",
-            ChartDataType.TotalExpenses => "Total Expenses",
+            ChartDataType.TotalExpenses => "Expense Trends",
             ChartDataType.ExpensesDistribution => "Expense Distribution",
-            ChartDataType.TotalProfits => "Total Profits",
+            ChartDataType.TotalProfits => "Profit Over Time",
             ChartDataType.SalesVsExpenses => "Expenses vs Revenue",
             ChartDataType.GrowthRates => "Growth Rates",
             ChartDataType.AverageTransactionValue => "Average Transaction Value",
