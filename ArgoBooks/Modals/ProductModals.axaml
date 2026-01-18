@@ -5,12 +5,9 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.ProductModals"
-             x:DataType="vm:ProductModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:ProductModalsViewModel">
 
     <Design.DataContext>
         <vm:ProductModalsViewModel />
@@ -18,12 +15,9 @@
 
     <Panel>
         <!-- Add Product Modal -->
-        <Panel IsVisible="{Binding IsAddModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsAddModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="550" MaxHeight="700"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -132,16 +126,14 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Edit Product Modal -->
-        <Panel IsVisible="{Binding IsEditModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsEditModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="550" MaxHeight="700"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -250,16 +242,14 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="400"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -321,7 +311,8 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>

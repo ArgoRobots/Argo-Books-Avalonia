@@ -4,21 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.LostDamagedModals"
-             x:DataType="vm:LostDamagedModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:LostDamagedModalsViewModel">
 
     <Panel>
         <!-- Filter Modal -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
                     HorizontalAlignment="Center"
@@ -127,7 +122,8 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>

@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
@@ -67,7 +68,7 @@ public partial class QuickActionsPanel : UserControl
                     }
                     else
                     {
-                        // Reset for next open
+                        // Reset for next open and return focus to parent
                         Dispatcher.UIThread.Post(() =>
                         {
                             if (DropdownBorder != null)
@@ -80,6 +81,8 @@ public partial class QuickActionsPanel : UserControl
                                 ModalBorder.Opacity = 0;
                                 ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
                             }
+
+                            ModalHelper.ReturnFocusToAppShell(this);
                         }, DispatcherPriority.Background);
                     }
                 }

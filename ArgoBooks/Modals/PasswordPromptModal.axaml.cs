@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -33,14 +32,7 @@ public partial class PasswordPromptModal : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PasswordPromptModalViewModel.IsOpen))
-        {
-            if (DataContext is PasswordPromptModalViewModel { IsOpen: true })
-                ModalAnimationHelper.AnimateIn(ModalBorder);
-            else
-                ModalAnimationHelper.AnimateOut(ModalBorder);
-        }
-        else if (e.PropertyName == nameof(PasswordPromptModalViewModel.ShowWindowsHelloSuccess))
+        if (e.PropertyName == nameof(PasswordPromptModalViewModel.ShowWindowsHelloSuccess))
         {
             if (DataContext is PasswordPromptModalViewModel { ShowWindowsHelloSuccess: true })
             {
@@ -75,15 +67,6 @@ public partial class PasswordPromptModal : UserControl
         if (e.Key == Key.Enter && DataContext is PasswordPromptModalViewModel vm)
         {
             vm.SubmitCommand.Execute(null);
-            e.Handled = true;
-        }
-    }
-
-    private void Modal_KeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Escape && DataContext is PasswordPromptModalViewModel vm)
-        {
-            vm.CancelCommand.Execute(null);
             e.Handled = true;
         }
     }

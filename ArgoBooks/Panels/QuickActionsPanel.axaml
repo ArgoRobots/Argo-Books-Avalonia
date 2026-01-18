@@ -55,12 +55,51 @@
                     </Grid>
                 </Border>
 
-                <!-- Results -->
+                <!-- Results (fixed height to prevent modal resizing as results change) -->
                 <ScrollViewer Grid.Row="1"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
-                              MaxHeight="380">
+                              Height="380">
                     <StackPanel Spacing="0">
+                        <!-- Top Results Section (shown when searching with strong matches) -->
+                        <StackPanel IsVisible="{Binding HasTopResults}">
+                            <TextBlock Text="{loc:Loc 'Top Results'}"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Margin="16,12,16,8" />
+                            <ItemsControl ItemsSource="{Binding TopResults}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickActionItem">
+                                        <Button Classes="action-item"
+                                                Command="{Binding $parent[UserControl].((vm:QuickActionsViewModel)DataContext).ExecuteActionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Background="{DynamicResource PrimaryIconBgBrush}"
+                                                        Margin="0,0,12,0">
+                                                    <PathIcon Data="{Binding IconData}"
+                                                              Width="18" Height="18"
+                                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Title, Converter={StaticResource TranslateConverter}}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description, Converter={StaticResource TranslateConverter}}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
                         <!-- Quick Actions Section -->
                         <StackPanel IsVisible="{Binding HasQuickActions}">
                             <TextBlock Text="{loc:Loc 'Quick Actions'}"
@@ -199,49 +238,43 @@
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Mode: Full overlay with centered panel -->
         <Panel IsVisible="{Binding !IsDropdownMode}">
-            <!-- Transparent backdrop for click-away -->
-            <Border Background="Transparent"
-                    PointerPressed="Backdrop_PointerPressed" />
+            <!-- Semi-transparent backdrop for click-away -->
+            <Border Background="{DynamicResource OverlayBrush}"
+                    IsHitTestVisible="True"
+                    PointerPressed="Backdrop_PointerPressed">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
 
-            <!-- Grid that mirrors main layout for proper centering in content area -->
-            <Grid ColumnDefinitions="Auto,*">
-                <!-- Spacer matching sidebar width -->
-                <Border Grid.Column="0" Width="{Binding SidebarWidth}">
-                    <Border.Transitions>
-                        <Transitions>
-                            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                        </Transitions>
-                    </Border.Transitions>
-                </Border>
-
-                <!-- Modal centered in content area -->
-                <Border Grid.Column="1"
-                        x:Name="ModalBorder"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Width="500"
-                        MaxHeight="500"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Top"
-                        Margin="0,100,0,0"
-                        BoxShadow="0 8 32 0 #40000000"
-                        Opacity="0"
-                        RenderTransformOrigin="0.5,0.5">
-                    <Border.RenderTransform>
-                        <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                    </Border.RenderTransform>
-                    <Border.Transitions>
-                        <Transitions>
-                            <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        </Transitions>
-                    </Border.Transitions>
-                    <ContentControl Content="{Binding}"
-                                    ContentTemplate="{StaticResource PanelContentTemplate}" />
-                </Border>
-            </Grid>
+            <!-- Modal centered on screen -->
+            <Border x:Name="ModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="500"
+                    MaxHeight="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Margin="0,-60,0,0"
+                    BoxShadow="0 8 32 0 #40000000"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource PanelContentTemplate}" />
+            </Border>
         </Panel>
 
         <!-- Dropdown Mode: No backdrop, positioned below header searchbox -->

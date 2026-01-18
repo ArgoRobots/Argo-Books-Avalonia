@@ -1,40 +1,27 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:controls="using:ArgoBooks.Controls"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Controls.ModalOverlay"
-             x:DataType="controls:ModalOverlay">
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
 
-    <Panel x:Name="OverlayPanel"
-           IsVisible="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ModalOverlay}}">
-        <!-- Semi-transparent backdrop -->
-        <Border x:Name="Backdrop"
-                Background="{DynamicResource OverlayBrush}"
-                IsHitTestVisible="True"
-                PointerPressed="OnBackdropPointerPressed">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
+    <Panel>
+        <Panel x:Name="OverlayPanel"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"
+               Opacity="0"
+               IsHitTestVisible="False">
 
-        <!-- Modal content container -->
-        <Border x:Name="ContentContainer"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                RenderTransformOrigin="0.5,0.5"
-                IsHitTestVisible="True">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+            <!-- Semi-transparent backdrop -->
+            <Border Background="{DynamicResource OverlayBrush}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    PointerPressed="OnBackdropPointerPressed" />
 
-            <ContentPresenter Content="{Binding Content, RelativeSource={RelativeSource AncestorType=controls:ModalOverlay}}" />
-        </Border>
+            <!-- Modal content container -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <ContentPresenter x:Name="ModalContentPresenter" />
+            </Border>
+        </Panel>
     </Panel>
 </UserControl>

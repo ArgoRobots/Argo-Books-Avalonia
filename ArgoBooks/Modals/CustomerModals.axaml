@@ -9,9 +9,7 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.CustomerModals"
-             x:DataType="vm:CustomerModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:CustomerModalsViewModel">
 
     <Design.DataContext>
         <vm:CustomerModalsViewModel />
@@ -20,12 +18,9 @@
     <!-- All modals in one UserControl for full-screen coverage -->
     <Panel>
         <!-- Add Customer Modal -->
-        <Panel IsVisible="{Binding IsAddModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsAddModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -156,16 +151,14 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Edit Customer Modal -->
-        <Panel IsVisible="{Binding IsEditModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsEditModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -278,13 +271,14 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -368,13 +362,14 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- Customer History Modal -->
-        <Panel IsVisible="{Binding IsHistoryModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -461,13 +456,14 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
 
         <!-- History Filter Modal -->
-        <Panel IsVisible="{Binding IsHistoryFilterModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsHistoryFilterModalOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -549,7 +545,8 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </Border>
-        </Panel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>

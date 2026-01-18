@@ -51,6 +51,16 @@ public partial class QuickActionsViewModel : ViewModelBase
     public ObservableCollection<QuickActionItem> ToolsItems { get; } = [];
 
     /// <summary>
+    /// Top results with strong matches (shown first when searching).
+    /// </summary>
+    public ObservableCollection<QuickActionItem> TopResults { get; } = [];
+
+    /// <summary>
+    /// Gets whether there are any top results visible.
+    /// </summary>
+    public bool HasTopResults => TopResults.Count > 0;
+
+    /// <summary>
     /// Gets whether there are any quick actions visible.
     /// </summary>
     public bool HasQuickActions => QuickActions.Count > 0;
@@ -68,7 +78,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     /// <summary>
     /// Gets whether there are any results at all.
     /// </summary>
-    public bool HasResults => HasQuickActions || HasNavigationItems || HasToolsItems;
+    public bool HasResults => HasTopResults || HasQuickActions || HasNavigationItems || HasToolsItems;
 
     #endregion
 
@@ -134,11 +144,12 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("New Rental Item", "Add a new rental item", "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z", QuickActionType.QuickAction, "RentalInventory", "OpenAddModal"),
             new QuickActionItem("New Rental Record", "Create a new rental transaction", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z", QuickActionType.QuickAction, "RentalRecords", "OpenAddModal"),
             new QuickActionItem("New Category", "Add a new category", "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z", QuickActionType.QuickAction, "Categories", "OpenAddModal"),
-            new QuickActionItem("New Department", "Add a new department", "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z", QuickActionType.QuickAction, "Departments", "OpenAddModal"),
             new QuickActionItem("New Location", "Add a new location", "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z", QuickActionType.QuickAction, "Locations", "OpenAddModal"),
             new QuickActionItem("New Purchase Order", "Create a new purchase order", "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z", QuickActionType.QuickAction, "PurchaseOrders", "OpenAddModal"),
             new QuickActionItem("New Stock Adjustment", "Record a stock adjustment", "M19 3H14.82C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z", QuickActionType.QuickAction, "Adjustments", "OpenAddModal"),
             new QuickActionItem("New Accountant", "Add a new accountant", "M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z", QuickActionType.QuickAction, "Accountants", "OpenAddModal"),
+            new QuickActionItem("New Return", "Record a customer return", "M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z", QuickActionType.QuickAction, "Returns", "OpenAddModal"),
+            new QuickActionItem("New Transfer", "Create inventory transfer", "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z", QuickActionType.QuickAction, "Transfers", "OpenAddModal"),
         ]);
 
         // Navigation - Go to pages
@@ -162,9 +173,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             // Contacts
             new QuickActionItem("Customers", "Manage customers", "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z", QuickActionType.Navigation, "Customers"),
             new QuickActionItem("Suppliers", "Manage suppliers", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z", QuickActionType.Navigation, "Suppliers"),
-            new QuickActionItem("Employees", "Manage employees", "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z", QuickActionType.Navigation, "Employees"),
             new QuickActionItem("Accountants", "Manage accountants", "M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z", QuickActionType.Navigation, "Accountants"),
-            new QuickActionItem("Departments", "Manage departments", "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z", QuickActionType.Navigation, "Departments"),
 
             // Inventory
             new QuickActionItem("Products", "Manage products and services", "M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2z", QuickActionType.Navigation, "Products"),
@@ -182,9 +191,14 @@ public partial class QuickActionsViewModel : ViewModelBase
         // Tools & Settings
         _allActions.AddRange([
             new QuickActionItem("Settings", "Configure application settings", "M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z", QuickActionType.Tools, null, "OpenSettings"),
-            new QuickActionItem("Help & Support", "Get help and documentation", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z", QuickActionType.Tools, null, "OpenHelp"),
+            new QuickActionItem("Edit Company", "Edit company information", "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z", QuickActionType.Tools, null, "OpenEditCompany"),
+            new QuickActionItem("View Profile", "View your profile", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z", QuickActionType.Tools, null, "OpenProfile"),
+            new QuickActionItem("Switch Account", "Switch to another account", "M16.67 13.13C18.04 14.06 19 15.32 19 17v3h4v-3c0-2.18-3.57-3.47-6.33-3.87zM15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4c-.47 0-.91.1-1.33.24C14.5 5.27 15 6.58 15 8s-.5 2.73-1.33 3.76c.42.14.86.24 1.33.24zM9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0-6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zM9 13c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z", QuickActionType.Tools, null, "OpenSwitchAccount"),
+            new QuickActionItem("Check for Updates", "Check for application updates", "M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79 2.73 2.71 7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58 3.51-3.47 9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z", QuickActionType.Tools, null, "OpenCheckForUpdates"),
             new QuickActionItem("Export Data", "Export your data", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z", QuickActionType.Tools, null, "OpenExport"),
             new QuickActionItem("Import Data", "Import data from file", "M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z", QuickActionType.Tools, null, "OpenImport"),
+            new QuickActionItem("Help & Support", "Get help and documentation", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z", QuickActionType.Tools, null, "OpenHelp"),
+            new QuickActionItem("Keyboard Shortcuts", "View keyboard shortcuts", "M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z", QuickActionType.Tools, null, "OpenKeyboardShortcuts"),
         ]);
     }
 
@@ -197,6 +211,12 @@ public partial class QuickActionsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Minimum score threshold for a "strong" match (prefix, word-start, or substring).
+    /// Items with title scores at or above this threshold appear in Top Results.
+    /// </summary>
+    private const double StrongMatchThreshold = 0.8;
+
+    /// <summary>
     /// Filters all action lists based on query using fuzzy matching.
     /// </summary>
     private void FilterActions(string? query)
@@ -204,40 +224,95 @@ public partial class QuickActionsViewModel : ViewModelBase
         QuickActions.Clear();
         NavigationItems.Clear();
         ToolsItems.Clear();
+        TopResults.Clear();
 
-        IEnumerable<(QuickActionItem Item, double Score)> scoredItems;
+        IEnumerable<(QuickActionItem Item, double Score, double TitleScore)> scoredItems;
 
         if (string.IsNullOrWhiteSpace(query))
         {
-            // No query - show all items with score 1
-            scoredItems = _allActions.Select(a => (a, 1.0));
+            // No query - show all items with score 1, no title score tracking needed
+            scoredItems = _allActions.Select(a => (a, 1.0, 0.0));
         }
         else
         {
-            // Use Levenshtein-based fuzzy search
+            // Use Levenshtein-based fuzzy search with title prioritization
             scoredItems = _allActions
                 .Select(a =>
                 {
-                    // Get best score from title or description
                     var titleScore = LevenshteinDistance.ComputeSearchScore(query, a.Title);
                     var descScore = LevenshteinDistance.ComputeSearchScore(query, a.Description);
-                    return (Item: a, Score: Math.Max(titleScore, descScore));
+
+                    // Title matches are prioritized:
+                    // - Strong title match (>= 0.8): use title score with small desc boost
+                    // - Weak title match with strong desc match: boost slightly but less than title match
+                    // - Both weak: use max
+                    double finalScore;
+                    if (titleScore >= StrongMatchThreshold)
+                    {
+                        // Strong title match - prioritize heavily
+                        finalScore = titleScore + (descScore > 0 ? descScore * 0.05 : 0);
+                    }
+                    else if (descScore >= StrongMatchThreshold && titleScore < StrongMatchThreshold)
+                    {
+                        // Strong description match but weak/no title match - reduce score
+                        // This prevents "Scan Receipt" (desc contains "import") from ranking high for "export"
+                        finalScore = descScore * 0.75;
+                    }
+                    else
+                    {
+                        // Both are fuzzy/weak matches - use max
+                        finalScore = Math.Max(titleScore, descScore);
+                    }
+
+                    return (Item: a, Score: finalScore, TitleScore: titleScore);
                 })
                 .Where(x => x.Score > 0) // Only include matches
                 .OrderByDescending(x => x.Score);
         }
 
-        var filteredItems = scoredItems.Select(x => x.Item).ToList();
+        var filteredList = scoredItems.ToList();
 
-        foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
-            QuickActions.Add(item);
+        // When searching, put strong title matches in Top Results section
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var topResultItems = new HashSet<QuickActionItem>();
+            foreach (var (item, _, titleScore) in filteredList.Where(x => x.TitleScore >= StrongMatchThreshold).Take(4))
+            {
+                TopResults.Add(item);
+                topResultItems.Add(item);
+            }
 
-        foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.Navigation).Take(8))
-            NavigationItems.Add(item);
+            // Exclude top results from other categories to avoid duplication
+            var remainingItems = filteredList
+                .Where(x => !topResultItems.Contains(x.Item))
+                .Select(x => x.Item)
+                .ToList();
 
-        foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.Tools).Take(4))
-            ToolsItems.Add(item);
+            foreach (var item in remainingItems.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
+                QuickActions.Add(item);
 
+            foreach (var item in remainingItems.Where(a => a.Type == QuickActionType.Navigation).Take(8))
+                NavigationItems.Add(item);
+
+            foreach (var item in remainingItems.Where(a => a.Type == QuickActionType.Tools).Take(4))
+                ToolsItems.Add(item);
+        }
+        else
+        {
+            // No query - normal category grouping
+            var items = filteredList.Select(x => x.Item).ToList();
+
+            foreach (var item in items.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
+                QuickActions.Add(item);
+
+            foreach (var item in items.Where(a => a.Type == QuickActionType.Navigation).Take(8))
+                NavigationItems.Add(item);
+
+            foreach (var item in items.Where(a => a.Type == QuickActionType.Tools).Take(4))
+                ToolsItems.Add(item);
+        }
+
+        OnPropertyChanged(nameof(HasTopResults));
         OnPropertyChanged(nameof(HasQuickActions));
         OnPropertyChanged(nameof(HasNavigationItems));
         OnPropertyChanged(nameof(HasToolsItems));
@@ -326,7 +401,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void MoveUp()
     {
-        var totalCount = QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
+        var totalCount = TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
         if (totalCount == 0) return;
         SelectedIndex = (SelectedIndex - 1 + totalCount) % totalCount;
     }
@@ -337,7 +412,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void MoveDown()
     {
-        var totalCount = QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
+        var totalCount = TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
         if (totalCount == 0) return;
         SelectedIndex = (SelectedIndex + 1) % totalCount;
     }
@@ -348,7 +423,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void ExecuteSelected()
     {
-        var allItems = QuickActions.Concat(NavigationItems).Concat(ToolsItems).ToList();
+        var allItems = TopResults.Concat(QuickActions).Concat(NavigationItems).Concat(ToolsItems).ToList();
         if (SelectedIndex >= 0 && SelectedIndex < allItems.Count)
         {
             ExecuteAction(allItems[SelectedIndex]);

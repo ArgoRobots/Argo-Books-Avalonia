@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
+using ArgoBooks.Utilities;
 
 namespace ArgoBooks.Helpers;
 
@@ -41,5 +42,7 @@ public static class ModalAnimationHelper
             modalBorder.Opacity = 0;
             modalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
         }, DispatcherPriority.Background);
+
+        ModalHelper.ReturnFocusToAppShell(modalBorder);
     }
 }

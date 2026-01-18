@@ -55,7 +55,7 @@
 
     <!-- Shadow/Overlay Colors -->
     <Color x:Key="ShadowColor">#40000000</Color>
-    <Color x:Key="OverlayColor">#B0000000</Color>
+    <Color x:Key="OverlayColor">#80000000</Color>
     <Color x:Key="LoadingOverlayColor">#E6111827</Color>
 
     <!-- Surface Alternate (for neutral backgrounds) -->
