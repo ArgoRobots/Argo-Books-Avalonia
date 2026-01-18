@@ -5,21 +5,14 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.LocationsModals"
-             x:DataType="vm:LocationsModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:LocationsModalsViewModel">
 
     <Panel>
         <!-- Add Location Modal -->
-        <Panel IsVisible="{Binding IsAddModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsAddModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+            <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="600"
                     MaxHeight="750"
@@ -147,15 +140,11 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- Edit Location Modal -->
-        <Panel IsVisible="{Binding IsEditModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsEditModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
+            <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="600"
                     MaxHeight="750"
@@ -284,15 +273,11 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    Background="{DynamicResource SurfaceBrush}"
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="400"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -354,6 +339,6 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>

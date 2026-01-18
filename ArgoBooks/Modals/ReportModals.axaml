@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReportModals"
              x:DataType="vm:ReportModalsViewModel">
@@ -16,34 +16,26 @@
 
     <Panel>
         <!-- ======================= PAGE SETTINGS MODAL ======================= -->
-        <Panel IsVisible="{Binding IsPageSettingsOpen}">
-            <Border Classes="modal-backdrop" />
+        <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}">
             <modals:ReportPageSettingsModal DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= SAVE TEMPLATE MODAL ======================= -->
-        <Panel IsVisible="{Binding IsSaveTemplateOpen}">
-            <Border Classes="modal-backdrop" />
+        <controls:ModalOverlay IsOpen="{Binding IsSaveTemplateOpen}">
             <modals:ReportSaveTemplateModal DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= DELETE TEMPLATE MODAL ======================= -->
-        <Panel IsVisible="{Binding IsDeleteTemplateOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsDeleteTemplateOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsDeleteTemplateOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Focusable="True"
-                    KeyDown="OnDeleteTemplateKeyDown">
+                    CornerRadius="12">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -98,21 +90,15 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= RENAME TEMPLATE MODAL ======================= -->
-        <Panel IsVisible="{Binding IsRenameTemplateOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsRenameTemplateOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsRenameTemplateOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Focusable="True"
-                    KeyDown="OnRenameTemplateKeyDown">
+                    CornerRadius="12">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -168,6 +154,6 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>

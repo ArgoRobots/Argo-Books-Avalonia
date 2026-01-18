@@ -3,31 +3,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="280"
              x:Class="ArgoBooks.Modals.ReportSaveTemplateModal"
              x:DataType="vm:ReportsPageViewModel">
 
-    <Border x:Name="RootBorder"
-            Background="{DynamicResource SurfaceBrush}"
-            CornerRadius="12"
-            Width="420"
-            Padding="0"
-            Focusable="True"
-            KeyDown="Modal_KeyDown"
-            Opacity="0"
-            RenderTransformOrigin="0.5,0.5">
-        <Border.RenderTransform>
-            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-        </Border.RenderTransform>
-        <Border.Transitions>
-            <Transitions>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-            </Transitions>
-        </Border.Transitions>
+    <controls:ModalOverlay IsOpen="{Binding IsSaveTemplateOpen}">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Width="420"
+                Padding="0">
 
-        <Grid RowDefinitions="Auto,*,Auto">
+            <Grid RowDefinitions="Auto,*,Auto">
             <!-- Header -->
             <Border Grid.Row="0"
                     Background="{DynamicResource SurfaceAltBrush}"
@@ -93,8 +81,9 @@
                             Command="{Binding SaveTemplateCommand}" />
                 </StackPanel>
             </Border>
-        </Grid>
-    </Border>
+            </Grid>
+        </Border>
+    </controls:ModalOverlay>
 
     <UserControl.Styles>
         <Style Selector="Button.close-button">

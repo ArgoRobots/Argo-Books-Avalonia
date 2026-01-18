@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="400"
              x:Class="ArgoBooks.Modals.ProfileModal"
              x:DataType="vm:ProfileModalViewModel">
@@ -12,39 +13,16 @@
         <vm:ProfileModalViewModel />
     </Design.DataContext>
 
-    <Panel IsVisible="{Binding IsOpen}">
-        <!-- Modal Backdrop with fade animation -->
-        <Border Background="#80000000">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
-        <!-- Modal Container with scale animation -->
-        <Border x:Name="ModalBorder"
-                Background="{DynamicResource SurfaceBrush}"
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <!-- Modal Container -->
+        <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Width="420"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                BoxShadow="0 4 20 0 #26000000"
-                Focusable="True"
-                KeyDown="Modal_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                BoxShadow="0 4 20 0 #26000000">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Modal Header -->
@@ -139,7 +117,7 @@
                 </Border>
             </Grid>
         </Border>
-    </Panel>
+    </controls:ModalOverlay>
 
     <UserControl.Styles>
         <!-- Upload Area -->

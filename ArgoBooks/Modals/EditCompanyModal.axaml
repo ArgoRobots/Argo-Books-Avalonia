@@ -4,47 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.EditCompanyModal"
-             x:DataType="vm:EditCompanyModalViewModel"
-             IsVisible="{Binding IsOpen}">
+             x:DataType="vm:EditCompanyModalViewModel">
 
-    <Panel>
-        <!-- Backdrop -->
-        <Border Background="#80000000"
-                IsVisible="{Binding IsOpen}"
-                PointerPressed="Backdrop_PointerPressed">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
         <!-- Modal -->
-        <Border x:Name="ModalBorder"
-                HorizontalAlignment="Center"
+        <Border HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
                 BoxShadow="0 8 32 0 #40000000"
                 Width="480"
                 MaxHeight="550"
-                ClipToBounds="True"
-                IsVisible="{Binding IsOpen}"
-                Focusable="True"
-                KeyDown="Modal_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                ClipToBounds="True">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
@@ -188,5 +162,5 @@
                 </Border>
             </Grid>
         </Border>
-    </Panel>
+    </controls:ModalOverlay>
 </UserControl>

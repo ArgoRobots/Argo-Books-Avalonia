@@ -13,7 +13,7 @@ namespace ArgoBooks.Modals;
 
 /// <summary>
 /// Modal for viewing receipt images with pan, zoom, and rubber band overscroll.
-/// Animation is handled automatically by ModalAnimationBehavior in XAML.
+/// Animation is handled automatically by ModalOverlay control.
 /// </summary>
 public partial class ReceiptViewerModal : UserControl
 {
@@ -126,10 +126,6 @@ public partial class ReceiptViewerModal : UserControl
         {
             switch (e.Key)
             {
-                case Key.Escape:
-                    vm.CloseCommand.Execute(null);
-                    e.Handled = true;
-                    break;
                 case Key.F:
                     vm.ToggleFullscreenCommand.Execute(null);
                     e.Handled = true;

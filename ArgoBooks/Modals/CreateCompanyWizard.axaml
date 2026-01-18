@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.CreateCompanyWizard"
              x:DataType="vm:CreateCompanyViewModel">
@@ -12,39 +13,16 @@
         <vm:CreateCompanyViewModel />
     </Design.DataContext>
 
-    <Panel IsVisible="{Binding IsOpen}">
-        <!-- Modal Backdrop with fade animation -->
-        <Border Background="#80000000">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
-        <!-- Wizard Container with scale animation -->
-        <Border x:Name="WizardBorder"
-                Background="{DynamicResource SurfaceBrush}"
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <!-- Wizard Container -->
+        <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="560"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                BoxShadow="0 8 32 0 #40000000"
-                Focusable="True"
-                KeyDown="Wizard_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                BoxShadow="0 8 32 0 #40000000">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
@@ -318,5 +296,5 @@
                 </Border>
             </Grid>
         </Border>
-    </Panel>
+    </controls:ModalOverlay>
 </UserControl>

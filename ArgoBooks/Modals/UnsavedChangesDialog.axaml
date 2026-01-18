@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:converters="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.UnsavedChangesDialog"
              x:DataType="vm:UnsavedChangesDialogViewModel"
@@ -23,22 +24,9 @@
         <converters:ChangeTypeToVisibilityConverter x:Key="IsDeletedConverter" TargetType="Deleted" />
     </UserControl.Resources>
 
-    <!-- Modal Overlay -->
-    <Grid IsVisible="{Binding IsOpen}">
-        <!-- Backdrop -->
-        <Border Background="#80000000"
-                IsHitTestVisible="True"
-                PointerPressed="Backdrop_PointerPressed">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}" CloseOnBackdropClick="False">
         <!-- Modal Content -->
-        <Border x:Name="DialogBorder"
-                Background="{DynamicResource SurfaceBrush}"
+        <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
@@ -46,20 +34,7 @@
                 MaxHeight="500"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                BoxShadow="0 8 32 0 #40000000"
-                Focusable="True"
-                KeyDown="Dialog_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                BoxShadow="0 8 32 0 #40000000">
 
             <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header -->
@@ -272,7 +247,7 @@
                 </Border>
             </Grid>
         </Border>
-    </Grid>
+    </controls:ModalOverlay>
 
     <UserControl.Styles>
         <!-- Category Header Button -->

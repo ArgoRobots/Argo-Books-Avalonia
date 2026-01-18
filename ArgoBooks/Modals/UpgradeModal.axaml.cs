@@ -1,11 +1,9 @@
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -19,41 +17,14 @@ public partial class UpgradeModal : UserControl
     {
         InitializeComponent();
 
-        // Animate the modal when it opens
+        // Handle success animation when verification succeeds
         DataContextChanged += (_, _) =>
         {
             if (DataContext is UpgradeModalViewModel vm)
             {
                 vm.PropertyChanged += (_, e) =>
                 {
-                    if (e.PropertyName == nameof(UpgradeModalViewModel.IsOpen))
-                    {
-                        if (vm.IsOpen)
-                        {
-                            Dispatcher.UIThread.Post(() =>
-                            {
-                                if (ModalBorder != null)
-                                {
-                                    ModalBorder.Opacity = 1;
-                                    ModalBorder.RenderTransform = new ScaleTransform(1, 1);
-                                }
-                            }, DispatcherPriority.Render);
-                        }
-                        else
-                        {
-                            Dispatcher.UIThread.Post(() =>
-                            {
-                                if (ModalBorder != null)
-                                {
-                                    ModalBorder.Opacity = 0;
-                                    ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
-                                }
-                            }, DispatcherPriority.Background);
-
-                            ModalHelper.ReturnFocusToAppShell(this);
-                        }
-                    }
-                    else if (e.PropertyName == nameof(UpgradeModalViewModel.IsVerificationSuccess))
+                    if (e.PropertyName == nameof(UpgradeModalViewModel.IsVerificationSuccess))
                     {
                         if (vm.IsVerificationSuccess)
                         {
@@ -311,23 +282,6 @@ public partial class UpgradeModal : UserControl
     }
 
     private bool _isFormatting;
-
-    private void Modal_KeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Escape && DataContext is UpgradeModalViewModel vm)
-        {
-            // If the enter key modal is open, close that first
-            if (vm.IsEnterKeyModalOpen)
-            {
-                vm.CloseEnterKeyCommand.Execute(null);
-            }
-            else
-            {
-                vm.CloseCommand.Execute(null);
-            }
-            e.Handled = true;
-        }
-    }
 
     private void LicenseKeyTextBox_TextChanged(object? sender, TextChangedEventArgs e)
     {

@@ -6,12 +6,9 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ExpenseModals"
-             x:DataType="vm:ExpenseModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:ExpenseModalsViewModel">
 
     <Design.DataContext>
         <vm:ExpenseModalsViewModel />
@@ -19,12 +16,8 @@
 
     <Panel>
         <!-- ======================= ADD / EDIT EXPENSE MODAL ======================= -->
-        <Panel IsVisible="{Binding IsAddEditModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsAddEditModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsAddEditModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="750"
                     MaxHeight="700"
@@ -349,15 +342,11 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= FILTER MODAL ======================= -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="500"
                     MaxHeight="600"
@@ -499,15 +488,11 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= ITEM STATUS MODAL ======================= -->
-        <Panel IsVisible="{Binding IsItemStatusModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsItemStatusModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsItemStatusModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="450"
                     Background="{DynamicResource SurfaceBrush}"
@@ -597,7 +582,7 @@
                     </Border>
                 </StackPanel>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>

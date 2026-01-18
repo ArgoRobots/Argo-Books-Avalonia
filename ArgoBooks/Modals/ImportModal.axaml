@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.ImportModal"
@@ -12,39 +13,13 @@
         <vm:ImportModalViewModel />
     </Design.DataContext>
 
-    <Panel IsVisible="{Binding IsOpen}">
-        <!-- Modal Backdrop -->
-        <Border Background="#80000000">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
-        <!-- Modal Container -->
-        <Border x:Name="ModalBorder"
-                Background="{DynamicResource SurfaceBrush}"
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="500"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                BoxShadow="0 8 32 0 #40000000"
-                Focusable="True"
-                KeyDown="Modal_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                BoxShadow="0 8 32 0 #40000000">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
@@ -169,7 +144,7 @@
                 </Border>
             </Grid>
         </Border>
-    </Panel>
+    </controls:ModalOverlay>
 
     <UserControl.Styles>
         <!-- Import Option Button -->

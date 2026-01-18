@@ -14,19 +14,9 @@
         <vm:SettingsModalViewModel />
     </Design.DataContext>
 
-    <Panel IsVisible="{Binding IsOpen}">
-        <!-- Modal Backdrop -->
-        <Border Background="#80000000">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
-
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
         <!-- Modal Container -->
-        <Border x:Name="ModalBorder"
-                Background="{DynamicResource SurfaceBrush}"
+        <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
@@ -34,20 +24,7 @@
                 Height="700"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                BoxShadow="0 8 32 0 #40000000"
-                Focusable="True"
-                KeyDown="Modal_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                BoxShadow="0 8 32 0 #40000000">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
@@ -867,7 +844,7 @@
                 </StackPanel>
             </Border>
         </Panel>
-    </Panel>
+    </controls:ModalOverlay>
 
     <UserControl.Styles>
         <!-- Password Field (borderless, for use inside bordered container) -->

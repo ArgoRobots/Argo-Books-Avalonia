@@ -6,12 +6,9 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.InvoiceModals"
-             x:DataType="vm:InvoiceModalsViewModel"
-             Focusable="True"
-             KeyDown="Modal_KeyDown">
+             x:DataType="vm:InvoiceModalsViewModel">
 
     <Design.DataContext>
         <vm:InvoiceModalsViewModel />
@@ -19,12 +16,8 @@
 
     <Panel>
         <!-- ======================= CREATE / EDIT INVOICE MODAL ======================= -->
-        <Panel IsVisible="{Binding IsCreateEditModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsCreateEditModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="750"
                     MaxHeight="700"
@@ -331,15 +324,11 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= FILTER MODAL ======================= -->
-        <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="700"
                     Background="{DynamicResource SurfaceBrush}"
@@ -473,15 +462,11 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= HISTORY MODAL ======================= -->
-        <Panel IsVisible="{Binding IsHistoryModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsHistoryModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="600"
                     MaxHeight="500"
@@ -565,15 +550,11 @@
                     </ScrollViewer>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- ======================= PREVIEW MODAL ======================= -->
-        <Panel IsVisible="{Binding IsPreviewModalOpen}">
-            <Border Classes="modal-backdrop" />
-            <Border Classes="modal-animated"
-                    helpers:ModalAnimationBehavior.IsEnabled="True"
-                    helpers:ModalAnimationBehavior.OpenPropertyName="IsPreviewModalOpen"
-                    HorizontalAlignment="Center"
+        <controls:ModalOverlay IsOpen="{Binding IsPreviewModalOpen}">
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="700"
                     MaxHeight="600"
@@ -690,7 +671,7 @@
                     </Border>
                 </Grid>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>
