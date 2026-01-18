@@ -67,7 +67,7 @@ public partial class QuickActionsPanel : UserControl
                     }
                     else
                     {
-                        // Reset for next open
+                        // Reset for next open and return focus to parent
                         Dispatcher.UIThread.Post(() =>
                         {
                             if (DropdownBorder != null)
@@ -80,6 +80,10 @@ public partial class QuickActionsPanel : UserControl
                                 ModalBorder.Opacity = 0;
                                 ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
                             }
+
+                            // Return focus to parent shell so Ctrl+K works again
+                            var parent = this.FindAncestorOfType<UserControl>();
+                            parent?.Focus();
                         }, DispatcherPriority.Background);
                     }
                 }

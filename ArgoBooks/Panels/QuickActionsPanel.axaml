@@ -55,11 +55,11 @@
                     </Grid>
                 </Border>
 
-                <!-- Results -->
+                <!-- Results (fixed height to prevent modal resizing as results change) -->
                 <ScrollViewer Grid.Row="1"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
-                              MaxHeight="380">
+                              Height="380">
                     <StackPanel Spacing="0">
                         <!-- Top Results Section (shown when searching with strong matches) -->
                         <StackPanel IsVisible="{Binding HasTopResults}">
