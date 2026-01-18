@@ -1041,6 +1041,23 @@ public class SpreadsheetImportService
             purchase.TotalUSD = purchase.Total;
             purchase.TaxAmountUSD = purchase.TaxAmount;
 
+            // Link product by looking up by name and creating a LineItem
+            if (!string.IsNullOrEmpty(description))
+            {
+                var product = data.Products.FirstOrDefault(p =>
+                    string.Equals(p.Name, description, StringComparison.OrdinalIgnoreCase));
+
+                var lineItem = new LineItem
+                {
+                    ProductId = product?.Id,
+                    Description = description,
+                    Quantity = 1,
+                    UnitPrice = purchase.Amount,
+                    TaxRate = purchase.Amount > 0 ? purchase.TaxAmount / purchase.Amount : 0
+                };
+                purchase.LineItems = [lineItem];
+            }
+
             if (existing == null)
                 data.Purchases.Add(purchase);
         }
@@ -1194,6 +1211,23 @@ public class SpreadsheetImportService
 
             if (string.IsNullOrEmpty(sale.PaymentStatus))
                 sale.PaymentStatus = "Paid";
+
+            // Link product by looking up by name and creating a LineItem
+            if (!string.IsNullOrEmpty(description))
+            {
+                var product = data.Products.FirstOrDefault(p =>
+                    string.Equals(p.Name, description, StringComparison.OrdinalIgnoreCase));
+
+                var lineItem = new LineItem
+                {
+                    ProductId = product?.Id,
+                    Description = description,
+                    Quantity = 1,
+                    UnitPrice = sale.Amount,
+                    TaxRate = sale.Amount > 0 ? sale.TaxAmount / sale.Amount : 0
+                };
+                sale.LineItems = [lineItem];
+            }
 
             if (existing == null)
                 data.Sales.Add(sale);
