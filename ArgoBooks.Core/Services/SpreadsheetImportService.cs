@@ -1025,7 +1025,7 @@ public class SpreadsheetImportService
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
-            var purchase = existing ?? new Purchase();
+            var purchase = existing ?? new Expense();
             purchase.Id = id;
             purchase.Date = GetDateTime(row, headers, "Date");
             purchase.SupplierId = GetNullableString(row, headers, "Supplier ID");
@@ -1193,7 +1193,7 @@ public class SpreadsheetImportService
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
-            var sale = existing ?? new Sale();
+            var sale = existing ?? new Revenue();
             sale.Id = id;
             sale.Date = GetDateTime(row, headers, "Date");
             sale.CustomerId = GetNullableString(row, headers, "Customer ID");

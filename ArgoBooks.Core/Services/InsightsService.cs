@@ -293,7 +293,7 @@ public class InsightsService : IInsightsService
         };
     }
 
-    private InsightItem? AnalyzeDayOfWeekPattern(List<Sale> sales)
+    private InsightItem? AnalyzeDayOfWeekPattern(List<Revenue> sales)
     {
         if (sales.Count < 14) return null;
 
@@ -326,7 +326,7 @@ public class InsightsService : IInsightsService
         return null;
     }
 
-    private InsightItem? AnalyzeSeasonalPattern(List<Sale> allSales, AnalysisDateRange dateRange)
+    private InsightItem? AnalyzeSeasonalPattern(List<Revenue> allSales, AnalysisDateRange dateRange)
     {
         // Get monthly revenue data for ML analysis
         var monthlyData = allSales

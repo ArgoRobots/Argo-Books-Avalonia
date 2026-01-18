@@ -6,16 +6,16 @@ using Xunit;
 namespace ArgoBooks.Tests.Models;
 
 /// <summary>
-/// Tests for the Sale model.
+/// Tests for the Revenue model.
 /// </summary>
-public class SaleTests
+public class RevenueTests
 {
     #region Default Value Tests
 
     [Fact]
-    public void Sale_DefaultValues_AreCorrect()
+    public void Revenue_DefaultValues_AreCorrect()
     {
-        var sale = new Sale();
+        var sale = new Revenue();
 
         Assert.Equal(string.Empty, sale.Id);
         Assert.Null(sale.CustomerId);
@@ -36,9 +36,9 @@ public class SaleTests
     #region Customer Association Tests
 
     [Fact]
-    public void Sale_CustomerAssociation_WorksCorrectly()
+    public void Revenue_CustomerAssociation_WorksCorrectly()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = "SAL-2024-00001",
             CustomerId = "CUST-001"
@@ -49,9 +49,9 @@ public class SaleTests
     }
 
     [Fact]
-    public void Sale_WithoutCustomer_IsValid()
+    public void Revenue_WithoutCustomer_IsValid()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = "SAL-2024-00001",
             CustomerId = null,
@@ -71,9 +71,9 @@ public class SaleTests
     [InlineData("Pending")]
     [InlineData("Partial")]
     [InlineData("Overdue")]
-    public void Sale_PaymentStatus_SupportsExpectedValues(string status)
+    public void Revenue_PaymentStatus_SupportsExpectedValues(string status)
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             PaymentStatus = status
         };
@@ -86,9 +86,9 @@ public class SaleTests
     #region Calculation Tests
 
     [Fact]
-    public void Sale_LineItemTotals_CalculateCorrectly()
+    public void Revenue_LineItemTotals_CalculateCorrectly()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             LineItems =
             [
@@ -107,9 +107,9 @@ public class SaleTests
     }
 
     [Fact]
-    public void Sale_WithDiscount_CalculatesCorrectly()
+    public void Revenue_WithDiscount_CalculatesCorrectly()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Subtotal = 100.00m,
             Discount = 10.00m,
@@ -122,9 +122,9 @@ public class SaleTests
     }
 
     [Fact]
-    public void Sale_WithShipping_CalculatesCorrectly()
+    public void Revenue_WithShipping_CalculatesCorrectly()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Subtotal = 100.00m,
             ShippingCost = 15.00m,
@@ -141,9 +141,9 @@ public class SaleTests
     #region Currency Tests
 
     [Fact]
-    public void Sale_Currency_DefaultsToUSD()
+    public void Revenue_Currency_DefaultsToUSD()
     {
-        var sale = new Sale();
+        var sale = new Revenue();
 
         Assert.Equal("USD", sale.OriginalCurrency);
     }
@@ -153,9 +153,9 @@ public class SaleTests
     [InlineData("EUR")]
     [InlineData("GBP")]
     [InlineData("CAD")]
-    public void Sale_SupportsDifferentCurrencies(string currency)
+    public void Revenue_SupportsDifferentCurrencies(string currency)
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             OriginalCurrency = currency,
             Total = 100.00m,
@@ -166,9 +166,9 @@ public class SaleTests
     }
 
     [Fact]
-    public void Sale_EffectiveTotalUSD_ReturnsConvertedValueWhenSet()
+    public void Revenue_EffectiveTotalUSD_ReturnsConvertedValueWhenSet()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             OriginalCurrency = "EUR",
             Total = 100.00m,
@@ -179,9 +179,9 @@ public class SaleTests
     }
 
     [Fact]
-    public void Sale_EffectiveTotalUSD_FallsBackToTotalWhenNotSet()
+    public void Revenue_EffectiveTotalUSD_FallsBackToTotalWhenNotSet()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             OriginalCurrency = "USD",
             Total = 100.00m,
@@ -203,9 +203,9 @@ public class SaleTests
     [InlineData(PaymentMethod.Check)]
     [InlineData(PaymentMethod.PayPal)]
     [InlineData(PaymentMethod.Other)]
-    public void Sale_PaymentMethod_SupportsAllValues(PaymentMethod method)
+    public void Revenue_PaymentMethod_SupportsAllValues(PaymentMethod method)
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             PaymentMethod = method
         };
@@ -218,10 +218,10 @@ public class SaleTests
     #region Timestamp Tests
 
     [Fact]
-    public void Sale_Timestamps_AreSetCorrectly()
+    public void Revenue_Timestamps_AreSetCorrectly()
     {
         var before = DateTime.UtcNow;
-        var sale = new Sale();
+        var sale = new Revenue();
         var after = DateTime.UtcNow;
 
         Assert.InRange(sale.CreatedAt, before, after);
@@ -229,10 +229,10 @@ public class SaleTests
     }
 
     [Fact]
-    public void Sale_Date_CanBeSet()
+    public void Revenue_Date_CanBeSet()
     {
         var saleDate = new DateTime(2024, 6, 15, 14, 30, 0);
-        var sale = new Sale
+        var sale = new Revenue
         {
             Date = saleDate
         };

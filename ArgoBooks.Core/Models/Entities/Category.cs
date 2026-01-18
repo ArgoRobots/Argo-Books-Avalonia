@@ -55,15 +55,4 @@ public class Category
     [JsonPropertyName("icon")]
     public string Icon { get; set; } = "📦";
 
-    /// <summary>
-    /// Default tax rate for items in this category.
-    /// </summary>
-    [JsonPropertyName("defaultTaxRate")]
-    public decimal DefaultTaxRate { get; set; }
-
-    /// <summary>
-    /// When the record was created.
-    /// </summary>
-    [JsonPropertyName("createdAt")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

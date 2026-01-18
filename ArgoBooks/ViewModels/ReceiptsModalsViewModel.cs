@@ -559,12 +559,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             };
         }).Where(li => !string.IsNullOrWhiteSpace(li.Description) || li.ProductId != null).ToList();
 
-        var expense = new Purchase
+        var expense = new Expense
         {
             Id = expenseId,
             Date = ExtractedDate?.DateTime ?? DateTime.Now,
             SupplierId = SelectedSupplier?.Id,
-            CategoryId = SelectedCategory?.Id,
             Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedVendor,
             LineItems = lineItems,
             Quantity = lineItems.Sum(li => li.Quantity),

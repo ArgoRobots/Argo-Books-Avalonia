@@ -27,12 +27,6 @@ public abstract class Transaction
     public string? AccountantId { get; set; }
 
     /// <summary>
-    /// Category ID for this transaction.
-    /// </summary>
-    [JsonPropertyName("categoryId")]
-    public string? CategoryId { get; set; }
-
-    /// <summary>
     /// Description of the transaction.
     /// </summary>
     [JsonPropertyName("description")]

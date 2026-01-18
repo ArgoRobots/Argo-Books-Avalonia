@@ -85,13 +85,13 @@ public class CompanyData
     /// All sales/revenue transactions.
     /// </summary>
     [JsonPropertyName("sales")]
-    public List<Sale> Sales { get; init; } = [];
+    public List<Revenue> Sales { get; init; } = [];
 
     /// <summary>
     /// All purchases/expense transactions.
     /// </summary>
     [JsonPropertyName("purchases")]
-    public List<Purchase> Purchases { get; init; } = [];
+    public List<Expense> Purchases { get; init; } = [];
 
     /// <summary>
     /// All invoices.

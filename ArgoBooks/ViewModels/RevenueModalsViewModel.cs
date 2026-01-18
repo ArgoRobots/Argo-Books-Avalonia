@@ -335,7 +335,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionSaved();
     }
 
-    private void CreateLostDamagedRecord(CompanyData companyData, Sale sale)
+    private void CreateLostDamagedRecord(CompanyData companyData, Revenue sale)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -358,7 +358,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         companyData.LostDamaged.Add(lostDamaged);
     }
 
-    private void CreateReturnRecord(CompanyData companyData, Sale sale)
+    private void CreateReturnRecord(CompanyData companyData, Revenue sale)
     {
         var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -390,14 +390,14 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         companyData.Returns.Add(returnRecord);
     }
 
-    private static void RemoveLostDamagedRecord(CompanyData companyData, Sale sale)
+    private static void RemoveLostDamagedRecord(CompanyData companyData, Revenue sale)
     {
         var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
         if (record != null)
             companyData.LostDamaged.Remove(record);
     }
 
-    private static void RemoveReturnRecord(CompanyData companyData, Sale sale)
+    private static void RemoveReturnRecord(CompanyData companyData, Revenue sale)
     {
         var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
         if (record != null)
@@ -416,12 +416,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
 
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = saleId,
             Date = ModalDate?.DateTime ?? DateTime.Now,
             CustomerId = SelectedCustomer?.Id,
-            CategoryId = SelectedCategory?.Id,
             Description = description,
             LineItems = modelLineItems,
             Quantity = totalQuantity,
@@ -494,7 +493,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         // Apply changes
         sale.Date = ModalDate?.DateTime ?? DateTime.Now;
         sale.CustomerId = SelectedCustomer?.Id;
-        sale.CategoryId = SelectedCategory?.Id;
         sale.Description = description;
         sale.LineItems = modelLineItems;
         sale.Quantity = totalQuantity;
@@ -536,7 +534,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             {
                 sale.Date = ModalDate?.DateTime ?? DateTime.Now;
                 sale.CustomerId = SelectedCustomer?.Id;
-                sale.CategoryId = SelectedCategory?.Id;
                 sale.Description = description;
                 sale.LineItems = modelLineItems;
                 sale.Quantity = totalQuantity;
@@ -604,13 +601,12 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
     }
 
-    private static TransactionState CaptureTransactionState(Sale sale)
+    private static TransactionState CaptureTransactionState(Revenue sale)
     {
         return new TransactionState
         {
             Date = sale.Date,
             CounterpartyId = sale.CustomerId,
-            CategoryId = sale.CategoryId,
             Description = sale.Description,
             LineItems = sale.LineItems.ToList(),
             Quantity = sale.Quantity,
@@ -628,11 +624,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
     }
 
-    private static void RestoreTransactionState(Sale sale, TransactionState state)
+    private static void RestoreTransactionState(Revenue sale, TransactionState state)
     {
         sale.Date = state.Date;
         sale.CustomerId = state.CounterpartyId;
-        sale.CategoryId = state.CategoryId;
         sale.Description = state.Description;
         sale.LineItems = state.LineItems;
         sale.Quantity = state.Quantity;

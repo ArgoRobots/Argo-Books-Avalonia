@@ -816,7 +816,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidateSale_ValidSale_ReturnsSuccess()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = "SAL-001",
             LineItems = [new LineItem { Description = "Product", Quantity = 2, UnitPrice = 50 }],
@@ -831,7 +831,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidateSale_EmptyLineItems_ReturnsError()
     {
-        var sale = new Sale { Id = "SAL-001", LineItems = [] };
+        var sale = new Revenue { Id = "SAL-001", LineItems = [] };
 
         var result = _validator.ValidateSale(sale);
 
@@ -842,7 +842,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidateSale_NegativeTotal_ReturnsError()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = "SAL-001",
             LineItems = [new LineItem { Description = "Product", Quantity = 1, UnitPrice = 50 }],
@@ -858,7 +858,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidateSale_NonExistentCustomer_ReturnsError()
     {
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = "SAL-001",
             CustomerId = "CUS-999",
@@ -875,7 +875,7 @@ public class DataValidatorTests
     public void ValidateSale_ValidCustomer_ReturnsSuccess()
     {
         _companyData.Customers.Add(new Customer { Id = "CUS-001", Name = "John Doe" });
-        var sale = new Sale
+        var sale = new Revenue
         {
             Id = "SAL-001",
             CustomerId = "CUS-001",
@@ -895,7 +895,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidatePurchase_ValidPurchase_ReturnsSuccess()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-001",
             Description = "Office Supplies",
@@ -910,7 +910,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidatePurchase_EmptyDescription_ReturnsError()
     {
-        var purchase = new Purchase { Id = "PUR-001", Description = "" };
+        var purchase = new Expense { Id = "PUR-001", Description = "" };
 
         var result = _validator.ValidatePurchase(purchase);
 
@@ -921,7 +921,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidatePurchase_NegativeAmount_ReturnsError()
     {
-        var purchase = new Purchase { Id = "PUR-001", Description = "Office Supplies", Amount = -50 };
+        var purchase = new Expense { Id = "PUR-001", Description = "Office Supplies", Amount = -50 };
 
         var result = _validator.ValidatePurchase(purchase);
 
@@ -932,7 +932,7 @@ public class DataValidatorTests
     [Fact]
     public void ValidatePurchase_NonExistentSupplier_ReturnsError()
     {
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-001",
             Description = "Office Supplies",
@@ -949,7 +949,7 @@ public class DataValidatorTests
     public void ValidatePurchase_ValidSupplier_ReturnsSuccess()
     {
         _companyData.Suppliers.Add(new Supplier { Id = "SUP-001", Name = "Acme Corp" });
-        var purchase = new Purchase
+        var purchase = new Expense
         {
             Id = "PUR-001",
             Description = "Office Supplies",

@@ -114,7 +114,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Where(s => s.Date >= startDate && s.Date <= endDate);
 
         return sales
-            .GroupBy(s => s.CategoryId ?? "Unknown")
+            .GroupBy(s =>
+            {
+                var productId = s.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData.GetProduct(productId) : null;
+                return product?.CategoryId ?? "Unknown";
+            })
             .Select(g =>
             {
                 var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";
@@ -183,7 +188,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .GroupBy(p => p.CategoryId ?? "Unknown")
+            .GroupBy(p =>
+            {
+                var productId = p.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData.GetProduct(productId) : null;
+                return product?.CategoryId ?? "Unknown";
+            })
             .Select(g =>
             {
                 var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";

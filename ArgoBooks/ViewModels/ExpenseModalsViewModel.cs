@@ -351,7 +351,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private void CreateLostDamagedRecord(CompanyData companyData, Purchase purchase)
+    private void CreateLostDamagedRecord(CompanyData companyData, Expense purchase)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -374,7 +374,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         companyData.LostDamaged.Add(lostDamaged);
     }
 
-    private void CreateReturnRecord(CompanyData companyData, Purchase purchase)
+    private void CreateReturnRecord(CompanyData companyData, Expense purchase)
     {
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -406,14 +406,14 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         companyData.Returns.Add(returnRecord);
     }
 
-    private static void RemoveLostDamagedRecord(CompanyData companyData, Purchase purchase)
+    private static void RemoveLostDamagedRecord(CompanyData companyData, Expense purchase)
     {
         var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
         if (record != null)
             companyData.LostDamaged.Remove(record);
     }
 
-    private static void RemoveReturnRecord(CompanyData companyData, Purchase purchase)
+    private static void RemoveReturnRecord(CompanyData companyData, Expense purchase)
     {
         var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
         if (record != null)
@@ -432,12 +432,11 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
 
-        var expense = new Purchase
+        var expense = new Expense
         {
             Id = expenseId,
             Date = ModalDate?.DateTime ?? DateTime.Now,
             SupplierId = SelectedSupplier?.Id,
-            CategoryId = SelectedCategory?.Id,
             Description = description,
             LineItems = modelLineItems,
             Quantity = totalQuantity,
@@ -510,7 +509,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         // Apply changes
         expense.Date = ModalDate?.DateTime ?? DateTime.Now;
         expense.SupplierId = SelectedSupplier?.Id;
-        expense.CategoryId = SelectedCategory?.Id;
         expense.Description = description;
         expense.LineItems = modelLineItems;
         expense.Quantity = totalQuantity;
@@ -552,7 +550,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             {
                 expense.Date = ModalDate?.DateTime ?? DateTime.Now;
                 expense.SupplierId = SelectedSupplier?.Id;
-                expense.CategoryId = SelectedCategory?.Id;
                 expense.Description = description;
                 expense.LineItems = modelLineItems;
                 expense.Quantity = totalQuantity;
@@ -620,13 +617,12 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
     }
 
-    private static TransactionState CaptureTransactionState(Purchase expense)
+    private static TransactionState CaptureTransactionState(Expense expense)
     {
         return new TransactionState
         {
             Date = expense.Date,
             CounterpartyId = expense.SupplierId,
-            CategoryId = expense.CategoryId,
             Description = expense.Description,
             LineItems = expense.LineItems.ToList(),
             Quantity = expense.Quantity,
@@ -644,11 +640,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
     }
 
-    private static void RestoreTransactionState(Purchase expense, TransactionState state)
+    private static void RestoreTransactionState(Expense expense, TransactionState state)
     {
         expense.Date = state.Date;
         expense.SupplierId = state.CounterpartyId;
-        expense.CategoryId = state.CategoryId;
         expense.Description = state.Description;
         expense.LineItems = state.LineItems;
         expense.Quantity = state.Quantity;

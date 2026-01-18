@@ -69,7 +69,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return query.Select(CreateSalesRow).ToList();
     }
 
-    private TransactionTableRow CreateSalesRow(Sale sale)
+    private TransactionTableRow CreateSalesRow(Revenue sale)
     {
         var customer = companyData?.GetCustomer(sale.CustomerId ?? "");
         var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
@@ -139,7 +139,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return query.Select(CreatePurchaseRow).ToList();
     }
 
-    private TransactionTableRow CreatePurchaseRow(Purchase purchase)
+    private TransactionTableRow CreatePurchaseRow(Expense purchase)
     {
         var supplier = companyData?.GetSupplier(purchase.SupplierId ?? "");
         var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");

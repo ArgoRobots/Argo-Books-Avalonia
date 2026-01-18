@@ -156,7 +156,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     #region Revenue Collection
 
-    private readonly List<Sale> _allRevenue = [];
+    private readonly List<Revenue> _allRevenue = [];
 
     public ObservableCollection<RevenueDisplayItem> Revenue { get; } = [];
 
@@ -338,7 +338,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             filtered = filtered
                 .Select(s => new
                 {
-                    Sale = s,
+                    Revenue = s,
                     IdScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, s.Id),
                     DescScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, s.Description),
                     CustomerScore = LevenshteinDistance.ComputeSearchScore(SearchQuery,
@@ -346,7 +346,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 })
                 .Where(x => x.IdScore >= 0 || x.DescScore >= 0 || x.CustomerScore >= 0)
                 .OrderByDescending(x => Math.Max(Math.Max(x.IdScore, x.DescScore), x.CustomerScore))
-                .Select(x => x.Sale)
+                .Select(x => x.Revenue)
                 .ToList();
         }
 
@@ -362,10 +362,15 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(s => s.CustomerId == FilterCustomerId).ToList();
         }
 
-        // Apply category filter
+        // Apply category filter (via line item product category)
         if (!string.IsNullOrEmpty(FilterCategoryId))
         {
-            filtered = filtered.Where(s => s.CategoryId == FilterCategoryId).ToList();
+            filtered = filtered.Where(s =>
+            {
+                var productId = s.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData?.GetProduct(productId) : null;
+                return product?.CategoryId == FilterCategoryId;
+            }).ToList();
         }
 
         // Apply amount filter
@@ -392,7 +397,10 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var displayItems = filtered.Select(sale =>
         {
             var customer = companyData?.GetCustomer(sale.CustomerId ?? "");
-            var category = companyData?.GetCategory(sale.CategoryId ?? "");
+            var productId = sale.LineItems.FirstOrDefault()?.ProductId;
+            var product = productId != null ? companyData?.GetProduct(productId) : null;
+            var categoryId = product?.CategoryId;
+            var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(sale, companyData);
 
@@ -417,7 +425,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 StatusDisplay = statusDisplay,
                 Notes = sale.Notes,
                 CustomerId = sale.CustomerId,
-                CategoryId = sale.CategoryId,
+                CategoryId = categoryId,
                 Amount = sale.Amount,
                 TaxAmount = sale.TaxAmount,
                 TaxRate = sale.TaxRate,
@@ -475,7 +483,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
     }
 
-    private static string GetStatusDisplay(Sale sale, Core.Data.CompanyData? companyData)
+    private static string GetStatusDisplay(Revenue sale, Core.Data.CompanyData? companyData)
     {
         // Check for lost/damaged related to this sale
         var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);

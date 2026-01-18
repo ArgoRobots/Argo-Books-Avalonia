@@ -234,7 +234,7 @@ public partial class DataValidator(CompanyData companyData)
     /// <summary>
     /// Validates a sale.
     /// </summary>
-    public ValidationResult ValidateSale(Sale sale)
+    public ValidationResult ValidateSale(Revenue sale)
     {
         var result = new ValidationResult();
 
@@ -260,7 +260,7 @@ public partial class DataValidator(CompanyData companyData)
     /// <summary>
     /// Validates a purchase.
     /// </summary>
-    public ValidationResult ValidatePurchase(Purchase purchase)
+    public ValidationResult ValidatePurchase(Expense purchase)
     {
         var result = new ValidationResult();
 
