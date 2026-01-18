@@ -1230,7 +1230,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void ScanReceipt()
     {
         App.NavigationService?.NavigateTo("Receipts");
-        App.ReceiptModalsViewModel?.OpenScanModal();
+        App.ReceiptsModalsViewModel?.OpenScanModal();
     }
 
     [RelayCommand]
@@ -1293,21 +1293,21 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void NewLocation()
     {
         App.NavigationService?.NavigateTo("Locations");
-        App.LocationModalsViewModel?.OpenAddModal();
+        App.LocationsModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
     private void NewPurchaseOrder()
     {
         App.NavigationService?.NavigateTo("PurchaseOrders");
-        App.PurchaseOrderModalsViewModel?.OpenAddModal();
+        App.PurchaseOrdersModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
     private void NewStockAdjustment()
     {
         App.NavigationService?.NavigateTo("Adjustments");
-        App.AdjustmentModalsViewModel?.OpenAddModal();
+        App.StockAdjustmentsModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
