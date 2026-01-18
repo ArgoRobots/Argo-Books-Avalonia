@@ -1,6 +1,7 @@
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media.Transformation;
@@ -15,6 +16,15 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ModalOverlay : UserControl
 {
+    #region Named Elements
+
+    private Panel? _overlayPanel;
+    private Border? _backdrop;
+    private Border? _contentContainer;
+    private ContentPresenter? _modalContentPresenter;
+
+    #endregion
+
     #region Styled Properties
 
     public static readonly StyledProperty<bool> IsOpenProperty =
@@ -100,6 +110,12 @@ public partial class ModalOverlay : UserControl
     {
         BackdropClickCommand = new RelayCommand(OnBackdropClick);
         InitializeComponent();
+
+        // Find named elements
+        _overlayPanel = this.FindControl<Panel>("OverlayPanel");
+        _backdrop = this.FindControl<Border>("Backdrop");
+        _contentContainer = this.FindControl<Border>("ContentContainer");
+        _modalContentPresenter = this.FindControl<ContentPresenter>("ModalContentPresenter");
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -107,13 +123,13 @@ public partial class ModalOverlay : UserControl
         base.OnAttachedToVisualTree(e);
 
         // Sync content and visibility when attached to visual tree
-        if (ModalContentPresenter != null)
+        if (_modalContentPresenter != null)
         {
-            ModalContentPresenter.Content = Content;
+            _modalContentPresenter.Content = Content;
         }
-        if (OverlayPanel != null)
+        if (_overlayPanel != null)
         {
-            OverlayPanel.IsVisible = IsOpen;
+            _overlayPanel.IsVisible = IsOpen;
         }
     }
 
@@ -127,9 +143,9 @@ public partial class ModalOverlay : UserControl
         }
         else if (change.Property == ContentProperty)
         {
-            if (ModalContentPresenter != null)
+            if (_modalContentPresenter != null)
             {
-                ModalContentPresenter.Content = Content;
+                _modalContentPresenter.Content = Content;
             }
         }
     }
@@ -147,31 +163,31 @@ public partial class ModalOverlay : UserControl
 
     private void OnIsOpenChanged(bool isOpen)
     {
-        if (OverlayPanel != null)
+        if (_overlayPanel != null)
         {
-            OverlayPanel.IsVisible = isOpen;
+            _overlayPanel.IsVisible = isOpen;
         }
 
         if (isOpen)
         {
             // Set initial state before animation
-            if (Backdrop != null)
-                Backdrop.Opacity = 0;
-            if (ContentContainer != null)
+            if (_backdrop != null)
+                _backdrop.Opacity = 0;
+            if (_contentContainer != null)
             {
-                ContentContainer.Opacity = 0;
-                ContentContainer.RenderTransform = TransformOperations.Parse("scale(0.95)");
+                _contentContainer.Opacity = 0;
+                _contentContainer.RenderTransform = TransformOperations.Parse("scale(0.95)");
             }
 
             // Trigger animation to final state (on next frame so transitions kick in)
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                if (Backdrop != null)
-                    Backdrop.Opacity = 1;
-                if (ContentContainer != null)
+                if (_backdrop != null)
+                    _backdrop.Opacity = 1;
+                if (_contentContainer != null)
                 {
-                    ContentContainer.Opacity = 1;
-                    ContentContainer.RenderTransform = TransformOperations.Parse("scale(1)");
+                    _contentContainer.Opacity = 1;
+                    _contentContainer.RenderTransform = TransformOperations.Parse("scale(1)");
                 }
             }, Avalonia.Threading.DispatcherPriority.Render);
 
