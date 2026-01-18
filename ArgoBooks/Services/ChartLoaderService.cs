@@ -702,7 +702,6 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        var totalExpenses = dataService.GetTotalExpenses();
 
         series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
 
@@ -752,7 +751,6 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        var totalRevenue = dataService.GetTotalRevenue();
 
         series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
 
@@ -934,7 +932,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
@@ -970,7 +967,6 @@ public class ChartLoaderService
             return ([], []);
         }
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
@@ -1188,7 +1184,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1221,7 +1216,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1253,7 +1247,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1285,7 +1278,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1317,7 +1309,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
@@ -1351,7 +1342,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1383,7 +1373,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1416,8 +1405,6 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var total = (int)dataPoints.Sum(p => p.Value);
-
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
@@ -1449,8 +1436,6 @@ public class ChartLoaderService
 
         if (dataPoints.Count == 0)
             return ([], []);
-
-        var total = dataPoints.Sum(p => p.Value);
 
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
@@ -1491,7 +1476,6 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        var totalReturns = (int)values.Sum();
 
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
@@ -1524,8 +1508,6 @@ public class ChartLoaderService
 
         if (dataPoints.Count == 0)
             return ([], []);
-
-        var total = (int)dataPoints.Sum(p => p.Value);
 
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
@@ -1570,7 +1552,6 @@ public class ChartLoaderService
         var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var impactValues = filteredData.Select(p => p.Value).ToArray();
-        var totalImpact = impactValues.Sum();
 
         if (dates.Length > 0)
         {
@@ -1614,7 +1595,6 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        var totalLosses = (int)values.Sum();
 
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
 
@@ -1657,7 +1637,6 @@ public class ChartLoaderService
         var labels = filteredData.Select(p => p.Label).ToArray();
         dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var impactValues = filteredData.Select(p => p.Value).ToArray();
-        var totalImpact = impactValues.Sum();
 
         if (dates.Length > 0)
         {
@@ -2055,6 +2034,11 @@ public class ChartExportData
     /// Each entry contains a series name and its values.
     /// </summary>
     public List<(string Name, double[] Values)> AdditionalSeries { get; init; } = [];
+
+    /// <summary>
+    /// Returns true if this chart has multiple series.
+    /// </summary>
+    public bool IsMultiSeries => AdditionalSeries.Count > 0;
 }
 
 /// <summary>
