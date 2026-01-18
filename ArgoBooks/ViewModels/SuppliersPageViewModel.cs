@@ -26,6 +26,52 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showSupplierColumn = true;
+
+    [ObservableProperty]
+    private bool _showContactColumn = true;
+
+    [ObservableProperty]
+    private bool _showCountryColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductsColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
+    partial void OnShowContactColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Contact", value);
+    partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
+    partial void OnShowProductsColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Products", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Responsive Header
 
     /// <summary>
