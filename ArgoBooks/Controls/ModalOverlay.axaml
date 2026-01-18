@@ -7,7 +7,7 @@
              x:Class="ArgoBooks.Controls.ModalOverlay"
              x:DataType="controls:ModalOverlay">
 
-    <Panel x:Name="OverlayPanel">
+    <Panel x:Name="OverlayPanel" IsVisible="False">
         <!-- Semi-transparent backdrop -->
         <Border x:Name="Backdrop"
                 Background="{DynamicResource OverlayBrush}"
