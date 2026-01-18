@@ -170,8 +170,14 @@
                     </Grid>
 
                     <!-- Responsive WrapPanel for Quick Actions -->
-                    <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                        <!-- New Invoice -->
+                    <ItemsControl>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.Items>
+                            <!-- New Invoice -->
                         <Button Classes="quick-action-compact" Margin="6" Width="160"
                                 Command="{Binding NewInvoiceCommand}"
                                 IsVisible="{Binding ShowNewInvoice}">
@@ -380,7 +386,8 @@
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                    </WrapPanel>
+                        </ItemsControl.Items>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 

@@ -126,6 +126,40 @@ public partial class QuickActionsSettingsModalViewModel : ViewModelBase
         IsOpen = false;
     }
 
+    /// <summary>
+    /// Resets all quick actions to their default values.
+    /// </summary>
+    [RelayCommand]
+    private void ResetAll()
+    {
+        // Primary actions (shown by default)
+        ShowNewInvoice = true;
+        ShowNewExpense = true;
+        ShowNewRevenue = true;
+        ShowScanReceipt = true;
+
+        // Contact actions (hidden by default)
+        ShowNewCustomer = false;
+        ShowNewSupplier = false;
+
+        // Product & Inventory actions (hidden by default)
+        ShowNewProduct = false;
+        ShowRecordPayment = false;
+
+        // Rental actions
+        ShowNewRentalItem = false;
+        ShowNewRentalRecord = true;
+
+        // Organization actions (hidden by default)
+        ShowNewCategory = false;
+        ShowNewDepartment = false;
+        ShowNewLocation = false;
+
+        // Order & Stock actions (hidden by default)
+        ShowNewPurchaseOrder = false;
+        ShowNewStockAdjustment = false;
+    }
+
     #endregion
 
     #region Settings Persistence

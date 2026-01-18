@@ -402,16 +402,25 @@
                         Padding="24,16"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Right"
-                                Spacing="12">
-                        <Button Classes="secondary-button"
-                                Content="{loc:Loc Cancel}"
-                                Command="{Binding CloseCommand}" />
-                        <Button Classes="primary-button"
-                                Content="{loc:Loc 'Save Changes'}"
-                                Command="{Binding SaveCommand}" />
-                    </StackPanel>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Reset All Button (Left) -->
+                        <Button Grid.Column="0"
+                                Classes="secondary-button"
+                                Content="{loc:Loc 'Reset All'}"
+                                Command="{Binding ResetAllCommand}" />
+
+                        <!-- Cancel and Save Buttons (Right) -->
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="{loc:Loc Cancel}"
+                                    Command="{Binding CloseCommand}" />
+                            <Button Classes="primary-button"
+                                    Content="{loc:Loc 'Save Changes'}"
+                                    Command="{Binding SaveCommand}" />
+                        </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>
