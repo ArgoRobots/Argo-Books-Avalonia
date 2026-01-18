@@ -495,7 +495,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Gets the visual title element for the expenses vs revenue chart.
     /// </summary>
-    public LabelVisual SalesVsExpensesChartTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
+    public LabelVisual SalesVsExpensesChartTitle => ChartLoaderService.CreateChartTitle(ChartDataType.SalesVsExpenses.GetDisplayName());
 
     #endregion
 

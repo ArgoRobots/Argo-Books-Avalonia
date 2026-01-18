@@ -958,53 +958,53 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     #region Chart Titles
 
     // Dashboard Tab Chart Titles
-    public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
-    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
-    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Revenue Trends");
-    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Revenue Distribution");
-    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Expense Trends");
-    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Expense Distribution");
+    public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalProfits.GetDisplayName());
+    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.SalesVsExpenses.GetDisplayName());
+    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalRevenue.GetDisplayName());
+    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueDistribution.GetDisplayName());
+    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalExpenses.GetDisplayName());
+    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpensesDistribution.GetDisplayName());
 
     // Geographic Tab Chart Titles
-    public LabelVisual CountriesOfOriginTitle => ChartLoaderService.CreateChartTitle("Countries of Origin");
-    public LabelVisual CompaniesOfOriginTitle => ChartLoaderService.CreateChartTitle("Companies of Origin");
-    public LabelVisual CountriesOfDestinationTitle => ChartLoaderService.CreateChartTitle("Countries of Destination");
-    public LabelVisual CompaniesOfDestinationTitle => ChartLoaderService.CreateChartTitle("Companies of Destination");
-    public LabelVisual WorldMapOverviewTitle => ChartLoaderService.CreateChartTitle("World Map Overview");
+    public LabelVisual CountriesOfOriginTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CountriesOfOrigin.GetDisplayName());
+    public LabelVisual CompaniesOfOriginTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CompaniesOfOrigin.GetDisplayName());
+    public LabelVisual CountriesOfDestinationTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CountriesOfDestination.GetDisplayName());
+    public LabelVisual CompaniesOfDestinationTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CompaniesOfDestination.GetDisplayName());
+    public LabelVisual WorldMapOverviewTitle => ChartLoaderService.CreateChartTitle(ChartDataType.WorldMap.GetDisplayName());
 
     // Operational Tab Chart Titles
-    public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle("Transactions by Accountant");
-    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Total Transactions Over Time");
+    public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AccountantsTransactions.GetDisplayName());
+    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalTransactionsOverTime.GetDisplayName());
 
     // Performance Tab Chart Titles
-    public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle("Average Transaction Value");
-    public LabelVisual TotalTransactionsTitle => ChartLoaderService.CreateChartTitle("Total Transactions");
-    public LabelVisual AverageShippingCostsTitle => ChartLoaderService.CreateChartTitle("Average Shipping Costs");
-    public LabelVisual GrowthRatesTitle => ChartLoaderService.CreateChartTitle("Growth Rates");
+    public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AverageTransactionValue.GetDisplayName());
+    public LabelVisual TotalTransactionsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalTransactions.GetDisplayName());
+    public LabelVisual AverageShippingCostsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AverageShippingCosts.GetDisplayName());
+    public LabelVisual GrowthRatesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.GrowthRates.GetDisplayName());
 
     // Customers Tab Chart Titles
-    public LabelVisual TopCustomersByRevenueTitle => ChartLoaderService.CreateChartTitle("Top Customers by Revenue");
-    public LabelVisual CustomerPaymentStatusTitle => ChartLoaderService.CreateChartTitle("Customer Payment Status");
-    public LabelVisual CustomerGrowthTitle => ChartLoaderService.CreateChartTitle("Customer Growth");
-    public LabelVisual CustomerLifetimeValueTitle => ChartLoaderService.CreateChartTitle("Customer Lifetime Value");
-    public LabelVisual ActiveVsInactiveCustomersTitle => ChartLoaderService.CreateChartTitle("Active vs Inactive Customers");
-    public LabelVisual RentalsPerCustomerTitle => ChartLoaderService.CreateChartTitle("Rentals per Customer");
+    public LabelVisual TopCustomersByRevenueTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TopCustomersByRevenue.GetDisplayName());
+    public LabelVisual CustomerPaymentStatusTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CustomerPaymentStatus.GetDisplayName());
+    public LabelVisual CustomerGrowthTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CustomerGrowth.GetDisplayName());
+    public LabelVisual CustomerLifetimeValueTitle => ChartLoaderService.CreateChartTitle(ChartDataType.CustomerLifetimeValue.GetDisplayName());
+    public LabelVisual ActiveVsInactiveCustomersTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ActiveVsInactiveCustomers.GetDisplayName());
+    public LabelVisual RentalsPerCustomerTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RentalsPerCustomer.GetDisplayName());
 
     // Returns Tab Chart Titles
-    public LabelVisual ReturnsOverTimeTitle => ChartLoaderService.CreateChartTitle("Returns Over Time");
-    public LabelVisual ReturnReasonsTitle => ChartLoaderService.CreateChartTitle("Return Reasons");
-    public LabelVisual FinancialImpactOfReturnsTitle => ChartLoaderService.CreateChartTitle("Financial Impact of Returns");
-    public LabelVisual ReturnsByCategoryTitle => ChartLoaderService.CreateChartTitle("Returns by Category");
-    public LabelVisual ReturnsByProductTitle => ChartLoaderService.CreateChartTitle("Returns by Product");
-    public LabelVisual PurchaseVsSaleReturnsTitle => ChartLoaderService.CreateChartTitle("Purchase vs Sale Returns");
+    public LabelVisual ReturnsOverTimeTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnsOverTime.GetDisplayName());
+    public LabelVisual ReturnReasonsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnReasons.GetDisplayName());
+    public LabelVisual FinancialImpactOfReturnsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnFinancialImpact.GetDisplayName());
+    public LabelVisual ReturnsByCategoryTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnsByCategory.GetDisplayName());
+    public LabelVisual ReturnsByProductTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ReturnsByProduct.GetDisplayName());
+    public LabelVisual PurchaseVsSaleReturnsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.PurchaseVsSaleReturns.GetDisplayName());
 
     // Losses Tab Chart Titles
-    public LabelVisual LossesOverTimeTitle => ChartLoaderService.CreateChartTitle("Losses Over Time");
-    public LabelVisual LossReasonsTitle => ChartLoaderService.CreateChartTitle("Loss Reasons");
-    public LabelVisual FinancialImpactOfLossesTitle => ChartLoaderService.CreateChartTitle("Financial Impact of Losses");
-    public LabelVisual LossesByCategoryTitle => ChartLoaderService.CreateChartTitle("Losses by Category");
-    public LabelVisual LossesByProductTitle => ChartLoaderService.CreateChartTitle("Losses by Product");
-    public LabelVisual PurchaseVsSaleLossesTitle => ChartLoaderService.CreateChartTitle("Purchase vs Sale Losses");
+    public LabelVisual LossesOverTimeTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesOverTime.GetDisplayName());
+    public LabelVisual LossReasonsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossReasons.GetDisplayName());
+    public LabelVisual FinancialImpactOfLossesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossFinancialImpact.GetDisplayName());
+    public LabelVisual LossesByCategoryTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesByCategory.GetDisplayName());
+    public LabelVisual LossesByProductTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesByProduct.GetDisplayName());
+    public LabelVisual PurchaseVsSaleLossesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.PurchaseVsSaleLosses.GetDisplayName());
 
     /// <summary>
     /// Chart title property names for batch notification.
