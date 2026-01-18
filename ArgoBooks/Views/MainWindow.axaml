@@ -98,10 +98,14 @@
 
         <!-- Password Prompt Modal (above WelcomeScreen so it can be shown when opening encrypted files) -->
         <modals:PasswordPromptModal DataContext="{Binding PasswordPromptModalViewModel}"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
                                     ZIndex="175" />
 
         <!-- Create Company Wizard (full-screen overlay above everything) -->
         <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
                                     ZIndex="200" />
 
         <!-- Loading Overlay (shows during long operations like import) -->
@@ -130,14 +134,20 @@
 
         <!-- Receipt Viewer Modal -->
         <modals:ReceiptViewerModal DataContext="{Binding ReceiptViewerModalViewModel}"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Stretch"
                                    ZIndex="200" />
 
         <!-- Confirmation Dialog (high level, can appear over any modal) -->
         <modals:ConfirmationDialog DataContext="{Binding ConfirmationDialogViewModel}"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Stretch"
                                    ZIndex="250" />
 
         <!-- Unsaved Changes Dialog (highest level, critical for data safety) -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}"
+                                     HorizontalAlignment="Stretch"
+                                     VerticalAlignment="Stretch"
                                      ZIndex="275" />
     </Panel>
 </Window>
