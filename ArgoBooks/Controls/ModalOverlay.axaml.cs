@@ -1,6 +1,7 @@
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media.Transformation;
 using ArgoBooks.Utilities;
@@ -16,7 +17,7 @@ public partial class ModalOverlay : UserControl
     #region Styled Properties
 
     public static readonly StyledProperty<bool> IsOpenProperty =
-        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(IsOpen));
+        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(IsOpen), defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<bool> CloseOnBackdropClickProperty =
         AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnBackdropClick), true);
@@ -97,6 +98,14 @@ public partial class ModalOverlay : UserControl
     {
         BackdropClickCommand = new RelayCommand(OnBackdropClick);
         InitializeComponent();
+
+        // Set initial visibility based on IsOpen (which defaults to false)
+        if (OverlayPanel != null)
+            OverlayPanel.IsVisible = IsOpen;
+
+        // Set initial content
+        if (ModalContentPresenter != null)
+            ModalContentPresenter.Content = Content;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -106,6 +115,11 @@ public partial class ModalOverlay : UserControl
         if (change.Property == IsOpenProperty)
         {
             OnIsOpenChanged(IsOpen);
+        }
+        else if (change.Property == ContentProperty)
+        {
+            if (ModalContentPresenter != null)
+                ModalContentPresenter.Content = Content;
         }
     }
 
@@ -122,6 +136,10 @@ public partial class ModalOverlay : UserControl
 
     private void OnIsOpenChanged(bool isOpen)
     {
+        // Update panel visibility
+        if (OverlayPanel != null)
+            OverlayPanel.IsVisible = isOpen;
+
         if (isOpen)
         {
             // Set initial state before animation
