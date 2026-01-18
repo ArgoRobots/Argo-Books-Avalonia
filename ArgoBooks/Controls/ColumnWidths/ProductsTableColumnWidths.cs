@@ -31,6 +31,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         public double MaxWidth { get; set; } = double.PositiveInfinity;
         public bool IsVisibleInExpenses { get; set; } = true;
         public bool IsVisibleInRevenue { get; set; } = true;
+        public bool IsVisible { get; set; } = true; // User-controlled visibility
         public bool IsFixed { get; set; }
         public double FixedWidth { get; set; } = 100;
         public double CurrentWidth { get; set; }
@@ -205,7 +206,20 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
     private bool IsColumnVisible(ColumnDef col)
     {
-        return _isExpensesTab ? col.IsVisibleInExpenses : col.IsVisibleInRevenue;
+        var tabVisible = _isExpensesTab ? col.IsVisibleInExpenses : col.IsVisibleInRevenue;
+        return tabVisible && col.IsVisible;
+    }
+
+    /// <summary>
+    /// Updates column visibility and recalculates widths.
+    /// </summary>
+    public void SetColumnVisibility(string columnName, bool isVisible)
+    {
+        if (_columns.TryGetValue(columnName, out var col))
+        {
+            col.IsVisible = isVisible;
+            RecalculateWidths();
+        }
     }
 
     private double GetColumnStarValue(ColumnDef col)
