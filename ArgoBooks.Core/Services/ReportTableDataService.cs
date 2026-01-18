@@ -360,8 +360,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             stats.TotalExpenses = purchases.Sum(p => p.Total);
             stats.ExpenseTransactionCount = purchases.Count;
             stats.AverageExpenseTransaction = purchases.Count > 0 ? stats.TotalExpenses / purchases.Count : 0;
-            stats.LargestPurchase = purchases.Count > 0 ? purchases.Max(p => p.Total) : 0;
-            stats.SmallestPurchase = purchases.Count > 0 ? purchases.Min(p => p.Total) : 0;
+            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.Total) : 0;
+            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.Total) : 0;
         }
 
         // Calculate profit
@@ -677,8 +677,8 @@ public class ReportSummaryStatistics
     public decimal TotalExpenses { get; set; }
     public int ExpenseTransactionCount { get; set; }
     public decimal AverageExpenseTransaction { get; set; }
-    public decimal LargestPurchase { get; set; }
-    public decimal SmallestPurchase { get; set; }
+    public decimal LargestExpense { get; set; }
+    public decimal SmallestExpense { get; set; }
 
     // Profit
     public decimal NetProfit { get; set; }
