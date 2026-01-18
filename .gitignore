@@ -464,3 +464,6 @@ $RECYCLE.BIN/
 ## Translation tool output
 ##
 **/translations/
+
+# Draw.io
+*.bkp
