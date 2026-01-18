@@ -1392,7 +1392,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpensesTrendsChart(CompanyData data)
     {
-        var (series, _, dates) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
+        var (series, dates) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
         ExpensesTrendsSeries = series;
         ExpensesTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);

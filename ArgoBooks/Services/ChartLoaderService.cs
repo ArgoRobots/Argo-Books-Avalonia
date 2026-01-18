@@ -671,14 +671,13 @@ public class ChartLoaderService
     /// <param name="companyData">The company data to load from.</param>
     /// <param name="startDate">Optional start date filter.</param>
     /// <param name="endDate">Optional end date filter.</param>
-    /// <returns>A tuple containing the series collection, X-axis labels, and dates for proportional spacing.</returns>
-    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates) LoadExpensesOverviewChart(
+    /// <returns>A tuple containing the series collection and dates for proportional spacing.</returns>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadExpensesOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
-        var labels = Array.Empty<string>();
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
@@ -696,10 +695,10 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             });
-            return (series, labels, dates);
+            return (series, dates);
         }
 
-        labels = dataPoints.Select(p => p.Label).ToArray();
+        var labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
@@ -714,7 +713,7 @@ public class ChartLoaderService
             SeriesName = "Expenses",
         });
 
-        return (series, labels, dates);
+        return (series, dates);
     }
 
     /// <summary>
