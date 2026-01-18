@@ -124,10 +124,13 @@ public partial class ModalOverlay : UserControl
     {
         base.OnAttachedToVisualTree(e);
 
+        System.Diagnostics.Debug.WriteLine($"[ModalOverlay] OnAttachedToVisualTree - Content: {Content?.GetType().Name ?? "null"}, IsOpen: {IsOpen}");
+
         // Sync content and visibility when attached to visual tree
         if (_modalContentPresenter != null)
         {
             _modalContentPresenter.Content = Content;
+            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set ContentPresenter.Content = {Content?.GetType().Name ?? "null"}");
         }
         if (_overlayPanel != null)
         {
@@ -145,6 +148,7 @@ public partial class ModalOverlay : UserControl
         }
         else if (change.Property == ContentProperty)
         {
+            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] ContentProperty changed to: {Content?.GetType().Name ?? "null"}");
             if (_modalContentPresenter != null)
             {
                 _modalContentPresenter.Content = Content;
