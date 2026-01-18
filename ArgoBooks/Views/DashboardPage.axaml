@@ -431,16 +431,16 @@
                     <Grid>
                         <lvc:CartesianChart
                             x:Name="ExpensesVsRevenueChart"
-                            Title="{Binding SalesVsExpensesChartTitle}"
-                            Series="{Binding SalesVsExpensesSeries}"
-                            XAxes="{Binding SalesVsExpensesXAxes}"
-                            YAxes="{Binding SalesVsExpensesYAxes}"
+                            Title="{Binding RevenueVsExpensesChartTitle}"
+                            Series="{Binding RevenueVsExpensesSeries}"
+                            XAxes="{Binding RevenueVsExpensesXAxes}"
+                            YAxes="{Binding RevenueVsExpensesYAxes}"
                             TooltipPosition="Top"
-                            IsVisible="{Binding HasSalesVsExpensesData}"
+                            IsVisible="{Binding HasRevenueVsExpensesData}"
                             PointerPressed="OnChartPointerPressed" />
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
-                                IsVisible="{Binding !HasSalesVsExpensesData}">
+                                IsVisible="{Binding !HasRevenueVsExpensesData}">
                             <TextBlock Text="{loc:Loc 'No expense/revenue data available'}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
