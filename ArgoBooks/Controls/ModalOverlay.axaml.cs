@@ -102,6 +102,21 @@ public partial class ModalOverlay : UserControl
         InitializeComponent();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        // Sync content and visibility when attached to visual tree
+        if (ModalContentPresenter != null)
+        {
+            ModalContentPresenter.Content = Content;
+        }
+        if (OverlayPanel != null)
+        {
+            OverlayPanel.IsVisible = IsOpen;
+        }
+    }
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -109,6 +124,13 @@ public partial class ModalOverlay : UserControl
         if (change.Property == IsOpenProperty)
         {
             OnIsOpenChanged(IsOpen);
+        }
+        else if (change.Property == ContentProperty)
+        {
+            if (ModalContentPresenter != null)
+            {
+                ModalContentPresenter.Content = Content;
+            }
         }
     }
 
@@ -125,6 +147,11 @@ public partial class ModalOverlay : UserControl
 
     private void OnIsOpenChanged(bool isOpen)
     {
+        if (OverlayPanel != null)
+        {
+            OverlayPanel.IsVisible = isOpen;
+        }
+
         if (isOpen)
         {
             // Set initial state before animation

@@ -8,7 +8,7 @@
              x:DataType="controls:ModalOverlay">
 
     <Panel x:Name="OverlayPanel"
-           IsVisible="{Binding $parent[controls:ModalOverlay].IsOpen}">
+           IsVisible="False">
         <!-- Semi-transparent backdrop -->
         <Border x:Name="Backdrop"
                 Background="{DynamicResource OverlayBrush}"
@@ -34,8 +34,7 @@
                 </Transitions>
             </Border.Transitions>
 
-            <ContentPresenter x:Name="ModalContentPresenter"
-                              Content="{Binding $parent[controls:ModalOverlay].Content}" />
+            <ContentPresenter x:Name="ModalContentPresenter" />
         </Border>
     </Panel>
 </UserControl>
