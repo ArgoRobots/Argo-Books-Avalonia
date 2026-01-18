@@ -14,6 +14,7 @@
         <converters:HighlightBrushMultiConverter x:Key="HighlightBrushMultiConverter" />
         <converters:HighlightBorderBrushMultiConverter x:Key="HighlightBorderBrushMultiConverter" />
         <converters:HighlightBorderThicknessMultiConverter x:Key="HighlightBorderThicknessMultiConverter" />
+        <converters:DisplayMemberMultiConverter x:Key="DisplayMemberMultiConverter" />
     </UserControl.Resources>
 
     <StackPanel Spacing="4">
@@ -187,7 +188,14 @@
                                                     <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
                                                 </MultiBinding>
                                             </Button.BorderThickness>
-                                            <TextBlock Text="{Binding}" />
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource DisplayMemberMultiConverter}">
+                                                        <Binding Path="." />
+                                                        <Binding Path="$parent[controls:SearchableDropdown].DisplayMemberPath" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -228,7 +236,14 @@
                                                     <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
                                                 </MultiBinding>
                                             </Button.BorderThickness>
-                                            <TextBlock Text="{Binding}" />
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource DisplayMemberMultiConverter}">
+                                                        <Binding Path="." />
+                                                        <Binding Path="$parent[controls:SearchableDropdown].DisplayMemberPath" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
