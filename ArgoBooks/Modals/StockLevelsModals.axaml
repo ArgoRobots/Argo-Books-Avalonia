@@ -15,7 +15,7 @@
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1" CornerRadius="12" Width="500"
+                    BorderThickness="1" CornerRadius="12" Width="550"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
@@ -55,12 +55,14 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Current Stock (Read-only) -->
-                            <Grid ColumnDefinitions="*,16,*">
+                            <!-- Stock Values Row -->
+                            <Grid ColumnDefinitions="*,16,*,16,*">
+                                <!-- Current Stock -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Current Stock'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding CurrentStock}"
                                              IsReadOnly="True"
+                                             IsEnabled="False"
                                              Classes="form-input"
                                              Background="{DynamicResource SurfaceAltBrush}" />
                                 </StackPanel>
@@ -74,16 +76,17 @@
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter quantity'}" />
                                 </StackPanel>
-                            </Grid>
 
-                            <!-- New Stock Level (Calculated, Read-only) -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc 'New Stock Level'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding CalculatedNewStock}"
-                                         IsReadOnly="True"
-                                         Classes="form-input"
-                                         Background="{DynamicResource SurfaceAltBrush}" />
-                            </StackPanel>
+                                <!-- New Stock Level -->
+                                <StackPanel Grid.Column="4" Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'New Stock'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding CalculatedNewStock}"
+                                             IsReadOnly="True"
+                                             IsEnabled="False"
+                                             Classes="form-input"
+                                             Background="{DynamicResource SurfaceAltBrush}" />
+                                </StackPanel>
+                            </Grid>
 
                             <!-- Reason/Notes -->
                             <StackPanel Spacing="6">
@@ -163,7 +166,7 @@
                                     <TextBlock Text="{loc:Loc SKU}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding AddItemSku, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Auto-generated if empty'}" />
+                                             Watermark="{loc:Loc 'Enter SKU (optional)'}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">

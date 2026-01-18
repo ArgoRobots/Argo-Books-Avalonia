@@ -97,7 +97,7 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (hasError) to border brush.
-    /// Error = red (#dc2626), No error = transparent.
+    /// Error = red (#dc2626), No error = default border color.
     /// </summary>
     public static readonly IValueConverter ToErrorBorderBrush =
         new FuncValueConverter<bool, IBrush>(value =>
@@ -112,7 +112,14 @@ public static class BoolConverters
                 }
                 return new SolidColorBrush(Color.Parse("#dc2626"));
             }
-            return Brushes.Transparent;
+            // Return BorderBrush for no error state to preserve the control's default border
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.TryGetResource("BorderBrush", Application.Current.ActualThemeVariant, out var borderResource) &&
+                borderResource is IBrush borderBrush)
+            {
+                return borderBrush;
+            }
+            return new SolidColorBrush(Color.Parse("#e5e7eb"));
         });
 
     /// <summary>

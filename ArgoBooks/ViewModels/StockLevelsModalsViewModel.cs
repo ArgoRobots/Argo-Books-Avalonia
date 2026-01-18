@@ -301,7 +301,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         AvailableProducts.Clear();
-        foreach (var product in companyData.Products.Where(p => p.Type == CategoryType.Purchase))
+        foreach (var product in companyData.Products)
         {
             AvailableProducts.Add(product);
         }
@@ -390,7 +390,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         {
             Id = newId,
             ProductId = SelectedProduct.Id,
-            Sku = string.IsNullOrWhiteSpace(AddItemSku) ? SelectedProduct.Sku : AddItemSku.Trim(),
+            Sku = AddItemSku.Trim(),
             LocationId = SelectedLocation.Id,
             InStock = quantity,
             Reserved = 0,

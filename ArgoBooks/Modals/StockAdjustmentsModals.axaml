@@ -80,6 +80,7 @@
                                     <TextBlock Text="{loc:Loc 'Current Stock'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding CurrentStock}"
                                              IsReadOnly="True"
+                                             IsEnabled="False"
                                              Classes="form-input"
                                              Background="{DynamicResource SurfaceAltBrush}" />
                                 </StackPanel>
@@ -99,6 +100,7 @@
                                     <TextBlock Text="{loc:Loc 'New Stock'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding CalculatedNewStock}"
                                              IsReadOnly="True"
+                                             IsEnabled="False"
                                              Classes="form-input"
                                              Background="{DynamicResource SurfaceAltBrush}" />
                                 </StackPanel>
