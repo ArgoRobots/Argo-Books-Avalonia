@@ -146,10 +146,12 @@
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,0"
-                                    MinHeight="40">
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                     <!-- PO Number Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.PoNumberColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.PoNumberColumnWidth}"
+                                           IsVisible="{Binding ShowPONumberColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="PONumber">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -185,7 +187,8 @@
                                     </Panel>
 
                                     <!-- Date Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.DateColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.DateColumnWidth}"
+                                           IsVisible="{Binding ShowDateColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Date">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -221,7 +224,8 @@
                                     </Panel>
 
                                     <!-- Supplier Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}"
+                                           IsVisible="{Binding ShowSupplierColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Supplier">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -257,7 +261,8 @@
                                     </Panel>
 
                                     <!-- Items Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ItemsColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ItemsColumnWidth}"
+                                           IsVisible="{Binding ShowItemsColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Items">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -293,7 +298,8 @@
                                     </Panel>
 
                                     <!-- Total Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.TotalColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.TotalColumnWidth}"
+                                           IsVisible="{Binding ShowTotalColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Total">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -329,7 +335,8 @@
                                     </Panel>
 
                                     <!-- Status Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}"
+                                           IsVisible="{Binding ShowStatusColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Status">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -365,7 +372,8 @@
                                     </Panel>
 
                                     <!-- Expected Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ExpectedColumnWidth}">
+                                    <Panel Width="{Binding ColumnWidths.ExpectedColumnWidth}"
+                                           IsVisible="{Binding ShowExpectedColumn}">
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Expected">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -427,7 +435,8 @@
                                                         MinHeight="52">
                                                     <StackPanel Orientation="Horizontal">
                                                         <!-- PO Number -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.PoNumberColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.PoNumberColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowPONumberColumn}">
                                                             <TextBlock Text="{Binding PoNumber}"
                                                                        FontSize="13"
                                                                        FontFamily="Consolas, monospace"
@@ -440,7 +449,8 @@
                                                         </Panel>
 
                                                         <!-- Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.DateColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowDateColumn}">
                                                             <TextBlock Text="{Binding DateDisplay}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -450,7 +460,8 @@
                                                         </Panel>
 
                                                         <!-- Supplier -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowSupplierColumn}">
                                                             <TextBlock Text="{Binding SupplierName}"
                                                                        FontSize="14"
                                                                        FontWeight="Medium"
@@ -462,7 +473,8 @@
                                                         </Panel>
 
                                                         <!-- Items Count -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.ItemsColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.ItemsColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowItemsColumn}">
                                                             <TextBlock Text="{Binding ItemsDisplay}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -472,7 +484,8 @@
                                                         </Panel>
 
                                                         <!-- Total -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowTotalColumn}">
                                                             <TextBlock Text="{Binding TotalDisplay}"
                                                                        FontSize="14"
                                                                        FontWeight="SemiBold"
@@ -483,7 +496,8 @@
                                                         </Panel>
 
                                                         <!-- Status Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowStatusColumn}">
                                                             <Border Background="{Binding StatusBackground}"
                                                                     CornerRadius="4"
                                                                     Padding="8,4"
@@ -499,7 +513,8 @@
                                                         </Panel>
 
                                                         <!-- Expected Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.ExpectedColumnWidth}">
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.ExpectedColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowExpectedColumn}">
                                                             <TextBlock Text="{Binding ExpectedDisplay}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -693,6 +708,24 @@
             </Border>
             </Grid>
         </Grid>
+
+        <!-- Column Visibility Menu -->
+        <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                        MenuX="{Binding ColumnMenuX}"
+                                        MenuY="{Binding ColumnMenuY}"
+                                        CloseCommand="{Binding CloseColumnMenuCommand}">
+            <controls:ColumnVisibilityMenu.ColumnsContent>
+                <StackPanel Spacing="4">
+                    <CheckBox IsChecked="{Binding ShowPONumberColumn}" Content="{loc:Loc 'PO #'}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc Supplier}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowItemsColumn}" Content="{loc:Loc Items}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="{loc:Loc Total}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+                    <CheckBox IsChecked="{Binding ShowExpectedColumn}" Content="{loc:Loc Expected}" Classes="column-toggle" />
+                </StackPanel>
+            </controls:ColumnVisibilityMenu.ColumnsContent>
+        </controls:ColumnVisibilityMenu>
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->

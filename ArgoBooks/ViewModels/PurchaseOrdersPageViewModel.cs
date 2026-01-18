@@ -47,6 +47,56 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     /// </summary>
     public PurchaseOrdersTableColumnWidths ColumnWidths => App.PurchaseOrdersColumnWidths;
 
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
+    private bool _showPONumberColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showSupplierColumn = true;
+
+    [ObservableProperty]
+    private bool _showItemsColumn = true;
+
+    [ObservableProperty]
+    private bool _showTotalColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    [ObservableProperty]
+    private bool _showExpectedColumn = true;
+
+    partial void OnShowPONumberColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("PONumber", value);
+    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
+    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
+    partial void OnShowItemsColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Items", value);
+    partial void OnShowTotalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Total", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+    partial void OnShowExpectedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Expected", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
     #endregion
 
     #region Tabs
