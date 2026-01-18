@@ -33,12 +33,6 @@ public class Customer : BaseEntity
     public string Notes { get; set; } = string.Empty;
 
     /// <summary>
-    /// Tags for categorization (e.g., VIP, Enterprise).
-    /// </summary>
-    [JsonPropertyName("tags")]
-    public List<string> Tags { get; set; } = [];
-
-    /// <summary>
     /// Customer status.
     /// </summary>
     [JsonPropertyName("status")]
