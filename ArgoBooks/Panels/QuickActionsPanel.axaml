@@ -238,49 +238,43 @@
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Mode: Full overlay with centered panel -->
         <Panel IsVisible="{Binding !IsDropdownMode}">
-            <!-- Transparent backdrop for click-away -->
-            <Border Background="Transparent"
-                    PointerPressed="Backdrop_PointerPressed" />
+            <!-- Semi-transparent backdrop for click-away -->
+            <Border Background="{DynamicResource OverlayBrush}"
+                    IsHitTestVisible="True"
+                    PointerPressed="Backdrop_PointerPressed">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
 
-            <!-- Grid that mirrors main layout for proper centering in content area -->
-            <Grid ColumnDefinitions="Auto,*">
-                <!-- Spacer matching sidebar width -->
-                <Border Grid.Column="0" Width="{Binding SidebarWidth}">
-                    <Border.Transitions>
-                        <Transitions>
-                            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                        </Transitions>
-                    </Border.Transitions>
-                </Border>
-
-                <!-- Modal centered in content area -->
-                <Border Grid.Column="1"
-                        x:Name="ModalBorder"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Width="500"
-                        MaxHeight="500"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Top"
-                        Margin="0,100,0,0"
-                        BoxShadow="0 8 32 0 #40000000"
-                        Opacity="0"
-                        RenderTransformOrigin="0.5,0.5">
-                    <Border.RenderTransform>
-                        <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                    </Border.RenderTransform>
-                    <Border.Transitions>
-                        <Transitions>
-                            <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        </Transitions>
-                    </Border.Transitions>
-                    <ContentControl Content="{Binding}"
-                                    ContentTemplate="{StaticResource PanelContentTemplate}" />
-                </Border>
-            </Grid>
+            <!-- Modal centered on screen -->
+            <Border x:Name="ModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="500"
+                    MaxHeight="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Margin="0,-60,0,0"
+                    BoxShadow="0 8 32 0 #40000000"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource PanelContentTemplate}" />
+            </Border>
         </Panel>
 
         <!-- Dropdown Mode: No backdrop, positioned below header searchbox -->
