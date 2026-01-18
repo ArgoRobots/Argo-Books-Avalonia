@@ -4,7 +4,7 @@ Argo Books is a cross-platform desktop accounting application built with modern 
 
 ## Technology Stack
 
-![Tech Stack](../diagrams/Tech%20Stack.svg)
+![Tech Stack](../diagrams/architecture/tech-stack.svg)
 
 | Layer | Technology | Description |
 |-------|------------|-------------|
@@ -17,7 +17,7 @@ Argo Books is a cross-platform desktop accounting application built with modern 
 
 The application follows the [Model-View-ViewModel (MVVM)](https://docs.avaloniaui.net/docs/concepts/the-mvvm-pattern/) pattern for clean separation of concerns.
 
-![MVVM Pattern](../diagrams/MVVM.svg)
+![MVVM Pattern](../diagrams/architecture/mvvm.svg)
 
 - **View** - XAML UI definitions and controls
 - **ViewModel** - Presentation logic and state management
