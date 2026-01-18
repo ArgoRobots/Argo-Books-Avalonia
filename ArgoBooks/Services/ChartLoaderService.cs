@@ -4,7 +4,6 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Reports;
-using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
@@ -170,62 +169,6 @@ public class ChartLoaderService
         { "Hungary", "hun" }, { "HU", "hun" }
     };
 
-    // ISO code to country name mapping (reverse of CountryNameToIsoCode)
-    private static readonly Dictionary<string, string> IsoCodeToCountryName = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "usa", "United States" },
-        { "gbr", "United Kingdom" },
-        { "can", "Canada" },
-        { "deu", "Germany" },
-        { "fra", "France" },
-        { "ita", "Italy" },
-        { "esp", "Spain" },
-        { "aus", "Australia" },
-        { "jpn", "Japan" },
-        { "chn", "China" },
-        { "ind", "India" },
-        { "bra", "Brazil" },
-        { "mex", "Mexico" },
-        { "rus", "Russia" },
-        { "kor", "South Korea" },
-        { "nld", "Netherlands" },
-        { "che", "Switzerland" },
-        { "swe", "Sweden" },
-        { "nor", "Norway" },
-        { "dnk", "Denmark" },
-        { "fin", "Finland" },
-        { "pol", "Poland" },
-        { "bel", "Belgium" },
-        { "aut", "Austria" },
-        { "irl", "Ireland" },
-        { "prt", "Portugal" },
-        { "grc", "Greece" },
-        { "nzl", "New Zealand" },
-        { "sgp", "Singapore" },
-        { "hkg", "Hong Kong" },
-        { "twn", "Taiwan" },
-        { "zaf", "South Africa" },
-        { "arg", "Argentina" },
-        { "chl", "Chile" },
-        { "col", "Colombia" },
-        { "idn", "Indonesia" },
-        { "mys", "Malaysia" },
-        { "tha", "Thailand" },
-        { "vnm", "Vietnam" },
-        { "phl", "Philippines" },
-        { "tur", "Turkey" },
-        { "sau", "Saudi Arabia" },
-        { "are", "UAE" },
-        { "isr", "Israel" },
-        { "egy", "Egypt" },
-        { "nga", "Nigeria" },
-        { "ken", "Kenya" },
-        { "ukr", "Ukraine" },
-        { "cze", "Czech Republic" },
-        { "rou", "Romania" },
-        { "hun", "Hungary" }
-    };
-
     /// <summary>
     /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
     /// </summary>
@@ -235,17 +178,6 @@ public class ChartLoaderService
             return string.Empty;
 
         return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
-    }
-
-    /// <summary>
-    /// Converts an ISO 3166-1 alpha-3 code to country name for display.
-    /// </summary>
-    private static string GetCountryName(string? isoCode)
-    {
-        if (string.IsNullOrEmpty(isoCode))
-            return LanguageService.Instance.Translate("Unknown");
-
-        return IsoCodeToCountryName.TryGetValue(isoCode, out var name) ? name : isoCode.ToUpperInvariant();
     }
 
     /// <summary>
@@ -1279,29 +1211,23 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads countries of origin (supplier countries from purchases) as a pie chart.
-    /// Uses same logic as LoadWorldMapDataBySupplier for consistency.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadCountriesOfOriginChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        // Use same logic as LoadWorldMapDataBySupplier - get supplier countries from purchases
-        var mapData = LoadWorldMapDataBySupplier(companyData, startDate, endDate);
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        if (mapData.Count == 0)
+        var dataPoints = dataService.GetPurchasesByCountryOfDestination().ToList();
+
+        if (dataPoints.Count == 0)
             return ([], []);
-
-        // Convert country codes to names and create data points
-        var dataPoints = mapData
-            .Select(kvp => new ChartDataPoint { Label = GetCountryName(kvp.Key), Value = kvp.Value })
-            .OrderByDescending(p => p.Value)
-            .ToList();
 
         var total = dataPoints.Sum(p => p.Value);
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
-
-        var filters = CreateFilters(startDate, endDate);
 
         // Store export data
         _chartExportDataByTitle["Countries of Origin"] = new ChartExportData
@@ -1358,39 +1284,17 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads companies of origin (supplier companies from purchases) as a pie chart.
-    /// Uses same logic as LoadWorldMapDataBySupplier for consistency.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadCompaniesOfOriginChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        if (companyData?.Purchases == null)
-            return ([], []);
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        // Get supplier companies from purchases (same logic as LoadWorldMapDataBySupplier)
-        var purchasesInRange = companyData.Purchases
-            .Where(p => p.Date >= start && p.Date <= end)
-            .ToList();
-
-        var dataPoints = purchasesInRange
-            .GroupBy(p =>
-            {
-                var supplierId = GetEffectiveSupplierId(p, companyData);
-                if (!string.IsNullOrEmpty(supplierId))
-                {
-                    var supplier = companyData.GetSupplier(supplierId);
-                    return supplier?.Name ?? "Unknown";
-                }
-                return "Unknown";
-            })
-            .Where(g => g.Key != "Unknown")
-            .Select(g => new ChartDataPoint { Label = g.Key, Value = (double)g.Sum(p => p.Total) })
-            .OrderByDescending(p => p.Value)
-            .ToList();
+        var dataPoints = dataService.GetPurchasesBySupplierCompany().ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
@@ -1407,8 +1311,8 @@ public class ChartLoaderService
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, legend);
@@ -1416,41 +1320,17 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads companies of destination (customer companies from sales) as a pie chart.
-    /// Only shows data when customers have CompanyName set.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadCompaniesOfDestinationChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        if (companyData?.Sales == null)
-            return ([], []);
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        // Get customer companies from sales - only include customers with CompanyName set
-        var salesInRange = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .ToList();
-
-        var dataPoints = salesInRange
-            .GroupBy(s =>
-            {
-                var customerId = GetEffectiveCustomerId(s);
-                if (!string.IsNullOrEmpty(customerId))
-                {
-                    var customer = companyData.GetCustomer(customerId);
-                    // Only use CompanyName, not Name - this chart is for companies only
-                    if (!string.IsNullOrEmpty(customer?.CompanyName))
-                        return customer.CompanyName;
-                }
-                return null;
-            })
-            .Where(g => g.Key != null)
-            .Select(g => new ChartDataPoint { Label = g.Key!, Value = (double)g.Sum(s => s.Total) })
-            .OrderByDescending(p => p.Value)
-            .ToList();
+        var dataPoints = dataService.GetSalesByCompanyOfDestination().ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
@@ -1467,8 +1347,8 @@ public class ChartLoaderService
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, legend);
@@ -1514,68 +1394,35 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads customer payment status chart (Paid vs Pending vs Overdue).
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadCustomerPaymentStatusChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        var legend = new ObservableCollection<PieLegendItem>();
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        if (companyData?.Sales == null)
-            return (series, legend);
+        var dataPoints = dataService.GetCustomerPaymentStatus().ToList();
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        if (dataPoints.Count == 0)
+            return ([], []);
 
-        var salesInRange = companyData.Sales.Where(s => s.Date >= start && s.Date <= end).ToList();
-        if (salesInRange.Count == 0)
-            return (series, legend);
-
-        var paid = salesInRange.Count(s => s.PaymentStatus == "Paid" || s.PaymentStatus == "Complete");
-        var pending = salesInRange.Count(s => s.PaymentStatus == "Pending" || string.IsNullOrEmpty(s.PaymentStatus));
-        var overdue = salesInRange.Count(s => s.PaymentStatus == "Overdue");
-
-        var total = salesInRange.Count;
-
-        var statusData = new[]
-        {
-            ("Paid", paid, "#22C55E"),
-            ("Pending", pending, "#F59E0B"),
-            ("Overdue", overdue, "#EF4444")
-        }.Where(x => x.Item2 > 0).ToList();
-
-        foreach (var (name, count, colorHex) in statusData)
-        {
-            var percentage = total > 0 ? (count / (double)total) * 100 : 0;
-            series.Add(new PieSeries<double>
-            {
-                Values = [count],
-                Name = name,
-                Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
-                Pushout = 0
-            });
-            legend.Add(new PieLegendItem
-            {
-                Label = name,
-                Value = count,
-                Percentage = percentage,
-                ColorHex = colorHex
-            });
-        }
+        var total = dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByTitle["Customer Payment Status"] = new ChartExportData
         {
             ChartTitle = "Customer Payment Status",
             ChartType = ChartType.Distribution,
-            Labels = statusData.Select(d => d.Item1).ToArray(),
-            Values = statusData.Select(d => (double)d.Item2).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count",
             TotalValue = total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, legend);
@@ -1583,87 +1430,35 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads active vs inactive customers chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadActiveInactiveCustomersChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        var legend = new ObservableCollection<PieLegendItem>();
+        var filters = CreateFilters(startDate, endDate, defaultDaysBack: 90); // 90 days for activity
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        if (companyData is not { Customers: not null, Sales: not null })
-            return (series, legend);
+        var dataPoints = dataService.GetActiveVsInactiveCustomers().ToList();
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-90); // Look at 90 days for activity
+        if (dataPoints.Count == 0)
+            return ([], []);
 
-        var activeCustomerIds = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end && !string.IsNullOrEmpty(s.CustomerId))
-            .Select(s => s.CustomerId)
-            .Distinct()
-            .ToHashSet();
-
-        var activeCount = activeCustomerIds.Count;
-        var inactiveCount = companyData.Customers.Count - activeCount;
-        var total = companyData.Customers.Count;
-
-        if (total == 0)
-            return (series, legend);
-
-        if (activeCount > 0)
-        {
-            var percentage = (activeCount / (double)total) * 100;
-            series.Add(new PieSeries<double>
-            {
-                Values = [activeCount],
-                Name = "Active",
-                Fill = new SolidColorPaint(SKColor.Parse("#22C55E")),
-                Pushout = 0
-            });
-            legend.Add(new PieLegendItem
-            {
-                Label = "Active",
-                Value = activeCount,
-                Percentage = percentage,
-                ColorHex = "#22C55E"
-            });
-        }
-
-        if (inactiveCount > 0)
-        {
-            var percentage = (inactiveCount / (double)total) * 100;
-            series.Add(new PieSeries<double>
-            {
-                Values = [inactiveCount],
-                Name = "Inactive",
-                Fill = new SolidColorPaint(SKColor.Parse("#6B7280")),
-                Pushout = 0
-            });
-            legend.Add(new PieLegendItem
-            {
-                Label = "Inactive",
-                Value = inactiveCount,
-                Percentage = percentage,
-                ColorHex = "#6B7280"
-            });
-        }
+        var total = dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        var statusList = new List<(string Label, int Value)>();
-        if (activeCount > 0) statusList.Add(("Active", activeCount));
-        if (inactiveCount > 0) statusList.Add(("Inactive", inactiveCount));
-
         _chartExportDataByTitle["Active vs Inactive Customers"] = new ChartExportData
         {
             ChartTitle = "Active vs Inactive Customers",
             ChartType = ChartType.Distribution,
-            Labels = statusList.Select(d => d.Label).ToArray(),
-            Values = statusList.Select(d => (double)d.Value).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count",
             TotalValue = total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, legend);
@@ -1979,85 +1774,46 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads world map data for GeoMap chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public Dictionary<string, double> LoadWorldMapData(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var mapData = new Dictionary<string, double>();
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        if (companyData?.Sales == null)
-            return mapData;
+        var countryData = dataService.GetWorldMapData();
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        var salesInRange = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .ToList();
-
-        return salesInRange
-            .GroupBy(s =>
-            {
-                // First try customer country
-                var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                if (!string.IsNullOrEmpty(customer?.Address.Country))
-                    return GetCountryIsoCode(customer.Address.Country);
-
-                // Fall back to product's supplier country
-                var firstProductId = s.LineItems.FirstOrDefault()?.ProductId;
-                if (!string.IsNullOrEmpty(firstProductId))
-                {
-                    var product = companyData.GetProduct(firstProductId);
-                    if (product != null && !string.IsNullOrEmpty(product.SupplierId))
-                    {
-                        var supplier = companyData.GetSupplier(product.SupplierId);
-                        if (!string.IsNullOrEmpty(supplier?.Address.Country))
-                            return GetCountryIsoCode(supplier.Address.Country);
-                    }
-                }
-
-                return string.Empty;
-            })
-            .Where(g => !string.IsNullOrEmpty(g.Key))
-            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total));
+        // Convert country names to ISO codes for GeoMap
+        return countryData
+            .Select(kvp => (GetCountryIsoCode(kvp.Key), kvp.Value))
+            .Where(x => !string.IsNullOrEmpty(x.Item1))
+            .GroupBy(x => x.Item1)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Item2));
     }
 
     /// <summary>
     /// Loads world map data by supplier country for GeoMap chart (destination mode).
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public Dictionary<string, double> LoadWorldMapDataBySupplier(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var mapData = new Dictionary<string, double>();
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        if (companyData?.Purchases == null)
-            return mapData;
+        var countryData = dataService.GetWorldMapDataBySupplier();
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        var purchasesInRange = companyData.Purchases
-            .Where(p => p.Date >= start && p.Date <= end)
-            .ToList();
-
-        return purchasesInRange
-            .GroupBy(p =>
-            {
-                var supplierId = GetEffectiveSupplierId(p, companyData);
-                if (!string.IsNullOrEmpty(supplierId))
-                {
-                    var supplier = companyData.GetSupplier(supplierId);
-                    if (supplier?.Address.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
-                        return GetCountryIsoCode(supplier.Address.Country);
-                }
-                return string.Empty;
-            })
-            .Where(g => !string.IsNullOrEmpty(g.Key))
-            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.Total));
+        // Convert country names to ISO codes for GeoMap
+        return countryData
+            .Select(kvp => (GetCountryIsoCode(kvp.Key), kvp.Value))
+            .Where(x => !string.IsNullOrEmpty(x.Item1))
+            .GroupBy(x => x.Item1)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Item2));
     }
 
     /// <summary>
@@ -2230,37 +1986,6 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Gets the data for exporting to Microsoft Excel.
-    /// </summary>
-    /// <returns>Export data formatted for Excel.</returns>
-    public ExcelExportData GetExcelExportData()
-    {
-        if (CurrentExportData == null)
-            return new ExcelExportData();
-
-        return new ExcelExportData
-        {
-            SheetName = CurrentExportData.ChartTitle,
-            Headers = ["Date", CurrentExportData.SeriesName],
-            Rows = CurrentExportData.Labels
-                .Zip(CurrentExportData.Values, (label, value) => new object[] { label, value })
-                .ToList(),
-            TotalRow = CurrentExportData.TotalValue.HasValue
-                ? ["Total", CurrentExportData.TotalValue.Value]
-                : null
-        };
-    }
-
-    /// <summary>
-    /// Gets raw chart data for report generation.
-    /// </summary>
-    /// <returns>The current export data.</returns>
-    public ChartExportData? GetReportData()
-    {
-        return CurrentExportData;
-    }
-
-    /// <summary>
     /// Resets the zoom on a cartesian chart by clearing axis limits.
     /// </summary>
     /// <param name="xAxes">The X-axes to reset.</param>
@@ -2284,35 +2009,6 @@ public class ChartLoaderService
                 axis.MaxLimit = null;
             }
         }
-    }
-
-    /// <summary>
-    /// Gets the effective supplier ID for a purchase, checking LineItems if not set directly.
-    /// </summary>
-    private static string? GetEffectiveSupplierId(Purchase purchase, CompanyData companyData)
-    {
-        // First check if SupplierId is set directly on the purchase
-        if (!string.IsNullOrEmpty(purchase.SupplierId))
-            return purchase.SupplierId;
-
-        // Otherwise, look at the first LineItem's product
-        var firstProductId = purchase.LineItems.FirstOrDefault()?.ProductId;
-        if (!string.IsNullOrEmpty(firstProductId))
-        {
-            var product = companyData.GetProduct(firstProductId);
-            if (product != null && !string.IsNullOrEmpty(product.SupplierId))
-                return product.SupplierId;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Gets the effective customer ID for a sale.
-    /// </summary>
-    private static string? GetEffectiveCustomerId(Sale sale)
-    {
-        return sale.CustomerId;
     }
 
     /// <summary>
@@ -2489,13 +2185,3 @@ public enum ChartStyle
     Scatter
 }
 
-/// <summary>
-/// Data structure for Excel export.
-/// </summary>
-public class ExcelExportData
-{
-    public string SheetName { get; set; } = "Chart Data";
-    public string[] Headers { get; set; } = [];
-    public List<object[]> Rows { get; set; } = [];
-    public object[]? TotalRow { get; set; }
-}

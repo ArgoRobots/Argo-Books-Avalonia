@@ -1899,6 +1899,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         const string returnLight = "#FCE4EC";
         const string lossColor = "#795548";          // Brown
         const string lossLight = "#EFEBE9";
+        const string customerColor = "#3F51B5";      // Indigo
+        const string customerLight = "#E8EAF6";
 
         // SVG icons for different chart types
         const string lineChartIcon = "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z";
@@ -1920,6 +1922,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         const string productIcon = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-7l-4 5h8z";
         const string vsIcon = "M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.45v4.05l3.58-2.03c1.2.39 2.48.53 3.75.53 5.5 0 10-3.58 10-8s-4.5-8-10-8z";
         const string lossIcon = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z";
+        const string groupIcon = "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z";
+        const string paymentIcon = "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z";
+        const string heartIcon = "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
+        const string rentalIcon = "M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z";
 
         // Revenue charts
         var revenueCharts = new ObservableCollection<ChartOption>
@@ -1948,6 +1954,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             new(ChartDataType.AverageTransactionValue, "Average Transaction", "Average transaction amounts", "Transactions", transactionIcon, transactionColor, transactionLight),
             new(ChartDataType.TotalTransactions, "Total Transactions", "Transaction volume", "Transactions", barChartIcon, transactionColor, transactionLight),
+            new(ChartDataType.TotalTransactionsOverTime, "Transactions Over Time", "Transaction trends over time", "Transactions", lineChartIcon, transactionColor, transactionLight),
             new(ChartDataType.AverageShippingCosts, "Average Shipping Costs", "Average shipping costs", "Transactions", shippingIcon, transactionColor, transactionLight)
         };
 
@@ -1957,13 +1964,25 @@ public partial class ReportsPageViewModel : ViewModelBase
             new(ChartDataType.WorldMap, "Geographic Distribution", "Geographic distribution", "Geographic", globeIcon, geographicColor, geographicLight),
             new(ChartDataType.CountriesOfOrigin, "Countries of Origin", "Sales by origin country", "Geographic", locationIcon, geographicColor, geographicLight),
             new(ChartDataType.CountriesOfDestination, "Countries of Destination", "Sales by destination country", "Geographic", locationIcon, geographicColor, geographicLight),
-            new(ChartDataType.CompaniesOfOrigin, "Companies of Origin", "Sales by supplier company", "Geographic", buildingIcon, geographicColor, geographicLight)
+            new(ChartDataType.CompaniesOfOrigin, "Companies of Origin", "Sales by supplier company", "Geographic", buildingIcon, geographicColor, geographicLight),
+            new(ChartDataType.CompaniesOfDestination, "Companies of Destination", "Sales by destination company", "Geographic", buildingIcon, geographicColor, geographicLight)
         };
 
         // Accountant charts
         var accountantCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.AccountantsTransactions, "Transactions by Accountant", "Transactions by accountant", "Personnel", personIcon, accountantColor, accountantLight)
+        };
+
+        // Customer charts
+        var customerCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.TopCustomersByRevenue, "Top Customers by Revenue", "Highest revenue customers", "Customers", groupIcon, customerColor, customerLight),
+            new(ChartDataType.CustomerPaymentStatus, "Customer Payment Status", "Payment status breakdown", "Customers", paymentIcon, customerColor, customerLight),
+            new(ChartDataType.CustomerGrowth, "Customer Growth", "Customer acquisition trends", "Customers", growthIcon, customerColor, customerLight),
+            new(ChartDataType.CustomerLifetimeValue, "Customer Lifetime Value", "Average customer value", "Customers", heartIcon, customerColor, customerLight),
+            new(ChartDataType.ActiveVsInactiveCustomers, "Active vs Inactive", "Customer activity status", "Customers", groupIcon, customerColor, customerLight),
+            new(ChartDataType.RentalsPerCustomer, "Rentals per Customer", "Rental frequency by customer", "Customers", rentalIcon, customerColor, customerLight)
         };
 
         // Return charts
@@ -1995,6 +2014,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         foreach (var chart in transactionCharts) AvailableCharts.Add(chart);
         foreach (var chart in geographicCharts) AvailableCharts.Add(chart);
         foreach (var chart in accountantCharts) AvailableCharts.Add(chart);
+        foreach (var chart in customerCharts) AvailableCharts.Add(chart);
         foreach (var chart in returnCharts) AvailableCharts.Add(chart);
         foreach (var chart in lossCharts) AvailableCharts.Add(chart);
 
@@ -2005,6 +2025,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         ChartCategories.Add(new ChartCategoryGroup("Transactions", transactionColor, transactionCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
         ChartCategories.Add(new ChartCategoryGroup("Geographic", geographicColor, geographicCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
         ChartCategories.Add(new ChartCategoryGroup("Personnel", accountantColor, accountantCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Customers", customerColor, customerCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
         ChartCategories.Add(new ChartCategoryGroup("Returns", returnColor, returnCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
         ChartCategories.Add(new ChartCategoryGroup("Losses", lossColor, lossCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
     }

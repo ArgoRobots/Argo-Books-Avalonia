@@ -816,7 +816,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets world map data (countries with sales totals).
+    /// Gets world map data (countries with sales totals) by customer country.
+    /// Returns country names as keys.
     /// </summary>
     public Dictionary<string, double> GetWorldMapData()
     {
@@ -834,6 +835,28 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             })
             .Where(g => g.Key != null)
             .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.EffectiveTotalUSD));
+    }
+
+    /// <summary>
+    /// Gets world map data by supplier country from purchases.
+    /// Returns country names as keys.
+    /// </summary>
+    public Dictionary<string, double> GetWorldMapDataBySupplier()
+    {
+        if (companyData?.Purchases == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return companyData.Purchases
+            .Where(p => p.Date >= startDate && p.Date <= endDate)
+            .GroupBy(p =>
+            {
+                var supplier = companyData.GetSupplier(p.SupplierId ?? "");
+                return supplier?.Address.Country;
+            })
+            .Where(g => g.Key != null && !string.IsNullOrEmpty(g.Key))
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(p => p.EffectiveTotalUSD));
     }
 
     /// <summary>
@@ -864,6 +887,30 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
+    /// Gets purchases by supplier company name.
+    /// </summary>
+    public List<ChartDataPoint> GetPurchasesBySupplierCompany()
+    {
+        if (companyData?.Purchases == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return companyData.Purchases
+            .Where(p => p.Date >= startDate && p.Date <= endDate)
+            .GroupBy(p => companyData.GetSupplier(p.SupplierId ?? "")?.Name ?? "Unknown")
+            .Where(g => g.Key != "Unknown")
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = (double)g.Sum(p => p.EffectiveTotalUSD)
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
     /// Gets sales by customer.
     /// </summary>
     public List<ChartDataPoint> GetSalesByCompanyOfOrigin()
@@ -880,6 +927,32 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             {
                 Label = g.Key,
                 Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets sales by customer company (destination companies).
+    /// Only includes customers with CompanyName set.
+    /// </summary>
+    public List<ChartDataPoint> GetSalesByCompanyOfDestination()
+    {
+        if (companyData?.Sales == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return companyData.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
+            .Select(s => new { Sale = s, Customer = companyData.GetCustomer(s.CustomerId ?? "") })
+            .Where(x => x.Customer != null && !string.IsNullOrEmpty(x.Customer.CompanyName))
+            .GroupBy(x => x.Customer!.CompanyName)
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key!,
+                Value = (double)g.Sum(x => x.Sale.EffectiveTotalUSD)
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -1008,6 +1081,194 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         return accountantData
             .Select(kvp => new ChartDataPoint { Label = kvp.Key, Value = kvp.Value })
             .OrderByDescending(p => p.Value)
+            .ToList();
+    }
+
+    #endregion
+
+    #region Customer Charts
+
+    /// <summary>
+    /// Gets top customers by revenue.
+    /// </summary>
+    public List<ChartDataPoint> GetTopCustomersByRevenue()
+    {
+        if (companyData?.Sales == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return companyData.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
+            .GroupBy(s => s.CustomerId)
+            .Select(g =>
+            {
+                var customer = companyData.GetCustomer(g.Key ?? "");
+                var customerName = customer?.Name ?? customer?.CompanyName ?? "Unknown";
+                return new ChartDataPoint
+                {
+                    Label = customerName,
+                    Value = (double)g.Sum(s => s.Total)
+                };
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets customer payment status breakdown (Paid, Pending, Overdue).
+    /// Uses Sales.PaymentStatus to match ChartLoaderService behavior.
+    /// </summary>
+    public List<ChartDataPoint> GetCustomerPaymentStatus()
+    {
+        if (companyData?.Sales == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var salesInRange = companyData.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .ToList();
+
+        if (salesInRange.Count == 0)
+            return [];
+
+        var paid = salesInRange.Count(s => s.PaymentStatus == "Paid" || s.PaymentStatus == "Complete");
+        var pending = salesInRange.Count(s => s.PaymentStatus == "Pending" || string.IsNullOrEmpty(s.PaymentStatus));
+        var overdue = salesInRange.Count(s => s.PaymentStatus == "Overdue");
+
+        var result = new List<ChartDataPoint>();
+        if (paid > 0) result.Add(new ChartDataPoint { Label = "Paid", Value = paid });
+        if (pending > 0) result.Add(new ChartDataPoint { Label = "Pending", Value = pending });
+        if (overdue > 0) result.Add(new ChartDataPoint { Label = "Overdue", Value = overdue });
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets customer growth over time (new customers acquired).
+    /// </summary>
+    public List<ChartDataPoint> GetCustomerGrowth()
+    {
+        if (companyData?.Customers == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        // Group customers by their first purchase date (approximated by earliest sale)
+        var customerFirstPurchase = companyData.Sales
+            .Where(s => !string.IsNullOrEmpty(s.CustomerId))
+            .GroupBy(s => s.CustomerId)
+            .ToDictionary(g => g.Key!, g => g.Min(s => s.Date));
+
+        return customerFirstPurchase
+            .Where(kvp => kvp.Value >= startDate && kvp.Value <= endDate)
+            .GroupBy(kvp => new DateTime(kvp.Value.Year, kvp.Value.Month, 1))
+            .OrderBy(g => g.Key)
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key.ToString("MMM yyyy"),
+                Value = g.Count(),
+                Date = g.Key
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets customer lifetime value (average revenue per customer).
+    /// </summary>
+    public List<ChartDataPoint> GetCustomerLifetimeValue()
+    {
+        if (companyData?.Sales == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var customerRevenue = companyData.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
+            .GroupBy(s => s.CustomerId)
+            .Select(g => new
+            {
+                CustomerId = g.Key,
+                TotalRevenue = g.Sum(s => s.Total)
+            })
+            .ToList();
+
+        if (!customerRevenue.Any())
+            return [];
+
+        // Return distribution of customer lifetime values
+        var ranges = new[]
+        {
+            (0m, 100m, "$0-100"),
+            (100m, 500m, "$100-500"),
+            (500m, 1000m, "$500-1K"),
+            (1000m, 5000m, "$1K-5K"),
+            (5000m, decimal.MaxValue, "$5K+")
+        };
+
+        return ranges
+            .Select(r => new ChartDataPoint
+            {
+                Label = r.Item3,
+                Value = customerRevenue.Count(c => c.TotalRevenue >= r.Item1 && c.TotalRevenue < r.Item2)
+            })
+            .Where(p => p.Value > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets active vs inactive customers count.
+    /// </summary>
+    public List<ChartDataPoint> GetActiveVsInactiveCustomers()
+    {
+        if (companyData?.Customers == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var activeCustomerIds = companyData.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
+            .Select(s => s.CustomerId)
+            .Distinct()
+            .ToHashSet();
+
+        var activeCount = activeCustomerIds.Count;
+        var inactiveCount = companyData.Customers.Count - activeCount;
+
+        var result = new List<ChartDataPoint>();
+        if (activeCount > 0) result.Add(new ChartDataPoint { Label = "Active", Value = activeCount });
+        if (inactiveCount > 0) result.Add(new ChartDataPoint { Label = "Inactive", Value = inactiveCount });
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets rentals per customer distribution.
+    /// </summary>
+    public List<ChartDataPoint> GetRentalsPerCustomer()
+    {
+        if (companyData?.Rentals == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return companyData.Rentals
+            .Where(r => r.StartDate >= startDate && r.StartDate <= endDate && !string.IsNullOrEmpty(r.CustomerId))
+            .GroupBy(r => r.CustomerId)
+            .Select(g =>
+            {
+                var customer = companyData.GetCustomer(g.Key);
+                var customerName = customer?.Name ?? customer?.CompanyName ?? "Unknown";
+                return new ChartDataPoint
+                {
+                    Label = customerName,
+                    Value = g.Count()
+                };
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
             .ToList();
     }
 
@@ -1480,64 +1741,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets the weeks between two dates.
-    /// Each week starts on Monday.
-    /// </summary>
-    private static IEnumerable<DateTime> GetWeeksBetween(DateTime startDate, DateTime endDate)
-    {
-        // Clamp dates to avoid DateTime overflow
-        var minSafeDate = new DateTime(1900, 1, 1);
-        var maxSafeDate = new DateTime(2100, 12, 31);
-
-        if (startDate < minSafeDate) startDate = minSafeDate;
-        if (endDate > maxSafeDate) endDate = maxSafeDate;
-        if (startDate > endDate) yield break;
-
-        // Get the Monday of the week containing startDate
-        var daysToMonday = ((int)startDate.DayOfWeek - 1 + 7) % 7;
-        var current = startDate.AddDays(-daysToMonday).Date;
-
-        // Safety limit (max 520 weeks = 10 years)
-        var maxIterations = 520;
-        var iterations = 0;
-
-        while (current <= endDate && iterations < maxIterations)
-        {
-            yield return current;
-            current = current.AddDays(7);
-            iterations++;
-        }
-    }
-
-    /// <summary>
-    /// Gets the days between two dates.
-    /// </summary>
-    private static IEnumerable<DateTime> GetDaysBetween(DateTime startDate, DateTime endDate)
-    {
-        // Clamp dates to avoid DateTime overflow
-        var minSafeDate = new DateTime(1900, 1, 1);
-        var maxSafeDate = new DateTime(2100, 12, 31);
-
-        if (startDate < minSafeDate) startDate = minSafeDate;
-        if (endDate > maxSafeDate) endDate = maxSafeDate;
-        if (startDate > endDate) yield break;
-
-        var current = startDate.Date;
-        var end = endDate.Date;
-
-        // Safety limit (max 3650 days = 10 years)
-        var maxIterations = 3650;
-        var iterations = 0;
-
-        while (current <= end && iterations < maxIterations)
-        {
-            yield return current;
-            current = current.AddDays(1);
-            iterations++;
-        }
-    }
-
-    /// <summary>
     /// Gets the months between two dates.
     /// Handles extreme dates (DateTime.MinValue/MaxValue) by clamping to reasonable ranges.
     /// </summary>
@@ -1589,6 +1792,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             // Transaction charts
             ChartDataType.AverageTransactionValue => GetAverageTransactionValue(),
             ChartDataType.TotalTransactions => GetTransactionCount(),
+            ChartDataType.TotalTransactionsOverTime => GetTransactionCount(),
             ChartDataType.AverageShippingCosts => GetAverageShippingCosts(),
 
             // Geographic charts
@@ -1596,9 +1800,18 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.CountriesOfOrigin => GetSalesByCountryOfOrigin(),
             ChartDataType.CountriesOfDestination => GetPurchasesByCountryOfDestination(),
             ChartDataType.CompaniesOfOrigin => GetSalesByCompanyOfOrigin(),
+            ChartDataType.CompaniesOfDestination => GetSalesByCompanyOfDestination(),
 
             // Accountant charts
             ChartDataType.AccountantsTransactions => GetTransactionsByAccountant(),
+
+            // Customer charts
+            ChartDataType.TopCustomersByRevenue => GetTopCustomersByRevenue(),
+            ChartDataType.CustomerPaymentStatus => GetCustomerPaymentStatus(),
+            ChartDataType.CustomerGrowth => GetCustomerGrowth(),
+            ChartDataType.CustomerLifetimeValue => GetCustomerLifetimeValue(),
+            ChartDataType.ActiveVsInactiveCustomers => GetActiveVsInactiveCustomers(),
+            ChartDataType.RentalsPerCustomer => GetRentalsPerCustomer(),
 
             // Returns charts
             ChartDataType.ReturnsOverTime => GetReturnsOverTime(),

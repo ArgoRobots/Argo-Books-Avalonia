@@ -420,7 +420,11 @@ public class ReportRenderer : IDisposable
             or ChartDataType.CountriesOfOrigin
             or ChartDataType.CountriesOfDestination
             or ChartDataType.CompaniesOfOrigin
-            or ChartDataType.AccountantsTransactions;
+            or ChartDataType.CompaniesOfDestination
+            or ChartDataType.AccountantsTransactions
+            or ChartDataType.TopCustomersByRevenue
+            or ChartDataType.CustomerPaymentStatus
+            or ChartDataType.ActiveVsInactiveCustomers;
     }
 
     /// <summary>
