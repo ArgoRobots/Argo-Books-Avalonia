@@ -7,7 +7,8 @@
              x:Class="ArgoBooks.Controls.ModalOverlay"
              x:DataType="controls:ModalOverlay">
 
-    <Panel x:Name="OverlayPanel" IsVisible="False">
+    <Panel x:Name="OverlayPanel"
+           IsVisible="{Binding $parent[controls:ModalOverlay].IsOpen}">
         <!-- Semi-transparent backdrop -->
         <Border x:Name="Backdrop"
                 Background="{DynamicResource OverlayBrush}"
@@ -33,7 +34,8 @@
                 </Transitions>
             </Border.Transitions>
 
-            <ContentPresenter x:Name="ModalContentPresenter" />
+            <ContentPresenter x:Name="ModalContentPresenter"
+                              Content="{Binding $parent[controls:ModalOverlay].Content}" />
         </Border>
     </Panel>
 </UserControl>

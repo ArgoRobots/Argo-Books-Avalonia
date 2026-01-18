@@ -98,19 +98,6 @@ public partial class ModalOverlay : UserControl
     {
         BackdropClickCommand = new RelayCommand(OnBackdropClick);
         InitializeComponent();
-
-        System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Constructor: IsOpen={IsOpen}, OverlayPanel={OverlayPanel != null}, Content={Content}");
-
-        // Set initial visibility based on IsOpen (which defaults to false)
-        if (OverlayPanel != null)
-        {
-            OverlayPanel.IsVisible = IsOpen;
-            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Constructor: Set OverlayPanel.IsVisible to {IsOpen}");
-        }
-
-        // Set initial content
-        if (ModalContentPresenter != null)
-            ModalContentPresenter.Content = Content;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -119,14 +106,7 @@ public partial class ModalOverlay : UserControl
 
         if (change.Property == IsOpenProperty)
         {
-            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] PropertyChanged: IsOpen changed from {change.OldValue} to {change.NewValue}");
             OnIsOpenChanged(IsOpen);
-        }
-        else if (change.Property == ContentProperty)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] PropertyChanged: Content changed to {Content?.GetType().Name ?? "null"}");
-            if (ModalContentPresenter != null)
-                ModalContentPresenter.Content = Content;
         }
     }
 
@@ -143,15 +123,6 @@ public partial class ModalOverlay : UserControl
 
     private void OnIsOpenChanged(bool isOpen)
     {
-        System.Diagnostics.Debug.WriteLine($"[ModalOverlay] OnIsOpenChanged: isOpen={isOpen}, OverlayPanel={OverlayPanel != null}");
-
-        // Update panel visibility
-        if (OverlayPanel != null)
-        {
-            OverlayPanel.IsVisible = isOpen;
-            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set OverlayPanel.IsVisible to {isOpen}");
-        }
-
         if (isOpen)
         {
             // Set initial state before animation
