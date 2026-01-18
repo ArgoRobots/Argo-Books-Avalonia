@@ -584,6 +584,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _companyManager = companyManager;
         LoadDashboardData();
 
+        // Load quick action visibility settings
+        LoadQuickActionsSettings();
+
         // Notify welcome subtitle since it depends on company manager
         OnPropertyChanged(nameof(WelcomeSubtitle));
 
@@ -592,6 +595,17 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to language changes to refresh translated chart titles
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+
+        // Subscribe to quick actions settings changes
+        if (App.QuickActionsSettingsModalViewModel != null)
+        {
+            App.QuickActionsSettingsModalViewModel.SettingsSaved += OnQuickActionsSettingsSaved;
+        }
+    }
+
+    private void OnQuickActionsSettingsSaved(object? sender, EventArgs e)
+    {
+        LoadQuickActionsSettings();
     }
 
     /// <summary>
@@ -610,6 +624,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Unsubscribe from language changes
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+
+        // Unsubscribe from quick actions settings changes
+        if (App.QuickActionsSettingsModalViewModel != null)
+        {
+            App.QuickActionsSettingsModalViewModel.SettingsSaved -= OnQuickActionsSettingsSaved;
+        }
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
@@ -1052,6 +1072,55 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// Gets the chart loader service for external use (e.g., report generation).
     /// </summary>
     public ChartLoaderService ChartLoaderService { get; } = new();
+
+    #endregion
+
+    #region Quick Actions Visibility
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewExpense = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewSale = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showCreateInvoice = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    private bool _showNewRental = true;
+
+    /// <summary>
+    /// Gets whether at least one quick action is visible.
+    /// </summary>
+    public bool HasVisibleQuickActions => ShowNewExpense || ShowNewSale || ShowCreateInvoice || ShowNewRental;
+
+    /// <summary>
+    /// Loads quick action visibility settings from global settings.
+    /// </summary>
+    public void LoadQuickActionsSettings()
+    {
+        var globalSettings = App.SettingsService?.GlobalSettings;
+        if (globalSettings != null)
+        {
+            ShowNewExpense = globalSettings.Ui.QuickActions.ShowNewExpense;
+            ShowNewSale = globalSettings.Ui.QuickActions.ShowNewSale;
+            ShowCreateInvoice = globalSettings.Ui.QuickActions.ShowCreateInvoice;
+            ShowNewRental = globalSettings.Ui.QuickActions.ShowNewRental;
+        }
+    }
+
+    /// <summary>
+    /// Opens the quick actions settings modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenQuickActionsSettings()
+    {
+        App.QuickActionsSettingsModalViewModel?.OpenCommand.Execute(null);
+    }
 
     #endregion
 

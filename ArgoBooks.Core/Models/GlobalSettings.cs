@@ -37,6 +37,15 @@ public class UiSettings
     public string AccentColor { get; set; } = "Blue";
     public string Language { get; set; } = "English";
     public ChartSettings Chart { get; set; } = new();
+    public QuickActionsSettings QuickActions { get; set; } = new();
+}
+
+public class QuickActionsSettings
+{
+    public bool ShowNewExpense { get; set; } = true;
+    public bool ShowNewSale { get; set; } = true;
+    public bool ShowCreateInvoice { get; set; } = true;
+    public bool ShowNewRental { get; set; } = true;
 }
 
 public class ChartSettings

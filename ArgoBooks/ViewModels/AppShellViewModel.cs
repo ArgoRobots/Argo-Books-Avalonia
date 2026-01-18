@@ -223,6 +223,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
 
+    /// <summary>
+    /// Gets the quick actions settings modal view model.
+    /// </summary>
+    public QuickActionsSettingsModalViewModel QuickActionsSettingsModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -376,6 +381,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
+
+        // Create quick actions settings modal
+        QuickActionsSettingsModalViewModel = new QuickActionsSettingsModalViewModel();
 
         // Register navigation guard for unsaved changes check
         if (_navigationService is NavigationService navService)

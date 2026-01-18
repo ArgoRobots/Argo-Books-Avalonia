@@ -166,5 +166,8 @@
 
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />
+
+        <!-- Quick Actions Settings Modal -->
+        <modals:QuickActionsSettingsModal DataContext="{Binding QuickActionsSettingsModalViewModel}" />
     </Panel>
 </UserControl>
