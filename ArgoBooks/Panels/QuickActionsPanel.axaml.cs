@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
@@ -81,15 +82,7 @@ public partial class QuickActionsPanel : UserControl
                                 ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
                             }
 
-                            // Return focus to AppShell so Ctrl+K works again
-                            var topLevel = TopLevel.GetTopLevel(this);
-                            if (topLevel != null)
-                            {
-                                var appShell = topLevel.GetVisualDescendants()
-                                    .OfType<UserControl>()
-                                    .FirstOrDefault(x => x.GetType().Name == "AppShell");
-                                appShell?.Focus();
-                            }
+                            ModalHelper.ReturnFocusToAppShell(this);
                         }, DispatcherPriority.Background);
                     }
                 }

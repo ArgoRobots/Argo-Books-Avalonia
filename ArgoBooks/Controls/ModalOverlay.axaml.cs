@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Transformation;
-using Avalonia.VisualTree;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -151,20 +151,7 @@ public partial class ModalOverlay : UserControl
         else
         {
             Closed?.Invoke(this, EventArgs.Empty);
-
-            // Return focus to AppShell so keyboard shortcuts (like Ctrl+K) work again
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                // Find AppShell in the visual tree and focus it
-                var topLevel = TopLevel.GetTopLevel(this);
-                if (topLevel != null)
-                {
-                    var appShell = topLevel.GetVisualDescendants()
-                        .OfType<UserControl>()
-                        .FirstOrDefault(x => x.GetType().Name == "AppShell");
-                    appShell?.Focus();
-                }
-            }, Avalonia.Threading.DispatcherPriority.Background);
+            ModalHelper.ReturnFocusToAppShell(this);
         }
     }
 
