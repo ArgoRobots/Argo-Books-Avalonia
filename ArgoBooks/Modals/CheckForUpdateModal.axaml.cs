@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -23,9 +24,12 @@ public partial class CheckForUpdateModal : UserControl
         {
             vm.PropertyChanged += (_, args) =>
             {
-                if (args.PropertyName == nameof(vm.IsOpen) && vm.IsOpen)
+                if (args.PropertyName == nameof(vm.IsOpen))
                 {
-                    AnimateOpen();
+                    if (vm.IsOpen)
+                        AnimateOpen();
+                    else
+                        ModalHelper.ReturnFocusToAppShell(this);
                 }
             };
         }

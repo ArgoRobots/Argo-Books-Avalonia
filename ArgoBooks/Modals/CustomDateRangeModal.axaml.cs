@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using ArgoBooks.Utilities;
 using System.ComponentModel;
 
 namespace ArgoBooks.Modals;
@@ -58,6 +59,8 @@ public partial class CustomDateRangeModal : UserControl
                                 DialogBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
                             }
                         }, DispatcherPriority.Background);
+
+                        ModalHelper.ReturnFocusToAppShell(this);
                     }
                 }
             };

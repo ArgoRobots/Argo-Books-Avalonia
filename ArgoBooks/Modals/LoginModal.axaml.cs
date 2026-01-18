@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -59,6 +60,7 @@ public partial class LoginModal : UserControl
                     border.Opacity = 0;
                     border.RenderTransform = new Avalonia.Media.ScaleTransform(0.95, 0.95);
                 }
+                ModalHelper.ReturnFocusToAppShell(this);
             }
         }
     }
