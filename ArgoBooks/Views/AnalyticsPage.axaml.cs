@@ -325,7 +325,7 @@ public partial class AnalyticsPage : UserControl
             var filePath = file.Path.LocalPath;
 
             // Export based on chart type
-            if (e.IsMultiSeries)
+            if (e.AdditionalSeries.Count > 0)
             {
                 // Multi-series chart (e.g., Sales vs Expenses)
                 var seriesData = new Dictionary<string, double[]>
