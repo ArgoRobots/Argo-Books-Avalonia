@@ -13,13 +13,17 @@
 
     <!-- Outer Panel always participates in layout -->
     <Panel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!-- OverlayPanel: Always visible for layout, but hidden via Opacity when closed -->
         <Panel x:Name="OverlayPanel"
                HorizontalAlignment="Stretch"
                VerticalAlignment="Stretch"
-               IsVisible="False">
-        <!-- Semi-transparent backdrop -->
+               Opacity="0"
+               IsHitTestVisible="False">
+        <!-- Semi-transparent backdrop - fills entire overlay -->
         <Border x:Name="Backdrop"
                 Background="{DynamicResource OverlayBrush}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
                 IsHitTestVisible="True"
                 PointerPressed="OnBackdropPointerPressed">
             <Border.Transitions>

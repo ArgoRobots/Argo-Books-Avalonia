@@ -134,7 +134,9 @@ public partial class ModalOverlay : UserControl
         }
         if (_overlayPanel != null)
         {
-            _overlayPanel.IsVisible = IsOpen;
+            // Use Opacity and IsHitTestVisible instead of IsVisible to maintain layout participation
+            _overlayPanel.Opacity = IsOpen ? 1 : 0;
+            _overlayPanel.IsHitTestVisible = IsOpen;
         }
     }
 
@@ -174,15 +176,15 @@ public partial class ModalOverlay : UserControl
 
         if (_overlayPanel != null)
         {
-            _overlayPanel.IsVisible = isOpen;
-            _overlayPanel.InvalidateMeasure();
-            _overlayPanel.InvalidateArrange();
-            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set _overlayPanel.IsVisible = {isOpen}, Bounds: {_overlayPanel.Bounds}");
+            // Use Opacity and IsHitTestVisible instead of IsVisible to maintain layout participation
+            _overlayPanel.Opacity = isOpen ? 1 : 0;
+            _overlayPanel.IsHitTestVisible = isOpen;
+            System.Diagnostics.Debug.WriteLine($"[ModalOverlay] Set _overlayPanel.Opacity = {(isOpen ? 1 : 0)}, Bounds: {_overlayPanel.Bounds}");
         }
 
         if (isOpen)
         {
-            // Ensure elements are visible (no animation for now to debug)
+            // Ensure elements are visible
             if (_backdrop != null)
             {
                 _backdrop.Opacity = 1;
