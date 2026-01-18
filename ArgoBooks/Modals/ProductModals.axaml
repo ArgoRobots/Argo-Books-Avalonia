@@ -15,7 +15,7 @@
 
     <Panel>
         <!-- Add Product Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}" CloseCommand="{Binding CloseAddModalCommand}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="550" MaxHeight="700"
@@ -129,7 +129,7 @@
         </controls:ModalOverlay>
 
         <!-- Edit Product Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}" CloseCommand="{Binding CloseEditModalCommand}">
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="550" MaxHeight="700"
@@ -243,7 +243,7 @@
         </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}" CloseCommand="{Binding CloseFilterModalCommand}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="400"

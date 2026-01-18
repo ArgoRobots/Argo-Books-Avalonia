@@ -14,9 +14,10 @@
         <vm:SettingsModalViewModel />
     </Design.DataContext>
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
-        <!-- Modal Container -->
-        <Border Background="{DynamicResource SurfaceBrush}"
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <!-- Modal Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
@@ -637,10 +638,10 @@
                 </Border>
             </Grid>
         </Border>
+    </controls:ModalOverlay>
 
         <!-- Add Password Modal -->
-        <Panel IsVisible="{Binding IsAddPasswordModalOpen}">
-            <Border Background="#80000000" />
+        <controls:ModalOverlay IsOpen="{Binding IsAddPasswordModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -705,11 +706,10 @@
                     </Border>
                 </StackPanel>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- Change Password Modal -->
-        <Panel IsVisible="{Binding IsChangePasswordModalOpen}">
-            <Border Background="#80000000" />
+        <controls:ModalOverlay IsOpen="{Binding IsChangePasswordModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -792,11 +792,10 @@
                     </Border>
                 </StackPanel>
             </Border>
-        </Panel>
+        </controls:ModalOverlay>
 
         <!-- Remove Password Modal -->
-        <Panel IsVisible="{Binding IsRemovePasswordModalOpen}">
-            <Border Background="#80000000" />
+        <controls:ModalOverlay IsOpen="{Binding IsRemovePasswordModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -843,8 +842,8 @@
                     </Border>
                 </StackPanel>
             </Border>
-        </Panel>
-    </controls:ModalOverlay>
+        </controls:ModalOverlay>
+    </Panel>
 
     <UserControl.Styles>
         <!-- Password Field (borderless, for use inside bordered container) -->
