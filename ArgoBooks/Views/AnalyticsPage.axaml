@@ -56,7 +56,7 @@
                                 Classes="page-tabs">
                         <TabItem Header="{loc:Loc Dashboard}" />
                         <TabItem Header="{loc:Loc Geographic}" />
-                        <TabItem Header="{loc:Loc Operational}" />
+                        <TabItem Header="{loc:Loc Operational}" IsVisible="False" />
                         <TabItem Header="{loc:Loc Performance}" />
                         <TabItem Header="{loc:Loc Customers}" />
                         <TabItem Header="{loc:Loc Returns}" />
