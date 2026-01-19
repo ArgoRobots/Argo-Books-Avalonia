@@ -167,6 +167,43 @@ public class LicenseService
     }
 
     /// <summary>
+    /// Gets the stored license key (if available).
+    /// </summary>
+    /// <returns>The license key, or null if not available.</returns>
+    public string? GetLicenseKey()
+    {
+        try
+        {
+            var settings = _settingsService.GetSettings();
+            if (settings?.License.LicenseData == null ||
+                settings.License.Salt == null ||
+                settings.License.Iv == null)
+            {
+                return null;
+            }
+
+            var encryptedData = Convert.FromBase64String(settings.License.LicenseData);
+
+            // Try to decrypt with the new stable machine key first
+            var machineKey = GetMachineKey();
+            var licenseData = TryDecryptLicense(encryptedData, machineKey, settings.License.Salt, settings.License.Iv);
+
+            // If that fails, try the legacy MAC-based key for backward compatibility
+            if (licenseData == null)
+            {
+                var legacyKey = GetLegacyMachineKey();
+                licenseData = TryDecryptLicense(encryptedData, legacyKey, settings.License.Salt, settings.License.Iv);
+            }
+
+            return licenseData?.LicenseKey;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Clears the saved license (for logout or plan cancellation).
     /// </summary>
     public async Task ClearLicenseAsync()

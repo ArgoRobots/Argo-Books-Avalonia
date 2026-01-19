@@ -132,6 +132,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     #region AI Scan Review Modal State
 
     private IReceiptScannerService? _scannerService;
+    private IReceiptUsageService? _usageService;
     private byte[]? _currentImageData;
     private string? _currentFileName;
 
@@ -281,6 +282,28 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAiConfigured;
 
+    // Usage tracking state
+    [ObservableProperty]
+    private int _scansUsed;
+
+    [ObservableProperty]
+    private int _scansLimit;
+
+    [ObservableProperty]
+    private int _scansRemaining;
+
+    [ObservableProperty]
+    private bool _hasUsageInfo;
+
+    [ObservableProperty]
+    private bool _isNearLimit;
+
+    [ObservableProperty]
+    private string? _usageTier;
+
+    [ObservableProperty]
+    private string? _resetsAt;
+
     #endregion
 
     #region AI Scan Commands
@@ -353,6 +376,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             // Get or create scanner service
             _scannerService ??= CreateScannerService();
+            _usageService ??= CreateUsageService();
 
             if (_scannerService == null || !_scannerService.IsConfigured)
             {
@@ -370,6 +394,32 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 return;
             }
 
+            // Check usage limit before scanning
+            ScanningMessage = "Checking usage limits...".Translate();
+            if (_usageService != null)
+            {
+                var usageCheck = await _usageService.CheckUsageAsync();
+                UpdateUsageDisplay(usageCheck);
+
+                if (!usageCheck.CanScan)
+                {
+                    HasScanError = true;
+                    if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+                    {
+                        ScanErrorMessage = usageCheck.ErrorMessage;
+                    }
+                    else
+                    {
+                        ScanErrorMessage = "Monthly scan limit reached ({0}/{1}).\n\nYour limit resets on {2}.\n\nUpgrade to Premium for more scans.".TranslateFormat(
+                            usageCheck.ScanCount,
+                            usageCheck.MonthlyLimit,
+                            usageCheck.ResetsAt ?? "the 1st of next month");
+                    }
+                    IsScanning = false;
+                    return;
+                }
+            }
+
             ScanningMessage = "Analyzing receipt with AI...".Translate();
 
             var result = await _scannerService.ScanReceiptAsync(_currentImageData, _currentFileName);
@@ -380,6 +430,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 ScanErrorMessage = result.ErrorMessage ?? "Unknown error occurred.".Translate();
                 IsScanning = false;
                 return;
+            }
+
+            // Increment usage after successful scan
+            if (_usageService != null)
+            {
+                var incrementResult = await _usageService.IncrementUsageAsync();
+                if (incrementResult.Success)
+                {
+                    ScansUsed = incrementResult.ScanCount;
+                    ScansRemaining = incrementResult.Remaining;
+                    IsNearLimit = incrementResult.Remaining <= 50 && incrementResult.Remaining > 0;
+                }
             }
 
             // Populate fields with extracted data
@@ -394,6 +456,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ScanErrorMessage = "Failed to scan receipt: {0}".TranslateFormat(ex.Message);
             IsScanning = false;
         }
+    }
+
+    private void UpdateUsageDisplay(UsageCheckResult usageCheck)
+    {
+        HasUsageInfo = true;
+        ScansUsed = usageCheck.ScanCount;
+        ScansLimit = usageCheck.MonthlyLimit;
+        ScansRemaining = usageCheck.Remaining;
+        UsageTier = usageCheck.Tier;
+        ResetsAt = usageCheck.ResetsAt;
+        IsNearLimit = usageCheck.Remaining <= 50 && usageCheck.Remaining > 0;
     }
 
     private async void PopulateScanResults(ReceiptScanResult result)
@@ -1048,6 +1121,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ShowCreateCategorySuggestion = false;
         SuggestedSupplierName = string.Empty;
         SuggestedCategoryName = string.Empty;
+
+        // Reset usage state (keep cached values for display)
+        IsNearLimit = false;
     }
 
     private void LoadSupplierOptions()
@@ -1103,6 +1179,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         // Credentials are loaded from .env file by the service
         return new AzureReceiptScannerService();
+    }
+
+    private IReceiptUsageService? CreateUsageService()
+    {
+        return new ReceiptUsageService(App.LicenseService);
     }
 
     private OcrData CreateOcrData()

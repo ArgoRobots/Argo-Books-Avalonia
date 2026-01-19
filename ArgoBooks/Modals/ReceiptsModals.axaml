@@ -181,7 +181,7 @@
                             Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                 <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
                                           Width="24" Height="24"
@@ -192,7 +192,35 @@
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
-                            <Button Grid.Column="1"
+                            <!-- Usage Indicator -->
+                            <Border Grid.Column="1"
+                                    IsVisible="{Binding HasUsageInfo}"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,6"
+                                    Margin="0,0,16,0"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                              Width="14" Height="14"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center">
+                                        <Run Text="{Binding ScansUsed}" />
+                                        <Run Text="/" />
+                                        <Run Text="{Binding ScansLimit}" />
+                                        <Run Text="{loc:Loc ' scans this month'}" />
+                                    </TextBlock>
+                                    <!-- Warning icon when near limit -->
+                                    <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                              Width="14" Height="14"
+                                              Foreground="#CA8A04"
+                                              IsVisible="{Binding IsNearLimit}"
+                                              ToolTip.Tip="{loc:Loc 'Running low on scans this month'}" />
+                                </StackPanel>
+                            </Border>
+                            <Button Grid.Column="2"
                                     Classes="icon-button"
                                     Command="{Binding CloseScanReviewModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
