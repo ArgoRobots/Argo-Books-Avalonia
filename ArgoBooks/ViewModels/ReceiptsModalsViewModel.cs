@@ -154,6 +154,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasScanResult;
 
+    /// <summary>
+    /// Gets the modal width based on current state.
+    /// Narrower for loading/error states, wider for results.
+    /// </summary>
+    public double ModalWidth => HasScanResult ? 950 : 480;
+
+    partial void OnHasScanResultChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ModalWidth));
+    }
+
     [ObservableProperty]
     private string? _receiptImagePath;
 
@@ -521,9 +532,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (_currentImageData != null && _currentFileName != null)
         {
+            // Set scanning state first to show loading spinner
             IsScanning = true;
+            ScanningMessage = "Retrying...".Translate();
+
+            // Small delay to ensure smooth transition from error to loading state
+            await Task.Delay(100);
+
+            // Now clear the error state
             HasScanError = false;
             HasScanResult = false;
+
+            // Start the scan
             await ScanReceiptAsync();
         }
     }

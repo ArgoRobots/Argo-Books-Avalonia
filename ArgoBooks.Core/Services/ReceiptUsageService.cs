@@ -12,9 +12,11 @@ namespace ArgoBooks.Core.Services;
 public class ReceiptUsageService : IReceiptUsageService
 {
     private const string UsageApiUrl = "https://argorobots.com/receipt_usage.php";
+    private const string ApiHostUrl = "https://argorobots.com";
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
+    private readonly IConnectivityService _connectivityService;
 
     // Cache the last known usage to reduce API calls
     private UsageStatus? _cachedUsage;
@@ -25,17 +27,18 @@ public class ReceiptUsageService : IReceiptUsageService
     /// Creates a new instance of the ReceiptUsageService.
     /// </summary>
     public ReceiptUsageService(LicenseService? licenseService = null)
-        : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) })
+        : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService())
     {
     }
 
     /// <summary>
-    /// Creates a new instance with custom HttpClient (for testing).
+    /// Creates a new instance with custom dependencies (for testing).
     /// </summary>
-    public ReceiptUsageService(LicenseService? licenseService, HttpClient httpClient)
+    public ReceiptUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService)
     {
         _licenseService = licenseService;
         _httpClient = httpClient;
+        _connectivityService = connectivityService;
     }
 
     /// <inheritdoc />
@@ -120,18 +123,31 @@ public class ReceiptUsageService : IReceiptUsageService
                 };
             }
 
+            // Check if it's a connectivity issue or server issue
+            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
             return new UsageCheckResult
             {
                 CanScan = false,
-                ErrorMessage = "Unable to verify usage. Please check your internet connection."
+                ErrorMessage = errorMessage
+            };
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
+        {
+            // Timeout - check connectivity to give better error message
+            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            return new UsageCheckResult
+            {
+                CanScan = false,
+                ErrorMessage = errorMessage
             };
         }
         catch (TaskCanceledException)
         {
+            // User cancelled
             return new UsageCheckResult
             {
                 CanScan = false,
-                ErrorMessage = "Request timed out. Please try again."
+                ErrorMessage = "Request was cancelled."
             };
         }
         catch (Exception ex)
@@ -219,6 +235,39 @@ public class ReceiptUsageService : IReceiptUsageService
 
     /// <inheritdoc />
     public UsageStatus? GetCachedUsage() => _cachedUsage;
+
+    /// <summary>
+    /// Determines whether the error is due to no internet or API being down.
+    /// </summary>
+    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // First check if we have internet at all
+            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
+
+            if (!hasInternet)
+            {
+                return "No internet connection. Please check your network and try again.";
+            }
+
+            // We have internet, so check if the API host is reachable
+            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
+
+            if (!isApiReachable)
+            {
+                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
+            }
+
+            // API is reachable but something else went wrong
+            return "Unable to verify usage. Please try again.";
+        }
+        catch
+        {
+            // If connectivity check itself fails, assume no internet
+            return "Unable to verify usage. Please check your internet connection.";
+        }
+    }
 
     private async Task<UsageApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)
     {

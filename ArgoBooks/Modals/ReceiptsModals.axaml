@@ -10,6 +10,12 @@
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
 
+    <UserControl.Resources>
+        <Transitions x:Key="ModalWidthTransitions">
+            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseInOut" />
+        </Transitions>
+    </UserControl.Resources>
+
     <Panel>
         <!-- Filter Modal -->
         <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
@@ -170,11 +176,12 @@
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="950"
+                    Width="{Binding ModalWidth}"
                     MaxHeight="750"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Transitions="{StaticResource ModalWidthTransitions}">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -192,9 +199,9 @@
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
-                            <!-- Usage Indicator -->
+                            <!-- Usage Indicator (only show when results are displayed) -->
                             <Border Grid.Column="1"
-                                    IsVisible="{Binding HasUsageInfo}"
+                                    IsVisible="{Binding HasScanResult}"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="6"
                                     Padding="12,6"
