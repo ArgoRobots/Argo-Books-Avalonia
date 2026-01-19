@@ -974,7 +974,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     // Operational Tab Chart Titles
     public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AccountantsTransactions.GetDisplayName());
-    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalTransactionsOverTime.GetDisplayName());
+    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalTransactions.GetDisplayName());
 
     // Performance Tab Chart Titles
     public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AverageTransactionValue.GetDisplayName());

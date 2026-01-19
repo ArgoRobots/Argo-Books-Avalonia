@@ -1821,7 +1821,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             // Transaction charts
             ChartDataType.AverageTransactionValue => GetAverageTransactionValue(),
             ChartDataType.TotalTransactions => GetTransactionCountBySeries(),
-            ChartDataType.TotalTransactionsOverTime => GetTransactionCountBySeries(),
             ChartDataType.AverageShippingCosts => GetAverageShippingCosts(),
 
             // Geographic charts

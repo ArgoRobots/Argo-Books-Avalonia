@@ -1963,7 +1963,6 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             new(ChartDataType.AverageTransactionValue, "Average Transaction", "Average transaction amounts", "Transactions", transactionIcon, transactionColor, transactionLight),
             new(ChartDataType.TotalTransactions, "Total Transactions", "Transaction volume", "Transactions", barChartIcon, transactionColor, transactionLight),
-            new(ChartDataType.TotalTransactionsOverTime, "Transactions Over Time", "Transaction trends over time", "Transactions", lineChartIcon, transactionColor, transactionLight),
             new(ChartDataType.AverageShippingCosts, "Average Shipping Costs", "Average shipping costs", "Transactions", shippingIcon, transactionColor, transactionLight)
         };
 
