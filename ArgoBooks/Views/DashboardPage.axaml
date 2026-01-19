@@ -152,7 +152,7 @@
 
             <!-- Quick Actions Section -->
             <Border Classes="card" Padding="20" IsVisible="{Binding HasVisibleQuickActions}">
-                <StackPanel Spacing="16">
+                <StackPanel>
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                    Text="{loc:Loc 'Quick Actions'}"

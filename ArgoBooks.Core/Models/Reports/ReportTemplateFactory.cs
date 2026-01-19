@@ -20,6 +20,8 @@ public static class ReportTemplateFactory
         public const string ReturnsAnalysis = "Returns Analysis";
         public const string LossesAnalysis = "Losses Analysis";
         public const string GeographicAnalysis = "Geographic Analysis";
+        public const string CustomerAnalysis = "Customer Analysis";
+        public const string ExpenseBreakdown = "Expense Breakdown";
     }
 
     /// <summary>
@@ -35,7 +37,9 @@ public static class ReportTemplateFactory
             TemplateNames.PerformanceAnalysis,
             TemplateNames.ReturnsAnalysis,
             TemplateNames.LossesAnalysis,
-            TemplateNames.GeographicAnalysis
+            TemplateNames.GeographicAnalysis,
+            TemplateNames.CustomerAnalysis,
+            TemplateNames.ExpenseBreakdown
         ];
     }
 
@@ -53,7 +57,9 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.PerformanceAnalysis ||
                templateName == TemplateNames.ReturnsAnalysis ||
                templateName == TemplateNames.LossesAnalysis ||
-               templateName == TemplateNames.GeographicAnalysis;
+               templateName == TemplateNames.GeographicAnalysis ||
+               templateName == TemplateNames.CustomerAnalysis ||
+               templateName == TemplateNames.ExpenseBreakdown;
     }
 
     /// <summary>
@@ -69,6 +75,8 @@ public static class ReportTemplateFactory
             TemplateNames.ReturnsAnalysis => CreateReturnsAnalysisTemplate(),
             TemplateNames.LossesAnalysis => CreateLossesAnalysisTemplate(),
             TemplateNames.GeographicAnalysis => CreateGeographicAnalysisTemplate(),
+            TemplateNames.CustomerAnalysis => CreateCustomerAnalysisTemplate(),
+            TemplateNames.ExpenseBreakdown => CreateExpenseBreakdownTemplate(),
             _ => new ReportConfiguration()
         };
     }
@@ -146,7 +154,7 @@ public static class ReportTemplateFactory
         {
             Title = "Performance Analysis",
             PageSize = PageSize.A4,
-            PageOrientation = PageOrientation.Portrait,
+            PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
@@ -178,7 +186,7 @@ public static class ReportTemplateFactory
         {
             Title = "Returns Analysis",
             PageSize = PageSize.A4,
-            PageOrientation = PageOrientation.Portrait,
+            PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
@@ -213,7 +221,7 @@ public static class ReportTemplateFactory
         {
             Title = "Losses Analysis",
             PageSize = PageSize.A4,
-            PageOrientation = PageOrientation.Portrait,
+            PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
@@ -268,6 +276,70 @@ public static class ReportTemplateFactory
         ]);
 
         AddGeographicAnalysisElements(config);
+        return config;
+    }
+
+    /// <summary>
+    /// Creates a customer analysis template.
+    /// </summary>
+    public static ReportConfiguration CreateCustomerAnalysisTemplate()
+    {
+        var config = new ReportConfiguration
+        {
+            Title = "Customer Analysis",
+            PageSize = PageSize.A4,
+            PageOrientation = PageOrientation.Landscape,
+            ShowHeader = true,
+            ShowFooter = true,
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Revenue,
+                DatePresetName = DatePresetNames.YearToDate
+            }
+        };
+
+        config.Filters.SelectedChartTypes.AddRange(
+        [
+            ChartDataType.TopCustomersByRevenue,
+            ChartDataType.CustomerGrowth,
+            ChartDataType.CustomerLifetimeValue,
+            ChartDataType.ActiveVsInactiveCustomers
+        ]);
+
+        AddCustomerAnalysisElements(config);
+        return config;
+    }
+
+    /// <summary>
+    /// Creates an expense breakdown template.
+    /// </summary>
+    public static ReportConfiguration CreateExpenseBreakdownTemplate()
+    {
+        var config = new ReportConfiguration
+        {
+            Title = "Expense Breakdown",
+            PageSize = PageSize.A4,
+            PageOrientation = PageOrientation.Landscape,
+            ShowHeader = true,
+            ShowFooter = true,
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Expenses,
+                DatePresetName = DatePresetNames.ThisMonth
+            }
+        };
+
+        config.Filters.SelectedChartTypes.AddRange(
+        [
+            ChartDataType.TotalExpenses,
+            ChartDataType.ExpensesDistribution,
+            ChartDataType.AverageTransactionValue,
+            ChartDataType.RevenueVsExpenses
+        ]);
+
+        AddExpenseBreakdownElements(config);
         return config;
     }
 
@@ -596,6 +668,112 @@ public static class ReportTemplateFactory
             Y = columns[1].Y,
             Width = columns[1].Width,
             Height = columns[1].Height
+        });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
+        });
+    }
+
+    private static void AddCustomerAnalysisElements(ReportConfiguration config)
+    {
+        var context = new LayoutContext(config);
+
+        // Create 2x2 grid for charts
+        var grid = CreateGrid(context, 2, 2);
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.TopCustomersByRevenue,
+            X = grid[0, 0].X,
+            Y = grid[0, 0].Y,
+            Width = grid[0, 0].Width,
+            Height = grid[0, 0].Height
+        });
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.CustomerGrowth,
+            X = grid[0, 1].X,
+            Y = grid[0, 1].Y,
+            Width = grid[0, 1].Width,
+            Height = grid[0, 1].Height
+        });
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.CustomerLifetimeValue,
+            X = grid[1, 0].X,
+            Y = grid[1, 0].Y,
+            Width = grid[1, 0].Width,
+            Height = grid[1, 0].Height
+        });
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.ActiveVsInactiveCustomers,
+            X = grid[1, 1].X,
+            Y = grid[1, 1].Y,
+            Width = grid[1, 1].Width,
+            Height = grid[1, 1].Height
+        });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
+        });
+    }
+
+    private static void AddExpenseBreakdownElements(ReportConfiguration config)
+    {
+        var context = new LayoutContext(config);
+
+        // Create 2x2 grid for charts
+        var grid = CreateGrid(context, 2, 2);
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.TotalExpenses,
+            X = grid[0, 0].X,
+            Y = grid[0, 0].Y,
+            Width = grid[0, 0].Width,
+            Height = grid[0, 0].Height
+        });
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.ExpensesDistribution,
+            X = grid[0, 1].X,
+            Y = grid[0, 1].Y,
+            Width = grid[0, 1].Width,
+            Height = grid[0, 1].Height
+        });
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.AverageTransactionValue,
+            X = grid[1, 0].X,
+            Y = grid[1, 0].Y,
+            Width = grid[1, 0].Width,
+            Height = grid[1, 0].Height
+        });
+
+        config.AddElement(new ChartReportElement
+        {
+            ChartType = ChartDataType.RevenueVsExpenses,
+            X = grid[1, 1].X,
+            Y = grid[1, 1].Y,
+            Width = grid[1, 1].Width,
+            Height = grid[1, 1].Height
         });
 
         // Date range element - added last so it renders on top (highest ZOrder)

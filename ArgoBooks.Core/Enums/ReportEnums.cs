@@ -110,7 +110,6 @@ public enum ChartDataType
     // Transaction charts
     AverageTransactionValue,
     TotalTransactions,
-    TotalTransactionsOverTime,
     AverageShippingCosts,
 
     // Geographic charts
@@ -208,7 +207,6 @@ public static class ReportEnumExtensions
             // Transaction charts
             ChartDataType.AverageTransactionValue => "Average Transaction Value",
             ChartDataType.TotalTransactions => "Total Transactions",
-            ChartDataType.TotalTransactionsOverTime => "Total Transactions Over Time",
             ChartDataType.AverageShippingCosts => "Average Shipping Costs",
 
             // Geographic charts

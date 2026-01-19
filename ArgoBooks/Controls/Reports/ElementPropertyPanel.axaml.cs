@@ -103,8 +103,8 @@ public partial class ElementPropertyPanel : UserControl
     private NumericUpDown? _positionY;
     private NumericUpDown? _elementWidth;
     private NumericUpDown? _elementHeight;
-    private CheckBox? _isLockedCheckbox;
-    private CheckBox? _isVisibleCheckbox;
+    private ToggleSwitch? _isLockedToggle;
+    private ToggleSwitch? _isVisibleToggle;
     private ContentControl? _elementSpecificProperties;
     private TextBlock? _elementTypeText;
     private PathIcon? _elementTypeIcon;
@@ -142,8 +142,8 @@ public partial class ElementPropertyPanel : UserControl
         _positionY = this.FindControl<NumericUpDown>("PositionY");
         _elementWidth = this.FindControl<NumericUpDown>("ElementWidth");
         _elementHeight = this.FindControl<NumericUpDown>("ElementHeight");
-        _isLockedCheckbox = this.FindControl<CheckBox>("IsLockedCheckbox");
-        _isVisibleCheckbox = this.FindControl<CheckBox>("IsVisibleCheckbox");
+        _isLockedToggle = this.FindControl<ToggleSwitch>("IsLockedToggle");
+        _isVisibleToggle = this.FindControl<ToggleSwitch>("IsVisibleToggle");
         _elementSpecificProperties = this.FindControl<ContentControl>("ElementSpecificProperties");
         _elementTypeText = this.FindControl<TextBlock>("ElementTypeText");
         _elementTypeIcon = this.FindControl<PathIcon>("ElementTypeIcon");
@@ -196,7 +196,7 @@ public partial class ElementPropertyPanel : UserControl
             _elementWidth?.Value = (decimal)element.Width;
             _elementHeight?.Value = (decimal)element.Height;
             // IsLocked is not a base property - skip for now
-            _isVisibleCheckbox?.IsChecked = element.IsVisible;
+            _isVisibleToggle?.IsChecked = element.IsVisible;
 
             // Update type header
             UpdateElementTypeHeader(element);
@@ -220,8 +220,8 @@ public partial class ElementPropertyPanel : UserControl
             _positionY?.Value = 0;
             _elementWidth?.Value = 100;
             _elementHeight?.Value = 100;
-            _isLockedCheckbox?.IsChecked = false;
-            _isVisibleCheckbox?.IsChecked = true;
+            _isLockedToggle?.IsChecked = false;
+            _isVisibleToggle?.IsChecked = true;
             _elementSpecificProperties?.Content = null;
         }
         finally
@@ -321,37 +321,40 @@ public partial class ElementPropertyPanel : UserControl
         panel.Children.Add(chartStyleCombo);
 
         // Show Title
-        var showTitleCheck = new CheckBox
+        var showTitleToggle = new ToggleSwitch
         {
-            Content = Tr("Show Title"),
-            Classes = { "property-checkbox" },
             IsChecked = chart.ShowTitle,
+            OnContent = Tr("Show Title"),
+            OffContent = Tr("Show Title"),
             Margin = new Thickness(0, 8, 0, 0)
         };
-        showTitleCheck.IsCheckedChanged += (_, _) =>
+        showTitleToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = chart.ShowTitle;
-            chart.ShowTitle = showTitleCheck.IsChecked ?? true;
+            chart.ShowTitle = showTitleToggle.IsChecked ?? true;
             OnPropertyChanged(chart, nameof(chart.ShowTitle), oldValue, chart.ShowTitle);
         };
-        panel.Children.Add(showTitleCheck);
+        panel.Children.Add(showTitleToggle);
 
-        // Show Legend
-        var showLegendCheck = new CheckBox
+        // Show Legend (only for pie/distribution charts)
+        if (IsDistributionChart(chart.ChartType))
         {
-            Content = Tr("Show Legend"),
-            Classes = { "property-checkbox" },
-            IsChecked = chart.ShowLegend
-        };
-        showLegendCheck.IsCheckedChanged += (_, _) =>
-        {
-            if (_isUpdating) return;
-            var oldValue = chart.ShowLegend;
-            chart.ShowLegend = showLegendCheck.IsChecked ?? true;
-            OnPropertyChanged(chart, nameof(chart.ShowLegend), oldValue, chart.ShowLegend);
-        };
-        panel.Children.Add(showLegendCheck);
+            var showLegendToggle = new ToggleSwitch
+            {
+                IsChecked = chart.ShowLegend,
+                OnContent = Tr("Show Legend"),
+                OffContent = Tr("Show Legend")
+            };
+            showLegendToggle.IsCheckedChanged += (_, _) =>
+            {
+                if (_isUpdating) return;
+                var oldValue = chart.ShowLegend;
+                chart.ShowLegend = showLegendToggle.IsChecked ?? true;
+                OnPropertyChanged(chart, nameof(chart.ShowLegend), oldValue, chart.ShowLegend);
+            };
+            panel.Children.Add(showLegendToggle);
+        }
 
         return panel;
     }
@@ -412,37 +415,37 @@ public partial class ElementPropertyPanel : UserControl
         };
         panel.Children.Add(rowCountInput);
 
-        // Checkboxes
-        var showHeaderCheck = new CheckBox
+        // Toggle switches
+        var showHeaderToggle = new ToggleSwitch
         {
-            Content = Tr("Show Header Row"),
-            Classes = { "property-checkbox" },
             IsChecked = table.ShowHeaders,
+            OnContent = Tr("Show Header Row"),
+            OffContent = Tr("Show Header Row"),
             Margin = new Thickness(0, 8, 0, 0)
         };
-        showHeaderCheck.IsCheckedChanged += (_, _) =>
+        showHeaderToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = table.ShowHeaders;
-            table.ShowHeaders = showHeaderCheck.IsChecked ?? true;
+            table.ShowHeaders = showHeaderToggle.IsChecked ?? true;
             OnPropertyChanged(table, nameof(table.ShowHeaders), oldValue, table.ShowHeaders);
         };
-        panel.Children.Add(showHeaderCheck);
+        panel.Children.Add(showHeaderToggle);
 
-        var alternatingRowsCheck = new CheckBox
+        var alternatingRowsToggle = new ToggleSwitch
         {
-            Content = Tr("Alternating Row Colors"),
-            Classes = { "property-checkbox" },
-            IsChecked = table.AlternateRowColors
+            IsChecked = table.AlternateRowColors,
+            OnContent = Tr("Alternating Row Colors"),
+            OffContent = Tr("Alternating Row Colors")
         };
-        alternatingRowsCheck.IsCheckedChanged += (_, _) =>
+        alternatingRowsToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = table.AlternateRowColors;
-            table.AlternateRowColors = alternatingRowsCheck.IsChecked ?? true;
+            table.AlternateRowColors = alternatingRowsToggle.IsChecked ?? true;
             OnPropertyChanged(table, nameof(table.AlternateRowColors), oldValue, table.AlternateRowColors);
         };
-        panel.Children.Add(alternatingRowsCheck);
+        panel.Children.Add(alternatingRowsToggle);
 
         return panel;
     }
@@ -736,65 +739,65 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-label" }
         });
 
-        var totalRevenueCheck = new CheckBox
+        var totalRevenueToggle = new ToggleSwitch
         {
-            Content = Tr("Total Sales"),
-            Classes = { "property-checkbox" },
-            IsChecked = summary.ShowTotalRevenue
+            IsChecked = summary.ShowTotalRevenue,
+            OnContent = Tr("Total Sales"),
+            OffContent = Tr("Total Sales")
         };
-        totalRevenueCheck.IsCheckedChanged += (_, _) =>
+        totalRevenueToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowTotalRevenue;
-            summary.ShowTotalRevenue = totalRevenueCheck.IsChecked ?? true;
+            summary.ShowTotalRevenue = totalRevenueToggle.IsChecked ?? true;
             OnPropertyChanged(summary, nameof(summary.ShowTotalRevenue), oldValue, summary.ShowTotalRevenue);
         };
-        panel.Children.Add(totalRevenueCheck);
+        panel.Children.Add(totalRevenueToggle);
 
-        var transactionCountCheck = new CheckBox
+        var transactionCountToggle = new ToggleSwitch
         {
-            Content = Tr("Total Transactions"),
-            Classes = { "property-checkbox" },
-            IsChecked = summary.ShowTotalTransactions
+            IsChecked = summary.ShowTotalTransactions,
+            OnContent = Tr("Total Transactions"),
+            OffContent = Tr("Total Transactions")
         };
-        transactionCountCheck.IsCheckedChanged += (_, _) =>
+        transactionCountToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowTotalTransactions;
-            summary.ShowTotalTransactions = transactionCountCheck.IsChecked ?? true;
+            summary.ShowTotalTransactions = transactionCountToggle.IsChecked ?? true;
             OnPropertyChanged(summary, nameof(summary.ShowTotalTransactions), oldValue, summary.ShowTotalTransactions);
         };
-        panel.Children.Add(transactionCountCheck);
+        panel.Children.Add(transactionCountToggle);
 
-        var avgValueCheck = new CheckBox
+        var avgValueToggle = new ToggleSwitch
         {
-            Content = Tr("Average Value"),
-            Classes = { "property-checkbox" },
-            IsChecked = summary.ShowAverageValue
+            IsChecked = summary.ShowAverageValue,
+            OnContent = Tr("Average Value"),
+            OffContent = Tr("Average Value")
         };
-        avgValueCheck.IsCheckedChanged += (_, _) =>
+        avgValueToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowAverageValue;
-            summary.ShowAverageValue = avgValueCheck.IsChecked ?? true;
+            summary.ShowAverageValue = avgValueToggle.IsChecked ?? true;
             OnPropertyChanged(summary, nameof(summary.ShowAverageValue), oldValue, summary.ShowAverageValue);
         };
-        panel.Children.Add(avgValueCheck);
+        panel.Children.Add(avgValueToggle);
 
-        var growthRateCheck = new CheckBox
+        var growthRateToggle = new ToggleSwitch
         {
-            Content = Tr("Growth Rate"),
-            Classes = { "property-checkbox" },
-            IsChecked = summary.ShowGrowthRate
+            IsChecked = summary.ShowGrowthRate,
+            OnContent = Tr("Growth Rate"),
+            OffContent = Tr("Growth Rate")
         };
-        growthRateCheck.IsCheckedChanged += (_, _) =>
+        growthRateToggle.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowGrowthRate;
-            summary.ShowGrowthRate = growthRateCheck.IsChecked ?? true;
+            summary.ShowGrowthRate = growthRateToggle.IsChecked ?? true;
             OnPropertyChanged(summary, nameof(summary.ShowGrowthRate), oldValue, summary.ShowGrowthRate);
         };
-        panel.Children.Add(growthRateCheck);
+        panel.Children.Add(growthRateToggle);
 
         return panel;
     }
@@ -842,9 +845,9 @@ public partial class ElementPropertyPanel : UserControl
 
     private void OnIsVisibleChanged(object? sender, RoutedEventArgs e)
     {
-        if (_isUpdating || SelectedElement == null || _isVisibleCheckbox == null) return;
+        if (_isUpdating || SelectedElement == null || _isVisibleToggle == null) return;
         var oldValue = SelectedElement.IsVisible;
-        SelectedElement.IsVisible = _isVisibleCheckbox.IsChecked ?? true;
+        SelectedElement.IsVisible = _isVisibleToggle.IsChecked ?? true;
         OnPropertyChanged(SelectedElement, "IsVisible", oldValue, SelectedElement.IsVisible);
     }
 
@@ -871,6 +874,33 @@ public partial class ElementPropertyPanel : UserControl
     private void OnPropertyChanged(ReportElementBase element, string propertyName, object? oldValue, object? newValue)
     {
         PropertyValueChanged?.Invoke(this, new PropertyChangedEventArgs(element, propertyName, oldValue, newValue));
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Checks if the chart type is a distribution/pie chart that benefits from legend display.
+    /// </summary>
+    private static bool IsDistributionChart(ChartDataType chartType)
+    {
+        return chartType is ChartDataType.RevenueDistribution
+            or ChartDataType.ExpensesDistribution
+            or ChartDataType.ReturnReasons
+            or ChartDataType.LossReasons
+            or ChartDataType.ReturnsByCategory
+            or ChartDataType.LossesByCategory
+            or ChartDataType.ReturnsByProduct
+            or ChartDataType.LossesByProduct
+            or ChartDataType.CountriesOfOrigin
+            or ChartDataType.CountriesOfDestination
+            or ChartDataType.CompaniesOfOrigin
+            or ChartDataType.CompaniesOfDestination
+            or ChartDataType.AccountantsTransactions
+            or ChartDataType.TopCustomersByRevenue
+            or ChartDataType.CustomerPaymentStatus
+            or ChartDataType.ActiveVsInactiveCustomers;
     }
 
     #endregion

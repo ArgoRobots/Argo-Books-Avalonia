@@ -1006,30 +1006,28 @@
                                     Placeholder="{loc:Loc 'Search chart types...'}"
                                     ItemsSource="{Binding ChartTypeOptions}"
                                     SelectedItem="{Binding SelectedChartDataTypeOption}" />
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding !IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Chart Style'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ChartStyleOptions}"
                                               SelectedItem="{Binding SelectedChartStyleOption}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
-                                <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
+                                <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" IsVisible="{Binding IsDistributionChartSelected}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
                                               SelectedItem="{Binding SelectedChartElement.FontFamily}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <Grid ColumnDefinitions="*,8,*">
-                                    <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Title Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Legend Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
-                                    </StackPanel>
-                                </Grid>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Title Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
+                                </StackPanel>
+                                <StackPanel Spacing="4" IsVisible="{Binding IsDistributionChartSelected}">
+                                    <TextBlock Text="{loc:Loc 'Legend Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
+                                </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedChartElement.BorderColor, Mode=TwoWay}" />

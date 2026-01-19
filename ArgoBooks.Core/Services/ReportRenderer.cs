@@ -401,7 +401,9 @@ public class ReportRenderer : IDisposable
     {
         return chartType is ChartDataType.RevenueVsExpenses
             or ChartDataType.ExpenseVsRevenueReturns
-            or ChartDataType.ExpenseVsRevenueLosses;
+            or ChartDataType.ExpenseVsRevenueLosses
+            or ChartDataType.TotalTransactions
+            or ChartDataType.AverageTransactionValue;
     }
 
     /// <summary>

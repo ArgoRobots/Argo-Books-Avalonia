@@ -164,14 +164,14 @@
                 <TextBlock Text="{loc:Loc Display}" Classes="section-header"/>
 
                 <StackPanel Spacing="8">
-                    <CheckBox x:Name="IsLockedCheckbox"
-                              Content="{loc:Loc 'Lock element'}"
-                              Classes="property-checkbox"
-                              IsCheckedChanged="OnIsLockedChanged"/>
-                    <CheckBox x:Name="IsVisibleCheckbox"
-                              Content="{loc:Loc Visible}"
-                              Classes="property-checkbox"
-                              IsCheckedChanged="OnIsVisibleChanged"/>
+                    <ToggleSwitch x:Name="IsLockedToggle"
+                                  OnContent="{loc:Loc 'Lock element'}"
+                                  OffContent="{loc:Loc 'Lock element'}"
+                                  IsCheckedChanged="OnIsLockedChanged"/>
+                    <ToggleSwitch x:Name="IsVisibleToggle"
+                                  OnContent="{loc:Loc Visible}"
+                                  OffContent="{loc:Loc Visible}"
+                                  IsCheckedChanged="OnIsVisibleChanged"/>
                 </StackPanel>
 
                 <Border Classes="property-separator"/>
