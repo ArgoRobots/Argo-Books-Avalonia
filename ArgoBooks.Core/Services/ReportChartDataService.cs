@@ -646,6 +646,76 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
+    /// Gets average transaction value over time with separate series for revenue and expense transactions.
+    /// </summary>
+    public List<ChartSeriesData> GetAverageTransactionValueBySeries()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
+
+        // Filter to only months with actual transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var hasRevenue = companyData.Revenues.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            var hasExpenses = companyData.Expenses.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
+
+            return hasRevenue || hasExpenses;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+            return [];
+
+        var revenueData = monthsWithData.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var transactions = companyData.Revenues
+                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
+                .Select(s => s.EffectiveTotalUSD)
+                .ToList();
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = transactions.Count > 0 ? (double)transactions.Average() : 0,
+                Date = month
+            };
+        }).ToList();
+
+        var expenseData = monthsWithData.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var transactions = companyData.Expenses
+                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
+                .Select(p => p.EffectiveTotalUSD)
+                .ToList();
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = transactions.Count > 0 ? (double)transactions.Average() : 0,
+                Date = month
+            };
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Revenue", Color = "#22C55E", DataPoints = revenueData },
+            new ChartSeriesData { Name = "Expenses", Color = "#EF4444", DataPoints = expenseData }
+        ];
+    }
+
+    /// <summary>
     /// Gets transaction count over time with separate series for revenue and expense transactions.
     /// </summary>
     public List<ChartSeriesData> GetTransactionCountBySeries()
@@ -748,6 +818,62 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Date = kvp.Key
             })
             .ToList();
+    }
+
+    /// <summary>
+    /// Gets average transaction value over time grouped by day with separate series for revenue and expense transactions.
+    /// </summary>
+    public List<ChartSeriesData> GetAverageTransactionValueDailyBySeries()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var revenueValuesByDate = new Dictionary<DateTime, List<decimal>>();
+        var expenseValuesByDate = new Dictionary<DateTime, List<decimal>>();
+
+        foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
+        {
+            var date = revenue.Date.Date;
+            if (!revenueValuesByDate.ContainsKey(date))
+                revenueValuesByDate[date] = [];
+            revenueValuesByDate[date].Add(revenue.EffectiveTotalUSD);
+        }
+
+        foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
+        {
+            var date = expense.Date.Date;
+            if (!expenseValuesByDate.ContainsKey(date))
+                expenseValuesByDate[date] = [];
+            expenseValuesByDate[date].Add(expense.EffectiveTotalUSD);
+        }
+
+        // Combine all dates
+        var allDates = revenueValuesByDate.Keys.Union(expenseValuesByDate.Keys).OrderBy(d => d).ToList();
+
+        if (allDates.Count == 0)
+            return [];
+
+        var revenueData = allDates.Select(date => new ChartDataPoint
+        {
+            Label = date.ToString("MMM dd"),
+            Value = revenueValuesByDate.TryGetValue(date, out var values) && values.Count > 0 ? (double)values.Average() : 0,
+            Date = date
+        }).ToList();
+
+        var expenseData = allDates.Select(date => new ChartDataPoint
+        {
+            Label = date.ToString("MMM dd"),
+            Value = expenseValuesByDate.TryGetValue(date, out var values) && values.Count > 0 ? (double)values.Average() : 0,
+            Date = date
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Revenue", Color = "#22C55E", DataPoints = revenueData },
+            new ChartSeriesData { Name = "Expenses", Color = "#EF4444", DataPoints = expenseData }
+        ];
     }
 
     /// <summary>
@@ -1819,7 +1945,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.GrowthRates => GetGrowthRates(),
 
             // Transaction charts
-            ChartDataType.AverageTransactionValue => GetAverageTransactionValue(),
+            ChartDataType.AverageTransactionValue => GetAverageTransactionValueBySeries(),
             ChartDataType.TotalTransactions => GetTransactionCountBySeries(),
             ChartDataType.AverageShippingCosts => GetAverageShippingCosts(),
 
