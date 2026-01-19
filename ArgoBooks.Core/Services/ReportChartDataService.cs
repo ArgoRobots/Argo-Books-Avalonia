@@ -590,62 +590,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     #region Transaction Charts
 
     /// <summary>
-    /// Gets average transaction value over time.
-    /// </summary>
-    public List<ChartDataPoint> GetAverageTransactionValue()
-    {
-        if (companyData == null)
-            return [];
-
-        var (startDate, endDate) = GetDateRange();
-
-        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
-
-        // Filter to only months with actual transaction data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            var hasRevenue = filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
-                companyData.Revenues.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
-            var hasExpenses = filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
-                companyData.Expenses.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
-
-            return hasRevenue || hasExpenses;
-        }).ToList();
-
-        return monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            var transactions = new List<decimal>();
-
-            if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
-            {
-                transactions.AddRange(companyData.Revenues
-                    .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                    .Select(s => s.EffectiveTotalUSD));
-            }
-
-            if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
-            {
-                transactions.AddRange(companyData.Expenses
-                    .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                    .Select(p => p.EffectiveTotalUSD));
-            }
-
-            return new ChartDataPoint
-            {
-                Label = month.ToString("MMM yyyy"),
-                Value = transactions.Count > 0 ? (double)transactions.Average() : 0,
-                Date = month
-            };
-        }).ToList();
-    }
-
-    /// <summary>
     /// Gets average transaction value over time with separate series for revenue and expense transactions.
     /// </summary>
     public List<ChartSeriesData> GetAverageTransactionValueBySeries()
@@ -773,51 +717,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             new ChartSeriesData { Name = "Revenue", Color = "#22C55E", DataPoints = revenueData },
             new ChartSeriesData { Name = "Expenses", Color = "#EF4444", DataPoints = expenseData }
         ];
-    }
-
-    /// <summary>
-    /// Gets average transaction value over time grouped by day.
-    /// </summary>
-    public List<ChartDataPoint> GetAverageTransactionValueDaily()
-    {
-        if (companyData == null)
-            return [];
-
-        var (startDate, endDate) = GetDateRange();
-
-        var transactionsByDate = new Dictionary<DateTime, List<decimal>>();
-
-        if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
-        {
-            foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
-            {
-                var date = revenue.Date.Date;
-                if (!transactionsByDate.ContainsKey(date))
-                    transactionsByDate[date] = [];
-                transactionsByDate[date].Add(revenue.EffectiveTotalUSD);
-            }
-        }
-
-        if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
-        {
-            foreach (var purchase in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
-            {
-                var date = purchase.Date.Date;
-                if (!transactionsByDate.ContainsKey(date))
-                    transactionsByDate[date] = [];
-                transactionsByDate[date].Add(purchase.EffectiveTotalUSD);
-            }
-        }
-
-        return transactionsByDate
-            .OrderBy(kvp => kvp.Key)
-            .Select(kvp => new ChartDataPoint
-            {
-                Label = kvp.Key.ToString("MMM dd"),
-                Value = kvp.Value.Count > 0 ? (double)kvp.Value.Average() : 0,
-                Date = kvp.Key
-            })
-            .ToList();
     }
 
     /// <summary>
