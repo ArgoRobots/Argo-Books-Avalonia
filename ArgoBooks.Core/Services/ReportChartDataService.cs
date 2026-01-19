@@ -646,58 +646,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets transaction count over time.
-    /// </summary>
-    public List<ChartDataPoint> GetTransactionCount()
-    {
-        if (companyData == null)
-            return [];
-
-        var (startDate, endDate) = GetDateRange();
-
-        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
-
-        // Filter to only months with actual transaction data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            var hasRevenue = filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
-                companyData.Revenues.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
-            var hasExpenses = filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
-                companyData.Expenses.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
-
-            return hasRevenue || hasExpenses;
-        }).ToList();
-
-        return monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            int count = 0;
-
-            if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
-            {
-                count += companyData.Revenues.Count(s => s.Date >= monthStart && s.Date <= monthEnd);
-            }
-
-            if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
-            {
-                count += companyData.Expenses.Count(p => p.Date >= monthStart && p.Date <= monthEnd);
-            }
-
-            return new ChartDataPoint
-            {
-                Label = month.ToString("MMM yyyy"),
-                Value = count,
-                Date = month
-            };
-        }).ToList();
-    }
-
-    /// <summary>
     /// Gets transaction count over time with separate series for revenue and expense transactions.
     /// </summary>
     public List<ChartSeriesData> GetTransactionCountBySeries()
