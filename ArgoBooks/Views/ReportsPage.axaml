@@ -1006,14 +1006,14 @@
                                     Placeholder="{loc:Loc 'Search chart types...'}"
                                     ItemsSource="{Binding ChartTypeOptions}"
                                     SelectedItem="{Binding SelectedChartDataTypeOption}" />
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding !IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Chart Style'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ChartStyleOptions}"
                                               SelectedItem="{Binding SelectedChartStyleOption}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <ToggleSwitch OnContent="{loc:Loc 'Show Title'}" OffContent="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
-                                <ToggleSwitch OnContent="{loc:Loc 'Show Legend'}" OffContent="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" IsVisible="{Binding IsDistributionChartSelected}" />
+                                <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
+                                <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" IsVisible="{Binding IsDistributionChartSelected}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
@@ -1062,10 +1062,10 @@
                                     <TextBlock Text="{loc:Loc 'Text Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedLabelElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <ToggleSwitch OnContent="{loc:Loc 'Bold'}" OffContent="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedLabelElement.IsBold}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Italic'}" OffContent="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Underline'}" OffContent="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedLabelElement.IsUnderline}" />
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedLabelElement.IsBold}" />
+                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
+                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedLabelElement.IsUnderline}" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
@@ -1165,10 +1165,10 @@
                                     <TextBlock Text="{loc:Loc 'Text Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedDateRangeElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <ToggleSwitch OnContent="{loc:Loc 'Bold'}" OffContent="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Italic'}" OffContent="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Underline'}" OffContent="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
+                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
@@ -1198,12 +1198,12 @@
                                               SelectedItem="{Binding SelectedSummaryElement.TransactionType}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <ToggleSwitch OnContent="{loc:Loc 'Show Total Revenue'}" OffContent="{loc:Loc 'Show Total Revenue'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalRevenue}" />
-                                <ToggleSwitch OnContent="{loc:Loc 'Show Total Transactions'}" OffContent="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
-                                <ToggleSwitch OnContent="{loc:Loc 'Show Average Value'}" OffContent="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
-                                <ToggleSwitch OnContent="{loc:Loc 'Show Growth Rate'}" OffContent="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
-                                <ToggleSwitch OnContent="{loc:Loc 'Include Returns'}" OffContent="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
-                                <ToggleSwitch OnContent="{loc:Loc 'Include Losses'}" OffContent="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Revenue'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalRevenue}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
+                                <CheckBox Content="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
+                                <CheckBox Content="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
+                                <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
+                                <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
 
                                 <TextBlock Text="{loc:Loc 'Formatting'}"
                                            FontSize="12"
@@ -1288,8 +1288,8 @@
                                                   SelectedItem="{Binding SelectedTableElement.TransactionType}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                    <ToggleSwitch OnContent="{loc:Loc 'Include Returns'}" OffContent="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Include Losses'}" OffContent="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
+                                    <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
+                                    <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Sort Order'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TableSortOrders}"
@@ -1308,11 +1308,11 @@
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Show Headers'}" OffContent="{loc:Loc 'Show Headers'}" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Show Grid Lines'}" OffContent="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Show Totals Row'}" OffContent="{loc:Loc 'Show Totals Row'}" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Alternate Row Colors'}" OffContent="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Auto Size Columns'}" OffContent="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+                                    <CheckBox Content="{loc:Loc 'Show Headers'}" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
+                                    <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
+                                    <CheckBox Content="{loc:Loc 'Show Totals Row'}" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
+                                    <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
+                                    <CheckBox Content="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
 
                                     <TextBlock Text="{loc:Loc 'Font'}"
                                                FontSize="11"
@@ -1385,14 +1385,14 @@
 
                                 <!-- Columns Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}">
-                                    <ToggleSwitch OnContent="{loc:Loc 'Date'}" OffContent="{loc:Loc 'Date'}" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Transaction ID'}" OffContent="{loc:Loc 'Transaction ID'}" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Company'}" OffContent="{loc:Loc 'Company'}" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Product'}" OffContent="{loc:Loc 'Product'}" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Quantity'}" OffContent="{loc:Loc 'Quantity'}" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Unit Price'}" OffContent="{loc:Loc 'Unit Price'}" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Total'}" OffContent="{loc:Loc 'Total'}" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
-                                    <ToggleSwitch OnContent="{loc:Loc 'Status'}" OffContent="{loc:Loc 'Status'}" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Date'}" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Transaction ID'}" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Company'}" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Product'}" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Quantity'}" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Unit Price'}" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Total'}" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Status'}" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1551,10 +1551,10 @@
 
                         <!-- Options -->
                         <StackPanel Spacing="8">
-                            <ToggleSwitch OnContent="{loc:Loc 'Open after export'}" OffContent="{loc:Loc 'Open after export'}"
-                                          IsChecked="{Binding OpenAfterExport}" />
-                            <ToggleSwitch OnContent="{loc:Loc 'Include metadata'}" OffContent="{loc:Loc 'Include metadata'}"
-                                          IsChecked="{Binding IncludeMetadata}" />
+                            <CheckBox Content="{loc:Loc 'Open after export'}"
+                                      IsChecked="{Binding OpenAfterExport}" />
+                            <CheckBox Content="{loc:Loc 'Include metadata'}"
+                                      IsChecked="{Binding IncludeMetadata}" />
                         </StackPanel>
 
                         <!-- Export Message -->
