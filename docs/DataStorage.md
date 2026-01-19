@@ -16,9 +16,11 @@ Central orchestrator for all company file operations.
 ### CompanyManager Operations
 
 Load File:
+
 ![Security Architecture](diagrams/data-storage/company-manager-load-file.svg)
 
 Save File:
+
 ![Security Architecture](diagrams/data-storage/company-manager-save-file.svg)
 
 ## `.argo` File Format
