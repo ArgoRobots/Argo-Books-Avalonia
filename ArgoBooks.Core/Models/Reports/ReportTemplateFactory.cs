@@ -22,7 +22,6 @@ public static class ReportTemplateFactory
         public const string GeographicAnalysis = "Geographic Analysis";
         public const string CustomerAnalysis = "Customer Analysis";
         public const string ExpenseBreakdown = "Expense Breakdown";
-        public const string ProfitLossSummary = "Profit & Loss Summary";
     }
 
     /// <summary>
@@ -40,8 +39,7 @@ public static class ReportTemplateFactory
             TemplateNames.LossesAnalysis,
             TemplateNames.GeographicAnalysis,
             TemplateNames.CustomerAnalysis,
-            TemplateNames.ExpenseBreakdown,
-            TemplateNames.ProfitLossSummary
+            TemplateNames.ExpenseBreakdown
         ];
     }
 
@@ -61,8 +59,7 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.LossesAnalysis ||
                templateName == TemplateNames.GeographicAnalysis ||
                templateName == TemplateNames.CustomerAnalysis ||
-               templateName == TemplateNames.ExpenseBreakdown ||
-               templateName == TemplateNames.ProfitLossSummary;
+               templateName == TemplateNames.ExpenseBreakdown;
     }
 
     /// <summary>
@@ -80,7 +77,6 @@ public static class ReportTemplateFactory
             TemplateNames.GeographicAnalysis => CreateGeographicAnalysisTemplate(),
             TemplateNames.CustomerAnalysis => CreateCustomerAnalysisTemplate(),
             TemplateNames.ExpenseBreakdown => CreateExpenseBreakdownTemplate(),
-            TemplateNames.ProfitLossSummary => CreateProfitLossSummaryTemplate(),
             _ => new ReportConfiguration()
         };
     }
@@ -344,38 +340,6 @@ public static class ReportTemplateFactory
         ]);
 
         AddExpenseBreakdownElements(config);
-        return config;
-    }
-
-    /// <summary>
-    /// Creates a profit and loss summary template.
-    /// </summary>
-    public static ReportConfiguration CreateProfitLossSummaryTemplate()
-    {
-        var config = new ReportConfiguration
-        {
-            Title = "Profit & Loss Summary",
-            PageSize = PageSize.A4,
-            PageOrientation = PageOrientation.Landscape,
-            ShowHeader = true,
-            ShowFooter = true,
-            ShowPageNumbers = true,
-            Filters =
-            {
-                TransactionType = TransactionType.Both,
-                DatePresetName = DatePresetNames.ThisQuarter
-            }
-        };
-
-        config.Filters.SelectedChartTypes.AddRange(
-        [
-            ChartDataType.RevenueVsExpenses,
-            ChartDataType.TotalProfits,
-            ChartDataType.GrowthRates,
-            ChartDataType.TotalTransactions
-        ]);
-
-        AddProfitLossSummaryElements(config);
         return config;
     }
 
@@ -810,73 +774,6 @@ public static class ReportTemplateFactory
             Y = grid[1, 1].Y,
             Width = grid[1, 1].Width,
             Height = grid[1, 1].Height
-        });
-
-        // Date range element - added last so it renders on top (highest ZOrder)
-        var dateRangeBounds = GetDateRangeBounds(context);
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin + (context.ContentWidth - 200) / 2,
-            Y = dateRangeBounds.Y,
-            Height = dateRangeBounds.Height
-        });
-    }
-
-    private static void AddProfitLossSummaryElements(ReportConfiguration config)
-    {
-        var context = new LayoutContext(config);
-
-        // Create vertical split: summary (15%) at top, then 2x2 grid (85%) below
-        var stack = CreateVerticalStack(context, 0.15, 0.85);
-
-        config.AddElement(new SummaryReportElement
-        {
-            X = stack[0].X,
-            Y = stack[0].Y,
-            Width = stack[0].Width,
-            Height = stack[0].Height,
-            ShowTotalRevenue = true,
-            ShowGrowthRate = true,
-            TransactionType = TransactionType.Both
-        });
-
-        // Create a 2x2 grid in the bottom portion
-        var bottomGrid = SplitIntoGrid(stack[1], 2, 2, context.ElementSpacing);
-
-        config.AddElement(new ChartReportElement
-        {
-            ChartType = ChartDataType.RevenueVsExpenses,
-            X = bottomGrid[0, 0].X,
-            Y = bottomGrid[0, 0].Y,
-            Width = bottomGrid[0, 0].Width,
-            Height = bottomGrid[0, 0].Height
-        });
-
-        config.AddElement(new ChartReportElement
-        {
-            ChartType = ChartDataType.TotalProfits,
-            X = bottomGrid[0, 1].X,
-            Y = bottomGrid[0, 1].Y,
-            Width = bottomGrid[0, 1].Width,
-            Height = bottomGrid[0, 1].Height
-        });
-
-        config.AddElement(new ChartReportElement
-        {
-            ChartType = ChartDataType.GrowthRates,
-            X = bottomGrid[1, 0].X,
-            Y = bottomGrid[1, 0].Y,
-            Width = bottomGrid[1, 0].Width,
-            Height = bottomGrid[1, 0].Height
-        });
-
-        config.AddElement(new ChartReportElement
-        {
-            ChartType = ChartDataType.TotalTransactions,
-            X = bottomGrid[1, 1].X,
-            Y = bottomGrid[1, 1].Y,
-            Width = bottomGrid[1, 1].Width,
-            Height = bottomGrid[1, 1].Height
         });
 
         // Date range element - added last so it renders on top (highest ZOrder)
