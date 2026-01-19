@@ -423,6 +423,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsTableSelected));
         OnPropertyChanged(nameof(IsDateRangeSelected));
         OnPropertyChanged(nameof(IsSummarySelected));
+        OnPropertyChanged(nameof(IsDistributionChartSelected));
     }
 
     private void OnElementPropertyChanging(object? sender, ElementPropertyChangingEventArgs e)
@@ -487,6 +488,27 @@ public partial class ReportsPageViewModel : ViewModelBase
     public bool IsTableSelected => SelectedElement is TableReportElement;
     public bool IsDateRangeSelected => SelectedElement is DateRangeReportElement;
     public bool IsSummarySelected => SelectedElement is SummaryReportElement;
+
+    /// <summary>
+    /// Whether the selected chart is a distribution/pie chart that benefits from legend display.
+    /// </summary>
+    public bool IsDistributionChartSelected => SelectedChartElement?.ChartType is
+        ChartDataType.RevenueDistribution or
+        ChartDataType.ExpensesDistribution or
+        ChartDataType.ReturnReasons or
+        ChartDataType.LossReasons or
+        ChartDataType.ReturnsByCategory or
+        ChartDataType.LossesByCategory or
+        ChartDataType.ReturnsByProduct or
+        ChartDataType.LossesByProduct or
+        ChartDataType.CountriesOfOrigin or
+        ChartDataType.CountriesOfDestination or
+        ChartDataType.CompaniesOfOrigin or
+        ChartDataType.CompaniesOfDestination or
+        ChartDataType.AccountantsTransactions or
+        ChartDataType.TopCustomersByRevenue or
+        ChartDataType.CustomerPaymentStatus or
+        ChartDataType.ActiveVsInactiveCustomers;
 
     [ObservableProperty]
     private bool _showGrid = true;
@@ -1456,6 +1478,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 SelectedChartElement.ChartType = value.Value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsDistributionChartSelected));
             }
         }
     }
