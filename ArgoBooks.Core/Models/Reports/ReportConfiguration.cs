@@ -367,7 +367,7 @@ public static class DatePresetNames
     public const string LastMonth = "Last month";
     public const string ThisQuarter = "This quarter";
     public const string LastQuarter = "Last quarter";
-    public const string YearToDate = "Year to date";
+    public const string YearToDate = "This year";
     public const string LastYear = "Last year";
     public const string AllTime = "All time";
     public const string Custom = "Custom";
@@ -408,8 +408,7 @@ public static class DatePresetNames
             "last 6 months" => (today.AddMonths(-6), today.AddDays(1).AddSeconds(-1)),
             "this quarter" => GetThisQuarterRange(now),
             "last quarter" => GetLastQuarterRange(now),
-            "this year" => (new DateTime(now.Year, 1, 1), new DateTime(now.Year, 12, 31, 23, 59, 59)),
-            "year to date" => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
+            "this year" => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
             "last year" => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
             "all time" => (new DateTime(2000, 1, 1), today.AddDays(1).AddSeconds(-1)),
 

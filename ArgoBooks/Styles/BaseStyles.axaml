@@ -147,7 +147,22 @@
         <Setter Property="MinWidth" Value="40" />
     </Style>
 
-    <!-- Global CheckBox Styling - Use dynamic accent color -->
+    <!-- Global CheckBox Styling - Use dynamic accent color with animations -->
+    <Style Selector="CheckBox /template/ Border#NormalRectangle">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="CheckBox /template/ Path#CheckGlyph">
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
     <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
