@@ -42,10 +42,11 @@
                 </Transitions>
             </Border.Transitions>
             <StackPanel>
-                <!-- User Profile Header -->
+                <!-- User Profile Header (temporarily hidden) -->
                 <Border Padding="16,16,20,16"
                         BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1">
+                        BorderThickness="0,0,0,1"
+                        IsVisible="False">
                     <Grid ColumnDefinitions="Auto,*">
                         <!-- Avatar -->
                         <Border Grid.Column="0"
