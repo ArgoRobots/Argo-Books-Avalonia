@@ -751,44 +751,55 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets transaction count over time grouped by day.
+    /// Gets transaction count over time grouped by day with separate series for revenue and expense transactions.
     /// </summary>
-    public List<ChartDataPoint> GetTransactionCountDaily()
+    public List<ChartSeriesData> GetTransactionCountDailyBySeries()
     {
         if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var countsByDate = new Dictionary<DateTime, int>();
+        var revenueCountsByDate = new Dictionary<DateTime, int>();
+        var expenseCountsByDate = new Dictionary<DateTime, int>();
 
-        if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
-            {
-                var date = revenue.Date.Date;
-                countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
-            }
+            var date = revenue.Date.Date;
+            revenueCountsByDate[date] = revenueCountsByDate.GetValueOrDefault(date, 0) + 1;
         }
 
-        if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
-            foreach (var purchase in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
-            {
-                var date = purchase.Date.Date;
-                countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
-            }
+            var date = expense.Date.Date;
+            expenseCountsByDate[date] = expenseCountsByDate.GetValueOrDefault(date, 0) + 1;
         }
 
-        return countsByDate
-            .OrderBy(kvp => kvp.Key)
-            .Select(kvp => new ChartDataPoint
-            {
-                Label = kvp.Key.ToString("MMM dd"),
-                Value = kvp.Value,
-                Date = kvp.Key
-            })
-            .ToList();
+        // Combine all dates
+        var allDates = revenueCountsByDate.Keys.Union(expenseCountsByDate.Keys).OrderBy(d => d).ToList();
+
+        if (allDates.Count == 0)
+            return [];
+
+        var revenueData = allDates.Select(date => new ChartDataPoint
+        {
+            Label = date.ToString("MMM dd"),
+            Value = revenueCountsByDate.GetValueOrDefault(date, 0),
+            Date = date
+        }).ToList();
+
+        var expenseData = allDates.Select(date => new ChartDataPoint
+        {
+            Label = date.ToString("MMM dd"),
+            Value = expenseCountsByDate.GetValueOrDefault(date, 0),
+            Date = date
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Revenue", Color = "#22C55E", DataPoints = revenueData },
+            new ChartSeriesData { Name = "Expenses", Color = "#EF4444", DataPoints = expenseData }
+        ];
     }
 
     #endregion

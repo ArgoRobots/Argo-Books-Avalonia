@@ -952,6 +952,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads total transactions count chart with daily granularity.
+    /// Shows separate series for revenue and expense transactions.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadTotalTransactionsChart(
@@ -966,31 +967,49 @@ public class ChartLoaderService
         filters.TransactionType = TransactionType.Both;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetTransactionCountDaily();
+        var seriesData = dataService.GetTransactionCountDailyBySeries();
 
-        // Filter to only days with data (non-zero values)
-        var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
-
-        if (filteredData.Count == 0)
+        if (seriesData.Count == 0)
             return (series, dates);
 
-        var labels = filteredData.Select(p => p.Label).ToArray();
-        dates = filteredData.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
-        var countValues = filteredData.Select(p => p.Value).ToArray();
+        // Get dates from the first series (both series have the same dates)
+        var revenueSeriesData = seriesData.FirstOrDefault(s => s.Name == "Revenue");
+        var expenseSeriesData = seriesData.FirstOrDefault(s => s.Name == "Expenses");
+
+        if (revenueSeriesData?.DataPoints == null || revenueSeriesData.DataPoints.Count == 0)
+            return (series, dates);
+
+        dates = revenueSeriesData.DataPoints
+            .Where(p => p.Date.HasValue)
+            .Select(p => p.Date!.Value)
+            .ToArray();
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, countValues, "Transactions", RevenueColor));
+            var revenueValues = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray();
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+
+            if (expenseSeriesData?.DataPoints != null)
+            {
+                var expenseValues = expenseSeriesData.DataPoints.Select(p => p.Value).ToArray();
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
+            }
         }
 
-        // Store export data
+        // Store export data (combined for backwards compatibility)
+        var labels = revenueSeriesData.DataPoints.Select(p => p.Label).ToArray();
+        var totalValues = revenueSeriesData.DataPoints
+            .Zip(expenseSeriesData?.DataPoints ?? [], (r, e) => r.Value + e.Value)
+            .ToArray();
+
         _chartExportDataByTitle["Total Transactions"] = new ChartExportData
         {
             ChartTitle = "Total Transactions",
             ChartType = ChartType.Comparison,
             Labels = labels,
-            Values = countValues,
-            SeriesName = "Transactions"        };
+            Values = totalValues,
+            SeriesName = "Transactions"
+        };
 
         return (series, dates);
     }
