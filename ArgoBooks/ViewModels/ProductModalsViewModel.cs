@@ -66,9 +66,6 @@ public partial class ProductModalsViewModel : ObservableObject
     private SupplierOption? _modalSupplier;
 
     [ObservableProperty]
-    private string _modalCountryOfOrigin = string.Empty;
-
-    [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
 
     [ObservableProperty]
@@ -115,9 +112,6 @@ public partial class ProductModalsViewModel : ObservableObject
     [ObservableProperty]
     private string? _filterSupplier;
 
-    [ObservableProperty]
-    private string? _filterCountry;
-
     #endregion
 
     #region Dropdown Options
@@ -125,7 +119,6 @@ public partial class ProductModalsViewModel : ObservableObject
     public ObservableCollection<CategoryOption> AvailableCategories { get; } = [];
     public ObservableCollection<CategoryItem> CategoryItems { get; } = [];
     public ObservableCollection<SupplierOption> AvailableSuppliers { get; } = [];
-    public ObservableCollection<string> AvailableCountries { get; } = [];
     public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
     public ObservableCollection<string> ItemTypeOptions { get; } = ["All", "Product", "Service"];
 
@@ -270,11 +263,6 @@ public partial class ProductModalsViewModel : ObservableObject
             }
 
             ModalSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == product.SupplierId);
-            if (ModalSupplier != null)
-            {
-                var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == product.SupplierId);
-                ModalCountryOfOrigin = supplier?.Address.Country ?? string.Empty;
-            }
         }
 
         ModalReorderPoint = product.TrackInventory ? "10" : string.Empty;
@@ -480,7 +468,6 @@ public partial class ProductModalsViewModel : ObservableObject
         FilterItemType = "All";
         FilterCategory = null;
         FilterSupplier = null;
-        FilterCountry = null;
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -518,19 +505,6 @@ public partial class ProductModalsViewModel : ObservableObject
         {
             AvailableSuppliers.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
         }
-
-        AvailableCountries.Clear();
-        AvailableCountries.Add("All Countries");
-        var countries = companyData.Suppliers
-            .Select(s => s.Address.Country)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(c => c);
-
-        foreach (var country in countries)
-        {
-            AvailableCountries.Add(country);
-        }
     }
 
     private void ClearModalFields()
@@ -541,7 +515,6 @@ public partial class ProductModalsViewModel : ObservableObject
         ModalCategory = null;
         ModalCategoryId = null;
         ModalSupplier = null;
-        ModalCountryOfOrigin = string.Empty;
         ModalReorderPoint = string.Empty;
         ModalOverstockThreshold = string.Empty;
         ModalUnitPrice = string.Empty;

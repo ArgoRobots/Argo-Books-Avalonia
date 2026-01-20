@@ -61,9 +61,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private bool _showSupplierColumn = true;
 
     [ObservableProperty]
-    private bool _showCountryColumn = true;
-
-    [ObservableProperty]
     private bool _showReorderColumn = true;
 
     [ObservableProperty]
@@ -74,7 +71,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
     partial void OnShowCategoryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Category", value);
     partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
     partial void OnShowReorderColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reorder", value);
     partial void OnShowOverstockColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Overstock", value);
 
@@ -138,9 +134,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private string? _filterSupplier;
-
-    [ObservableProperty]
-    private string? _filterCountry;
 
     #endregion
 
@@ -287,11 +280,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     public ObservableCollection<SupplierOption> AvailableSuppliers { get; } = [];
 
     /// <summary>
-    /// Available countries for filter/modal dropdown.
-    /// </summary>
-    public ObservableCollection<string> AvailableCountries { get; } = [];
-
-    /// <summary>
     /// Item type options for filter.
     /// </summary>
     public ObservableCollection<string> ItemTypeOptions { get; } = ["All", "Product", "Service"];
@@ -361,9 +349,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private SupplierOption? _modalSupplier;
 
     [ObservableProperty]
-    private string _modalCountryOfOrigin = string.Empty;
-
-    [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
 
     [ObservableProperty]
@@ -405,11 +390,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// Item types for dropdown.
     /// </summary>
     public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
-
-    /// <summary>
-    /// All countries for dropdown.
-    /// </summary>
-    public IReadOnlyList<string> CountryOptions { get; } = Countries.Names;
 
     #endregion
 
@@ -475,7 +455,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             FilterItemType = modals.FilterItemType;
             FilterCategory = modals.FilterCategory;
             FilterSupplier = modals.FilterSupplier;
-            FilterCountry = modals.FilterCountry;
         }
         CurrentPage = 1;
         FilterProducts();
@@ -486,7 +465,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         FilterItemType = "All";
         FilterCategory = null;
         FilterSupplier = null;
-        FilterCountry = null;
         SearchQuery = null;
         CurrentPage = 1;
         FilterProducts();
@@ -612,21 +590,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         {
             AvailableSuppliers.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
         }
-
-        // Update countries
-        AvailableCountries.Clear();
-        AvailableCountries.Add("All Countries");
-
-        var countries = companyData.Suppliers
-            .Select(s => s.Address.Country)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(c => c);
-
-        foreach (var country in countries)
-        {
-            AvailableCountries.Add(country);
-        }
     }
 
     /// <summary>
@@ -713,17 +676,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply country filter (via supplier)
-        if (!string.IsNullOrWhiteSpace(FilterCountry) && FilterCountry != "All Countries")
-        {
-            var supplierIdsInCountry = companyData.Suppliers
-                .Where(s => s.Address.Country.Equals(FilterCountry, StringComparison.OrdinalIgnoreCase))
-                .Select(s => s.Id)
-                .ToHashSet();
-
-            filtered = filtered.Where(p => !string.IsNullOrEmpty(p.SupplierId) && supplierIdsInCountry.Contains(p.SupplierId)).ToList();
-        }
-
         // Create display items
         var displayItems = filtered.Select(product =>
         {
@@ -760,8 +712,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                     ["Type"] = p => p.ItemType,
                     ["Description"] = p => p.Description,
                     ["Category"] = p => p.CategoryName,
-                    ["Supplier"] = p => p.SupplierName,
-                    ["Country"] = p => p.CountryOfOrigin
+                    ["Supplier"] = p => p.SupplierName
                 },
                 p => p.Name);
         }
@@ -1105,7 +1056,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         FilterItemType = "All";
         FilterCategory = null;
         FilterSupplier = null;
-        FilterCountry = null;
         SearchQuery = null;
         CurrentPage = 1;
         FilterProducts();
@@ -1124,7 +1074,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         ModalCategory = null;
         ModalCategoryId = null;
         ModalSupplier = null;
-        ModalCountryOfOrigin = string.Empty;
         ModalReorderPoint = string.Empty;
         ModalOverstockThreshold = string.Empty;
         ModalUnitPrice = string.Empty;
