@@ -207,6 +207,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [ObservableProperty]
     private string _saveErrorMessage = string.Empty;
 
+    [RelayCommand]
+    private void DismissSaveError()
+    {
+        HasSaveError = false;
+        SaveErrorMessage = string.Empty;
+    }
+
     // USD conversion result - stored for use by derived classes
     protected MonetaryValue? ConvertedTotal;
     protected MonetaryValue? ConvertedTaxAmount;
