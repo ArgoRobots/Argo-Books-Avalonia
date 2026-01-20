@@ -147,7 +147,7 @@ public class SampleCompanyService
         {
             Language = "English",
             Currency = "USD",
-            DateFormat = "MM/dd/yyyy"
+            DateFormat = "MM/DD/YYYY"
         };
 
         return companyData;
