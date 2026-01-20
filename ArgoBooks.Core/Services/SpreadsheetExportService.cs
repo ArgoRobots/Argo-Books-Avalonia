@@ -343,7 +343,11 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Type", "Item Type", "SKU", "Description", "Category ID", "Supplier ID" };
+        // Build lookup dictionaries for category and supplier names
+        var categoryLookup = data.Categories.ToDictionary(c => c.Id, c => c.Name);
+        var supplierLookup = data.Suppliers.ToDictionary(s => s.Id, s => s.Name);
+
+        var headers = new[] { "ID", "Name", "Type", "Item Type", "SKU", "Description", "Category ID", "Category Name", "Supplier ID", "Supplier Name", "Reorder Point", "Overstock Threshold" };
         var rows = data.Products.Select(p => new object[]
         {
             p.Id,
@@ -358,7 +362,11 @@ public class SpreadsheetExportService
             p.Sku,
             p.Description,
             p.CategoryId ?? "",
-            p.SupplierId ?? ""
+            p.CategoryId != null && categoryLookup.TryGetValue(p.CategoryId, out var catName) ? catName : "",
+            p.SupplierId ?? "",
+            p.SupplierId != null && supplierLookup.TryGetValue(p.SupplierId, out var supName) ? supName : "",
+            p.ReorderPoint,
+            p.OverstockThreshold
         }).ToList();
         return (headers, rows);
     }

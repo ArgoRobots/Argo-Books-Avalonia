@@ -691,9 +691,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 ItemType = product.ItemType,
                 CategoryName = category?.Name ?? "-",
                 SupplierName = supplier?.Name ?? "-",
-                CountryOfOrigin = supplier?.Address.Country ?? "-",
-                ReorderPoint = product.TrackInventory ? "10" : "-",
-                OverstockThreshold = product.TrackInventory ? "100" : "-",
+                ReorderPoint = product.TrackInventory && product.ReorderPoint > 0 ? product.ReorderPoint.ToString() : "-",
+                OverstockThreshold = product.TrackInventory && product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : "-",
                 UnitPrice = product.UnitPrice,
                 CostPrice = product.CostPrice,
                 TrackInventory = product.TrackInventory
@@ -798,6 +797,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         companyData.IdCounters.Product++;
         var newId = $"PRD-{companyData.IdCounters.Product:D3}";
 
+        var reorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
+        var overstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
+
         var newProduct = new Product
         {
             Id = newId,
@@ -808,7 +810,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
             CostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0,
-            TrackInventory = ModalItemType == "Product" && !string.IsNullOrWhiteSpace(ModalReorderPoint),
+            TrackInventory = ModalItemType == "Product" && (reorderPoint > 0 || overstockThreshold > 0),
+            ReorderPoint = reorderPoint,
+            OverstockThreshold = overstockThreshold,
             Status = EntityStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -885,6 +889,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         var oldUnitPrice = _editingProduct.UnitPrice;
         var oldCostPrice = _editingProduct.CostPrice;
         var oldTrackInventory = _editingProduct.TrackInventory;
+        var oldReorderPoint = _editingProduct.ReorderPoint;
+        var oldOverstockThreshold = _editingProduct.OverstockThreshold;
 
         // Store new values
         var newName = ModalProductName.Trim();
@@ -894,7 +900,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         var newSupplierId = ModalSupplier?.Id;
         var newUnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0;
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
-        var newTrackInventory = ModalItemType == "Product" && !string.IsNullOrWhiteSpace(ModalReorderPoint);
+        var newReorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
+        var newOverstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
+        var newTrackInventory = ModalItemType == "Product" && (newReorderPoint > 0 || newOverstockThreshold > 0);
 
         // Update the product
         var productToEdit = _editingProduct;
@@ -906,6 +914,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         productToEdit.UnitPrice = newUnitPrice;
         productToEdit.CostPrice = newCostPrice;
         productToEdit.TrackInventory = newTrackInventory;
+        productToEdit.ReorderPoint = newReorderPoint;
+        productToEdit.OverstockThreshold = newOverstockThreshold;
         productToEdit.UpdatedAt = DateTime.UtcNow;
 
         companyData.MarkAsModified();
@@ -923,6 +933,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 productToEdit.UnitPrice = oldUnitPrice;
                 productToEdit.CostPrice = oldCostPrice;
                 productToEdit.TrackInventory = oldTrackInventory;
+                productToEdit.ReorderPoint = oldReorderPoint;
+                productToEdit.OverstockThreshold = oldOverstockThreshold;
                 companyData.MarkAsModified();
                 LoadProducts();
             },
@@ -936,6 +948,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 productToEdit.UnitPrice = newUnitPrice;
                 productToEdit.CostPrice = newCostPrice;
                 productToEdit.TrackInventory = newTrackInventory;
+                productToEdit.ReorderPoint = newReorderPoint;
+                productToEdit.OverstockThreshold = newOverstockThreshold;
                 companyData.MarkAsModified();
                 LoadProducts();
             }));
@@ -1151,9 +1165,6 @@ public partial class ProductDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _supplierName = string.Empty;
-
-    [ObservableProperty]
-    private string _countryOfOrigin = string.Empty;
 
     [ObservableProperty]
     private string _reorderPoint = string.Empty;

@@ -74,6 +74,18 @@ public class Product
     public bool TrackInventory { get; set; }
 
     /// <summary>
+    /// Minimum stock level before reordering (for physical products).
+    /// </summary>
+    [JsonPropertyName("reorderPoint")]
+    public int ReorderPoint { get; set; }
+
+    /// <summary>
+    /// Maximum stock level threshold (for physical products).
+    /// </summary>
+    [JsonPropertyName("overstockThreshold")]
+    public int OverstockThreshold { get; set; }
+
+    /// <summary>
     /// Primary supplier ID.
     /// </summary>
     [JsonPropertyName("supplierId")]
