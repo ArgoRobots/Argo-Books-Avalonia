@@ -631,29 +631,34 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 var connectivityService = new ConnectivityService();
                 var hasInternet = await connectivityService.IsInternetAvailableAsync();
 
-                // Try to convert amounts to USD
+                // Check if exchange rate is available FIRST before any conversion
+                var exchangeService = ExchangeRateService.Instance;
+                if (exchangeService == null)
+                {
+                    IsSavingTransaction = false;
+                    HasSaveError = true;
+                    SaveErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
+                    return;
+                }
+
+                // Try to get the exchange rate (this will attempt to fetch if missing)
+                var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
+                if (rate <= 0)
+                {
+                    // Rate fetch failed
+                    IsSavingTransaction = false;
+                    HasSaveError = true;
+                    SaveErrorMessage = hasInternet
+                        ? "Unable to fetch exchange rates. Please try again.".Translate()
+                        : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
+                    return;
+                }
+
+                // Now convert amounts to USD (rate is guaranteed to be available)
                 ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
                 ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
                 ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
                 ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
-
-                // Check if conversion actually worked (rate was available)
-                // If no rate was available, the USD amount will equal the original amount (which is wrong for non-USD currencies)
-                var exchangeService = ExchangeRateService.Instance;
-                if (exchangeService != null)
-                {
-                    var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
-                    if (rate <= 0)
-                    {
-                        // Rate fetch failed
-                        IsSavingTransaction = false;
-                        HasSaveError = true;
-                        SaveErrorMessage = hasInternet
-                            ? "Unable to fetch exchange rates. Please try again.".Translate()
-                            : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
-                        return;
-                    }
-                }
             }
             catch (Exception)
             {
