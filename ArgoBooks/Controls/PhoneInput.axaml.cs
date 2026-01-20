@@ -73,6 +73,42 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         set => SetValue(FullPhoneNumberProperty, value);
     }
 
+    /// <summary>
+    /// Gets whether the phone number is complete (has the expected number of digits).
+    /// Returns true if the phone is empty (optional field) or has the correct length.
+    /// </summary>
+    public bool IsPhoneComplete
+    {
+        get
+        {
+            var digits = ExtractDigits(PhoneNumber);
+            // Empty phone is valid (optional field)
+            if (string.IsNullOrEmpty(digits))
+                return true;
+
+            var country = SelectedCountry ?? AllDialCodes.FirstOrDefault(c => c.Code == "US");
+            var expectedDigits = country?.PhoneFormat.Count(c => c == 'X') ?? 10;
+            return digits.Length == expectedDigits;
+        }
+    }
+
+    /// <summary>
+    /// Gets whether there is a partial (incomplete) phone number entered.
+    /// </summary>
+    public bool HasIncompletePhone
+    {
+        get
+        {
+            var digits = ExtractDigits(PhoneNumber);
+            if (string.IsNullOrEmpty(digits))
+                return false;
+
+            var country = SelectedCountry ?? AllDialCodes.FirstOrDefault(c => c.Code == "US");
+            var expectedDigits = country?.PhoneFormat.Count(c => c == 'X') ?? 10;
+            return digits.Length > 0 && digits.Length < expectedDigits;
+        }
+    }
+
     private string _countrySearchText = string.Empty;
     /// <summary>
     /// Gets or sets the country search text.
@@ -236,6 +272,8 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
             ReformatPhoneNumberForNewCountry();
             UpdatePhoneNumberPlaceholder();
             UpdateFullPhoneNumber();
+            RaisePropertyChanged(nameof(IsPhoneComplete));
+            RaisePropertyChanged(nameof(HasIncompletePhone));
         }
         else if (change.Property == PhoneNumberProperty && !_isUpdatingText)
         {
@@ -406,6 +444,8 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         PhoneNumber = rawDigits;
         UpdateFullPhoneNumber();
         RaisePropertyChanged(nameof(FormattedPhoneNumber));
+        RaisePropertyChanged(nameof(IsPhoneComplete));
+        RaisePropertyChanged(nameof(HasIncompletePhone));
 
         _isFormattingPhone = false;
     }

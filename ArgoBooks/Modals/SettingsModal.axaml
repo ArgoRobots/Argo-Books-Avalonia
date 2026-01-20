@@ -93,6 +93,17 @@
                                               Classes="form-combobox" />
                                 </StackPanel>
 
+                                <!-- Time Zone -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Time Zone'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TimeZones}"
+                                              SelectedItem="{Binding SelectedTimeZone}"
+                                              Classes="form-combobox" />
+                                </StackPanel>
+
                                 <!-- Chart Settings -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0">
                                     <TextBlock Text="{loc:Loc 'Max Pie Chart Slices'}"

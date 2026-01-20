@@ -66,9 +66,6 @@ public partial class ProductModalsViewModel : ObservableObject
     private SupplierOption? _modalSupplier;
 
     [ObservableProperty]
-    private string _modalCountryOfOrigin = string.Empty;
-
-    [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
 
     [ObservableProperty]
@@ -115,9 +112,6 @@ public partial class ProductModalsViewModel : ObservableObject
     [ObservableProperty]
     private string? _filterSupplier;
 
-    [ObservableProperty]
-    private string? _filterCountry;
-
     #endregion
 
     #region Dropdown Options
@@ -125,7 +119,6 @@ public partial class ProductModalsViewModel : ObservableObject
     public ObservableCollection<CategoryOption> AvailableCategories { get; } = [];
     public ObservableCollection<CategoryItem> CategoryItems { get; } = [];
     public ObservableCollection<SupplierOption> AvailableSuppliers { get; } = [];
-    public ObservableCollection<string> AvailableCountries { get; } = [];
     public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
     public ObservableCollection<string> ItemTypeOptions { get; } = ["All", "Product", "Service"];
 
@@ -197,6 +190,9 @@ public partial class ProductModalsViewModel : ObservableObject
         companyData.IdCounters.Product++;
         var newId = $"PRD-{companyData.IdCounters.Product:D3}";
 
+        var reorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
+        var overstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
+
         var newProduct = new Product
         {
             Id = newId,
@@ -207,7 +203,9 @@ public partial class ProductModalsViewModel : ObservableObject
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
             CostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0,
-            TrackInventory = ModalItemType == "Product" && !string.IsNullOrWhiteSpace(ModalReorderPoint),
+            TrackInventory = ModalItemType == "Product" && (reorderPoint > 0 || overstockThreshold > 0),
+            ReorderPoint = reorderPoint,
+            OverstockThreshold = overstockThreshold,
             Status = EntityStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -270,15 +268,10 @@ public partial class ProductModalsViewModel : ObservableObject
             }
 
             ModalSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == product.SupplierId);
-            if (ModalSupplier != null)
-            {
-                var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == product.SupplierId);
-                ModalCountryOfOrigin = supplier?.Address.Country ?? string.Empty;
-            }
         }
 
-        ModalReorderPoint = product.TrackInventory ? "10" : string.Empty;
-        ModalOverstockThreshold = product.TrackInventory ? "100" : string.Empty;
+        ModalReorderPoint = product.ReorderPoint > 0 ? product.ReorderPoint.ToString() : string.Empty;
+        ModalOverstockThreshold = product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : string.Empty;
 
         ModalError = null;
         IsEditModalOpen = true;
@@ -316,6 +309,8 @@ public partial class ProductModalsViewModel : ObservableObject
         var oldUnitPrice = _editingProduct.UnitPrice;
         var oldCostPrice = _editingProduct.CostPrice;
         var oldTrackInventory = _editingProduct.TrackInventory;
+        var oldReorderPoint = _editingProduct.ReorderPoint;
+        var oldOverstockThreshold = _editingProduct.OverstockThreshold;
 
         var newName = ModalProductName.Trim();
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? string.Empty : ModalDescription.Trim();
@@ -324,7 +319,9 @@ public partial class ProductModalsViewModel : ObservableObject
         var newSupplierId = ModalSupplier?.Id;
         var newUnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0;
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
-        var newTrackInventory = ModalItemType == "Product" && !string.IsNullOrWhiteSpace(ModalReorderPoint);
+        var newReorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
+        var newOverstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
+        var newTrackInventory = ModalItemType == "Product" && (newReorderPoint > 0 || newOverstockThreshold > 0);
 
         // Check if anything actually changed
         var hasChanges = oldName != newName ||
@@ -334,7 +331,9 @@ public partial class ProductModalsViewModel : ObservableObject
                          oldSupplierId != newSupplierId ||
                          oldUnitPrice != newUnitPrice ||
                          oldCostPrice != newCostPrice ||
-                         oldTrackInventory != newTrackInventory;
+                         oldTrackInventory != newTrackInventory ||
+                         oldReorderPoint != newReorderPoint ||
+                         oldOverstockThreshold != newOverstockThreshold;
 
         // If nothing changed, just close the modal without recording an action
         if (!hasChanges)
@@ -352,6 +351,8 @@ public partial class ProductModalsViewModel : ObservableObject
         productToEdit.UnitPrice = newUnitPrice;
         productToEdit.CostPrice = newCostPrice;
         productToEdit.TrackInventory = newTrackInventory;
+        productToEdit.ReorderPoint = newReorderPoint;
+        productToEdit.OverstockThreshold = newOverstockThreshold;
         productToEdit.UpdatedAt = DateTime.UtcNow;
 
         companyData.MarkAsModified();
@@ -368,6 +369,8 @@ public partial class ProductModalsViewModel : ObservableObject
                 productToEdit.UnitPrice = oldUnitPrice;
                 productToEdit.CostPrice = oldCostPrice;
                 productToEdit.TrackInventory = oldTrackInventory;
+                productToEdit.ReorderPoint = oldReorderPoint;
+                productToEdit.OverstockThreshold = oldOverstockThreshold;
                 companyData.MarkAsModified();
                 ProductSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -381,6 +384,8 @@ public partial class ProductModalsViewModel : ObservableObject
                 productToEdit.UnitPrice = newUnitPrice;
                 productToEdit.CostPrice = newCostPrice;
                 productToEdit.TrackInventory = newTrackInventory;
+                productToEdit.ReorderPoint = newReorderPoint;
+                productToEdit.OverstockThreshold = newOverstockThreshold;
                 companyData.MarkAsModified();
                 ProductSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -480,7 +485,6 @@ public partial class ProductModalsViewModel : ObservableObject
         FilterItemType = "All";
         FilterCategory = null;
         FilterSupplier = null;
-        FilterCountry = null;
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -518,19 +522,6 @@ public partial class ProductModalsViewModel : ObservableObject
         {
             AvailableSuppliers.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
         }
-
-        AvailableCountries.Clear();
-        AvailableCountries.Add("All Countries");
-        var countries = companyData.Suppliers
-            .Select(s => s.Address.Country)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(c => c);
-
-        foreach (var country in countries)
-        {
-            AvailableCountries.Add(country);
-        }
     }
 
     private void ClearModalFields()
@@ -541,7 +532,6 @@ public partial class ProductModalsViewModel : ObservableObject
         ModalCategory = null;
         ModalCategoryId = null;
         ModalSupplier = null;
-        ModalCountryOfOrigin = string.Empty;
         ModalReorderPoint = string.Empty;
         ModalOverstockThreshold = string.Empty;
         ModalUnitPrice = string.Empty;

@@ -1094,8 +1094,44 @@ public class SpreadsheetImportService
             product.ItemType = itemType;
             product.Sku = GetString(row, headers, "SKU");
             product.Description = GetString(row, headers, "Description");
-            product.CategoryId = GetNullableString(row, headers, "Category ID");
-            product.SupplierId = GetNullableString(row, headers, "Supplier ID");
+
+            // Handle Category - prefer ID, fall back to name lookup
+            var categoryId = GetNullableString(row, headers, "Category ID");
+            if (string.IsNullOrEmpty(categoryId))
+            {
+                var categoryName = GetNullableString(row, headers, "Category Name");
+                if (!string.IsNullOrEmpty(categoryName))
+                {
+                    var category = data.Categories.FirstOrDefault(c =>
+                        string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase));
+                    categoryId = category?.Id;
+                }
+            }
+            product.CategoryId = categoryId;
+
+            // Handle Supplier - prefer ID, fall back to name lookup
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+            if (string.IsNullOrEmpty(supplierId))
+            {
+                var supplierName = GetNullableString(row, headers, "Supplier Name");
+                if (!string.IsNullOrEmpty(supplierName))
+                {
+                    var supplier = data.Suppliers.FirstOrDefault(s =>
+                        string.Equals(s.Name, supplierName, StringComparison.OrdinalIgnoreCase));
+                    supplierId = supplier?.Id;
+                }
+            }
+            product.SupplierId = supplierId;
+
+            // Handle Reorder Point and Overstock Threshold
+            product.ReorderPoint = GetInt(row, headers, "Reorder Point");
+            product.OverstockThreshold = GetInt(row, headers, "Overstock Threshold");
+
+            // Set TrackInventory based on whether reorder/overstock values are set
+            if (product.ReorderPoint > 0 || product.OverstockThreshold > 0)
+            {
+                product.TrackInventory = true;
+            }
 
             if (existing == null)
                 data.Products.Add(product);

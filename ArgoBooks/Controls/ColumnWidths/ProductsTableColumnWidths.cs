@@ -4,7 +4,7 @@ namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Manages column widths for the Products table.
-/// Supports both Expenses tab (9 columns) and Revenue tab (5 columns).
+/// Supports both Expenses tab (8 columns) and Revenue tab (5 columns).
 /// </summary>
 public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnWidths
 {
@@ -16,7 +16,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     private readonly Dictionary<string, ColumnDef> _columns = new();
 
     // Column order for Expenses tab
-    private readonly string[] _expensesColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Country", "Reorder", "Overstock", "Actions"
+    private readonly string[] _expensesColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Reorder", "Overstock", "Actions"
     ];
 
     // Column order for Revenue tab
@@ -55,9 +55,6 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
     [ObservableProperty]
     private double _supplierColumnWidth = 100;
-
-    [ObservableProperty]
-    private double _countryColumnWidth = 100;
 
     [ObservableProperty]
     private double _reorderColumnWidth = 80;
@@ -135,18 +132,6 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         _columns["Supplier"] = new ColumnDef
         {
             Name = "Supplier",
-            ExpensesStarValue = 0.8,
-            RevenueStarValue = 0,
-            MinWidth = 80,
-            PreferredWidth = 100,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = false
-        };
-
-        // Country column (Expenses only)
-        _columns["Country"] = new ColumnDef
-        {
-            Name = "Country",
             ExpensesStarValue = 0.8,
             RevenueStarValue = 0,
             MinWidth = 80,
@@ -366,7 +351,6 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
             case "Description": DescriptionColumnWidth = width; break;
             case "Category": CategoryColumnWidth = width; break;
             case "Supplier": SupplierColumnWidth = width; break;
-            case "Country": CountryColumnWidth = width; break;
             case "Reorder": ReorderColumnWidth = width; break;
             case "Overstock": OverstockColumnWidth = width; break;
             case "Actions": ActionsColumnWidth = width; break;

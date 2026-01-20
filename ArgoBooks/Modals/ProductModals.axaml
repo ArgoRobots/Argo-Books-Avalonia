@@ -95,11 +95,6 @@
                                                             EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                             </StackPanel>
 
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Country of Origin'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
-                            </StackPanel>
-
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -211,11 +206,6 @@
                                                             EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                             </StackPanel>
 
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Country of Origin'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
-                            </StackPanel>
-
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -294,10 +284,6 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
-                        </StackPanel>
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="{loc:Loc 'Country of Origin'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding AvailableCountries}" SelectedItem="{Binding FilterCountry}" Classes="form-combobox" PlaceholderText="{loc:Loc 'All Countries'}" />
                         </StackPanel>
                     </StackPanel>
 

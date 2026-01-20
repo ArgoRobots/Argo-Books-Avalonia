@@ -36,6 +36,11 @@ public class UiSettings
     public string Theme { get; set; } = "Dark";
     public string AccentColor { get; set; } = "Blue";
     public string Language { get; set; } = "English";
+    /// <summary>
+    /// User's preferred timezone for displaying times. Defaults to UTC.
+    /// Uses IANA timezone identifiers (e.g., "America/New_York", "Europe/London").
+    /// </summary>
+    public string TimeZone { get; set; } = "UTC";
     public ChartSettings Chart { get; set; } = new();
     public QuickActionsSettings QuickActions { get; set; } = new();
 }

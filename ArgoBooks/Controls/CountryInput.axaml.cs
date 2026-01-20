@@ -204,6 +204,16 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             _countryListBox.PointerWheelChanged += OnCountryListBoxPointerWheelChanged;
             _countryListBox.PointerReleased += OnCountryListBoxPointerReleased;
         }
+
+        // Ensure the search text is updated when the control loads
+        // This handles cases where the property was set before the control was fully loaded
+        if (!string.IsNullOrEmpty(SelectedCountryName) && SelectedCountry == null)
+        {
+            var country = PhoneInput.AllDialCodes.FirstOrDefault(c =>
+                c.Name.Equals(SelectedCountryName, StringComparison.OrdinalIgnoreCase));
+            SelectedCountry = country;
+        }
+        UpdateSearchText();
     }
 
     private void OnCountryListBoxPointerWheelChanged(object? sender, PointerWheelEventArgs e)
