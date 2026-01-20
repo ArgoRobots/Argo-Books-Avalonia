@@ -275,12 +275,21 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the settings page.
+    /// Opens the settings modal.
     /// </summary>
     [RelayCommand]
     private void OpenSettings()
     {
-        _navigationService?.NavigateTo("Settings");
+        OpenSettingsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Opens the profile modal (My Plan).
+    /// </summary>
+    [RelayCommand]
+    private void OpenProfile()
+    {
+        OpenProfileRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -363,6 +372,16 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when upgrade modal should be opened.
     /// </summary>
     public event EventHandler? OpenUpgradeRequested;
+
+    /// <summary>
+    /// Event raised when settings modal should be opened.
+    /// </summary>
+    public event EventHandler? OpenSettingsRequested;
+
+    /// <summary>
+    /// Event raised when profile modal should be opened.
+    /// </summary>
+    public event EventHandler? OpenProfileRequested;
 
     /// <summary>
     /// Event raised when save is requested.

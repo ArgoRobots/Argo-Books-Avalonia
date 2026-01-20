@@ -23,7 +23,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Width="240"
+                Width="280"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
