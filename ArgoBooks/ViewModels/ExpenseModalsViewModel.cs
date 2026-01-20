@@ -97,7 +97,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     }
 
     // Command aliases for AXAML bindings
-    public IAsyncRelayCommand SaveExpenseCommand => SaveTransactionAsyncCommand;
+    public IAsyncRelayCommand SaveExpenseCommand => SaveTransactionCommand;
 
     // Expense-specific filter
     [ObservableProperty]

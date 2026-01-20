@@ -96,7 +96,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     }
 
     // Command aliases for AXAML bindings
-    public IAsyncRelayCommand SaveRevenueCommand => SaveTransactionAsyncCommand;
+    public IAsyncRelayCommand SaveRevenueCommand => SaveTransactionCommand;
 
     #endregion
 
