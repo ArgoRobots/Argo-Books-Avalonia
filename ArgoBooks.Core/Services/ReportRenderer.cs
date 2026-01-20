@@ -338,7 +338,19 @@ public class ReportRenderer : IDisposable
                 DrawNoDataPlaceholder(canvas, pieChartArea);
                 return;
             }
-            RenderMultiSeriesBarChart(canvas, barChartArea, seriesData, chart);
+
+            // Choose rendering based on chart style
+            if (chart.ChartStyle == ReportChartStyle.Line ||
+                chart.ChartStyle == ReportChartStyle.StepLine ||
+                chart.ChartStyle == ReportChartStyle.Area ||
+                chart.ChartStyle == ReportChartStyle.Scatter)
+            {
+                RenderMultiSeriesLineChart(canvas, barChartArea, seriesData, chart);
+            }
+            else
+            {
+                RenderMultiSeriesBarChart(canvas, barChartArea, seriesData, chart);
+            }
             return;
         }
 
@@ -1040,6 +1052,205 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// Renders a multi-series line/area chart (e.g., Revenue vs Expenses as lines).
+    /// </summary>
+    private void RenderMultiSeriesLineChart(SKCanvas canvas, SKRect chartArea, List<ChartSeriesData> seriesData, ChartReportElement chart)
+    {
+        if (seriesData.Count == 0) return;
+
+        // Get all data points and find max/min values
+        var allDataPoints = seriesData.SelectMany(s => s.DataPoints).ToList();
+        if (allDataPoints.Count == 0) return;
+
+        var maxValue = allDataPoints.Max(p => Math.Abs(p.Value));
+        var minValue = allDataPoints.Min(p => p.Value);
+        if (maxValue == 0) maxValue = 1;
+
+        // Add 20% padding at top
+        var paddedMaxValue = maxValue * 1.2;
+
+        var hasNegatives = minValue < 0;
+        var baselineY = hasNegatives
+            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / (paddedMaxValue - minValue))
+            : chartArea.Bottom;
+
+        // Draw grid lines
+        using var gridPaint = new SKPaint();
+        gridPaint.Color = ChartGridColor;
+        gridPaint.Style = SKPaintStyle.Stroke;
+        gridPaint.StrokeWidth = 1 * _renderScale;
+        gridPaint.IsAntialias = true;
+
+        var gridLineCount = 5;
+        for (int i = 0; i <= gridLineCount; i++)
+        {
+            var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
+            canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
+
+            var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
+            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            using var yLabelPaint = new SKPaint();
+            yLabelPaint.Color = ChartAxisColor;
+            yLabelPaint.IsAntialias = true;
+            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+        }
+
+        // Draw axes
+        using var axisPaint = new SKPaint();
+        axisPaint.Color = ChartAxisColor;
+        axisPaint.Style = SKPaintStyle.Stroke;
+        axisPaint.StrokeWidth = 1 * _renderScale;
+        axisPaint.IsAntialias = true;
+        canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
+        canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
+
+        // Get unique labels (X-axis categories)
+        var firstSeriesPoints = seriesData.First().DataPoints;
+        var pointCount = firstSeriesPoints.Count;
+        if (pointCount == 0) return;
+
+        var xSpacing = chartArea.Width / Math.Max(1, pointCount - 1);
+
+        // Render each series
+        foreach (var series in seriesData)
+        {
+            if (series.DataPoints.Count == 0) continue;
+
+            var lineColor = SKColor.Parse(series.Color);
+
+            // Calculate points for this series
+            var points = new SKPoint[series.DataPoints.Count];
+            for (int i = 0; i < series.DataPoints.Count; i++)
+            {
+                var x = chartArea.Left + (i * xSpacing);
+                if (pointCount == 1) x = chartArea.MidX;
+                var valueRatio = (float)(series.DataPoints[i].Value / paddedMaxValue);
+                var y = baselineY - (chartArea.Height * valueRatio);
+                points[i] = new SKPoint(x, y);
+            }
+
+            // Render based on chart style
+            if (chart.ChartStyle == ReportChartStyle.Area)
+            {
+                // Draw filled area under line
+                using var path = new SKPath();
+                path.MoveTo(points[0].X, baselineY);
+                path.LineTo(points[0].X, points[0].Y);
+
+                // Use cubic Bezier curves for smooth spline
+                for (int i = 0; i < points.Length - 1; i++)
+                {
+                    var p0 = i > 0 ? points[i - 1] : points[i];
+                    var p1 = points[i];
+                    var p2 = points[i + 1];
+                    var p3 = i < points.Length - 2 ? points[i + 2] : points[i + 1];
+
+                    var tension = 0.5f;
+                    var cp1 = new SKPoint(
+                        p1.X + (p2.X - p0.X) * tension / 3,
+                        p1.Y + (p2.Y - p0.Y) * tension / 3);
+                    var cp2 = new SKPoint(
+                        p2.X - (p3.X - p1.X) * tension / 3,
+                        p2.Y - (p3.Y - p1.Y) * tension / 3);
+
+                    path.CubicTo(cp1, cp2, p2);
+                }
+
+                path.LineTo(points[^1].X, baselineY);
+                path.Close();
+
+                using var fillPaint = new SKPaint();
+                fillPaint.Color = lineColor.WithAlpha(80);
+                fillPaint.Style = SKPaintStyle.Fill;
+                fillPaint.IsAntialias = true;
+                canvas.DrawPath(path, fillPaint);
+            }
+
+            // Draw the line (skip for Scatter charts - only points)
+            if (chart.ChartStyle != ReportChartStyle.Scatter)
+            {
+                using var linePaint = new SKPaint();
+                linePaint.Color = lineColor;
+                linePaint.Style = SKPaintStyle.Stroke;
+                linePaint.StrokeWidth = 2 * _renderScale;
+                linePaint.IsAntialias = true;
+                linePaint.StrokeCap = SKStrokeCap.Round;
+                linePaint.StrokeJoin = SKStrokeJoin.Round;
+
+                using var linePath = new SKPath();
+                linePath.MoveTo(points[0]);
+
+                if (chart.ChartStyle == ReportChartStyle.StepLine)
+                {
+                    // Step line - horizontal then vertical
+                    for (int i = 1; i < points.Length; i++)
+                    {
+                        linePath.LineTo(points[i].X, points[i - 1].Y);
+                        linePath.LineTo(points[i].X, points[i].Y);
+                    }
+                }
+                else
+                {
+                    // Smooth spline using cubic Bezier curves
+                    for (int i = 0; i < points.Length - 1; i++)
+                    {
+                        var p0 = i > 0 ? points[i - 1] : points[i];
+                        var p1 = points[i];
+                        var p2 = points[i + 1];
+                        var p3 = i < points.Length - 2 ? points[i + 2] : points[i + 1];
+
+                        var tension = 0.5f;
+                        var cp1 = new SKPoint(
+                            p1.X + (p2.X - p0.X) * tension / 3,
+                            p1.Y + (p2.Y - p0.Y) * tension / 3);
+                        var cp2 = new SKPoint(
+                            p2.X - (p3.X - p1.X) * tension / 3,
+                            p2.Y - (p3.Y - p1.Y) * tension / 3);
+
+                        linePath.CubicTo(cp1, cp2, p2);
+                    }
+                }
+
+                canvas.DrawPath(linePath, linePaint);
+            }
+
+            // Draw points
+            using var pointPaint = new SKPaint();
+            pointPaint.Color = lineColor;
+            pointPaint.Style = SKPaintStyle.Fill;
+            pointPaint.IsAntialias = true;
+            var pointRadius = 4 * _renderScale;
+
+            foreach (var point in points)
+            {
+                canvas.DrawCircle(point, pointRadius, pointPaint);
+            }
+        }
+
+        // Draw X-axis labels
+        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelPaint = new SKPaint();
+        xLabelPaint.Color = ChartAxisColor;
+        xLabelPaint.IsAntialias = true;
+
+        var labelIndices = GetXAxisLabelIndices(firstSeriesPoints, chartArea.Width, _renderScale);
+        var labelY = chartArea.Bottom + 18 * _renderScale;
+
+        for (int idx = 0; idx < labelIndices.Length; idx++)
+        {
+            var i = labelIndices[idx];
+            var label = FormatXAxisLabel(firstSeriesPoints[i]);
+            var labelX = chartArea.Left + (i * xSpacing);
+
+            var align = idx == 0 ? SKTextAlign.Left
+                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
+                      : SKTextAlign.Center;
+
+            canvas.DrawText(label, labelX, labelY, align, xLabelFont, xLabelPaint);
+        }
+    }
+
+    /// <summary>
     /// Renders a simplified GeoMap chart showing country data.
     /// Since we can't use LiveChartsCore GeoMap in the Core project, we render a data summary.
     /// </summary>
@@ -1629,7 +1840,8 @@ public class ReportRenderer : IDisposable
         footerPaint.Color = SKColors.Gray;
         footerPaint.IsAntialias = true;
 
-        var timestamp = DateTime.Now.ToString("MMM dd, yyyy HH:mm");
+        var timeFormat = _config.Use24HourFormat ? "HH:mm" : "h:mm tt";
+        var timestamp = DateTime.Now.ToString($"MMM dd, yyyy {timeFormat}");
         canvas.DrawText($"{Tr("Generated")}: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
 
         // Draw page number if enabled

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,7 +20,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalLanguage = "English";
     private string _originalDateFormat = "MM/DD/YYYY";
     private string _originalCurrency = "USD - US Dollar ($)";
-    private string _originalTimeZone = "UTC";
+    private TimeZoneItem _originalTimeZone = TimeZones.FindById("UTC");
+    private string _originalTimeFormat = "12h";
     private int _originalMaxPieSlices = 6;
 
     // Flag to prevent firing LanguageChanged when loading from settings
@@ -76,7 +78,38 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _selectedDateFormat = "MM/DD/YYYY";
 
     [ObservableProperty]
-    private string _selectedTimeZone = "UTC";
+    private TimeZoneItem _selectedTimeZone = TimeZones.FindById("UTC");
+
+    [ObservableProperty]
+    private string _selectedTimeFormat = "12h";
+
+    /// <summary>
+    /// Whether the 12-hour time format is selected.
+    /// </summary>
+    public bool Is12HourFormat => SelectedTimeFormat == "12h";
+
+    /// <summary>
+    /// Whether the 24-hour time format is selected.
+    /// </summary>
+    public bool Is24HourFormat => SelectedTimeFormat == "24h";
+
+    partial void OnSelectedTimeFormatChanged(string value)
+    {
+        OnPropertyChanged(nameof(Is12HourFormat));
+        OnPropertyChanged(nameof(Is24HourFormat));
+    }
+
+    /// <summary>
+    /// Selects the time format.
+    /// </summary>
+    [RelayCommand]
+    private void SelectTimeFormat(string format)
+    {
+        if (!string.IsNullOrEmpty(format))
+        {
+            SelectedTimeFormat = format;
+        }
+    }
 
     [ObservableProperty]
     private bool _anonymousDataCollection;
@@ -143,29 +176,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     ];
 
     /// <summary>
-    /// Available timezone options.
+    /// All available timezone options from the system.
     /// </summary>
-    public ObservableCollection<string> TimeZones { get; } =
-    [
-        "UTC",
-        "America/New_York",
-        "America/Chicago",
-        "America/Denver",
-        "America/Los_Angeles",
-        "America/Toronto",
-        "America/Vancouver",
-        "Europe/London",
-        "Europe/Paris",
-        "Europe/Berlin",
-        "Europe/Amsterdam",
-        "Asia/Tokyo",
-        "Asia/Shanghai",
-        "Asia/Singapore",
-        "Asia/Dubai",
-        "Australia/Sydney",
-        "Australia/Melbourne",
-        "Pacific/Auckland"
-    ];
+    public IReadOnlyList<TimeZoneItem> AllTimeZones => TimeZones.All;
+
+    /// <summary>
+    /// Priority timezone options shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<TimeZoneItem> PriorityTimeZones => TimeZones.Priority;
 
     #endregion
 
@@ -487,7 +505,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedLanguage != _originalLanguage ||
         SelectedDateFormat != _originalDateFormat ||
         SelectedCurrency != _originalCurrency ||
-        SelectedTimeZone != _originalTimeZone ||
+        SelectedTimeZone?.Id != _originalTimeZone?.Id ||
+        SelectedTimeFormat != _originalTimeFormat ||
         MaxPieSlices != _originalMaxPieSlices;
 
     /// <summary>
@@ -542,13 +561,14 @@ public partial class SettingsModalViewModel : ViewModelBase
                 : LanguageService.Instance.CurrentLanguage);
         }
 
-        // Load max pie slices and timezone from global settings
+        // Load max pie slices, timezone and time format from global settings
         {
             var globalSettings = App.SettingsService?.GlobalSettings;
             if (globalSettings != null)
             {
                 MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
-                SelectedTimeZone = globalSettings.Ui.TimeZone;
+                SelectedTimeZone = TimeZones.FindById(globalSettings.Ui.TimeZone);
+                SelectedTimeFormat = globalSettings.Ui.TimeFormat;
             }
         }
 
@@ -559,6 +579,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
         _originalTimeZone = SelectedTimeZone;
+        _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
@@ -634,9 +655,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedCurrency = _originalCurrency;
         }
-        if (SelectedTimeZone != _originalTimeZone)
+        if (SelectedTimeZone?.Id != _originalTimeZone?.Id)
         {
             SelectedTimeZone = _originalTimeZone;
+        }
+        if (SelectedTimeFormat != _originalTimeFormat)
+        {
+            SelectedTimeFormat = _originalTimeFormat;
         }
         if (MaxPieSlices != _originalMaxPieSlices)
         {
@@ -654,6 +679,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         var languageChanged = SelectedLanguage != _originalLanguage;
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
         var currencyChanged = SelectedCurrency != _originalCurrency;
+        var timeSettingsChanged = SelectedTimeZone?.Id != _originalTimeZone?.Id ||
+                                   SelectedTimeFormat != _originalTimeFormat;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
         // Save the previous values in case download/fetch fails
@@ -670,6 +697,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
         _originalTimeZone = SelectedTimeZone;
+        _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
 
         // Save language, date format and currency to company settings
@@ -683,13 +711,14 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.ChangesMade = true;
         }
 
-        // Save max pie slices, language, and timezone to global settings
+        // Save max pie slices, language, timezone and time format to global settings
         var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
             globalSettings.Ui.Language = SelectedLanguage;
-            globalSettings.Ui.TimeZone = SelectedTimeZone;
+            globalSettings.Ui.TimeZone = SelectedTimeZone?.Id ?? "UTC";
+            globalSettings.Ui.TimeFormat = SelectedTimeFormat;
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }
 
@@ -697,6 +726,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (dateFormatChanged)
         {
             DateFormatService.NotifyDateFormatChanged();
+        }
+
+        // Notify that timezone or time format changed so views can refresh
+        if (timeSettingsChanged)
+        {
+            TimeZoneService.NotifyTimeSettingsChanged();
         }
 
         // Notify that currency changed so views can refresh

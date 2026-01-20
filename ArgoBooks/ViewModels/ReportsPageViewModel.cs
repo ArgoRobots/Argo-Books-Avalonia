@@ -1233,6 +1233,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;
+            Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance);
             using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
@@ -1279,6 +1280,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         try
         {
             var companyData = App.CompanyManager?.CompanyData;
+            Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance);
 
             bool success;

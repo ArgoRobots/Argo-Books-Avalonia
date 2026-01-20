@@ -86,6 +86,13 @@ public class ReportConfiguration
     public int CurrentPageNumber { get; set; } = 1;
 
     /// <summary>
+    /// Whether to use 24-hour time format in the report footer.
+    /// This is a runtime setting that is not persisted.
+    /// </summary>
+    [JsonIgnore]
+    public bool Use24HourFormat { get; set; }
+
+    /// <summary>
     /// Gets elements sorted by Z-order (for rendering).
     /// </summary>
     public List<ReportElementBase> GetElementsByZOrder()
@@ -165,6 +172,7 @@ public class ReportConfiguration
                 SelectedChartTypes = [.. Filters.SelectedChartTypes]
             },
             HasManualChartLayout = HasManualChartLayout,
+            Use24HourFormat = Use24HourFormat,
             Elements = Elements.Select(e => e.Clone()).ToList()
         };
     }

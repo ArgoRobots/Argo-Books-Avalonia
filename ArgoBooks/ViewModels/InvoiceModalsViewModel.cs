@@ -1016,5 +1016,5 @@ public class InvoiceHistoryDisplayItem
     public DateTime DateTime { get; set; }
     public bool IsLast { get; set; }
 
-    public string DateTimeFormatted => DateTime.ToString("MMM d, yyyy 'at' h:mm tt");
+    public string DateTimeFormatted => TimeZoneService.FormatDateTime(DateTime);
 }

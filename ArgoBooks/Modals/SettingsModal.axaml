@@ -99,9 +99,36 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TimeZones}"
-                                              SelectedItem="{Binding SelectedTimeZone}"
-                                              Classes="form-combobox" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding AllTimeZones}"
+                                                                  SelectedItem="{Binding SelectedTimeZone}"
+                                                                  PriorityItems="{Binding PriorityTimeZones}"
+                                                                  DisplayMemberPath="DisplayName"
+                                                                  Placeholder="{loc:Loc 'Search timezones...'}" />
+                                </StackPanel>
+
+                                <!-- Time Format -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Time Format'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="6"
+                                            Padding="4"
+                                            HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <Button Content="12h"
+                                                    Command="{Binding SelectTimeFormatCommand}"
+                                                    CommandParameter="12h"
+                                                    Classes="time-format-toggle"
+                                                    Classes.selected="{Binding Is12HourFormat}" />
+                                            <Button Content="24h"
+                                                    Command="{Binding SelectTimeFormatCommand}"
+                                                    CommandParameter="24h"
+                                                    Classes="time-format-toggle"
+                                                    Classes.selected="{Binding Is24HourFormat}" />
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
 
                                 <!-- Chart Settings -->
@@ -1000,6 +1027,35 @@
         <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
             <Setter Property="Opacity" Value="1" />
             <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+
+        <!-- Time Format Toggle Buttons -->
+        <Style Selector="Button.time-format-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.time-format-toggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.time-format-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.time-format-toggle.selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.time-format-toggle.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.time-format-toggle.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Opacity" Value="0.9" />
         </Style>
     </UserControl.Styles>
 </UserControl>

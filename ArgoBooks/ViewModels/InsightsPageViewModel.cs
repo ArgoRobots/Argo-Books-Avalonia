@@ -3,6 +3,7 @@ using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -564,7 +565,7 @@ public partial class InsightsPageViewModel : ViewModelBase
             var forecast = await _insightsService.GenerateForecastAsync(companyData, forecastDateRange);
             UpdateForecastDisplay(forecast);
 
-            LastUpdated = DateTime.Now.ToString("h:mm tt");
+            LastUpdated = TimeZoneService.FormatTime(DateTime.Now);
         }
         catch (Exception ex)
         {

@@ -286,7 +286,8 @@ public partial class ReportPreviewControl : UserControl
             await Task.Run(() =>
             {
                 // Generate preview bitmap using SkiaSharp with company data for chart rendering
-                using var renderer = new ReportRenderer(config!, companyData, 1f, LanguageServiceTranslationProvider.Instance);
+                config!.Use24HourFormat = TimeZoneService.Is24HourFormat;
+                using var renderer = new ReportRenderer(config, companyData, 1f, LanguageServiceTranslationProvider.Instance);
                 using var skBitmap = renderer.CreatePreview(width, height);
 
                 // Convert SKBitmap to Avalonia Bitmap

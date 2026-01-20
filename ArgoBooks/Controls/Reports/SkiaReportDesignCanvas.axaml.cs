@@ -331,6 +331,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Render all elements using the shared renderer
         // Pass company data so tables render with actual data in designer
         var companyData = App.CompanyManager?.CompanyData;
+        Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
         using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance);
         renderer.RenderElementsToCanvas(canvas);
 

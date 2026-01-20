@@ -38,9 +38,13 @@ public class UiSettings
     public string Language { get; set; } = "English";
     /// <summary>
     /// User's preferred timezone for displaying times. Defaults to UTC.
-    /// Uses IANA timezone identifiers (e.g., "America/New_York", "Europe/London").
+    /// Uses system timezone identifiers.
     /// </summary>
     public string TimeZone { get; set; } = "UTC";
+    /// <summary>
+    /// User's preferred time format. "12h" for 12-hour (AM/PM), "24h" for 24-hour.
+    /// </summary>
+    public string TimeFormat { get; set; } = "12h";
     public ChartSettings Chart { get; set; } = new();
     public QuickActionsSettings QuickActions { get; set; } = new();
 }
