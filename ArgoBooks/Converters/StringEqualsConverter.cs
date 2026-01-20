@@ -261,6 +261,54 @@ public class ThemeBorderBrushConverter : IValueConverter
 }
 
 /// <summary>
+/// Multi-value converter that returns PrimaryBrush if the selected theme matches the compare value.
+/// Binds to both SelectedTheme and SelectedAccentColor so it updates when either changes.
+/// Values[0] = SelectedTheme, Values[1] = SelectedAccentColor (used to trigger re-evaluation).
+/// Parameter = the theme value to compare against (e.g., "Light", "Dark", "System").
+/// </summary>
+public class ThemeBorderBrushMultiConverter : IMultiValueConverter
+{
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 1)
+            return GetBorderBrush();
+
+        var selectedTheme = values[0] as string;
+        var compareValue = parameter as string;
+
+        // Values[1] is SelectedAccentColor - we don't use its value directly,
+        // but binding to it ensures this converter re-runs when accent color changes
+
+        bool isSelected = string.Equals(selectedTheme, compareValue, StringComparison.OrdinalIgnoreCase);
+
+        // Get the appropriate brush from Application resources
+        if (Application.Current?.Resources != null)
+        {
+            var resourceKey = isSelected ? "PrimaryBrush" : "BorderBrush";
+            if (Application.Current.Resources.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource))
+            {
+                return resource;
+            }
+        }
+
+        // Fallback colors
+        return isSelected
+            ? new SolidColorBrush(Color.Parse("#3B82F6"))
+            : new SolidColorBrush(Color.Parse("#E5E7EB"));
+    }
+
+    private static IBrush GetBorderBrush()
+    {
+        if (Application.Current?.Resources != null &&
+            Application.Current.Resources.TryGetResource("BorderBrush", Application.Current.ActualThemeVariant, out var resource))
+        {
+            return resource as IBrush ?? new SolidColorBrush(Color.Parse("#E5E7EB"));
+        }
+        return new SolidColorBrush(Color.Parse("#E5E7EB"));
+    }
+}
+
+/// <summary>
 /// Multi-value converter that returns the display text for an item using the DisplayMemberPath.
 /// Values[0] = the item, Values[1] = the DisplayMemberPath string.
 /// Uses reflection to get the property value specified by DisplayMemberPath.
@@ -285,4 +333,15 @@ public class DisplayMemberMultiConverter : IMultiValueConverter
         var property = item.GetType().GetProperty(displayMemberPath);
         return property?.GetValue(item)?.ToString() ?? item.ToString() ?? string.Empty;
     }
+}
+
+/// <summary>
+/// Static class providing common converter instances for XAML binding.
+/// </summary>
+public static class Converters
+{
+    /// <summary>
+    /// Multi-value converter for theme border brush that updates when accent color changes.
+    /// </summary>
+    public static readonly IMultiValueConverter ThemeBorderBrushMulti = new ThemeBorderBrushMultiConverter();
 }
