@@ -284,12 +284,12 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the profile modal (My Plan).
+    /// Opens the My Plan / Upgrade modal.
     /// </summary>
     [RelayCommand]
-    private void OpenProfile()
+    private void OpenMyPlan()
     {
-        OpenProfileRequested?.Invoke(this, EventArgs.Empty);
+        OpenMyPlanRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -379,9 +379,9 @@ public partial class HeaderViewModel : ViewModelBase
     public event EventHandler? OpenSettingsRequested;
 
     /// <summary>
-    /// Event raised when profile modal should be opened.
+    /// Event raised when My Plan / Upgrade modal should be opened.
     /// </summary>
-    public event EventHandler? OpenProfileRequested;
+    public event EventHandler? OpenMyPlanRequested;
 
     /// <summary>
     /// Event raised when save is requested.

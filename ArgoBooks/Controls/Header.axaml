@@ -184,9 +184,9 @@
 
                 <!-- My Plan (temporary) -->
                 <Button Classes="header-icon"
-                        Command="{Binding OpenProfileCommand}"
+                        Command="{Binding OpenMyPlanCommand}"
                         ToolTip.Tip="{loc:Loc 'My Plan'}">
-                    <PathIcon Data="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                    <PathIcon Data="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 1z"
                               Width="20" Height="20" />
                 </Button>
 
