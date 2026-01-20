@@ -330,12 +330,7 @@
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
                                     <PathIcon Data="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"
                                               Width="20" Height="20"
-                                              RenderTransformOrigin="50%,50%"
-                                              Foreground="{DynamicResource PrimaryBrush}">
-                                        <PathIcon.RenderTransform>
-                                            <RotateTransform x:Name="SpinnerRotateExpense" />
-                                        </PathIcon.RenderTransform>
-                                    </PathIcon>
+                                              Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Converting currency...'}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
