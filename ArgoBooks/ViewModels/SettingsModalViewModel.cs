@@ -83,6 +83,34 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedTimeFormat = "12h";
 
+    /// <summary>
+    /// Whether the 12-hour time format is selected.
+    /// </summary>
+    public bool Is12HourFormat => SelectedTimeFormat == "12h";
+
+    /// <summary>
+    /// Whether the 24-hour time format is selected.
+    /// </summary>
+    public bool Is24HourFormat => SelectedTimeFormat == "24h";
+
+    partial void OnSelectedTimeFormatChanged(string value)
+    {
+        OnPropertyChanged(nameof(Is12HourFormat));
+        OnPropertyChanged(nameof(Is24HourFormat));
+    }
+
+    /// <summary>
+    /// Selects the time format.
+    /// </summary>
+    [RelayCommand]
+    private void SelectTimeFormat(string format)
+    {
+        if (!string.IsNullOrEmpty(format))
+        {
+            SelectedTimeFormat = format;
+        }
+    }
+
     [ObservableProperty]
     private bool _anonymousDataCollection;
 
@@ -156,15 +184,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Priority timezone options shown at the top of the dropdown.
     /// </summary>
     public IReadOnlyList<TimeZoneItem> PriorityTimeZones => TimeZones.Priority;
-
-    /// <summary>
-    /// Available time format options.
-    /// </summary>
-    public ObservableCollection<string> TimeFormatOptions { get; } =
-    [
-        "12h",
-        "24h"
-    ];
 
     #endregion
 
