@@ -257,11 +257,10 @@
                                                         </Binding>
                                                     </Border.BorderThickness>
                                                     <Border.BorderBrush>
-                                                        <Binding Path="SelectedTheme">
-                                                            <Binding.Converter>
-                                                                <local:ThemeBorderBrushConverter CompareValue="Light" />
-                                                            </Binding.Converter>
-                                                        </Binding>
+                                                        <MultiBinding Converter="{x:Static local:Converters.ThemeBorderBrushMulti}" ConverterParameter="Light">
+                                                            <Binding Path="SelectedTheme" />
+                                                            <Binding Path="SelectedAccentColor" />
+                                                        </MultiBinding>
                                                     </Border.BorderBrush>
                                                     <StackPanel Margin="10" Spacing="6">
                                                         <Border Height="10" Background="#E5E7EB" CornerRadius="2" />
@@ -295,11 +294,10 @@
                                                         </Binding>
                                                     </Border.BorderThickness>
                                                     <Border.BorderBrush>
-                                                        <Binding Path="SelectedTheme">
-                                                            <Binding.Converter>
-                                                                <local:ThemeBorderBrushConverter CompareValue="Dark" />
-                                                            </Binding.Converter>
-                                                        </Binding>
+                                                        <MultiBinding Converter="{x:Static local:Converters.ThemeBorderBrushMulti}" ConverterParameter="Dark">
+                                                            <Binding Path="SelectedTheme" />
+                                                            <Binding Path="SelectedAccentColor" />
+                                                        </MultiBinding>
                                                     </Border.BorderBrush>
                                                     <StackPanel Margin="10" Spacing="6">
                                                         <Border Height="10" Background="#374151" CornerRadius="2" />
@@ -332,11 +330,10 @@
                                                         </Binding>
                                                     </Border.BorderThickness>
                                                     <Border.BorderBrush>
-                                                        <Binding Path="SelectedTheme">
-                                                            <Binding.Converter>
-                                                                <local:ThemeBorderBrushConverter CompareValue="System" />
-                                                            </Binding.Converter>
-                                                        </Binding>
+                                                        <MultiBinding Converter="{x:Static local:Converters.ThemeBorderBrushMulti}" ConverterParameter="System">
+                                                            <Binding Path="SelectedTheme" />
+                                                            <Binding Path="SelectedAccentColor" />
+                                                        </MultiBinding>
                                                     </Border.BorderBrush>
                                                     <Grid>
                                                         <Border Background="#FFFFFF" CornerRadius="6,0,0,6" HorizontalAlignment="Left" Width="50" />
@@ -899,6 +896,8 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
         </Style>
         <Style Selector="Button.color-button /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />

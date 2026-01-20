@@ -885,6 +885,27 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private bool _hasReturnFinancialImpactData;
 
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _returnsByProductSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _returnsByProductLegend = [];
+
+    [ObservableProperty]
+    private bool _hasReturnsByProductData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _expenseVsRevenueReturnsSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _expenseVsRevenueReturnsXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _expenseVsRevenueReturnsYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasExpenseVsRevenueReturnsData;
+
     #endregion
 
     #region Customer Charts
@@ -952,6 +973,27 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     [ObservableProperty]
     private bool _hasLossesByProductData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _lossesByCategorySeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _lossesByCategoryLegend = [];
+
+    [ObservableProperty]
+    private bool _hasLossesByCategoryData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _expenseVsRevenueLossesSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _expenseVsRevenueLossesXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _expenseVsRevenueLossesYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasExpenseVsRevenueLossesData;
 
     #endregion
 
@@ -1382,12 +1424,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadReturnsOverTimeChart(data);
         LoadReturnReasonsChart(data);
         LoadReturnFinancialImpactChart(data);
+        LoadReturnsByProductChart(data);
+        LoadExpenseVsRevenueReturnsChart(data);
 
         // Losses charts
         LoadLossesOverTimeChart(data);
         LoadLossFinancialImpactChart(data);
         LoadLossReasonsChart(data);
         LoadLossesByProductChart(data);
+        LoadLossesByCategoryChart(data);
+        LoadExpenseVsRevenueLossesChart(data);
     }
 
     private void LoadExpensesTrendsChart(CompanyData data)
@@ -1629,6 +1675,40 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LossesByProductSeries = series;
         LossesByProductLegend = legend;
         HasLossesByProductData = series.Count > 0;
+    }
+
+    private void LoadReturnsByProductChart(CompanyData data)
+    {
+        var (series, legend) = _chartLoaderService.LoadReturnsByProductChart(data, StartDate, EndDate);
+        ReturnsByProductSeries = series;
+        ReturnsByProductLegend = legend;
+        HasReturnsByProductData = series.Count > 0;
+    }
+
+    private void LoadExpenseVsRevenueReturnsChart(CompanyData data)
+    {
+        var (series, dates) = _chartLoaderService.LoadExpenseVsRevenueReturnsChart(data, StartDate, EndDate);
+        ExpenseVsRevenueReturnsSeries = series;
+        ExpenseVsRevenueReturnsXAxes = _chartLoaderService.CreateDateXAxes(dates);
+        ExpenseVsRevenueReturnsYAxes = _chartLoaderService.CreateNumberYAxes();
+        HasExpenseVsRevenueReturnsData = series.Count > 0;
+    }
+
+    private void LoadLossesByCategoryChart(CompanyData data)
+    {
+        var (series, legend) = _chartLoaderService.LoadLossesByCategoryChart(data, StartDate, EndDate);
+        LossesByCategorySeries = series;
+        LossesByCategoryLegend = legend;
+        HasLossesByCategoryData = series.Count > 0;
+    }
+
+    private void LoadExpenseVsRevenueLossesChart(CompanyData data)
+    {
+        var (series, dates) = _chartLoaderService.LoadExpenseVsRevenueLossesChart(data, StartDate, EndDate);
+        ExpenseVsRevenueLossesSeries = series;
+        ExpenseVsRevenueLossesXAxes = _chartLoaderService.CreateDateXAxes(dates);
+        ExpenseVsRevenueLossesYAxes = _chartLoaderService.CreateNumberYAxes();
+        HasExpenseVsRevenueLossesData = series.Count > 0;
     }
 
     #endregion

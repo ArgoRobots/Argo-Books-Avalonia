@@ -1564,6 +1564,222 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Loads returns by product chart.
+    /// Uses ReportChartDataService for data fetching.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadReturnsByProductChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeReturns = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetReturnsByProduct().ToList();
+
+        if (dataPoints.Count == 0)
+            return ([], []);
+
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+
+        // Store export data
+        _chartExportDataByTitle["Returns by Product"] = new ChartExportData
+        {
+            ChartTitle = "Returns by Product",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Count"
+        };
+
+        return (series, legend);
+    }
+
+    /// <summary>
+    /// Loads losses by category chart.
+    /// Uses ReportChartDataService for data fetching.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadLossesByCategoryChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeLosses = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetLossesByCategory().ToList();
+
+        if (dataPoints.Count == 0)
+            return ([], []);
+
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+
+        // Store export data
+        _chartExportDataByTitle["Losses by Category"] = new ChartExportData
+        {
+            ChartTitle = "Losses by Category",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Count"
+        };
+
+        return (series, legend);
+    }
+
+    /// <summary>
+    /// Loads expense vs revenue returns chart.
+    /// Uses ReportChartDataService for data fetching.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadExpenseVsRevenueReturnsChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        var dates = Array.Empty<DateTime>();
+
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeReturns = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var seriesData = dataService.GetExpenseVsRevenueReturns();
+
+        if (seriesData.Count == 0)
+        {
+            _chartExportDataByTitle["Expense vs Revenue Returns"] = new ChartExportData
+            {
+                ChartTitle = "Expense vs Revenue Returns",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue Returns"
+            };
+            return (series, dates);
+        }
+
+        var revenueReturns = seriesData.FirstOrDefault(s => s.Name == "Revenue Returns");
+        var expenseReturns = seriesData.FirstOrDefault(s => s.Name == "Expense Returns");
+
+        if (revenueReturns == null || revenueReturns.DataPoints.Count == 0)
+        {
+            _chartExportDataByTitle["Expense vs Revenue Returns"] = new ChartExportData
+            {
+                ChartTitle = "Expense vs Revenue Returns",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue Returns"
+            };
+            return (series, dates);
+        }
+
+        var labels = revenueReturns.DataPoints.Select(p => p.Label).ToArray();
+        dates = revenueReturns.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var revenueReturnValues = revenueReturns.DataPoints.Select(p => p.Value).ToArray();
+        var expenseReturnValues = expenseReturns?.DataPoints.Select(p => p.Value).ToArray() ?? [];
+
+        if (dates.Length > 0)
+        {
+            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ExpenseColor));
+            if (expenseReturnValues.Length > 0)
+            {
+                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", ProfitColor));
+            }
+        }
+
+        // Store export data
+        _chartExportDataByTitle["Expense vs Revenue Returns"] = new ChartExportData
+        {
+            ChartTitle = "Expense vs Revenue Returns",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = revenueReturnValues,
+            SeriesName = "Revenue Returns",
+            AdditionalSeries = expenseReturnValues.Length > 0 ? [("Expense Returns", expenseReturnValues)] : []
+        };
+
+        return (series, dates);
+    }
+
+    /// <summary>
+    /// Loads expense vs revenue losses chart.
+    /// Uses ReportChartDataService for data fetching.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadExpenseVsRevenueLossesChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        var dates = Array.Empty<DateTime>();
+
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeLosses = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var seriesData = dataService.GetExpenseVsRevenueLosses();
+
+        if (seriesData.Count == 0)
+        {
+            _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
+            {
+                ChartTitle = "Expense vs Revenue Losses",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Damaged"
+            };
+            return (series, dates);
+        }
+
+        var damagedLosses = seriesData.FirstOrDefault(s => s.Name == "Damaged");
+        var lostLosses = seriesData.FirstOrDefault(s => s.Name == "Lost");
+
+        if (damagedLosses == null || damagedLosses.DataPoints.Count == 0)
+        {
+            _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
+            {
+                ChartTitle = "Expense vs Revenue Losses",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Damaged"
+            };
+            return (series, dates);
+        }
+
+        var labels = damagedLosses.DataPoints.Select(p => p.Label).ToArray();
+        dates = damagedLosses.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var damagedValues = damagedLosses.DataPoints.Select(p => p.Value).ToArray();
+        var lostValues = lostLosses?.DataPoints.Select(p => p.Value).ToArray() ?? [];
+
+        if (dates.Length > 0)
+        {
+            series.Add(CreateDateTimeSeries(dates, damagedValues, "Damaged", ExpenseColor));
+            if (lostValues.Length > 0)
+            {
+                series.Add(CreateDateTimeSeries(dates, lostValues, "Lost", ProfitColor));
+            }
+        }
+
+        // Store export data
+        _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
+        {
+            ChartTitle = "Expense vs Revenue Losses",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = damagedValues,
+            SeriesName = "Damaged",
+            AdditionalSeries = lostValues.Length > 0 ? [("Lost", lostValues)] : []
+        };
+
+        return (series, dates);
+    }
+
+    /// <summary>
     /// Loads world map data for GeoMap chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>

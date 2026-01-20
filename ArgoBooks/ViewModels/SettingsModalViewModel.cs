@@ -1031,8 +1031,10 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         if (!string.IsNullOrEmpty(colorName))
         {
-            SelectedAccentColor = colorName;
+            // Apply the accent color FIRST so PrimaryBrush is updated
+            // before the binding triggers the MultiValueConverter
             ApplyAccentColor(colorName);
+            SelectedAccentColor = colorName;
         }
     }
 
