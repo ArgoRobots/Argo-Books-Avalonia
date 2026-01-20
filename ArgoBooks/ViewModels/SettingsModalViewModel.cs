@@ -1029,16 +1029,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void SelectAccentColor(string? colorName)
     {
-        System.Diagnostics.Debug.WriteLine($"[DEBUG] SelectAccentColor called with: '{colorName}'");
-        Console.WriteLine($"[DEBUG] SelectAccentColor called with: '{colorName}'");
         if (!string.IsNullOrEmpty(colorName))
         {
             // Apply the accent color FIRST so PrimaryBrush is updated
             // before the binding triggers the MultiValueConverter
             ApplyAccentColor(colorName);
-
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] Setting SelectedAccentColor to: '{colorName}'");
-            Console.WriteLine($"[DEBUG] Setting SelectedAccentColor to: '{colorName}'");
             SelectedAccentColor = colorName;
         }
     }
