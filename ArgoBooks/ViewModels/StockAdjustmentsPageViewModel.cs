@@ -234,6 +234,9 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             App.StockAdjustmentsModalsViewModel.AdjustmentDeleted += OnAdjustmentMade;
             App.StockAdjustmentsModalsViewModel.FiltersApplied += OnFiltersApplied;
         }
+
+        // Subscribe to timezone/time format changes to refresh time display
+        TimeZoneService.TimeSettingsChanged += (_, _) => FilterAdjustments();
     }
 
     /// <summary>
@@ -438,7 +441,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             var product = invItem != null ? products.FirstOrDefault(p => p.Id == invItem.ProductId) : null;
             var location = invItem != null ? locations.FirstOrDefault(l => l.Id == invItem.LocationId) : null;
 
-            // Convert UTC timestamp to user's timezone
+            // Convert UTC timestamp to user's timezone and format using user's time format preference
             var localTime = TimeZoneService.ConvertToUserTimeZone(adjustment.Timestamp);
 
             return new StockAdjustmentDisplayItem
@@ -446,7 +449,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
                 Id = adjustment.Id,
                 Date = adjustment.Timestamp,
                 DateDisplay = localTime.ToString("MMM dd, yyyy"),
-                TimeDisplay = localTime.ToString("HH:mm"),
+                TimeDisplay = TimeZoneService.FormatTime(localTime),
                 Reference = adjustment.ReferenceNumber ?? "-",
                 ProductId = invItem?.ProductId ?? "",
                 ProductName = product?.Name ?? "Unknown Product",

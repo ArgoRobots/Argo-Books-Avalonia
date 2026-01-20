@@ -106,6 +106,21 @@
                                                                   Placeholder="{loc:Loc 'Search timezones...'}" />
                                 </StackPanel>
 
+                                <!-- Time Format -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Time Format'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TimeFormatOptions}"
+                                              SelectedItem="{Binding SelectedTimeFormat}"
+                                              Classes="form-combobox"
+                                              Width="200" />
+                                    <TextBlock Text="{loc:Loc 'Example: 2:30 PM (12h) or 14:30 (24h)'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+
                                 <!-- Chart Settings -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0">
                                     <TextBlock Text="{loc:Loc 'Max Pie Chart Slices'}"

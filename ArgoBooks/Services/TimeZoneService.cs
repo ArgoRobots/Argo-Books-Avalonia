@@ -3,10 +3,23 @@ using ArgoBooks.Data;
 namespace ArgoBooks.Services;
 
 /// <summary>
-/// Service for handling timezone conversions.
+/// Service for handling timezone conversions and time formatting.
 /// </summary>
 public static class TimeZoneService
 {
+    /// <summary>
+    /// Event raised when the timezone or time format setting changes.
+    /// </summary>
+    public static event EventHandler? TimeSettingsChanged;
+
+    /// <summary>
+    /// Raises the TimeSettingsChanged event to notify subscribers.
+    /// </summary>
+    public static void NotifyTimeSettingsChanged()
+    {
+        TimeSettingsChanged?.Invoke(null, EventArgs.Empty);
+    }
+
     /// <summary>
     /// Gets the user's selected timezone from global settings.
     /// </summary>
@@ -14,6 +27,20 @@ public static class TimeZoneService
     {
         return App.SettingsService?.GlobalSettings?.Ui.TimeZone ?? "UTC";
     }
+
+    /// <summary>
+    /// Gets the user's selected time format from global settings.
+    /// </summary>
+    /// <returns>"12h" for 12-hour format, "24h" for 24-hour format.</returns>
+    public static string GetUserTimeFormat()
+    {
+        return App.SettingsService?.GlobalSettings?.Ui.TimeFormat ?? "12h";
+    }
+
+    /// <summary>
+    /// Returns true if the user prefers 24-hour time format.
+    /// </summary>
+    public static bool Is24HourFormat => GetUserTimeFormat() == "24h";
 
     /// <summary>
     /// Converts a UTC DateTime to the user's selected timezone.
@@ -64,6 +91,39 @@ public static class TimeZoneService
             // Fall back to UTC on any error
             return utcDateTime;
         }
+    }
+
+    /// <summary>
+    /// Formats a time using the user's preferred time format (12h or 24h).
+    /// </summary>
+    /// <param name="dateTime">The DateTime to format.</param>
+    /// <returns>Formatted time string (e.g., "2:30 PM" or "14:30").</returns>
+    public static string FormatTime(DateTime dateTime)
+    {
+        return Is24HourFormat
+            ? dateTime.ToString("HH:mm")
+            : dateTime.ToString("h:mm tt");
+    }
+
+    /// <summary>
+    /// Formats a time with seconds using the user's preferred time format (12h or 24h).
+    /// </summary>
+    /// <param name="dateTime">The DateTime to format.</param>
+    /// <returns>Formatted time string with seconds (e.g., "2:30:45 PM" or "14:30:45").</returns>
+    public static string FormatTimeWithSeconds(DateTime dateTime)
+    {
+        return Is24HourFormat
+            ? dateTime.ToString("HH:mm:ss")
+            : dateTime.ToString("h:mm:ss tt");
+    }
+
+    /// <summary>
+    /// Gets the time format pattern for the user's preference.
+    /// </summary>
+    /// <returns>Format pattern string (e.g., "HH:mm" or "h:mm tt").</returns>
+    public static string GetTimeFormatPattern()
+    {
+        return Is24HourFormat ? "HH:mm" : "h:mm tt";
     }
 
     /// <summary>
