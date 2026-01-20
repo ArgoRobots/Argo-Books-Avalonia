@@ -6,6 +6,7 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -851,6 +852,9 @@
                 </Border>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
+
+        <!-- Currency Error Modal -->
+        <modals:CurrencyErrorModal />
     </Panel>
 
     <UserControl.Styles>

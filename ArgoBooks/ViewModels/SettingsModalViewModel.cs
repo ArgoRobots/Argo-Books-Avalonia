@@ -80,6 +80,31 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private int _maxPieSlices = 6;
 
+    // Currency change error state
+    [ObservableProperty]
+    private bool _hasCurrencyError;
+
+    [ObservableProperty]
+    private string _currencyErrorMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool _isSavingCurrency;
+
+    [RelayCommand]
+    private void DismissCurrencyError()
+    {
+        HasCurrencyError = false;
+        CurrencyErrorMessage = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task RetryCurrencySaveAsync()
+    {
+        HasCurrencyError = false;
+        CurrencyErrorMessage = string.Empty;
+        await SaveAsync();
+    }
+
     /// <summary>
     /// Available options for max pie slices.
     /// </summary>
@@ -595,8 +620,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         var currencyChanged = SelectedCurrency != _originalCurrency;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
-        // Save the previous language in case download fails
+        // Save the previous values in case download/fetch fails
         var previousLanguage = _originalLanguage;
+        var previousCurrency = _originalCurrency;
 
         // Extract the new currency code before updating originals
         var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
@@ -639,7 +665,26 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Also preload exchange rates for the new currency
         if (currencyChanged)
         {
-            await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
+            IsSavingCurrency = true;
+            var success = await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
+            IsSavingCurrency = false;
+
+            if (!success)
+            {
+                // Revert currency change
+                SelectedCurrency = _originalCurrency;
+                _originalCurrency = previousCurrency;
+
+                // Revert in company settings
+                if (settings != null)
+                {
+                    settings.Localization.Currency = CurrencyService.ParseCurrencyCode(previousCurrency);
+                }
+
+                // Show error state modal
+                return;
+            }
+
             CurrencyService.NotifyCurrencyChanged();
         }
 
@@ -706,68 +751,52 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     /// <summary>
     /// Preloads exchange rates for the selected currency.
-    /// Shows error message box if API call fails.
+    /// Returns true if successful, false if exchange rates could not be fetched.
     /// </summary>
-    private async Task PreloadExchangeRatesForCurrencyAsync(string currencyCode)
+    private async Task<bool> PreloadExchangeRatesForCurrencyAsync(string currencyCode)
     {
         // Skip if USD (no conversion needed)
         if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            return;
+            return true;
 
         var exchangeService = ExchangeRateService.Instance;
         if (exchangeService == null)
         {
-            await ShowExchangeRateErrorAsync(
-                "Exchange Rates Unavailable",
-                "Exchange rate service is not available. Currency values will not be converted.");
-            return;
+            HasCurrencyError = true;
+            CurrencyErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
+            return false;
         }
 
-        if (!exchangeService.HasApiKey)
+        // Check connectivity first
+        var connectivityService = new ConnectivityService();
+        var hasInternet = await connectivityService.IsInternetAvailableAsync();
+
+        // Try to get exchange rate for today
+        var today = DateTime.Today;
+        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true);
+
+        if (rate <= 0)
         {
-            // Check if we have cached rates
-            if (exchangeService.CachedRatesCount == 0)
-            {
-                await ShowExchangeRateErrorAsync(
-                    "Exchange Rates Unavailable",
-                    "No exchange rate API key configured and no cached rates available. Currency values will be displayed in USD.");
-            }
-            return;
+            // Rate fetch failed
+            HasCurrencyError = true;
+            CurrencyErrorMessage = hasInternet
+                ? "Unable to fetch exchange rates. Please try again.".Translate()
+                : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
+            return false;
         }
 
+        // Rate available - try to preload more dates in the background
         try
         {
-            // Preload rates for today and the past 30 days (covers most common scenarios)
-            var today = DateTime.Today;
-            var dates = Enumerable.Range(0, 30).Select(i => today.AddDays(-i)).ToList();
-
+            var dates = Enumerable.Range(1, 30).Select(i => today.AddDays(-i)).ToList();
             await exchangeService.PreloadRatesAsync(dates);
         }
-        catch (Exception ex)
+        catch
         {
-            await ShowExchangeRateErrorAsync(
-                "Exchange Rate Error",
-                $"Failed to fetch exchange rates: {ex.Message}. Cached rates will be used if available.");
+            // Preloading additional dates failed, but we have today's rate so it's OK
         }
-    }
 
-    /// <summary>
-    /// Shows an exchange rate error message box.
-    /// </summary>
-    private static async Task ShowExchangeRateErrorAsync(string title, string message)
-    {
-        var dialog = App.ConfirmationDialog;
-        if (dialog != null)
-        {
-            await dialog.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = title,
-                Message = message,
-                PrimaryButtonText = "OK",
-                SecondaryButtonText = null,
-                CancelButtonText = null
-            });
-        }
+        return true;
     }
 
     /// <summary>

@@ -439,6 +439,12 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up header's upgrade button to open upgrade modal
         HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
+        // Wire up header's settings button to open settings modal
+        HeaderViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up header's my plan button to open upgrade modal
+        HeaderViewModel.OpenMyPlanRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
+
         // Wire up license verification to enable premium features
         UpgradeModalViewModel.KeyVerified += (_, _) =>
         {

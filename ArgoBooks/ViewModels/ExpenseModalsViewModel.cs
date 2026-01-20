@@ -97,7 +97,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     }
 
     // Command aliases for AXAML bindings
-    public IRelayCommand SaveExpenseCommand => SaveTransactionCommand;
+    public IAsyncRelayCommand SaveExpenseCommand => SaveTransactionCommand;
 
     // Expense-specific filter
     [ObservableProperty]
@@ -451,7 +451,16 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             Notes = ModalNotes,
             ReferenceNumber = ReceiptFilePath ?? string.Empty,
             CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            UpdatedAt = DateTime.Now,
+            // USD conversion fields
+            OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
+            TotalUSD = ConvertedTotal?.AmountUSD ?? Total,
+            TaxAmountUSD = ConvertedTaxAmount?.AmountUSD ?? TaxAmount,
+            ShippingCostUSD = ConvertedShippingCost?.AmountUSD ?? ModalShipping,
+            DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount,
+            UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
+                ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+                : averageUnitPrice
         };
 
         // Create Receipt if file was attached
@@ -523,6 +532,15 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.Notes = ModalNotes;
         expense.ReferenceNumber = ReceiptFilePath ?? string.Empty;
         expense.UpdatedAt = DateTime.Now;
+        // USD conversion fields
+        expense.OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD";
+        expense.TotalUSD = ConvertedTotal?.AmountUSD ?? Total;
+        expense.TaxAmountUSD = ConvertedTaxAmount?.AmountUSD ?? TaxAmount;
+        expense.ShippingCostUSD = ConvertedShippingCost?.AmountUSD ?? ModalShipping;
+        expense.DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount;
+        expense.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
+            ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+            : averageUnitPrice;
 
         // Handle receipt
         Receipt? newReceipt = null;

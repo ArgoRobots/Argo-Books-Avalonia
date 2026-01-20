@@ -3,7 +3,9 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using Avalonia;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -194,6 +196,29 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private string _receiptFileName = "No receipt attached";
 
     protected string? ReceiptFilePath;
+
+    // Save error state for offline USD conversion failures
+    [ObservableProperty]
+    private bool _isSavingTransaction;
+
+    [ObservableProperty]
+    private bool _hasSaveError;
+
+    [ObservableProperty]
+    private string _saveErrorMessage = string.Empty;
+
+    [RelayCommand]
+    private void DismissSaveError()
+    {
+        HasSaveError = false;
+        SaveErrorMessage = string.Empty;
+    }
+
+    // USD conversion result - stored for use by derived classes
+    protected MonetaryValue? ConvertedTotal;
+    protected MonetaryValue? ConvertedTaxAmount;
+    protected MonetaryValue? ConvertedShippingCost;
+    protected MonetaryValue? ConvertedDiscount;
 
     public ObservableCollection<CounterpartyOption> CounterpartyOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
@@ -565,9 +590,11 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     }
 
     [RelayCommand]
-    protected void SaveTransaction()
+    protected async Task SaveTransactionAsync()
     {
         ClearValidationErrors();
+        HasSaveError = false;
+        SaveErrorMessage = string.Empty;
 
         if (LineItems.Count == 0)
         {
@@ -598,6 +625,69 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
+        // Perform USD conversion if currency is not USD
+        var currentCurrency = CurrencyService.CurrentCurrencyCode;
+        var transactionDate = ModalDate?.DateTime ?? DateTime.Now;
+
+        if (!string.Equals(currentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            IsSavingTransaction = true;
+            try
+            {
+                // Check connectivity first to provide better error message
+                var connectivityService = new ConnectivityService();
+                var hasInternet = await connectivityService.IsInternetAvailableAsync();
+
+                // Check if exchange rate is available FIRST before any conversion
+                var exchangeService = ExchangeRateService.Instance;
+                if (exchangeService == null)
+                {
+                    IsSavingTransaction = false;
+                    HasSaveError = true;
+                    SaveErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
+                    return;
+                }
+
+                // Try to get the exchange rate (this will attempt to fetch if missing)
+                var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
+                if (rate <= 0)
+                {
+                    // Rate fetch failed
+                    IsSavingTransaction = false;
+                    HasSaveError = true;
+                    SaveErrorMessage = hasInternet
+                        ? "Unable to fetch exchange rates. Please try again.".Translate()
+                        : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
+                    return;
+                }
+
+                // Now convert amounts to USD (rate is guaranteed to be available)
+                ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
+                ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
+                ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
+                ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
+            }
+            catch (Exception)
+            {
+                IsSavingTransaction = false;
+                HasSaveError = true;
+                SaveErrorMessage = "Failed to convert currency. Please check your internet connection and try again.".Translate();
+                return;
+            }
+            finally
+            {
+                IsSavingTransaction = false;
+            }
+        }
+        else
+        {
+            // USD currency - no conversion needed
+            ConvertedTotal = new MonetaryValue(Total, "USD", Total, transactionDate);
+            ConvertedTaxAmount = new MonetaryValue(TaxAmount, "USD", TaxAmount, transactionDate);
+            ConvertedShippingCost = new MonetaryValue(ShippingAmount, "USD", ShippingAmount, transactionDate);
+            ConvertedDiscount = new MonetaryValue(DiscountAmount, "USD", DiscountAmount, transactionDate);
+        }
+
         if (IsEditMode)
         {
             SaveEditedTransaction(companyData);
@@ -608,6 +698,12 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         }
 
         CloseAddEditModal();
+    }
+
+    [RelayCommand]
+    protected async Task RetrySaveAsync()
+    {
+        await SaveTransactionAsync();
     }
 
     protected abstract void SaveNewTransaction(CompanyData companyData);
@@ -654,6 +750,10 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         AddLineItem();
         ReceiptFileName = "No receipt attached";
         ReceiptFilePath = null;
+        ConvertedTotal = null;
+        ConvertedTaxAmount = null;
+        ConvertedShippingCost = null;
+        ConvertedDiscount = null;
         ClearValidationErrors();
     }
 
@@ -665,6 +765,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         HasUnitPriceError = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
+        HasSaveError = false;
+        SaveErrorMessage = string.Empty;
+        IsSavingTransaction = false;
     }
 
     #endregion
