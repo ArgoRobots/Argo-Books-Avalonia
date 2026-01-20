@@ -1629,7 +1629,8 @@ public class ReportRenderer : IDisposable
         footerPaint.Color = SKColors.Gray;
         footerPaint.IsAntialias = true;
 
-        var timestamp = DateTime.Now.ToString("MMM dd, yyyy HH:mm");
+        var timeFormat = _config.Use24HourFormat ? "HH:mm" : "h:mm tt";
+        var timestamp = DateTime.Now.ToString($"MMM dd, yyyy {timeFormat}");
         canvas.DrawText($"{Tr("Generated")}: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
 
         // Draw page number if enabled

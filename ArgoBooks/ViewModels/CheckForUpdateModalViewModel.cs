@@ -81,7 +81,7 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
 
             // For demo purposes, show "up to date"
             IsUpToDate = true;
-            LastChecked = DateTime.Now.ToString("MMM d, yyyy 'at' h:mm tt");
+            LastChecked = TimeZoneService.FormatDateTime(DateTime.Now);
         }
         catch
         {

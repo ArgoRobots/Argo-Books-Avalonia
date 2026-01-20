@@ -127,6 +127,17 @@ public static class TimeZoneService
     }
 
     /// <summary>
+    /// Formats a date and time using the user's preferred time format (12h or 24h).
+    /// </summary>
+    /// <param name="dateTime">The DateTime to format.</param>
+    /// <returns>Formatted date and time string (e.g., "Jan 5, 2024 at 2:30 PM" or "Jan 5, 2024 at 14:30").</returns>
+    public static string FormatDateTime(DateTime dateTime)
+    {
+        var timeFormat = Is24HourFormat ? "HH:mm" : "h:mm tt";
+        return dateTime.ToString($"MMM d, yyyy 'at' {timeFormat}");
+    }
+
+    /// <summary>
     /// Maps common IANA timezone IDs to Windows timezone IDs.
     /// Used for backwards compatibility with legacy settings.
     /// </summary>
