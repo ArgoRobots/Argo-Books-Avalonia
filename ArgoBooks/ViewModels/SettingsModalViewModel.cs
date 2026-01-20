@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,7 +20,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalLanguage = "English";
     private string _originalDateFormat = "MM/DD/YYYY";
     private string _originalCurrency = "USD - US Dollar ($)";
-    private string _originalTimeZone = "UTC";
+    private TimeZoneItem _originalTimeZone = TimeZones.FindById("UTC");
     private int _originalMaxPieSlices = 6;
 
     // Flag to prevent firing LanguageChanged when loading from settings
@@ -76,7 +77,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _selectedDateFormat = "MM/DD/YYYY";
 
     [ObservableProperty]
-    private string _selectedTimeZone = "UTC";
+    private TimeZoneItem _selectedTimeZone = TimeZones.FindById("UTC");
 
     [ObservableProperty]
     private bool _anonymousDataCollection;
@@ -143,29 +144,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     ];
 
     /// <summary>
-    /// Available timezone options.
+    /// All available timezone options from the system.
     /// </summary>
-    public ObservableCollection<string> TimeZones { get; } =
-    [
-        "UTC",
-        "America/New_York",
-        "America/Chicago",
-        "America/Denver",
-        "America/Los_Angeles",
-        "America/Toronto",
-        "America/Vancouver",
-        "Europe/London",
-        "Europe/Paris",
-        "Europe/Berlin",
-        "Europe/Amsterdam",
-        "Asia/Tokyo",
-        "Asia/Shanghai",
-        "Asia/Singapore",
-        "Asia/Dubai",
-        "Australia/Sydney",
-        "Australia/Melbourne",
-        "Pacific/Auckland"
-    ];
+    public IReadOnlyList<TimeZoneItem> AllTimeZones => TimeZones.All;
+
+    /// <summary>
+    /// Priority timezone options shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<TimeZoneItem> PriorityTimeZones => TimeZones.Priority;
 
     #endregion
 
@@ -487,7 +473,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedLanguage != _originalLanguage ||
         SelectedDateFormat != _originalDateFormat ||
         SelectedCurrency != _originalCurrency ||
-        SelectedTimeZone != _originalTimeZone ||
+        SelectedTimeZone?.Id != _originalTimeZone?.Id ||
         MaxPieSlices != _originalMaxPieSlices;
 
     /// <summary>
@@ -548,7 +534,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             if (globalSettings != null)
             {
                 MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
-                SelectedTimeZone = globalSettings.Ui.TimeZone;
+                SelectedTimeZone = TimeZones.FindById(globalSettings.Ui.TimeZone);
             }
         }
 
@@ -634,7 +620,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedCurrency = _originalCurrency;
         }
-        if (SelectedTimeZone != _originalTimeZone)
+        if (SelectedTimeZone?.Id != _originalTimeZone?.Id)
         {
             SelectedTimeZone = _originalTimeZone;
         }
@@ -689,7 +675,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
             globalSettings.Ui.Language = SelectedLanguage;
-            globalSettings.Ui.TimeZone = SelectedTimeZone;
+            globalSettings.Ui.TimeZone = SelectedTimeZone?.Id ?? "UTC";
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }
 

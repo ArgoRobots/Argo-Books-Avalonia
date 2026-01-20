@@ -99,9 +99,11 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TimeZones}"
-                                              SelectedItem="{Binding SelectedTimeZone}"
-                                              Classes="form-combobox" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding AllTimeZones}"
+                                                                  SelectedItem="{Binding SelectedTimeZone}"
+                                                                  PriorityItems="{Binding PriorityTimeZones}"
+                                                                  DisplayMemberPath="DisplayName"
+                                                                  Placeholder="{loc:Loc 'Search timezones...'}" />
                                 </StackPanel>
 
                                 <!-- Chart Settings -->

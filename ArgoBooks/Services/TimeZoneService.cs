@@ -1,3 +1,5 @@
+using ArgoBooks.Data;
+
 namespace ArgoBooks.Services;
 
 /// <summary>
@@ -39,7 +41,8 @@ public static class TimeZoneService
         }
         catch (TimeZoneNotFoundException)
         {
-            // If timezone not found, try common Windows timezone mappings
+            // If timezone not found, try common IANA to Windows mappings
+            // This handles legacy settings that might have IANA identifiers on Windows
             var windowsTimeZone = MapIanaToWindows(timeZoneId);
             if (windowsTimeZone != null)
             {
@@ -65,10 +68,12 @@ public static class TimeZoneService
 
     /// <summary>
     /// Maps common IANA timezone IDs to Windows timezone IDs.
+    /// Used for backwards compatibility with legacy settings.
     /// </summary>
     private static string? MapIanaToWindows(string ianaTimeZone)
     {
         // Common mappings for Windows systems that don't support IANA identifiers
+        // This handles legacy settings that might have been saved with IANA IDs
         return ianaTimeZone switch
         {
             "America/New_York" => "Eastern Standard Time",
@@ -93,16 +98,16 @@ public static class TimeZoneService
     }
 
     /// <summary>
-    /// Gets the display name for a timezone.
+    /// Gets the display name for a timezone using the TimeZones data class.
     /// </summary>
     public static string GetTimeZoneDisplayName(string timeZoneId)
     {
         if (string.IsNullOrEmpty(timeZoneId) || timeZoneId == "UTC")
         {
-            return "UTC";
+            return "(UTC+00:00) UTC";
         }
 
-        // Return the IANA ID formatted nicely
-        return timeZoneId.Replace("_", " ").Replace("/", " / ");
+        var tzItem = TimeZones.FindById(timeZoneId);
+        return tzItem.DisplayName;
     }
 }
