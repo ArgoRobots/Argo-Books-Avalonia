@@ -1331,8 +1331,8 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <!-- Pie Chart with custom legend - reusing Expense Distribution -->
-                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
+                                <!-- Pie Chart with custom legend - Returns by Product -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasReturnsByProductData}">
                                     <TextBlock Grid.Row="0"
                                                Text="{loc:Loc 'Returns by Product'}"
                                                HorizontalAlignment="Center"
@@ -1343,11 +1343,11 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
-                                                      Series="{Binding ExpensesDistributionSeries}"
+                                                      Series="{Binding ReturnsByProductSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
-                                                                 Items="{Binding ExpensesDistributionLegend}"
+                                                                 Items="{Binding ReturnsByProductLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
                                                                  Margin="8,0,0,0"
@@ -1357,7 +1357,7 @@
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        IsVisible="{Binding !HasExpensesDistributionData}">
+                                        IsVisible="{Binding !HasReturnsByProductData}">
                                     <TextBlock Text="{loc:Loc 'No product data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
@@ -1376,17 +1376,17 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Chart - using Sales vs Expenses -->
+                                <!-- Chart - Expense vs Revenue Returns -->
                                 <lvc:CartesianChart Title="{Binding ExpenseVsRevenueReturnsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
-                                                    Series="{Binding RevenueVsExpensesSeries}"
-                                                    XAxes="{Binding RevenueVsExpensesXAxes}"
-                                                    YAxes="{Binding RevenueVsExpensesYAxes}"
-                                                    IsVisible="{Binding HasRevenueVsExpensesData}" />
+                                                    Series="{Binding ExpenseVsRevenueReturnsSeries}"
+                                                    XAxes="{Binding ExpenseVsRevenueReturnsXAxes}"
+                                                    YAxes="{Binding ExpenseVsRevenueReturnsYAxes}"
+                                                    IsVisible="{Binding HasExpenseVsRevenueReturnsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        IsVisible="{Binding !HasRevenueVsExpensesData}">
+                                        IsVisible="{Binding !HasExpenseVsRevenueReturnsData}">
                                     <TextBlock Text="{loc:Loc 'No comparison data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
@@ -1550,8 +1550,8 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Pie Chart with custom legend - reusing Expense Distribution -->
-                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
+                                <!-- Pie Chart with custom legend - Losses by Category -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasLossesByCategoryData}">
                                     <TextBlock Grid.Row="0"
                                                Text="{loc:Loc 'Losses by Category'}"
                                                HorizontalAlignment="Center"
@@ -1562,11 +1562,11 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
-                                                      Series="{Binding ExpensesDistributionSeries}"
+                                                      Series="{Binding LossesByCategorySeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
-                                                                 Items="{Binding ExpensesDistributionLegend}"
+                                                                 Items="{Binding LossesByCategoryLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
                                                                  Margin="8,0,0,0"
@@ -1576,7 +1576,7 @@
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        IsVisible="{Binding !HasExpensesDistributionData}">
+                                        IsVisible="{Binding !HasLossesByCategoryData}">
                                     <TextBlock Text="{loc:Loc 'No category data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
@@ -1643,17 +1643,17 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Chart - using Sales vs Expenses -->
+                                <!-- Chart - Expense vs Revenue Losses -->
                                 <lvc:CartesianChart Title="{Binding ExpenseVsRevenueLossesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
-                                                    Series="{Binding RevenueVsExpensesSeries}"
-                                                    XAxes="{Binding RevenueVsExpensesXAxes}"
-                                                    YAxes="{Binding RevenueVsExpensesYAxes}"
-                                                    IsVisible="{Binding HasRevenueVsExpensesData}" />
+                                                    Series="{Binding ExpenseVsRevenueLossesSeries}"
+                                                    XAxes="{Binding ExpenseVsRevenueLossesXAxes}"
+                                                    YAxes="{Binding ExpenseVsRevenueLossesYAxes}"
+                                                    IsVisible="{Binding HasExpenseVsRevenueLossesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        IsVisible="{Binding !HasRevenueVsExpensesData}">
+                                        IsVisible="{Binding !HasExpenseVsRevenueLossesData}">
                                     <TextBlock Text="{loc:Loc 'No comparison data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
