@@ -5,7 +5,8 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
-             x:Class="ArgoBooks.Modals.SaveErrorModal">
+             x:Class="ArgoBooks.Modals.SaveErrorModal"
+             x:CompileBindings="False">
 
     <controls:ModalOverlay IsOpen="{Binding HasSaveError}">
         <controls:ModalOverlay.ModalContent>
