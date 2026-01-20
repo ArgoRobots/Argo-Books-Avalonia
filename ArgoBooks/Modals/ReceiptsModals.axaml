@@ -10,12 +10,6 @@
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
 
-    <UserControl.Resources>
-        <Transitions x:Key="ModalWidthTransitions">
-            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseInOut" />
-        </Transitions>
-    </UserControl.Resources>
-
     <Panel>
         <!-- Filter Modal -->
         <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
@@ -180,8 +174,12 @@
                     MaxHeight="750"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Transitions="{StaticResource ModalWidthTransitions}">
+                    BoxShadow="0 8 32 0 #40000000">
+                    <Border.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseInOut" />
+                        </Transitions>
+                    </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"

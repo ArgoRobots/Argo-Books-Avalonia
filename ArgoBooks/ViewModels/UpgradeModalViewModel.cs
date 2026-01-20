@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,8 +14,10 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class UpgradeModalViewModel : ViewModelBase
 {
-    private static readonly HttpClient HttpClient = new();
+    private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
     private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
+    private const string ApiHostUrl = "https://argorobots.com";
+    private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";
     private const string PremiumUpgradeUrl = "http://localhost/argo-books-website/upgrade/premium/";
     private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
@@ -295,19 +298,56 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
         catch (HttpRequestException)
         {
-            VerificationError = "Unable to connect to the server. Please check your internet connection.";
+            VerificationError = await GetConnectivityErrorMessageAsync();
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || ex.CancellationToken != default)
+        {
+            VerificationError = await GetConnectivityErrorMessageAsync();
         }
         catch (TaskCanceledException)
         {
-            VerificationError = "Request timed out. Please try again.";
+            VerificationError = "Request was cancelled.".Translate();
         }
         catch (Exception ex)
         {
-            VerificationError = $"Verification failed: {ex.Message}";
+            VerificationError = "Verification failed: {0}".TranslateFormat(ex.Message);
         }
         finally
         {
             IsVerifying = false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the error is due to no internet or API being down.
+    /// </summary>
+    private async Task<string> GetConnectivityErrorMessageAsync()
+    {
+        try
+        {
+            // First check if we have internet at all
+            var hasInternet = await _connectivityService.IsInternetAvailableAsync();
+
+            if (!hasInternet)
+            {
+                return "No internet connection. Please check your network and try again.".Translate();
+            }
+
+            // We have internet, so check if the API host is reachable
+            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl);
+
+            if (!isApiReachable)
+            {
+                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.".Translate();
+            }
+
+            // API is reachable but something else went wrong
+            return "Unable to verify license. Please try again.".Translate();
+        }
+        catch
+        {
+            // If connectivity check itself fails, assume no internet
+            return "Unable to verify license. Please check your internet connection.".Translate();
         }
     }
 
@@ -320,10 +360,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
         var json = JsonSerializer.Serialize(requestBody);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        var response = await HttpClient.PostAsync(LicenseValidationUrl, content, cts.Token);
-
-        var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
+        var response = await HttpClient.PostAsync(LicenseValidationUrl, content);
+        var responseJson = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<LicenseResponse>(responseJson);
     }
 
