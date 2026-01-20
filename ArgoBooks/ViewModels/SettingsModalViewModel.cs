@@ -19,6 +19,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalLanguage = "English";
     private string _originalDateFormat = "MM/DD/YYYY";
     private string _originalCurrency = "USD - US Dollar ($)";
+    private string _originalTimeZone = "UTC";
     private int _originalMaxPieSlices = 6;
 
     // Flag to prevent firing LanguageChanged when loading from settings
@@ -73,6 +74,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _selectedDateFormat = "MM/DD/YYYY";
+
+    [ObservableProperty]
+    private string _selectedTimeZone = "UTC";
 
     [ObservableProperty]
     private bool _anonymousDataCollection;
@@ -136,6 +140,31 @@ public partial class SettingsModalViewModel : ViewModelBase
         "DD/MM/YYYY",
         "YYYY-MM-DD",
         "MMM D, YYYY"
+    ];
+
+    /// <summary>
+    /// Available timezone options.
+    /// </summary>
+    public ObservableCollection<string> TimeZones { get; } =
+    [
+        "UTC",
+        "America/New_York",
+        "America/Chicago",
+        "America/Denver",
+        "America/Los_Angeles",
+        "America/Toronto",
+        "America/Vancouver",
+        "Europe/London",
+        "Europe/Paris",
+        "Europe/Berlin",
+        "Europe/Amsterdam",
+        "Asia/Tokyo",
+        "Asia/Shanghai",
+        "Asia/Singapore",
+        "Asia/Dubai",
+        "Australia/Sydney",
+        "Australia/Melbourne",
+        "Pacific/Auckland"
     ];
 
     #endregion
@@ -458,6 +487,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedLanguage != _originalLanguage ||
         SelectedDateFormat != _originalDateFormat ||
         SelectedCurrency != _originalCurrency ||
+        SelectedTimeZone != _originalTimeZone ||
         MaxPieSlices != _originalMaxPieSlices;
 
     /// <summary>
@@ -512,12 +542,13 @@ public partial class SettingsModalViewModel : ViewModelBase
                 : LanguageService.Instance.CurrentLanguage);
         }
 
-        // Load max pie slices from global settings
+        // Load max pie slices and timezone from global settings
         {
             var globalSettings = App.SettingsService?.GlobalSettings;
             if (globalSettings != null)
             {
                 MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
+                SelectedTimeZone = globalSettings.Ui.TimeZone;
             }
         }
 
@@ -527,6 +558,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
+        _originalTimeZone = SelectedTimeZone;
         _originalMaxPieSlices = MaxPieSlices;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
@@ -602,6 +634,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedCurrency = _originalCurrency;
         }
+        if (SelectedTimeZone != _originalTimeZone)
+        {
+            SelectedTimeZone = _originalTimeZone;
+        }
         if (MaxPieSlices != _originalMaxPieSlices)
         {
             MaxPieSlices = _originalMaxPieSlices;
@@ -633,6 +669,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
+        _originalTimeZone = SelectedTimeZone;
         _originalMaxPieSlices = MaxPieSlices;
 
         // Save language, date format and currency to company settings
@@ -646,12 +683,13 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.ChangesMade = true;
         }
 
-        // Save max pie slices and language to global settings
+        // Save max pie slices, language, and timezone to global settings
         var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
             globalSettings.Ui.Language = SelectedLanguage;
+            globalSettings.Ui.TimeZone = SelectedTimeZone;
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }
 

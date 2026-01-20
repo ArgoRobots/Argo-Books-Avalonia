@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -437,12 +438,15 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             var product = invItem != null ? products.FirstOrDefault(p => p.Id == invItem.ProductId) : null;
             var location = invItem != null ? locations.FirstOrDefault(l => l.Id == invItem.LocationId) : null;
 
+            // Convert UTC timestamp to user's timezone
+            var localTime = TimeZoneService.ConvertToUserTimeZone(adjustment.Timestamp);
+
             return new StockAdjustmentDisplayItem
             {
                 Id = adjustment.Id,
                 Date = adjustment.Timestamp,
-                DateDisplay = adjustment.Timestamp.ToString("MMM dd, yyyy"),
-                TimeDisplay = adjustment.Timestamp.ToString("HH:mm"),
+                DateDisplay = localTime.ToString("MMM dd, yyyy"),
+                TimeDisplay = localTime.ToString("HH:mm"),
                 Reference = adjustment.ReferenceNumber ?? "-",
                 ProductId = invItem?.ProductId ?? "",
                 ProductName = product?.Name ?? "Unknown Product",

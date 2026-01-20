@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
@@ -70,6 +71,9 @@ public partial class SupplierModalsViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _modalEmailError;
+
+    [ObservableProperty]
+    private string? _modalPhoneError;
 
     private Supplier? _editingSupplier;
 
@@ -376,6 +380,7 @@ public partial class SupplierModalsViewModel : ObservableObject
         ModalError = null;
         ModalSupplierNameError = null;
         ModalEmailError = null;
+        ModalPhoneError = null;
     }
 
     private bool ValidateModal()
@@ -383,6 +388,7 @@ public partial class SupplierModalsViewModel : ObservableObject
         ModalError = null;
         ModalSupplierNameError = null;
         ModalEmailError = null;
+        ModalPhoneError = null;
         var isValid = true;
 
         if (string.IsNullOrWhiteSpace(ModalSupplierName))
@@ -410,7 +416,46 @@ public partial class SupplierModalsViewModel : ObservableObject
             isValid = false;
         }
 
+        if (!IsPhoneComplete(ModalPhone))
+        {
+            ModalPhoneError = "Please enter a complete phone number.".Translate();
+            isValid = false;
+        }
+
         return isValid;
+    }
+
+    /// <summary>
+    /// Checks if a phone number is complete based on its country's expected format.
+    /// Returns true if empty (optional field) or has the correct number of digits.
+    /// </summary>
+    private static bool IsPhoneComplete(string fullPhone)
+    {
+        if (string.IsNullOrWhiteSpace(fullPhone))
+            return true; // Phone is optional
+
+        // Extract digits from the phone number (excluding dial code)
+        var parts = fullPhone.Split(' ', 2);
+        if (parts.Length < 2)
+            return true; // No number entered yet
+
+        var dialCode = parts[0];
+        var numberPart = parts[1];
+        var digits = new string(numberPart.Where(char.IsDigit).ToArray());
+
+        if (string.IsNullOrEmpty(digits))
+            return true; // No digits entered
+
+        // Find the country by dial code
+        var country = PhoneInput.AllDialCodes
+            .OrderByDescending(c => c.DialCode.Length)
+            .FirstOrDefault(c => dialCode.Equals(c.DialCode, StringComparison.OrdinalIgnoreCase));
+
+        if (country == null)
+            return true; // Unknown country, allow it
+
+        var expectedDigits = country.PhoneFormat.Count(c => c == 'X');
+        return digits.Length == expectedDigits;
     }
 
     #endregion
