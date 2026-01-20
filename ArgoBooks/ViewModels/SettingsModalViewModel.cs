@@ -1029,8 +1029,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void SelectAccentColor(string? colorName)
     {
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] SelectAccentColor called with: '{colorName}'");
+        Console.WriteLine($"[DEBUG] SelectAccentColor called with: '{colorName}'");
         if (!string.IsNullOrEmpty(colorName))
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Setting SelectedAccentColor to: '{colorName}'");
+            Console.WriteLine($"[DEBUG] Setting SelectedAccentColor to: '{colorName}'");
             SelectedAccentColor = colorName;
             ApplyAccentColor(colorName);
         }

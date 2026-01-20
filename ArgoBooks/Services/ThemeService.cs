@@ -204,10 +204,18 @@ public class ThemeService : IThemeService
     /// <param name="colorName">The color name (Blue, Green, Purple, Pink, Orange, Teal).</param>
     public void SetAccentColor(string colorName)
     {
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] ThemeService.SetAccentColor called with: '{colorName}'");
+        Console.WriteLine($"[DEBUG] ThemeService.SetAccentColor called with: '{colorName}'");
         if (!AccentColors.ContainsKey(colorName))
+        {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Color '{colorName}' not found in AccentColors!");
+            Console.WriteLine($"[DEBUG] Color '{colorName}' not found in AccentColors!");
             return;
+        }
 
         CurrentAccentColor = colorName;
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] CurrentAccentColor set to: '{CurrentAccentColor}'");
+        Console.WriteLine($"[DEBUG] CurrentAccentColor set to: '{CurrentAccentColor}'");
         ApplyAccentColor();
         SaveToSettings();
     }
