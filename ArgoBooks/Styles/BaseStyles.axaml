@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:behaviors="using:ArgoBooks.Behaviors">
 
     <!--
         Argo Books Base Styles
@@ -145,6 +146,7 @@
     </Style>
     <Style Selector="NumericUpDown /template/ TextBox">
         <Setter Property="MinWidth" Value="40" />
+        <Setter Property="(behaviors:NumericInputBehavior.IsDecimalOnly)" Value="True" />
     </Style>
 
     <!-- Global CheckBox Styling - Use dynamic accent color with animations -->
