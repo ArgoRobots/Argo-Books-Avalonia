@@ -16,6 +16,7 @@
                 <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
+                    MaxHeight="500"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
