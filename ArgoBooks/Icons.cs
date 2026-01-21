@@ -178,6 +178,9 @@ public static class Icons
     /// <summary>Close/X icon.</summary>
     public const string Close = "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z";
 
+    /// <summary>Close circle icon.</summary>
+    public const string CloseCircle = "M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z";
+
     /// <summary>Checkmark icon.</summary>
     public const string Check = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
 
@@ -212,8 +215,11 @@ public static class Icons
     /// <summary>Chevron up icon for dropdown collapsed.</summary>
     public const string ChevronUp = "M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z";
 
-    /// <summary>Folder icon.</summary>
+    /// <summary>Folder icon (outlined).</summary>
     public const string Folder = "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z";
+
+    /// <summary>Folder icon (filled).</summary>
+    public const string FolderFilled = "M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z";
 
     /// <summary>Star icon.</summary>
     public const string Star = "M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 1z";

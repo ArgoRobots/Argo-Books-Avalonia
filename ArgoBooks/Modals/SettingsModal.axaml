@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:modals="using:ArgoBooks.Modals"
@@ -44,7 +45,7 @@
                         <Button Grid.Column="1"
                                 Classes="icon-button"
                                 Command="{Binding CloseCommand}">
-                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
                                       Width="20" Height="20" />
                         </Button>
                     </Grid>
@@ -402,7 +403,7 @@
                                                 CommandParameter="Blue">
                                             <Grid>
                                                 <Border Width="48" Height="48" CornerRadius="24" Background="#3B82F6">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
                                                             <Binding Path="SelectedAccentColor">
@@ -421,7 +422,7 @@
                                                 CommandParameter="Green">
                                             <Grid>
                                                 <Border Width="48" Height="48" CornerRadius="24" Background="#10B981">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
                                                             <Binding Path="SelectedAccentColor">
@@ -440,7 +441,7 @@
                                                 CommandParameter="Purple">
                                             <Grid>
                                                 <Border Width="48" Height="48" CornerRadius="24" Background="#8B5CF6">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
                                                             <Binding Path="SelectedAccentColor">
@@ -459,7 +460,7 @@
                                                 CommandParameter="Pink">
                                             <Grid>
                                                 <Border Width="48" Height="48" CornerRadius="24" Background="#EC4899">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
                                                             <Binding Path="SelectedAccentColor">
@@ -478,7 +479,7 @@
                                                 CommandParameter="Orange">
                                             <Grid>
                                                 <Border Width="48" Height="48" CornerRadius="24" Background="#F97316">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
                                                             <Binding Path="SelectedAccentColor">
@@ -497,7 +498,7 @@
                                                 CommandParameter="Teal">
                                             <Grid>
                                                 <Border Width="48" Height="48" CornerRadius="24" Background="#14B8A6">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
                                                             <Binding Path="SelectedAccentColor">

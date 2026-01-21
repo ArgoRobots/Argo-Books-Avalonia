@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InsightsPage"
@@ -63,7 +64,7 @@
                                 CornerRadius="8"
                                 Background="#DBEAFE"
                                 Margin="0,0,12,0">
-                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                            <PathIcon Data="{x:Static local:Icons.TrendUp}"
                                       Width="16" Height="16"
                                       Foreground="#3B82F6" />
                         </Border>
@@ -81,7 +82,7 @@
                                         VerticalAlignment="Center"
                                         Command="{Binding ShowPredictionInfoCommand}"
                                         ToolTip.Tip="How predictions are calculated">
-                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                    <PathIcon Data="{x:Static local:Icons.Info}"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Button>
@@ -155,7 +156,7 @@
                                     Command="{Binding RefreshInsightsCommand}"
                                     HorizontalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                    <PathIcon Data="{x:Static local:Icons.Refresh}"
                                               Width="14" Height="14" />
                                     <TextBlock Text="Try Again" />
                                 </StackPanel>
@@ -172,7 +173,7 @@
                             <!-- Main confidence row -->
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                    <PathIcon Data="{x:Static local:Icons.CircleCheck}"
                                               Width="16" Height="16"
                                               Foreground="#22C55E" />
                                     <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
@@ -212,7 +213,7 @@
                             <Grid ColumnDefinitions="Auto,*,Auto"
                                   IsVisible="{Binding HasAccuracyData}">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                    <PathIcon Data="{x:Static local:Icons.Check}"
                                               Width="14" Height="14"
                                               Foreground="#3B82F6" />
                                     <TextBlock Text="Historical Accuracy:"
@@ -236,7 +237,7 @@
                             <Grid ColumnDefinitions="Auto,*"
                                   IsVisible="{Binding HasSeasonalPattern}">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                    <PathIcon Data="{x:Static local:Icons.Clock}"
                                               Width="14" Height="14"
                                               Foreground="#8B5CF6" />
                                     <TextBlock Text="Seasonal Pattern:"
@@ -275,7 +276,7 @@
                         Margin="0,0,0,16">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                            <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                            <PathIcon Data="{x:Static local:Icons.Clock}"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                             <TextBlock Text="{loc:Loc 'Business Insights'}"
@@ -321,7 +322,7 @@
                                             CornerRadius="8"
                                             Background="#DCFCE7"
                                             Margin="0,0,12,0">
-                                        <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                        <PathIcon Data="{x:Static local:Icons.TrendUp}"
                                                   Width="16" Height="16"
                                                   Foreground="#22C55E" />
                                     </Border>
@@ -342,7 +343,7 @@
                                             CornerRadius="8"
                                             Background="#DCFCE7"
                                             Margin="0,0,12,0">
-                                        <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                        <PathIcon Data="{x:Static local:Icons.TrendUp}"
                                                   Width="16" Height="16"
                                                   Foreground="#22C55E" />
                                     </Border>
@@ -504,7 +505,7 @@
                                             CornerRadius="8"
                                             Background="#FEF3C7"
                                             Margin="0,0,12,0">
-                                        <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                        <PathIcon Data="{x:Static local:Icons.LostDamaged}"
                                                   Width="16" Height="16"
                                                   Foreground="#F59E0B" />
                                     </Border>
@@ -525,7 +526,7 @@
                                             CornerRadius="8"
                                             Background="#FEF3C7"
                                             Margin="0,0,12,0">
-                                        <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                        <PathIcon Data="{x:Static local:Icons.LostDamaged}"
                                                   Width="16" Height="16"
                                                   Foreground="#F59E0B" />
                                     </Border>
@@ -594,7 +595,7 @@
                                             CornerRadius="8"
                                             Background="#DBEAFE"
                                             Margin="0,0,12,0">
-                                        <PathIcon Data="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                        <PathIcon Data="{x:Static local:Icons.Star}"
                                                   Width="16" Height="16"
                                                   Foreground="#3B82F6" />
                                     </Border>
@@ -615,7 +616,7 @@
                                             CornerRadius="8"
                                             Background="#DBEAFE"
                                             Margin="0,0,12,0">
-                                        <PathIcon Data="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                        <PathIcon Data="{x:Static local:Icons.Star}"
                                                   Width="16" Height="16"
                                                   Foreground="#3B82F6" />
                                     </Border>
