@@ -151,16 +151,6 @@
                                        TextAlignment="Center"
                                        MaxWidth="400"
                                        TextWrapping="Wrap" />
-                            <Button Classes="secondary-button"
-                                    Margin="0,4,0,0"
-                                    Command="{Binding RefreshInsightsCommand}"
-                                    HorizontalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="{x:Static local:Icons.Refresh}"
-                                              Width="14" Height="14" />
-                                    <TextBlock Text="Try Again" />
-                                </StackPanel>
-                            </Button>
                         </StackPanel>
                     </Border>
 
