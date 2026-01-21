@@ -21,6 +21,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? OpenFileScanRequested;
 
+    /// <summary>
+    /// Raised when the user requests to edit the company via quick action.
+    /// </summary>
+    public event EventHandler? EditCompanyRequested;
+
     #region ViewModels
 
     /// <summary>
@@ -561,6 +566,9 @@ public partial class AppShellViewModel : ViewModelBase
                 case "OpenScanModal":
                     // Request file picker from view - can't open scan modal without a file
                     OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
+                    break;
+                case "OpenEditCompany":
+                    EditCompanyRequested?.Invoke(this, EventArgs.Empty);
                     break;
             }
         };

@@ -1487,11 +1487,11 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<ChartStyleOption> ChartStyleOptions { get; } =
     [
-        new(ReportChartStyle.Bar, "Bar Chart"),
-        new(ReportChartStyle.Line, "Line Chart"),
-        new(ReportChartStyle.StepLine, "Step Line"),
-        new(ReportChartStyle.Area, "Area Chart"),
-        new(ReportChartStyle.Scatter, "Scatter Chart")
+        new(ReportChartStyle.Bar, "Bar"),
+        new(ReportChartStyle.Line, "Line"),
+        new(ReportChartStyle.StepLine, "Step line"),
+        new(ReportChartStyle.Area, "Area"),
+        new(ReportChartStyle.Scatter, "Scatter")
     ];
 
     public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =
