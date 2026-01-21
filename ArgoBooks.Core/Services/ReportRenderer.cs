@@ -1342,7 +1342,6 @@ public class ReportRenderer : IDisposable
         var rect = GetScaledRect(table);
         var columns = GetVisibleColumns(table);
         var columnCount = Math.Max(columns.Count, 1);
-        var columnWidth = rect.Width / columnCount;
 
         // Get table data
         var tableData = GetTableData(table, columns);
@@ -1351,6 +1350,15 @@ public class ReportRenderer : IDisposable
 
         var headerRowHeight = table.HeaderRowHeight * _renderScale;
         var dataRowHeight = table.DataRowHeight * _renderScale;
+
+        // Create fonts using table's font settings
+        var headerTypeface = SKTypeface.FromFamilyName(table.HeaderFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
+        var dataTypeface = SKTypeface.FromFamilyName(table.FontFamily) ?? _defaultTypeface;
+        using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
+        using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
+
+        // Calculate column widths
+        var columnWidths = CalculateColumnWidths(table, columns, tableData, rect.Width, headerFont, dataFont);
 
         // Calculate total height needed
         var totalHeight = (table.ShowHeaders ? headerRowHeight : 0) + (dataRowCount * dataRowHeight);
@@ -1369,23 +1377,26 @@ public class ReportRenderer : IDisposable
             canvas.DrawRect(headerRect, headerFill);
 
             // Draw column headers
-            using var headerFont = new SKFont(_boldTypeface, (float)table.FontSize * _renderScale);
             using var headerTextPaint = new SKPaint();
             headerTextPaint.Color = ParseColor(table.HeaderTextColor);
             headerTextPaint.IsAntialias = true;
 
+            float colX = rect.Left;
             for (int i = 0; i < columns.Count; i++)
             {
-                var x = rect.Left + (i * columnWidth) + (columnWidth / 2);
-                var y = headerRect.MidY + (float)(table.FontSize * _renderScale) / 3;
+                var colWidth = columnWidths[i];
+                var x = colX + (colWidth / 2);
+                var y = headerRect.MidY + (float)(table.HeaderFontSize * _renderScale) / 3;
                 canvas.DrawText(columns[i], x, y, SKTextAlign.Center, headerFont, headerTextPaint);
 
                 // Draw vertical grid line
                 if (table.ShowGridLines && i > 0)
                 {
                     var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
-                    canvas.DrawLine(rect.Left + (i * columnWidth), headerRect.Top, rect.Left + (i * columnWidth), headerRect.Bottom, gridPaint);
+                    canvas.DrawLine(colX, headerRect.Top, colX, headerRect.Bottom, gridPaint);
                 }
+
+                colX += colWidth;
             }
 
             // Draw header bottom border
@@ -1399,7 +1410,6 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw data rows
-        using var dataFont = new SKFont(_defaultTypeface, (float)table.FontSize * _renderScale);
         using var dataTextPaint = new SKPaint();
         dataTextPaint.Color = ParseColor(table.DataRowTextColor);
         dataTextPaint.IsAntialias = true;
@@ -1417,10 +1427,12 @@ public class ReportRenderer : IDisposable
             canvas.DrawRect(rowRect, new SKPaint { Color = rowBgColor, Style = SKPaintStyle.Fill });
 
             // Draw cell data
+            float colX = rect.Left;
             for (int colIndex = 0; colIndex < columns.Count; colIndex++)
             {
+                var colWidth = columnWidths[colIndex];
                 var cellText = colIndex < rowData.Count ? rowData[colIndex] : "";
-                var x = rect.Left + (colIndex * columnWidth) + (columnWidth / 2);
+                var x = colX + (colWidth / 2);
                 var y = rowRect.MidY + (float)(table.FontSize * _renderScale) / 3;
                 canvas.DrawText(cellText, x, y, SKTextAlign.Center, dataFont, dataTextPaint);
 
@@ -1428,8 +1440,10 @@ public class ReportRenderer : IDisposable
                 if (table.ShowGridLines && colIndex > 0)
                 {
                     var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
-                    canvas.DrawLine(rect.Left + (colIndex * columnWidth), rowRect.Top, rect.Left + (colIndex * columnWidth), rowRect.Bottom, gridPaint);
+                    canvas.DrawLine(colX, rowRect.Top, colX, rowRect.Bottom, gridPaint);
                 }
+
+                colX += colWidth;
             }
 
             // Draw row bottom border
@@ -1445,6 +1459,63 @@ public class ReportRenderer : IDisposable
         // Draw outer border
         _borderPaint.Color = ParseColor(table.GridLineColor);
         canvas.DrawRect(tableRect, _borderPaint);
+    }
+
+    private float[] CalculateColumnWidths(TableReportElement table, List<string> columns, List<List<string>> tableData, float totalWidth, SKFont headerFont, SKFont dataFont)
+    {
+        var columnCount = columns.Count;
+        var columnWidths = new float[columnCount];
+
+        if (!table.AutoSizeColumns || columnCount == 0)
+        {
+            // Equal width for all columns
+            var equalWidth = totalWidth / Math.Max(columnCount, 1);
+            for (int i = 0; i < columnCount; i++)
+                columnWidths[i] = equalWidth;
+            return columnWidths;
+        }
+
+        // Calculate max content width for each column
+        var maxWidths = new float[columnCount];
+        var cellPadding = table.CellPadding * _renderScale * 2; // Padding on both sides
+
+        for (int i = 0; i < columnCount; i++)
+        {
+            // Measure header text width
+            var headerWidth = headerFont.MeasureText(columns[i]) + cellPadding;
+            maxWidths[i] = headerWidth;
+
+            // Measure data cells
+            foreach (var row in tableData)
+            {
+                if (i < row.Count)
+                {
+                    var cellWidth = dataFont.MeasureText(row[i]) + cellPadding;
+                    maxWidths[i] = Math.Max(maxWidths[i], cellWidth);
+                }
+            }
+        }
+
+        // Calculate total measured width
+        var totalMeasured = maxWidths.Sum();
+
+        if (totalMeasured <= 0)
+        {
+            // Fallback to equal widths
+            var equalWidth = totalWidth / columnCount;
+            for (int i = 0; i < columnCount; i++)
+                columnWidths[i] = equalWidth;
+            return columnWidths;
+        }
+
+        // Scale widths proportionally to fit available width
+        var scale = totalWidth / totalMeasured;
+        for (int i = 0; i < columnCount; i++)
+        {
+            columnWidths[i] = maxWidths[i] * scale;
+        }
+
+        return columnWidths;
     }
 
     private List<List<string>> GetTableData(TableReportElement table, List<string> columns)

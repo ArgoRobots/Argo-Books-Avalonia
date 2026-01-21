@@ -1314,7 +1314,25 @@
                                     <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
                                     <CheckBox Content="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
 
-                                    <TextBlock Text="{loc:Loc 'Font'}"
+                                    <TextBlock Text="{loc:Loc 'Header Font'}"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderFontSize}" Minimum="6" Maximum="24" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding FontFamilies}"
+                                                      SelectedItem="{Binding SelectedTableElement.HeaderFontFamily}"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="{loc:Loc 'Data Font'}"
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}"

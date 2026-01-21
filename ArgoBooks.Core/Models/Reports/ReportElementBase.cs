@@ -368,6 +368,20 @@ public class TableReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = "Segoe UI";
 
+    [JsonPropertyName("headerFontSize")]
+    public double HeaderFontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 8;
+
+    [JsonPropertyName("headerFontFamily")]
+    public string HeaderFontFamily
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
+
     [JsonPropertyName("dataRowHeight")]
     public int DataRowHeight
     {
