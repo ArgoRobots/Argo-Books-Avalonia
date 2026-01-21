@@ -86,7 +86,7 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" />
+                                <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
 
                             <!-- Payment Method -->
@@ -196,7 +196,7 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" />
+                                <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
 
                             <!-- Payment Method -->
