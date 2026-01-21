@@ -1408,7 +1408,7 @@ public class ReportRenderer : IDisposable
             var titleText = BuildTableTitle(table);
 
             using var titleTextPaint = new SKPaint();
-            titleTextPaint.Color = SKColors.White;
+            titleTextPaint.Color = ParseColor(table.TitleTextColor);
             titleTextPaint.IsAntialias = true;
 
             var x = titleRect.MidX;

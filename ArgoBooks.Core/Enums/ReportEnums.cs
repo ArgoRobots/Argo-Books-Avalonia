@@ -185,6 +185,21 @@ public enum VerticalTextAlignment
 public static class ReportEnumExtensions
 {
     /// <summary>
+    /// Gets a user-friendly display name for a table sort order.
+    /// </summary>
+    public static string GetDisplayName(this TableSortOrder sortOrder)
+    {
+        return sortOrder switch
+        {
+            TableSortOrder.DateDescending => "Date descending",
+            TableSortOrder.DateAscending => "Date ascending",
+            TableSortOrder.AmountDescending => "Amount descending",
+            TableSortOrder.AmountAscending => "Amount ascending",
+            _ => sortOrder.ToString()
+        };
+    }
+
+    /// <summary>
     /// Gets a user-friendly display name for a chart data type.
     /// </summary>
     public static string GetDisplayName(this ChartDataType chartType)

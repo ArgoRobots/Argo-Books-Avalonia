@@ -14,6 +14,7 @@
 
     <UserControl.Resources>
         <converters:EqualConverter x:Key="EqualConverter" />
+        <converters:EnumDisplayNameConverter x:Key="EnumDisplayNameConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -1294,7 +1295,13 @@
                                         <TextBlock Text="{loc:Loc 'Sort Order'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TableSortOrders}"
                                                   SelectedItem="{Binding SelectedTableElement.SortOrder}"
-                                                  HorizontalAlignment="Stretch" />
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumDisplayNameConverter}}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max Rows'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1341,10 +1348,6 @@
                                                       HorizontalAlignment="Stretch" />
                                         </StackPanel>
                                     </Grid>
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Title Background'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleBackgroundColor, Mode=TwoWay}" />
-                                    </StackPanel>
 
                                     <TextBlock Text="{loc:Loc 'Header Font'}"
                                                FontSize="11"
@@ -1407,6 +1410,14 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                Margin="0,8,0,0" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Title BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleBackgroundColor, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Title Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleTextColor, Mode=TwoWay}" />
+                                    </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />

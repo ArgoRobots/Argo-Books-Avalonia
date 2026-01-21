@@ -473,6 +473,13 @@ public class TableReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = "#4A7FD4";
 
+    [JsonPropertyName("titleTextColor")]
+    public string TitleTextColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
+
     [JsonPropertyName("textAlignment")]
     public HorizontalTextAlignment TextAlignment
     {
