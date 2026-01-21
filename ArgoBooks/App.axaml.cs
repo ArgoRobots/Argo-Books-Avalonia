@@ -1250,20 +1250,34 @@ public class App : Application
         // Edit current company
         companySwitcher.EditCompanyRequested += (_, _) =>
         {
-            if (CompanyManager?.IsCompanyOpen != true) return;
+            OpenEditCompanyModal();
+        };
 
-            var settings = CompanyManager.CurrentCompanySettings;
-            var logoPath = CompanyManager.CurrentCompanyLogoPath;
-            var logo = LoadBitmapFromPath(logoPath);
-            _appShellViewModel.EditCompanyModalViewModel.Open(
-                settings?.Company.Name ?? "",
-                settings?.Company.BusinessType,
-                settings?.Company.Industry,
-                logo);
+        // Edit company from quick action
+        _appShellViewModel.EditCompanyRequested += (_, _) =>
+        {
+            OpenEditCompanyModal();
         };
 
         // Wire up edit company modal events
         WireEditCompanyEvents(desktop);
+    }
+
+    /// <summary>
+    /// Opens the edit company modal with the current company information.
+    /// </summary>
+    private static void OpenEditCompanyModal()
+    {
+        if (CompanyManager?.IsCompanyOpen != true || _appShellViewModel == null) return;
+
+        var settings = CompanyManager.CurrentCompanySettings;
+        var logoPath = CompanyManager.CurrentCompanyLogoPath;
+        var logo = LoadBitmapFromPath(logoPath);
+        _appShellViewModel.EditCompanyModalViewModel.Open(
+            settings?.Company.Name ?? "",
+            settings?.Company.BusinessType,
+            settings?.Company.Industry,
+            logo);
     }
 
     /// <summary>

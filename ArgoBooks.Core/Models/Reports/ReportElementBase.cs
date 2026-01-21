@@ -289,14 +289,14 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = true;
+    }
 
     [JsonPropertyName("includeLosses")]
     public bool IncludeLosses
     {
         get;
         set => SetField(ref field, value);
-    } = true;
+    }
 
     [JsonPropertyName("dataSelection")]
     public TableDataSelection DataSelection
@@ -368,6 +368,20 @@ public class TableReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = "Segoe UI";
 
+    [JsonPropertyName("headerFontSize")]
+    public double HeaderFontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 8;
+
+    [JsonPropertyName("headerFontFamily")]
+    public string HeaderFontFamily
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
+
     [JsonPropertyName("dataRowHeight")]
     public int DataRowHeight
     {
@@ -430,6 +444,48 @@ public class TableReportElement : ReportElementBase
         get;
         set => SetField(ref field, value);
     } = "#F8F8F8";
+
+    [JsonPropertyName("showTitle")]
+    public bool ShowTitle
+    {
+        get;
+        set => SetField(ref field, value);
+    } = true;
+
+    [JsonPropertyName("titleFontSize")]
+    public double TitleFontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 10;
+
+    [JsonPropertyName("titleFontFamily")]
+    public string TitleFontFamily
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
+
+    [JsonPropertyName("titleBackgroundColor")]
+    public string TitleBackgroundColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#4A7FD4";
+
+    [JsonPropertyName("titleTextColor")]
+    public string TitleTextColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
+
+    [JsonPropertyName("textAlignment")]
+    public HorizontalTextAlignment TextAlignment
+    {
+        get;
+        set => SetField(ref field, value);
+    } = HorizontalTextAlignment.Center;
 
     // Column visibility
     [JsonPropertyName("showDateColumn")]

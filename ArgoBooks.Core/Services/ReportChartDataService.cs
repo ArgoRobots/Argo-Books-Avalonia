@@ -32,8 +32,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         // For custom ranges, use the explicit start/end dates from filters
         if (string.IsNullOrEmpty(filters.DatePresetName) || IsCustomRange(filters.DatePresetName))
         {
-            var start = filters.StartDate ?? DateTime.MinValue;
-            var end = filters.EndDate ?? DateTime.MaxValue;
+            var start = filters.StartDate?.Date ?? DateTime.MinValue;
+            // Normalize end date to include the entire day (end of day)
+            var end = filters.EndDate?.Date.AddDays(1).AddSeconds(-1) ?? DateTime.MaxValue;
             return (start, end);
         }
 

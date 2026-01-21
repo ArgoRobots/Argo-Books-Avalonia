@@ -192,8 +192,6 @@ public partial class QuickActionsViewModel : ViewModelBase
         _allActions.AddRange([
             new QuickActionItem("Settings", "Configure application settings", Icons.Settings, QuickActionType.Tools, null, "OpenSettings"),
             new QuickActionItem("Edit Company", "Edit company information", Icons.EditCompany, QuickActionType.Tools, null, "OpenEditCompany"),
-            new QuickActionItem("View Profile", "View your profile", Icons.ViewProfile, QuickActionType.Tools, null, "OpenProfile"),
-            new QuickActionItem("Switch Account", "Switch to another account", Icons.SwitchAccount, QuickActionType.Tools, null, "OpenSwitchAccount"),
             new QuickActionItem("Check for Updates", "Check for application updates", Icons.CheckForUpdates, QuickActionType.Tools, null, "OpenCheckForUpdates"),
             new QuickActionItem("Export Data", "Export your data", Icons.ExportData, QuickActionType.Tools, null, "OpenExport"),
             new QuickActionItem("Import Data", "Import data from file", Icons.ImportData, QuickActionType.Tools, null, "OpenImport"),
