@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.WelcomeScreen"
@@ -74,7 +75,7 @@
                                 <Border Width="64" Height="64"
                                         CornerRadius="32"
                                         Background="{DynamicResource PrimaryLightBrush}">
-                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                    <PathIcon Data="{x:Static local:Icons.Add}"
                                               Width="28" Height="28"
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
@@ -103,7 +104,7 @@
                                 <Border Width="64" Height="64"
                                         CornerRadius="32"
                                         Background="#E6F4EA">
-                                    <PathIcon Data="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+                                    <PathIcon Data="{x:Static local:Icons.Folder}"
                                               Width="28" Height="28"
                                               Foreground="#22C55E" />
                                 </Border>
@@ -157,7 +158,7 @@
                                                     CornerRadius="8"
                                                     Background="{DynamicResource SurfaceAltBrush}"
                                                     Margin="0,0,16,0">
-                                                <PathIcon Data="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
+                                                <PathIcon Data="{x:Static local:Icons.Departments}"
                                                           Width="22" Height="22"
                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                             </Border>
@@ -190,7 +191,7 @@
                                                     Command="{Binding $parent[ItemsControl].((vm:WelcomeScreenViewModel)DataContext).RemoveFromRecentCommand}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip.Tip="{loc:Loc 'Remove from recent'}">
-                                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                <PathIcon Data="{x:Static local:Icons.Close}"
                                                           Width="14" Height="14" />
                                             </Button>
                                         </Grid>
@@ -213,7 +214,7 @@
                                     CornerRadius="24"
                                     Background="#FEF3C7"
                                     Margin="0,0,16,0">
-                                <PathIcon Data="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                <PathIcon Data="{x:Static local:Icons.Star}"
                                           Width="24" Height="24"
                                           Foreground="#F59E0B" />
                             </Border>
@@ -233,7 +234,7 @@
 
                             <!-- Arrow -->
                             <PathIcon Grid.Column="2"
-                                      Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                      Data="{x:Static local:Icons.ChevronRightNav}"
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                       VerticalAlignment="Center" />
@@ -248,7 +249,7 @@
                     <Button Classes="footer-link"
                             Command="{Binding OpenHelpCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                            <PathIcon Data="{x:Static local:Icons.Help}"
                                       Width="16" Height="16" />
                             <TextBlock Text="{loc:Loc 'Help &amp; Support'}" />
                         </StackPanel>

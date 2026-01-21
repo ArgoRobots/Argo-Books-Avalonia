@@ -6,6 +6,7 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.RentalRecordsPage"
              x:DataType="vm:RentalRecordsPageViewModel">
@@ -30,15 +31,15 @@
                                    IconColor="Primary" />
                 <controls:StatCard Label="{loc:Loc 'Active'}"
                                    Value="{Binding ActiveRentals}"
-                                   Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                   Icon="{x:Static icons:Icons.Check}"
                                    IconColor="Success" />
                 <controls:StatCard Label="{loc:Loc 'Overdue'}"
                                    Value="{Binding OverdueRentals}"
-                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                   Icon="{x:Static icons:Icons.Info}"
                                    IconColor="Danger" />
                 <controls:StatCard Label="{loc:Loc 'Total Revenue'}"
                                    Value="{Binding TotalRevenueFormatted}"
-                                   Icon="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
+                                   Icon="{x:Static icons:Icons.Dollar}"
                                    IconColor="Info" />
             </controls:StatCardsRow>
 
@@ -76,7 +77,7 @@
                                         MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}">
                                     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                         <PathIcon Grid.Column="0"
-                                                  Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                                  Data="{x:Static icons:Icons.Search}"
                                                   Width="16" Height="16"
                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
@@ -108,7 +109,7 @@
                                         Command="{Binding OpenAddModalCommand}"
                                         ToolTip.Tip="{loc:Loc 'New Rental'}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                        <PathIcon Data="{x:Static icons:Icons.Add}"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
                                         <TextBlock Text="{loc:Loc 'New Rental'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
@@ -402,7 +403,7 @@
                                                                         Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenReturnModalCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         IsVisible="{Binding IsActive}">
-                                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button"
@@ -417,14 +418,14 @@
                                                                         Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenEditModalCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         IsVisible="{Binding IsActive}">
-                                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button danger"
                                                                         ToolTip.Tip="{loc:Loc 'Delete'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                             </StackPanel>
@@ -466,7 +467,7 @@
                                                 Margin="0,8,0,0"
                                                 Command="{Binding OpenAddModalCommand}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                <PathIcon Data="{x:Static icons:Icons.Add}"
                                                           Width="16" Height="16"
                                                           Foreground="White" />
                                                 <TextBlock Text="{loc:Loc 'New Rental'}" />
@@ -520,7 +521,7 @@
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToPreviousPageCommand}"
                                         IsEnabled="{Binding CanGoToPreviousPage}">
-                                    <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
                                               Width="16" Height="16" />
                                 </Button>
 
@@ -552,7 +553,7 @@
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToNextPageCommand}"
                                         IsEnabled="{Binding CanGoToNextPage}">
-                                    <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
                                               Width="16" Height="16" />
                                 </Button>
                             </StackPanel>

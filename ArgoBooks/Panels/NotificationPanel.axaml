@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="500"
              x:Class="ArgoBooks.Panels.NotificationPanel"
              x:DataType="vm:NotificationPanelViewModel">
@@ -82,7 +83,7 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Margin="0,60">
-                            <PathIcon Data="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                            <PathIcon Data="{x:Static local:Icons.Notification}"
                                       Width="48" Height="48"
                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                       HorizontalAlignment="Center"
@@ -122,27 +123,27 @@
                                                 </Border.Styles>
                                                 <Panel>
                                                     <!-- Info Icon -->
-                                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                                    <PathIcon Data="{x:Static local:Icons.Info}"
                                                               Width="18" Height="18"
                                                               Foreground="{DynamicResource PrimaryBrush}"
                                                               IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsInfo}}" />
                                                     <!-- Success Icon -->
-                                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                                    <PathIcon Data="{x:Static local:Icons.CircleCheck}"
                                                               Width="18" Height="18"
                                                               Foreground="{DynamicResource SuccessBrush}"
                                                               IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsSuccess}}" />
                                                     <!-- Warning Icon -->
-                                                    <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                                    <PathIcon Data="{x:Static local:Icons.LostDamaged}"
                                                               Width="18" Height="18"
                                                               Foreground="{DynamicResource WarningBrush}"
                                                               IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsWarning}}" />
                                                     <!-- Error Icon -->
-                                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                                    <PathIcon Data="{x:Static local:Icons.Info}"
                                                               Width="18" Height="18"
                                                               Foreground="{DynamicResource DangerBrush}"
                                                               IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsError}}" />
                                                     <!-- System Icon -->
-                                                    <PathIcon Data="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                                                    <PathIcon Data="{x:Static local:Icons.Settings}"
                                                               Width="18" Height="18"
                                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                                               IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsSystem}}" />
@@ -180,7 +181,7 @@
                                                         CommandParameter="{Binding}"
                                                         ToolTip.Tip="{loc:Loc 'Mark as read'}"
                                                         IsVisible="{Binding !IsRead}">
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                    <PathIcon Data="{x:Static local:Icons.Check}"
                                                               Width="14" Height="14" />
                                                 </Button>
                                                 <!-- Dismiss Button -->
@@ -188,7 +189,7 @@
                                                         Command="{Binding $parent[UserControl].((vm:NotificationPanelViewModel)DataContext).RemoveNotificationCommand}"
                                                         CommandParameter="{Binding}"
                                                         ToolTip.Tip="{loc:Loc Dismiss}">
-                                                    <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                    <PathIcon Data="{x:Static local:Icons.Close}"
                                                               Width="14" Height="14" />
                                                 </Button>
                                             </StackPanel>
@@ -217,7 +218,7 @@
                                 Command="{Binding OpenSettingsCommand}"
                                 HorizontalAlignment="Right">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <PathIcon Data="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"
+                                <PathIcon Data="{x:Static local:Icons.Settings}"
                                           Width="14" Height="14" />
                                 <TextBlock Text="{loc:Loc Settings}" />
                             </StackPanel>

@@ -133,70 +133,70 @@ public partial class QuickActionsViewModel : ViewModelBase
     {
         // Quick Actions - Creation tasks
         _allActions.AddRange([
-            new QuickActionItem("New Invoice", "Create a new invoice", "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z", QuickActionType.QuickAction, "Invoices", "OpenAddModal"),
-            new QuickActionItem("New Expense", "Record a new expense", "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z", QuickActionType.QuickAction, "Expenses", "OpenAddModal"),
-            new QuickActionItem("New Revenue", "Record a new revenue entry", "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z", QuickActionType.QuickAction, "Revenue", "OpenAddModal"),
-            new QuickActionItem("Scan Receipt", "Scan and import a receipt using AI", "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z", QuickActionType.QuickAction, "Receipts", "OpenScanModal"),
-            new QuickActionItem("New Customer", "Add a new customer", "M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z", QuickActionType.QuickAction, "Customers", "OpenAddModal"),
-            new QuickActionItem("New Product", "Add a new product or service", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z", QuickActionType.QuickAction, "Products", "OpenAddModal"),
-            new QuickActionItem("New Supplier", "Add a new supplier", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z", QuickActionType.QuickAction, "Suppliers", "OpenAddModal"),
-            new QuickActionItem("Record Payment", "Record a payment received", "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z", QuickActionType.QuickAction, "Payments", "OpenAddModal"),
-            new QuickActionItem("New Rental Item", "Add a new rental item", "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z", QuickActionType.QuickAction, "RentalInventory", "OpenAddModal"),
-            new QuickActionItem("New Rental Record", "Create a new rental transaction", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z", QuickActionType.QuickAction, "RentalRecords", "OpenAddModal"),
-            new QuickActionItem("New Category", "Add a new category", "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z", QuickActionType.QuickAction, "Categories", "OpenAddModal"),
-            new QuickActionItem("New Location", "Add a new location", "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z", QuickActionType.QuickAction, "Locations", "OpenAddModal"),
-            new QuickActionItem("New Purchase Order", "Create a new purchase order", "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z", QuickActionType.QuickAction, "PurchaseOrders", "OpenAddModal"),
-            new QuickActionItem("New Stock Adjustment", "Record a stock adjustment", "M19 3H14.82C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z", QuickActionType.QuickAction, "Adjustments", "OpenAddModal"),
-            new QuickActionItem("New Accountant", "Add a new accountant", "M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z", QuickActionType.QuickAction, "Accountants", "OpenAddModal"),
-            new QuickActionItem("New Return", "Record a customer return", "M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z", QuickActionType.QuickAction, "Returns", "OpenAddModal"),
-            new QuickActionItem("New Transfer", "Create inventory transfer", "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z", QuickActionType.QuickAction, "Transfers", "OpenAddModal"),
+            new QuickActionItem("New Invoice", "Create a new invoice", Icons.Invoices, QuickActionType.QuickAction, "Invoices", "OpenAddModal"),
+            new QuickActionItem("New Expense", "Record a new expense", Icons.Expenses, QuickActionType.QuickAction, "Expenses", "OpenAddModal"),
+            new QuickActionItem("New Revenue", "Record a new revenue entry", Icons.Revenue, QuickActionType.QuickAction, "Revenue", "OpenAddModal"),
+            new QuickActionItem("Scan Receipt", "Scan and import a receipt using AI", Icons.ScanReceipt, QuickActionType.QuickAction, "Receipts", "OpenScanModal"),
+            new QuickActionItem("New Customer", "Add a new customer", Icons.NewCustomer, QuickActionType.QuickAction, "Customers", "OpenAddModal"),
+            new QuickActionItem("New Product", "Add a new product or service", Icons.NewProduct, QuickActionType.QuickAction, "Products", "OpenAddModal"),
+            new QuickActionItem("New Supplier", "Add a new supplier", Icons.Suppliers, QuickActionType.QuickAction, "Suppliers", "OpenAddModal"),
+            new QuickActionItem("Record Payment", "Record a payment received", Icons.Payments, QuickActionType.QuickAction, "Payments", "OpenAddModal"),
+            new QuickActionItem("New Rental Item", "Add a new rental item", Icons.NewRentalItem, QuickActionType.QuickAction, "RentalInventory", "OpenAddModal"),
+            new QuickActionItem("New Rental Record", "Create a new rental transaction", Icons.RentalRecords, QuickActionType.QuickAction, "RentalRecords", "OpenAddModal"),
+            new QuickActionItem("New Category", "Add a new category", Icons.Categories, QuickActionType.QuickAction, "Categories", "OpenAddModal"),
+            new QuickActionItem("New Location", "Add a new location", Icons.Locations, QuickActionType.QuickAction, "Locations", "OpenAddModal"),
+            new QuickActionItem("New Purchase Order", "Create a new purchase order", Icons.NewPurchaseOrder, QuickActionType.QuickAction, "PurchaseOrders", "OpenAddModal"),
+            new QuickActionItem("New Stock Adjustment", "Record a stock adjustment", Icons.NewStockAdjustment, QuickActionType.QuickAction, "Adjustments", "OpenAddModal"),
+            new QuickActionItem("New Accountant", "Add a new accountant", Icons.NewAccountant, QuickActionType.QuickAction, "Accountants", "OpenAddModal"),
+            new QuickActionItem("New Return", "Record a customer return", Icons.NewReturn, QuickActionType.QuickAction, "Returns", "OpenAddModal"),
+            new QuickActionItem("New Transfer", "Create inventory transfer", Icons.Transfers, QuickActionType.QuickAction, "Transfers", "OpenAddModal"),
         ]);
 
         // Navigation - Go to pages
         _allActions.AddRange([
             // Main
-            new QuickActionItem("Dashboard", "Go to Dashboard", "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z", QuickActionType.Navigation, "Dashboard"),
-            new QuickActionItem("Analytics", "View analytics and charts", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z", QuickActionType.Navigation, "Analytics"),
-            new QuickActionItem("Reports", "Generate and view reports", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z", QuickActionType.Navigation, "Reports"),
-            new QuickActionItem("Insights", "View business insights (Premium)", "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z", QuickActionType.Navigation, "Insights"),
+            new QuickActionItem("Dashboard", "Go to Dashboard", Icons.Dashboard, QuickActionType.Navigation, "Dashboard"),
+            new QuickActionItem("Analytics", "View analytics and charts", Icons.Analytics, QuickActionType.Navigation, "Analytics"),
+            new QuickActionItem("Reports", "Generate and view reports", Icons.Reports, QuickActionType.Navigation, "Reports"),
+            new QuickActionItem("Insights", "View business insights (Premium)", Icons.Insights, QuickActionType.Navigation, "Insights"),
 
             // Transactions
-            new QuickActionItem("Expenses", "View and manage expenses", "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z", QuickActionType.Navigation, "Expenses"),
-            new QuickActionItem("Revenue", "View and manage revenue", "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z", QuickActionType.Navigation, "Revenue"),
-            new QuickActionItem("Invoices", "Manage invoices", "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z", QuickActionType.Navigation, "Invoices"),
-            new QuickActionItem("Payments", "View payment records", "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2z", QuickActionType.Navigation, "Payments"),
-            new QuickActionItem("Receipts", "View and manage receipts", "M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z", QuickActionType.Navigation, "Receipts"),
-            new QuickActionItem("Purchase Orders", "Manage purchase orders", "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z", QuickActionType.Navigation, "PurchaseOrders"),
-            new QuickActionItem("Returns", "Manage returns", "M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z", QuickActionType.Navigation, "Returns"),
-            new QuickActionItem("Lost & Damaged", "Track lost and damaged items", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z", QuickActionType.Navigation, "LostDamaged"),
+            new QuickActionItem("Expenses", "View and manage expenses", Icons.Expenses, QuickActionType.Navigation, "Expenses"),
+            new QuickActionItem("Revenue", "View and manage revenue", Icons.Revenue, QuickActionType.Navigation, "Revenue"),
+            new QuickActionItem("Invoices", "Manage invoices", Icons.Invoices, QuickActionType.Navigation, "Invoices"),
+            new QuickActionItem("Payments", "View payment records", Icons.Payments, QuickActionType.Navigation, "Payments"),
+            new QuickActionItem("Receipts", "View and manage receipts", Icons.Receipts, QuickActionType.Navigation, "Receipts"),
+            new QuickActionItem("Purchase Orders", "Manage purchase orders", Icons.PurchaseOrders, QuickActionType.Navigation, "PurchaseOrders"),
+            new QuickActionItem("Returns", "Manage returns", Icons.Returns, QuickActionType.Navigation, "Returns"),
+            new QuickActionItem("Lost & Damaged", "Track lost and damaged items", Icons.LostDamaged, QuickActionType.Navigation, "LostDamaged"),
 
             // Contacts
-            new QuickActionItem("Customers", "Manage customers", "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z", QuickActionType.Navigation, "Customers"),
-            new QuickActionItem("Suppliers", "Manage suppliers", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z", QuickActionType.Navigation, "Suppliers"),
-            new QuickActionItem("Accountants", "Manage accountants", "M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z", QuickActionType.Navigation, "Accountants"),
+            new QuickActionItem("Customers", "Manage customers", Icons.Customers, QuickActionType.Navigation, "Customers"),
+            new QuickActionItem("Suppliers", "Manage suppliers", Icons.Suppliers, QuickActionType.Navigation, "Suppliers"),
+            new QuickActionItem("Accountants", "Manage accountants", Icons.Accountants, QuickActionType.Navigation, "Accountants"),
 
             // Inventory
-            new QuickActionItem("Products", "Manage products and services", "M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2z", QuickActionType.Navigation, "Products"),
-            new QuickActionItem("Stock Levels", "Monitor inventory levels", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z", QuickActionType.Navigation, "StockLevels"),
-            new QuickActionItem("Adjustments", "Manage stock adjustments", "M19 3H14.82C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z", QuickActionType.Navigation, "Adjustments"),
-            new QuickActionItem("Categories", "Manage categories", "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z", QuickActionType.Navigation, "Categories"),
-            new QuickActionItem("Locations", "Manage locations (Enterprise)", "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z", QuickActionType.Navigation, "Locations"),
-            new QuickActionItem("Transfers", "Manage inventory transfers (Enterprise)", "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z", QuickActionType.Navigation, "Transfers"),
+            new QuickActionItem("Products", "Manage products and services", Icons.Products, QuickActionType.Navigation, "Products"),
+            new QuickActionItem("Stock Levels", "Monitor inventory levels", Icons.StockLevels, QuickActionType.Navigation, "StockLevels"),
+            new QuickActionItem("Adjustments", "Manage stock adjustments", Icons.Adjustments, QuickActionType.Navigation, "Adjustments"),
+            new QuickActionItem("Categories", "Manage categories", Icons.Categories, QuickActionType.Navigation, "Categories"),
+            new QuickActionItem("Locations", "Manage locations (Enterprise)", Icons.Locations, QuickActionType.Navigation, "Locations"),
+            new QuickActionItem("Transfers", "Manage inventory transfers (Enterprise)", Icons.Transfers, QuickActionType.Navigation, "Transfers"),
 
             // Rentals
-            new QuickActionItem("Rental Inventory", "Manage rental items", "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2z", QuickActionType.Navigation, "RentalInventory"),
-            new QuickActionItem("Rental Records", "View rental transactions", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z", QuickActionType.Navigation, "RentalRecords"),
+            new QuickActionItem("Rental Inventory", "Manage rental items", Icons.RentalInventory, QuickActionType.Navigation, "RentalInventory"),
+            new QuickActionItem("Rental Records", "View rental transactions", Icons.RentalRecords, QuickActionType.Navigation, "RentalRecords"),
         ]);
 
         // Tools & Settings
         _allActions.AddRange([
-            new QuickActionItem("Settings", "Configure application settings", "M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z", QuickActionType.Tools, null, "OpenSettings"),
-            new QuickActionItem("Edit Company", "Edit company information", "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z", QuickActionType.Tools, null, "OpenEditCompany"),
-            new QuickActionItem("Check for Updates", "Check for application updates", "M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79 2.73 2.71 7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58 3.51-3.47 9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z", QuickActionType.Tools, null, "OpenCheckForUpdates"),
-            new QuickActionItem("Export Data", "Export your data", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z", QuickActionType.Tools, null, "OpenExport"),
-            new QuickActionItem("Import Data", "Import data from file", "M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z", QuickActionType.Tools, null, "OpenImport"),
-            new QuickActionItem("Help & Support", "Get help and documentation", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z", QuickActionType.Tools, null, "OpenHelp"),
-            new QuickActionItem("Keyboard Shortcuts", "View keyboard shortcuts", "M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z", QuickActionType.Tools, null, "OpenKeyboardShortcuts"),
+            new QuickActionItem("Settings", "Configure application settings", Icons.Settings, QuickActionType.Tools, null, "OpenSettings"),
+            new QuickActionItem("Edit Company", "Edit company information", Icons.EditCompany, QuickActionType.Tools, null, "OpenEditCompany"),
+            new QuickActionItem("Check for Updates", "Check for application updates", Icons.CheckForUpdates, QuickActionType.Tools, null, "OpenCheckForUpdates"),
+            new QuickActionItem("Export Data", "Export your data", Icons.ExportData, QuickActionType.Tools, null, "OpenExport"),
+            new QuickActionItem("Import Data", "Import data from file", Icons.ImportData, QuickActionType.Tools, null, "OpenImport"),
+            new QuickActionItem("Help & Support", "Get help and documentation", Icons.Help, QuickActionType.Tools, null, "OpenHelp"),
+            new QuickActionItem("Keyboard Shortcuts", "View keyboard shortcuts", Icons.KeyboardShortcuts, QuickActionType.Tools, null, "OpenKeyboardShortcuts"),
         ]);
     }
 

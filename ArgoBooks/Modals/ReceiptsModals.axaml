@@ -6,6 +6,7 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -35,7 +36,7 @@
                             <Button Grid.Column="1"
                                     Classes="icon-button"
                                     Command="{Binding CloseFilterModalCommand}">
-                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                <PathIcon Data="{x:Static icons:Icons.Close}"
                                           Width="20" Height="20" />
                             </Button>
                         </Grid>
@@ -189,7 +190,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
+                                <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
                                           Width="24" Height="24"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                                 <TextBlock Text="{loc:Loc 'AI Receipt Scanner'}"
@@ -219,7 +220,7 @@
                                         <Run Text="{loc:Loc ' scans this month'}" />
                                     </TextBlock>
                                     <!-- Warning icon when near limit -->
-                                    <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                    <PathIcon Data="{x:Static icons:Icons.LostDamaged}"
                                               Width="14" Height="14"
                                               Foreground="#CA8A04"
                                               IsVisible="{Binding IsNearLimit}"
@@ -229,7 +230,7 @@
                             <Button Grid.Column="2"
                                     Classes="icon-button"
                                     Command="{Binding CloseScanReviewModalCommand}">
-                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                <PathIcon Data="{x:Static icons:Icons.Close}"
                                           Width="20" Height="20" />
                             </Button>
                         </Grid>
@@ -373,7 +374,7 @@
                                                 </StackPanel>
                                             </StackPanel>
                                             <PathIcon Grid.Column="1"
-                                                      Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                      Data="{x:Static icons:Icons.Check}"
                                                       Width="24" Height="24"
                                                       Foreground="#16A34A"
                                                       VerticalAlignment="Center"
@@ -449,7 +450,7 @@
                                                     Classes="secondary-button"
                                                     Command="{Binding AddLineItemCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Add}"
                                                               Width="14" Height="14" />
                                                     <TextBlock Text="{loc:Loc 'Add Item'}" />
                                                 </StackPanel>
@@ -528,7 +529,7 @@
                                                                                 Padding="8,4"
                                                                                 Margin="4,0,0,0"
                                                                                 Cursor="Hand">
-                                                                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                                            <PathIcon Data="{x:Static icons:Icons.Close}"
                                                                                       Width="14" Height="14"
                                                                                       Foreground="#92400E" />
                                                                         </Button>
@@ -559,7 +560,7 @@
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                                     CommandParameter="{Binding}"
                                                                     ToolTip.Tip="{loc:Loc 'Remove item'}">
-                                                                <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                <PathIcon Data="{x:Static icons:Icons.Delete}"
                                                                           Width="14" Height="14" />
                                                             </Button>
                                                         </Grid>
@@ -770,7 +771,7 @@
                                     Classes="primary-button"
                                     Command="{Binding CreateExpenseCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                    <PathIcon Data="{x:Static icons:Icons.Check}"
                                               Width="16" Height="16" />
                                     <TextBlock Text="{loc:Loc 'Create Expense'}" />
                                 </StackPanel>

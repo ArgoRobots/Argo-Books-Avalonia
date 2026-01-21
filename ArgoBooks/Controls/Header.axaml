@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="60"
              x:Class="ArgoBooks.Controls.Header"
              x:DataType="vm:HeaderViewModel">
@@ -32,7 +33,7 @@
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <!-- Search Icon -->
                     <PathIcon Grid.Column="0"
-                              Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                              Data="{x:Static local:Icons.Search}"
                               Width="16" Height="16"
                               Foreground="{DynamicResource TextTertiaryBrush}"
                               Margin="15,0,10,0"
@@ -71,7 +72,7 @@
                 <Button Classes="header-icon"
                         Command="{Binding OpenFileMenuCommand}"
                         ToolTip.Tip="{loc:Loc File}">
-                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                    <PathIcon Data="{x:Static local:Icons.Reports}"
                               Width="18" Height="18" />
                 </Button>
 
@@ -85,7 +86,7 @@
                     <Button Classes="header-icon"
                             Command="{Binding SaveCommand}"
                             ToolTip.Tip="{loc:Loc Save}">
-                        <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
+                        <PathIcon Data="{x:Static local:Icons.Save}"
                                   Width="18" Height="18" />
                     </Button>
 
@@ -153,7 +154,7 @@
                         Command="{Binding OpenNotificationsCommand}"
                         ToolTip.Tip="{loc:Loc Notifications}">
                     <Panel>
-                        <PathIcon Data="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                        <PathIcon Data="{x:Static local:Icons.Notification}"
                                   Width="20" Height="20" />
                         <!-- Notification Badge -->
                         <Border Background="{DynamicResource DangerBrush}"
@@ -178,7 +179,7 @@
                 <Button Classes="header-icon"
                         Command="{Binding OpenHelpCommand}"
                         ToolTip.Tip="{loc:Loc Help}">
-                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                    <PathIcon Data="{x:Static local:Icons.Help}"
                               Width="20" Height="20" />
                 </Button>
 
@@ -186,7 +187,7 @@
                 <Button Classes="header-icon"
                         Command="{Binding OpenMyPlanCommand}"
                         ToolTip.Tip="{loc:Loc 'My Plan'}">
-                    <PathIcon Data="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 1z"
+                    <PathIcon Data="{x:Static local:Icons.Star}"
                               Width="20" Height="20" />
                 </Button>
 
@@ -194,7 +195,7 @@
                 <Button Classes="header-icon"
                         Command="{Binding OpenSettingsCommand}"
                         ToolTip.Tip="{loc:Loc Settings}">
-                    <PathIcon Data="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                    <PathIcon Data="{x:Static local:Icons.Settings}"
                               Width="20" Height="20" />
                 </Button>
 

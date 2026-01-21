@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="50"
              x:Class="ArgoBooks.Controls.UndoRedoButtonGroup"
              x:CompileBindings="False">
@@ -29,7 +30,7 @@
                         ToolTip.Tip="{Binding UndoTooltip}"
                         Command="{Binding UndoCommand}"
                         IsEnabled="{Binding CanUndo}">
-                    <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                    <PathIcon Data="{x:Static local:Icons.Returns}"
                               Width="15" Height="15" />
                 </Button>
 
@@ -107,7 +108,7 @@
                                             Tag="{Binding Index}">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
-                                                      Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                                      Data="{x:Static local:Icons.Returns}"
                                                       Width="12" Height="12"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,8,0" />
