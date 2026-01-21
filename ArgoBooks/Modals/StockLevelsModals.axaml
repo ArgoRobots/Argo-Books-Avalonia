@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -78,7 +79,8 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter quantity'}" />
+                                             Watermark="{loc:Loc 'Enter quantity'}"
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                 </StackPanel>
 
                                 <!-- New Stock Level -->
@@ -201,14 +203,16 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding AddItemQuantity, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="0" />
+                                             Watermark="0"
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding AddItemReorderPoint, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="10" />
+                                             Watermark="10"
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -217,7 +221,8 @@
                                 <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding AddItemOverstockThreshold, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="100" />
+                                         Watermark="100"
+                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                             </StackPanel>
 
                             <!-- Error Message -->

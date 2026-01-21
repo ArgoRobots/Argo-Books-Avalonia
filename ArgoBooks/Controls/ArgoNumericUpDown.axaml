@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              mc:Ignorable="d" d:DesignWidth="120" d:DesignHeight="32"
              x:Class="ArgoBooks.Controls.ArgoNumericUpDown"
              x:DataType="controls:ArgoNumericUpDown">
@@ -28,7 +29,8 @@
                      BorderThickness="0"
                      Padding="8,4"
                      VerticalAlignment="Center"
-                     VerticalContentAlignment="Center" />
+                     VerticalContentAlignment="Center"
+                     behaviors:NumericInputBehavior.IsDecimalOnly="True" />
 
             <!-- Vertically Stacked Up/Down Buttons -->
             <Grid Grid.Column="1" RowDefinitions="*,*" Width="20">

@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
@@ -92,7 +93,8 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding FilterAmountMin}"
-                                             Watermark="{loc:Loc '$0.00'}" />
+                                             Watermark="{loc:Loc '$0.00'}"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="8">
                                     <TextBlock Text="{loc:Loc 'Max Amount'}"
@@ -100,7 +102,8 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding FilterAmountMax}"
-                                             Watermark="{loc:Loc '$0.00'}" />
+                                             Watermark="{loc:Loc '$0.00'}"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -407,7 +410,8 @@
                                                 <TextBox Text="{Binding ExtractedTotal}"
                                                          Watermark="0.00"
                                                          Classes="form-input"
-                                                         BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
+                                                         BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                                 <TextBlock Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="#dc2626"
@@ -424,7 +428,8 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedSubtotal}"
                                                          Watermark="0.00"
-                                                         Classes="form-input" />
+                                                         Classes="form-input"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Tax'}"
@@ -433,7 +438,8 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedTax}"
                                                          Watermark="0.00"
-                                                         Classes="form-input" />
+                                                         Classes="form-input"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -540,12 +546,14 @@
                                                                      Text="{Binding Quantity}"
                                                                      HorizontalContentAlignment="Center"
                                                                      VerticalAlignment="Top"
-                                                                     Margin="0,0,8,0" />
+                                                                     Margin="0,0,8,0"
+                                                                     behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                                             <TextBox Grid.Column="2" Grid.Row="0"
                                                                      Text="{Binding UnitPrice}"
                                                                      HorizontalContentAlignment="Center"
                                                                      VerticalAlignment="Top"
-                                                                     Margin="0,0,8,0" />
+                                                                     Margin="0,0,8,0"
+                                                                     behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                                             <TextBlock Grid.Column="3" Grid.Row="0"
                                                                        Text="{Binding TotalPrice, StringFormat='${0}'}"
                                                                        FontSize="14"

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:local="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
@@ -75,7 +76,8 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="0.00" />
+                                         Watermark="0.00"
+                                         behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
                                            Foreground="#dc2626"
@@ -185,7 +187,8 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="0.00" />
+                                         Watermark="0.00"
+                                         behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
                                            Foreground="#dc2626"
@@ -331,9 +334,9 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Amount Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <Grid ColumnDefinitions="*,Auto,*">
-                                    <TextBox Grid.Column="0" Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc Min}" />
+                                    <TextBox Grid.Column="0" Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc Min}" behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Grid.Column="1" Text="{loc:Loc to}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                    <TextBox Grid.Column="2" Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc Max}" />
+                                    <TextBox Grid.Column="2" Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc Max}" behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>

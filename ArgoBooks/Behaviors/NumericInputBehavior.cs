@@ -8,6 +8,7 @@ namespace ArgoBooks.Behaviors;
 
 /// <summary>
 /// Attached behavior to restrict TextBox input to numeric values only.
+/// Uses KeyDown event to prevent non-numeric characters from being entered.
 /// </summary>
 public static partial class NumericInputBehavior
 {
@@ -39,10 +40,12 @@ public static partial class NumericInputBehavior
     {
         if (e.NewValue is true)
         {
+            textBox.AddHandler(InputElement.KeyDownEvent, OnIntegerKeyDown, RoutingStrategies.Tunnel);
             textBox.AddHandler(InputElement.TextInputEvent, OnIntegerTextInput, RoutingStrategies.Tunnel);
         }
         else
         {
+            textBox.RemoveHandler(InputElement.KeyDownEvent, OnIntegerKeyDown);
             textBox.RemoveHandler(InputElement.TextInputEvent, OnIntegerTextInput);
         }
     }
@@ -51,14 +54,91 @@ public static partial class NumericInputBehavior
     {
         if (e.NewValue is true)
         {
+            textBox.AddHandler(InputElement.KeyDownEvent, OnDecimalKeyDown, RoutingStrategies.Tunnel);
             textBox.AddHandler(InputElement.TextInputEvent, OnDecimalTextInput, RoutingStrategies.Tunnel);
         }
         else
         {
+            textBox.RemoveHandler(InputElement.KeyDownEvent, OnDecimalKeyDown);
             textBox.RemoveHandler(InputElement.TextInputEvent, OnDecimalTextInput);
         }
     }
 
+    private static void OnIntegerKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (IsAllowedControlKey(e))
+            return;
+
+        // Allow digits (both main keyboard and numpad)
+        if (IsDigitKey(e.Key))
+            return;
+
+        // Block all other keys
+        e.Handled = true;
+    }
+
+    private static void OnDecimalKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (IsAllowedControlKey(e))
+            return;
+
+        // Allow digits (both main keyboard and numpad)
+        if (IsDigitKey(e.Key))
+            return;
+
+        // Allow decimal point (period and numpad decimal)
+        if (e.Key == Key.OemPeriod || e.Key == Key.Decimal)
+        {
+            // Only allow if there's no decimal point already
+            if (sender is TextBox textBox)
+            {
+                var currentText = textBox.Text ?? string.Empty;
+                var selectionStart = textBox.SelectionStart;
+                var selectionEnd = textBox.SelectionEnd;
+
+                // Check if selection contains the decimal point
+                var selectedText = selectionEnd > selectionStart
+                    ? currentText.Substring(selectionStart, selectionEnd - selectionStart)
+                    : string.Empty;
+
+                // Allow if no existing decimal or the selection contains it
+                if (!currentText.Contains('.') || selectedText.Contains('.'))
+                    return;
+            }
+        }
+
+        // Block all other keys
+        e.Handled = true;
+    }
+
+    private static bool IsDigitKey(Key key)
+    {
+        return key >= Key.D0 && key <= Key.D9 ||
+               key >= Key.NumPad0 && key <= Key.NumPad9;
+    }
+
+    private static bool IsAllowedControlKey(KeyEventArgs e)
+    {
+        // Allow navigation and editing keys
+        if (e.Key == Key.Back || e.Key == Key.Delete ||
+            e.Key == Key.Left || e.Key == Key.Right ||
+            e.Key == Key.Home || e.Key == Key.End ||
+            e.Key == Key.Tab || e.Key == Key.Enter ||
+            e.Key == Key.Up || e.Key == Key.Down)
+            return true;
+
+        // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            if (e.Key == Key.A || e.Key == Key.C || e.Key == Key.V ||
+                e.Key == Key.X || e.Key == Key.Z)
+                return true;
+        }
+
+        return false;
+    }
+
+    // TextInput handlers as backup for paste operations
     private static void OnIntegerTextInput(object? sender, TextInputEventArgs e)
     {
         if (e.Text != null && !IntegerRegex().IsMatch(e.Text))
@@ -73,11 +153,21 @@ public static partial class NumericInputBehavior
             return;
 
         var currentText = textBox.Text ?? string.Empty;
-        var caretIndex = textBox.CaretIndex;
-        var selectionLength = textBox.SelectionEnd - textBox.SelectionStart;
+        var selectionStart = textBox.SelectionStart;
+        var selectionEnd = textBox.SelectionEnd;
+        var selectionLength = selectionEnd - selectionStart;
 
         // Build the resulting text
-        var newText = currentText.Substring(0, caretIndex - selectionLength) + e.Text + currentText.Substring(caretIndex);
+        string newText;
+        if (selectionLength > 0)
+        {
+            newText = currentText.Substring(0, selectionStart) + e.Text + currentText.Substring(selectionEnd);
+        }
+        else
+        {
+            var caretIndex = textBox.CaretIndex;
+            newText = currentText.Substring(0, caretIndex) + e.Text + currentText.Substring(caretIndex);
+        }
 
         // Check if the result would be a valid decimal
         if (!IsValidDecimalInput(newText))
