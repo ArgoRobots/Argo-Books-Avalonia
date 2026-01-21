@@ -192,59 +192,12 @@
                             <Border Grid.Row="0"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,0,0,1">
-                                <StackPanel Orientation="Horizontal" Margin="24,0">
-                                    <!-- Templates Tab -->
-                                    <Button Classes="tab-button"
-                                            Command="{Binding SetStep1TabCommand}"
-                                            CommandParameter="0">
-                                        <StackPanel>
-                                            <Panel>
-                                                <TextBlock Text="{loc:Loc 'Templates'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Padding="4,12,4,10"
-                                                           Foreground="{DynamicResource PrimaryBrush}"
-                                                           IsVisible="{Binding IsTemplatesTabSelected}" />
-                                                <TextBlock Text="{loc:Loc 'Templates'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Padding="4,12,4,10"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           IsVisible="{Binding !IsTemplatesTabSelected}" />
-                                            </Panel>
-                                            <Border Height="2"
-                                                    CornerRadius="1"
-                                                    Background="{DynamicResource PrimaryBrush}"
-                                                    IsVisible="{Binding IsTemplatesTabSelected}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Panel Width="16" />
-                                    <!-- Custom Tab -->
-                                    <Button Classes="tab-button"
-                                            Command="{Binding SetStep1TabCommand}"
-                                            CommandParameter="1">
-                                        <StackPanel>
-                                            <Panel>
-                                                <TextBlock Text="{loc:Loc 'Custom'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Padding="4,12,4,10"
-                                                           Foreground="{DynamicResource PrimaryBrush}"
-                                                           IsVisible="{Binding IsChartsTabSelected}" />
-                                                <TextBlock Text="{loc:Loc 'Custom'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Padding="4,12,4,10"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           IsVisible="{Binding !IsChartsTabSelected}" />
-                                            </Panel>
-                                            <Border Height="2"
-                                                    CornerRadius="1"
-                                                    Background="{DynamicResource PrimaryBrush}"
-                                                    IsVisible="{Binding IsChartsTabSelected}" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
+                                <TabControl SelectedIndex="{Binding Step1TabIndex}"
+                                            Margin="0"
+                                            Classes="page-tabs">
+                                    <TabItem Header="{loc:Loc 'Templates'}" />
+                                    <TabItem Header="{loc:Loc 'Custom'}" />
+                                </TabControl>
                             </Border>
 
                             <!-- Tab Content (Scrollable) -->
@@ -1746,6 +1699,52 @@
     </Panel>
 
     <UserControl.Styles>
+        <!-- TabControl - page tabs styling -->
+        <Style Selector="TabControl.page-tabs">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ ItemsPresenter#PART_ItemsPresenter">
+            <Setter Property="Margin" Value="24,0" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ Border#PART_InnerBorder">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ ContentPresenter#PART_SelectedContentHost">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Tab Item Styling -->
+        <Style Selector="TabControl.page-tabs TabItem">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Padding" Value="4,12,4,10" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="IsVisible" Value="True" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Height" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="CornerRadius" Value="1" />
+        </Style>
+
         <!-- Toolbox Button -->
         <Style Selector="Button.toolbox-button">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -1759,20 +1758,6 @@
         </Style>
         <Style Selector="Button.toolbox-button:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
-        <!-- Tab Button (for main navigation tabs - transparent) -->
-        <Style Selector="Button.tab-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
         </Style>
 
         <!-- Property Tab Button (for properties panel tabs - with background) -->
