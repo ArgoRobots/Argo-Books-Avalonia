@@ -1348,15 +1348,29 @@ public class ReportRenderer : IDisposable
 
         var headerRowHeight = table.HeaderRowHeight * _renderScale;
         var dataRowHeight = table.DataRowHeight * _renderScale;
+        var titleRowHeight = headerRowHeight; // Title uses same height as header
 
         // Create fonts using table's font settings
+        var titleTypeface = SKTypeface.FromFamilyName(table.TitleFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
         var headerTypeface = SKTypeface.FromFamilyName(table.HeaderFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
         var dataTypeface = SKTypeface.FromFamilyName(table.FontFamily) ?? _defaultTypeface;
+        using var titleFont = new SKFont(titleTypeface, (float)table.TitleFontSize * _renderScale);
         using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
         using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
 
+        // Get text alignment
+        var textAlign = table.TextAlignment switch
+        {
+            HorizontalTextAlignment.Left => SKTextAlign.Left,
+            HorizontalTextAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Center
+        };
+        var cellPadding = table.CellPadding * _renderScale;
+
         // Calculate available height for data rows
         var availableHeight = rect.Height;
+        if (table.ShowTitle)
+            availableHeight -= titleRowHeight;
         if (table.ShowHeaders)
             availableHeight -= headerRowHeight;
         if (table.ShowTotalsRow)
@@ -1365,13 +1379,14 @@ public class ReportRenderer : IDisposable
         // Calculate max rows that fit in available space
         var maxRowsByHeight = (int)Math.Floor(availableHeight / dataRowHeight);
         var maxRowsSetting = table.MaxRows > 0 ? table.MaxRows : int.MaxValue;
-        var dataRowCount = Math.Min(Math.Min(tableData.Count, maxRowsSetting), maxRowsByHeight);
+        var dataRowCount = Math.Min(Math.Min(tableData.Count, maxRowsSetting), Math.Max(0, maxRowsByHeight));
 
         // Calculate column widths
         var columnWidths = CalculateColumnWidths(table, columns, tableData, rect.Width, headerFont, dataFont);
 
         // Calculate actual table height (constrained to element bounds)
-        var actualHeight = (table.ShowHeaders ? headerRowHeight : 0) +
+        var actualHeight = (table.ShowTitle ? titleRowHeight : 0) +
+                          (table.ShowHeaders ? headerRowHeight : 0) +
                           (dataRowCount * dataRowHeight) +
                           (table.ShowTotalsRow ? headerRowHeight : 0);
         actualHeight = Math.Min(actualHeight, rect.Height);
@@ -1381,6 +1396,34 @@ public class ReportRenderer : IDisposable
         canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
 
         var currentY = rect.Top;
+
+        // Draw title row
+        if (table.ShowTitle)
+        {
+            var titleRect = new SKRect(rect.Left, currentY, rect.Right, currentY + titleRowHeight);
+            var titleFill = new SKPaint { Color = ParseColor(table.TitleBackgroundColor), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(titleRect, titleFill);
+
+            // Build title text
+            var titleText = BuildTableTitle(table);
+
+            using var titleTextPaint = new SKPaint();
+            titleTextPaint.Color = SKColors.White;
+            titleTextPaint.IsAntialias = true;
+
+            var x = titleRect.MidX;
+            var y = titleRect.MidY + (float)(table.TitleFontSize * _renderScale) / 3;
+            canvas.DrawText(titleText, x, y, SKTextAlign.Center, titleFont, titleTextPaint);
+
+            // Draw title bottom border
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, titleRect.Bottom, rect.Right, titleRect.Bottom, gridPaint);
+            }
+
+            currentY += titleRowHeight;
+        }
 
         // Draw header row
         if (table.ShowHeaders)
@@ -1398,9 +1441,9 @@ public class ReportRenderer : IDisposable
             for (int i = 0; i < columns.Count; i++)
             {
                 var colWidth = columnWidths[i];
-                var x = colX + (colWidth / 2);
                 var y = headerRect.MidY + (float)(table.HeaderFontSize * _renderScale) / 3;
-                canvas.DrawText(columns[i], x, y, SKTextAlign.Center, headerFont, headerTextPaint);
+                var truncatedText = TruncateText(columns[i], colWidth - cellPadding * 2, headerFont);
+                DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, headerFont, headerTextPaint);
 
                 // Draw vertical grid line
                 if (table.ShowGridLines && i > 0)
@@ -1445,9 +1488,9 @@ public class ReportRenderer : IDisposable
             {
                 var colWidth = columnWidths[colIndex];
                 var cellText = colIndex < rowData.Count ? rowData[colIndex] : "";
-                var x = colX + (colWidth / 2);
                 var y = rowRect.MidY + (float)(table.FontSize * _renderScale) / 3;
-                canvas.DrawText(cellText, x, y, SKTextAlign.Center, dataFont, dataTextPaint);
+                var truncatedText = TruncateText(cellText, colWidth - cellPadding * 2, dataFont);
+                DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, dataFont, dataTextPaint);
 
                 // Draw vertical grid line
                 if (table.ShowGridLines && colIndex > 0)
@@ -1487,7 +1530,6 @@ public class ReportRenderer : IDisposable
             for (int i = 0; i < columns.Count; i++)
             {
                 var colWidth = columnWidths[i];
-                var x = colX + (colWidth / 2);
                 var y = totalsRect.MidY + (float)(table.HeaderFontSize * _renderScale) / 3;
 
                 string cellText;
@@ -1498,7 +1540,8 @@ public class ReportRenderer : IDisposable
                 else
                     cellText = "";
 
-                canvas.DrawText(cellText, x, y, SKTextAlign.Center, headerFont, totalsTextPaint);
+                var truncatedText = TruncateText(cellText, colWidth - cellPadding * 2, headerFont);
+                DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, headerFont, totalsTextPaint);
 
                 // Draw vertical grid line
                 if (table.ShowGridLines && i > 0)
@@ -1516,6 +1559,74 @@ public class ReportRenderer : IDisposable
         // Draw outer border
         _borderPaint.Color = ParseColor(table.GridLineColor);
         canvas.DrawRect(tableRect, _borderPaint);
+    }
+
+    private string BuildTableTitle(TableReportElement table)
+    {
+        var parts = new List<string>();
+
+        // Transaction type
+        var typeText = table.TransactionType switch
+        {
+            TransactionType.Revenue => Tr("Revenue"),
+            TransactionType.Expenses => Tr("Expenses"),
+            _ => Tr("Revenue & Expenses")
+        };
+        parts.Add(typeText);
+
+        // Include returns/losses
+        var inclusions = new List<string>();
+        if (table.IncludeReturns)
+            inclusions.Add(Tr("Returns"));
+        if (table.IncludeLosses)
+            inclusions.Add(Tr("Losses"));
+
+        if (inclusions.Count > 0)
+            parts.Add("(" + Tr("incl.") + " " + string.Join(", ", inclusions) + ")");
+
+        return string.Join(" ", parts);
+    }
+
+    private void DrawAlignedText(SKCanvas canvas, string text, float colX, float colWidth, float y, float padding, SKTextAlign align, SKFont font, SKPaint paint)
+    {
+        float x = align switch
+        {
+            SKTextAlign.Left => colX + padding,
+            SKTextAlign.Right => colX + colWidth - padding,
+            _ => colX + colWidth / 2
+        };
+        canvas.DrawText(text, x, y, align, font, paint);
+    }
+
+    private string TruncateText(string text, float maxWidth, SKFont font)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        var textWidth = font.MeasureText(text);
+        if (textWidth <= maxWidth)
+            return text;
+
+        const string ellipsis = "...";
+        var ellipsisWidth = font.MeasureText(ellipsis);
+
+        if (maxWidth <= ellipsisWidth)
+            return ellipsis;
+
+        // Binary search for the right length
+        var availableWidth = maxWidth - ellipsisWidth;
+        var length = text.Length;
+
+        while (length > 0)
+        {
+            var truncated = text[..length];
+            var width = font.MeasureText(truncated);
+            if (width <= availableWidth)
+                return truncated + ellipsis;
+            length--;
+        }
+
+        return ellipsis;
     }
 
     private Dictionary<string, string> CalculateTableTotals(List<List<string>> tableData, List<string> columns, int rowCount)

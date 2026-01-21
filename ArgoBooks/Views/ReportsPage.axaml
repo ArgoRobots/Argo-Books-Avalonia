@@ -1308,11 +1308,43 @@
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedTableElement.ShowTitle}" />
                                     <CheckBox Content="{loc:Loc 'Show Headers'}" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
                                     <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
                                     <CheckBox Content="{loc:Loc 'Show Totals Row'}" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
                                     <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
                                     <CheckBox Content="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+
+                                    <TextBlock Text="{loc:Loc 'Text Alignment'}"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <ComboBox ItemsSource="{Binding HorizontalAlignments}"
+                                              SelectedItem="{Binding SelectedTableElement.TextAlignment}"
+                                              HorizontalAlignment="Stretch" />
+
+                                    <TextBlock Text="{loc:Loc 'Title'}"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.TitleFontSize}" Minimum="6" Maximum="24" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding FontFamilies}"
+                                                      SelectedItem="{Binding SelectedTableElement.TitleFontFamily}"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Title Background'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleBackgroundColor, Mode=TwoWay}" />
+                                    </StackPanel>
 
                                     <TextBlock Text="{loc:Loc 'Header Font'}"
                                                FontSize="11"
