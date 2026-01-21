@@ -5,6 +5,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="50"
              x:Class="ArgoBooks.Controls.PaginationFooter"
              x:DataType="controls:PaginationFooter"
@@ -53,7 +54,7 @@
                 <Button Classes="pagination-button"
                         Command="{Binding #Root.GoToPreviousPageCommand}"
                         IsEnabled="{Binding #Root.CanGoToPreviousPage}">
-                    <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
                               Width="16" Height="16" />
                 </Button>
 
@@ -85,7 +86,7 @@
                 <Button Classes="pagination-button"
                         Command="{Binding #Root.GoToNextPageCommand}"
                         IsEnabled="{Binding #Root.CanGoToNextPage}">
-                    <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
                               Width="16" Height="16" />
                 </Button>
             </StackPanel>

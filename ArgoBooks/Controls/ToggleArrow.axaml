@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="24" d:DesignHeight="24"
              x:Class="ArgoBooks.Controls.ToggleArrow"
              x:DataType="controls:ToggleArrow"
@@ -10,7 +11,7 @@
 
     <!-- Left-pointing chevron arrow (Material Design chevron_left) -->
     <PathIcon x:Name="ArrowIcon"
-              Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+              Data="{x:Static local:Icons.ChevronLeft}"
               Width="{Binding IconSize, ElementName=Root}"
               Height="{Binding IconSize, ElementName=Root}"
               Foreground="{Binding Foreground, ElementName=Root}" />

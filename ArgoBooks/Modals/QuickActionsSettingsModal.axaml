@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.QuickActionsSettingsModal"
              x:DataType="vm:QuickActionsSettingsModalViewModel">
@@ -88,7 +89,7 @@
                                 Classes="icon-button"
                                 VerticalAlignment="Top"
                                 Command="{Binding CloseCommand}">
-                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                            <PathIcon Data="{x:Static local:Icons.Close}"
                                       Width="16" Height="16" />
                         </Button>
                     </Grid>
@@ -113,7 +114,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                        <PathIcon Data="{x:Static local:Icons.Invoices}"
                                                   Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -161,7 +162,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource InfoIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
+                                        <PathIcon Data="{x:Static local:Icons.ScanReceipt}"
                                                   Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -186,7 +187,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                                        <PathIcon Data="{x:Static local:Icons.NewCustomer}"
                                                   Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -227,7 +228,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource SuccessIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"
+                                        <PathIcon Data="{x:Static local:Icons.NewProduct}"
                                                   Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -243,7 +244,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource SuccessIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                        <PathIcon Data="{x:Static local:Icons.Payments}"
                                                   Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -268,7 +269,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource InfoIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z"
+                                        <PathIcon Data="{x:Static local:Icons.NewRentalItem}"
                                                   Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -284,7 +285,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource InfoIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"
+                                        <PathIcon Data="{x:Static local:Icons.RentalRecords}"
                                                   Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -325,7 +326,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
+                                        <PathIcon Data="{x:Static local:Icons.Departments}"
                                                   Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -341,7 +342,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                                        <PathIcon Data="{x:Static local:Icons.Locations}"
                                                   Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -366,7 +367,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z"
+                                        <PathIcon Data="{x:Static local:Icons.NewPurchaseOrder}"
                                                   Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -382,7 +383,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M19 3H14.82C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                        <PathIcon Data="{x:Static local:Icons.NewStockAdjustment}"
                                                   Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">

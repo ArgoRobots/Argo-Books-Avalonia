@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.UpgradeModal"
              x:DataType="vm:UpgradeModalViewModel">
@@ -39,7 +40,7 @@
                             <Button Grid.Column="1"
                                     Classes="icon-button"
                                     Command="{Binding CloseCommand}">
-                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                <PathIcon Data="{x:Static local:Icons.Close}"
                                           Width="20" Height="20" />
                             </Button>
                         </Grid>
@@ -63,7 +64,7 @@
                                                         <GradientStop Color="#f59e0b" Offset="1" />
                                                     </LinearGradientBrush>
                                                 </Border.Background>
-                                                <PathIcon Data="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 1z"
+                                                <PathIcon Data="{x:Static local:Icons.Star}"
                                                           Width="24" Height="24"
                                                           Foreground="White" />
                                             </Border>
@@ -116,7 +117,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -126,7 +127,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -136,7 +137,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -146,7 +147,7 @@
                                         <Border Classes="feature-item" BorderThickness="0">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -222,7 +223,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -232,7 +233,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -242,7 +243,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -252,7 +253,7 @@
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -262,7 +263,7 @@
                                         <Border Classes="feature-item" BorderThickness="0">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
-                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
@@ -387,7 +388,7 @@
                                         Command="{Binding VerifyKeyCommand}"
                                         IsEnabled="{Binding !IsVerifying}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                        <PathIcon Data="{x:Static local:Icons.Check}"
                                                   Width="16" Height="16"
                                                   IsVisible="{Binding !IsVerifying}" />
                                         <TextBlock Text="{loc:Loc 'Verify Key'}" IsVisible="{Binding !IsVerifying}" />
@@ -440,7 +441,7 @@
                                 <Border.RenderTransform>
                                     <ScaleTransform ScaleX="0" ScaleY="0" />
                                 </Border.RenderTransform>
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                <PathIcon Data="{x:Static local:Icons.Check}"
                                           Width="48" Height="48"
                                           Foreground="White"
                                           HorizontalAlignment="Center"

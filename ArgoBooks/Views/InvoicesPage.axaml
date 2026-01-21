@@ -6,6 +6,7 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InvoicesPage"
              x:DataType="vm:InvoicesPageViewModel">
@@ -43,19 +44,19 @@
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'Total Outstanding'}"
                                    Value="{Binding TotalOutstanding}"
-                                   Icon="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                   Icon="{x:Static icons:Icons.Invoices}"
                                    IconColor="Primary" />
                 <controls:StatCard Label="{loc:Loc 'Paid This Month'}"
                                    Value="{Binding PaidThisMonth}"
-                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                   Icon="{x:Static icons:Icons.CircleCheck}"
                                    IconColor="Success" />
                 <controls:StatCard Label="{loc:Loc Overdue}"
                                    Value="{Binding OverdueAmount}"
-                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                   Icon="{x:Static icons:Icons.Info}"
                                    IconColor="Danger" />
                 <controls:StatCard Label="{loc:Loc 'Due This Week'}"
                                    Value="{Binding DueThisWeekCount}"
-                                   Icon="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                   Icon="{x:Static icons:Icons.Clock}"
                                    IconColor="Info" />
             </controls:StatCardsRow>
 
@@ -93,7 +94,7 @@
                                         MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}">
                                     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                         <PathIcon Grid.Column="0"
-                                                  Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                                  Data="{x:Static icons:Icons.Search}"
                                                   Width="16" Height="16"
                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
@@ -126,7 +127,7 @@
                                         Command="{Binding OpenCreateModalCommand}"
                                         ToolTip.Tip="{loc:Loc 'Create Invoice'}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                        <PathIcon Data="{x:Static icons:Icons.Add}"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
                                         <TextBlock Text="{loc:Loc 'Create Invoice'}"
@@ -367,7 +368,7 @@
                                                                         IsVisible="{Binding CanEdit}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
                                                                         CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button"
@@ -381,7 +382,7 @@
                                                                         ToolTip.Tip="{loc:Loc Delete}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                             </StackPanel>
@@ -402,7 +403,7 @@
                                                     CornerRadius="32"
                                                     Background="{DynamicResource SurfaceAltBrush}"
                                                     HorizontalAlignment="Center">
-                                                <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                <PathIcon Data="{x:Static icons:Icons.Invoices}"
                                                           Width="28" Height="28"
                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                                             </Border>
@@ -423,7 +424,7 @@
                                                     Margin="0,8,0,0"
                                                     Command="{Binding OpenCreateModalCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                    <PathIcon Data="{x:Static icons:Icons.Add}"
                                                               Width="16" Height="16"
                                                               Foreground="White" />
                                                     <TextBlock Text="{loc:Loc 'Create Invoice'}" />
@@ -477,7 +478,7 @@
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToPreviousPageCommand}"
                                         IsEnabled="{Binding CanGoToPreviousPage}">
-                                    <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
                                               Width="16" Height="16" />
                                 </Button>
 
@@ -509,7 +510,7 @@
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToNextPageCommand}"
                                         IsEnabled="{Binding CanGoToNextPage}">
-                                    <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
                                               Width="16" Height="16" />
                                 </Button>
                             </StackPanel>

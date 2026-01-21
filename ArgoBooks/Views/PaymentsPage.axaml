@@ -6,6 +6,7 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.PaymentsPage"
              x:DataType="vm:PaymentsPageViewModel">
@@ -30,15 +31,15 @@
                                    IconColor="Success" />
                 <controls:StatCard Label="{loc:Loc 'Transactions'}"
                                    Value="{Binding TotalTransactions}"
-                                   Icon="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                   Icon="{x:Static icons:Icons.Payments}"
                                    IconColor="Primary" />
                 <controls:StatCard Label="{loc:Loc 'Pending'}"
                                    Value="{Binding PendingPayments}"
-                                   Icon="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                   Icon="{x:Static icons:Icons.Refresh}"
                                    IconColor="Info" />
                 <controls:StatCard Label="{loc:Loc 'Refunds'}"
                                    Value="{Binding RefundedPayments}"
-                                   Icon="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                   Icon="{x:Static icons:Icons.Returns}"
                                    IconColor="Warning" />
             </controls:StatCardsRow>
 
@@ -58,7 +59,7 @@
                             Background="{DynamicResource PrimaryIconBgBrush}"
                             Margin="0,0,16,0"
                             VerticalAlignment="Center">
-                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                        <PathIcon Data="{x:Static icons:Icons.Globe}"
                                   Width="24" Height="24"
                                   Foreground="{DynamicResource PrimaryBrush}" />
                     </Border>
@@ -85,7 +86,7 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    TextWrapping="Wrap" />
                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                            <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                            <PathIcon Data="{x:Static icons:Icons.Clock}"
                                       Width="14" Height="14"
                                       VerticalAlignment="Center"
                                       Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -105,7 +106,7 @@
                                 Command="{Binding SyncPortalCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Classes.sync-spinning="{Binding IsSyncing}"
-                                          Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                          Data="{x:Static icons:Icons.Refresh}"
                                           Width="16" Height="16"
                                           RenderTransformOrigin="50%,50%">
                                     <PathIcon.RenderTransform>
@@ -162,7 +163,7 @@
                                         MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}">
                                     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                         <PathIcon Grid.Column="0"
-                                                  Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                                  Data="{x:Static icons:Icons.Search}"
                                                   Width="16" Height="16"
                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
@@ -194,7 +195,7 @@
                                         Command="{Binding OpenAddModalCommand}"
                                         ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc 'Record Payment'}}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                        <PathIcon Data="{x:Static icons:Icons.Add}"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
                                         <TextBlock Text="{loc:Loc 'Record Payment'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
@@ -422,14 +423,14 @@
                                                                     ToolTip.Tip="{loc:Loc 'Edit'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).OpenEditModalCommand}"
                                                                     CommandParameter="{Binding}">
-                                                                <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                <PathIcon Data="{x:Static icons:Icons.Edit}"
                                                                           Width="16" Height="16" />
                                                             </Button>
                                                             <Button Classes="icon-button danger"
                                                                     ToolTip.Tip="{loc:Loc 'Delete'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                     CommandParameter="{Binding}">
-                                                                <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                <PathIcon Data="{x:Static icons:Icons.Delete}"
                                                                           Width="16" Height="16" />
                                                             </Button>
                                                         </StackPanel>
@@ -450,7 +451,7 @@
                                                 CornerRadius="32"
                                                 Background="{DynamicResource SurfaceAltBrush}"
                                                 HorizontalAlignment="Center">
-                                            <PathIcon Data="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                            <PathIcon Data="{x:Static icons:Icons.Payments}"
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>
@@ -471,7 +472,7 @@
                                                 Margin="0,8,0,0"
                                                 Command="{Binding OpenAddModalCommand}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                <PathIcon Data="{x:Static icons:Icons.Add}"
                                                           Width="16" Height="16"
                                                           Foreground="White" />
                                                 <TextBlock Text="{loc:Loc 'Record Payment'}" />
@@ -525,7 +526,7 @@
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToPreviousPageCommand}"
                                         IsEnabled="{Binding CanGoToPreviousPage}">
-                                    <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
                                               Width="16" Height="16" />
                                 </Button>
 
@@ -557,7 +558,7 @@
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToNextPageCommand}"
                                         IsEnabled="{Binding CanGoToNextPage}">
-                                    <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
                                               Width="16" Height="16" />
                                 </Button>
                             </StackPanel>

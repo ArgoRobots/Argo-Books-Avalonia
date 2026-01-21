@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="400"
              x:Class="ArgoBooks.Panels.CompanySwitcherPanel"
              x:DataType="vm:CompanySwitcherPanelViewModel">
@@ -109,7 +110,7 @@
                                     ToolTip.Tip="{loc:Loc 'Edit Company'}"
                                     VerticalAlignment="Center"
                                     Margin="8,0,8,0">
-                                <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                <PathIcon Data="{x:Static local:Icons.Edit}"
                                           Width="14" Height="14" />
                             </Button>
 
@@ -119,7 +120,7 @@
                                     CornerRadius="12"
                                     Background="{DynamicResource SuccessBrush}"
                                     VerticalAlignment="Center">
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                <PathIcon Data="{x:Static local:Icons.Check}"
                                           Width="14" Height="14"
                                           Foreground="White" />
                             </Border>
@@ -194,7 +195,7 @@
                                     CornerRadius="8"
                                     Background="{DynamicResource PrimaryBrush}"
                                     Margin="0,0,12,0">
-                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                <PathIcon Data="{x:Static local:Icons.Add}"
                                           Width="18" Height="18"
                                           Foreground="White" />
                             </Border>
@@ -219,7 +220,7 @@
                                     CornerRadius="8"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Margin="0,0,12,0">
-                                <PathIcon Data="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+                                <PathIcon Data="{x:Static local:Icons.Folder}"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Border>

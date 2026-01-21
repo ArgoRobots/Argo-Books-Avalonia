@@ -7,6 +7,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:reports="using:ArgoBooks.Controls.Reports"
              xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:local="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.ReportsPage"
@@ -39,7 +40,7 @@
                                 IsVisible="{Binding IsStep1Active}">
                             <Panel>
                                 <!-- Show checkmark only if completed AND not currently on step 1 -->
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                <PathIcon Data="{x:Static local:Icons.Check}"
                                           Width="16" Height="16"
                                           Foreground="White"
                                           IsVisible="{Binding IsStep1CompletedAndPast}" />
@@ -84,7 +85,7 @@
                                 IsVisible="{Binding IsStep2Active}">
                             <Panel>
                                 <!-- Show checkmark only if completed AND not currently on step 2 -->
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                <PathIcon Data="{x:Static local:Icons.Check}"
                                           Width="16" Height="16"
                                           Foreground="White"
                                           IsVisible="{Binding IsStep2CompletedAndPast}" />
@@ -910,7 +911,7 @@
                                 </Transitions>
                             </Border.Transitions>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                <PathIcon Data="{x:Static local:Icons.Check}"
                                           Width="16" Height="16"
                                           Foreground="White" />
                                 <TextBlock Text="{loc:Loc 'Saved'}"
@@ -1673,7 +1674,7 @@
                         Command="{Binding ExportReportCommand}"
                         IsVisible="{Binding IsOnFinalStep}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                        <PathIcon Data="{x:Static local:Icons.Check}"
                                   Width="16" Height="16"
                                   Foreground="White" />
                         <TextBlock Text="{loc:Loc 'Create Report'}" />
