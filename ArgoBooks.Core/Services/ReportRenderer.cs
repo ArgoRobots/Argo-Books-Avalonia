@@ -1345,8 +1345,6 @@ public class ReportRenderer : IDisposable
 
         // Get table data
         var tableData = GetTableData(table, columns);
-        var maxRows = table.MaxRows > 0 ? table.MaxRows : 10;
-        var dataRowCount = Math.Min(tableData.Count, maxRows);
 
         var headerRowHeight = table.HeaderRowHeight * _renderScale;
         var dataRowHeight = table.DataRowHeight * _renderScale;
@@ -1357,12 +1355,27 @@ public class ReportRenderer : IDisposable
         using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
         using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
 
+        // Calculate available height for data rows
+        var availableHeight = rect.Height;
+        if (table.ShowHeaders)
+            availableHeight -= headerRowHeight;
+        if (table.ShowTotalsRow)
+            availableHeight -= headerRowHeight; // Totals row uses header row height
+
+        // Calculate max rows that fit in available space
+        var maxRowsByHeight = (int)Math.Floor(availableHeight / dataRowHeight);
+        var maxRowsSetting = table.MaxRows > 0 ? table.MaxRows : int.MaxValue;
+        var dataRowCount = Math.Min(Math.Min(tableData.Count, maxRowsSetting), maxRowsByHeight);
+
         // Calculate column widths
         var columnWidths = CalculateColumnWidths(table, columns, tableData, rect.Width, headerFont, dataFont);
 
-        // Calculate total height needed
-        var totalHeight = (table.ShowHeaders ? headerRowHeight : 0) + (dataRowCount * dataRowHeight);
-        var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + totalHeight);
+        // Calculate actual table height (constrained to element bounds)
+        var actualHeight = (table.ShowHeaders ? headerRowHeight : 0) +
+                          (dataRowCount * dataRowHeight) +
+                          (table.ShowTotalsRow ? headerRowHeight : 0);
+        actualHeight = Math.Min(actualHeight, rect.Height);
+        var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + actualHeight);
 
         // Draw table background for the entire element bounds (matching design canvas)
         canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
@@ -1456,9 +1469,88 @@ public class ReportRenderer : IDisposable
             currentY += dataRowHeight;
         }
 
+        // Draw totals row
+        if (table.ShowTotalsRow)
+        {
+            var totalsRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
+            var totalsFill = new SKPaint { Color = ParseColor(table.HeaderBackgroundColor), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(totalsRect, totalsFill);
+
+            // Calculate totals from displayed data
+            var totals = CalculateTableTotals(tableData, columns, dataRowCount);
+
+            using var totalsTextPaint = new SKPaint();
+            totalsTextPaint.Color = ParseColor(table.HeaderTextColor);
+            totalsTextPaint.IsAntialias = true;
+
+            float colX = rect.Left;
+            for (int i = 0; i < columns.Count; i++)
+            {
+                var colWidth = columnWidths[i];
+                var x = colX + (colWidth / 2);
+                var y = totalsRect.MidY + (float)(table.HeaderFontSize * _renderScale) / 3;
+
+                string cellText;
+                if (i == 0)
+                    cellText = Tr("Total");
+                else if (totals.TryGetValue(columns[i], out var total))
+                    cellText = total;
+                else
+                    cellText = "";
+
+                canvas.DrawText(cellText, x, y, SKTextAlign.Center, headerFont, totalsTextPaint);
+
+                // Draw vertical grid line
+                if (table.ShowGridLines && i > 0)
+                {
+                    var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                    canvas.DrawLine(colX, totalsRect.Top, colX, totalsRect.Bottom, gridPaint);
+                }
+
+                colX += colWidth;
+            }
+
+            currentY += headerRowHeight;
+        }
+
         // Draw outer border
         _borderPaint.Color = ParseColor(table.GridLineColor);
         canvas.DrawRect(tableRect, _borderPaint);
+    }
+
+    private Dictionary<string, string> CalculateTableTotals(List<List<string>> tableData, List<string> columns, int rowCount)
+    {
+        var totals = new Dictionary<string, string>();
+        var numericColumns = new HashSet<string> { "Qty", "Unit Price", "Total", "Shipping" };
+
+        for (int colIndex = 0; colIndex < columns.Count; colIndex++)
+        {
+            var colName = columns[colIndex];
+            if (!numericColumns.Contains(colName))
+                continue;
+
+            decimal sum = 0;
+            for (int rowIndex = 0; rowIndex < rowCount && rowIndex < tableData.Count; rowIndex++)
+            {
+                var row = tableData[rowIndex];
+                if (colIndex < row.Count)
+                {
+                    var text = row[colIndex];
+                    // Parse currency or number - remove currency symbols and commas
+                    var cleanText = text.Replace("$", "").Replace(",", "").Replace("€", "").Replace("£", "").Trim();
+                    if (decimal.TryParse(cleanText, out var value))
+                        sum += value;
+                }
+            }
+
+            // Format based on column type
+            if (colName == "Qty")
+                totals[colName] = sum.ToString("N0");
+            else
+                totals[colName] = FormatCurrency(sum);
+        }
+
+        return totals;
     }
 
     private float[] CalculateColumnWidths(TableReportElement table, List<string> columns, List<List<string>> tableData, float totalWidth, SKFont headerFont, SKFont dataFont)
