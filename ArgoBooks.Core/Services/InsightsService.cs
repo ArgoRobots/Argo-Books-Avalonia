@@ -886,36 +886,6 @@ public class InsightsService : IInsightsService
             });
         }
 
-        // Historical accuracy insight
-        var accuracyData = _forecastAccuracyService.GetAccuracyData(companyData);
-        if (accuracyData.ValidatedForecastCount > 0)
-        {
-            var accuracySeverity = accuracyData.AverageRevenueAccuracy >= 80
-                ? InsightSeverity.Success
-                : accuracyData.AverageRevenueAccuracy >= 60
-                    ? InsightSeverity.Info
-                    : InsightSeverity.Warning;
-
-            var trendNote = accuracyData.AccuracyTrend switch
-            {
-                AccuracyTrend.Improving => " Accuracy is improving over time.",
-                AccuracyTrend.Declining => " Note: accuracy has been declining recently.",
-                _ => ""
-            };
-
-            insights.Add(new InsightItem
-            {
-                Title = "Forecast Accuracy Tracking",
-                Description = $"Based on {accuracyData.ValidatedForecastCount} validated {(accuracyData.ValidatedForecastCount == 1 ? "forecast" : "forecasts")}, average accuracy is {accuracyData.AverageRevenueAccuracy:F0}%.{trendNote}",
-                Recommendation = accuracyData.AverageRevenueAccuracy < 70
-                    ? "More consistent data entry and longer history will improve forecast accuracy."
-                    : null,
-                Severity = accuracySeverity,
-                Category = InsightCategory.Forecast,
-                PercentageChange = (decimal)accuracyData.AverageRevenueAccuracy
-            });
-        }
-
         // Inventory depletion alert
         var inventoryAlerts = CheckInventoryDepletion(companyData, historicalRange);
         if (inventoryAlerts.Count > 0)
