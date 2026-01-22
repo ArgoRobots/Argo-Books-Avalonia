@@ -1122,6 +1122,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to export telemetry data");
+            App.AddNotification("Error".Translate(), "Failed to export telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
         }
         finally
         {
@@ -1164,6 +1165,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to delete telemetry data");
+            App.AddNotification("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
         }
         finally
         {
