@@ -284,7 +284,7 @@
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Center"
                                                 Command="{Binding CancelSubscriptionCommand}"
-                                                Content="{loc:Loc 'Cancel Subscription'}"
+                                                Content="{loc:Loc 'Manage Subscription'}"
                                                 IsVisible="{Binding ShowCancelPremium}" />
                                     </StackPanel>
                                 </Grid>
