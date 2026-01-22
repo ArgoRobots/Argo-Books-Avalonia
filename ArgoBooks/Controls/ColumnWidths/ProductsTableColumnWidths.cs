@@ -216,33 +216,48 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     {
         if (Math.Abs(_availableWidth - width) < 1) return;
 
+        var totalCurrentWidth = _columns.Values
+            .Where(IsColumnVisible)
+            .Sum(c => c.CurrentWidth) + 48;
+
         if (_hasManualOverflow)
         {
-            var visibleColumns = _columns.Values.Where(IsColumnVisible).ToList();
-            var totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
-            if (width < totalWidth + 50)
+            // Already in overflow state - check if we still need it
+            if (width < totalCurrentWidth + 50)
             {
-                MinimumTotalWidth = totalWidth;
+                // Still overflowing or close to it, maintain scroll state
+                _availableWidth = width;
+                MinimumTotalWidth = totalCurrentWidth;
                 NeedsHorizontalScroll = true;
                 return;
             }
+            // Enough space now (with buffer), can reset overflow state
             _hasManualOverflow = false;
+        }
+        else if (totalCurrentWidth > width)
+        {
+            // Window resize caused overflow - enable scrolling
+            _availableWidth = width;
+            _hasManualOverflow = true;
+            MinimumTotalWidth = totalCurrentWidth;
+            NeedsHorizontalScroll = true;
+            return;
         }
 
         _availableWidth = width;
         RecalculateWidths();
     }
 
-    public void ResizeColumn(string columnName, double delta)
+    public double ResizeColumn(string columnName, double delta)
     {
-        if (!_columns.TryGetValue(columnName, out var col)) return;
-        if (!IsColumnVisible(col) || col.IsFixed) return;
-        if (Math.Abs(delta) < 0.5) return;
+        if (!_columns.TryGetValue(columnName, out var col)) return 0;
+        if (!IsColumnVisible(col) || col.IsFixed) return 0;
+        if (Math.Abs(delta) < 0.5) return 0;
 
         var columnOrder = GetCurrentColumnOrder();
         var visibleColumns = columnOrder.Where(name => _columns.TryGetValue(name, out var c) && IsColumnVisible(c)).ToList();
         var columnIndex = visibleColumns.IndexOf(columnName);
-        if (columnIndex < 0) return;
+        if (columnIndex < 0) return 0;
 
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
         double totalCurrentWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth);
@@ -250,7 +265,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
         var newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, col.CurrentWidth + delta));
         var actualDelta = newColWidth - col.CurrentWidth;
-        if (Math.Abs(actualDelta) < 0.5) return;
+        if (Math.Abs(actualDelta) < 0.5) return 0;
 
         if (totalCurrentWidth + actualDelta > maxTotalWidth) _hasManualOverflow = true;
 
@@ -274,6 +289,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         }
 
         UpdateScrollState(visibleColumns);
+        return actualDelta;
     }
 
     private void UpdateScrollState(List<string> visibleColumns)

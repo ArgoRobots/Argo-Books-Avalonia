@@ -87,19 +87,32 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     {
         if (Math.Abs(_availableWidth - width) < 1) return;
 
+        var totalCurrentWidth = Columns.Values
+            .Where(c => c.IsVisible)
+            .Sum(c => c.CurrentWidth) + 48;
+
         if (_hasManualOverflow)
         {
-            var totalWidth = Columns.Values
-                .Where(c => c.IsVisible)
-                .Sum(c => c.CurrentWidth) + 48;
-
-            if (width < totalWidth + 50)
+            // Already in overflow state - check if we still need it
+            if (width < totalCurrentWidth + 50)
             {
-                MinimumTotalWidth = totalWidth;
+                // Still overflowing or close to it, maintain scroll state
+                _availableWidth = width;
+                MinimumTotalWidth = totalCurrentWidth;
                 NeedsHorizontalScroll = true;
                 return;
             }
+            // Enough space now (with buffer), can reset overflow state
             _hasManualOverflow = false;
+        }
+        else if (totalCurrentWidth > width)
+        {
+            // Window resize caused overflow - enable scrolling
+            _availableWidth = width;
+            _hasManualOverflow = true;
+            MinimumTotalWidth = totalCurrentWidth;
+            NeedsHorizontalScroll = true;
+            return;
         }
 
         _availableWidth = width;
@@ -109,18 +122,19 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     /// <summary>
     /// Adjusts a column width by a delta amount.
     /// </summary>
-    public void ResizeColumn(string columnName, double delta)
+    /// <returns>The actual delta that was applied (may be less than requested due to constraints).</returns>
+    public double ResizeColumn(string columnName, double delta)
     {
-        if (!Columns.TryGetValue(columnName, out var col)) return;
-        if (!col.IsVisible || col.IsFixed) return;
-        if (Math.Abs(delta) < 0.5) return;
+        if (!Columns.TryGetValue(columnName, out var col)) return 0;
+        if (!col.IsVisible || col.IsFixed) return 0;
+        if (Math.Abs(delta) < 0.5) return 0;
 
         var visibleColumns = ColumnOrder
             .Where(name => Columns.TryGetValue(name, out var c) && c.IsVisible)
             .ToList();
 
         var columnIndex = visibleColumns.IndexOf(columnName);
-        if (columnIndex < 0) return;
+        if (columnIndex < 0) return 0;
 
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
 
@@ -131,7 +145,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
         newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newColWidth));
         var actualDelta = newColWidth - col.CurrentWidth;
 
-        if (Math.Abs(actualDelta) < 0.5) return;
+        if (Math.Abs(actualDelta) < 0.5) return 0;
 
         if (totalCurrentWidth + actualDelta > maxTotalWidth)
         {
@@ -159,6 +173,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
         }
 
         UpdateScrollState(visibleColumns);
+        return actualDelta;
     }
 
     /// <summary>

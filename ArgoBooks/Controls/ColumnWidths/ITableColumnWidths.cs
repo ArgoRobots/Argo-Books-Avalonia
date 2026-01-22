@@ -12,8 +12,9 @@ public interface ITableColumnWidths
 
     /// <summary>
     /// Resize a column by a delta amount.
+    /// Returns the actual delta applied, which may be less than requested due to min/max constraints.
     /// </summary>
-    void ResizeColumn(string columnName, double delta);
+    double ResizeColumn(string columnName, double delta);
 
     /// <summary>
     /// Auto-size a column to fit content.
