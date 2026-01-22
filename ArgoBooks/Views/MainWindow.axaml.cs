@@ -126,6 +126,11 @@ public partial class MainWindow : Window
         if (_isClosingConfirmed)
         {
             SaveWindowState();
+            // End telemetry session and wait for upload to complete
+            if (App.TelemetryManager != null)
+            {
+                await App.TelemetryManager.EndSessionAsync();
+            }
             return;
         }
 
@@ -203,8 +208,16 @@ public partial class MainWindow : Window
         }
         else
         {
-            // No unsaved changes, just save window state
+            // No unsaved changes, but we need to wait for telemetry upload to complete
+            // Cancel close, do async work, then close
+            e.Cancel = true;
             SaveWindowState();
+            if (App.TelemetryManager != null)
+            {
+                await App.TelemetryManager.EndSessionAsync();
+            }
+            _isClosingConfirmed = true;
+            Close();
         }
     }
 
@@ -221,9 +234,6 @@ public partial class MainWindow : Window
 
             viewModel.SaveWindowState();
         }
-
-        // End telemetry session on app close
-        _ = App.TelemetryManager?.EndSessionAsync();
     }
 
     private void OnPositionChanged(object? sender, PixelPointEventArgs e)
