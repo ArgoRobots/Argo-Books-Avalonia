@@ -1238,7 +1238,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                     : GoogleSheetsService.ChartType.Column;
             }
 
-            var googleSheetsService = new GoogleSheetsService();
+            var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,

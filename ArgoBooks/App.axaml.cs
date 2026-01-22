@@ -345,7 +345,7 @@ public class App : Application
             _fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
             LicenseService = new LicenseService(encryptionService, SettingsService);
-            CompanyManager = new CompanyManager(_fileService, SettingsService, footerService);
+            CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
 
             // Initialize error logging and telemetry services
             var errorLogger = new ErrorLogger();
@@ -389,6 +389,12 @@ public class App : Application
 
             // Set navigation callback to update current page in AppShell
             NavigationService.SetNavigationCallback(page => _appShellViewModel.CurrentPage = page);
+
+            // Track page views for telemetry
+            NavigationService.Navigated += (_, args) =>
+            {
+                _ = TelemetryManager?.TrackPageViewAsync(args.PageName);
+            };
 
             // Set initial view
             _mainWindowViewModel.NavigateTo(appShell);
@@ -1192,7 +1198,7 @@ public class App : Application
                     return;
                 }
 
-                var importService = new SpreadsheetImportService();
+                var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
                 var sampleService = new SampleCompanyService(_fileService, importService);
                 sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
             }
@@ -1863,7 +1869,7 @@ public class App : Application
 
             try
             {
-                var importService = new SpreadsheetImportService();
+                var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
 
                 // First validate the import file
                 var validationResult = await importService.ValidateImportAsync(filePath, companyData);

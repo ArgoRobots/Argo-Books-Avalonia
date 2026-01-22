@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
@@ -16,15 +18,19 @@ public class AzureReceiptScannerService : IReceiptScannerService
     private DocumentAnalysisClient? _client;
     private string? _lastEndpoint;
     private string? _lastApiKey;
+    private readonly IErrorLogger? _errorLogger;
+    private readonly ITelemetryManager? _telemetryManager;
 
     /// <summary>
     /// Creates a new instance of the Azure receipt scanner service.
     /// Credentials are loaded from .env file.
     /// </summary>
-    public AzureReceiptScannerService()
+    public AzureReceiptScannerService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         // Ensure .env file is loaded
         DotEnv.Load();
+        _errorLogger = errorLogger;
+        _telemetryManager = telemetryManager;
     }
 
     /// <inheritdoc />
@@ -39,6 +45,9 @@ public class AzureReceiptScannerService : IReceiptScannerService
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
     {
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
+
         try
         {
             var client = GetOrCreateClient();
@@ -70,22 +79,28 @@ public class AzureReceiptScannerService : IReceiptScannerService
                 cancellationToken: cancellationToken);
 
             var result = operation.Value;
+            success = true;
+            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, cancellationToken: cancellationToken);
             return ParseAnalyzeResult(result);
         }
         catch (RequestFailedException ex) when (ex.Status == 401)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Authentication, "Azure Document Intelligence auth failed");
             return ReceiptScanResult.Failed("Invalid Azure API key. Please check your AZURE_DOCUMENT_INTELLIGENCE_API_KEY in .env file.");
         }
         catch (RequestFailedException ex) when (ex.Status == 403)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Authentication, "Azure Document Intelligence access denied");
             return ReceiptScanResult.Failed("Azure API access denied. Please verify your subscription and endpoint in .env file.");
         }
         catch (RequestFailedException ex) when (ex.Status == 429)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Azure Document Intelligence rate limited");
             return ReceiptScanResult.Failed("Azure API rate limit exceeded. Please try again later or upgrade your plan.");
         }
         catch (RequestFailedException ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Azure Document Intelligence API error");
             return ReceiptScanResult.Failed($"Azure API error: {ex.Message}");
         }
         catch (TaskCanceledException)
@@ -94,7 +109,17 @@ public class AzureReceiptScannerService : IReceiptScannerService
         }
         catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan failed");
             return ReceiptScanResult.Failed($"Failed to scan receipt: {ex.Message}");
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.AzureDocumentIntelligence,
+                stopwatch.ElapsedMilliseconds,
+                success,
+                cancellationToken: cancellationToken);
         }
     }
 

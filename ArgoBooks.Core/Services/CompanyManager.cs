@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
@@ -12,6 +13,7 @@ public class CompanyManager : IDisposable
     private readonly FileService _fileService;
     private readonly GlobalSettingsService _settingsService;
     private readonly FooterService _footerService;
+    private readonly IErrorLogger? _errorLogger;
 
     private string? _currentFilePath;
     private string? _currentTempDirectory;
@@ -142,11 +144,13 @@ public class CompanyManager : IDisposable
     public CompanyManager(
         FileService fileService,
         GlobalSettingsService settingsService,
-        FooterService footerService)
+        FooterService footerService,
+        IErrorLogger? errorLogger = null)
     {
         _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _footerService = footerService ?? throw new ArgumentNullException(nameof(footerService));
+        _errorLogger = errorLogger;
     }
 
     /// <summary>

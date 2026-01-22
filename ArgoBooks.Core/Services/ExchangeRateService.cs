@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Net.Http.Json;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
@@ -15,6 +17,8 @@ public class ExchangeRateService : IExchangeRateService
     private readonly ExchangeRateCache _cache;
     private readonly HttpClient _httpClient;
     private readonly string? _apiKey;
+    private readonly IErrorLogger? _errorLogger;
+    private readonly ITelemetryManager? _telemetryManager;
     private bool _isInitialized;
 
     /// <summary>
@@ -26,20 +30,24 @@ public class ExchangeRateService : IExchangeRateService
     /// Creates a new ExchangeRateService instance.
     /// </summary>
     /// <param name="apiKey">OpenExchangeRates API key. If null, will try to read from environment variable.</param>
-    public ExchangeRateService(string? apiKey = null)
-        : this(apiKey, PlatformServiceFactory.GetPlatformService(), new HttpClient())
+    /// <param name="errorLogger">Optional error logger for tracking errors.</param>
+    /// <param name="telemetryManager">Optional telemetry manager for tracking API calls.</param>
+    public ExchangeRateService(string? apiKey = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+        : this(apiKey, PlatformServiceFactory.GetPlatformService(), new HttpClient(), errorLogger, telemetryManager)
     {
     }
 
     /// <summary>
     /// Creates a new ExchangeRateService instance with custom dependencies.
     /// </summary>
-    public ExchangeRateService(string? apiKey, IPlatformService platformService, HttpClient httpClient)
+    public ExchangeRateService(string? apiKey, IPlatformService platformService, HttpClient httpClient, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _apiKey = apiKey ?? DotEnv.Get("OPENEXCHANGERATES_API_KEY");
         _httpClient = httpClient;
         _httpClient.Timeout = TimeSpan.FromSeconds(10);
         _cache = new ExchangeRateCache(platformService);
+        _errorLogger = errorLogger;
+        _telemetryManager = telemetryManager;
 
         Instance ??= this;
     }
@@ -222,6 +230,9 @@ public class ExchangeRateService : IExchangeRateService
             return null;
         }
 
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
+
         try
         {
             // Use historical endpoint for past dates, latest for today
@@ -233,15 +244,26 @@ public class ExchangeRateService : IExchangeRateService
             var response = await _httpClient.GetAsync(endpoint);
             if (!response.IsSuccessStatusCode)
             {
+                _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode}", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
                 return null;
             }
 
             var result = await response.Content.ReadFromJsonAsync<OpenExchangeRatesResponse>();
+            success = result?.Rates != null;
             return result?.Rates;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, $"Failed to fetch exchange rates for {date:yyyy-MM-dd}");
             return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.OpenExchangeRates,
+                stopwatch.ElapsedMilliseconds,
+                success);
         }
     }
 
