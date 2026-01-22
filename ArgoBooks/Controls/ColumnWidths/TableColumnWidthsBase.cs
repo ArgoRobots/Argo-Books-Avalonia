@@ -91,10 +91,23 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             .Where(c => c.IsVisible)
             .Sum(c => c.CurrentWidth) + 48;
 
-        // If current column widths overflow the available width, enable scrolling
-        // This handles both manual overflow and window resize causing overflow
-        if (totalCurrentWidth > width + 1)
+        if (_hasManualOverflow)
         {
+            // Already in overflow state - check if we still need it
+            if (width < totalCurrentWidth + 50)
+            {
+                // Still overflowing or close to it, maintain scroll state
+                _availableWidth = width;
+                MinimumTotalWidth = totalCurrentWidth;
+                NeedsHorizontalScroll = true;
+                return;
+            }
+            // Enough space now (with buffer), can reset overflow state
+            _hasManualOverflow = false;
+        }
+        else if (totalCurrentWidth > width)
+        {
+            // Window resize caused overflow - enable scrolling
             _availableWidth = width;
             _hasManualOverflow = true;
             MinimumTotalWidth = totalCurrentWidth;
@@ -102,8 +115,6 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             return;
         }
 
-        // We have enough space, reset overflow state
-        _hasManualOverflow = false;
         _availableWidth = width;
         RecalculateWidths();
     }
