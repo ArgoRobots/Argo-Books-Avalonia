@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -7,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -42,6 +44,16 @@ public class App : Application
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
+
+    /// <summary>
+    /// Gets the error logger instance for centralized error logging.
+    /// </summary>
+    public static IErrorLogger? ErrorLogger { get; private set; }
+
+    /// <summary>
+    /// Gets the telemetry manager instance for anonymous usage tracking.
+    /// </summary>
+    public static ITelemetryManager? TelemetryManager { get; private set; }
 
     /// <summary>
     /// Gets the shared undo/redo manager instance.
@@ -326,14 +338,30 @@ public class App : Application
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             DisableAvaloniaDataAnnotationValidation();
 
-            // Initialize services synchronously
+            // Initialize error logging first so it's available for all services
+            var errorLogger = new ErrorLogger();
+            ErrorLogger = errorLogger;
+
+            // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             _fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
-            LicenseService = new LicenseService(encryptionService, SettingsService);
-            CompanyManager = new CompanyManager(_fileService, SettingsService, footerService);
+            LicenseService = new LicenseService(encryptionService, SettingsService, errorLogger);
+            CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
+
+            // Initialize telemetry services
+            var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var geoLocationService = new GeoLocationService(httpClient, errorLogger);
+            var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
+            var telemetryUploadService = new TelemetryUploadService(telemetryStorageService, httpClient, errorLogger);
+            TelemetryManager = new TelemetryManager(
+                telemetryStorageService,
+                telemetryUploadService,
+                geoLocationService,
+                SettingsService,
+                errorLogger);
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -362,6 +390,12 @@ public class App : Application
 
             // Set navigation callback to update current page in AppShell
             NavigationService.SetNavigationCallback(page => _appShellViewModel.CurrentPage = page);
+
+            // Track page views for telemetry
+            NavigationService.Navigated += (_, args) =>
+            {
+                _ = TelemetryManager?.TrackPageViewAsync(args.PageName);
+            };
 
             // Set initial view
             _mainWindowViewModel.NavigateTo(appShell);
@@ -419,6 +453,7 @@ public class App : Application
                     }
                     catch (Exception ex)
                     {
+                        ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company on close");
                         _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
                     }
                 }
@@ -488,6 +523,12 @@ public class App : Application
                 ThemeService.Instance.Initialize();
             }
 
+            // Initialize telemetry session (respects user consent)
+            if (TelemetryManager != null)
+            {
+                await TelemetryManager.InitializeAsync();
+            }
+
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
@@ -520,7 +561,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            Console.WriteLine($"Error during async initialization: {ex.Message}");
+            ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Error during async initialization");
         }
     }
 
@@ -541,7 +582,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize exchange rate service");
         }
     }
 
@@ -570,7 +611,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log but don't crash - file association is not critical
-            Console.WriteLine($"Failed to register file type associations: {ex.Message}");
+            ErrorLogger?.LogWarning($"Failed to register file type associations: {ex.Message}", "FileAssociation");
         }
     }
 
@@ -632,7 +673,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to extract icon: {ex.Message}");
+            ErrorLogger?.LogWarning($"Failed to extract icon: {ex.Message}", "IconExtraction");
             return null;
         }
     }
@@ -919,6 +960,7 @@ public class App : Application
                 }
                 catch (Exception ex)
                 {
+                    ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company");
                     _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
                 }
             }
@@ -1027,6 +1069,7 @@ public class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1054,9 +1097,9 @@ public class App : Application
                     var bitmap = new Bitmap(path);
                     createCompany.SetLogo(path, bitmap);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Invalid image
+                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "CreateCompanyLogo");
                 }
             }
         };
@@ -1159,7 +1202,7 @@ public class App : Application
                     return;
                 }
 
-                var importService = new SpreadsheetImportService();
+                var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
                 var sampleService = new SampleCompanyService(_fileService, importService);
                 sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
             }
@@ -1199,6 +1242,7 @@ public class App : Application
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open sample company");
             _appShellViewModel.AddNotification(
                 "Error".Translate(),
                 "Failed to open sample company: {0}".TranslateFormat(ex.Message),
@@ -1357,6 +1401,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to update company");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to update company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1385,9 +1430,9 @@ public class App : Application
                     var bitmap = new Bitmap(path);
                     editCompany.SetLogo(path, bitmap);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Invalid image
+                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "EditCompanyLogo");
                 }
             }
         };
@@ -1432,6 +1477,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.HasPassword = false;
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to set password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to set password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1459,6 +1505,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to change password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to change password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1486,6 +1533,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to remove password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to remove password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1564,6 +1612,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Windows Hello authentication failed");
                 var dialog = ConfirmationDialog;
                 if (dialog != null)
                 {
@@ -1697,6 +1746,7 @@ public class App : Application
             var filePath = file.Path.LocalPath;
             _mainWindowViewModel?.ShowLoading("Exporting data...".Translate());
 
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 var exportService = new SpreadsheetExportService();
@@ -1731,7 +1781,19 @@ public class App : Application
                         break;
                 }
 
+                stopwatch.Stop();
                 _mainWindowViewModel?.HideLoading();
+
+                // Track export telemetry
+                var fileSize = new FileInfo(filePath).Length;
+                var exportType = args.Format.ToLowerInvariant() switch
+                {
+                    "xlsx" => ExportType.Excel,
+                    "csv" => ExportType.Csv,
+                    "pdf" => ExportType.Pdf,
+                    _ => ExportType.Excel
+                };
+                _ = TelemetryManager?.TrackExportAsync(exportType, stopwatch.ElapsedMilliseconds, fileSize);
 
                 // Open the containing folder
                 try
@@ -1753,14 +1815,16 @@ public class App : Application
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore errors opening folder
+                    ErrorLogger?.LogWarning($"Failed to open folder after export: {ex.Message}", "ExportFolder");
                 }
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Export, $"Failed to export {args.Format}");
                 _appShellViewModel.AddNotification("Export Failed".Translate(), "Failed to export data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1815,7 +1879,7 @@ public class App : Application
 
             try
             {
-                var importService = new SpreadsheetImportService();
+                var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
 
                 // First validate the import file
                 var validationResult = await importService.ValidateImportAsync(filePath, companyData);
@@ -1908,6 +1972,7 @@ public class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to import spreadsheet data");
                 var errorDialog = ConfirmationDialog;
                 if (errorDialog != null)
                 {
@@ -2049,9 +2114,10 @@ public class App : Application
                         await CompanyManager.SaveCompanyAsync();
                         _mainWindowViewModel?.HideLoading();
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         _mainWindowViewModel?.HideLoading();
+                        ErrorLogger?.LogWarning($"Auto-save before lock failed: {ex.Message}", "AutoSave");
                         // Continue to close even if save fails - user can reopen
                     }
                 }
@@ -2199,6 +2265,7 @@ public class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
             _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
@@ -2255,6 +2322,7 @@ public class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file with password");
             _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
@@ -2297,6 +2365,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
             _appShellViewModel?.AddNotification("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
@@ -2385,9 +2454,9 @@ public class App : Application
                 _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors loading recent companies
+            ErrorLogger?.LogWarning($"Failed to load recent companies: {ex.Message}", "RecentCompanies");
         }
     }
 
@@ -2609,8 +2678,9 @@ public class App : Application
         {
             return new Bitmap(path);
         }
-        catch
+        catch (Exception ex)
         {
+            ErrorLogger?.LogWarning($"Failed to load bitmap from path: {ex.Message}", "BitmapLoader");
             return null;
         }
     }

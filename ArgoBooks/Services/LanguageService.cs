@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Data;
 
 namespace ArgoBooks.Services;
@@ -145,7 +146,7 @@ public partial class LanguageService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Error loading cached translations: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to load cached translations");
         }
     }
 
@@ -196,13 +197,13 @@ public partial class LanguageService
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"LanguageService: Error loading {file}: {ex.Message}");
+                    App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to load language file: {Path.GetFileName(file)}");
                 }
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Error scanning language files: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to scan language files");
         }
     }
 
@@ -219,7 +220,7 @@ public partial class LanguageService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Error saving translation cache: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save translation cache");
         }
     }
 
@@ -367,7 +368,7 @@ public partial class LanguageService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Error downloading translations: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, $"Failed to download translations for {languageName}");
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, $"Error: {ex.Message}"));
             return false;
         }
@@ -649,7 +650,7 @@ public partial class LanguageService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Error clearing cache files: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to clear translation cache files");
         }
     }
 
@@ -699,7 +700,7 @@ public partial class LanguageService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Error saving translations: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save translations");
         }
     }
 

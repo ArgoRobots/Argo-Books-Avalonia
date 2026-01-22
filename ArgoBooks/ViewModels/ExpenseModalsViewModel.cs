@@ -611,9 +611,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 var bytes = File.ReadAllBytes(ReceiptFilePath!);
                 fileData = Convert.ToBase64String(bytes);
             }
-            catch
+            catch (Exception ex)
             {
-                // Failed to read file
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to read receipt file");
+                App.AddNotification("Warning".Translate(), "Could not attach receipt file: {0}".TranslateFormat(ex.Message), NotificationType.Warning);
             }
         }
 

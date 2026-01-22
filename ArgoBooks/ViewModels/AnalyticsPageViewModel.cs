@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -1238,7 +1239,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                     : GoogleSheetsService.ChartType.Column;
             }
 
-            var googleSheetsService = new GoogleSheetsService();
+            var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
@@ -1284,6 +1285,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         }
         catch (InvalidOperationException ex)
         {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Google Sheets export failed - invalid operation");
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,
@@ -1292,6 +1294,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         }
         catch (Exception ex)
         {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Google Sheets export failed");
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,

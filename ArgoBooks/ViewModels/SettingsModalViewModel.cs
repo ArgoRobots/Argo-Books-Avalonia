@@ -114,6 +114,32 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _anonymousDataCollection;
 
+    /// <summary>
+    /// Called when anonymous data collection setting changes.
+    /// </summary>
+    partial void OnAnonymousDataCollectionChanged(bool value)
+    {
+        // Update telemetry consent when toggle changes
+        App.TelemetryManager?.SetConsent(value);
+    }
+
+    [ObservableProperty]
+    private int _telemetryEventCount;
+
+    [ObservableProperty]
+    private int _telemetryPendingCount;
+
+    [ObservableProperty]
+    private bool _isExportingTelemetry;
+
+    [ObservableProperty]
+    private bool _isDeletingTelemetry;
+
+    /// <summary>
+    /// Event raised when telemetry data should be exported.
+    /// </summary>
+    public event EventHandler<string>? TelemetryDataExported;
+
     [ObservableProperty]
     private int _maxPieSlices = 6;
 
@@ -569,8 +595,14 @@ public partial class SettingsModalViewModel : ViewModelBase
                 MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
                 SelectedTimeZone = TimeZones.FindById(globalSettings.Ui.TimeZone);
                 SelectedTimeFormat = globalSettings.Ui.TimeFormat;
+
+                // Load privacy settings
+                AnonymousDataCollection = globalSettings.Privacy.AnonymousDataCollectionConsent;
             }
         }
+
+        // Refresh telemetry stats
+        _ = RefreshTelemetryStatsAsync();
 
         // Store original values for potential revert
         _originalTheme = SelectedTheme;
@@ -657,7 +689,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         if (SelectedTimeZone?.Id != _originalTimeZone?.Id)
         {
-            SelectedTimeZone = _originalTimeZone;
+            SelectedTimeZone = _originalTimeZone ?? TimeZones.FindById("UTC");
         }
         if (SelectedTimeFormat != _originalTimeFormat)
         {
@@ -696,7 +728,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
-        _originalTimeZone = SelectedTimeZone;
+        _originalTimeZone = SelectedTimeZone ?? TimeZones.FindById("UTC");
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
 
@@ -1071,6 +1103,93 @@ public partial class SettingsModalViewModel : ViewModelBase
     private void ToggleCurrentPasswordVisibility()
     {
         IsCurrentPasswordVisible = !IsCurrentPasswordVisible;
+    }
+
+    /// <summary>
+    /// Exports telemetry data as JSON for user review.
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportTelemetryDataAsync()
+    {
+        if (App.TelemetryManager == null) return;
+
+        IsExportingTelemetry = true;
+        try
+        {
+            var json = await App.TelemetryManager.ExportDataAsJsonAsync();
+            TelemetryDataExported?.Invoke(this, json);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to export telemetry data");
+            App.AddNotification("Error".Translate(), "Failed to export telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+        }
+        finally
+        {
+            IsExportingTelemetry = false;
+        }
+    }
+
+    /// <summary>
+    /// Deletes all collected telemetry data.
+    /// </summary>
+    [RelayCommand]
+    private async Task DeleteTelemetryDataAsync()
+    {
+        if (App.TelemetryManager == null) return;
+
+        // Confirm deletion
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Telemetry Data".Translate(),
+                Message = "Are you sure you want to delete all collected telemetry data? This action cannot be undone.".Translate(),
+                PrimaryButtonText = "Delete".Translate(),
+                SecondaryButtonText = null,
+                CancelButtonText = "Cancel".Translate()
+            });
+
+            if (result != ConfirmationResult.Primary)
+                return;
+        }
+
+        IsDeletingTelemetry = true;
+        try
+        {
+            await App.TelemetryManager.ClearAllDataAsync();
+            TelemetryEventCount = 0;
+            TelemetryPendingCount = 0;
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to delete telemetry data");
+            App.AddNotification("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+        }
+        finally
+        {
+            IsDeletingTelemetry = false;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the telemetry statistics.
+    /// </summary>
+    private async Task RefreshTelemetryStatsAsync()
+    {
+        if (App.TelemetryManager == null) return;
+
+        try
+        {
+            var stats = await App.TelemetryManager.GetStatisticsAsync();
+            TelemetryEventCount = stats.TotalEvents;
+            TelemetryPendingCount = stats.PendingEvents;
+        }
+        catch
+        {
+            // Ignore errors loading stats
+        }
     }
 
     /// <summary>

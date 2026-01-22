@@ -4,6 +4,7 @@ using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using System.Diagnostics;
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
@@ -13,6 +14,17 @@ namespace ArgoBooks.Core.Services;
 public class GoogleSheetsService
 {
     private SheetsService? _sheetsService;
+    private readonly IErrorLogger? _errorLogger;
+    private readonly ITelemetryManager? _telemetryManager;
+
+    /// <summary>
+    /// Creates a new instance of the GoogleSheetsService.
+    /// </summary>
+    public GoogleSheetsService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    {
+        _errorLogger = errorLogger;
+        _telemetryManager = telemetryManager;
+    }
 
     /// <summary>
     /// Chart type for Google Sheets visualization.
@@ -70,46 +82,75 @@ public class GoogleSheetsService
         string numberFormat = "#,##0.00",
         CancellationToken cancellationToken = default)
     {
-        if (!await InitializeServiceAsync(cancellationToken))
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
+
+        try
         {
+            if (!await InitializeServiceAsync(cancellationToken))
+            {
+                return null;
+            }
+
+            const string sheetName = "Chart Data";
+
+            var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
+            var spreadsheetId = spreadsheet.SpreadsheetId;
+
+            // Prepare the data
+            var values = new List<IList<object>> { new List<object> { column1Text, column2Text } };
+            foreach (var item in data.OrderBy(x => x.Key))
+            {
+                values.Add(new List<object> { item.Key, item.Value });
+            }
+
+            // Write data to sheet
+            var range = $"'{sheetName}'!A1:B{values.Count}";
+            var valueRange = new ValueRange { Values = values };
+
+            var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
+            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            await updateRequest.ExecuteAsync(cancellationToken);
+
+            // Format headers and numbers, add chart
+            var requests = new List<Request>
+            {
+                CreateHeaderFormatRequest(0, 0, 0, 1),
+                CreateNumberFormatRequest(1, values.Count - 1, 1, 1, numberFormat),
+                CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, [("A", "B")])
+            };
+
+            await _sheetsService.Spreadsheets
+                .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
+                .ExecuteAsync(cancellationToken);
+
+            await AutoResizeColumnsAsync(spreadsheetId, 2, cancellationToken);
+
+            success = true;
+            return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Google Sheets export failed");
             return null;
         }
-
-        const string sheetName = "Chart Data";
-
-        var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
-        var spreadsheetId = spreadsheet.SpreadsheetId;
-
-        // Prepare the data
-        var values = new List<IList<object>> { new List<object> { column1Text, column2Text } };
-        foreach (var item in data.OrderBy(x => x.Key))
+        finally
         {
-            values.Add(new List<object> { item.Key, item.Value });
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.GoogleSheets,
+                stopwatch.ElapsedMilliseconds,
+                success,
+                cancellationToken: cancellationToken);
+            if (success)
+            {
+                _ = _telemetryManager?.TrackExportAsync(
+                    ExportType.GoogleSheets,
+                    stopwatch.ElapsedMilliseconds,
+                    0, // No file size for Google Sheets
+                    cancellationToken);
+            }
         }
-
-        // Write data to sheet
-        var range = $"'{sheetName}'!A1:B{values.Count}";
-        var valueRange = new ValueRange { Values = values };
-
-        var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-        await updateRequest.ExecuteAsync(cancellationToken);
-
-        // Format headers and numbers, add chart
-        var requests = new List<Request>
-        {
-            CreateHeaderFormatRequest(0, 0, 0, 1),
-            CreateNumberFormatRequest(1, values.Count - 1, 1, 1, numberFormat),
-            CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, [("A", "B")])
-        };
-
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-
-        await AutoResizeColumnsAsync(spreadsheetId, 2, cancellationToken);
-
-        return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
     }
 
     /// <summary>

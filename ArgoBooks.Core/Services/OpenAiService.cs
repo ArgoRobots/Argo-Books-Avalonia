@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
@@ -16,15 +18,19 @@ public class OpenAiService : IOpenAiService
     private const string ApiEndpoint = "https://api.openai.com/v1/chat/completions";
 
     private readonly HttpClient _httpClient;
+    private readonly IErrorLogger? _errorLogger;
+    private readonly ITelemetryManager? _telemetryManager;
     private string? _lastApiKey;
 
     /// <summary>
     /// Creates a new instance of the OpenAI service.
     /// </summary>
-    public OpenAiService()
+    public OpenAiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         DotEnv.Load();
         _httpClient = new HttpClient();
+        _errorLogger = errorLogger;
+        _telemetryManager = telemetryManager;
         ConfigureHttpClient();
     }
 
@@ -46,6 +52,10 @@ public class OpenAiService : IOpenAiService
             ConfigureHttpClient();
         }
 
+        var stopwatch = Stopwatch.StartNew();
+        var model = DotEnv.Get(ModelEnvVar) ?? DefaultModel;
+        var success = false;
+
         try
         {
             var prompt = BuildPrompt(request);
@@ -54,12 +64,23 @@ public class OpenAiService : IOpenAiService
             if (string.IsNullOrEmpty(response))
                 return null;
 
+            success = true;
             return ParseResponse(response, request);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"OpenAI API error: {ex.Message}");
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
             return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.OpenAI,
+                stopwatch.ElapsedMilliseconds,
+                success,
+                model,
+                cancellationToken: cancellationToken);
         }
     }
 

@@ -2,6 +2,7 @@ using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
@@ -14,6 +15,7 @@ public class LicenseService
     private readonly IEncryptionService _encryptionService;
     private readonly IGlobalSettingsService _settingsService;
     private readonly IPlatformService _platformService;
+    private readonly IErrorLogger? _errorLogger;
 
     /// <summary>
     /// Internal license data structure.
@@ -30,19 +32,20 @@ public class LicenseService
     /// Initializes a new instance of the LicenseService.
     /// Uses the default platform service from the factory.
     /// </summary>
-    public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService)
-        : this(encryptionService, settingsService, PlatformServiceFactory.GetPlatformService())
+    public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IErrorLogger? errorLogger = null)
+        : this(encryptionService, settingsService, PlatformServiceFactory.GetPlatformService(), errorLogger)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the LicenseService with a specific platform service.
     /// </summary>
-    public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IPlatformService platformService)
+    public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IPlatformService platformService, IErrorLogger? errorLogger = null)
     {
         _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
+        _errorLogger = errorLogger;
     }
 
     /// <summary>
@@ -127,9 +130,9 @@ public class LicenseService
 
             return (licenseData.HasStandard, licenseData.HasPremium);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Any error - return no license
+            _errorLogger?.LogError(ex, ErrorCategory.License, "Failed to load license status");
             return (false, false);
         }
     }
@@ -197,8 +200,9 @@ public class LicenseService
 
             return licenseData?.LicenseKey;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.License, "Failed to retrieve license key");
             return null;
         }
     }

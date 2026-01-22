@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -273,7 +274,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"Failed to save license: {ex.Message}");
+                        App.ErrorLogger?.LogError(ex, ErrorCategory.License, "Failed to save license after verification");
                         var dialog = App.ConfirmationDialog;
                         if (dialog != null)
                         {
@@ -310,6 +311,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "License verification request failed");
             VerificationError = "Verification failed: {0}".TranslateFormat(ex.Message);
         }
         finally

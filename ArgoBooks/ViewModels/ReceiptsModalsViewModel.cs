@@ -827,7 +827,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private async Task GetAiSuggestionsAsync(ReceiptScanResult result)
     {
-        var openAiService = new OpenAiService();
+        var openAiService = new OpenAiService(App.ErrorLogger, App.TelemetryManager);
         IsAiConfigured = openAiService.IsConfigured;
 
         if (!openAiService.IsConfigured)
@@ -1198,7 +1198,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private IReceiptScannerService? CreateScannerService()
     {
         // Credentials are loaded from .env file by the service
-        return new AzureReceiptScannerService();
+        return new AzureReceiptScannerService(App.ErrorLogger, App.TelemetryManager);
     }
 
     private IReceiptUsageService? CreateUsageService()

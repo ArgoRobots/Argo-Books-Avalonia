@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -5,6 +6,7 @@ using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Transactions;
 using ClosedXML.Excel;
 
@@ -32,6 +34,17 @@ public class ImportOptions
 /// </summary>
 public class SpreadsheetImportService
 {
+    private readonly IErrorLogger? _errorLogger;
+    private readonly ITelemetryManager? _telemetryManager;
+
+    /// <summary>
+    /// Creates a new SpreadsheetImportService.
+    /// </summary>
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    {
+        _errorLogger = errorLogger;
+        _telemetryManager = telemetryManager;
+    }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
     /// </summary>
@@ -65,6 +78,7 @@ public class SpreadsheetImportService
             }
             catch (Exception ex)
             {
+                _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to validate import file: {Path.GetFileName(filePath)}");
                 result.Errors.Add($"Failed to read file: {ex.Message}");
             }
 
@@ -86,31 +100,44 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
 
         options ??= new ImportOptions();
+        var stopwatch = Stopwatch.StartNew();
 
-        await Task.Run(() =>
+        try
         {
-            // Open file with read sharing to allow importing even if file is open in Excel
-            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var workbook = new XLWorkbook(fileStream);
-
-            // If auto-creating references, do that first
-            if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
+            await Task.Run(() =>
             {
-                CreateMissingReferences(workbook, companyData, options);
-            }
+                // Open file with read sharing to allow importing even if file is open in Excel
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var workbook = new XLWorkbook(fileStream);
 
-            foreach (var worksheet in workbook.Worksheets)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                ImportWorksheet(worksheet, companyData);
-            }
+                // If auto-creating references, do that first
+                if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
+                {
+                    CreateMissingReferences(workbook, companyData, options);
+                }
 
-            // Update ID counters based on imported data
-            UpdateIdCounters(companyData);
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ImportWorksheet(worksheet, companyData);
+                }
 
-            // Mark data as modified
-            companyData.MarkAsModified();
-        }, cancellationToken);
+                // Update ID counters based on imported data
+                UpdateIdCounters(companyData);
+
+                // Mark data as modified
+                companyData.MarkAsModified();
+            }, cancellationToken);
+
+            stopwatch.Stop();
+            var fileSize = new FileInfo(filePath).Length;
+            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, Path.GetExtension(filePath), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to import from: {Path.GetFileName(filePath)}");
+            throw;
+        }
     }
 
     #region Validation

@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
@@ -17,6 +18,7 @@ public class ReceiptUsageService : IReceiptUsageService
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
     private readonly IConnectivityService _connectivityService;
+    private readonly IErrorLogger? _errorLogger;
 
     // Cache the last known usage to reduce API calls
     private UsageStatus? _cachedUsage;
@@ -26,19 +28,20 @@ public class ReceiptUsageService : IReceiptUsageService
     /// <summary>
     /// Creates a new instance of the ReceiptUsageService.
     /// </summary>
-    public ReceiptUsageService(LicenseService? licenseService = null)
-        : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService())
+    public ReceiptUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null)
+        : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService(), errorLogger)
     {
     }
 
     /// <summary>
     /// Creates a new instance with custom dependencies (for testing).
     /// </summary>
-    public ReceiptUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService)
+    public ReceiptUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService, IErrorLogger? errorLogger = null)
     {
         _licenseService = licenseService;
         _httpClient = httpClient;
         _connectivityService = connectivityService;
+        _errorLogger = errorLogger;
     }
 
     /// <inheritdoc />
@@ -152,6 +155,7 @@ public class ReceiptUsageService : IReceiptUsageService
         }
         catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt usage check failed");
             return new UsageCheckResult
             {
                 CanScan = false,
@@ -218,6 +222,7 @@ public class ReceiptUsageService : IReceiptUsageService
         }
         catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt usage increment failed");
             return new UsageIncrementResult
             {
                 Success = false,
