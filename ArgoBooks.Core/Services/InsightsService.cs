@@ -983,13 +983,6 @@ public class InsightsService : IInsightsService
             recommendations.Add(concentrationRec);
         }
 
-        // Profit margin analysis
-        var marginRec = AnalyzeProfitMargins(companyData, historicalRange);
-        if (marginRec != null)
-        {
-            recommendations.Add(marginRec);
-        }
-
         return recommendations;
     }
 
@@ -1166,48 +1159,6 @@ public class InsightsService : IInsightsService
                 Severity = InsightSeverity.Warning,
                 Category = InsightCategory.Customer,
                 PercentageChange = concentrationPercent
-            };
-        }
-
-        return null;
-    }
-
-    private InsightItem? AnalyzeProfitMargins(CompanyData companyData, AnalysisDateRange dateRange)
-    {
-        var totalRevenue = companyData.Revenues
-            .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
-            .Sum(s => s.EffectiveTotalUSD);
-
-        var totalExpenses = companyData.Expenses
-            .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)
-            .Sum(p => p.EffectiveTotalUSD);
-
-        if (totalRevenue == 0) return null;
-
-        var profitMargin = (totalRevenue - totalExpenses) / totalRevenue * 100;
-
-        if (profitMargin < 10) // Low margin warning
-        {
-            return new InsightItem
-            {
-                Title = "Low Profit Margin Alert",
-                Description = $"Your current profit margin is {profitMargin:F1}%. Industry benchmarks typically suggest 15-20% for healthy businesses.",
-                Recommendation = "Review pricing strategy and look for cost reduction opportunities to improve profitability.",
-                Severity = InsightSeverity.Warning,
-                Category = InsightCategory.Recommendation,
-                PercentageChange = profitMargin
-            };
-        }
-
-        if (profitMargin > 30) // Good margin
-        {
-            return new InsightItem
-            {
-                Title = "Strong Profit Margins",
-                Description = $"Your profit margin of {profitMargin:F1}% is excellent. You're maintaining healthy profitability.",
-                Severity = InsightSeverity.Success,
-                Category = InsightCategory.Recommendation,
-                PercentageChange = profitMargin
             };
         }
 
