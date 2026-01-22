@@ -689,7 +689,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         if (SelectedTimeZone?.Id != _originalTimeZone?.Id)
         {
-            SelectedTimeZone = _originalTimeZone;
+            SelectedTimeZone = _originalTimeZone ?? TimeZones.FindById("UTC");
         }
         if (SelectedTimeFormat != _originalTimeFormat)
         {
@@ -728,7 +728,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
-        _originalTimeZone = SelectedTimeZone;
+        _originalTimeZone = SelectedTimeZone ?? TimeZones.FindById("UTC");
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
 

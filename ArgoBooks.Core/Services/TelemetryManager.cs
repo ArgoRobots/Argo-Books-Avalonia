@@ -53,12 +53,14 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
-    public bool IsConsentGranted => _settingsService.GetSettings().Privacy.AnonymousDataCollectionConsent;
+    public bool IsConsentGranted => _settingsService.GetSettings()?.Privacy?.AnonymousDataCollectionConsent ?? false;
 
     /// <inheritdoc />
     public void SetConsent(bool granted)
     {
         var settings = _settingsService.GetSettings();
+        if (settings?.Privacy == null)
+            return;
         settings.Privacy.AnonymousDataCollectionConsent = granted;
         settings.Privacy.ConsentDate = granted ? DateTime.UtcNow : null;
         _settingsService.SaveSettings(settings);
