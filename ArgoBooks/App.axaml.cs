@@ -561,7 +561,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            ErrorLogger?.LogError(ex, Models.Telemetry.ErrorCategory.Unknown, "Error during async initialization");
+            ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Error during async initialization");
         }
     }
 
@@ -1477,7 +1477,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.HasPassword = false;
-                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Failed to set password");
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to set password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to set password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1505,7 +1505,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Failed to change password");
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to change password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to change password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1533,7 +1533,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Failed to remove password");
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to remove password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to remove password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1612,7 +1612,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
-                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Windows Hello authentication failed");
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Windows Hello authentication failed");
                 var dialog = ConfirmationDialog;
                 if (dialog != null)
                 {
