@@ -338,19 +338,20 @@ public class App : Application
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             DisableAvaloniaDataAnnotationValidation();
 
-            // Initialize services synchronously
+            // Initialize error logging first so it's available for all services
+            var errorLogger = new ErrorLogger();
+            ErrorLogger = errorLogger;
+
+            // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             _fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
-            LicenseService = new LicenseService(encryptionService, SettingsService);
+            LicenseService = new LicenseService(encryptionService, SettingsService, errorLogger);
             CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
 
-            // Initialize error logging and telemetry services
-            var errorLogger = new ErrorLogger();
-            ErrorLogger = errorLogger;
-
+            // Initialize telemetry services
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             var geoLocationService = new GeoLocationService(httpClient, errorLogger);
             var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);

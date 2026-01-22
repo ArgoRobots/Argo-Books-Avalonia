@@ -11,22 +11,24 @@ public class ExchangeRateCache
     private const string CacheFileName = "exchange_rates.json";
     private readonly Dictionary<string, decimal> _memoryCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly IPlatformService _platformService;
+    private readonly IErrorLogger? _errorLogger;
     private readonly Lock _lock = new();
     private bool _isDirty;
 
     /// <summary>
     /// Creates a new ExchangeRateCache instance.
     /// </summary>
-    public ExchangeRateCache() : this(PlatformServiceFactory.GetPlatformService())
+    public ExchangeRateCache(IErrorLogger? errorLogger = null) : this(PlatformServiceFactory.GetPlatformService(), errorLogger)
     {
     }
 
     /// <summary>
     /// Creates a new ExchangeRateCache instance with a specific platform service.
     /// </summary>
-    public ExchangeRateCache(IPlatformService platformService)
+    public ExchangeRateCache(IPlatformService platformService, IErrorLogger? errorLogger = null)
     {
         _platformService = platformService;
+        _errorLogger = errorLogger;
     }
 
     /// <summary>
@@ -159,9 +161,10 @@ public class ExchangeRateCache
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Cache file corrupted or unreadable - start fresh
+            _errorLogger?.LogWarning($"Failed to load exchange rate cache: {ex.Message}", "ExchangeRateCache");
         }
     }
 
@@ -196,9 +199,10 @@ public class ExchangeRateCache
             var json = JsonSerializer.Serialize(snapshot, options);
             await File.WriteAllTextAsync(cachePath, json);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Failed to save cache - not critical
+            _errorLogger?.LogWarning($"Failed to save exchange rate cache: {ex.Message}", "ExchangeRateCache");
         }
     }
 

@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
@@ -14,17 +15,20 @@ public class ReportTemplateStorage
     };
 
     private readonly string _templatesDirectory;
+    private readonly IErrorLogger? _errorLogger;
 
-    public ReportTemplateStorage()
+    public ReportTemplateStorage(IErrorLogger? errorLogger = null)
     {
         // Default to AppData/Roaming/ArgoBooks/ReportTemplates
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         _templatesDirectory = Path.Combine(appData, "ArgoBooks", "ReportTemplates");
+        _errorLogger = errorLogger;
     }
 
-    public ReportTemplateStorage(string templatesDirectory)
+    public ReportTemplateStorage(string templatesDirectory, IErrorLogger? errorLogger = null)
     {
         _templatesDirectory = templatesDirectory;
+        _errorLogger = errorLogger;
     }
 
     /// <summary>
@@ -68,8 +72,9 @@ public class ReportTemplateStorage
 
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save report template");
             return false;
         }
     }
@@ -92,8 +97,9 @@ public class ReportTemplateStorage
 
             return templateData?.Configuration;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to load report template");
             return null;
         }
     }
