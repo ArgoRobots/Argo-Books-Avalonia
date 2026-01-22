@@ -67,9 +67,6 @@ public class NotificationSettings
 {
     public bool LowStockAlert { get; set; } = true;
     public bool InvoiceOverdueAlert { get; set; } = true;
-    public bool PaymentReceivedAlert { get; set; } = true;
-    public bool LargeTransactionAlert { get; set; } = true;
-    public decimal LargeTransactionThreshold { get; set; } = 10000m;
 }
 
 public class SecuritySettings

@@ -267,46 +267,6 @@
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
-
-                                <!-- Payment Received -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Payment Received'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Notify when payments are received'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding PaymentReceived}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
-                                <!-- Large Transaction Alert -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Large Transaction Alert'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Alert for transactions above threshold'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding LargeTransactionAlert}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

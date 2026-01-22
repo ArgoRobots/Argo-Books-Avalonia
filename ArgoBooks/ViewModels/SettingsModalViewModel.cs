@@ -221,12 +221,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _invoiceOverdue = true;
 
-    [ObservableProperty]
-    private bool _paymentReceived = true;
-
-    [ObservableProperty]
-    private bool _largeTransactionAlert = true;
-
     #endregion
 
     #region Appearance Settings
@@ -577,6 +571,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             SelectedDateFormat = settings.Localization.DateFormat;
             // Convert currency code to display string
             SelectedCurrency = CurrencyService.GetDisplayString(settings.Localization.Currency);
+
+            // Load notification settings
+            LowStockAlert = settings.Notifications.LowStockAlert;
+            InvoiceOverdue = settings.Notifications.InvoiceOverdueAlert;
         }
         else
         {
@@ -740,6 +738,11 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.Localization.DateFormat = SelectedDateFormat;
             // Extract currency code from display string (e.g., "USD - US Dollar ($)" -> "USD")
             settings.Localization.Currency = newCurrencyCode;
+
+            // Save notification settings
+            settings.Notifications.LowStockAlert = LowStockAlert;
+            settings.Notifications.InvoiceOverdueAlert = InvoiceOverdue;
+
             settings.ChangesMade = true;
         }
 

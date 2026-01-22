@@ -176,6 +176,58 @@ public class App : Application
         _appShellViewModel?.AddNotification(title, message, type);
     }
 
+    /// <summary>
+    /// Checks for low stock items and overdue invoices, and sends notifications if enabled.
+    /// </summary>
+    private static void CheckAndSendNotifications()
+    {
+        var companyData = CompanyManager?.CompanyData;
+        if (companyData == null)
+            return;
+
+        var settings = companyData.Settings.Notifications;
+
+        // Check for low stock items
+        if (settings.LowStockAlert)
+        {
+            var lowStockItems = companyData.Inventory
+                .Where(item => item.CalculateStatus() == InventoryStatus.LowStock)
+                .ToList();
+
+            if (lowStockItems.Count > 0)
+            {
+                var message = lowStockItems.Count == 1
+                    ? "1 item is running low on stock.".Translate()
+                    : "{0} items are running low on stock.".TranslateFormat(lowStockItems.Count);
+
+                AddNotification(
+                    "Low Stock Alert".Translate(),
+                    message,
+                    NotificationType.Warning);
+            }
+        }
+
+        // Check for overdue invoices
+        if (settings.InvoiceOverdueAlert)
+        {
+            var overdueInvoices = companyData.Invoices
+                .Where(invoice => invoice.IsOverdue)
+                .ToList();
+
+            if (overdueInvoices.Count > 0)
+            {
+                var message = overdueInvoices.Count == 1
+                    ? "1 invoice is overdue.".Translate()
+                    : "{0} invoices are overdue.".TranslateFormat(overdueInvoices.Count);
+
+                AddNotification(
+                    "Invoice Overdue".Translate(),
+                    message,
+                    NotificationType.Error);
+            }
+        }
+    }
+
     #region Plan Status Events
 
     /// <summary>
@@ -721,6 +773,9 @@ public class App : Application
                     }
                 }
             }
+
+            // Check for low stock and overdue invoice notifications
+            CheckAndSendNotifications();
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
