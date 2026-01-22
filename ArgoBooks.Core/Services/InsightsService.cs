@@ -857,34 +857,6 @@ public class InsightsService : IInsightsService
 
         // Use historical data range for forecast insights
         var historicalRange = GetHistoricalDateRange(dateRange);
-        var forecast = GenerateForecast(companyData, historicalRange);
-
-        // Revenue forecast insight with ML-enhanced details
-        if (forecast.ForecastedRevenue > 0)
-        {
-            var methodDescription = forecast.ForecastMethod switch
-            {
-                "Combined (SSA + Holt-Winters)" => "Using combined ML analysis (SSA + Holt-Winters)",
-                "ML.NET SSA" => "Using ML.NET Singular Spectrum Analysis",
-                var m when m?.Contains("Holt-Winters") == true => "Using Holt-Winters seasonal forecasting",
-                _ => $"Based on {forecast.DataMonthsUsed} months of data"
-            };
-
-            var confidenceNote = forecast.ConfidenceScore >= 80
-                ? "High confidence prediction"
-                : forecast.ConfidenceScore >= 50
-                    ? "Moderate confidence prediction"
-                    : "Low confidence - consider adding more data";
-
-            insights.Add(new InsightItem
-            {
-                Title = "ML Revenue Forecast",
-                Description = $"{methodDescription}: Expected revenue is {FormatCurrency(forecast.ForecastedRevenueLower)} - {FormatCurrency(forecast.ForecastedRevenueUpper)}. {confidenceNote} ({forecast.ConfidenceScore:F0}%).",
-                Severity = forecast.ConfidenceScore >= 60 ? InsightSeverity.Info : InsightSeverity.Warning,
-                Category = InsightCategory.Forecast,
-                MetricValue = forecast.ForecastedRevenue
-            });
-        }
 
         // Inventory depletion alert
         var inventoryAlerts = CheckInventoryDepletion(companyData, historicalRange);
