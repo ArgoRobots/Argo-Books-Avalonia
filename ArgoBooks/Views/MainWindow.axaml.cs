@@ -221,6 +221,9 @@ public partial class MainWindow : Window
 
             viewModel.SaveWindowState();
         }
+
+        // End telemetry session on app close
+        _ = App.TelemetryManager?.EndSessionAsync();
     }
 
     private void OnPositionChanged(object? sender, PixelPointEventArgs e)

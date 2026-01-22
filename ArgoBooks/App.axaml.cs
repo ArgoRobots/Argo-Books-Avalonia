@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -7,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -42,6 +44,16 @@ public class App : Application
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
+
+    /// <summary>
+    /// Gets the error logger instance for centralized error logging.
+    /// </summary>
+    public static IErrorLogger? ErrorLogger { get; private set; }
+
+    /// <summary>
+    /// Gets the telemetry manager instance for anonymous usage tracking.
+    /// </summary>
+    public static ITelemetryManager? TelemetryManager { get; private set; }
 
     /// <summary>
     /// Gets the shared undo/redo manager instance.
@@ -335,6 +347,21 @@ public class App : Application
             LicenseService = new LicenseService(encryptionService, SettingsService);
             CompanyManager = new CompanyManager(_fileService, SettingsService, footerService);
 
+            // Initialize error logging and telemetry services
+            var errorLogger = new ErrorLogger();
+            ErrorLogger = errorLogger;
+
+            var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var geoLocationService = new GeoLocationService(httpClient, errorLogger);
+            var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
+            var telemetryUploadService = new TelemetryUploadService(telemetryStorageService, httpClient, errorLogger);
+            TelemetryManager = new TelemetryManager(
+                telemetryStorageService,
+                telemetryUploadService,
+                geoLocationService,
+                SettingsService,
+                errorLogger);
+
             // Create navigation service
             NavigationService = new NavigationService();
 
@@ -488,6 +515,12 @@ public class App : Application
                 ThemeService.Instance.Initialize();
             }
 
+            // Initialize telemetry session (respects user consent)
+            if (TelemetryManager != null)
+            {
+                await TelemetryManager.InitializeAsync();
+            }
+
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
@@ -520,7 +553,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            Console.WriteLine($"Error during async initialization: {ex.Message}");
+            ErrorLogger?.LogError(ex, Models.Telemetry.ErrorCategory.Unknown, "Error during async initialization");
         }
     }
 
@@ -1697,6 +1730,7 @@ public class App : Application
             var filePath = file.Path.LocalPath;
             _mainWindowViewModel?.ShowLoading("Exporting data...".Translate());
 
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 var exportService = new SpreadsheetExportService();
@@ -1731,7 +1765,19 @@ public class App : Application
                         break;
                 }
 
+                stopwatch.Stop();
                 _mainWindowViewModel?.HideLoading();
+
+                // Track export telemetry
+                var fileSize = new FileInfo(filePath).Length;
+                var exportType = args.Format.ToLowerInvariant() switch
+                {
+                    "xlsx" => ExportType.Excel,
+                    "csv" => ExportType.Csv,
+                    "pdf" => ExportType.Pdf,
+                    _ => ExportType.Excel
+                };
+                _ = TelemetryManager?.TrackExportAsync(exportType, stopwatch.ElapsedMilliseconds, fileSize);
 
                 // Open the containing folder
                 try
@@ -1760,7 +1806,9 @@ public class App : Application
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Export, $"Failed to export {args.Format}");
                 _appShellViewModel.AddNotification("Export Failed".Translate(), "Failed to export data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
