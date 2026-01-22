@@ -311,6 +311,64 @@ public class TelemetryStorageService : ITelemetryStorageService
         }
     }
 
+    /// <inheritdoc />
+    public async Task<string?> SaveBackupFileAsync(CancellationToken cancellationToken = default)
+    {
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            await EnsureLoadedAsync(cancellationToken);
+
+            var pendingEvents = _events
+                .Where(e => !e.Event.IsUploaded)
+                .Select(e => e.Event)
+                .OrderBy(e => e.Timestamp)
+                .ToList();
+
+            if (pendingEvents.Count == 0)
+            {
+                return null;
+            }
+
+            var backupData = new TelemetryBackup
+            {
+                BackupTime = DateTime.UtcNow,
+                TotalEvents = pendingEvents.Count,
+                Events = pendingEvents
+            };
+
+            var backupPath = GetBackupFilePath();
+            EnsureDirectoryExists(backupPath);
+
+            try
+            {
+                await using var stream = File.Create(backupPath);
+                await JsonSerializer.SerializeAsync(stream, backupData, _jsonOptions, cancellationToken);
+                _errorLogger?.LogInfo($"Telemetry backup saved to: {backupPath}");
+                return backupPath;
+            }
+            catch (Exception ex)
+            {
+                _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save telemetry backup file");
+                return null;
+            }
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    private string GetBackupFilePath()
+    {
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+        return _platformService.CombinePaths(
+            _platformService.GetAppDataPath(),
+            TelemetryDirectory,
+            "backups",
+            $"telemetry_backup_{timestamp}.json");
+    }
+
     #region Internal Types
 
     private class TelemetryEventWrapper
@@ -330,6 +388,13 @@ public class TelemetryStorageService : ITelemetryStorageService
     private class TelemetryExport
     {
         public DateTime ExportTime { get; set; }
+        public int TotalEvents { get; set; }
+        public List<TelemetryEvent> Events { get; set; } = [];
+    }
+
+    private class TelemetryBackup
+    {
+        public DateTime BackupTime { get; set; }
         public int TotalEvents { get; set; }
         public List<TelemetryEvent> Events { get; set; } = [];
     }
@@ -406,6 +471,13 @@ public interface ITelemetryStorageService
     /// Gets statistics about stored telemetry data.
     /// </summary>
     Task<TelemetryStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves pending events to a local backup file. This is used when upload fails
+    /// to ensure data is preserved locally for later upload attempts.
+    /// </summary>
+    /// <returns>The path to the saved backup file, or null if there was nothing to save.</returns>
+    Task<string?> SaveBackupFileAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -56,6 +56,8 @@ public class TelemetryUploadService : ITelemetryUploadService
             {
                 result.Success = false;
                 result.ErrorMessage = "API key not configured";
+                // Save backup when API key is missing
+                result.BackupFilePath = await _storageService.SaveBackupFileAsync(cancellationToken);
                 return result;
             }
 
@@ -102,17 +104,27 @@ public class TelemetryUploadService : ITelemetryUploadService
             result.Success = uploadedIds.Count == pendingEvents.Count;
             result.EventsUploaded = uploadedIds.Count;
             result.TotalPending = pendingEvents.Count;
+
+            // If upload failed or was partial, save a backup file locally
+            if (!result.Success)
+            {
+                result.BackupFilePath = await _storageService.SaveBackupFileAsync(cancellationToken);
+            }
         }
         catch (OperationCanceledException)
         {
             result.Success = false;
             result.ErrorMessage = "Upload cancelled";
+            // Save backup on cancellation
+            result.BackupFilePath = await _storageService.SaveBackupFileAsync(CancellationToken.None);
         }
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Network, "Failed to upload telemetry data");
             result.Success = false;
             result.ErrorMessage = ex.Message;
+            // Save backup on failure
+            result.BackupFilePath = await _storageService.SaveBackupFileAsync(CancellationToken.None);
         }
 
         return result;
@@ -247,4 +259,8 @@ public class TelemetryUploadResult
     public int EventsUploaded { get; set; }
     public int TotalPending { get; set; }
     public string? ErrorMessage { get; set; }
+    /// <summary>
+    /// Path to the local backup file saved when upload fails. Null if upload succeeded or no backup was needed.
+    /// </summary>
+    public string? BackupFilePath { get; set; }
 }

@@ -121,8 +121,8 @@ public class TelemetryManager : ITelemetryManager
             sessionEvent.DurationSeconds = duration;
             await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
 
-            // Attempt to upload pending data on shutdown
-            _ = _uploadService.UploadPendingDataAsync(cancellationToken);
+            // Attempt to upload pending data on shutdown - must await to ensure upload completes before app closes
+            await _uploadService.UploadPendingDataAsync(cancellationToken);
         }
         catch (Exception ex)
         {

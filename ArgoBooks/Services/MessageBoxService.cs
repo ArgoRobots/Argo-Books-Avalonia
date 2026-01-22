@@ -52,7 +52,7 @@ public class MessageBoxService : IMessageBoxService
 
             messageBox.ResultSelected += OnResultSelected;
 
-            _overlay.Content = messageBox;
+            _overlay.ModalContent = messageBox;
             _overlay.CloseOnBackdropClick = false;
             _overlay.CloseOnEscape = true;
             _overlay.Closed += OnOverlayClosed;

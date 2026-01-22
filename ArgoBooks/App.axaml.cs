@@ -355,13 +355,15 @@ public class App : Application
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             var geoLocationService = new GeoLocationService(httpClient, errorLogger);
             var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
-            var telemetryUploadService = new TelemetryUploadService(telemetryStorageService, httpClient, errorLogger);
+            var appVersion = AppInfo.VersionNumber;
+            var telemetryUploadService = new TelemetryUploadService(telemetryStorageService, httpClient, errorLogger, appVersion);
             TelemetryManager = new TelemetryManager(
                 telemetryStorageService,
                 telemetryUploadService,
                 geoLocationService,
                 SettingsService,
-                errorLogger);
+                errorLogger,
+                appVersion);
 
             // Create navigation service
             NavigationService = new NavigationService();

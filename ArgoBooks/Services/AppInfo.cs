@@ -8,7 +8,7 @@ namespace ArgoBooks.Services;
 public static class AppInfo
 {
     /// <summary>
-    /// Gets the application version in "V.X.X.X" format.
+    /// Gets the application version in "V.X.X.X" format for display.
     /// </summary>
     public static string Version
     {
@@ -21,6 +21,25 @@ public static class AppInfo
                 field = version != null
                     ? $"V.{version.Major}.{version.Minor}.{version.Build}"
                     : "V.1.0.0";
+            }
+            return field;
+        }
+    }
+
+    /// <summary>
+    /// Gets the application version in "X.X.X" format (without "V." prefix).
+    /// </summary>
+    public static string VersionNumber
+    {
+        get
+        {
+            if (field == null)
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                var version = assembly.GetName().Version;
+                field = version != null
+                    ? $"{version.Major}.{version.Minor}.{version.Build}"
+                    : "1.0.0";
             }
             return field;
         }
