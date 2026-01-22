@@ -105,8 +105,11 @@ public class ColumnResizeGripper : Border
 
             if (Math.Abs(delta) >= 1)
             {
-                ColumnWidths?.ResizeColumn(ColumnName, delta);
-                _lastDragPoint = currentPoint;
+                var actualDelta = ColumnWidths?.ResizeColumn(ColumnName, delta) ?? 0;
+                // Only move the drag anchor by the amount actually applied.
+                // This ensures the mouse must "catch up" to the column position
+                // when constraints prevent the full delta from being applied.
+                _lastDragPoint = new Point(_lastDragPoint.X + actualDelta, currentPoint.Y);
             }
             e.Handled = true;
         }
