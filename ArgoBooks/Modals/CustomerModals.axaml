@@ -6,6 +6,7 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
@@ -528,9 +529,9 @@
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Amount Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Grid ColumnDefinitions="*,Auto,*">
-                                <TextBox Grid.Column="0" Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Min'}" />
+                                <TextBox Grid.Column="0" Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Min'}" behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'to'}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                <TextBox Grid.Column="2" Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Max'}" />
+                                <TextBox Grid.Column="2" Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Max'}" behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                             </Grid>
                         </StackPanel>
                     </StackPanel>

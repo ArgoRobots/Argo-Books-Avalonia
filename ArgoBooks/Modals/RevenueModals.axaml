@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:modals="using:ArgoBooks.Modals"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
@@ -488,14 +489,16 @@
                                         <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}"
                                                  Classes="form-input"
                                                  Watermark="$0.00"
-                                                 HorizontalAlignment="Stretch" />
+                                                 HorizontalAlignment="Stretch"
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}"
                                                  Classes="form-input"
                                                  Watermark="$0.00"
-                                                 HorizontalAlignment="Stretch" />
+                                                 HorizontalAlignment="Stretch"
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>

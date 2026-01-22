@@ -570,6 +570,9 @@ public partial class AppShellViewModel : ViewModelBase
                 case "OpenEditCompany":
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);
                     break;
+                case "OpenCheckForUpdates":
+                    CheckForUpdateModalViewModel.OpenCommand.Execute(null);
+                    break;
             }
         };
 

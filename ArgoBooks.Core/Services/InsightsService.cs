@@ -240,57 +240,7 @@ public class InsightsService : IInsightsService
             insights.Add(volumeTrendInsight);
         }
 
-        // ML-based overall trend analysis
-        var mlTrendInsight = AnalyzeMLTrend(companyData);
-        if (mlTrendInsight != null)
-        {
-            insights.Add(mlTrendInsight);
-        }
-
         return insights;
-    }
-
-    private InsightItem? AnalyzeMLTrend(CompanyData companyData)
-    {
-        // Get monthly revenue data for ML trend analysis
-        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveTotalUSD);
-
-        if (monthlyRevenue.Count < 3) return null;
-
-        // Use ML service to detect trend
-        var seasonalPattern = _mlForecastingService.DetectSeasonality(monthlyRevenue);
-
-        // Only report if there's a significant trend
-        if (seasonalPattern.Trend == TrendDirection.Stable)
-            return null;
-
-        var trendDescription = seasonalPattern.Trend switch
-        {
-            TrendDirection.Increasing => $"Your business shows consistent growth. ML analysis detected an upward trend with a slope of {seasonalPattern.TrendSlope:F2} per month.",
-            TrendDirection.Decreasing => $"ML analysis detected a declining trend. Revenue is decreasing by approximately {Math.Abs(seasonalPattern.TrendSlope):F2} per month.",
-            _ => null
-        };
-
-        if (trendDescription == null) return null;
-
-        var recommendation = seasonalPattern.Trend switch
-        {
-            TrendDirection.Increasing => "Consider investing in growth areas and preparing for increased demand.",
-            TrendDirection.Decreasing => "Review pricing, marketing, and customer retention strategies to reverse this trend.",
-            _ => null
-        };
-
-        return new InsightItem
-        {
-            Title = $"ML Trend: {seasonalPattern.Trend}",
-            Description = trendDescription,
-            Recommendation = recommendation,
-            Severity = seasonalPattern.Trend == TrendDirection.Increasing
-                ? InsightSeverity.Success
-                : InsightSeverity.Warning,
-            Category = InsightCategory.RevenueTrend,
-            PercentageChange = (decimal)seasonalPattern.TrendSlope
-        };
     }
 
     private InsightItem? AnalyzeDayOfWeekPattern(List<Revenue> sales)
@@ -857,64 +807,6 @@ public class InsightsService : IInsightsService
 
         // Use historical data range for forecast insights
         var historicalRange = GetHistoricalDateRange(dateRange);
-        var forecast = GenerateForecast(companyData, historicalRange);
-
-        // Revenue forecast insight with ML-enhanced details
-        if (forecast.ForecastedRevenue > 0)
-        {
-            var methodDescription = forecast.ForecastMethod switch
-            {
-                "Combined (SSA + Holt-Winters)" => "Using combined ML analysis (SSA + Holt-Winters)",
-                "ML.NET SSA" => "Using ML.NET Singular Spectrum Analysis",
-                var m when m?.Contains("Holt-Winters") == true => "Using Holt-Winters seasonal forecasting",
-                _ => $"Based on {forecast.DataMonthsUsed} months of data"
-            };
-
-            var confidenceNote = forecast.ConfidenceScore >= 80
-                ? "High confidence prediction"
-                : forecast.ConfidenceScore >= 50
-                    ? "Moderate confidence prediction"
-                    : "Low confidence - consider adding more data";
-
-            insights.Add(new InsightItem
-            {
-                Title = "ML Revenue Forecast",
-                Description = $"{methodDescription}: Expected revenue is {FormatCurrency(forecast.ForecastedRevenueLower)} - {FormatCurrency(forecast.ForecastedRevenueUpper)}. {confidenceNote} ({forecast.ConfidenceScore:F0}%).",
-                Severity = forecast.ConfidenceScore >= 60 ? InsightSeverity.Info : InsightSeverity.Warning,
-                Category = InsightCategory.Forecast,
-                MetricValue = forecast.ForecastedRevenue
-            });
-        }
-
-        // Historical accuracy insight
-        var accuracyData = _forecastAccuracyService.GetAccuracyData(companyData);
-        if (accuracyData.ValidatedForecastCount > 0)
-        {
-            var accuracySeverity = accuracyData.AverageRevenueAccuracy >= 80
-                ? InsightSeverity.Success
-                : accuracyData.AverageRevenueAccuracy >= 60
-                    ? InsightSeverity.Info
-                    : InsightSeverity.Warning;
-
-            var trendNote = accuracyData.AccuracyTrend switch
-            {
-                AccuracyTrend.Improving => " Accuracy is improving over time.",
-                AccuracyTrend.Declining => " Note: accuracy has been declining recently.",
-                _ => ""
-            };
-
-            insights.Add(new InsightItem
-            {
-                Title = "Forecast Accuracy Tracking",
-                Description = $"Based on {accuracyData.ValidatedForecastCount} validated {(accuracyData.ValidatedForecastCount == 1 ? "forecast" : "forecasts")}, average accuracy is {accuracyData.AverageRevenueAccuracy:F0}%.{trendNote}",
-                Recommendation = accuracyData.AverageRevenueAccuracy < 70
-                    ? "More consistent data entry and longer history will improve forecast accuracy."
-                    : null,
-                Severity = accuracySeverity,
-                Category = InsightCategory.Forecast,
-                PercentageChange = (decimal)accuracyData.AverageRevenueAccuracy
-            });
-        }
 
         // Inventory depletion alert
         var inventoryAlerts = CheckInventoryDepletion(companyData, historicalRange);
@@ -1011,13 +903,6 @@ public class InsightsService : IInsightsService
         if (concentrationRec != null)
         {
             recommendations.Add(concentrationRec);
-        }
-
-        // Profit margin analysis
-        var marginRec = AnalyzeProfitMargins(companyData, historicalRange);
-        if (marginRec != null)
-        {
-            recommendations.Add(marginRec);
         }
 
         return recommendations;
@@ -1196,48 +1081,6 @@ public class InsightsService : IInsightsService
                 Severity = InsightSeverity.Warning,
                 Category = InsightCategory.Customer,
                 PercentageChange = concentrationPercent
-            };
-        }
-
-        return null;
-    }
-
-    private InsightItem? AnalyzeProfitMargins(CompanyData companyData, AnalysisDateRange dateRange)
-    {
-        var totalRevenue = companyData.Revenues
-            .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
-            .Sum(s => s.EffectiveTotalUSD);
-
-        var totalExpenses = companyData.Expenses
-            .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)
-            .Sum(p => p.EffectiveTotalUSD);
-
-        if (totalRevenue == 0) return null;
-
-        var profitMargin = (totalRevenue - totalExpenses) / totalRevenue * 100;
-
-        if (profitMargin < 10) // Low margin warning
-        {
-            return new InsightItem
-            {
-                Title = "Low Profit Margin Alert",
-                Description = $"Your current profit margin is {profitMargin:F1}%. Industry benchmarks typically suggest 15-20% for healthy businesses.",
-                Recommendation = "Review pricing strategy and look for cost reduction opportunities to improve profitability.",
-                Severity = InsightSeverity.Warning,
-                Category = InsightCategory.Recommendation,
-                PercentageChange = profitMargin
-            };
-        }
-
-        if (profitMargin > 30) // Good margin
-        {
-            return new InsightItem
-            {
-                Title = "Strong Profit Margins",
-                Description = $"Your profit margin of {profitMargin:F1}% is excellent. You're maintaining healthy profitability.",
-                Severity = InsightSeverity.Success,
-                Category = InsightCategory.Recommendation,
-                PercentageChange = profitMargin
             };
         }
 
