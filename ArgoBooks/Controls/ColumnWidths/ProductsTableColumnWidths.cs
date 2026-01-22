@@ -216,19 +216,23 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     {
         if (Math.Abs(_availableWidth - width) < 1) return;
 
-        if (_hasManualOverflow)
+        var totalCurrentWidth = _columns.Values
+            .Where(IsColumnVisible)
+            .Sum(c => c.CurrentWidth) + 48;
+
+        // If current column widths overflow the available width, enable scrolling
+        // This handles both manual overflow and window resize causing overflow
+        if (totalCurrentWidth > width + 1)
         {
-            var visibleColumns = _columns.Values.Where(IsColumnVisible).ToList();
-            var totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
-            if (width < totalWidth + 50)
-            {
-                MinimumTotalWidth = totalWidth;
-                NeedsHorizontalScroll = true;
-                return;
-            }
-            _hasManualOverflow = false;
+            _availableWidth = width;
+            _hasManualOverflow = true;
+            MinimumTotalWidth = totalCurrentWidth;
+            NeedsHorizontalScroll = true;
+            return;
         }
 
+        // We have enough space, reset overflow state
+        _hasManualOverflow = false;
         _availableWidth = width;
         RecalculateWidths();
     }
