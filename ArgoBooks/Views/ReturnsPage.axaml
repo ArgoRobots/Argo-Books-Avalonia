@@ -383,7 +383,7 @@
                                                 CornerRadius="32"
                                                 Background="{DynamicResource SurfaceAltBrush}"
                                                 HorizontalAlignment="Center">
-                                            <PathIcon Data="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"
+                                            <PathIcon Data="{x:Static icons:Icons.Returns}"
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>

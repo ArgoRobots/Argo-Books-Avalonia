@@ -361,7 +361,7 @@
                                                         CornerRadius="32"
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         HorizontalAlignment="Center">
-                                                    <PathIcon Data="{x:Static icons:Icons.Info}"
+                                                    <PathIcon Data="{x:Static icons:Icons.LostDamaged}"
                                                               Width="28" Height="28"
                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 </Border>

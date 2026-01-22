@@ -522,18 +522,31 @@ public class CompanyManager : IDisposable
 
     /// <summary>
     /// Changes the password for the current company.
+    /// This re-encrypts the file with the new password WITHOUT saving any pending data changes.
     /// </summary>
     /// <param name="newPassword">New password (null or empty to remove encryption).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ChangePasswordAsync(string? newPassword, CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || _currentFilePath == null)
+        if (!IsCompanyOpen || _currentFilePath == null || _currentTempDirectory == null)
         {
             throw new InvalidOperationException("No company is currently open.");
         }
 
-        // Save with new password
-        await SaveCompanyAsAsync(_currentFilePath, newPassword ?? string.Empty, cancellationToken);
+        // Determine password to use
+        var passwordToUse = string.IsNullOrEmpty(newPassword) ? null : newPassword;
+
+        // Re-encrypt the file with the new password WITHOUT saving data changes
+        // This only packages the existing temp directory content with the new encryption
+        await _fileService.SaveCompanyAsync(_currentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+
+        // Update current password
+        _currentPassword = passwordToUse;
+
+        // Note: We intentionally do NOT:
+        // - Call SaveCompanyDataAsync (preserves unsaved changes in memory)
+        // - Call _companyData.MarkAsSaved() (keeps HasUnsavedChanges state)
+        // - Raise CompanySaved event (no data was saved, only password changed)
     }
 
     /// <summary>
