@@ -217,9 +217,10 @@ public class CompanyManager : IDisposable
             // Raise event
             CompanyOpened?.Invoke(this, new CompanyOpenedEventArgs(companyName, filePath, false));
         }
-        catch
+        catch (Exception ex)
         {
             // Clean up on failure
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
             {
                 Directory.Delete(_currentTempDirectory, recursive: true);
@@ -311,9 +312,10 @@ public class CompanyManager : IDisposable
             // Invalid password - let UI handle retry
             throw;
         }
-        catch
+        catch (Exception ex)
         {
             // Clean up on failure
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
             {
                 Directory.Delete(_currentTempDirectory, recursive: true);

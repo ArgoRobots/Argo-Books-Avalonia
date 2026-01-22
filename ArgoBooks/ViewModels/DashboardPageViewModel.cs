@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -1016,6 +1017,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
         catch (InvalidOperationException ex)
         {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Google Sheets export failed - invalid operation");
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,
@@ -1024,6 +1026,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
         catch (Exception ex)
         {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Google Sheets export failed");
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,
