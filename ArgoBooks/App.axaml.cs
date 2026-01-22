@@ -453,6 +453,7 @@ public class App : Application
                     }
                     catch (Exception ex)
                     {
+                        ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company on close");
                         _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
                     }
                 }
@@ -581,7 +582,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize exchange rate service");
         }
     }
 
@@ -610,7 +611,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log but don't crash - file association is not critical
-            Console.WriteLine($"Failed to register file type associations: {ex.Message}");
+            ErrorLogger?.LogWarning($"Failed to register file type associations: {ex.Message}", "FileAssociation");
         }
     }
 
@@ -672,7 +673,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to extract icon: {ex.Message}");
+            ErrorLogger?.LogWarning($"Failed to extract icon: {ex.Message}", "IconExtraction");
             return null;
         }
     }
@@ -959,6 +960,7 @@ public class App : Application
                 }
                 catch (Exception ex)
                 {
+                    ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company");
                     _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
                 }
             }
@@ -1067,6 +1069,7 @@ public class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1094,9 +1097,9 @@ public class App : Application
                     var bitmap = new Bitmap(path);
                     createCompany.SetLogo(path, bitmap);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Invalid image
+                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "CreateCompanyLogo");
                 }
             }
         };
@@ -1239,6 +1242,7 @@ public class App : Application
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open sample company");
             _appShellViewModel.AddNotification(
                 "Error".Translate(),
                 "Failed to open sample company: {0}".TranslateFormat(ex.Message),
@@ -1397,6 +1401,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to update company");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to update company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1425,9 +1430,9 @@ public class App : Application
                     var bitmap = new Bitmap(path);
                     editCompany.SetLogo(path, bitmap);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Invalid image
+                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "EditCompanyLogo");
                 }
             }
         };
@@ -1472,6 +1477,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.HasPassword = false;
+                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Failed to set password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to set password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1499,6 +1505,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
+                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Failed to change password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to change password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1526,6 +1533,7 @@ public class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
+                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Failed to remove password");
                 _appShellViewModel.AddNotification("Error".Translate(), "Failed to remove password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
@@ -1604,6 +1612,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
+                ErrorLogger?.LogError(ex, ErrorCategory.Security, "Windows Hello authentication failed");
                 var dialog = ConfirmationDialog;
                 if (dialog != null)
                 {
@@ -1806,9 +1815,9 @@ public class App : Application
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore errors opening folder
+                    ErrorLogger?.LogWarning($"Failed to open folder after export: {ex.Message}", "ExportFolder");
                 }
             }
             catch (Exception ex)
@@ -1963,6 +1972,7 @@ public class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to import spreadsheet data");
                 var errorDialog = ConfirmationDialog;
                 if (errorDialog != null)
                 {
@@ -2104,9 +2114,10 @@ public class App : Application
                         await CompanyManager.SaveCompanyAsync();
                         _mainWindowViewModel?.HideLoading();
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         _mainWindowViewModel?.HideLoading();
+                        ErrorLogger?.LogWarning($"Auto-save before lock failed: {ex.Message}", "AutoSave");
                         // Continue to close even if save fails - user can reopen
                     }
                 }
@@ -2254,6 +2265,7 @@ public class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
             _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
@@ -2310,6 +2322,7 @@ public class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file with password");
             _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
@@ -2352,6 +2365,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
             _appShellViewModel?.AddNotification("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
@@ -2440,9 +2454,9 @@ public class App : Application
                 _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors loading recent companies
+            ErrorLogger?.LogWarning($"Failed to load recent companies: {ex.Message}", "RecentCompanies");
         }
     }
 
@@ -2664,8 +2678,9 @@ public class App : Application
         {
             return new Bitmap(path);
         }
-        catch
+        catch (Exception ex)
         {
+            ErrorLogger?.LogWarning($"Failed to load bitmap from path: {ex.Message}", "BitmapLoader");
             return null;
         }
     }
