@@ -48,23 +48,12 @@
                         BorderThickness="0,0,0,1"
                         Padding="16,12">
                     <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{loc:Loc Notifications}"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <Border Background="{DynamicResource PrimaryBrush}"
-                                    CornerRadius="10"
-                                    Padding="8,2"
-                                    IsVisible="{Binding HasUnreadNotifications}"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding UnreadCount}"
-                                           FontSize="11"
-                                           FontWeight="SemiBold"
-                                           Foreground="White" />
-                            </Border>
-                        </StackPanel>
+                        <TextBlock Grid.Column="0"
+                                   Text="{loc:Loc Notifications}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
                         <Button Grid.Column="1"
                                 Classes="text-button"
                                 Content="{loc:Loc 'Mark all read'}"
