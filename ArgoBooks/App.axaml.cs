@@ -355,7 +355,7 @@ public class App : Application
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             var geoLocationService = new GeoLocationService(httpClient, errorLogger);
             var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
-            var appVersion = AppInfo.AssemblyVersion?.ToString(3) ?? "2.0.0";
+            var appVersion = AppInfo.VersionNumber;
             var telemetryUploadService = new TelemetryUploadService(telemetryStorageService, httpClient, errorLogger, appVersion);
             TelemetryManager = new TelemetryManager(
                 telemetryStorageService,
