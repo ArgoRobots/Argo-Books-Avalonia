@@ -117,7 +117,6 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         HasError = true;
         IsLoading = false;
         IsWindowsHelloAuthenticating = false;
-        Password = string.Empty;
         IsOpen = true; // Ensure modal stays/reopens
 
         // Create a new completion source for the retry
