@@ -117,7 +117,7 @@ public class LicenseSettings
 
 public class PrivacySettings
 {
-    public bool AnonymousDataCollectionConsent { get; set; } = false;
+    public bool AnonymousDataCollectionConsent { get; set; } = true;
     public DateTime? ConsentDate { get; set; }
 }
 
