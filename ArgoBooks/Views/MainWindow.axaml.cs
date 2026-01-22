@@ -122,15 +122,10 @@ public partial class MainWindow : Window
 
     private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
-        // If we've already confirmed closing, just save window state and close
+        // If we've already confirmed closing and done telemetry upload, just save window state
         if (_isClosingConfirmed)
         {
             SaveWindowState();
-            // End telemetry session and wait for upload to complete
-            if (App.TelemetryManager != null)
-            {
-                await App.TelemetryManager.EndSessionAsync();
-            }
             return;
         }
 
@@ -149,9 +144,8 @@ public partial class MainWindow : Window
             var hasAppUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;
             if (!hasAppUnsavedChanges)
             {
-                // No other unsaved changes, close the window
-                _isClosingConfirmed = true;
-                Close();
+                // No other unsaved changes, do telemetry upload and close
+                await EndTelemetryAndCloseAsync();
                 return;
             }
             // Fall through to handle app-level unsaved changes
@@ -189,14 +183,12 @@ public partial class MainWindow : Window
                                 await App.CompanyManager.SaveCompanyAsync();
                             }
                         }
-                        _isClosingConfirmed = true;
-                        Close();
+                        await EndTelemetryAndCloseAsync();
                         break;
 
                     case UnsavedChangesResult.DontSave:
                         // Close without saving
-                        _isClosingConfirmed = true;
-                        Close();
+                        await EndTelemetryAndCloseAsync();
                         break;
 
                     case UnsavedChangesResult.Cancel:
@@ -208,17 +200,24 @@ public partial class MainWindow : Window
         }
         else
         {
-            // No unsaved changes, but we need to wait for telemetry upload to complete
-            // Cancel close, do async work, then close
+            // No unsaved changes, do telemetry upload and close
             e.Cancel = true;
-            SaveWindowState();
-            if (App.TelemetryManager != null)
-            {
-                await App.TelemetryManager.EndSessionAsync();
-            }
-            _isClosingConfirmed = true;
-            Close();
+            await EndTelemetryAndCloseAsync();
         }
+    }
+
+    /// <summary>
+    /// Ends the telemetry session, waits for upload to complete, then closes the window.
+    /// </summary>
+    private async Task EndTelemetryAndCloseAsync()
+    {
+        SaveWindowState();
+        if (App.TelemetryManager != null)
+        {
+            await App.TelemetryManager.EndSessionAsync();
+        }
+        _isClosingConfirmed = true;
+        Close();
     }
 
     private void SaveWindowState()
