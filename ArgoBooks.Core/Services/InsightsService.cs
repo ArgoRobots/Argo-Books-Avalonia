@@ -240,57 +240,7 @@ public class InsightsService : IInsightsService
             insights.Add(volumeTrendInsight);
         }
 
-        // ML-based overall trend analysis
-        var mlTrendInsight = AnalyzeMLTrend(companyData);
-        if (mlTrendInsight != null)
-        {
-            insights.Add(mlTrendInsight);
-        }
-
         return insights;
-    }
-
-    private InsightItem? AnalyzeMLTrend(CompanyData companyData)
-    {
-        // Get monthly revenue data for ML trend analysis
-        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveTotalUSD);
-
-        if (monthlyRevenue.Count < 3) return null;
-
-        // Use ML service to detect trend
-        var seasonalPattern = _mlForecastingService.DetectSeasonality(monthlyRevenue);
-
-        // Only report if there's a significant trend
-        if (seasonalPattern.Trend == TrendDirection.Stable)
-            return null;
-
-        var trendDescription = seasonalPattern.Trend switch
-        {
-            TrendDirection.Increasing => $"Your business shows consistent growth. ML analysis detected an upward trend with a slope of {seasonalPattern.TrendSlope:F2} per month.",
-            TrendDirection.Decreasing => $"ML analysis detected a declining trend. Revenue is decreasing by approximately {Math.Abs(seasonalPattern.TrendSlope):F2} per month.",
-            _ => null
-        };
-
-        if (trendDescription == null) return null;
-
-        var recommendation = seasonalPattern.Trend switch
-        {
-            TrendDirection.Increasing => "Consider investing in growth areas and preparing for increased demand.",
-            TrendDirection.Decreasing => "Review pricing, marketing, and customer retention strategies to reverse this trend.",
-            _ => null
-        };
-
-        return new InsightItem
-        {
-            Title = $"ML Trend: {seasonalPattern.Trend}",
-            Description = trendDescription,
-            Recommendation = recommendation,
-            Severity = seasonalPattern.Trend == TrendDirection.Increasing
-                ? InsightSeverity.Success
-                : InsightSeverity.Warning,
-            Category = InsightCategory.RevenueTrend,
-            PercentageChange = (decimal)seasonalPattern.TrendSlope
-        };
     }
 
     private InsightItem? AnalyzeDayOfWeekPattern(List<Revenue> sales)
