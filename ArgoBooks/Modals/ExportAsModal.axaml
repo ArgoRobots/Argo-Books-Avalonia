@@ -94,26 +94,9 @@
                     </TabItem>
 
                     <!-- Spreadsheet Tab -->
-                    <TabItem Header="{loc:Loc Spreadsheet}">
+                    <TabItem Header="{loc:Loc 'Spreadsheet (XLSX)'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
-                                <!-- File Format -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="{loc:Loc 'File Format'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <Border Background="{DynamicResource SurfaceBrush}"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="6"
-                                            Padding="12,10">
-                                        <TextBlock Text="{loc:Loc 'Excel Workbook (.xlsx)'}"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Border>
-                                </StackPanel>
-
                                 <!-- Date Range -->
                                 <StackPanel Spacing="12">
                                     <TextBlock Text="{loc:Loc 'Date Range'}"
