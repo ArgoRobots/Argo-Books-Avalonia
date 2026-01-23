@@ -129,6 +129,7 @@ public partial class AppTourOverlay : UserControl
     private Rect? GetElementBoundsRelativeToOverlay(Control element)
     {
         const double borderThickness = 3;
+        const double edgeOffset = 8; // Extra offset when highlight is at window edge
 
         try
         {
@@ -149,16 +150,16 @@ public partial class AppTourOverlay : UserControl
             var overlayHeight = Bounds.Height;
 
             // Inset the bounds by border thickness so the border draws INSIDE the element
-            // This prevents overflow outside the window
-            var left = Math.Max(0, topLeft.X) + borderThickness;
-            var top = Math.Max(0, topLeft.Y) + borderThickness;
+            // Add extra offset when at window edges to prevent overflow
+            var leftOffset = topLeft.X <= edgeOffset ? edgeOffset : borderThickness;
+            var topOffset = topLeft.Y <= edgeOffset ? edgeOffset : borderThickness;
+            var rightOffset = bottomRight.X >= overlayWidth - edgeOffset ? edgeOffset : borderThickness;
+            var bottomOffset = bottomRight.Y >= overlayHeight - edgeOffset ? edgeOffset : borderThickness;
 
-            // Clamp right and bottom edges to stay within overlay bounds
-            var right = Math.Min(overlayWidth, bottomRight.X) - borderThickness;
-            var bottom = Math.Min(overlayHeight, bottomRight.Y) - borderThickness;
-
-            var width = right - left;
-            var height = bottom - top;
+            var left = topLeft.X + leftOffset;
+            var top = topLeft.Y + topOffset;
+            var width = (bottomRight.X - topLeft.X) - leftOffset - rightOffset;
+            var height = (bottomRight.Y - topLeft.Y) - topOffset - bottomOffset;
 
             // Ensure we have valid dimensions
             if (width <= 0 || height <= 0)
