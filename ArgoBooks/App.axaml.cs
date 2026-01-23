@@ -483,6 +483,22 @@ public class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
+            // Load settings and recent companies BEFORE showing window to prevent flicker
+            // Use Task.Run to avoid deadlock with synchronization context
+            try
+            {
+                Task.Run(async () =>
+                {
+                    if (SettingsService != null)
+                        await SettingsService.LoadGlobalSettingsAsync();
+                    await LoadRecentCompaniesAsync();
+                }).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
+            }
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = _mainWindowViewModel
@@ -515,11 +531,10 @@ public class App : Application
             // Register file type associations on Windows
             RegisterFileTypeAssociationsAsync();
 
-            // Load global settings
+            // Settings and recent companies are loaded synchronously before window is shown
+            // to prevent flicker. Just initialize services that depend on settings here.
             if (SettingsService != null)
             {
-                await SettingsService.LoadGlobalSettingsAsync();
-
                 // Initialize theme service with settings
                 ThemeService.Instance.SetGlobalSettingsService(SettingsService);
                 ThemeService.Instance.Initialize();
@@ -556,9 +571,6 @@ public class App : Application
                     _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
                 }
             }
-
-            // Load and display recent companies
-            await LoadRecentCompaniesAsync();
         }
         catch (Exception ex)
         {
@@ -2448,11 +2460,15 @@ public class App : Application
                     });
                 }
                 _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
+                _welcomeScreenViewModel.IsRecentCompaniesLoaded = true;
             }
         }
         catch (Exception ex)
         {
             ErrorLogger?.LogWarning($"Failed to load recent companies: {ex.Message}", "RecentCompanies");
+            // Mark as loaded even on error to prevent indefinite hidden state
+            if (_welcomeScreenViewModel != null)
+                _welcomeScreenViewModel.IsRecentCompaniesLoaded = true;
         }
     }
 
