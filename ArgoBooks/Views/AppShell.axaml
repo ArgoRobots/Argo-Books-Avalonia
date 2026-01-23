@@ -41,7 +41,7 @@
                     <!-- Unsaved Changes Reminder Banner (inside page area) -->
                     <Border Grid.Row="1"
                             Background="#F59E0B"
-                            IsVisible="{Binding HeaderViewModel.ShowUnsavedChangesReminder}"
+                            IsVisible="{Binding HeaderViewModel.ShowUnsavedChangesReminder, FallbackValue=True}"
                             Margin="30,20,30,0"
                             CornerRadius="8"
                             Padding="16,10">
