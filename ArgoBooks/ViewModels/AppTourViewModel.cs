@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using ArgoBooks.Services;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -107,6 +108,27 @@ public partial class AppTourViewModel : ViewModelBase
     [ObservableProperty]
     private string _progressText = "";
 
+    // Dynamic highlight bounds (set by code-behind)
+    [ObservableProperty]
+    private Thickness _highlightMargin;
+
+    [ObservableProperty]
+    private double _highlightWidth = double.NaN;
+
+    [ObservableProperty]
+    private double _highlightHeight = double.NaN;
+
+    [ObservableProperty]
+    private bool _showHighlight;
+
+    [ObservableProperty]
+    private CornerRadius _highlightCornerRadius = new(8);
+
+    /// <summary>
+    /// Event raised when the target area changes and bounds need to be recalculated.
+    /// </summary>
+    public event EventHandler? TargetAreaChanged;
+
     /// <summary>
     /// Step indicators for the progress dots.
     /// </summary>
@@ -212,6 +234,35 @@ public partial class AppTourViewModel : ViewModelBase
             {
                 StepIndicators[i].IsActive = i == CurrentStepIndex;
             }
+
+            // Notify that bounds need to be recalculated
+            TargetAreaChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    /// <summary>
+    /// Updates the highlight bounds. Called from code-behind after measuring elements.
+    /// </summary>
+    public void SetHighlightBounds(Rect bounds, CornerRadius cornerRadius)
+    {
+        if (bounds == Rect.Empty)
+        {
+            ShowHighlight = false;
+            return;
+        }
+
+        HighlightMargin = new Thickness(bounds.Left, bounds.Top, 0, 0);
+        HighlightWidth = bounds.Width;
+        HighlightHeight = bounds.Height;
+        HighlightCornerRadius = cornerRadius;
+        ShowHighlight = true;
+    }
+
+    /// <summary>
+    /// Hides the highlight.
+    /// </summary>
+    public void HideHighlight()
+    {
+        ShowHighlight = false;
     }
 }

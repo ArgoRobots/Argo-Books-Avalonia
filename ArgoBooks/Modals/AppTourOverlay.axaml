@@ -15,88 +15,21 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- Semi-transparent backdrop with cutouts based on target area -->
-        <Grid>
-            <!-- Full overlay backdrop -->
-            <Border Background="#CC000000" />
+        <!-- Semi-transparent backdrop -->
+        <Border Background="#CC000000" />
 
-            <!-- Highlight areas -->
-            <!-- Sidebar highlight -->
-            <Border x:Name="SidebarHighlight"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    Width="200"
-                    Margin="0,44,0,0"
-                    Background="Transparent"
-                    BorderBrush="{DynamicResource PrimaryBrush}"
-                    BorderThickness="3"
-                    CornerRadius="0,8,8,0">
-                <Border.IsVisible>
-                    <Binding Path="CurrentTargetArea">
-                        <Binding.Converter>
-                            <conv:StringEqualsConverter CompareValue="sidebar" />
-                        </Binding.Converter>
-                    </Binding>
-                </Border.IsVisible>
-            </Border>
-
-            <!-- Search bar highlight (just the search area in header) -->
-            <Border x:Name="SearchBarHighlight"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Width="280"
-                    Height="36"
-                    Margin="410,50,0,0"
-                    Background="Transparent"
-                    BorderBrush="{DynamicResource PrimaryBrush}"
-                    BorderThickness="3"
-                    CornerRadius="8">
-                <Border.IsVisible>
-                    <Binding Path="CurrentTargetArea">
-                        <Binding.Converter>
-                            <conv:StringEqualsConverter CompareValue="searchbar" />
-                        </Binding.Converter>
-                    </Binding>
-                </Border.IsVisible>
-            </Border>
-
-            <!-- Header highlight -->
-            <Border x:Name="HeaderHighlight"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
-                    Height="56"
-                    Margin="210,40,0,0"
-                    Background="Transparent"
-                    BorderBrush="{DynamicResource PrimaryBrush}"
-                    BorderThickness="3"
-                    CornerRadius="0,0,8,8">
-                <Border.IsVisible>
-                    <Binding Path="CurrentTargetArea">
-                        <Binding.Converter>
-                            <conv:StringEqualsConverter CompareValue="header" />
-                        </Binding.Converter>
-                    </Binding>
-                </Border.IsVisible>
-            </Border>
-
-            <!-- Content area highlight -->
-            <Border x:Name="ContentHighlight"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Margin="210,96,8,8"
-                    Background="Transparent"
-                    BorderBrush="{DynamicResource PrimaryBrush}"
-                    BorderThickness="3"
-                    CornerRadius="8">
-                <Border.IsVisible>
-                    <Binding Path="CurrentTargetArea">
-                        <Binding.Converter>
-                            <conv:StringEqualsConverter CompareValue="content" />
-                        </Binding.Converter>
-                    </Binding>
-                </Border.IsVisible>
-            </Border>
-        </Grid>
+        <!-- Dynamic highlight border - positioned by code-behind -->
+        <Border x:Name="DynamicHighlight"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="{Binding HighlightMargin}"
+                Width="{Binding HighlightWidth}"
+                Height="{Binding HighlightHeight}"
+                Background="Transparent"
+                BorderBrush="{DynamicResource PrimaryBrush}"
+                BorderThickness="3"
+                CornerRadius="{Binding HighlightCornerRadius}"
+                IsVisible="{Binding ShowHighlight}" />
 
         <!-- Tour step card - use nested borders to prevent corner clipping -->
         <Border CornerRadius="12"
