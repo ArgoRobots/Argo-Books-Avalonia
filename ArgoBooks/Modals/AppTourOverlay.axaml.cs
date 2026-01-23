@@ -128,6 +128,8 @@ public partial class AppTourOverlay : UserControl
 
     private Rect? GetElementBoundsRelativeToOverlay(Control element)
     {
+        const double borderThickness = 3;
+
         try
         {
             // Get the transform from the element to this overlay
@@ -142,7 +144,18 @@ public partial class AppTourOverlay : UserControl
             var topLeft = transform.Value.Transform(elementBounds.TopLeft);
             var bottomRight = transform.Value.Transform(elementBounds.BottomRight);
 
-            return new Rect(topLeft, bottomRight);
+            // Inset the bounds by border thickness so the border draws INSIDE the element
+            // This prevents overflow outside the window
+            var left = Math.Max(0, topLeft.X) + borderThickness;
+            var top = Math.Max(0, topLeft.Y) + borderThickness;
+            var width = (bottomRight.X - topLeft.X) - (borderThickness * 2);
+            var height = (bottomRight.Y - topLeft.Y) - (borderThickness * 2);
+
+            // Ensure we have valid dimensions
+            if (width <= 0 || height <= 0)
+                return null;
+
+            return new Rect(left, top, width, height);
         }
         catch
         {
