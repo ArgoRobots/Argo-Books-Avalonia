@@ -168,6 +168,11 @@ public class App : Application
     public static QuickActionsSettingsModalViewModel? QuickActionsSettingsModalViewModel => _appShellViewModel?.QuickActionsSettingsModalViewModel;
 
     /// <summary>
+    /// Gets the header view model for shared access.
+    /// </summary>
+    public static HeaderViewModel? HeaderViewModel => _appShellViewModel?.HeaderViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>

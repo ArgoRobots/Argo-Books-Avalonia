@@ -768,6 +768,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.Notifications.UnsavedChangesReminder = UnsavedChangesReminder;
             settings.Notifications.UnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
 
+            // Restart the timer with new settings
+            App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
+
             settings.ChangesMade = true;
         }
 

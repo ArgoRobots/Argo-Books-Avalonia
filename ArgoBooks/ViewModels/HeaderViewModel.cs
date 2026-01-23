@@ -226,6 +226,19 @@ public partial class HeaderViewModel : ViewModelBase
         ShowUnsavedChangesReminder = false;
     }
 
+    /// <summary>
+    /// Restarts the unsaved changes reminder timer with current settings.
+    /// Call this when the reminder settings change.
+    /// </summary>
+    public void RestartUnsavedChangesReminderTimer()
+    {
+        if (HasUnsavedChanges)
+        {
+            ShowUnsavedChangesReminder = false;
+            StartUnsavedChangesReminderTimer();
+        }
+    }
+
     #endregion
 
     #region Undo/Redo
