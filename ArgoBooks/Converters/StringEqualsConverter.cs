@@ -353,7 +353,7 @@ public static class Converters
     /// <summary>
     /// Converts a boolean to "Finish" or "Next" text.
     /// </summary>
-    public static readonly IValueConverter BoolToFinishNext = new BoolToStringConverter("Finish", "Next");
+    public static readonly IValueConverter BoolToFinishNext = new BoolToFixedStringConverter("Finish", "Next");
 }
 
 /// <summary>
@@ -378,14 +378,14 @@ public class IntToRangeConverter : IValueConverter
 }
 
 /// <summary>
-/// Converter that converts a boolean to one of two strings.
+/// Converter that converts a boolean to one of two fixed strings specified in the constructor.
 /// </summary>
-public class BoolToStringConverter : IValueConverter
+public class BoolToFixedStringConverter : IValueConverter
 {
     private readonly string _trueValue;
     private readonly string _falseValue;
 
-    public BoolToStringConverter(string trueValue, string falseValue)
+    public BoolToFixedStringConverter(string trueValue, string falseValue)
     {
         _trueValue = trueValue;
         _falseValue = falseValue;
