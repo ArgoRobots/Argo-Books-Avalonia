@@ -629,13 +629,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void OnChecklistNavigationRequested(object? sender, string pageName)
     {
-        // Handle Settings separately - open modal instead of navigating
-        if (pageName == "Settings")
-        {
-            App.ShowSettingsModal();
-            return;
-        }
-
         // Navigate to the requested page
         _ = App.NavigationService?.NavigateToAsync(pageName);
     }

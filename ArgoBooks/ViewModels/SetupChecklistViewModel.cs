@@ -86,7 +86,7 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Title = "Set up payment methods",
             Description = "Track how money moves",
             Icon = Icons.Payments,
-            NavigationTarget = "Settings"
+            NavigationTarget = "Payments"
         });
         Items.Add(new ChecklistItemViewModel
         {
