@@ -67,6 +67,18 @@
         </Setter>
     </Style>
 
+    <!-- Popup Banner - small notification banner with fade-in animation -->
+    <!-- Use with BannerAnimationBehavior for proper fade animations -->
+    <Style Selector="Border.popup-banner">
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:1" Easing="CubicEaseOut" />
+            </Transitions>
+        </Setter>
+    </Style>
+
     <!-- Modal Content variant without border (for modals that define their own border) -->
     <Style Selector="Border.modal-content-noborder">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
