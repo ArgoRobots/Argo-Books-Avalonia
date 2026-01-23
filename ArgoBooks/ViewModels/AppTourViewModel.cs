@@ -245,7 +245,7 @@ public partial class AppTourViewModel : ViewModelBase
     /// </summary>
     public void SetHighlightBounds(Rect bounds, CornerRadius cornerRadius)
     {
-        if (bounds == Rect.Empty)
+        if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             ShowHighlight = false;
             return;
