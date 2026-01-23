@@ -27,7 +27,7 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
         new CategoriesTutorialStep
         {
             Title = "Example Categories",
-            Description = "For expenses: 'Office Supplies', 'Marketing', 'Travel'.\nFor revenue: 'Product Sales', 'Service Fees', 'Subscriptions'.\n\nYou can also create sub-categories like 'Marketing > Social Media Ads'.",
+            Description = "A bakery might use expense categories like 'Ingredients', 'Packaging', and 'Equipment'. For revenue: 'Cakes', 'Bread', 'Catering'.\n\nYou can nest categories too - like 'Ingredients > Flour' or 'Cakes > Wedding Cakes'.",
             HighlightArea = "none"
         }
     ];

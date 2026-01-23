@@ -7,7 +7,6 @@
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CategoriesPage"
              x:DataType="vm:CategoriesPageViewModel">
@@ -449,9 +448,6 @@
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>
-
-    <!-- First-visit tutorial overlay -->
-    <modals:CategoriesTutorialOverlay DataContext="{Binding Tutorial}" />
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->

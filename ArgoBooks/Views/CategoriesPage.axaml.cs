@@ -18,10 +18,7 @@ public partial class CategoriesPage : UserControl
     private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         // Show tutorial on first visit
-        if (DataContext is CategoriesPageViewModel viewModel)
-        {
-            viewModel.Tutorial.ShowIfFirstVisit();
-        }
+        App.CategoriesTutorialViewModel?.ShowIfFirstVisit();
     }
 
     private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)

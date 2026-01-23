@@ -18,11 +18,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 {
     public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
-    /// <summary>
-    /// ViewModel for the first-visit tutorial.
-    /// </summary>
-    public CategoriesTutorialViewModel Tutorial { get; } = new();
-
     #region Tab Selection
 
     [ObservableProperty]
