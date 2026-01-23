@@ -236,7 +236,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// Available options for the unsaved changes reminder minutes.
     /// </summary>
-    public int[] ReminderMinuteOptions { get; } = [5, 10, 15, 30, 60];
+    public int[] ReminderMinuteOptions { get; } = [5, 10, 15, 30, 45, 60];
 
     #endregion
 
