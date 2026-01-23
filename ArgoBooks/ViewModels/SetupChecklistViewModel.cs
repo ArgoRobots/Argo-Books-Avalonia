@@ -104,14 +104,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Icon = Icons.Revenue,
             NavigationTarget = "Revenue"
         });
-        Items.Add(new ChecklistItemViewModel
-        {
-            Id = TutorialService.ChecklistItems.ExploreDashboard,
-            Title = "Explore the Dashboard",
-            Description = "See your business overview",
-            Icon = Icons.Dashboard,
-            NavigationTarget = "Dashboard"
-        });
 
         TotalCount = Items.Count;
         RefreshCompletionState();

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,11 +18,25 @@ public class TourStep
 }
 
 /// <summary>
+/// Represents a step indicator dot for the tour progress.
+/// </summary>
+public partial class StepIndicator : ObservableObject
+{
+    [ObservableProperty]
+    private bool _isActive;
+
+    public int Index { get; init; }
+}
+
+/// <summary>
 /// ViewModel for the interactive app tour overlay.
 /// </summary>
 public partial class AppTourViewModel : ViewModelBase
 {
-    private static readonly List<TourStep> TourSteps =
+    private static bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    private static string QuickActionsShortcut => IsMacOS ? "Cmd+K" : "Ctrl+K";
+
+    private static List<TourStep> GetTourSteps() =>
     [
         new TourStep
         {
@@ -46,16 +62,9 @@ public partial class AppTourViewModel : ViewModelBase
         new TourStep
         {
             Title = "Quick Actions",
-            Description = "Press Ctrl+K (or Cmd+K on Mac) anytime to open Quick Actions. It's the fastest way to create expenses, revenue, and more.",
-            TargetArea = "header",
+            Description = $"Press {QuickActionsShortcut} anytime to open Quick Actions. It's the fastest way to create expenses, revenue, and more.",
+            TargetArea = "searchbar",
             Icon = Icons.Lightning
-        },
-        new TourStep
-        {
-            Title = "Search & Settings",
-            Description = "Use the header to access search, notifications, company settings, and your profile.",
-            TargetArea = "header",
-            Icon = Icons.Search
         },
         new TourStep
         {
@@ -65,6 +74,8 @@ public partial class AppTourViewModel : ViewModelBase
             Icon = Icons.Check
         }
     ];
+
+    private readonly List<TourStep> _tourSteps;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -97,6 +108,11 @@ public partial class AppTourViewModel : ViewModelBase
     private string _progressText = "";
 
     /// <summary>
+    /// Step indicators for the progress dots.
+    /// </summary>
+    public ObservableCollection<StepIndicator> StepIndicators { get; } = [];
+
+    /// <summary>
     /// Event raised when the tour is completed.
     /// </summary>
     public event EventHandler? TourCompleted;
@@ -108,7 +124,14 @@ public partial class AppTourViewModel : ViewModelBase
 
     public AppTourViewModel()
     {
-        TotalSteps = TourSteps.Count;
+        _tourSteps = GetTourSteps();
+        TotalSteps = _tourSteps.Count;
+
+        // Initialize step indicators
+        for (int i = 0; i < TotalSteps; i++)
+        {
+            StepIndicators.Add(new StepIndicator { Index = i, IsActive = false });
+        }
     }
 
     /// <summary>
@@ -135,7 +158,7 @@ public partial class AppTourViewModel : ViewModelBase
     [RelayCommand]
     private void NextStep()
     {
-        if (CurrentStepIndex < TourSteps.Count - 1)
+        if (CurrentStepIndex < _tourSteps.Count - 1)
         {
             CurrentStepIndex++;
             UpdateCurrentStep();
@@ -173,16 +196,22 @@ public partial class AppTourViewModel : ViewModelBase
 
     private void UpdateCurrentStep()
     {
-        if (CurrentStepIndex >= 0 && CurrentStepIndex < TourSteps.Count)
+        if (CurrentStepIndex >= 0 && CurrentStepIndex < _tourSteps.Count)
         {
-            var step = TourSteps[CurrentStepIndex];
+            var step = _tourSteps[CurrentStepIndex];
             CurrentTitle = step.Title;
             CurrentDescription = step.Description;
             CurrentTargetArea = step.TargetArea;
             CurrentIcon = step.Icon;
             IsFirstStep = CurrentStepIndex == 0;
-            IsLastStep = CurrentStepIndex == TourSteps.Count - 1;
+            IsLastStep = CurrentStepIndex == _tourSteps.Count - 1;
             ProgressText = $"{CurrentStepIndex + 1} of {TotalSteps}";
+
+            // Update step indicators
+            for (int i = 0; i < StepIndicators.Count; i++)
+            {
+                StepIndicators[i].IsActive = i == CurrentStepIndex;
+            }
         }
     }
 }

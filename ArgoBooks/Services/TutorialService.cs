@@ -196,8 +196,7 @@ public class TutorialService
         return completed.Contains(ChecklistItems.CreateCategory) &&
                completed.Contains(ChecklistItems.AddPaymentMethod) &&
                completed.Contains(ChecklistItems.RecordExpense) &&
-               completed.Contains(ChecklistItems.RecordRevenue) &&
-               completed.Contains(ChecklistItems.ExploreDashboard);
+               completed.Contains(ChecklistItems.RecordRevenue);
     }
 
     /// <summary>
@@ -214,7 +213,7 @@ public class TutorialService
     public int GetTotalChecklistCount()
     {
         // Core items that all users should complete
-        return 5;
+        return 4;
     }
 
     /// <summary>
