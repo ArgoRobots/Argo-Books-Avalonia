@@ -219,7 +219,13 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _lowStockAlert = true;
 
     [ObservableProperty]
+    private bool _outOfStockAlert = true;
+
+    [ObservableProperty]
     private bool _invoiceOverdue = true;
+
+    [ObservableProperty]
+    private bool _rentalOverdue = true;
 
     #endregion
 
@@ -574,7 +580,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
             // Load notification settings
             LowStockAlert = settings.Notifications.LowStockAlert;
+            OutOfStockAlert = settings.Notifications.OutOfStockAlert;
             InvoiceOverdue = settings.Notifications.InvoiceOverdueAlert;
+            RentalOverdue = settings.Notifications.RentalOverdueAlert;
         }
         else
         {
@@ -741,7 +749,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
             // Save notification settings
             settings.Notifications.LowStockAlert = LowStockAlert;
+            settings.Notifications.OutOfStockAlert = OutOfStockAlert;
             settings.Notifications.InvoiceOverdueAlert = InvoiceOverdue;
+            settings.Notifications.RentalOverdueAlert = RentalOverdue;
 
             settings.ChangesMade = true;
         }

@@ -66,7 +66,9 @@ public class EnabledModulesSettings
 public class NotificationSettings
 {
     public bool LowStockAlert { get; set; } = true;
+    public bool OutOfStockAlert { get; set; } = true;
     public bool InvoiceOverdueAlert { get; set; } = true;
+    public bool RentalOverdueAlert { get; set; } = true;
 }
 
 public class SecuritySettings

@@ -177,7 +177,8 @@ public class App : Application
     }
 
     /// <summary>
-    /// Checks for low stock items and overdue invoices, and sends notifications if enabled.
+    /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
+    /// and sends notifications if enabled.
     /// </summary>
     private static void CheckAndSendNotifications()
     {
@@ -207,6 +208,26 @@ public class App : Application
             }
         }
 
+        // Check for out of stock items
+        if (settings.OutOfStockAlert)
+        {
+            var outOfStockItems = companyData.Inventory
+                .Where(item => item.CalculateStatus() == InventoryStatus.OutOfStock)
+                .ToList();
+
+            if (outOfStockItems.Count > 0)
+            {
+                var message = outOfStockItems.Count == 1
+                    ? "1 item is out of stock.".Translate()
+                    : "{0} items are out of stock.".TranslateFormat(outOfStockItems.Count);
+
+                AddNotification(
+                    "Out of Stock Alert".Translate(),
+                    message,
+                    NotificationType.Error);
+            }
+        }
+
         // Check for overdue invoices
         if (settings.InvoiceOverdueAlert)
         {
@@ -222,6 +243,26 @@ public class App : Application
 
                 AddNotification(
                     "Invoice Overdue".Translate(),
+                    message,
+                    NotificationType.Error);
+            }
+        }
+
+        // Check for overdue rentals
+        if (settings.RentalOverdueAlert)
+        {
+            var overdueRentals = companyData.Rentals
+                .Where(rental => rental.IsOverdue)
+                .ToList();
+
+            if (overdueRentals.Count > 0)
+            {
+                var message = overdueRentals.Count == 1
+                    ? "1 rental is overdue.".Translate()
+                    : "{0} rentals are overdue.".TranslateFormat(overdueRentals.Count);
+
+                AddNotification(
+                    "Rental Overdue".Translate(),
                     message,
                     NotificationType.Error);
             }
