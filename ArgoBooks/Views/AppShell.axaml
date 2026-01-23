@@ -71,9 +71,11 @@
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Center" />
                                     <Button Grid.Column="2"
-                                            Classes="icon-button"
                                             Command="{Binding HeaderViewModel.DismissUnsavedChangesReminderCommand}"
                                             ToolTip.Tip="Dismiss"
+                                            Background="#D97706"
+                                            BorderThickness="0"
+                                            CornerRadius="4"
                                             Padding="4"
                                             Margin="10,0,0,0"
                                             VerticalAlignment="Center">
