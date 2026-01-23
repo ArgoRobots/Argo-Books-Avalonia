@@ -72,7 +72,7 @@ public class TutorialService
     public event EventHandler? TutorialStateChanged;
 
     private TutorialSettings Settings =>
-        _globalSettingsService?.GetSettings().Tutorial ?? new TutorialSettings();
+        _globalSettingsService?.GetSettings()?.Tutorial ?? new TutorialSettings();
 
     /// <summary>
     /// Gets whether this is the user's first time using the app (no tutorial completed).

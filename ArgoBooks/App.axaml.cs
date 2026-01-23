@@ -1333,7 +1333,7 @@ public class App : Application
         // Restart tutorial from help panel
         _appShellViewModel.RestartTutorialRequested += (_, _) =>
         {
-            _mainWindowViewModel.TutorialWelcomeViewModel?.Show();
+            _mainWindowViewModel?.TutorialWelcomeViewModel?.Show();
         };
 
         // Wire up edit company modal events
