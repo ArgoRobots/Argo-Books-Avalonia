@@ -74,7 +74,7 @@
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
         <Setter Property="Transitions">
             <Transitions>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="0:0:1" Easing="CubicEaseOut" />
             </Transitions>
         </Setter>
     </Style>
