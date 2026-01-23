@@ -1,0 +1,207 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks"
+             xmlns:conv="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="400"
+             x:Class="ArgoBooks.Controls.SetupChecklist"
+             x:DataType="vm:SetupChecklistViewModel"
+             IsVisible="{Binding IsVisible}">
+
+    <Design.DataContext>
+        <vm:SetupChecklistViewModel />
+    </Design.DataContext>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Margin="0,0,0,24">
+
+        <Grid RowDefinitions="Auto,Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <!-- Title and Progress -->
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="Getting Started"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{Binding ProgressText}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Expand/Collapse Button -->
+                    <Button Grid.Column="1"
+                            Classes="icon-button-small"
+                            Command="{Binding ToggleExpandedCommand}"
+                            ToolTip.Tip="Expand/Collapse"
+                            Margin="0,0,8,0">
+                        <PathIcon Data="{x:Static local:Icons.ChevronDown}"
+                                  Width="16" Height="16"
+                                  RenderTransformOrigin="0.5,0.5">
+                            <PathIcon.RenderTransform>
+                                <RotateTransform Angle="{Binding IsExpanded, Converter={x:Static conv:BoolConverters.ToCollapseAngle}}" />
+                            </PathIcon.RenderTransform>
+                        </PathIcon>
+                    </Button>
+
+                    <!-- Dismiss Button -->
+                    <Button Grid.Column="2"
+                            Classes="icon-button-small"
+                            Command="{Binding DismissChecklistCommand}"
+                            ToolTip.Tip="Dismiss checklist">
+                        <PathIcon Data="{x:Static local:Icons.Close}"
+                                  Width="14" Height="14" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Progress Bar -->
+            <Border Grid.Row="1"
+                    Padding="20,12"
+                    IsVisible="{Binding IsExpanded}">
+                <Grid>
+                    <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                            CornerRadius="4"
+                            Height="8" />
+                    <Border Background="{DynamicResource PrimaryBrush}"
+                            CornerRadius="4"
+                            Height="8"
+                            HorizontalAlignment="Left">
+                        <Border.Width>
+                            <MultiBinding Converter="{x:Static conv:MathConverters.Percentage}">
+                                <Binding Path="ProgressPercentage" />
+                                <Binding Path="$parent[Border].Bounds.Width" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Checklist Items -->
+            <ItemsControl Grid.Row="2"
+                          ItemsSource="{Binding Items}"
+                          IsVisible="{Binding IsExpanded}"
+                          Padding="8,0,8,8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChecklistItemViewModel">
+                        <Button Classes="checklist-item"
+                                Command="{Binding $parent[ItemsControl].((vm:SetupChecklistViewModel)DataContext).NavigateToItemCommand}"
+                                CommandParameter="{Binding}"
+                                IsEnabled="{Binding !IsCompleted}">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- Checkbox/Check Icon -->
+                                <Border Grid.Column="0"
+                                        Width="24" Height="24"
+                                        CornerRadius="12"
+                                        Margin="0,0,12,0">
+                                    <Border.Background>
+                                        <Binding Path="IsCompleted">
+                                            <Binding.Converter>
+                                                <conv:BoolToBrushConverter TrueValue="{DynamicResource PrimaryBrush}"
+                                                                            FalseValue="{DynamicResource BackgroundSecondaryBrush}" />
+                                            </Binding.Converter>
+                                        </Binding>
+                                    </Border.Background>
+                                    <Panel>
+                                        <!-- Unchecked: empty circle border -->
+                                        <Border BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="2"
+                                                CornerRadius="12"
+                                                IsVisible="{Binding !IsCompleted}" />
+                                        <!-- Checked: checkmark -->
+                                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                                  Width="14" Height="14"
+                                                  Foreground="White"
+                                                  IsVisible="{Binding IsCompleted}" />
+                                    </Panel>
+                                </Border>
+
+                                <!-- Title and Description -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}">
+                                        <TextBlock.TextDecorations>
+                                            <Binding Path="IsCompleted">
+                                                <Binding.Converter>
+                                                    <conv:BoolToTextDecorationConverter />
+                                                </Binding.Converter>
+                                            </Binding>
+                                        </TextBlock.TextDecorations>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Description}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding !IsCompleted}" />
+                                </StackPanel>
+
+                                <!-- Arrow (only for incomplete items) -->
+                                <PathIcon Grid.Column="2"
+                                          Data="{x:Static local:Icons.ChevronRightNav}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          VerticalAlignment="Center"
+                                          IsVisible="{Binding !IsCompleted}" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- All Complete Message -->
+            <Border Grid.Row="2"
+                    Padding="20"
+                    IsVisible="{Binding IsAllCompleted}">
+                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                    <Border Width="48" Height="48"
+                            CornerRadius="24"
+                            Background="#E6F4EA"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="24" Height="24"
+                                  Foreground="#22C55E" />
+                    </Border>
+                    <TextBlock Text="All done! You're all set."
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+
+    <UserControl.Styles>
+        <Style Selector="Button.checklist-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.checklist-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.checklist-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.checklist-item:disabled">
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+        <Style Selector="Button.checklist-item:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

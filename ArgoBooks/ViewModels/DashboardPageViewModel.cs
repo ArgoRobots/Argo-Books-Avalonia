@@ -506,6 +506,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Setup Checklist
+
+    /// <summary>
+    /// Gets the setup checklist view model for first-time user guidance.
+    /// </summary>
+    public SetupChecklistViewModel SetupChecklist { get; } = new();
+
+    #endregion
+
     #region Constructor
 
     public DashboardPageViewModel()
@@ -513,6 +522,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Initialize with empty data - will be populated when company is loaded
         RecentTransactions = [];
         ActiveRentalsList = [];
+
+        // Wire up checklist navigation to use App's navigation
+        SetupChecklist.NavigationRequested += OnChecklistNavigationRequested;
 
         // Initialize the shared chart settings service
         ChartSettings.Initialize();
@@ -588,6 +600,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Load quick action visibility settings
         LoadQuickActionsSettings();
 
+        // Refresh setup checklist visibility
+        SetupChecklist.Refresh();
+
+        // Mark dashboard as explored when initialized
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ExploreDashboard);
+
         // Notify welcome subtitle since it depends on company manager
         OnPropertyChanged(nameof(WelcomeSubtitle));
 
@@ -607,6 +625,19 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void OnQuickActionsSettingsSaved(object? sender, EventArgs e)
     {
         LoadQuickActionsSettings();
+    }
+
+    private void OnChecklistNavigationRequested(object? sender, string pageName)
+    {
+        // Handle Settings separately - open modal instead of navigating
+        if (pageName == "Settings")
+        {
+            App.ShowSettingsModal();
+            return;
+        }
+
+        // Navigate to the requested page
+        _ = App.NavigationService?.NavigateToAsync(pageName);
     }
 
     /// <summary>
@@ -631,6 +662,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             App.QuickActionsSettingsModalViewModel.SettingsSaved -= OnQuickActionsSettingsSaved;
         }
+
+        // Unsubscribe from checklist navigation
+        SetupChecklist.NavigationRequested -= OnChecklistNavigationRequested;
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)

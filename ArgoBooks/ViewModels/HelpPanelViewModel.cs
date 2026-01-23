@@ -79,6 +79,21 @@ public partial class HelpPanelViewModel : ViewModelBase
         CheckForUpdatesRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    [RelayCommand]
+    private void RestartTutorial()
+    {
+        Close();
+        TutorialService.Instance.ResetAllTutorials();
+        RestartTutorialRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void ShowSetupChecklist()
+    {
+        Close();
+        TutorialService.Instance.ShowSetupChecklist();
+    }
+
     /// <summary>
     /// Opens a URL in the default browser.
     /// </summary>
@@ -111,6 +126,7 @@ public partial class HelpPanelViewModel : ViewModelBase
     #region Events
 
     public event EventHandler? CheckForUpdatesRequested;
+    public event EventHandler? RestartTutorialRequested;
 
     #endregion
 }

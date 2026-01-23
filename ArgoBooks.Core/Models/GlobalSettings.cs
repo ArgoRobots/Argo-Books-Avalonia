@@ -15,6 +15,7 @@ public class GlobalSettings
     public PrivacySettings Privacy { get; set; } = new();
     public WindowStateSettings? WindowState { get; set; }
     public ReportExportSettings ReportExport { get; set; } = new();
+    public TutorialSettings Tutorial { get; set; } = new();
 }
 
 public class WelcomeSettings
@@ -126,4 +127,45 @@ public class ReportExportSettings
     public string? LastExportDirectory { get; set; }
     public bool OpenAfterExport { get; set; } = true;
     public bool IncludeMetadata { get; set; } = true;
+}
+
+/// <summary>
+/// Settings for the first-time user tutorial system.
+/// </summary>
+public class TutorialSettings
+{
+    /// <summary>
+    /// Whether the user has completed or dismissed the initial welcome tutorial.
+    /// </summary>
+    public bool HasCompletedWelcomeTutorial { get; set; } = false;
+
+    /// <summary>
+    /// Whether the user has completed the interactive app tour.
+    /// </summary>
+    public bool HasCompletedAppTour { get; set; } = false;
+
+    /// <summary>
+    /// Whether to show the setup checklist on the dashboard.
+    /// </summary>
+    public bool ShowSetupChecklist { get; set; } = true;
+
+    /// <summary>
+    /// Completed setup checklist items by their identifier.
+    /// </summary>
+    public List<string> CompletedChecklistItems { get; set; } = [];
+
+    /// <summary>
+    /// Pages that have been visited (for first-visit hints).
+    /// </summary>
+    public List<string> VisitedPages { get; set; } = [];
+
+    /// <summary>
+    /// Whether to show first-visit hints on pages.
+    /// </summary>
+    public bool ShowFirstVisitHints { get; set; } = true;
+
+    /// <summary>
+    /// When the user first started using the app.
+    /// </summary>
+    public DateTime? FirstLaunchDate { get; set; }
 }

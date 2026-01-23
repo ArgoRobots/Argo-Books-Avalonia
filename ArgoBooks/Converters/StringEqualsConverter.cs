@@ -344,4 +344,64 @@ public static class Converters
     /// Multi-value converter for theme border brush that updates when accent color changes.
     /// </summary>
     public static readonly IMultiValueConverter ThemeBorderBrushMulti = new ThemeBorderBrushMultiConverter();
+
+    /// <summary>
+    /// Converts an integer to a range of integers (0 to value-1) for ItemsControls.
+    /// </summary>
+    public static readonly IValueConverter IntToRange = new IntToRangeConverter();
+
+    /// <summary>
+    /// Converts a boolean to "Finish" or "Next" text.
+    /// </summary>
+    public static readonly IValueConverter BoolToFinishNext = new BoolToStringConverter("Finish", "Next");
+}
+
+/// <summary>
+/// Converter that converts an integer to a list of integers from 0 to value-1.
+/// Useful for creating dots or progress indicators in ItemsControls.
+/// </summary>
+public class IntToRangeConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int count && count > 0)
+        {
+            return Enumerable.Range(0, count).ToList();
+        }
+        return new List<int>();
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converter that converts a boolean to one of two strings.
+/// </summary>
+public class BoolToStringConverter : IValueConverter
+{
+    private readonly string _trueValue;
+    private readonly string _falseValue;
+
+    public BoolToStringConverter(string trueValue, string falseValue)
+    {
+        _trueValue = trueValue;
+        _falseValue = falseValue;
+    }
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return boolValue ? _trueValue : _falseValue;
+        }
+        return _falseValue;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
 }

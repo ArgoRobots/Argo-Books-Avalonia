@@ -479,6 +479,16 @@ public class App : Application
             // Share ReceiptViewerModalViewModel with MainWindow for receipt viewing
             _mainWindowViewModel.ReceiptViewerModalViewModel = ReceiptViewerModal;
 
+            // Initialize tutorial ViewModels for first-time user experience
+            _mainWindowViewModel.TutorialWelcomeViewModel = new TutorialWelcomeViewModel();
+            _mainWindowViewModel.AppTourViewModel = new AppTourViewModel();
+
+            // Wire up tutorial flow: Welcome -> App Tour
+            _mainWindowViewModel.TutorialWelcomeViewModel.StartTourRequested += (_, _) =>
+            {
+                _mainWindowViewModel.AppTourViewModel?.StartTour();
+            };
+
             // Final reset of unsaved changes before window is shown - ensures clean startup state
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
@@ -538,6 +548,9 @@ public class App : Application
                 // Initialize theme service with settings
                 ThemeService.Instance.SetGlobalSettingsService(SettingsService);
                 ThemeService.Instance.Initialize();
+
+                // Initialize tutorial service with settings
+                TutorialService.Instance.SetGlobalSettingsService(SettingsService);
             }
 
             // Initialize telemetry session (respects user consent)
@@ -1315,6 +1328,12 @@ public class App : Application
         _appShellViewModel.EditCompanyRequested += (_, _) =>
         {
             OpenEditCompanyModal();
+        };
+
+        // Restart tutorial from help panel
+        _appShellViewModel.RestartTutorialRequested += (_, _) =>
+        {
+            _mainWindowViewModel.TutorialWelcomeViewModel?.Show();
         };
 
         // Wire up edit company modal events

@@ -1,0 +1,204 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks"
+             xmlns:conv="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="ArgoBooks.Modals.AppTourOverlay"
+             x:DataType="vm:AppTourViewModel"
+             IsVisible="{Binding IsOpen}">
+
+    <Design.DataContext>
+        <vm:AppTourViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- Semi-transparent backdrop with cutouts based on target area -->
+        <Grid>
+            <!-- Full overlay backdrop -->
+            <Border Background="#CC000000" />
+
+            <!-- Highlight areas - these will "cut through" the overlay -->
+            <!-- Sidebar highlight -->
+            <Border x:Name="SidebarHighlight"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Width="250"
+                    Margin="0,40,0,0"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource PrimaryBrush}"
+                    BorderThickness="3"
+                    CornerRadius="0,8,8,0"
+                    IsVisible="{Binding CurrentTargetArea, Converter={x:Static StringConverters.IsNotNullOrEmpty}, ConverterParameter=sidebar}">
+                <Border.IsVisible>
+                    <Binding Path="CurrentTargetArea">
+                        <Binding.Converter>
+                            <conv:StringEqualsConverter CompareValue="sidebar" />
+                        </Binding.Converter>
+                    </Binding>
+                </Border.IsVisible>
+            </Border>
+
+            <!-- Header highlight -->
+            <Border x:Name="HeaderHighlight"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Height="56"
+                    Margin="250,40,0,0"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource PrimaryBrush}"
+                    BorderThickness="3"
+                    CornerRadius="0,0,8,8">
+                <Border.IsVisible>
+                    <Binding Path="CurrentTargetArea">
+                        <Binding.Converter>
+                            <conv:StringEqualsConverter CompareValue="header" />
+                        </Binding.Converter>
+                    </Binding>
+                </Border.IsVisible>
+            </Border>
+
+            <!-- Content area highlight -->
+            <Border x:Name="ContentHighlight"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Margin="260,106,10,10"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource PrimaryBrush}"
+                    BorderThickness="3"
+                    CornerRadius="8">
+                <Border.IsVisible>
+                    <Binding Path="CurrentTargetArea">
+                        <Binding.Converter>
+                            <conv:StringEqualsConverter CompareValue="content" />
+                        </Binding.Converter>
+                    </Binding>
+                </Border.IsVisible>
+            </Border>
+        </Grid>
+
+        <!-- Tour step card -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="400"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 12 40 0 #50000000"
+                Padding="24">
+
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                <!-- Icon and Title -->
+                <StackPanel Grid.Row="0" Spacing="16" Margin="0,0,0,16">
+                    <Border Width="56" Height="56"
+                            CornerRadius="28"
+                            Background="{DynamicResource PrimaryLightBrush}"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="{Binding CurrentIcon}"
+                                  Width="28" Height="28"
+                                  Foreground="{DynamicResource PrimaryBrush}" />
+                    </Border>
+
+                    <TextBlock Text="{Binding CurrentTitle}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" />
+                </StackPanel>
+
+                <!-- Description -->
+                <TextBlock Grid.Row="1"
+                           Text="{Binding CurrentDescription}"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           LineHeight="22"
+                           Margin="0,0,0,24" />
+
+                <!-- Progress indicator -->
+                <StackPanel Grid.Row="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="6"
+                            Margin="0,0,0,20">
+                    <ItemsControl ItemsSource="{Binding TotalSteps, Converter={x:Static conv:Converters.IntToRange}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="8" Height="8"
+                                         Fill="{DynamicResource TextTertiaryBrush}">
+                                    <Ellipse.Styles>
+                                        <Style Selector="Ellipse">
+                                            <Setter Property="Fill" Value="{DynamicResource TextTertiaryBrush}" />
+                                        </Style>
+                                    </Ellipse.Styles>
+                                </Ellipse>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Navigation buttons -->
+                <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto">
+                    <!-- Skip button -->
+                    <Button Grid.Column="0"
+                            Classes="text-button"
+                            Content="Skip"
+                            Command="{Binding SkipTourCommand}"
+                            IsVisible="{Binding !IsLastStep}" />
+
+                    <!-- Progress text -->
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding ProgressText}"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+
+                    <!-- Navigation -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                        <Button Classes="secondary-button"
+                                Content="Back"
+                                Command="{Binding PreviousStepCommand}"
+                                IsVisible="{Binding !IsFirstStep}"
+                                MinWidth="80" />
+
+                        <Button Classes="primary-button"
+                                Command="{Binding NextStepCommand}"
+                                MinWidth="100">
+                            <TextBlock Text="{Binding IsLastStep, Converter={x:Static conv:Converters.BoolToFinishNext}}" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <Style Selector="Button.text-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.text-button:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

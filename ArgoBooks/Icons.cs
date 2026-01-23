@@ -203,6 +203,15 @@ public static class Icons
     /// <summary>Chevron right (alternate) for navigation.</summary>
     public const string ChevronRightNav = "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z";
 
+    /// <summary>Chevron down icon for dropdowns and collapsible sections.</summary>
+    public const string ChevronDown = "M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z";
+
+    /// <summary>Menu/hamburger icon for navigation toggles.</summary>
+    public const string Menu = "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z";
+
+    /// <summary>Lightning bolt icon for quick actions.</summary>
+    public const string Lightning = "M7 2v11h3v9l7-12h-4l4-8z";
+
     /// <summary>Folder icon (outlined).</summary>
     public const string Folder = "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z";
 
