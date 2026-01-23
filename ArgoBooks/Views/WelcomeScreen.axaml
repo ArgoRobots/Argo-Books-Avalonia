@@ -127,7 +127,7 @@
 
                 <!-- Recent Companies Section -->
                 <Border Classes="section-card"
-                        IsVisible="{Binding HasRecentCompanies}"
+                        IsVisible="{Binding ShowRecentCompanies}"
                         Margin="0,0,0,32">
                     <StackPanel>
                         <!-- Section Header -->

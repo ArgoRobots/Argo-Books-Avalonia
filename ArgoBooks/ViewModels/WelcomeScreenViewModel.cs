@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using ArgoBooks.Services;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -17,7 +18,18 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     public ObservableCollection<RecentCompanyItem> RecentCompanies { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowRecentCompanies))]
     private bool _hasRecentCompanies;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowRecentCompanies))]
+    private bool _isRecentCompaniesLoaded;
+
+    /// <summary>
+    /// Only show recent companies section after initial load completes and there are companies.
+    /// This prevents layout shift/flicker on startup.
+    /// </summary>
+    public bool ShowRecentCompanies => IsRecentCompaniesLoaded && HasRecentCompanies;
 
     [ObservableProperty]
     private string _appVersion = AppInfo.Version;
@@ -27,6 +39,10 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     /// </summary>
     public WelcomeScreenViewModel()
     {
+        // Only populate sample data in design mode to avoid flicker at runtime
+        if (!Design.IsDesignMode)
+            return;
+
         // Design-time defaults
         RecentCompanies.Add(new RecentCompanyItem
         {
@@ -50,6 +66,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
             LastOpened = DateTime.Now.AddDays(-7)
         });
         HasRecentCompanies = RecentCompanies.Count > 0;
+        IsRecentCompaniesLoaded = true;
     }
 
     #region Commands
