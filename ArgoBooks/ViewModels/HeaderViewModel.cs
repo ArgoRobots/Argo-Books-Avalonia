@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -150,6 +151,80 @@ public partial class HeaderViewModel : ViewModelBase
 
     [ObservableProperty]
     private double _noChangesIndicatorOpacity;
+
+    #endregion
+
+    #region Unsaved Changes Reminder
+
+    [ObservableProperty]
+    private bool _showUnsavedChangesReminder;
+
+    private DispatcherTimer? _unsavedChangesReminderTimer;
+
+    /// <summary>
+    /// Called when HasUnsavedChanges changes. Starts or stops the reminder timer.
+    /// </summary>
+    partial void OnHasUnsavedChangesChanged(bool value)
+    {
+        if (value)
+        {
+            // Start the timer when there are unsaved changes
+            StartUnsavedChangesReminderTimer();
+        }
+        else
+        {
+            // Stop the timer and hide the reminder when changes are saved
+            StopUnsavedChangesReminderTimer();
+            ShowUnsavedChangesReminder = false;
+        }
+    }
+
+    /// <summary>
+    /// Starts the unsaved changes reminder timer based on settings.
+    /// </summary>
+    private void StartUnsavedChangesReminderTimer()
+    {
+        var settings = App.CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null || !settings.UnsavedChangesReminder)
+            return;
+
+        StopUnsavedChangesReminderTimer();
+
+        var minutes = Math.Max(1, settings.UnsavedChangesReminderMinutes);
+        _unsavedChangesReminderTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(minutes)
+        };
+        _unsavedChangesReminderTimer.Tick += (_, _) =>
+        {
+            // Only show if still has unsaved changes and setting is still enabled
+            var currentSettings = App.CompanyManager?.CompanyData?.Settings.Notifications;
+            if (HasUnsavedChanges && currentSettings?.UnsavedChangesReminder == true)
+            {
+                ShowUnsavedChangesReminder = true;
+            }
+            _unsavedChangesReminderTimer?.Stop();
+        };
+        _unsavedChangesReminderTimer.Start();
+    }
+
+    /// <summary>
+    /// Stops the unsaved changes reminder timer.
+    /// </summary>
+    private void StopUnsavedChangesReminderTimer()
+    {
+        _unsavedChangesReminderTimer?.Stop();
+        _unsavedChangesReminderTimer = null;
+    }
+
+    /// <summary>
+    /// Dismisses the unsaved changes reminder banner.
+    /// </summary>
+    [RelayCommand]
+    private void DismissUnsavedChangesReminder()
+    {
+        ShowUnsavedChangesReminder = false;
+    }
 
     #endregion
 

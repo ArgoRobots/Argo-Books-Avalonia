@@ -69,6 +69,8 @@ public class NotificationSettings
     public bool OutOfStockAlert { get; set; } = true;
     public bool InvoiceOverdueAlert { get; set; } = true;
     public bool RentalOverdueAlert { get; set; } = true;
+    public bool UnsavedChangesReminder { get; set; } = true;
+    public int UnsavedChangesReminderMinutes { get; set; } = 5;
 }
 
 public class SecuritySettings

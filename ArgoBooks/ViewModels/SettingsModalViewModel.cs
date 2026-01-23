@@ -227,6 +227,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _rentalOverdue = true;
 
+    [ObservableProperty]
+    private bool _unsavedChangesReminder = true;
+
+    [ObservableProperty]
+    private int _unsavedChangesReminderMinutes = 5;
+
     #endregion
 
     #region Appearance Settings
@@ -583,6 +589,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             OutOfStockAlert = settings.Notifications.OutOfStockAlert;
             InvoiceOverdue = settings.Notifications.InvoiceOverdueAlert;
             RentalOverdue = settings.Notifications.RentalOverdueAlert;
+            UnsavedChangesReminder = settings.Notifications.UnsavedChangesReminder;
+            UnsavedChangesReminderMinutes = settings.Notifications.UnsavedChangesReminderMinutes;
         }
         else
         {
@@ -752,6 +760,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.Notifications.OutOfStockAlert = OutOfStockAlert;
             settings.Notifications.InvoiceOverdueAlert = InvoiceOverdue;
             settings.Notifications.RentalOverdueAlert = RentalOverdue;
+            settings.Notifications.UnsavedChangesReminder = UnsavedChangesReminder;
+            settings.Notifications.UnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
 
             settings.ChangesMade = true;
         }

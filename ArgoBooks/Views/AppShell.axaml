@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:panels="using:ArgoBooks.Panels"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"
@@ -17,40 +18,73 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- Main Layout -->
-        <Grid ColumnDefinitions="Auto,*">
-            <!-- Sidebar with smooth width transition -->
-            <controls:Sidebar Grid.Column="0"
-                              DataContext="{Binding SidebarViewModel}"
-                              Width="{Binding Width}">
-                <controls:Sidebar.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                    </Transitions>
-                </controls:Sidebar.Transitions>
-            </controls:Sidebar>
-
-            <!-- Main Content Area -->
-            <Panel Grid.Column="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <!-- Header -->
-                    <controls:Header Grid.Row="0"
-                                     DataContext="{Binding HeaderViewModel}" />
-
-                    <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
-                    <Border Grid.Row="1"
-                            Background="{DynamicResource BackgroundSecondaryBrush}">
-                        <ContentControl Content="{Binding CurrentPage}"
-                                        Margin="30" />
-                    </Border>
+        <!-- Main Layout with Banner -->
+        <Grid RowDefinitions="Auto,*">
+            <!-- Unsaved Changes Reminder Banner -->
+            <Border Grid.Row="0"
+                    Background="#F59E0B"
+                    IsVisible="{Binding HeaderViewModel.ShowUnsavedChangesReminder}"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                HorizontalAlignment="Center">
+                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                  Width="18" Height="18"
+                                  Foreground="White" />
+                        <TextBlock Text="{loc:Loc 'You have unsaved changes. Don\\'t forget to save your work!'}"
+                                   Foreground="White"
+                                   FontWeight="Medium"
+                                   FontSize="13"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Classes="icon-button"
+                            Command="{Binding HeaderViewModel.DismissUnsavedChangesReminderCommand}"
+                            ToolTip.Tip="Dismiss">
+                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                  Width="14" Height="14"
+                                  Foreground="White" />
+                    </Button>
                 </Grid>
+            </Border>
 
-            </Panel>
+            <!-- Content Area -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+                <!-- Sidebar with smooth width transition -->
+                <controls:Sidebar Grid.Column="0"
+                                  DataContext="{Binding SidebarViewModel}"
+                                  Width="{Binding Width}">
+                    <controls:Sidebar.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                        </Transitions>
+                    </controls:Sidebar.Transitions>
+                </controls:Sidebar>
+
+                <!-- Main Content Area -->
+                <Panel Grid.Column="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <controls:Header Grid.Row="0"
+                                         DataContext="{Binding HeaderViewModel}" />
+
+                        <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource BackgroundSecondaryBrush}">
+                            <ContentControl Content="{Binding CurrentPage}"
+                                            Margin="30" />
+                        </Border>
+                    </Grid>
+
+                </Panel>
+            </Grid>
         </Grid>
 
         <!-- Panels at root level (need full window coverage for click-away backdrop) -->

@@ -307,6 +307,44 @@
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
+
+                                <!-- Unsaved Changes Reminder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc 'Unsaved Changes Reminder'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Show a reminder when changes are unsaved'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding UnsavedChangesReminder}"
+                                                          VerticalAlignment="Center" />
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                                    IsVisible="{Binding UnsavedChangesReminder}">
+                                            <TextBlock Text="{loc:Loc 'Show after'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <NumericUpDown Value="{Binding UnsavedChangesReminderMinutes}"
+                                                           Minimum="1"
+                                                           Maximum="60"
+                                                           Width="80"
+                                                           VerticalAlignment="Center" />
+                                            <TextBlock Text="{loc:Loc 'minutes'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
