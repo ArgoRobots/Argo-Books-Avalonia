@@ -14,7 +14,7 @@
     </Design.DataContext>
 
     <!-- Semi-transparent backdrop -->
-    <Panel Background="#E6000000">
+    <Panel Background="{DynamicResource OverlayBrush}">
         <!-- Centered welcome card -->
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"

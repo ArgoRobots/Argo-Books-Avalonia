@@ -16,7 +16,7 @@
 
     <Panel>
         <!-- Semi-transparent backdrop -->
-        <Border Background="#CC000000" />
+        <Border Background="{DynamicResource OverlayBrush}" />
 
         <!-- Dynamic highlight border - positioned by code-behind -->
         <Border x:Name="DynamicHighlight"
