@@ -56,24 +56,32 @@
                                     Margin="0,10,0,0"
                                     CornerRadius="6"
                                     Padding="12,8">
-                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                               Width="16" Height="16"
-                                              Foreground="White" />
-                                    <TextBlock Text="{loc:Loc 'You have unsaved changes. Remember to save your work!'}"
+                                              Foreground="White"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,10,0" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{loc:Loc 'You have unsaved changes. Remember to save your work!'}"
                                                Foreground="White"
                                                FontWeight="Medium"
-                                               FontSize="13" />
-                                    <Button Classes="icon-button"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center" />
+                                    <Button Grid.Column="2"
+                                            Classes="icon-button"
                                             Command="{Binding HeaderViewModel.DismissUnsavedChangesReminderCommand}"
                                             ToolTip.Tip="Dismiss"
                                             Padding="4"
+                                            Margin="10,0,0,0"
                                             VerticalAlignment="Center">
                                         <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                                   Width="12" Height="12"
                                                   Foreground="White" />
                                     </Button>
-                                </StackPanel>
+                                </Grid>
                             </Border>
                         </Panel>
                     </Border>
