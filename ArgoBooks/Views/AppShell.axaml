@@ -48,7 +48,7 @@
 
                             <!-- Unsaved Changes Reminder Banner (overlays on top of page content) -->
                             <Border Classes="popup-banner"
-                                    Background="#F59E0B"
+                                    Background="{DynamicResource WarningBrush}"
                                     Opacity="{Binding HeaderViewModel.ShowUnsavedChangesReminder, Converter={x:Static converters:BoolToOpacityConverter.Instance}}"
                                     IsHitTestVisible="{Binding HeaderViewModel.ShowUnsavedChangesReminder}"
                                     HorizontalAlignment="Center"
@@ -73,7 +73,7 @@
                                     <Button Grid.Column="2"
                                             Command="{Binding HeaderViewModel.DismissUnsavedChangesReminderCommand}"
                                             ToolTip.Tip="Dismiss"
-                                            Background="#D97706"
+                                            Background="{DynamicResource WarningDarkBrush}"
                                             BorderThickness="0"
                                             CornerRadius="4"
                                             Padding="4"
