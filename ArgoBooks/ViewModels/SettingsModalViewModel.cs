@@ -233,6 +233,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private int _unsavedChangesReminderMinutes = 5;
 
+    /// <summary>
+    /// Available options for the unsaved changes reminder minutes.
+    /// </summary>
+    public int[] ReminderMinuteOptions { get; } = [1, 2, 3, 5, 10, 15, 30, 60];
+
     #endregion
 
     #region Appearance Settings
