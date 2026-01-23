@@ -268,7 +268,7 @@
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Alert when invoices become overdue'}"
+                                            <TextBlock Text="{loc:Loc 'Get notified when invoices become overdue'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -288,7 +288,7 @@
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Alert when rentals become overdue'}"
+                                            <TextBlock Text="{loc:Loc 'Get notified when rentals become overdue'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
