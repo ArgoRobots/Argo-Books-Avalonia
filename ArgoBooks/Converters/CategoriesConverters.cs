@@ -223,6 +223,20 @@ public static class BoolConverters
     /// Returns the ConverterParameter when the bool value is false, null otherwise.
     /// </summary>
     public static readonly IValueConverter ToParameterWhenFalse = new BoolToParameterConverter(false);
+
+    /// <summary>
+    /// Converts bool (isExpanded) to header border thickness.
+    /// Expanded = bottom border only, Collapsed = no border.
+    /// </summary>
+    public static readonly IValueConverter ToHeaderBorderThickness =
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 0, 0, 1) : new Thickness(0));
+
+    /// <summary>
+    /// Converts bool (isExpanded) to max height for collapsible content.
+    /// Expanded = large value to show content, Collapsed = 0 to hide.
+    /// </summary>
+    public static readonly IValueConverter ToExpandedMaxHeight =
+        new FuncValueConverter<bool, double>(value => value ? 500 : 0);
 }
 
 /// <summary>
