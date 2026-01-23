@@ -22,7 +22,8 @@
             Padding="16,0,16,0">
         <Panel>
             <!-- Center Section: Search Box (absolutely centered) -->
-            <Border Width="280"
+            <Border x:Name="SearchBox"
+                    Width="280"
                     Height="40"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"

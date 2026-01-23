@@ -55,6 +55,13 @@ public static class BoolConverters
     public new static readonly IValueConverter ToString = new BoolToStringConverter();
 
     /// <summary>
+    /// Converts bool (isExpanded) to rotation angle.
+    /// Expanded = 0, Collapsed = -90.
+    /// </summary>
+    public static readonly IValueConverter ToCollapseAngle =
+        new FuncValueConverter<bool, double>(value => value ? 0 : -90);
+
+    /// <summary>
     /// Converts bool to "Expenses" (true) or "Revenue" (false).
     /// </summary>
     public static readonly IValueConverter ToExpensesOrRevenue =
@@ -632,5 +639,107 @@ public class BoolToParameterConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converter that returns one of two brushes based on a boolean value.
+/// Useful for dynamically changing colors in XAML.
+/// </summary>
+public class BoolToBrushConverter : IValueConverter
+{
+    public object? TrueValue { get; set; }
+    public object? FalseValue { get; set; }
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool boolValue)
+            return FalseValue;
+
+        var selectedValue = boolValue ? TrueValue : FalseValue;
+
+        if (selectedValue is IBrush brush)
+            return brush;
+
+        if (selectedValue is string colorString)
+        {
+            try
+            {
+                return new SolidColorBrush(Color.Parse(colorString));
+            }
+            catch
+            {
+                return Brushes.Transparent;
+            }
+        }
+
+        return Brushes.Transparent;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converter that returns strikethrough text decoration when the bool value is true.
+/// </summary>
+public class BoolToTextDecorationConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue && boolValue)
+        {
+            return TextDecorations.Strikethrough;
+        }
+        return null;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Math converters for calculations in XAML bindings.
+/// </summary>
+public static class MathConverters
+{
+    /// <summary>
+    /// Calculates a percentage of a total width.
+    /// Values[0] = percentage (0-100), Values[1] = total width
+    /// </summary>
+    public static readonly IMultiValueConverter Percentage = new PercentageMultiConverter();
+}
+
+/// <summary>
+/// Multi-value converter that calculates a percentage of a total width.
+/// </summary>
+public class PercentageMultiConverter : IMultiValueConverter
+{
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+            return 0.0;
+
+        double percentage = 0;
+        double totalWidth = 0;
+
+        if (values[0] is double p)
+            percentage = p;
+        else if (values[0] is int pi)
+            percentage = pi;
+
+        if (values[1] is double w)
+            totalWidth = w;
+        else if (values[1] is int wi)
+            totalWidth = wi;
+
+        if (totalWidth <= 0 || percentage <= 0)
+            return 0.0;
+
+        return Math.Max(0, Math.Min(totalWidth, totalWidth * percentage / 100.0));
     }
 }

@@ -108,6 +108,18 @@
                                     VerticalAlignment="Stretch"
                                     ZIndex="200" />
 
+        <!-- Tutorial Welcome Overlay (shown on first launch after company opens) -->
+        <modals:TutorialWelcomeOverlay DataContext="{Binding TutorialWelcomeViewModel}"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch"
+                                       ZIndex="210" />
+
+        <!-- App Tour Overlay (interactive tour after welcome) -->
+        <modals:AppTourOverlay DataContext="{Binding AppTourViewModel}"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"
+                               ZIndex="215" />
+
         <!-- Loading Overlay (shows during long operations like import) -->
         <Border IsVisible="{Binding IsLoading}"
                 Background="#80000000"

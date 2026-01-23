@@ -151,6 +151,9 @@
                                    SecondaryText="{Binding OverdueRentalCount, StringFormat='{}{0} overdue'}" />
             </controls:StatCardsRow>
 
+            <!-- Setup Checklist for new users -->
+            <controls:SetupChecklist DataContext="{Binding SetupChecklist}" />
+
             <!-- Quick Actions Section -->
             <Border Classes="card" Padding="20" IsVisible="{Binding HasVisibleQuickActions}">
                 <StackPanel>

@@ -20,7 +20,8 @@
         <!-- Main Layout -->
         <Grid ColumnDefinitions="Auto,*">
             <!-- Sidebar with smooth width transition -->
-            <controls:Sidebar Grid.Column="0"
+            <controls:Sidebar x:Name="AppSidebar"
+                              Grid.Column="0"
                               DataContext="{Binding SidebarViewModel}"
                               Width="{Binding Width}">
                 <controls:Sidebar.Transitions>
@@ -39,11 +40,13 @@
                     </Grid.RowDefinitions>
 
                     <!-- Header -->
-                    <controls:Header Grid.Row="0"
+                    <controls:Header x:Name="AppHeader"
+                                     Grid.Row="0"
                                      DataContext="{Binding HeaderViewModel}" />
 
                     <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
-                    <Border Grid.Row="1"
+                    <Border x:Name="AppContent"
+                            Grid.Row="1"
                             Background="{DynamicResource BackgroundSecondaryBrush}">
                         <ContentControl Content="{Binding CurrentPage}"
                                         Margin="30" />
