@@ -25,8 +25,8 @@
             <Border x:Name="SidebarHighlight"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Stretch"
-                    Width="210"
-                    Margin="0,40,0,0"
+                    Width="200"
+                    Margin="0,44,0,0"
                     Background="Transparent"
                     BorderBrush="{DynamicResource PrimaryBrush}"
                     BorderThickness="3"
@@ -44,9 +44,9 @@
             <Border x:Name="SearchBarHighlight"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Width="300"
-                    Height="40"
-                    Margin="470,48,0,0"
+                    Width="280"
+                    Height="36"
+                    Margin="410,50,0,0"
                     Background="Transparent"
                     BorderBrush="{DynamicResource PrimaryBrush}"
                     BorderThickness="3"
@@ -83,7 +83,7 @@
             <Border x:Name="ContentHighlight"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    Margin="220,106,10,10"
+                    Margin="210,96,8,8"
                     Background="Transparent"
                     BorderBrush="{DynamicResource PrimaryBrush}"
                     BorderThickness="3"
@@ -98,16 +98,18 @@
             </Border>
         </Grid>
 
-        <!-- Tour step card -->
-        <Border Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="12"
+        <!-- Tour step card - use nested borders to prevent corner clipping -->
+        <Border CornerRadius="12"
                 Width="400"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 12 40 0 #50000000"
-                Padding="24">
+                ClipToBounds="True">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24">
 
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
                 <!-- Icon and Title -->
@@ -203,6 +205,7 @@
                     </StackPanel>
                 </Grid>
             </Grid>
+        </Border>
         </Border>
     </Panel>
 
