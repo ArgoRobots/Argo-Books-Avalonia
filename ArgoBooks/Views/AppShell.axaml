@@ -6,6 +6,8 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:panels="using:ArgoBooks.Panels"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"
@@ -32,12 +34,7 @@
 
             <!-- Main Content Area -->
             <Panel Grid.Column="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
+                <Grid RowDefinitions="Auto,*">
                     <!-- Header -->
                     <controls:Header Grid.Row="0"
                                      DataContext="{Binding HeaderViewModel}" />
@@ -45,8 +42,50 @@
                     <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
                     <Border Grid.Row="1"
                             Background="{DynamicResource BackgroundSecondaryBrush}">
-                        <ContentControl Content="{Binding CurrentPage}"
-                                        Margin="30" />
+                        <Panel>
+                            <ContentControl Content="{Binding CurrentPage}"
+                                            Margin="30" />
+
+                            <!-- Unsaved Changes Reminder Banner (overlays on top of page content) -->
+                            <Border Classes="popup-banner"
+                                    Background="{DynamicResource WarningBrush}"
+                                    helpers:BannerAnimationBehavior.IsEnabled="True"
+                                    helpers:BannerAnimationBehavior.IsVisible="{Binding HeaderViewModel.ShowUnsavedChangesReminder}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Top"
+                                    Margin="0,10,0,0"
+                                    CornerRadius="6"
+                                    Padding="12,8">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                              Width="16" Height="16"
+                                              Foreground="White"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,10,0" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{loc:Loc 'You have unsaved changes. Remember to save your work!'}"
+                                               Foreground="White"
+                                               FontWeight="Medium"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center" />
+                                    <Button Grid.Column="2"
+                                            Command="{Binding HeaderViewModel.DismissUnsavedChangesReminderCommand}"
+                                            ToolTip.Tip="Dismiss"
+                                            Background="{DynamicResource WarningDarkBrush}"
+                                            BorderThickness="0"
+                                            CornerRadius="4"
+                                            Padding="4"
+                                            Margin="10,0,0,0"
+                                            VerticalAlignment="Center">
+                                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                  Width="12" Height="12"
+                                                  Foreground="White" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </Panel>
                     </Border>
                 </Grid>
 

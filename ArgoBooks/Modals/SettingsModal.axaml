@@ -189,16 +189,6 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <StackPanel Orientation="Horizontal" Spacing="16">
-                                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <Run Text="{loc:Loc 'Total events:'}" />
-                                                        <Run Text="{Binding TelemetryEventCount}" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    </TextBlock>
-                                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <Run Text="{loc:Loc 'Pending upload:'}" />
-                                                        <Run Text="{Binding TelemetryPendingCount}" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    </TextBlock>
-                                                </StackPanel>
                                             </StackPanel>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <Button Classes="secondary-button"
@@ -248,6 +238,26 @@
                                     </Grid>
                                 </Border>
 
+                                <!-- Out of Stock Alert -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Out of Stock Alert'}"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Get notified when inventory runs out'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding OutOfStockAlert}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
                                 <!-- Invoice Overdue -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -258,7 +268,7 @@
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Alert when invoices become overdue'}"
+                                            <TextBlock Text="{loc:Loc 'Get notified when invoices become overdue'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -268,44 +278,61 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Payment Received -->
+                                <!-- Rental Overdue -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Payment Received'}"
+                                            <TextBlock Text="{loc:Loc 'Rental Overdue'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Notify when payments are received'}"
+                                            <TextBlock Text="{loc:Loc 'Get notified when rentals become overdue'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding PaymentReceived}"
+                                                      IsChecked="{Binding RentalOverdue}"
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
 
-                                <!-- Large Transaction Alert -->
+                                <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Large Transaction Alert'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Alert for transactions above threshold'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding LargeTransactionAlert}"
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc 'Unsaved Changes Reminder'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Show a reminder when changes are unsaved'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding UnsavedChangesReminder}"
+                                                          VerticalAlignment="Center" />
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                                    IsVisible="{Binding UnsavedChangesReminder}">
+                                            <TextBlock Text="{loc:Loc 'Show after'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <ComboBox SelectedItem="{Binding UnsavedChangesReminderMinutes}"
+                                                      ItemsSource="{Binding ReminderMinuteOptions}"
+                                                      Width="70"
                                                       VerticalAlignment="Center" />
-                                    </Grid>
+                                            <TextBlock Text="{loc:Loc 'minutes'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>

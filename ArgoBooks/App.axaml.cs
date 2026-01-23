@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -8,7 +7,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -166,6 +168,11 @@ public class App : Application
     public static QuickActionsSettingsModalViewModel? QuickActionsSettingsModalViewModel => _appShellViewModel?.QuickActionsSettingsModalViewModel;
 
     /// <summary>
+    /// Gets the header view model for shared access.
+    /// </summary>
+    public static HeaderViewModel? HeaderViewModel => _appShellViewModel?.HeaderViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -174,6 +181,174 @@ public class App : Application
     public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
     {
         _appShellViewModel?.AddNotification(title, message, type);
+    }
+
+    /// <summary>
+    /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
+    /// and sends notifications if enabled.
+    /// </summary>
+    private static void CheckAndSendNotifications()
+    {
+        var companyData = CompanyManager?.CompanyData;
+        if (companyData == null)
+            return;
+
+        var settings = companyData.Settings.Notifications;
+
+        // Check for low stock items
+        if (settings.LowStockAlert)
+        {
+            var lowStockItems = companyData.Inventory
+                .Where(item => item.CalculateStatus() == InventoryStatus.LowStock)
+                .ToList();
+
+            if (lowStockItems.Count > 0)
+            {
+                var message = lowStockItems.Count == 1
+                    ? "1 item is running low on stock.".Translate()
+                    : "{0} items are running low on stock.".TranslateFormat(lowStockItems.Count);
+
+                AddNotification(
+                    "Low Stock Alert".Translate(),
+                    message,
+                    NotificationType.Warning);
+            }
+        }
+
+        // Check for out of stock items
+        if (settings.OutOfStockAlert)
+        {
+            var outOfStockItems = companyData.Inventory
+                .Where(item => item.CalculateStatus() == InventoryStatus.OutOfStock)
+                .ToList();
+
+            if (outOfStockItems.Count > 0)
+            {
+                var message = outOfStockItems.Count == 1
+                    ? "1 item is out of stock.".Translate()
+                    : "{0} items are out of stock.".TranslateFormat(outOfStockItems.Count);
+
+                AddNotification(
+                    "Out of Stock Alert".Translate(),
+                    message,
+                    NotificationType.Error);
+            }
+        }
+
+        // Check for overdue invoices
+        if (settings.InvoiceOverdueAlert)
+        {
+            var overdueInvoices = companyData.Invoices
+                .Where(invoice => invoice.IsOverdue)
+                .ToList();
+
+            if (overdueInvoices.Count > 0)
+            {
+                var message = overdueInvoices.Count == 1
+                    ? "1 invoice is overdue.".Translate()
+                    : "{0} invoices are overdue.".TranslateFormat(overdueInvoices.Count);
+
+                AddNotification(
+                    "Invoice Overdue".Translate(),
+                    message,
+                    NotificationType.Error);
+            }
+        }
+
+        // Check for overdue rentals
+        if (settings.RentalOverdueAlert)
+        {
+            var overdueRentals = companyData.Rentals
+                .Where(rental => rental.IsOverdue)
+                .ToList();
+
+            if (overdueRentals.Count > 0)
+            {
+                var message = overdueRentals.Count == 1
+                    ? "1 rental is overdue.".Translate()
+                    : "{0} rentals are overdue.".TranslateFormat(overdueRentals.Count);
+
+                AddNotification(
+                    "Rental Overdue".Translate(),
+                    message,
+                    NotificationType.Error);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks if an inventory item is low stock or out of stock and sends a notification if enabled.
+    /// Call this after saving a stock adjustment.
+    /// </summary>
+    /// <param name="item">The inventory item to check.</param>
+    public static void CheckAndNotifyStockStatus(InventoryItem item)
+    {
+        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null)
+            return;
+
+        var status = item.CalculateStatus();
+
+        if (settings.OutOfStockAlert && status == InventoryStatus.OutOfStock)
+        {
+            var product = CompanyManager?.CompanyData?.GetProduct(item.ProductId);
+            var productName = product?.Name ?? "Item";
+            AddNotification(
+                "Out of Stock".Translate(),
+                "{0} is now out of stock.".TranslateFormat(productName),
+                NotificationType.Error);
+        }
+        else if (settings.LowStockAlert && status == InventoryStatus.LowStock)
+        {
+            var product = CompanyManager?.CompanyData?.GetProduct(item.ProductId);
+            var productName = product?.Name ?? "Item";
+            AddNotification(
+                "Low Stock".Translate(),
+                "{0} is running low on stock.".TranslateFormat(productName),
+                NotificationType.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Checks if an invoice is overdue and sends a notification if enabled.
+    /// Call this after saving an invoice.
+    /// </summary>
+    /// <param name="invoice">The invoice to check.</param>
+    public static void CheckAndNotifyInvoiceOverdue(Invoice invoice)
+    {
+        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null || !settings.InvoiceOverdueAlert)
+            return;
+
+        if (invoice.IsOverdue)
+        {
+            AddNotification(
+                "Invoice Overdue".Translate(),
+                "Invoice {0} is overdue.".TranslateFormat(invoice.InvoiceNumber),
+                NotificationType.Error);
+        }
+    }
+
+    /// <summary>
+    /// Checks if a rental is overdue and sends a notification if enabled.
+    /// Call this after saving a rental record.
+    /// </summary>
+    /// <param name="rental">The rental record to check.</param>
+    public static void CheckAndNotifyRentalOverdue(RentalRecord rental)
+    {
+        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null || !settings.RentalOverdueAlert)
+            return;
+
+        if (rental.IsOverdue)
+        {
+            var customer = CompanyManager?.CompanyData?.GetCustomer(rental.CustomerId);
+            var customerName = customer?.Name ?? "Customer";
+            AddNotification(
+                "Rental Overdue".Translate(),
+                "Rental for {0} is overdue.".TranslateFormat(customerName),
+                NotificationType.Error);
+        }
     }
 
     #region Plan Status Events
@@ -575,7 +750,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Error during async initialization");
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Error during async initialization");
         }
     }
 
@@ -733,6 +908,9 @@ public class App : Application
                     }
                 }
             }
+
+            // Check for low stock and overdue invoice notifications
+            CheckAndSendNotifications();
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
@@ -1232,17 +1410,14 @@ public class App : Application
                     CompanyManager.CompanyData.MarkAsSaved();
 
                     // Reset unsaved changes since time-shift is automatic and shouldn't count as a user change
-                    if (_mainWindowViewModel != null)
-                        _mainWindowViewModel.HasUnsavedChanges = false;
-                    if (_appShellViewModel != null)
-                        _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                    _mainWindowViewModel.HasUnsavedChanges = false;
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
 
                 await LoadRecentCompaniesAsync();
-                // Note: Sample company welcome message is shown in DashboardPageViewModel.WelcomeSubtitle
             }
             else
             {
@@ -2214,10 +2389,9 @@ public class App : Application
     /// Opens a company file with password retry support.
     /// Shows password modal on encrypted files and retries on wrong password.
     /// </summary>
-    private static async Task<bool> OpenCompanyWithRetryAsync(string filePath)
+    private static async Task OpenCompanyWithRetryAsync(string filePath)
     {
-        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null)
-            return false;
+        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null) return;
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
@@ -2231,13 +2405,11 @@ public class App : Application
                 // Close the password modal if it was open
                 passwordModal.Close();
                 await LoadRecentCompaniesAsync();
-                return true;
             }
             else
             {
                 // User cancelled password prompt
                 _mainWindowViewModel.HideLoading();
-                return false;
             }
         }
         catch (UnauthorizedAccessException)
@@ -2254,11 +2426,11 @@ public class App : Application
             {
                 // User cancelled
                 passwordModal.Close();
-                return false;
+                return;
             }
 
             // Retry with the new password
-            return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+            await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
         {
@@ -2267,7 +2439,6 @@ public class App : Application
             _appShellViewModel.AddNotification("File Not Found".Translate(), "The company file no longer exists.".Translate(), NotificationType.Error);
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
-            return false;
         }
         catch (Exception ex)
         {
@@ -2275,7 +2446,6 @@ public class App : Application
             passwordModal.Close();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
             _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
-            return false;
         }
     }
 

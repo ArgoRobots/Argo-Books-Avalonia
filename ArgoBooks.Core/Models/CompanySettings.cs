@@ -66,10 +66,11 @@ public class EnabledModulesSettings
 public class NotificationSettings
 {
     public bool LowStockAlert { get; set; } = true;
+    public bool OutOfStockAlert { get; set; } = true;
     public bool InvoiceOverdueAlert { get; set; } = true;
-    public bool PaymentReceivedAlert { get; set; } = true;
-    public bool LargeTransactionAlert { get; set; } = true;
-    public decimal LargeTransactionThreshold { get; set; } = 10000m;
+    public bool RentalOverdueAlert { get; set; } = true;
+    public bool UnsavedChangesReminder { get; set; } = true;
+    public int UnsavedChangesReminderMinutes { get; set; } = 5;
 }
 
 public class SecuritySettings
