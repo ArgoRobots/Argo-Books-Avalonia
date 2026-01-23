@@ -218,12 +218,17 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Dismisses the unsaved changes reminder banner.
+    /// Dismisses the unsaved changes reminder banner and restarts the timer.
     /// </summary>
     [RelayCommand]
     private void DismissUnsavedChangesReminder()
     {
         ShowUnsavedChangesReminder = false;
+        // Restart the timer so the banner will appear again after the configured interval
+        if (HasUnsavedChanges)
+        {
+            StartUnsavedChangesReminderTimer();
+        }
     }
 
     /// <summary>
