@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Threading;
 
@@ -8,6 +9,7 @@ namespace ArgoBooks.Helpers;
 /// <summary>
 /// Attached behavior for banner fade-in/fade-out animations.
 /// Similar to ModalAnimationBehavior but supports nested property paths.
+/// Opens with a slow animation (1 second) and closes quickly (0.15 seconds).
 /// </summary>
 public static class BannerAnimationBehavior
 {
@@ -17,11 +19,17 @@ public static class BannerAnimationBehavior
     public static readonly AttachedProperty<bool> IsVisibleProperty =
         AvaloniaProperty.RegisterAttached<Border, bool>("IsVisible", typeof(BannerAnimationBehavior));
 
+    private static readonly AttachedProperty<Transitions?> OriginalTransitionsProperty =
+        AvaloniaProperty.RegisterAttached<Border, Transitions?>("OriginalTransitions", typeof(BannerAnimationBehavior));
+
     public static bool GetIsEnabled(Border element) => element.GetValue(IsEnabledProperty);
     public static void SetIsEnabled(Border element, bool value) => element.SetValue(IsEnabledProperty, value);
 
     public static bool GetIsVisible(Border element) => element.GetValue(IsVisibleProperty);
     public static void SetIsVisible(Border element, bool value) => element.SetValue(IsVisibleProperty, value);
+
+    private static Transitions? GetOriginalTransitions(Border element) => element.GetValue(OriginalTransitionsProperty);
+    private static void SetOriginalTransitions(Border element, Transitions? value) => element.SetValue(OriginalTransitionsProperty, value);
 
     static BannerAnimationBehavior()
     {
@@ -33,6 +41,9 @@ public static class BannerAnimationBehavior
     {
         if (e.NewValue is true)
         {
+            // Store original transitions (from CSS style) for restore during animate-in
+            SetOriginalTransitions(border, border.Transitions);
+
             // Set initial state
             border.Opacity = 0;
             border.IsHitTestVisible = false;
@@ -59,6 +70,13 @@ public static class BannerAnimationBehavior
         // Use Dispatcher.Post to ensure the animation happens after render
         Dispatcher.UIThread.Post(() =>
         {
+            // Restore original transitions (1 second from CSS) for open animation
+            var originalTransitions = GetOriginalTransitions(border);
+            if (originalTransitions != null)
+            {
+                border.Transitions = originalTransitions;
+            }
+
             border.Opacity = 1;
             border.IsHitTestVisible = true;
         }, DispatcherPriority.Render);
@@ -68,6 +86,16 @@ public static class BannerAnimationBehavior
     {
         Dispatcher.UIThread.Post(() =>
         {
+            // Use a faster transition (0.15s) for closing
+            border.Transitions = new Transitions
+            {
+                new DoubleTransition
+                {
+                    Property = Visual.OpacityProperty,
+                    Duration = TimeSpan.FromSeconds(0.15),
+                    Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                }
+            };
             border.Opacity = 0;
             border.IsHitTestVisible = false;
         }, DispatcherPriority.Background);
