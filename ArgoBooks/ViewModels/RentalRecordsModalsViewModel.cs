@@ -376,9 +376,11 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
                 itemToUpdate.RentedQuantity += rentQty;
                 companyData.MarkAsModified();
                 RecordSaved?.Invoke(this, EventArgs.Empty);
+                App.CheckAndNotifyRentalOverdue(recordToUndo);
             }));
 
         RecordSaved?.Invoke(this, EventArgs.Empty);
+        App.CheckAndNotifyRentalOverdue(newRecord);
         CloseAddModal();
     }
 
@@ -554,9 +556,11 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
                 companyData.MarkAsModified();
                 RecordSaved?.Invoke(this, EventArgs.Empty);
+                App.CheckAndNotifyRentalOverdue(recordToEdit);
             }));
 
         RecordSaved?.Invoke(this, EventArgs.Empty);
+        App.CheckAndNotifyRentalOverdue(recordToEdit);
         CloseEditModal();
     }
 

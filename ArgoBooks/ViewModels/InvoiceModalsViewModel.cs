@@ -860,6 +860,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 companyData.Invoices.Add(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                App.CheckAndNotifyInvoiceOverdue(invoice);
             });
 
         // Add the invoice
@@ -870,6 +871,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
+        App.CheckAndNotifyInvoiceOverdue(invoice);
     }
 
     private void SaveEditedInvoice(CompanyData companyData)
@@ -932,6 +934,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                     TaxRate = 0
                 }).ToList();
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                App.CheckAndNotifyInvoiceOverdue(invoice);
             });
 
         // Record undo action and mark as changed
@@ -939,6 +942,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
+        App.CheckAndNotifyInvoiceOverdue(invoice);
     }
 
     private void ResetForm()

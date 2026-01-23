@@ -253,11 +253,13 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
                     companyData.StockAdjustments.Add(adjustmentRecord);
                     companyData.MarkAsModified();
                     AdjustmentSaved?.Invoke(this, EventArgs.Empty);
+                    App.CheckAndNotifyStockStatus(itemToUndo);
                 }));
         }
 
         // Notify and close
         AdjustmentSaved?.Invoke(this, EventArgs.Empty);
+        App.CheckAndNotifyStockStatus(inventoryItem);
         CloseAddModal();
     }
 

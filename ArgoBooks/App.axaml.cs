@@ -8,7 +8,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -266,6 +269,81 @@ public class App : Application
                     message,
                     NotificationType.Error);
             }
+        }
+    }
+
+    /// <summary>
+    /// Checks if an inventory item is low stock or out of stock and sends a notification if enabled.
+    /// Call this after saving a stock adjustment.
+    /// </summary>
+    /// <param name="item">The inventory item to check.</param>
+    public static void CheckAndNotifyStockStatus(InventoryItem item)
+    {
+        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null)
+            return;
+
+        var status = item.CalculateStatus();
+
+        if (settings.OutOfStockAlert && status == InventoryStatus.OutOfStock)
+        {
+            var product = CompanyManager?.CompanyData?.GetProduct(item.ProductId);
+            var productName = product?.Name ?? "Item";
+            AddNotification(
+                "Out of Stock".Translate(),
+                "{0} is now out of stock.".TranslateFormat(productName),
+                NotificationType.Error);
+        }
+        else if (settings.LowStockAlert && status == InventoryStatus.LowStock)
+        {
+            var product = CompanyManager?.CompanyData?.GetProduct(item.ProductId);
+            var productName = product?.Name ?? "Item";
+            AddNotification(
+                "Low Stock".Translate(),
+                "{0} is running low on stock.".TranslateFormat(productName),
+                NotificationType.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Checks if an invoice is overdue and sends a notification if enabled.
+    /// Call this after saving an invoice.
+    /// </summary>
+    /// <param name="invoice">The invoice to check.</param>
+    public static void CheckAndNotifyInvoiceOverdue(Invoice invoice)
+    {
+        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null || !settings.InvoiceOverdueAlert)
+            return;
+
+        if (invoice.IsOverdue)
+        {
+            AddNotification(
+                "Invoice Overdue".Translate(),
+                "Invoice {0} is overdue.".TranslateFormat(invoice.InvoiceNumber),
+                NotificationType.Error);
+        }
+    }
+
+    /// <summary>
+    /// Checks if a rental is overdue and sends a notification if enabled.
+    /// Call this after saving a rental record.
+    /// </summary>
+    /// <param name="rental">The rental record to check.</param>
+    public static void CheckAndNotifyRentalOverdue(RentalRecord rental)
+    {
+        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
+        if (settings == null || !settings.RentalOverdueAlert)
+            return;
+
+        if (rental.IsOverdue)
+        {
+            var customer = CompanyManager?.CompanyData?.GetCustomer(rental.CustomerId);
+            var customerName = customer?.Name ?? "Customer";
+            AddNotification(
+                "Rental Overdue".Translate(),
+                "Rental for {0} is overdue.".TranslateFormat(customerName),
+                NotificationType.Error);
         }
     }
 
