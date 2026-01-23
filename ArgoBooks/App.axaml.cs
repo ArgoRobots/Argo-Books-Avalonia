@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -734,7 +733,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Error during async initialization");
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Error during async initialization");
         }
     }
 
@@ -1394,17 +1393,14 @@ public class App : Application
                     CompanyManager.CompanyData.MarkAsSaved();
 
                     // Reset unsaved changes since time-shift is automatic and shouldn't count as a user change
-                    if (_mainWindowViewModel != null)
-                        _mainWindowViewModel.HasUnsavedChanges = false;
-                    if (_appShellViewModel != null)
-                        _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                    _mainWindowViewModel.HasUnsavedChanges = false;
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
 
                 await LoadRecentCompaniesAsync();
-                // Note: Sample company welcome message is shown in DashboardPageViewModel.WelcomeSubtitle
             }
             else
             {
@@ -2376,10 +2372,9 @@ public class App : Application
     /// Opens a company file with password retry support.
     /// Shows password modal on encrypted files and retries on wrong password.
     /// </summary>
-    private static async Task<bool> OpenCompanyWithRetryAsync(string filePath)
+    private static async Task OpenCompanyWithRetryAsync(string filePath)
     {
-        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null)
-            return false;
+        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null) return;
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
@@ -2393,13 +2388,11 @@ public class App : Application
                 // Close the password modal if it was open
                 passwordModal.Close();
                 await LoadRecentCompaniesAsync();
-                return true;
             }
             else
             {
                 // User cancelled password prompt
                 _mainWindowViewModel.HideLoading();
-                return false;
             }
         }
         catch (UnauthorizedAccessException)
@@ -2416,11 +2409,11 @@ public class App : Application
             {
                 // User cancelled
                 passwordModal.Close();
-                return false;
+                return;
             }
 
             // Retry with the new password
-            return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+            await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
         {
@@ -2429,7 +2422,6 @@ public class App : Application
             _appShellViewModel.AddNotification("File Not Found".Translate(), "The company file no longer exists.".Translate(), NotificationType.Error);
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
-            return false;
         }
         catch (Exception ex)
         {
@@ -2437,7 +2429,6 @@ public class App : Application
             passwordModal.Close();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
             _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
-            return false;
         }
     }
 

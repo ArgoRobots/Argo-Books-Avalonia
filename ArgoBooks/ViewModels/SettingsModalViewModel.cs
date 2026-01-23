@@ -542,7 +542,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedLanguage != _originalLanguage ||
         SelectedDateFormat != _originalDateFormat ||
         SelectedCurrency != _originalCurrency ||
-        SelectedTimeZone?.Id != _originalTimeZone?.Id ||
+        SelectedTimeZone.Id != _originalTimeZone.Id ||
         SelectedTimeFormat != _originalTimeFormat ||
         MaxPieSlices != _originalMaxPieSlices;
 
@@ -706,9 +706,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedCurrency = _originalCurrency;
         }
-        if (SelectedTimeZone?.Id != _originalTimeZone?.Id)
+        if (SelectedTimeZone.Id != _originalTimeZone.Id)
         {
-            SelectedTimeZone = _originalTimeZone ?? TimeZones.FindById("UTC");
+            SelectedTimeZone = _originalTimeZone;
         }
         if (SelectedTimeFormat != _originalTimeFormat)
         {
@@ -730,7 +730,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         var languageChanged = SelectedLanguage != _originalLanguage;
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
         var currencyChanged = SelectedCurrency != _originalCurrency;
-        var timeSettingsChanged = SelectedTimeZone?.Id != _originalTimeZone?.Id ||
+        var timeSettingsChanged = SelectedTimeZone.Id != _originalTimeZone.Id ||
                                    SelectedTimeFormat != _originalTimeFormat;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
@@ -747,7 +747,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
-        _originalTimeZone = SelectedTimeZone ?? TimeZones.FindById("UTC");
+        _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
 
@@ -777,7 +777,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
             globalSettings.Ui.Language = SelectedLanguage;
-            globalSettings.Ui.TimeZone = SelectedTimeZone?.Id ?? "UTC";
+            globalSettings.Ui.TimeZone = SelectedTimeZone.Id;
             globalSettings.Ui.TimeFormat = SelectedTimeFormat;
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }
