@@ -1,5 +1,5 @@
-using System.ComponentModel;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Threading;
 
@@ -8,6 +8,7 @@ namespace ArgoBooks.Helpers;
 /// <summary>
 /// Attached behavior for banner fade-in/fade-out animations.
 /// Similar to ModalAnimationBehavior but supports nested property paths.
+/// Uses 1 second fade-in and 0.15 second fade-out.
 /// </summary>
 public static class BannerAnimationBehavior
 {
@@ -22,6 +23,9 @@ public static class BannerAnimationBehavior
 
     public static bool GetIsVisible(Border element) => element.GetValue(IsVisibleProperty);
     public static void SetIsVisible(Border element, bool value) => element.SetValue(IsVisibleProperty, value);
+
+    private static readonly TimeSpan FadeInDuration = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan FadeOutDuration = TimeSpan.FromSeconds(0.15);
 
     static BannerAnimationBehavior()
     {
@@ -59,6 +63,8 @@ public static class BannerAnimationBehavior
         // Use Dispatcher.Post to ensure the animation happens after render
         Dispatcher.UIThread.Post(() =>
         {
+            // Set transition duration for fade-in (1 second)
+            SetTransitionDuration(border, FadeInDuration);
             border.Opacity = 1;
             border.IsHitTestVisible = true;
         }, DispatcherPriority.Render);
@@ -68,8 +74,23 @@ public static class BannerAnimationBehavior
     {
         Dispatcher.UIThread.Post(() =>
         {
+            // Set transition duration for fade-out (0.15 seconds)
+            SetTransitionDuration(border, FadeOutDuration);
             border.Opacity = 0;
             border.IsHitTestVisible = false;
         }, DispatcherPriority.Background);
+    }
+
+    private static void SetTransitionDuration(Border border, TimeSpan duration)
+    {
+        border.Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = Border.OpacityProperty,
+                Duration = duration,
+                Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+            }
+        };
     }
 }
