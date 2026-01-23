@@ -144,12 +144,21 @@ public partial class AppTourOverlay : UserControl
             var topLeft = transform.Value.Transform(elementBounds.TopLeft);
             var bottomRight = transform.Value.Transform(elementBounds.BottomRight);
 
+            // Get overlay bounds for clamping
+            var overlayWidth = Bounds.Width;
+            var overlayHeight = Bounds.Height;
+
             // Inset the bounds by border thickness so the border draws INSIDE the element
             // This prevents overflow outside the window
             var left = Math.Max(0, topLeft.X) + borderThickness;
             var top = Math.Max(0, topLeft.Y) + borderThickness;
-            var width = (bottomRight.X - topLeft.X) - (borderThickness * 2);
-            var height = (bottomRight.Y - topLeft.Y) - (borderThickness * 2);
+
+            // Clamp right and bottom edges to stay within overlay bounds
+            var right = Math.Min(overlayWidth, bottomRight.X) - borderThickness;
+            var bottom = Math.Min(overlayHeight, bottomRight.Y) - borderThickness;
+
+            var width = right - left;
+            var height = bottom - top;
 
             // Ensure we have valid dimensions
             if (width <= 0 || height <= 0)
