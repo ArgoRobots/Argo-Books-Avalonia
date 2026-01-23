@@ -96,14 +96,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Icon = Icons.Expenses,
             NavigationTarget = "Expenses"
         });
-        Items.Add(new ChecklistItemViewModel
-        {
-            Id = TutorialService.ChecklistItems.RecordRevenue,
-            Title = "Record your first revenue",
-            Description = "Log income or a sale",
-            Icon = Icons.Revenue,
-            NavigationTarget = "Revenue"
-        });
 
         TotalCount = Items.Count;
         RefreshCompletionState();
