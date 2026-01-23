@@ -82,11 +82,11 @@ public partial class SetupChecklistViewModel : ViewModelBase
         });
         Items.Add(new ChecklistItemViewModel
         {
-            Id = TutorialService.ChecklistItems.AddPaymentMethod,
-            Title = "Set up payment methods",
-            Description = "Track how money moves",
-            Icon = Icons.Payments,
-            NavigationTarget = "Payments"
+            Id = TutorialService.ChecklistItems.AddProduct,
+            Title = "Create a product",
+            Description = "Add items you sell or track",
+            Icon = Icons.Products,
+            NavigationTarget = "Products"
         });
         Items.Add(new ChecklistItemViewModel
         {
@@ -95,14 +95,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Description = "Log a business expense",
             Icon = Icons.Expenses,
             NavigationTarget = "Expenses"
-        });
-        Items.Add(new ChecklistItemViewModel
-        {
-            Id = TutorialService.ChecklistItems.RecordRevenue,
-            Title = "Record your first revenue",
-            Description = "Log income or a sale",
-            Icon = Icons.Revenue,
-            NavigationTarget = "Revenue"
         });
 
         TotalCount = Items.Count;
@@ -122,15 +114,21 @@ public partial class SetupChecklistViewModel : ViewModelBase
     {
         var completedItems = TutorialService.Instance.GetCompletedChecklistItems();
 
+        // Only count items that are in our current visible checklist
+        var visibleCompletedCount = 0;
         foreach (var item in Items)
         {
             item.IsCompleted = completedItems.Contains(item.Id);
+            if (item.IsCompleted)
+            {
+                visibleCompletedCount++;
+            }
         }
 
-        CompletedCount = completedItems.Count;
+        CompletedCount = visibleCompletedCount;
         ProgressText = $"{CompletedCount} of {TotalCount} completed";
         ProgressPercentage = TotalCount > 0 ? (double)CompletedCount / TotalCount * 100 : 0;
-        IsAllCompleted = TutorialService.Instance.AreAllChecklistItemsCompleted();
+        IsAllCompleted = CompletedCount >= TotalCount;
     }
 
     private void OnChecklistItemCompleted(object? sender, string itemId)

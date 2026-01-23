@@ -173,6 +173,11 @@ public class App : Application
     public static HeaderViewModel? HeaderViewModel => _appShellViewModel?.HeaderViewModel;
 
     /// <summary>
+    /// Gets the categories tutorial view model for first-visit tutorial.
+    /// </summary>
+    public static CategoriesTutorialViewModel? CategoriesTutorialViewModel => _mainWindowViewModel?.CategoriesTutorialViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -657,6 +662,7 @@ public class App : Application
             // Initialize tutorial ViewModels for first-time user experience
             _mainWindowViewModel.TutorialWelcomeViewModel = new TutorialWelcomeViewModel();
             _mainWindowViewModel.AppTourViewModel = new AppTourViewModel();
+            _mainWindowViewModel.CategoriesTutorialViewModel = new CategoriesTutorialViewModel();
 
             // Wire up tutorial flow: Welcome -> App Tour
             _mainWindowViewModel.TutorialWelcomeViewModel.StartTourRequested += (_, _) =>

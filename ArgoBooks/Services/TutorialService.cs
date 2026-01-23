@@ -194,9 +194,8 @@ public class TutorialService
     {
         var completed = Settings.CompletedChecklistItems;
         return completed.Contains(ChecklistItems.CreateCategory) &&
-               completed.Contains(ChecklistItems.AddPaymentMethod) &&
-               completed.Contains(ChecklistItems.RecordExpense) &&
-               completed.Contains(ChecklistItems.RecordRevenue);
+               completed.Contains(ChecklistItems.AddProduct) &&
+               completed.Contains(ChecklistItems.RecordExpense);
     }
 
     /// <summary>

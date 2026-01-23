@@ -486,6 +486,9 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
+
+        // Mark the setup checklist item as complete
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.RecordRevenue);
     }
 
     protected override void SaveEditedTransaction(CompanyData companyData)

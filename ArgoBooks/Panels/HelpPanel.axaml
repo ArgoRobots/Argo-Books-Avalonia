@@ -130,20 +130,6 @@
                         </Grid>
                     </Button>
 
-                    <!-- Show Setup Checklist -->
-                    <Button x:Name="MenuItem6"
-                            Classes="menu-item"
-                            Command="{Binding ShowSetupChecklistCommand}">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <PathIcon Grid.Column="0"
-                                      Data="{x:Static local:Icons.Check}"
-                                      Width="20" Height="20"
-                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                      Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Show Setup Checklist'}" VerticalAlignment="Center" />
-                        </Grid>
-                    </Button>
-
                     <!-- Divider -->
                     <Border Height="1"
                             Background="{DynamicResource BorderBrush}"

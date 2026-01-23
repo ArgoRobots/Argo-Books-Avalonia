@@ -120,6 +120,12 @@
                                VerticalAlignment="Stretch"
                                ZIndex="215" />
 
+        <!-- Categories Page Tutorial Overlay -->
+        <modals:CategoriesTutorialOverlay DataContext="{Binding CategoriesTutorialViewModel}"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch"
+                                          ZIndex="220" />
+
         <!-- Loading Overlay (shows during long operations like import) -->
         <Border IsVisible="{Binding IsLoading}"
                 Background="#80000000"

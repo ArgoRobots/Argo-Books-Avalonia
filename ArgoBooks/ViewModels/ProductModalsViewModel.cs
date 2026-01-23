@@ -231,6 +231,10 @@ public partial class ProductModalsViewModel : ObservableObject
             }));
 
         ProductSaved?.Invoke(this, EventArgs.Empty);
+
+        // Mark the setup checklist item as complete
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.AddProduct);
+
         CloseAddModal();
     }
 

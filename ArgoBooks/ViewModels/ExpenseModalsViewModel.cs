@@ -502,6 +502,9 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
+
+        // Mark the setup checklist item as complete
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.RecordExpense);
     }
 
     protected override void SaveEditedTransaction(CompanyData companyData)

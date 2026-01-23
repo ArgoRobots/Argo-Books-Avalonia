@@ -12,6 +12,13 @@ public partial class CategoriesPage : UserControl
     public CategoriesPage()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        // Show tutorial on first visit
+        App.CategoriesTutorialViewModel?.ShowIfFirstVisit();
     }
 
     private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
