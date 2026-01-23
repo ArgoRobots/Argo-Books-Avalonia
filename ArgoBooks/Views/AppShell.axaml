@@ -33,7 +33,7 @@
                         <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                   Width="18" Height="18"
                                   Foreground="White" />
-                        <TextBlock Text="{loc:Loc 'You have unsaved changes. Don\\'t forget to save your work!'}"
+                        <TextBlock Text="{loc:Loc 'You have unsaved changes. Remember to save your work!'}"
                                    Foreground="White"
                                    FontWeight="Medium"
                                    FontSize="13"
