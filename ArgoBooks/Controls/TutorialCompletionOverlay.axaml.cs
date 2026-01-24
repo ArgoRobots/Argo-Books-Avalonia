@@ -8,27 +8,23 @@ namespace ArgoBooks.Controls;
 
 public partial class TutorialCompletionOverlay : UserControl
 {
-    public static readonly StyledProperty<bool> IsVisibleProperty =
-        AvaloniaProperty.Register<TutorialCompletionOverlay, bool>(nameof(IsVisible));
+    public static readonly StyledProperty<bool> IsOverlayVisibleProperty =
+        AvaloniaProperty.Register<TutorialCompletionOverlay, bool>(nameof(IsOverlayVisible));
 
-    public new bool IsVisible
+    public bool IsOverlayVisible
     {
-        get => GetValue(IsVisibleProperty);
-        set => SetValue(IsVisibleProperty, value);
+        get => GetValue(IsOverlayVisibleProperty);
+        set => SetValue(IsOverlayVisibleProperty, value);
     }
 
-    public static readonly StyledProperty<ICommand?> DismissCommandProperty =
-        AvaloniaProperty.Register<TutorialCompletionOverlay, ICommand?>(nameof(DismissCommand));
-
-    public ICommand? DismissCommand
-    {
-        get => GetValue(DismissCommandProperty);
-        set => SetValue(DismissCommandProperty, value);
-    }
+    public ICommand DismissCommand { get; }
 
     public TutorialCompletionOverlay()
     {
         InitializeComponent();
+
+        // Set DataContext to self so bindings work
+        DataContext = this;
 
         // Set default dismiss command
         DismissCommand = new RelayCommand(() =>
@@ -40,12 +36,12 @@ public partial class TutorialCompletionOverlay : UserControl
         TutorialService.Instance.CompletionGuidanceChanged += OnCompletionGuidanceChanged;
 
         // Set initial state
-        IsVisible = TutorialService.Instance.ShowCompletionGuidance;
+        IsOverlayVisible = TutorialService.Instance.ShowCompletionGuidance;
     }
 
     private void OnCompletionGuidanceChanged(object? sender, bool show)
     {
-        IsVisible = show;
+        IsOverlayVisible = show;
     }
 
     protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)

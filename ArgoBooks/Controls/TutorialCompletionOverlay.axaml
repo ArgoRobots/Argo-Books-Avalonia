@@ -3,12 +3,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="using:ArgoBooks"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="200"
-             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay">
+             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay"
+             x:DataType="controls:TutorialCompletionOverlay">
 
     <Border Background="#80000000"
-            IsVisible="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            IsVisible="{Binding IsOverlayVisible}">
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource PrimaryBrush}"
                 BorderThickness="2"
@@ -50,7 +52,7 @@
                         Content="{loc:Loc 'Got it'}"
                         HorizontalAlignment="Center"
                         Padding="24,10"
-                        Command="{Binding DismissCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        Command="{Binding DismissCommand}" />
             </StackPanel>
         </Border>
     </Border>
