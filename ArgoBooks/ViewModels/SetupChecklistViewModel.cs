@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -96,6 +97,14 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Icon = Icons.Expenses,
             NavigationTarget = "Expenses"
         });
+        Items.Add(new ChecklistItemViewModel
+        {
+            Id = TutorialService.ChecklistItems.VisitAnalytics,
+            Title = "Visit the Analytics page",
+            Description = "See your business insights",
+            Icon = Icons.Analytics,
+            NavigationTarget = "Analytics"
+        });
 
         TotalCount = Items.Count;
         RefreshCompletionState();
@@ -173,6 +182,23 @@ public partial class SetupChecklistViewModel : ViewModelBase
             {
                 TutorialService.Instance.CompleteChecklistItem(item.Id);
             }
+        }
+    }
+
+    [RelayCommand]
+    private void OpenUpgradeUrl()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://www.argorobots.com/upgrade/",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore errors opening URL
         }
     }
 }

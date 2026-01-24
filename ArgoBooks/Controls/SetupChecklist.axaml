@@ -167,19 +167,62 @@
                     <!-- All Complete Message -->
                     <Border Padding="20"
                             IsVisible="{Binding IsAllCompleted}">
-                        <StackPanel Spacing="12" HorizontalAlignment="Center">
-                            <Border Width="48" Height="48"
-                                    CornerRadius="24"
-                                    Background="#E6F4EA"
-                                    HorizontalAlignment="Center">
-                                <PathIcon Data="{x:Static local:Icons.Check}"
-                                          Width="24" Height="24"
-                                          Foreground="#22C55E" />
+                        <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                            <!-- Success Icon and Message -->
+                            <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                <Border Width="48" Height="48"
+                                        CornerRadius="24"
+                                        Background="#E6F4EA"
+                                        HorizontalAlignment="Center">
+                                    <PathIcon Data="{x:Static local:Icons.Check}"
+                                              Width="24" Height="24"
+                                              Foreground="#22C55E" />
+                                </Border>
+                                <TextBlock Text="{loc:Loc 'Tutorial Complete!'}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'You''re ready to start tracking your business finances.'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Free Tier Info -->
+                            <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{loc:Loc 'Free Plan'}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'You can use Argo Books for free with up to 10 products. Upgrade anytime for unlimited products and more features.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <Button Classes="text-link"
+                                            Command="{Binding OpenUpgradeUrlCommand}"
+                                            HorizontalAlignment="Left"
+                                            Padding="0"
+                                            Margin="0,4,0,0">
+                                        <TextBlock Text="{loc:Loc 'View upgrade options →'}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Button>
+                                </StackPanel>
                             </Border>
-                            <TextBlock Text="All done! You're all set."
-                                       FontSize="14"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center" />
+
+                            <!-- Close Button -->
+                            <Button Classes="secondary"
+                                    Command="{Binding DismissChecklistCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    Padding="12,8">
+                                <TextBlock Text="{loc:Loc 'Close'}" />
+                            </Button>
                         </StackPanel>
                     </Border>
                 </StackPanel>
