@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Controls;
@@ -28,8 +27,10 @@ public static class BannerAnimationBehavior
     public static bool GetIsVisible(Border element) => element.GetValue(IsVisibleProperty);
     public static void SetIsVisible(Border element, bool value) => element.SetValue(IsVisibleProperty, value);
 
-    private static Transitions? GetOriginalTransitions(Border element) => element.GetValue(OriginalTransitionsProperty);
     private static void SetOriginalTransitions(Border element, Transitions? value) => element.SetValue(OriginalTransitionsProperty, value);
+
+    private static readonly TimeSpan FadeInDuration = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan FadeOutDuration = TimeSpan.FromSeconds(0.15);
 
     static BannerAnimationBehavior()
     {
@@ -70,13 +71,8 @@ public static class BannerAnimationBehavior
         // Use Dispatcher.Post to ensure the animation happens after render
         Dispatcher.UIThread.Post(() =>
         {
-            // Restore original transitions (1 second from CSS) for open animation
-            var originalTransitions = GetOriginalTransitions(border);
-            if (originalTransitions != null)
-            {
-                border.Transitions = originalTransitions;
-            }
-
+            // Set transition duration for fade-in (1 second)
+            SetTransitionDuration(border, FadeInDuration);
             border.Opacity = 1;
             border.IsHitTestVisible = true;
         }, DispatcherPriority.Render);
@@ -86,18 +82,23 @@ public static class BannerAnimationBehavior
     {
         Dispatcher.UIThread.Post(() =>
         {
-            // Use a faster transition (0.15s) for closing
-            border.Transitions = new Transitions
-            {
-                new DoubleTransition
-                {
-                    Property = Visual.OpacityProperty,
-                    Duration = TimeSpan.FromSeconds(0.15),
-                    Easing = new Avalonia.Animation.Easings.CubicEaseOut()
-                }
-            };
+            // Set transition duration for fade-out (0.15 seconds)
+            SetTransitionDuration(border, FadeOutDuration);
             border.Opacity = 0;
             border.IsHitTestVisible = false;
         }, DispatcherPriority.Background);
+    }
+
+    private static void SetTransitionDuration(Border border, TimeSpan duration)
+    {
+        border.Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = Border.OpacityProperty,
+                Duration = duration,
+                Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+            }
+        };
     }
 }
