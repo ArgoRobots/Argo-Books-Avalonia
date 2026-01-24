@@ -190,22 +190,23 @@ public class TutorialService
     /// </summary>
     public bool ShouldShowTutorialOnCurrentCompany()
     {
+        // Don't show tutorial if current company has no path (not saved yet)
+        if (string.IsNullOrEmpty(_currentCompanyPath))
+            return false;
+
         var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
 
-        // If no tutorial company is set, tutorial can show on any company
+        // If no tutorial company is set, tutorial can show on any company (with a path)
         if (string.IsNullOrEmpty(tutorialCompanyPath))
             return true;
 
-        // If we have a current company path, check if it matches the tutorial company
-        if (!string.IsNullOrEmpty(_currentCompanyPath))
-            return string.Equals(_currentCompanyPath, tutorialCompanyPath, StringComparison.OrdinalIgnoreCase);
-
-        // No current company path set, don't show tutorial
-        return false;
+        // Check if current company matches the tutorial company
+        return string.Equals(_currentCompanyPath, tutorialCompanyPath, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
     /// Records the current company as the company where the tutorial was started.
+    /// Only records if the company has been saved (has a path).
     /// </summary>
     public void SetTutorialStartedOnCurrentCompany()
     {
