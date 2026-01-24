@@ -493,5 +493,11 @@
             <Setter Property="Foreground" Value="#1E293B" />
             <Setter Property="BorderBrush" Value="#94A3B8" />
         </Style>
+        <Style Selector="Button.skip-tutorial-button TextBlock">
+            <Setter Property="Foreground" Value="#475569" />
+        </Style>
+        <Style Selector="Button.skip-tutorial-button:pointerover TextBlock">
+            <Setter Property="Foreground" Value="#1E293B" />
+        </Style>
     </UserControl.Styles>
 </UserControl>
