@@ -735,21 +735,6 @@ public class App : Application
 
                 // Initialize welcome screen tutorial mode after tutorial service is set up
                 _welcomeScreenViewModel?.InitializeTutorialMode();
-
-                // Show guidance notification when a checklist item is completed
-                TutorialService.Instance.ChecklistItemCompleted += (_, itemId) =>
-                {
-                    // Only show guidance for the main tutorial tasks (not dashboard exploration)
-                    if (itemId == TutorialService.ChecklistItems.CreateCategory ||
-                        itemId == TutorialService.ChecklistItems.AddProduct ||
-                        itemId == TutorialService.ChecklistItems.RecordExpense)
-                    {
-                        _appShellViewModel?.AddNotification(
-                            "Nice work!".Translate(),
-                            "Use the navigation bar to go back to the Dashboard for the next step.".Translate(),
-                            NotificationType.Success);
-                    }
-                };
             }
 
             // Initialize telemetry session (respects user consent)

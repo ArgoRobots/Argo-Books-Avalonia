@@ -71,6 +71,35 @@ public class TutorialService
     /// </summary>
     public event EventHandler? TutorialStateChanged;
 
+    /// <summary>
+    /// Event raised when completion guidance should be shown/hidden.
+    /// </summary>
+    public event EventHandler<bool>? CompletionGuidanceChanged;
+
+    /// <summary>
+    /// Gets or sets whether the completion guidance overlay should be shown.
+    /// </summary>
+    public bool ShowCompletionGuidance
+    {
+        get => field;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                CompletionGuidanceChanged?.Invoke(this, value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Dismisses the completion guidance overlay.
+    /// </summary>
+    public void DismissCompletionGuidance()
+    {
+        ShowCompletionGuidance = false;
+    }
+
     private TutorialSettings Settings =>
         _globalSettingsService?.GetSettings()?.Tutorial ?? new TutorialSettings();
 
@@ -169,6 +198,14 @@ public class TutorialService
             settings.Tutorial.CompletedChecklistItems.Add(itemId);
             SaveSettings();
             ChecklistItemCompleted?.Invoke(this, itemId);
+
+            // Show completion guidance for main tutorial tasks
+            if (itemId == ChecklistItems.CreateCategory ||
+                itemId == ChecklistItems.AddProduct ||
+                itemId == ChecklistItems.RecordExpense)
+            {
+                ShowCompletionGuidance = true;
+            }
 
             if (AreAllChecklistItemsCompleted())
             {
