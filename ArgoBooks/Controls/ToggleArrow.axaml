@@ -9,9 +9,8 @@
              x:DataType="controls:ToggleArrow"
              x:Name="Root">
 
-    <!-- Left-pointing chevron arrow (Material Design chevron_left) -->
+    <!-- Chevron arrow that rotates when collapsed -->
     <PathIcon x:Name="ArrowIcon"
-              Data="{x:Static local:Icons.ChevronLeft}"
               Width="{Binding IconSize, ElementName=Root}"
               Height="{Binding IconSize, ElementName=Root}"
               Foreground="{Binding Foreground, ElementName=Root}" />

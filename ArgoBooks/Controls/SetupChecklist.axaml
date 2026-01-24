@@ -48,6 +48,7 @@
                         <controls:ToggleArrow IconSize="16"
                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                               IsCollapsed="{Binding !IsExpanded}"
+                                              Orientation="Vertical"
                                               HorizontalAlignment="Center"
                                               VerticalAlignment="Center" />
                     </Button>
