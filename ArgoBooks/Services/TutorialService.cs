@@ -434,7 +434,7 @@ public class TutorialService
 
     /// <summary>
     /// Resets all tutorial progress (for restart functionality).
-    /// Records the current company as the new tutorial company.
+    /// Clears the tutorial company so it will show on the next company opened.
     /// </summary>
     public void ResetAllTutorials()
     {
@@ -447,7 +447,7 @@ public class TutorialService
             settings.Tutorial.CompletedChecklistItems.Clear();
             settings.Tutorial.VisitedPages.Clear();
             settings.Tutorial.ShowFirstVisitHints = true;
-            settings.Tutorial.TutorialStartedOnCompanyPath = _currentCompanyPath;
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
             // Keep FirstLaunchDate to track they're not actually new
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
@@ -456,7 +456,7 @@ public class TutorialService
 
     /// <summary>
     /// Resets only the app tour (allows re-watching).
-    /// Records the current company as the tutorial company.
+    /// Clears the tutorial company so it will show on the next company opened.
     /// </summary>
     public void ResetAppTour()
     {
@@ -464,7 +464,7 @@ public class TutorialService
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.HasCompletedAppTour = false;
-            settings.Tutorial.TutorialStartedOnCompanyPath = _currentCompanyPath;
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
