@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -472,6 +473,9 @@ public class App : Application
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
+
+    // File watchers for recent companies - watches directories containing recent company files
+    private static readonly Dictionary<string, FileSystemWatcher> _recentCompanyWatchers = new();
 
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
@@ -2687,6 +2691,9 @@ public class App : Application
                 _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
                 _welcomeScreenViewModel.IsRecentCompaniesLoaded = true;
             }
+
+            // Set up file watchers to detect when recent company files are deleted
+            SetupRecentCompanyFileWatchers(recentCompanies.Select(c => c.FilePath).ToList());
         }
         catch (Exception ex)
         {
@@ -2695,6 +2702,113 @@ public class App : Application
             if (_welcomeScreenViewModel != null)
                 _welcomeScreenViewModel.IsRecentCompaniesLoaded = true;
         }
+    }
+
+    /// <summary>
+    /// Sets up file system watchers to detect when recent company files are deleted.
+    /// </summary>
+    private static void SetupRecentCompanyFileWatchers(List<string> filePaths)
+    {
+        // Dispose existing watchers
+        foreach (var watcher in _recentCompanyWatchers.Values)
+        {
+            watcher.EnableRaisingEvents = false;
+            watcher.Dispose();
+        }
+        _recentCompanyWatchers.Clear();
+
+        // Group files by directory to minimize number of watchers
+        var directories = filePaths
+            .Select(Path.GetDirectoryName)
+            .Where(d => !string.IsNullOrEmpty(d))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var directory in directories)
+        {
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+                continue;
+
+            try
+            {
+                var watcher = new FileSystemWatcher(directory)
+                {
+                    Filter = "*.argo",
+                    NotifyFilter = NotifyFilters.FileName,
+                    EnableRaisingEvents = true
+                };
+
+                watcher.Deleted += OnRecentCompanyFileDeleted;
+                watcher.Renamed += OnRecentCompanyFileRenamed;
+
+                _recentCompanyWatchers[directory] = watcher;
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Failed to create file watcher for {directory}: {ex.Message}", "FileWatcher");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles when a recent company file is deleted from the file system.
+    /// </summary>
+    private static void OnRecentCompanyFileDeleted(object sender, FileSystemEventArgs e)
+    {
+        // Run on UI thread
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            RemoveRecentCompanyFromUI(e.FullPath);
+        });
+    }
+
+    /// <summary>
+    /// Handles when a recent company file is renamed (which also removes it from our tracked list).
+    /// </summary>
+    private static void OnRecentCompanyFileRenamed(object sender, RenamedEventArgs e)
+    {
+        // Run on UI thread - remove the old path
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            RemoveRecentCompanyFromUI(e.OldFullPath);
+        });
+    }
+
+    /// <summary>
+    /// Removes a company from all recent company UI lists and persists the change.
+    /// </summary>
+    private static void RemoveRecentCompanyFromUI(string filePath)
+    {
+        if (_appShellViewModel == null || SettingsService == null)
+            return;
+
+        // Remove from file menu
+        var fileMenuItem = _appShellViewModel.FileMenuPanelViewModel.RecentCompanies
+            .FirstOrDefault(c => string.Equals(c.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+        if (fileMenuItem != null)
+            _appShellViewModel.FileMenuPanelViewModel.RecentCompanies.Remove(fileMenuItem);
+
+        // Remove from company switcher
+        var switcherItem = _appShellViewModel.CompanySwitcherPanelViewModel.RecentCompanies
+            .FirstOrDefault(c => string.Equals(c.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+        if (switcherItem != null)
+            _appShellViewModel.CompanySwitcherPanelViewModel.RecentCompanies.Remove(switcherItem);
+
+        // Remove from welcome screen
+        if (_welcomeScreenViewModel != null)
+        {
+            var welcomeItem = _welcomeScreenViewModel.RecentCompanies
+                .FirstOrDefault(c => string.Equals(c.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+            if (welcomeItem != null)
+            {
+                _welcomeScreenViewModel.RecentCompanies.Remove(welcomeItem);
+                _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
+            }
+        }
+
+        // Persist the removal to settings
+        SettingsService.RemoveRecentCompany(filePath);
+        _ = SettingsService.SaveGlobalSettingsAsync();
     }
 
     /// <summary>
