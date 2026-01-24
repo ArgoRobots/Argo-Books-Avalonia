@@ -6,7 +6,8 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
-             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay">
+             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay"
+             x:DataType="controls:TutorialCompletionOverlayViewModel">
 
     <controls:ModalOverlay x:Name="Overlay"
                            CloseOnBackdropClick="False"
