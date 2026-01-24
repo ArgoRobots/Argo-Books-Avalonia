@@ -152,23 +152,18 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="*,80,90,70,Auto">
-                                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                        <controls:SearchableDropdown
-                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).ProductOptions}"
-                                                                 SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                                                                 DisplayMemberPath="Name"
-                                                                 Placeholder="{loc:Loc 'Search for a product...'}"
-                                                                 ShowAddNew="False"
-                                                                 EmptyMessage="{loc:Loc 'No products found.'}"
-                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).NavigateToCreateProductCommand}"
-                                                                 HasError="{Binding HasProductError}" />
-                                                        <TextBlock Text="{loc:Loc 'Please select a product'}"
-                                                                   FontSize="12"
-                                                                   Foreground="#dc2626"
-                                                                   Margin="0,2,0,0"
-                                                                   IsVisible="{Binding HasProductError}" />
-                                                    </StackPanel>
+                                                    <controls:SearchableDropdown Grid.Column="0"
+                                                             Margin="0,0,8,0"
+                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).ProductOptions}"
+                                                             SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="{loc:Loc 'Search for a product...'}"
+                                                             ShowAddNew="False"
+                                                             EmptyMessage="{loc:Loc 'No products found.'}"
+                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                             HasError="{Binding HasProductError}"
+                                                             ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay, TargetNullValue=1}"
                                                                    Minimum="1"
