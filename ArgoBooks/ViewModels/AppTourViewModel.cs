@@ -167,11 +167,16 @@ public partial class AppTourViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Shows the tour if the user hasn't completed it yet.
+    /// Shows the tour if the user hasn't completed it yet
+    /// and we're on the company where the tutorial was started.
     /// </summary>
     public void ShowIfNeeded()
     {
-        if (!TutorialService.Instance.HasCompletedAppTour)
+        // Update the current company path in TutorialService
+        TutorialService.Instance.SetCurrentCompanyPath(App.CompanyManager?.CurrentFilePath);
+
+        if (!TutorialService.Instance.HasCompletedAppTour &&
+            TutorialService.Instance.ShouldShowTutorialOnCurrentCompany())
         {
             StartTour();
         }

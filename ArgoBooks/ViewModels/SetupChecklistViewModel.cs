@@ -126,8 +126,18 @@ public partial class SetupChecklistViewModel : ViewModelBase
 
         var tutorialService = TutorialService.Instance;
 
+        // Update the current company path
+        tutorialService.SetCurrentCompanyPath(App.CompanyManager?.CurrentFilePath);
+
         // If user explicitly dismissed the checklist, always hide it
         if (tutorialService.IsSetupChecklistDismissed)
+        {
+            IsVisible = false;
+            return;
+        }
+
+        // Only show checklist on the company where the tutorial was started
+        if (!tutorialService.ShouldShowTutorialOnCurrentCompany())
         {
             IsVisible = false;
             return;

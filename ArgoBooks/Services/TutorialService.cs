@@ -9,6 +9,7 @@ namespace ArgoBooks.Services;
 public class TutorialService
 {
     private IGlobalSettingsService? _globalSettingsService;
+    private string? _currentCompanyPath;
 
     /// <summary>
     /// Gets the singleton instance of the TutorialService.
@@ -176,7 +177,62 @@ public class TutorialService
     }
 
     /// <summary>
+    /// Sets the current company path for tutorial tracking.
+    /// </summary>
+    public void SetCurrentCompanyPath(string? companyPath)
+    {
+        _currentCompanyPath = companyPath;
+    }
+
+    /// <summary>
+    /// Checks if the tutorial should be shown on the current company.
+    /// Returns true if no tutorial is in progress, or if we're on the same company where it was started.
+    /// </summary>
+    public bool ShouldShowTutorialOnCurrentCompany()
+    {
+        var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
+
+        // If no tutorial company is set, tutorial can show on any company
+        if (string.IsNullOrEmpty(tutorialCompanyPath))
+            return true;
+
+        // If we have a current company path, check if it matches the tutorial company
+        if (!string.IsNullOrEmpty(_currentCompanyPath))
+            return string.Equals(_currentCompanyPath, tutorialCompanyPath, StringComparison.OrdinalIgnoreCase);
+
+        // No current company path set, don't show tutorial
+        return false;
+    }
+
+    /// <summary>
+    /// Records the current company as the company where the tutorial was started.
+    /// </summary>
+    public void SetTutorialStartedOnCurrentCompany()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null && !string.IsNullOrEmpty(_currentCompanyPath))
+        {
+            settings.Tutorial.TutorialStartedOnCompanyPath = _currentCompanyPath;
+            SaveSettings();
+        }
+    }
+
+    /// <summary>
+    /// Clears the tutorial company association (called when tutorial is completed).
+    /// </summary>
+    private void ClearTutorialCompanyPath()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null)
+        {
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
+            SaveSettings();
+        }
+    }
+
+    /// <summary>
     /// Initializes the tutorial service for a new user if needed.
+    /// Also records the current company as the tutorial company.
     /// </summary>
     public void InitializeForNewUser()
     {
@@ -186,6 +242,9 @@ public class TutorialService
             settings.Tutorial.FirstLaunchDate = DateTime.UtcNow;
             SaveSettings();
         }
+
+        // Record which company the tutorial was started on
+        SetTutorialStartedOnCurrentCompany();
     }
 
     /// <summary>
@@ -203,7 +262,7 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Marks the app tour as completed.
+    /// Marks the app tour as completed and clears the tutorial company association.
     /// </summary>
     public void CompleteAppTour()
     {
@@ -211,6 +270,7 @@ public class TutorialService
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.HasCompletedAppTour = true;
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -374,6 +434,7 @@ public class TutorialService
 
     /// <summary>
     /// Resets all tutorial progress (for restart functionality).
+    /// Records the current company as the new tutorial company.
     /// </summary>
     public void ResetAllTutorials()
     {
@@ -386,6 +447,7 @@ public class TutorialService
             settings.Tutorial.CompletedChecklistItems.Clear();
             settings.Tutorial.VisitedPages.Clear();
             settings.Tutorial.ShowFirstVisitHints = true;
+            settings.Tutorial.TutorialStartedOnCompanyPath = _currentCompanyPath;
             // Keep FirstLaunchDate to track they're not actually new
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
@@ -394,6 +456,7 @@ public class TutorialService
 
     /// <summary>
     /// Resets only the app tour (allows re-watching).
+    /// Records the current company as the tutorial company.
     /// </summary>
     public void ResetAppTour()
     {
@@ -401,6 +464,7 @@ public class TutorialService
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.HasCompletedAppTour = false;
+            settings.Tutorial.TutorialStartedOnCompanyPath = _currentCompanyPath;
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
