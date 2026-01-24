@@ -1,8 +1,6 @@
-using System.Windows.Input;
 using ArgoBooks.Services;
 using Avalonia;
 using Avalonia.Controls;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
 
@@ -17,20 +15,12 @@ public partial class TutorialCompletionOverlay : UserControl
         set => SetValue(IsOverlayVisibleProperty, value);
     }
 
-    public ICommand DismissCommand { get; }
-
     public TutorialCompletionOverlay()
     {
         InitializeComponent();
 
         // Set DataContext to self so bindings work
         DataContext = this;
-
-        // Set default dismiss command
-        DismissCommand = new RelayCommand(() =>
-        {
-            TutorialService.Instance.DismissCompletionGuidance();
-        });
 
         // Subscribe to tutorial service changes
         TutorialService.Instance.CompletionGuidanceChanged += OnCompletionGuidanceChanged;
@@ -48,5 +38,8 @@ public partial class TutorialCompletionOverlay : UserControl
     {
         base.OnUnloaded(e);
         TutorialService.Instance.CompletionGuidanceChanged -= OnCompletionGuidanceChanged;
+
+        // Dismiss the guidance when navigating away from this page
+        TutorialService.Instance.DismissCompletionGuidance();
     }
 }

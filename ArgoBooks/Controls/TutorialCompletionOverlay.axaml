@@ -9,7 +9,7 @@
              x:Class="ArgoBooks.Controls.TutorialCompletionOverlay"
              x:DataType="controls:TutorialCompletionOverlay">
 
-    <Border Background="#80000000"
+    <Border Background="#CC000000"
             IsVisible="{Binding IsOverlayVisible}">
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource PrimaryBrush}"
@@ -46,13 +46,6 @@
                                TextWrapping="Wrap"
                                MaxWidth="350" />
                 </StackPanel>
-
-                <!-- Dismiss Button -->
-                <Button Classes="primary"
-                        Content="{loc:Loc 'Got it'}"
-                        HorizontalAlignment="Center"
-                        Padding="24,10"
-                        Command="{Binding DismissCommand}" />
             </StackPanel>
         </Border>
     </Border>
