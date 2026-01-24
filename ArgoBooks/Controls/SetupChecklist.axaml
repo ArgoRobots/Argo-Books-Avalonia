@@ -108,23 +108,21 @@
                                     <Grid ColumnDefinitions="Auto,*,Auto">
                                         <!-- Checkbox/Check Icon -->
                                         <Border Grid.Column="0"
+                                                Classes="checklist-circle"
                                                 Width="24" Height="24"
                                                 CornerRadius="12"
-                                                Margin="0,0,12,0">
+                                                Margin="0,0,12,0"
+                                                BorderThickness="{Binding IsCompleted, Converter={x:Static conv:BoolConverters.ToCircleBorderThickness}}"
+                                                BorderBrush="{DynamicResource BorderBrush}">
                                             <Border.Background>
                                                 <Binding Path="IsCompleted">
                                                     <Binding.Converter>
                                                         <conv:BoolToBrushConverter TrueValue="{DynamicResource PrimaryBrush}"
-                                                                                    FalseValue="{DynamicResource BackgroundSecondaryBrush}" />
+                                                                                    FalseValue="Transparent" />
                                                     </Binding.Converter>
                                                 </Binding>
                                             </Border.Background>
                                             <Panel>
-                                                <!-- Unchecked: empty circle border -->
-                                                <Border BorderBrush="{DynamicResource BorderBrush}"
-                                                        BorderThickness="2"
-                                                        CornerRadius="12"
-                                                        IsVisible="{Binding !IsCompleted}" />
                                                 <!-- Checked: checkmark -->
                                                 <PathIcon Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
@@ -211,6 +209,10 @@
         </Style>
         <Style Selector="Button.checklist-item:disabled /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <!-- Circle styling on hover -->
+        <Style Selector="Button.checklist-item:pointerover Border.checklist-circle">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

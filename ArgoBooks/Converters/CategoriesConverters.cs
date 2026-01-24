@@ -237,6 +237,13 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToExpandedMaxHeight =
         new FuncValueConverter<bool, double>(value => value ? 500 : 0);
+
+    /// <summary>
+    /// Converts bool (isCompleted) to circle border thickness.
+    /// Completed = 0 (no border), Not completed = 2px border.
+    /// </summary>
+    public static readonly IValueConverter ToCircleBorderThickness =
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0) : new Thickness(2));
 }
 
 /// <summary>
