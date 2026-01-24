@@ -169,7 +169,7 @@
                                     Spacing="12">
                             <Border Width="40" Height="40"
                                     CornerRadius="20"
-                                    Background="{DynamicResource PrimaryLightBrush}">
+                                    Background="White">
                                 <PathIcon Data="{x:Static local:Icons.Help}"
                                           Width="20" Height="20"
                                           Foreground="{DynamicResource PrimaryBrush}" />
@@ -179,10 +179,10 @@
                                 <TextBlock Text="{loc:Loc 'A tutorial will guide you through the setup'}"
                                            FontSize="15"
                                            FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                           Foreground="#1E293B" />
                                 <TextBlock Text="{loc:Loc 'Learn how to use Argo Books step by step'}"
                                            FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                           Foreground="#64748B" />
                             </StackPanel>
                         </StackPanel>
 
@@ -190,7 +190,8 @@
                         <Button Classes="skip-tutorial-button"
                                 Command="{Binding SkipTutorialCommand}"
                                 HorizontalAlignment="Center">
-                            <TextBlock Text="{loc:Loc 'Skip Tutorial'}" />
+                            <TextBlock Text="{loc:Loc 'Skip Tutorial'}"
+                                       Foreground="#64748B" />
                         </Button>
                     </StackPanel>
                 </Border>
@@ -475,8 +476,8 @@
         <Style Selector="Button.skip-tutorial-button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="#94A3B8" />
+            <Setter Property="Foreground" Value="#64748B" />
             <Setter Property="Padding" Value="16,8" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="CornerRadius" Value="6" />
@@ -486,10 +487,10 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Button.skip-tutorial-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="Background" Value="#E2E8F0" />
         </Style>
         <Style Selector="Button.skip-tutorial-button:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="#1E293B" />
         </Style>
     </UserControl.Styles>
 </UserControl>
