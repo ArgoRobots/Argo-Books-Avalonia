@@ -92,6 +92,8 @@
                     </Border>
                 </Grid>
 
+                <!-- Tutorial Completion Overlay (covers content area but not sidebar) -->
+                <controls:TutorialCompletionOverlay />
             </Panel>
         </Grid>
 

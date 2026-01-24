@@ -1346,6 +1346,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;
+
+        // Mark the analytics page visit as complete for the tutorial checklist
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.VisitAnalytics);
     }
 
     /// <summary>

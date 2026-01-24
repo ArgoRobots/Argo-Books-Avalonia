@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -27,6 +28,13 @@ public partial class ChecklistItemViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isCompleted;
+
+    /// <summary>
+    /// Gets or sets whether this is the current item to complete (next in sequence).
+    /// Only the current item can be clicked.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCurrentItem;
 }
 
 /// <summary>
@@ -96,6 +104,14 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Icon = Icons.Expenses,
             NavigationTarget = "Expenses"
         });
+        Items.Add(new ChecklistItemViewModel
+        {
+            Id = TutorialService.ChecklistItems.VisitAnalytics,
+            Title = "Visit the Analytics page",
+            Description = "See your business insights",
+            Icon = Icons.Analytics,
+            NavigationTarget = "Analytics"
+        });
 
         TotalCount = Items.Count;
         RefreshCompletionState();
@@ -106,8 +122,20 @@ public partial class SetupChecklistViewModel : ViewModelBase
     /// </summary>
     public void Refresh()
     {
-        IsVisible = TutorialService.Instance.ShouldShowSetupChecklist;
         RefreshCompletionState();
+
+        var tutorialService = TutorialService.Instance;
+
+        // If user explicitly dismissed the checklist, always hide it
+        if (tutorialService.IsSetupChecklistDismissed)
+        {
+            IsVisible = false;
+            return;
+        }
+
+        // Show checklist if there are incomplete items, OR if all items are complete
+        // (so the user can see the completion state and close it manually)
+        IsVisible = true;
     }
 
     private void RefreshCompletionState()
@@ -116,12 +144,26 @@ public partial class SetupChecklistViewModel : ViewModelBase
 
         // Only count items that are in our current visible checklist
         var visibleCompletedCount = 0;
+        var foundCurrentItem = false;
+
         foreach (var item in Items)
         {
             item.IsCompleted = completedItems.Contains(item.Id);
             if (item.IsCompleted)
             {
                 visibleCompletedCount++;
+                item.IsCurrentItem = false;
+            }
+            else if (!foundCurrentItem)
+            {
+                // First incomplete item is the current one
+                item.IsCurrentItem = true;
+                foundCurrentItem = true;
+            }
+            else
+            {
+                // Subsequent incomplete items are not current
+                item.IsCurrentItem = false;
             }
         }
 
@@ -173,6 +215,23 @@ public partial class SetupChecklistViewModel : ViewModelBase
             {
                 TutorialService.Instance.CompleteChecklistItem(item.Id);
             }
+        }
+    }
+
+    [RelayCommand]
+    private void OpenUpgradeUrl()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://www.argorobots.com/upgrade/",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore errors opening URL
         }
     }
 }

@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="using:ArgoBooks"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay"
+             x:DataType="controls:TutorialCompletionOverlayViewModel">
+
+    <controls:ModalOverlay x:Name="Overlay"
+                           CloseOnBackdropClick="False"
+                           CloseOnEscape="False">
+        <controls:ModalOverlay.ModalContent>
+            <!-- Modal Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource PrimaryBrush}"
+                    BorderThickness="2"
+                    CornerRadius="16"
+                    Padding="32,24"
+                    MaxWidth="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 4 20 0 #26000000">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <!-- Success Icon -->
+                    <Border Width="56" Height="56"
+                            CornerRadius="28"
+                            Background="#DCFCE7"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="28" Height="28"
+                                  Foreground="#22C55E" />
+                    </Border>
+
+                    <!-- Message -->
+                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Title}"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Message}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="380" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

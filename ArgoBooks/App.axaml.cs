@@ -573,10 +573,13 @@ public class App : Application
             // Set navigation callback to update current page in AppShell
             NavigationService.SetNavigationCallback(page => _appShellViewModel.CurrentPage = page);
 
-            // Track page views for telemetry
+            // Track page views for telemetry and dismiss tutorial guidance on navigation
             NavigationService.Navigated += (_, args) =>
             {
                 _ = TelemetryManager?.TrackPageViewAsync(args.PageName);
+
+                // Dismiss tutorial completion guidance when user navigates
+                TutorialService.Instance.DismissCompletionGuidance();
             };
 
             // Set initial view
@@ -732,6 +735,9 @@ public class App : Application
 
                 // Initialize tutorial service with settings
                 TutorialService.Instance.SetGlobalSettingsService(SettingsService);
+
+                // Initialize welcome screen tutorial mode after tutorial service is set up
+                _welcomeScreenViewModel?.InitializeTutorialMode();
             }
 
             // Initialize telemetry session (respects user consent)
@@ -1512,9 +1518,33 @@ public class App : Application
         };
 
         // Restart tutorial from help panel
-        _appShellViewModel.RestartTutorialRequested += (_, _) =>
+        _appShellViewModel.RestartTutorialRequested += async (_, _) =>
         {
-            _mainWindowViewModel?.TutorialWelcomeViewModel?.Show();
+            // Save and close the current company if one is open
+            if (CompanyManager?.IsCompanyOpen == true)
+            {
+                // Save the company first (unless it's the sample company)
+                if (!CompanyManager.IsSampleCompany)
+                {
+                    try
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    catch
+                    {
+                        // Continue even if save fails - user can still restart tutorial
+                    }
+                }
+
+                // Close the company to go back to welcome screen
+                await CompanyManager.CloseCompanyAsync();
+            }
+
+            // Enable tutorial mode on welcome screen (set directly since tutorial was reset)
+            if (_welcomeScreenViewModel != null)
+            {
+                _welcomeScreenViewModel.IsTutorialMode = true;
+            }
         };
 
         // Wire up edit company modal events

@@ -131,6 +131,7 @@
                 <!-- Footer with actions -->
                 <Border Grid.Row="2"
                         Padding="32,24"
+                        CornerRadius="0,0,16,16"
                         Background="{DynamicResource BackgroundSecondaryBrush}">
                     <Grid ColumnDefinitions="*,Auto">
                         <Button Grid.Column="0"

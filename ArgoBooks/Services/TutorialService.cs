@@ -27,6 +27,7 @@ public class TutorialService
         public const string AddProduct = "add_product";
         public const string AddCustomer = "add_customer";
         public const string ExploreDashboard = "explore_dashboard";
+        public const string VisitAnalytics = "visit_analytics";
     }
 
     /// <summary>
@@ -71,6 +72,66 @@ public class TutorialService
     /// </summary>
     public event EventHandler? TutorialStateChanged;
 
+    /// <summary>
+    /// Event raised when completion guidance should be shown/hidden.
+    /// </summary>
+    public event EventHandler<bool>? CompletionGuidanceChanged;
+
+    /// <summary>
+    /// Gets or sets whether the completion guidance overlay should be shown.
+    /// </summary>
+    public bool ShowCompletionGuidance
+    {
+        get => field;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                CompletionGuidanceChanged?.Invoke(this, value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the type of completion guidance to show.
+    /// </summary>
+    public CompletionGuidanceType CurrentGuidanceType { get; set; } = CompletionGuidanceType.Standard;
+
+    // Flag to skip the next dismiss call (used when guidance is shown during navigation)
+    private bool _skipNextDismiss;
+
+    /// <summary>
+    /// Dismisses the completion guidance overlay.
+    /// </summary>
+    public void DismissCompletionGuidance()
+    {
+        if (_skipNextDismiss)
+        {
+            // Skip this dismiss call (happens during same navigation event as ShowGuidance)
+            return;
+        }
+        ShowCompletionGuidance = false;
+    }
+
+    /// <summary>
+    /// Shows completion guidance with the specified type.
+    /// </summary>
+    public void ShowGuidance(CompletionGuidanceType type)
+    {
+        CurrentGuidanceType = type;
+        ShowCompletionGuidance = true;
+        // Skip the next dismiss call to prevent navigation from immediately hiding the guidance
+        _skipNextDismiss = true;
+
+        // Clear the skip flag after the current event cycle so it only prevents
+        // immediate dismissal (same navigation event), not user-initiated navigations
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _skipNextDismiss = false;
+        }, Avalonia.Threading.DispatcherPriority.Background);
+    }
+
     private TutorialSettings Settings =>
         _globalSettingsService?.GetSettings()?.Tutorial ?? new TutorialSettings();
 
@@ -95,6 +156,11 @@ public class TutorialService
     /// </summary>
     public bool ShouldShowSetupChecklist =>
         Settings.ShowSetupChecklist && !AreAllChecklistItemsCompleted();
+
+    /// <summary>
+    /// Gets whether the user has manually dismissed the setup checklist.
+    /// </summary>
+    public bool IsSetupChecklistDismissed => !Settings.ShowSetupChecklist;
 
     /// <summary>
     /// Gets whether first-visit hints should be shown.
@@ -170,6 +236,18 @@ public class TutorialService
             SaveSettings();
             ChecklistItemCompleted?.Invoke(this, itemId);
 
+            // Show completion guidance for main tutorial tasks
+            if (itemId == ChecklistItems.CreateCategory ||
+                itemId == ChecklistItems.AddProduct ||
+                itemId == ChecklistItems.RecordExpense)
+            {
+                ShowGuidance(CompletionGuidanceType.Standard);
+            }
+            else if (itemId == ChecklistItems.VisitAnalytics)
+            {
+                ShowGuidance(CompletionGuidanceType.Analytics);
+            }
+
             if (AreAllChecklistItemsCompleted())
             {
                 AllChecklistItemsCompleted?.Invoke(this, EventArgs.Empty);
@@ -195,7 +273,8 @@ public class TutorialService
         var completed = Settings.CompletedChecklistItems;
         return completed.Contains(ChecklistItems.CreateCategory) &&
                completed.Contains(ChecklistItems.AddProduct) &&
-               completed.Contains(ChecklistItems.RecordExpense);
+               completed.Contains(ChecklistItems.RecordExpense) &&
+               completed.Contains(ChecklistItems.VisitAnalytics);
     }
 
     /// <summary>
@@ -376,4 +455,20 @@ public class TutorialService
             _globalSettingsService?.SaveSettings(settings);
         }
     }
+}
+
+/// <summary>
+/// Types of completion guidance messages.
+/// </summary>
+public enum CompletionGuidanceType
+{
+    /// <summary>
+    /// Standard message to go back to dashboard for next step.
+    /// </summary>
+    Standard,
+
+    /// <summary>
+    /// Analytics-specific message about charts updating with data.
+    /// </summary>
+    Analytics
 }
