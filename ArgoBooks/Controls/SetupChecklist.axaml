@@ -46,13 +46,10 @@
                             ToolTip.Tip="Expand/Collapse"
                             Margin="0,0,8,0">
                         <controls:ToggleArrow IconSize="16"
-                                              Foreground="{DynamicResource TextPrimaryBrush}"
+                                              Foreground="{DynamicResource TextSecondaryBrush}"
                                               IsCollapsed="{Binding !IsExpanded}"
-                                              RenderTransformOrigin="0.5,0.5">
-                            <controls:ToggleArrow.RenderTransform>
-                                <RotateTransform Angle="-90" />
-                            </controls:ToggleArrow.RenderTransform>
-                        </controls:ToggleArrow>
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
                     </Button>
 
                     <!-- Dismiss Button -->
