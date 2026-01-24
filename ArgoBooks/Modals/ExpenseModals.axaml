@@ -182,6 +182,7 @@
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
                                                             VerticalAlignment="Top"
+                                                            Margin="8,0,0,0"
                                                             Command="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"
                                                             ToolTip.Tip="{loc:Loc 'Remove item'}">
@@ -214,7 +215,7 @@
                                                Text="{loc:Loc 'Tax ($)'}" />
                                     <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay}"
                                                    Minimum="0"
-                                                   FormatString="C2"
+                                                   FormatString="N2"
                                                    Classes="form-numericupdown"
                                                    ShowButtonSpinner="False"
                                                    HorizontalAlignment="Stretch" />
@@ -226,7 +227,7 @@
                                                Text="{loc:Loc 'Shipping'}" />
                                     <NumericUpDown Value="{Binding ModalShipping, Mode=TwoWay}"
                                                    Minimum="0"
-                                                   FormatString="C2"
+                                                   FormatString="N2"
                                                    Classes="form-numericupdown"
                                                    ShowButtonSpinner="False"
                                                    HorizontalAlignment="Stretch" />
@@ -238,7 +239,7 @@
                                                Text="{loc:Loc 'Discount'}" />
                                     <NumericUpDown Value="{Binding ModalDiscount, Mode=TwoWay}"
                                                    Minimum="0"
-                                                   FormatString="C2"
+                                                   FormatString="N2"
                                                    Classes="form-numericupdown"
                                                    ShowButtonSpinner="False"
                                                    HorizontalAlignment="Stretch" />
