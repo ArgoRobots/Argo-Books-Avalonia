@@ -229,7 +229,7 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Tax ($)'}" />
-                                    <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay}"
+                                    <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay, TargetNullValue=0}"
                                                    Minimum="0"
                                                    FormatString="N2"
                                                    Classes="form-numericupdown"
@@ -241,7 +241,7 @@
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Shipping'}" />
-                                    <NumericUpDown Value="{Binding ModalShipping, Mode=TwoWay}"
+                                    <NumericUpDown Value="{Binding ModalShipping, Mode=TwoWay, TargetNullValue=0}"
                                                    Minimum="0"
                                                    FormatString="N2"
                                                    Classes="form-numericupdown"
@@ -253,7 +253,7 @@
                                 <StackPanel Grid.Column="4" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Discount'}" />
-                                    <NumericUpDown Value="{Binding ModalDiscount, Mode=TwoWay}"
+                                    <NumericUpDown Value="{Binding ModalDiscount, Mode=TwoWay, TargetNullValue=0}"
                                                    Minimum="0"
                                                    FormatString="N2"
                                                    Classes="form-numericupdown"
