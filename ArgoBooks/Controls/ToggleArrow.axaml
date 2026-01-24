@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="24" d:DesignHeight="24"
              x:Class="ArgoBooks.Controls.ToggleArrow"
              x:DataType="controls:ToggleArrow"
