@@ -76,8 +76,9 @@
                 </Border.Transitions>
 
                 <StackPanel>
-                    <!-- Progress Bar -->
-                    <Border Padding="20,12">
+                    <!-- Progress Bar (hidden when complete) -->
+                    <Border Padding="20,12"
+                            IsVisible="{Binding !IsAllCompleted}">
                         <Grid>
                             <Border Background="{DynamicResource BackgroundSecondaryBrush}"
                                     CornerRadius="4"
@@ -168,7 +169,7 @@
                     <!-- All Complete Message -->
                     <Border Padding="20"
                             IsVisible="{Binding IsAllCompleted}">
-                        <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="16" HorizontalAlignment="Center">
                             <!-- Success Icon and Message -->
                             <StackPanel Spacing="8" HorizontalAlignment="Center">
                                 <Border Width="48" Height="48"
@@ -195,20 +196,30 @@
                             <Border Background="{DynamicResource BackgroundSecondaryBrush}"
                                     CornerRadius="8"
                                     Padding="16">
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
                                     <TextBlock Text="{loc:Loc 'Free Plan'}"
                                                FontSize="13"
                                                FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'You can use Argo Books for free with up to 10 products. Upgrade anytime for unlimited products and more features.'}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'You can use Argo Books for free with up to 10 products.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Upgrade for unlimited products, AI receipt scanning, and priority support.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,4,0,0" />
                                     <Button Classes="text-link"
                                             Command="{Binding OpenUpgradeUrlCommand}"
-                                            HorizontalAlignment="Left"
+                                            HorizontalAlignment="Center"
                                             Padding="0"
-                                            Margin="0,4,0,0">
+                                            Margin="0,8,0,0">
                                         <TextBlock Text="{loc:Loc 'View upgrade options →'}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource PrimaryBrush}" />
@@ -219,9 +230,9 @@
                             <!-- Close Button -->
                             <Button Classes="secondary"
                                     Command="{Binding DismissChecklistCommand}"
-                                    HorizontalAlignment="Stretch"
+                                    HorizontalAlignment="Center"
                                     HorizontalContentAlignment="Center"
-                                    Padding="12,8">
+                                    Padding="24,8">
                                 <TextBlock Text="{loc:Loc 'Close'}" />
                             </Button>
                         </StackPanel>
