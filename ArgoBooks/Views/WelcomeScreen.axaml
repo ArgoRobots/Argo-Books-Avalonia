@@ -126,11 +126,48 @@
                     </Border>
                 </UniformGrid>
 
+                <!-- Tutorial Mode Guidance Banner (shown above create company card) -->
+                <Border Classes="tutorial-banner"
+                        IsVisible="{Binding IsTutorialMode}"
+                        Margin="0,0,0,24">
+                    <StackPanel Spacing="12">
+                        <!-- Tutorial message -->
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Spacing="12">
+                            <Border Width="40" Height="40"
+                                    CornerRadius="20"
+                                    Background="White">
+                                <PathIcon Data="{x:Static local:Icons.Help}"
+                                          Width="20" Height="20"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center"
+                                        Spacing="2">
+                                <TextBlock Text="{loc:Loc 'A tutorial will guide you through the setup'}"
+                                           FontSize="15"
+                                           FontWeight="Medium"
+                                           Foreground="#1E293B" />
+                                <TextBlock Text="{loc:Loc 'Create a new company below to get started'}"
+                                           FontSize="13"
+                                           Foreground="#64748B" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Skip tutorial button -->
+                        <Button Classes="skip-tutorial-button"
+                                Command="{Binding SkipTutorialCommand}"
+                                HorizontalAlignment="Center">
+                            <TextBlock Text="{loc:Loc 'Skip Tutorial'}" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+
                 <!-- Main Action - Tutorial Mode (single centered card) -->
                 <Border Classes="action-card"
                         HorizontalAlignment="Center"
                         MaxWidth="350"
-                        Margin="0,0,0,24"
+                        Margin="0,0,0,48"
                         IsVisible="{Binding IsTutorialMode}">
                     <Button Classes="action-card-button"
                             Command="{Binding CreateNewCompanyCommand}">
@@ -156,44 +193,6 @@
                             </StackPanel>
                         </StackPanel>
                     </Button>
-                </Border>
-
-                <!-- Tutorial Mode Guidance Banner -->
-                <Border Classes="tutorial-banner"
-                        IsVisible="{Binding IsTutorialMode}"
-                        Margin="0,0,0,48">
-                    <StackPanel Spacing="16">
-                        <!-- Tutorial message -->
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    Spacing="12">
-                            <Border Width="40" Height="40"
-                                    CornerRadius="20"
-                                    Background="White">
-                                <PathIcon Data="{x:Static local:Icons.Help}"
-                                          Width="20" Height="20"
-                                          Foreground="{DynamicResource PrimaryBrush}" />
-                            </Border>
-                            <StackPanel VerticalAlignment="Center"
-                                        Spacing="2">
-                                <TextBlock Text="{loc:Loc 'A tutorial will guide you through the setup'}"
-                                           FontSize="15"
-                                           FontWeight="Medium"
-                                           Foreground="#1E293B" />
-                                <TextBlock Text="{loc:Loc 'Learn how to use Argo Books step by step'}"
-                                           FontSize="13"
-                                           Foreground="#64748B" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <!-- Skip tutorial button -->
-                        <Button Classes="skip-tutorial-button"
-                                Command="{Binding SkipTutorialCommand}"
-                                HorizontalAlignment="Center">
-                            <TextBlock Text="{loc:Loc 'Skip Tutorial'}"
-                                       Foreground="#64748B" />
-                        </Button>
-                    </StackPanel>
                 </Border>
 
                 <!-- Recent Companies Section -->
@@ -474,23 +473,25 @@
 
         <!-- Skip Tutorial Button -->
         <Style Selector="Button.skip-tutorial-button">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="White" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#94A3B8" />
-            <Setter Property="Foreground" Value="#64748B" />
-            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="BorderBrush" Value="#CBD5E1" />
+            <Setter Property="Foreground" Value="#475569" />
+            <Setter Property="Padding" Value="20,10" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.skip-tutorial-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="White" />
         </Style>
         <Style Selector="Button.skip-tutorial-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#E2E8F0" />
+            <Setter Property="Background" Value="#F1F5F9" />
         </Style>
         <Style Selector="Button.skip-tutorial-button:pointerover">
             <Setter Property="Foreground" Value="#1E293B" />
+            <Setter Property="BorderBrush" Value="#94A3B8" />
         </Style>
     </UserControl.Styles>
 </UserControl>
