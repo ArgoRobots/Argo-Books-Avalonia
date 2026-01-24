@@ -98,11 +98,19 @@ public class TutorialService
     /// </summary>
     public CompletionGuidanceType CurrentGuidanceType { get; set; } = CompletionGuidanceType.Standard;
 
+    // Flag to skip the next dismiss call (used when guidance is shown during navigation)
+    private bool _skipNextDismiss;
+
     /// <summary>
     /// Dismisses the completion guidance overlay.
     /// </summary>
     public void DismissCompletionGuidance()
     {
+        if (_skipNextDismiss)
+        {
+            _skipNextDismiss = false;
+            return;
+        }
         ShowCompletionGuidance = false;
     }
 
@@ -113,6 +121,8 @@ public class TutorialService
     {
         CurrentGuidanceType = type;
         ShowCompletionGuidance = true;
+        // Skip the next dismiss call to prevent navigation from immediately hiding the guidance
+        _skipNextDismiss = true;
     }
 
     private TutorialSettings Settings =>
@@ -139,6 +149,11 @@ public class TutorialService
     /// </summary>
     public bool ShouldShowSetupChecklist =>
         Settings.ShowSetupChecklist && !AreAllChecklistItemsCompleted();
+
+    /// <summary>
+    /// Gets whether the user has manually dismissed the setup checklist.
+    /// </summary>
+    public bool IsSetupChecklistDismissed => !Settings.ShowSetupChecklist;
 
     /// <summary>
     /// Gets whether first-visit hints should be shown.

@@ -115,8 +115,20 @@ public partial class SetupChecklistViewModel : ViewModelBase
     /// </summary>
     public void Refresh()
     {
-        IsVisible = TutorialService.Instance.ShouldShowSetupChecklist;
         RefreshCompletionState();
+
+        var tutorialService = TutorialService.Instance;
+
+        // If user explicitly dismissed the checklist, always hide it
+        if (tutorialService.IsSetupChecklistDismissed)
+        {
+            IsVisible = false;
+            return;
+        }
+
+        // Show checklist if there are incomplete items, OR if all items are complete
+        // (so the user can see the completion state and close it manually)
+        IsVisible = true;
     }
 
     private void RefreshCompletionState()
