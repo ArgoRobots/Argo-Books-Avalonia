@@ -5,48 +5,51 @@
              xmlns:local="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="200"
-             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay"
-             x:DataType="controls:TutorialCompletionOverlay">
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="ArgoBooks.Controls.TutorialCompletionOverlay">
 
-    <Border Background="#CC000000"
-            IsVisible="{Binding IsOverlayVisible}">
-        <Border Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource PrimaryBrush}"
-                BorderThickness="2"
-                CornerRadius="16"
-                Padding="32,24"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                MaxWidth="450"
-                BoxShadow="0 8 32 0 #40000000">
-            <StackPanel Spacing="16" HorizontalAlignment="Center">
-                <!-- Success Icon -->
-                <Border Width="56" Height="56"
-                        CornerRadius="28"
-                        Background="#DCFCE7"
-                        HorizontalAlignment="Center">
-                    <PathIcon Data="{x:Static local:Icons.Check}"
-                              Width="28" Height="28"
-                              Foreground="#22C55E" />
-                </Border>
+    <controls:ModalOverlay x:Name="Overlay"
+                           CloseOnBackdropClick="False"
+                           CloseOnEscape="False">
+        <controls:ModalOverlay.ModalContent>
+            <!-- Modal Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource PrimaryBrush}"
+                    BorderThickness="2"
+                    CornerRadius="16"
+                    Padding="32,24"
+                    MaxWidth="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 4 20 0 #26000000">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <!-- Success Icon -->
+                    <Border Width="56" Height="56"
+                            CornerRadius="28"
+                            Background="#DCFCE7"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="28" Height="28"
+                                  Foreground="#22C55E" />
+                    </Border>
 
-                <!-- Message -->
-                <StackPanel Spacing="8" HorizontalAlignment="Center">
-                    <TextBlock Text="{loc:Loc 'Nice work!'}"
-                               FontSize="20"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="{loc:Loc 'Use the navigation bar to go back to the Dashboard for the next step.'}"
-                               FontSize="14"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               HorizontalAlignment="Center"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               MaxWidth="350" />
+                    <!-- Message -->
+                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                        <TextBlock Text="{loc:Loc 'Nice work!'}"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Use the navigation bar to go back to the Dashboard for the next step.'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="350" />
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-        </Border>
-    </Border>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
 </UserControl>
