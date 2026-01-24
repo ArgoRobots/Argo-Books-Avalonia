@@ -106,7 +106,7 @@
                                 <Button Classes="checklist-item"
                                         Command="{Binding $parent[ItemsControl].((vm:SetupChecklistViewModel)DataContext).NavigateToItemCommand}"
                                         CommandParameter="{Binding}"
-                                        IsEnabled="{Binding !IsCompleted}">
+                                        IsEnabled="{Binding IsCurrentItem}">
                                     <Grid ColumnDefinitions="Auto,*,Auto">
                                         <!-- Checkbox/Check Icon -->
                                         <Border Grid.Column="0"
@@ -193,39 +193,30 @@
                             </StackPanel>
 
                             <!-- Free Tier Info -->
-                            <Border Background="{DynamicResource BackgroundSecondaryBrush}"
-                                    CornerRadius="8"
-                                    Padding="16">
-                                <StackPanel Spacing="8" HorizontalAlignment="Center">
-                                    <TextBlock Text="{loc:Loc 'Free Plan'}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               HorizontalAlignment="Center" />
-                                    <TextBlock Text="{loc:Loc 'You can use Argo Books for free with up to 10 products.'}"
+                            <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                <TextBlock Text="{loc:Loc 'You can use Argo Books for free with up to 10 products.'}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'Upgrade for unlimited products, AI receipt scanning, and more.'}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                                <Button Classes="text-link"
+                                        Command="{Binding OpenUpgradeUrlCommand}"
+                                        HorizontalAlignment="Center"
+                                        Background="Transparent"
+                                        Padding="0"
+                                        Margin="0,8,0,0">
+                                    <TextBlock Text="{loc:Loc 'View upgrade options →'}"
                                                FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Center" />
-                                    <TextBlock Text="{loc:Loc 'Upgrade for unlimited products, AI receipt scanning, and priority support.'}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,4,0,0" />
-                                    <Button Classes="text-link"
-                                            Command="{Binding OpenUpgradeUrlCommand}"
-                                            HorizontalAlignment="Center"
-                                            Padding="0"
-                                            Margin="0,8,0,0">
-                                        <TextBlock Text="{loc:Loc 'View upgrade options →'}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource PrimaryBrush}" />
-                                    </Button>
-                                </StackPanel>
-                            </Border>
+                                               Foreground="{DynamicResource PrimaryBrush}" />
+                                </Button>
+                            </StackPanel>
 
                             <!-- Close Button -->
                             <Button Classes="secondary"

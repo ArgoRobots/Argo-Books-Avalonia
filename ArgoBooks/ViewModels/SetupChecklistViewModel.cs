@@ -28,6 +28,13 @@ public partial class ChecklistItemViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isCompleted;
+
+    /// <summary>
+    /// Gets or sets whether this is the current item to complete (next in sequence).
+    /// Only the current item can be clicked.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCurrentItem;
 }
 
 /// <summary>
@@ -137,12 +144,26 @@ public partial class SetupChecklistViewModel : ViewModelBase
 
         // Only count items that are in our current visible checklist
         var visibleCompletedCount = 0;
+        var foundCurrentItem = false;
+
         foreach (var item in Items)
         {
             item.IsCompleted = completedItems.Contains(item.Id);
             if (item.IsCompleted)
             {
                 visibleCompletedCount++;
+                item.IsCurrentItem = false;
+            }
+            else if (!foundCurrentItem)
+            {
+                // First incomplete item is the current one
+                item.IsCurrentItem = true;
+                foundCurrentItem = true;
+            }
+            else
+            {
+                // Subsequent incomplete items are not current
+                item.IsCurrentItem = false;
             }
         }
 
