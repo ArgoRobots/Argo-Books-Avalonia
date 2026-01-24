@@ -732,6 +732,9 @@ public class App : Application
 
                 // Initialize tutorial service with settings
                 TutorialService.Instance.SetGlobalSettingsService(SettingsService);
+
+                // Initialize welcome screen tutorial mode after tutorial service is set up
+                _welcomeScreenViewModel?.InitializeTutorialMode();
             }
 
             // Initialize telemetry session (respects user consent)

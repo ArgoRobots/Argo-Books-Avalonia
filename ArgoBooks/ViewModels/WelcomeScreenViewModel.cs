@@ -25,11 +25,27 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowRecentCompanies))]
     private bool _isRecentCompaniesLoaded;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowRecentCompanies))]
+    [NotifyPropertyChangedFor(nameof(ShowOpenCompany))]
+    [NotifyPropertyChangedFor(nameof(ShowSampleCompany))]
+    private bool _isTutorialMode;
+
     /// <summary>
     /// Only show recent companies section after initial load completes and there are companies.
     /// This prevents layout shift/flicker on startup.
     /// </summary>
-    public bool ShowRecentCompanies => IsRecentCompaniesLoaded && HasRecentCompanies;
+    public bool ShowRecentCompanies => IsRecentCompaniesLoaded && HasRecentCompanies && !IsTutorialMode;
+
+    /// <summary>
+    /// Gets whether to show the Open Company option (hidden in tutorial mode).
+    /// </summary>
+    public bool ShowOpenCompany => !IsTutorialMode;
+
+    /// <summary>
+    /// Gets whether to show the Sample Company option (hidden in tutorial mode).
+    /// </summary>
+    public bool ShowSampleCompany => !IsTutorialMode;
 
     [ObservableProperty]
     private string _appVersion = AppInfo.Version;
@@ -173,6 +189,18 @@ public partial class WelcomeScreenViewModel : ViewModelBase
         OpenWhatsNewRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Skips the tutorial and exits tutorial mode.
+    /// </summary>
+    [RelayCommand]
+    private void SkipTutorial()
+    {
+        TutorialService.Instance.CompleteWelcomeTutorial();
+        TutorialService.Instance.CompleteAppTour();
+        IsTutorialMode = false;
+        SkipTutorialRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     #endregion
 
     #region Events
@@ -185,10 +213,19 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     public event EventHandler? OpenSampleCompanyRequested;
     public event EventHandler? OpenHelpRequested;
     public event EventHandler? OpenWhatsNewRequested;
+    public event EventHandler? SkipTutorialRequested;
 
     #endregion
 
     #region Public Methods
+
+    /// <summary>
+    /// Initializes the tutorial mode state based on whether this is a first-time user.
+    /// </summary>
+    public void InitializeTutorialMode()
+    {
+        IsTutorialMode = TutorialService.Instance.IsFirstTimeUser;
+    }
 
     /// <summary>
     /// Adds a company to the recent list.
