@@ -108,7 +108,7 @@ public class TutorialService
     {
         if (_skipNextDismiss)
         {
-            _skipNextDismiss = false;
+            // Skip this dismiss call (happens during same navigation event as ShowGuidance)
             return;
         }
         ShowCompletionGuidance = false;
@@ -123,6 +123,13 @@ public class TutorialService
         ShowCompletionGuidance = true;
         // Skip the next dismiss call to prevent navigation from immediately hiding the guidance
         _skipNextDismiss = true;
+
+        // Clear the skip flag after the current event cycle so it only prevents
+        // immediate dismissal (same navigation event), not user-initiated navigations
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _skipNextDismiss = false;
+        }, Avalonia.Threading.DispatcherPriority.Background);
     }
 
     private TutorialSettings Settings =>
