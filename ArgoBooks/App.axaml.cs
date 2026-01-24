@@ -1515,9 +1515,33 @@ public class App : Application
         };
 
         // Restart tutorial from help panel
-        _appShellViewModel.RestartTutorialRequested += (_, _) =>
+        _appShellViewModel.RestartTutorialRequested += async (_, _) =>
         {
-            _mainWindowViewModel?.TutorialWelcomeViewModel?.Show();
+            // Save and close the current company if one is open
+            if (CompanyManager?.IsCompanyOpen == true)
+            {
+                // Save the company first (unless it's the sample company)
+                if (!CompanyManager.IsSampleCompany)
+                {
+                    try
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    catch
+                    {
+                        // Continue even if save fails - user can still restart tutorial
+                    }
+                }
+
+                // Close the company to go back to welcome screen
+                await CompanyManager.CloseCompanyAsync();
+            }
+
+            // Enable tutorial mode on welcome screen (set directly since tutorial was reset)
+            if (_welcomeScreenViewModel != null)
+            {
+                _welcomeScreenViewModel.IsTutorialMode = true;
+            }
         };
 
         // Wire up edit company modal events
