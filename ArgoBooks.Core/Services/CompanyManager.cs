@@ -488,11 +488,20 @@ public class CompanyManager : IDisposable
 
     /// <summary>
     /// Gets the list of recent companies with their metadata.
+    /// Also cleans up entries for files that no longer exist.
     /// </summary>
     /// <returns>List of recent company info.</returns>
     public async Task<List<RecentCompanyInfo>> GetRecentCompaniesAsync(CancellationToken cancellationToken = default)
     {
         var result = new List<RecentCompanyInfo>();
+
+        // Clean up deleted companies and persist the change
+        var removedCount = _settingsService.CleanupRecentCompanies();
+        if (removedCount > 0)
+        {
+            await _settingsService.SaveGlobalSettingsAsync();
+        }
+
         var recentPaths = _settingsService.GetValidRecentCompanies();
 
         foreach (var path in recentPaths)
