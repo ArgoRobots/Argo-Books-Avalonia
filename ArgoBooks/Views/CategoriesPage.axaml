@@ -448,9 +448,6 @@
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>
-
-    <!-- Tutorial completion guidance overlay -->
-    <controls:TutorialCompletionOverlay />
     </Panel>
 
     <!-- Styles are now consolidated in Styles/TableStyles.axaml -->

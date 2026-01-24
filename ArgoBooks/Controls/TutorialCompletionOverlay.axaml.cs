@@ -38,8 +38,5 @@ public partial class TutorialCompletionOverlay : UserControl
     {
         base.OnUnloaded(e);
         TutorialService.Instance.CompletionGuidanceChanged -= OnCompletionGuidanceChanged;
-
-        // Dismiss the guidance when navigating away from this page
-        TutorialService.Instance.DismissCompletionGuidance();
     }
 }
