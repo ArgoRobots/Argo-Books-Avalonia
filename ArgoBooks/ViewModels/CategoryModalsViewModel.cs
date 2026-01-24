@@ -199,6 +199,10 @@ public partial class CategoryModalsViewModel : ObservableObject
             () => { companyData.Categories.Add(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 
         CategorySaved?.Invoke(this, EventArgs.Empty);
+
+        // Mark the setup checklist item as complete
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.CreateCategory);
+
         CloseAddModal();
     }
 

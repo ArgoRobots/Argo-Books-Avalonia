@@ -26,6 +26,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? EditCompanyRequested;
 
+    /// <summary>
+    /// Raised when the user requests to restart the tutorial from the Help panel.
+    /// </summary>
+    public event EventHandler? RestartTutorialRequested;
+
     #region ViewModels
 
     /// <summary>
@@ -474,6 +479,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up help panel's check for updates to open the check for update modal
         HelpPanelViewModel.CheckForUpdatesRequested += (_, _) => CheckForUpdateModalViewModel.OpenCommand.Execute(null);
 
+        // Wire up help panel's restart tutorial to show the tutorial welcome
+        HelpPanelViewModel.RestartTutorialRequested += OnRestartTutorialRequested;
+
         // Wire up file menu's import to open the import modal
         FileMenuPanelViewModel.ImportRequested += (_, _) => ImportModalViewModel.OpenCommand.Execute(null);
 
@@ -812,6 +820,14 @@ public partial class AppShellViewModel : ViewModelBase
         HelpPanelViewModel.CloseCommand.Execute(null);
         QuickActionsViewModel.CloseCommand.Execute(null);
         CompanySwitcherPanelViewModel.CloseCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// Handles the restart tutorial request from the Help panel.
+    /// </summary>
+    private void OnRestartTutorialRequested(object? sender, EventArgs e)
+    {
+        RestartTutorialRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

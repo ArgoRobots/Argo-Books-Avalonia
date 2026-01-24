@@ -89,6 +89,24 @@ public partial class MainWindowViewModel : ViewModelBase
     private ReceiptViewerModalViewModel? _receiptViewerModalViewModel;
 
     /// <summary>
+    /// Gets or sets the TutorialWelcomeViewModel for the first-time user welcome overlay.
+    /// </summary>
+    [ObservableProperty]
+    private TutorialWelcomeViewModel? _tutorialWelcomeViewModel;
+
+    /// <summary>
+    /// Gets or sets the AppTourViewModel for the interactive app tour.
+    /// </summary>
+    [ObservableProperty]
+    private AppTourViewModel? _appTourViewModel;
+
+    /// <summary>
+    /// Gets or sets the CategoriesTutorialViewModel for the Categories page tutorial.
+    /// </summary>
+    [ObservableProperty]
+    private CategoriesTutorialViewModel? _categoriesTutorialViewModel;
+
+    /// <summary>
     /// Whether to show the welcome screen (when no company is open).
     /// </summary>
     [ObservableProperty]
@@ -289,6 +307,9 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         CurrentCompanyName = companyName;
         ShowWelcomeScreen = false;
+
+        // Show tutorial welcome for first-time users
+        TutorialWelcomeViewModel?.ShowIfNeeded();
     }
 
     /// <summary>
