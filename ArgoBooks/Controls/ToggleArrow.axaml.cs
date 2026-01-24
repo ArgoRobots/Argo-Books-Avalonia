@@ -1,14 +1,33 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 
 namespace ArgoBooks.Controls;
 
 /// <summary>
+/// Orientation for the ToggleArrow control.
+/// </summary>
+public enum ToggleArrowOrientation
+{
+    /// <summary>
+    /// Horizontal orientation: points left when expanded, right when collapsed.
+    /// </summary>
+    Horizontal,
+
+    /// <summary>
+    /// Vertical orientation: points up when expanded, down when collapsed.
+    /// </summary>
+    Vertical
+}
+
+/// <summary>
 /// An animated arrow control that rotates 180 degrees when collapsed.
 /// Used for toggle buttons in sidebars and collapsible panels.
-/// Points left when expanded, points right when collapsed.
+/// Horizontal: Points left when expanded, points right when collapsed.
+/// Vertical: Points up when expanded, points down when collapsed.
 /// </summary>
 public partial class ToggleArrow : UserControl
 {
@@ -22,7 +41,7 @@ public partial class ToggleArrow : UserControl
 
     /// <summary>
     /// Defines the IsCollapsed property.
-    /// When true, the arrow rotates 180 degrees to point right.
+    /// When true, the arrow rotates 180 degrees.
     /// </summary>
     public static readonly StyledProperty<bool> IsCollapsedProperty =
         AvaloniaProperty.Register<ToggleArrow, bool>(nameof(IsCollapsed));
@@ -40,6 +59,13 @@ public partial class ToggleArrow : UserControl
     /// </summary>
     public new static readonly StyledProperty<IBrush?> ForegroundProperty =
         AvaloniaProperty.Register<ToggleArrow, IBrush?>(nameof(Foreground));
+
+    /// <summary>
+    /// Defines the Orientation property.
+    /// Controls whether the arrow animates horizontally (left/right) or vertically (up/down).
+    /// </summary>
+    public static readonly StyledProperty<ToggleArrowOrientation> OrientationProperty =
+        AvaloniaProperty.Register<ToggleArrow, ToggleArrowOrientation>(nameof(Orientation), ToggleArrowOrientation.Horizontal);
 
     /// <summary>
     /// Gets or sets whether the arrow is in collapsed state (rotated 180 degrees).
@@ -68,6 +94,16 @@ public partial class ToggleArrow : UserControl
         set => SetValue(ForegroundProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the orientation of the arrow animation.
+    /// Horizontal: left/right, Vertical: up/down.
+    /// </summary>
+    public ToggleArrowOrientation Orientation
+    {
+        get => GetValue(OrientationProperty);
+        set => SetValue(OrientationProperty, value);
+    }
+
     public ToggleArrow()
     {
         InitializeComponent();
@@ -75,6 +111,9 @@ public partial class ToggleArrow : UserControl
         _rotateTransform = new RotateTransform();
         ArrowIcon.RenderTransform = _rotateTransform;
         ArrowIcon.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
+
+        // Set initial icon based on default orientation
+        UpdateIcon();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -84,15 +123,44 @@ public partial class ToggleArrow : UserControl
         if (change.Property == IsCollapsedProperty)
         {
             var isCollapsed = change.GetNewValue<bool>();
-            AnimateRotation(isCollapsed ? 180 : 0);
+            AnimateRotation(GetTargetAngle(isCollapsed));
+        }
+        else if (change.Property == OrientationProperty)
+        {
+            UpdateIcon();
+            // Update rotation immediately without animation when orientation changes
+            _rotateTransform.Angle = GetTargetAngle(IsCollapsed);
         }
     }
 
     protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
     {
         base.OnLoaded(e);
-        // Set initial rotation without animation
-        _rotateTransform.Angle = IsCollapsed ? 180 : 0;
+        // Set initial icon and rotation without animation
+        UpdateIcon();
+        _rotateTransform.Angle = GetTargetAngle(IsCollapsed);
+    }
+
+    private void UpdateIcon()
+    {
+        // Horizontal uses ChevronLeft, Vertical uses ChevronDown
+        ArrowIcon.Data = Orientation == ToggleArrowOrientation.Vertical
+            ? Geometry.Parse(Icons.ChevronDown)
+            : Geometry.Parse(Icons.ChevronLeft);
+    }
+
+    private double GetTargetAngle(bool isCollapsed)
+    {
+        if (Orientation == ToggleArrowOrientation.Vertical)
+        {
+            // Vertical: up (180°) when expanded, down (0°) when collapsed
+            return isCollapsed ? 0 : 180;
+        }
+        else
+        {
+            // Horizontal: left (0°) when expanded, right (180°) when collapsed
+            return isCollapsed ? 180 : 0;
+        }
     }
 
     private void AnimateRotation(double targetAngle)
