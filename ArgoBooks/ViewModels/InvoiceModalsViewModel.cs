@@ -639,7 +639,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             TaxRate = TaxRate,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
-            LineItems = LineItems.Select(li => new InvoiceLineItem
+            LineItems = LineItems.Select(li => new LineItem
             {
                 Description = li.Description,
                 Quantity = li.Quantity,
@@ -658,8 +658,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData != null)
         {
-            var currencySymbol = Core.Services.CurrencyService.GetSymbol(companySettings.Currency);
-            PreviewHtml = renderer.Render(previewInvoice, template, companyData, currencySymbol);
+            var currencySymbol = Services.CurrencyService.GetSymbol(companySettings.Localization.Currency);
+            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
         }
         else
         {
