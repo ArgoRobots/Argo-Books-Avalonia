@@ -27,6 +27,7 @@
                         VerticalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
+                        ClipToBounds="True"
                         BoxShadow="0 8 32 0 #40000000">
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Header -->
@@ -248,10 +249,11 @@
                                     <ScrollViewer x:Name="PreviewScrollViewer"
                                                   HorizontalScrollBarVisibility="Auto"
                                                   VerticalScrollBarVisibility="Auto"
+                                                  HorizontalContentAlignment="Center"
                                                   Padding="0">
                                         <LayoutTransformControl x:Name="ZoomTransformControl"
                                                                 HorizontalAlignment="Center"
-                                                                VerticalAlignment="Top">
+                                                                VerticalAlignment="Center">
                                             <!-- HtmlLabel renders the same HTML that the browser preview uses -->
                                             <html:HtmlLabel x:Name="HtmlPreviewPanel"
                                                             Text="{Binding PreviewHtml}"

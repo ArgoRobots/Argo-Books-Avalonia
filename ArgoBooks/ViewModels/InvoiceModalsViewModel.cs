@@ -691,36 +691,46 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             lineItem.HasProductError = false;
         }
 
-        // Validation before showing preview
+        // Collect all validation errors
+        var hasErrors = false;
+        var errorMessages = new List<string>();
+
+        // Check customer
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
             HasCustomerError = true;
-            ValidationMessage = "Please select a customer".Translate();
-            HasValidationMessage = true;
-            return;
+            errorMessages.Add("Please select a customer".Translate());
+            hasErrors = true;
         }
 
+        // Check line items
         if (LineItems.Count == 0)
         {
-            ValidationMessage = "Please add at least one line item".Translate();
-            HasValidationMessage = true;
-            return;
+            errorMessages.Add("Please add at least one line item".Translate());
+            hasErrors = true;
         }
-
-        // Validate that all line items have a product selected
-        var hasProductErrors = false;
-        foreach (var lineItem in LineItems)
+        else
         {
-            if (lineItem.SelectedProduct == null)
+            // Validate that all line items have a product selected
+            foreach (var lineItem in LineItems)
             {
-                lineItem.HasProductError = true;
-                hasProductErrors = true;
+                if (lineItem.SelectedProduct == null)
+                {
+                    lineItem.HasProductError = true;
+                    hasErrors = true;
+                }
+            }
+
+            if (LineItems.Any(li => li.HasProductError))
+            {
+                errorMessages.Add("Please select a product for all line items".Translate());
             }
         }
 
-        if (hasProductErrors)
+        // Show errors if any
+        if (hasErrors)
         {
-            ValidationMessage = "Please select a product for all line items".Translate();
+            ValidationMessage = string.Join(" ", errorMessages);
             HasValidationMessage = true;
             return;
         }

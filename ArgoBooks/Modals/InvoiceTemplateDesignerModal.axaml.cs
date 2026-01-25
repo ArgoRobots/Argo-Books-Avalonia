@@ -79,8 +79,8 @@ public partial class InvoiceTemplateDesignerModal : UserControl
                     _isPanning = true;
                     _panStartPoint = e.GetPosition(this);
                     _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
-                    e.Pointer.Capture(_previewScrollViewer);
-                    _previewScrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
+                    e.Pointer.Capture(this);
+                    Cursor = new Cursor(StandardCursorType.Hand);
                     e.Handled = true; // Prevent HtmlLabel from receiving the event
                 }
             }
@@ -351,10 +351,7 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         {
             _isPanning = false;
             e.Pointer.Capture(null);
-            if (_previewScrollViewer != null)
-            {
-                _previewScrollViewer.Cursor = Cursor.Default;
-            }
+            Cursor = Cursor.Default;
 
             if (_overscrollHelper?.HasOverscroll == true)
             {

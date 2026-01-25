@@ -183,9 +183,9 @@
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).NavigateToCreateProductCommand}"
                                                                  HasError="{Binding HasProductError}" />
                                                         <TextBlock Text="{loc:Loc 'Please select a product'}"
-                                                                   FontSize="11"
+                                                                   FontSize="12"
                                                                    Foreground="#dc2626"
-                                                                   Margin="0,1,0,0"
+                                                                   Margin="0,-2,0,0"
                                                                    IsVisible="{Binding HasProductError}" />
                                                     </StackPanel>
                                                     <NumericUpDown Grid.Column="1"
@@ -628,10 +628,11 @@
                         <ScrollViewer x:Name="PreviewScrollViewer"
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Auto"
+                                      HorizontalContentAlignment="Center"
                                       Padding="0">
                             <LayoutTransformControl x:Name="PreviewZoomTransformControl"
                                                     HorizontalAlignment="Center"
-                                                    VerticalAlignment="Top">
+                                                    VerticalAlignment="Center">
                                 <!-- HtmlLabel renders the same HTML as the browser preview -->
                                 <html:HtmlLabel x:Name="InvoiceHtmlPreview"
                                                 Text="{Binding PreviewHtml}"
