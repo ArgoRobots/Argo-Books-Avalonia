@@ -27,6 +27,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
+    private bool _isFullscreen;
+
+    [ObservableProperty]
     private bool _isEditMode;
 
     [ObservableProperty]
@@ -190,7 +193,14 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private void Close()
     {
         IsOpen = false;
+        IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void ToggleFullscreen()
+    {
+        IsFullscreen = !IsFullscreen;
     }
 
     [RelayCommand]

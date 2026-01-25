@@ -682,6 +682,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private void OpenPreviewModal()
     {
+        // Clear previous validation errors first
+        HasCustomerError = false;
+        ValidationMessage = string.Empty;
+        HasValidationMessage = false;
+        foreach (var lineItem in LineItems)
+        {
+            lineItem.HasProductError = false;
+        }
+
         // Validation before showing preview
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
@@ -940,6 +949,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private void SaveInvoice()
     {
+        // Clear previous validation errors first
+        HasCustomerError = false;
+        ValidationMessage = string.Empty;
+        HasValidationMessage = false;
+        foreach (var lineItem in LineItems)
+        {
+            lineItem.HasProductError = false;
+        }
+
         // Validation
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {

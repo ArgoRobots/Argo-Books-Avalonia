@@ -117,17 +117,17 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal width.
-    /// Fullscreen = NaN (stretch), Normal = 800px.
+    /// Fullscreen = NaN (stretch), Normal = default or parameter value.
+    /// Supports ConverterParameter for custom normal width.
     /// </summary>
-    public static readonly IValueConverter ToFullscreenWidth =
-        new FuncValueConverter<bool, double>(value => value ? double.NaN : 800);
+    public static readonly IValueConverter ToFullscreenWidth = new FullscreenDimensionConverter(800);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal height.
-    /// Fullscreen = NaN (stretch), Normal = 650px.
+    /// Fullscreen = NaN (stretch), Normal = default or parameter value.
+    /// Supports ConverterParameter for custom normal height.
     /// </summary>
-    public static readonly IValueConverter ToFullscreenHeight =
-        new FuncValueConverter<bool, double>(value => value ? double.NaN : 650);
+    public static readonly IValueConverter ToFullscreenHeight = new FullscreenDimensionConverter(650);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal margin.
@@ -414,6 +414,41 @@ public class BoolToTextDecorationConverter : IValueConverter
             return TextDecorations.Strikethrough;
         }
         return null;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converter for fullscreen modal dimensions.
+/// When fullscreen is true, returns NaN (stretch). When false, returns the default or parameter value.
+/// </summary>
+public class FullscreenDimensionConverter : IValueConverter
+{
+    private readonly double _defaultValue;
+
+    public FullscreenDimensionConverter(double defaultValue)
+    {
+        _defaultValue = defaultValue;
+    }
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool isFullscreen)
+            return _defaultValue;
+
+        if (isFullscreen)
+            return double.NaN;
+
+        // Use parameter if provided, otherwise use default
+        if (parameter is double doubleParam)
+            return doubleParam;
+
+        if (parameter is string stringParam && double.TryParse(stringParam, out var parsedValue))
+            return parsedValue;
+
+        return _defaultValue;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

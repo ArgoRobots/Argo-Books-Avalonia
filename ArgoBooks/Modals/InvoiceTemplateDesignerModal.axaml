@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks.Converters"
              xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
              xmlns:html="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -19,10 +20,11 @@
     <Panel>
         <controls:ModalOverlay IsOpen="{Binding IsOpen}">
             <controls:ModalOverlay.ModalContent>
-                <Border HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Width="1000"
-                        MaxHeight="750"
+                <Border Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter=1000}"
+                        Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter=750}"
+                        Margin="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
+                        HorizontalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
+                        VerticalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BoxShadow="0 8 32 0 #40000000">
@@ -242,7 +244,7 @@
                                 </Border>
 
                                 <!-- Preview container with zoom - uses same HTML as browser preview -->
-                                <Border Grid.Row="1" Margin="8,8,8,8" Background="#f3f4f6" CornerRadius="8" ClipToBounds="True">
+                                <Border Grid.Row="1" Margin="0" Background="#f3f4f6" ClipToBounds="True">
                                     <ScrollViewer x:Name="PreviewScrollViewer"
                                                   HorizontalScrollBarVisibility="Auto"
                                                   VerticalScrollBarVisibility="Auto"
@@ -290,14 +292,23 @@
                                 Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,1,0,0">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <TextBlock Grid.Column="0"
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                <!-- Fullscreen toggle -->
+                                <Button Grid.Column="0"
+                                        Classes="icon-button"
+                                        ToolTip.Tip="{loc:Loc 'Toggle Fullscreen (F)'}"
+                                        Command="{Binding ToggleFullscreenCommand}">
+                                    <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <TextBlock Grid.Column="1"
                                            Text="{Binding ValidationMessage}"
                                            Foreground="#DC2626"
                                            FontSize="13"
+                                           Margin="12,0,0,0"
                                            VerticalAlignment="Center"
                                            IsVisible="{Binding HasValidationMessage}" />
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
                                             Content="{loc:Loc Cancel}"
                                             Command="{Binding CloseCommand}" />

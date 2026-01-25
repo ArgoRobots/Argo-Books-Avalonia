@@ -183,9 +183,9 @@
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).NavigateToCreateProductCommand}"
                                                                  HasError="{Binding HasProductError}" />
                                                         <TextBlock Text="{loc:Loc 'Please select a product'}"
-                                                                   FontSize="12"
+                                                                   FontSize="11"
                                                                    Foreground="#dc2626"
-                                                                   Margin="0,2,0,0"
+                                                                   Margin="0,1,0,0"
                                                                    IsVisible="{Binding HasProductError}" />
                                                     </StackPanel>
                                                     <NumericUpDown Grid.Column="1"
@@ -624,7 +624,7 @@
                     </Border>
 
                     <!-- HTML Preview Content -->
-                    <Border Grid.Row="1" Margin="8,8,8,8" Background="#f3f4f6" CornerRadius="8" ClipToBounds="True">
+                    <Border Grid.Row="1" Margin="0" Background="#f3f4f6" ClipToBounds="True">
                         <ScrollViewer x:Name="PreviewScrollViewer"
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Auto"
