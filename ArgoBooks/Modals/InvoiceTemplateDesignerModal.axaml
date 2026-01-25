@@ -230,7 +230,7 @@
                                                            FontSize="12"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            HorizontalAlignment="Center" />
-                                                <TextBlock Text="{loc:Loc 'Click \"Open in Browser\" to see the exact invoice rendering'}"
+                                                <TextBlock Text="{loc:Loc 'Click Open in Browser to see the exact invoice rendering'}"
                                                            FontSize="13"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            TextWrapping="Wrap"
