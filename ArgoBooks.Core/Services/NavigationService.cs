@@ -55,13 +55,7 @@ public class NavigationService : INavigationService
     }
 
     /// <inheritdoc />
-    public void NavigateTo(string pageName)
-    {
-        NavigateTo(pageName, null);
-    }
-
-    /// <inheritdoc />
-    public void NavigateTo(string pageName, object? parameter)
+    public void NavigateTo(string pageName, object? parameter = null)
     {
         if (string.IsNullOrEmpty(pageName))
             return;
@@ -85,13 +79,7 @@ public class NavigationService : INavigationService
     }
 
     /// <inheritdoc />
-    public async Task<bool> NavigateToAsync(string pageName)
-    {
-        return await NavigateToAsync(pageName, null);
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> NavigateToAsync(string pageName, object? parameter)
+    public async Task<bool> NavigateToAsync(string pageName, object? parameter = null)
     {
         if (string.IsNullOrEmpty(pageName))
             return false;

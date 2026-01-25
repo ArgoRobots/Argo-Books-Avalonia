@@ -144,26 +144,19 @@ public class AzureReceiptScannerService : IReceiptScannerService
     }
 
     /// <inheritdoc />
-    public async Task<bool> ValidateConfigurationAsync()
+    public Task<bool> ValidateConfigurationAsync()
     {
         if (!IsConfigured)
-            return false;
+            return Task.FromResult(false);
 
         try
         {
             var client = GetOrCreateClient();
-            if (client == null)
-                return false;
-
-            // Try to get service info to validate credentials
-            // We'll do a minimal request to check if the API is accessible
-            // Note: There's no direct "ping" endpoint, so we just verify the client was created
-            await Task.CompletedTask;
-            return true;
+            return Task.FromResult(client != null);
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 

@@ -146,15 +146,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     protected override void LoadCounterpartyOptions()
     {
         CounterpartyOptions.Clear();
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Suppliers == null)
-            return;
-
-        foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
-        {
-            CounterpartyOptions.Add(new CounterpartyOption { Id = supplier.Id, Name = supplier.Name });
-        }
+        LoadCounterpartyOptionsInternal();
     }
 
     protected override void LoadCounterpartyOptionsInternal()
