@@ -74,7 +74,14 @@ public partial class InvoiceHtmlRenderer
         {
             Name = "Acme Corporation",
             Email = "billing@acme.com",
-            Address = "123 Business Ave\nSuite 100\nNew York, NY 10001"
+            Address = new Models.Common.Address
+            {
+                Street = "123 Business Ave, Suite 100",
+                City = "New York",
+                State = "NY",
+                ZipCode = "10001",
+                Country = "USA"
+            }
         };
 
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
@@ -117,8 +124,9 @@ public partial class InvoiceHtmlRenderer
         // Bill to
         sb.AppendLine("BILL TO:");
         sb.AppendLine(customer?.Name ?? "Unknown Customer");
-        if (!string.IsNullOrWhiteSpace(customer?.Address))
-            sb.AppendLine(customer.Address);
+        var customerAddress = customer?.Address?.ToString();
+        if (!string.IsNullOrWhiteSpace(customerAddress))
+            sb.AppendLine(customerAddress);
         if (!string.IsNullOrWhiteSpace(customer?.Email))
             sb.AppendLine(customer.Email);
         sb.AppendLine();
@@ -389,6 +397,19 @@ public partial class InvoiceHtmlRenderer
 
         // Replace newlines with <br> for HTML
         return address.Replace("\n", "<br>").Replace("\r", "");
+    }
+
+    private static string? FormatAddress(Models.Common.Address? address)
+    {
+        if (address == null)
+            return null;
+
+        var formatted = address.ToString();
+        if (string.IsNullOrWhiteSpace(formatted))
+            return null;
+
+        // Replace commas with <br> for HTML display
+        return formatted.Replace(", ", "<br>");
     }
 
     [GeneratedRegex(@"\{\{#(\w+)\}\}([\s\S]*?)\{\{/\1\}\}", RegexOptions.Compiled)]
