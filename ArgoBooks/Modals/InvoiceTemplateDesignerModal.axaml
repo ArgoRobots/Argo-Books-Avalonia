@@ -157,16 +157,19 @@
                                                     IsVisible="{Binding HasLogo}"
                                                     HorizontalAlignment="Left" />
 
-                                            <Grid ColumnDefinitions="*,80" IsVisible="{Binding ShowLogo}">
-                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                <NumericUpDown Grid.Column="1"
-                                                               Value="{Binding LogoWidth}"
-                                                               Minimum="50"
-                                                               Maximum="300"
-                                                               FormatString="0"
-                                                               ShowButtonSpinner="False"
-                                                               Classes="form-input" />
-                                            </Grid>
+                                            <StackPanel Spacing="4" IsVisible="{Binding ShowLogo}">
+                                                <Grid ColumnDefinitions="*,80">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <NumericUpDown Grid.Column="1"
+                                                                   Value="{Binding LogoWidth}"
+                                                                   Minimum="50"
+                                                                   Maximum="300"
+                                                                   FormatString="0"
+                                                                   ShowButtonSpinner="False"
+                                                                   Classes="form-input" />
+                                                </Grid>
+                                                <TextBlock Text="{loc:Loc 'Range: 50-300 px'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
                                         </StackPanel>
 
                                         <Border Height="1" Background="{DynamicResource BorderBrush}" />

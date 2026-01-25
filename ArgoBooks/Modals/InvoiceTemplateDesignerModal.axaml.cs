@@ -80,7 +80,11 @@ public partial class InvoiceTemplateDesignerModal : UserControl
                     _panStartPoint = e.GetPosition(this);
                     _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
                     e.Pointer.Capture(_previewScrollViewer);
-                    _previewScrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
+                    // Set cursor on all relevant controls to ensure hand cursor shows
+                    var handCursor = new Cursor(StandardCursorType.Hand);
+                    _previewScrollViewer.Cursor = handCursor;
+                    if (_htmlPreviewPanel != null) _htmlPreviewPanel.Cursor = handCursor;
+                    if (_zoomTransformControl != null) _zoomTransformControl.Cursor = handCursor;
                     e.Handled = true; // Prevent HtmlLabel from receiving the event
                 }
             }
@@ -351,10 +355,10 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         {
             _isPanning = false;
             e.Pointer.Capture(null);
-            if (_previewScrollViewer != null)
-            {
-                _previewScrollViewer.Cursor = Cursor.Default;
-            }
+            // Reset cursors on all controls
+            if (_previewScrollViewer != null) _previewScrollViewer.Cursor = Cursor.Default;
+            if (_htmlPreviewPanel != null) _htmlPreviewPanel.Cursor = Cursor.Default;
+            if (_zoomTransformControl != null) _zoomTransformControl.Cursor = Cursor.Default;
 
             if (_overscrollHelper?.HasOverscroll == true)
             {

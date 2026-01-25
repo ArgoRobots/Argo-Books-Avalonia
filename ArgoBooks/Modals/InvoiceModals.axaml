@@ -171,8 +171,8 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                        <controls:SearchableDropdown
+                                                    <controls:SearchableDropdown Grid.Column="0"
+                                                                 Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
                                                                  SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                                  DisplayMemberPath="Name"
@@ -181,13 +181,8 @@
                                                                  EmptyMessage="{loc:Loc 'No products found.'}"
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).NavigateToCreateProductCommand}"
-                                                                 HasError="{Binding HasProductError}" />
-                                                        <TextBlock Text="{loc:Loc 'Please select a product'}"
-                                                                   FontSize="12"
-                                                                   Foreground="#dc2626"
-                                                                   Margin="0,-2,0,0"
-                                                                   IsVisible="{Binding HasProductError}" />
-                                                    </StackPanel>
+                                                                 HasError="{Binding HasProductError}"
+                                                                 ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
                                                                    Minimum="1"
@@ -326,7 +321,7 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="{Binding ValidationMessage}"
+                                       Text="{loc:Loc 'Please enter all required fields'}"
                                        Foreground="#DC2626"
                                        FontSize="13"
                                        VerticalAlignment="Center"
