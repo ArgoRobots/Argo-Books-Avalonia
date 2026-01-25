@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Models.Invoices;
+
 namespace ArgoBooks.Core.Services.InvoiceTemplates;
 
 /// <summary>
