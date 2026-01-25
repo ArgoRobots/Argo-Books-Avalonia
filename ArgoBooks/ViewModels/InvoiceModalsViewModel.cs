@@ -742,7 +742,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         // Validate that we have a template selected
-        if (SelectedTemplate?.Template == null)
+        if (SelectedTemplate == null)
         {
             await ShowSendErrorAsync("Please select an invoice template.".Translate());
             return;
@@ -752,6 +752,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (!InvoiceEmailSettings.IsConfigured)
         {
             await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiEndpointEnvVar} {"and".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
+            return;
+        }
+
+        // Get the customer for email
+        var customer = companyData.GetCustomer(SelectedCustomer!.Id!);
+        if (customer == null || string.IsNullOrWhiteSpace(customer.Email))
+        {
+            await ShowSendErrorAsync("Customer does not have an email address.".Translate());
             return;
         }
 
@@ -789,7 +797,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
             var response = await emailService.SendInvoiceAsync(
                 invoice,
-                SelectedTemplate.Template,
+                SelectedTemplate,
                 companyData,
                 emailSettings,
                 currencySymbol);
@@ -805,7 +813,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.History.Add(new InvoiceHistoryEntry
             {
                 Action = "Sent",
-                Details = $"Invoice sent to {SelectedCustomer.Email}",
+                Details = $"Invoice sent to {customer.Email}",
                 Timestamp = DateTime.UtcNow
             });
         }
