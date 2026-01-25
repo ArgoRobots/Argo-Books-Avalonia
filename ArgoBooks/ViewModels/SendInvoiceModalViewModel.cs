@@ -160,12 +160,13 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
             return;
         }
 
-        var emailSettings = companyData.Settings.InvoiceEmail;
-        if (!emailSettings.IsConfigured)
+        if (!InvoiceEmailSettings.IsConfigured)
         {
-            ShowError("Email settings are not configured. Please configure them in Settings.");
+            ShowError($"Email API is not configured. Please add {InvoiceEmailSettings.ApiEndpointEnvVar} and {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.");
             return;
         }
+
+        var emailSettings = companyData.Settings.InvoiceEmail;
 
         if (!HasCustomerEmail)
         {
@@ -346,23 +347,22 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
 
     private void LoadEmailSettings()
     {
+        // Check if API credentials are configured in .env file
+        IsEmailConfigured = InvoiceEmailSettings.IsConfigured;
+
         var settings = App.CompanyManager?.CompanyData?.Settings.InvoiceEmail;
-        if (settings == null)
+        if (settings != null)
         {
-            IsEmailConfigured = false;
-            return;
-        }
+            FromEmail = settings.FromEmail;
 
-        IsEmailConfigured = settings.IsConfigured;
-        FromEmail = settings.FromEmail;
-
-        // Build default subject
-        if (_invoice != null)
-        {
-            var companyName = App.CompanyManager?.CompanyData?.Settings.Company.Name ?? "Company";
-            Subject = settings.SubjectTemplate
-                .Replace("{InvoiceNumber}", _invoice.InvoiceNumber)
-                .Replace("{CompanyName}", companyName);
+            // Build default subject
+            if (_invoice != null)
+            {
+                var companyName = App.CompanyManager?.CompanyData?.Settings.Company.Name ?? "Company";
+                Subject = settings.SubjectTemplate
+                    .Replace("{InvoiceNumber}", _invoice.InvoiceNumber)
+                    .Replace("{CompanyName}", companyName);
+            }
         }
     }
 

@@ -44,12 +44,12 @@ public class InvoiceEmailService : IDisposable
         string currencySymbol = "$",
         CancellationToken cancellationToken = default)
     {
-        if (!emailSettings.IsConfigured)
+        if (!InvoiceEmailSettings.IsConfigured)
         {
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = "Email settings are not configured. Please configure the email API in Settings.",
+                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiEndpointEnvVar} and {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -151,14 +151,15 @@ public class InvoiceEmailService : IDisposable
             WriteIndented = false
         });
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, emailSettings.ApiEndpoint)
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InvoiceEmailSettings.ApiEndpoint)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        // Add API key authentication
-        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", emailSettings.ApiKey);
-        httpRequest.Headers.Add("X-Api-Key", emailSettings.ApiKey);
+        // Add API key authentication (from .env file)
+        var apiKey = InvoiceEmailSettings.ApiKey;
+        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        httpRequest.Headers.Add("X-Api-Key", apiKey);
 
         using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
 
@@ -222,15 +223,14 @@ public class InvoiceEmailService : IDisposable
     /// Tests the email API connection.
     /// </summary>
     public async Task<InvoiceEmailResponse> TestConnectionAsync(
-        InvoiceEmailSettings emailSettings,
         CancellationToken cancellationToken = default)
     {
-        if (!emailSettings.IsConfigured)
+        if (!InvoiceEmailSettings.IsConfigured)
         {
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = "Email settings are not configured.",
+                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiEndpointEnvVar} and {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -238,9 +238,10 @@ public class InvoiceEmailService : IDisposable
         try
         {
             // Try to reach the API endpoint with a simple HEAD or GET request
-            using var request = new HttpRequestMessage(HttpMethod.Get, emailSettings.ApiEndpoint);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", emailSettings.ApiKey);
-            request.Headers.Add("X-Api-Key", emailSettings.ApiKey);
+            var apiKey = InvoiceEmailSettings.ApiKey;
+            using var request = new HttpRequestMessage(HttpMethod.Get, InvoiceEmailSettings.ApiEndpoint);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Headers.Add("X-Api-Key", apiKey);
 
             using var response = await _httpClient.SendAsync(request, cancellationToken);
 

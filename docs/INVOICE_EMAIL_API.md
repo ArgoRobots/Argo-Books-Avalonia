@@ -673,12 +673,19 @@ Add this to your `.htaccess` to protect the config file:
 
 ### 5. Configure Argo Books
 
-In Argo Books, go to **Settings > Invoice Email** and configure:
+Argo Books loads API credentials from a `.env` file (same approach as telemetry and other services).
 
-- **API Endpoint**: `https://yourwebsite.com/api/invoice/send-email.php`
-- **API Key**: The same key you set in `config.php`
-- **Default From Email**: Your business email address
-- **Default From Name**: Your business name
+Add the following to your `.env` file in the Argo Books application directory:
+
+```env
+# Invoice Email API Configuration
+INVOICE_EMAIL_API_ENDPOINT=https://yourwebsite.com/api/invoice/send-email.php
+INVOICE_EMAIL_API_KEY=your-secure-api-key-here
+```
+
+**Important**: The API key must match the one you set in `config.php` on your website.
+
+Company-specific settings (From Name, From Email, etc.) are configured within each company file through the Argo Books UI.
 
 ## Testing
 
@@ -712,8 +719,12 @@ curl -X POST https://yourwebsite.com/api/invoice/send-email.php \
 ### Common Issues
 
 1. **401 Unauthorized**
-   - Check that the API key matches in both config.php and Argo Books settings
+   - Check that the API key in your `.env` file (`INVOICE_EMAIL_API_KEY`) matches `config.php`
    - Ensure the X-Api-Key header is being sent
+
+1. **"Email API is not configured" error in Argo Books**
+   - Make sure your `.env` file contains both `INVOICE_EMAIL_API_ENDPOINT` and `INVOICE_EMAIL_API_KEY`
+   - Verify the `.env` file is in the correct location (application directory or parent directories)
 
 2. **500 Internal Server Error**
    - Check PHP error logs

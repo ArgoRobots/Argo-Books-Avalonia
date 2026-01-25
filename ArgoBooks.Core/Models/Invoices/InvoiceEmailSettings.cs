@@ -1,21 +1,35 @@
+using ArgoBooks.Core.Services;
+
 namespace ArgoBooks.Core.Models.Invoices;
 
 /// <summary>
 /// Settings for the invoice email API integration.
+/// API credentials (endpoint and key) are loaded from .env file for security.
+/// Company-specific settings (from name, email, etc.) are stored in company data.
 /// </summary>
 public class InvoiceEmailSettings
 {
     /// <summary>
-    /// The API endpoint URL for sending invoice emails.
+    /// Environment variable name for the API endpoint.
     /// </summary>
-    [JsonPropertyName("apiEndpoint")]
-    public string ApiEndpoint { get; set; } = string.Empty;
+    public const string ApiEndpointEnvVar = "INVOICE_EMAIL_API_ENDPOINT";
 
     /// <summary>
-    /// API key for authentication (if required).
+    /// Environment variable name for the API key.
     /// </summary>
-    [JsonPropertyName("apiKey")]
-    public string ApiKey { get; set; } = string.Empty;
+    public const string ApiKeyEnvVar = "INVOICE_EMAIL_API_KEY";
+
+    /// <summary>
+    /// Gets the API endpoint URL from .env file.
+    /// </summary>
+    [JsonIgnore]
+    public static string ApiEndpoint => DotEnv.Get(ApiEndpointEnvVar);
+
+    /// <summary>
+    /// Gets the API key from .env file.
+    /// </summary>
+    [JsonIgnore]
+    public static string ApiKey => DotEnv.Get(ApiKeyEnvVar);
 
     /// <summary>
     /// Default "From" name for invoice emails.
@@ -54,11 +68,11 @@ public class InvoiceEmailSettings
     public bool IncludePdfAttachment { get; set; } = true;
 
     /// <summary>
-    /// Whether the email settings have been configured.
+    /// Whether the email API is configured (credentials in .env file).
     /// </summary>
     [JsonIgnore]
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiEndpoint) &&
-                                 !string.IsNullOrWhiteSpace(ApiKey);
+    public static bool IsConfigured => DotEnv.HasValue(ApiEndpointEnvVar) &&
+                                        DotEnv.HasValue(ApiKeyEnvVar);
 }
 
 /// <summary>
