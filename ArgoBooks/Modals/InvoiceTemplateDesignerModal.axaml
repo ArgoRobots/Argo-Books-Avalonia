@@ -7,7 +7,7 @@
              xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
-             xmlns:html="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=HtmlRendererCore.Avalonia"
+             xmlns:html="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.InvoiceTemplateDesignerModal"
              x:DataType="vm:InvoiceTemplateDesignerViewModel">
@@ -233,8 +233,8 @@
                                                                 HorizontalAlignment="Center"
                                                                 VerticalAlignment="Top"
                                                                 Margin="20">
-                                            <!-- HtmlPanel renders the same HTML that the browser preview uses -->
-                                            <html:HtmlPanel x:Name="HtmlPreviewPanel"
+                                            <!-- HtmlLabel renders the same HTML that the browser preview uses -->
+                                            <html:HtmlLabel x:Name="HtmlPreviewPanel"
                                                             Text="{Binding PreviewHtml}"
                                                             Background="Transparent"
                                                             MinWidth="640"

@@ -41,7 +41,7 @@
         <PackageReference Include="PixiEditor.ColorPicker.AvaloniaUI" />
 
         <!-- HTML Rendering (for invoice template preview) -->
-        <PackageReference Include="HtmlRendererCore.Avalonia" />
+        <PackageReference Include="Avalonia.HtmlRenderer" />
     </ItemGroup>
 
     <ItemGroup>
