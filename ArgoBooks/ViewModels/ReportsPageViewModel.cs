@@ -1040,6 +1040,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void RemoveImage()
+    {
+        if (SelectedImageElement == null) return;
+        SelectedImageElement.ImagePath = string.Empty;
+        OnPropertyChanged(nameof(SelectedImageElement));
+        OnPropertyChanged(nameof(Configuration));
+    }
+
     // Store original values for cancel
     private PageSize _originalPageSize;
     private PageOrientation _originalPageOrientation;

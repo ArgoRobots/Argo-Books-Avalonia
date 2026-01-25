@@ -1,10 +1,16 @@
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Views;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.InvoiceTemplates;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -90,6 +96,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
 
     public ObservableCollection<string> StatusOptions { get; } = ["Draft", "Pending", "Sent", "Partial", "Paid", "Cancelled"];
+
+    public ObservableCollection<InvoiceTemplate> TemplateOptions { get; } = [];
+
+    [ObservableProperty]
+    private InvoiceTemplate? _selectedTemplate;
 
     // Computed totals
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
@@ -267,6 +278,32 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    private void LoadTemplateOptions()
+    {
+        TemplateOptions.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.InvoiceTemplates == null || companyData.InvoiceTemplates.Count == 0)
+        {
+            // Create default templates if none exist
+            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            foreach (var template in defaultTemplates)
+            {
+                TemplateOptions.Add(template);
+            }
+            SelectedTemplate = TemplateOptions.FirstOrDefault(t => t.IsDefault) ?? TemplateOptions.FirstOrDefault();
+            return;
+        }
+
+        foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))
+        {
+            TemplateOptions.Add(template);
+        }
+
+        // Select default template or first one
+        SelectedTemplate = TemplateOptions.FirstOrDefault(t => t.IsDefault) ?? TemplateOptions.FirstOrDefault();
+    }
+
     #endregion
 
     #region Create Modal
@@ -275,6 +312,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
+        LoadTemplateOptions();
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Create Invoice";
@@ -580,39 +618,119 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public string PreviewIssueDate => ModalIssueDate?.ToString("MMMM d, yyyy") ?? "-";
     public string PreviewDueDate => ModalDueDate?.ToString("MMMM d, yyyy") ?? "-";
 
+    [ObservableProperty]
+    private string _previewHtml = string.Empty;
+
+    private void GeneratePreviewHtml()
+    {
+        var template = SelectedTemplate;
+        if (template == null)
+        {
+            // Use default template if none selected
+            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
+        }
+
+        var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
+
+        // Create a preview invoice from current form data
+        var previewInvoice = new Invoice
+        {
+            Id = "INV-PREVIEW",
+            InvoiceNumber = $"INV-{DateTime.Now:yyyy}-XXXXX",
+            CustomerId = SelectedCustomer?.Id ?? string.Empty,
+            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            TaxRate = TaxRate,
+            Notes = ModalNotes,
+            Status = InvoiceStatus.Draft,
+            LineItems = LineItems.Select(li => new LineItem
+            {
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitPrice = li.UnitPrice
+            }).ToList()
+        };
+
+        // Calculate totals
+        previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
+        previewInvoice.TaxAmount = previewInvoice.Subtotal * (TaxRate / 100m);
+        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount;
+        previewInvoice.Balance = previewInvoice.Total;
+
+        // Render HTML using the same renderer as the template designer
+        var renderer = new Core.Services.InvoiceTemplates.InvoiceHtmlRenderer();
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData != null)
+        {
+            var currencySymbol = Services.CurrencyService.GetSymbol(companySettings.Localization.Currency);
+            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
+        }
+        else
+        {
+            PreviewHtml = "<p>Unable to generate preview</p>";
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenPreviewInBrowser()
+    {
+        if (string.IsNullOrEmpty(PreviewHtml)) return;
+        await Core.Services.InvoiceTemplates.InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "invoice-preview");
+    }
+
     [RelayCommand]
     private void OpenPreviewModal()
     {
-        // Validation before showing preview
+        // Clear previous validation errors first
+        HasCustomerError = false;
+        ValidationMessage = string.Empty;
+        HasValidationMessage = false;
+        foreach (var lineItem in LineItems)
+        {
+            lineItem.HasProductError = false;
+        }
+
+        // Collect all validation errors
+        var hasErrors = false;
+        var errorMessages = new List<string>();
+
+        // Check customer
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
             HasCustomerError = true;
-            ValidationMessage = "Please select a customer".Translate();
-            HasValidationMessage = true;
-            return;
+            errorMessages.Add("Please select a customer".Translate());
+            hasErrors = true;
         }
 
+        // Check line items
         if (LineItems.Count == 0)
         {
-            ValidationMessage = "Please add at least one line item".Translate();
-            HasValidationMessage = true;
-            return;
+            errorMessages.Add("Please add at least one line item".Translate());
+            hasErrors = true;
         }
-
-        // Validate that all line items have a product selected
-        var hasProductErrors = false;
-        foreach (var lineItem in LineItems)
+        else
         {
-            if (lineItem.SelectedProduct == null)
+            // Validate that all line items have a product selected
+            foreach (var lineItem in LineItems)
             {
-                lineItem.HasProductError = true;
-                hasProductErrors = true;
+                if (lineItem.SelectedProduct == null)
+                {
+                    lineItem.HasProductError = true;
+                    hasErrors = true;
+                }
+            }
+
+            if (LineItems.Any(li => li.HasProductError))
+            {
+                errorMessages.Add("Please select a product for all line items".Translate());
             }
         }
 
-        if (hasProductErrors)
+        // Show errors if any
+        if (hasErrors)
         {
-            ValidationMessage = "Please select a product for all line items".Translate();
+            ValidationMessage = string.Join(" ", errorMessages);
             HasValidationMessage = true;
             return;
         }
@@ -621,6 +739,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(PreviewCustomerName));
         OnPropertyChanged(nameof(PreviewIssueDate));
         OnPropertyChanged(nameof(PreviewDueDate));
+
+        // Generate HTML preview using the same renderer as the template designer
+        GeneratePreviewHtml();
 
         IsCreateEditModalOpen = false;
         IsPreviewModalOpen = true;
@@ -634,10 +755,32 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CreateAndSendInvoice()
+    private async Task CreateAndSendInvoice()
     {
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
+
+        // Validate that we have a template selected
+        if (SelectedTemplate == null)
+        {
+            await ShowSendErrorAsync("Please select an invoice template.".Translate());
+            return;
+        }
+
+        // Check if email API is configured
+        if (!InvoiceEmailSettings.IsConfigured)
+        {
+            await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiEndpointEnvVar} {"and".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
+            return;
+        }
+
+        // Get the customer for email
+        var customer = companyData.GetCustomer(SelectedCustomer!.Id!);
+        if (customer == null || string.IsNullOrWhiteSpace(customer.Email))
+        {
+            await ShowSendErrorAsync("Customer does not have an email address.".Translate());
+            return;
+        }
 
         // Generate invoice ID
         var nextNumber = (companyData.Invoices.Count) + 1;
@@ -652,7 +795,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
             TaxRate = TaxRate,
             Notes = ModalNotes,
-            Status = InvoiceStatus.Sent, // Mark as Sent since we're "sending" it
+            Status = InvoiceStatus.Pending, // Start as pending until email is sent
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
             LineItems = LineItems.Select(i => new LineItem
@@ -663,6 +806,41 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 TaxRate = 0
             }).ToList()
         };
+
+        // Try to send the email
+        try
+        {
+            var emailService = new InvoiceEmailService();
+            var emailSettings = companyData.Settings.InvoiceEmail;
+            var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+
+            var response = await emailService.SendInvoiceAsync(
+                invoice,
+                SelectedTemplate,
+                companyData,
+                emailSettings,
+                currencySymbol);
+
+            if (!response.Success)
+            {
+                await ShowSendErrorAsync(response.Message);
+                return;
+            }
+
+            // Email sent successfully - update invoice status
+            invoice.Status = InvoiceStatus.Sent;
+            invoice.History.Add(new InvoiceHistoryEntry
+            {
+                Action = "Sent",
+                Details = $"Invoice sent to {customer.Email}",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            await ShowSendErrorAsync($"{"Failed to send invoice:".Translate()} {ex.Message}");
+            return;
+        }
 
         // Create undo action
         var action = new DelegateAction(
@@ -685,12 +863,21 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
-        // TODO: Actually send email to customer here
-        // For now, we just mark it as sent
-
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         IsPreviewModalOpen = false;
         ResetForm();
+    }
+
+    private async Task ShowSendErrorAsync(string message)
+    {
+        var messageBoxService = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            ? (desktop.MainWindow as MainWindow)?.MessageBoxService
+            : null;
+
+        if (messageBoxService != null)
+        {
+            await messageBoxService.ShowErrorAsync("Invoice Send Failed".Translate(), message);
+        }
     }
 
     #endregion
@@ -772,6 +959,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private void SaveInvoice()
     {
+        // Clear previous validation errors first
+        HasCustomerError = false;
+        ValidationMessage = string.Empty;
+        HasValidationMessage = false;
+        foreach (var lineItem in LineItems)
+        {
+            lineItem.HasProductError = false;
+        }
+
         // Validation
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {

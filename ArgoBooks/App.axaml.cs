@@ -109,6 +109,16 @@ public class App : Application
     public static InvoiceModalsViewModel? InvoiceModalsViewModel => _appShellViewModel?.InvoiceModalsViewModel;
 
     /// <summary>
+    /// Gets the send invoice modal view model for shared access.
+    /// </summary>
+    public static SendInvoiceModalViewModel? SendInvoiceModalViewModel => _appShellViewModel?.SendInvoiceModalViewModel;
+
+    /// <summary>
+    /// Gets the invoice template designer view model for shared access.
+    /// </summary>
+    public static InvoiceTemplateDesignerViewModel? InvoiceTemplateDesignerViewModel => _appShellViewModel?.InvoiceTemplateDesignerViewModel;
+
+    /// <summary>
     /// Gets the expense modals view model for shared access.
     /// </summary>
     public static ExpenseModalsViewModel? ExpenseModalsViewModel => _appShellViewModel?.ExpenseModalsViewModel;
@@ -1139,6 +1149,32 @@ public class App : Application
         // Invoice modals
         _appShellViewModel.InvoiceModalsViewModel.InvoiceSaved += MarkUnsavedChanges;
         _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
+
+        // Invoice template designer
+        _appShellViewModel.InvoiceTemplateDesignerViewModel.TemplateSaved += MarkUnsavedChanges;
+        _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
+        {
+            if (Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Logo".Translate(),
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                    }
+                ]
+            });
+
+            if (files.Count > 0)
+            {
+                _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
+            }
+        };
 
         // Expense modals
         _appShellViewModel.ExpenseModalsViewModel.ExpenseSaved += MarkUnsavedChanges;

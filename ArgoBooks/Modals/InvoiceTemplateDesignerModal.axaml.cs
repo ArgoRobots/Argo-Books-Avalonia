@@ -9,23 +9,22 @@ using ArgoBooks.Helpers;
 namespace ArgoBooks.Modals;
 
 /// <summary>
-/// Modal dialogs for creating, editing, and filtering invoices.
-/// Includes zoom, pan, and rubber band functionality for the preview modal.
+/// Modal for designing invoice templates with zoom, pan, and rubber band overscroll.
 /// </summary>
-public partial class InvoiceModals : UserControl
+public partial class InvoiceTemplateDesignerModal : UserControl
 {
     #region Private Fields
 
     private ScrollViewer? _previewScrollViewer;
-    private LayoutTransformControl? _previewZoomTransformControl;
-    private Control? _invoiceHtmlPreview;
-    private OverscrollHelper? _previewOverscrollHelper;
-    private Slider? _previewZoomSlider;
-    private TextBlock? _previewZoomPercentText;
+    private LayoutTransformControl? _zoomTransformControl;
+    private Control? _htmlPreviewPanel;
+    private OverscrollHelper? _overscrollHelper;
+    private Slider? _zoomSlider;
+    private TextBlock? _zoomPercentText;
     private bool _updatingSlider;
 
     // Zoom settings
-    private double _previewZoomLevel = 1.0;
+    private double _zoomLevel = 1.0;
     private const double MinZoom = 0.25;
     private const double MaxZoom = 3.0;
     private const double ZoomStep = 0.1;
@@ -37,7 +36,7 @@ public partial class InvoiceModals : UserControl
 
     #endregion
 
-    public InvoiceModals()
+    public InvoiceTemplateDesignerModal()
     {
         InitializeComponent();
     }
@@ -45,21 +44,21 @@ public partial class InvoiceModals : UserControl
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
-        FindPreviewControls();
+        FindControls();
 
         // Use Tunnel strategy to intercept wheel events before ScrollViewer handles them
         if (_previewScrollViewer != null)
         {
-            _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnPreviewScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
+            _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
             // Intercept right-click at tunnel level to prevent HtmlLabel's context menu
             _previewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
         }
 
         // Disable context menu on the preview area
-        if (_invoiceHtmlPreview != null)
+        if (_htmlPreviewPanel != null)
         {
-            _invoiceHtmlPreview.ContextMenu = null;
-            _invoiceHtmlPreview.AddHandler(ContextRequestedEvent, OnContextRequested, RoutingStrategies.Tunnel);
+            _htmlPreviewPanel.ContextMenu = null;
+            _htmlPreviewPanel.AddHandler(ContextRequestedEvent, OnContextRequested, RoutingStrategies.Tunnel);
         }
     }
 
@@ -94,70 +93,73 @@ public partial class InvoiceModals : UserControl
         e.Handled = true;
     }
 
-    private void FindPreviewControls()
+    private void FindControls()
     {
         _previewScrollViewer ??= this.FindControl<ScrollViewer>("PreviewScrollViewer");
-        _previewZoomTransformControl ??= this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
-        _invoiceHtmlPreview ??= this.FindControl<Control>("InvoiceHtmlPreview");
-        _previewZoomSlider ??= this.FindControl<Slider>("PreviewZoomSlider");
-        _previewZoomPercentText ??= this.FindControl<TextBlock>("PreviewZoomPercentText");
+        _zoomTransformControl ??= this.FindControl<LayoutTransformControl>("ZoomTransformControl");
+        _htmlPreviewPanel ??= this.FindControl<Control>("HtmlPreviewPanel");
+        _zoomSlider ??= this.FindControl<Slider>("ZoomSlider");
+        _zoomPercentText ??= this.FindControl<TextBlock>("ZoomPercentText");
 
-        if (_previewZoomTransformControl != null && _previewOverscrollHelper == null)
+        if (_zoomTransformControl != null && _overscrollHelper == null)
         {
-            _previewOverscrollHelper = new OverscrollHelper(_previewZoomTransformControl);
+            _overscrollHelper = new OverscrollHelper(_zoomTransformControl);
         }
 
         // Initialize slider value
-        if (_previewZoomSlider != null)
+        if (_zoomSlider != null)
         {
             _updatingSlider = true;
-            _previewZoomSlider.Value = _previewZoomLevel;
+            _zoomSlider.Value = _zoomLevel;
             _updatingSlider = false;
         }
 
-        UpdatePreviewZoomDisplay();
+        UpdateZoomDisplay();
     }
 
-    #region Preview Zoom
+    #region Zoom
 
-    private void ApplyPreviewZoom()
+    private void ApplyZoom()
     {
-        if (_previewZoomTransformControl == null) return;
-        _previewZoomTransformControl.LayoutTransform = new ScaleTransform(_previewZoomLevel, _previewZoomLevel);
-        UpdatePreviewZoomDisplay();
+        if (_zoomTransformControl == null) return;
+        _zoomTransformControl.LayoutTransform = new ScaleTransform(_zoomLevel, _zoomLevel);
+        UpdateZoomDisplay();
     }
 
-    private void UpdatePreviewZoomDisplay()
+    private void UpdateZoomDisplay()
     {
         // Update slider (without triggering the event)
-        if (_previewZoomSlider != null && !_updatingSlider)
+        if (_zoomSlider != null && !_updatingSlider)
         {
             _updatingSlider = true;
-            _previewZoomSlider.Value = _previewZoomLevel;
+            _zoomSlider.Value = _zoomLevel;
             _updatingSlider = false;
         }
 
         // Update percentage text
-        if (_previewZoomPercentText != null)
+        if (_zoomPercentText != null)
         {
-            _previewZoomPercentText.Text = $"{_previewZoomLevel:P0}";
+            _zoomPercentText.Text = $"{_zoomLevel:P0}";
         }
     }
 
-    private void PreviewZoomIn_Click(object? sender, RoutedEventArgs e) => PreviewZoomTowardsCenter(true);
-    private void PreviewZoomOut_Click(object? sender, RoutedEventArgs e) => PreviewZoomTowardsCenter(false);
+    private void ZoomIn_Click(object? sender, RoutedEventArgs e) => ZoomTowardsCenter(true);
+    private void ZoomOut_Click(object? sender, RoutedEventArgs e) => ZoomTowardsCenter(false);
 
-    private void PreviewZoomSlider_ValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    private void ZoomSlider_ValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
     {
         if (_updatingSlider) return;
-        PreviewZoomToLevel(e.NewValue);
+        ZoomToLevel(e.NewValue);
     }
 
-    private void PreviewZoomToLevel(double newZoom)
+    /// <summary>
+    /// Zooms to a specific level while maintaining center focus.
+    /// </summary>
+    private void ZoomToLevel(double newZoom)
     {
-        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+        if (_previewScrollViewer == null || _zoomTransformControl == null) return;
 
-        var oldZoom = _previewZoomLevel;
+        var oldZoom = _zoomLevel;
         newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
@@ -169,9 +171,9 @@ public partial class InvoiceModals : UserControl
         var contentCenterX = (_previewScrollViewer.Offset.X + viewportCenterX) / oldZoom;
         var contentCenterY = (_previewScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
 
-        _previewZoomLevel = newZoom;
-        ApplyPreviewZoom();
-        _previewZoomTransformControl.UpdateLayout();
+        _zoomLevel = newZoom;
+        ApplyZoom();
+        _zoomTransformControl.UpdateLayout();
 
         // Calculate new offset to keep the same content point at center
         var newOffsetX = contentCenterX * newZoom - viewportCenterX;
@@ -186,21 +188,24 @@ public partial class InvoiceModals : UserControl
         );
     }
 
-    private void PreviewFitToWindow_Click(object? sender, RoutedEventArgs e)
+    private void FitToWindow_Click(object? sender, RoutedEventArgs e)
     {
-        PreviewZoomToFit();
+        ZoomToFit();
     }
 
-    private void PreviewZoomToFit()
+    /// <summary>
+    /// Zooms to fit the entire preview in the viewport.
+    /// </summary>
+    private void ZoomToFit()
     {
-        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+        if (_previewScrollViewer == null || _zoomTransformControl == null) return;
 
         // First reset to 1.0 zoom to get accurate content dimensions
-        _previewZoomLevel = 1.0;
-        ApplyPreviewZoom();
-        _previewZoomTransformControl.UpdateLayout();
+        _zoomLevel = 1.0;
+        ApplyZoom();
+        _zoomTransformControl.UpdateLayout();
 
-        // Get content dimensions from the scroll extent
+        // Get content dimensions from the scroll extent (this gives us the actual content size)
         var contentWidth = _previewScrollViewer.Extent.Width;
         var contentHeight = _previewScrollViewer.Extent.Height;
 
@@ -218,39 +223,39 @@ public partial class InvoiceModals : UserControl
         var scaleX = viewportWidth / contentWidth;
         var scaleY = viewportHeight / contentHeight;
 
-        _previewZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
-        ApplyPreviewZoom();
+        _zoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
+        ApplyZoom();
     }
 
-    private void PreviewZoomTowardsCenter(bool zoomIn)
+    private void ZoomTowardsCenter(bool zoomIn)
     {
         var newZoom = zoomIn
-            ? Math.Min(_previewZoomLevel + ZoomStep, MaxZoom)
-            : Math.Max(_previewZoomLevel - ZoomStep, MinZoom);
+            ? Math.Min(_zoomLevel + ZoomStep, MaxZoom)
+            : Math.Max(_zoomLevel - ZoomStep, MinZoom);
 
-        PreviewZoomToLevel(newZoom);
+        ZoomToLevel(newZoom);
     }
 
-    private void OnPreviewScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    private void OnScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         // Only zoom when Ctrl is pressed
         if (!e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
 
         var delta = e.Delta.Y;
-        if (delta != 0 && _previewZoomTransformControl != null)
+        if (delta != 0 && _zoomTransformControl != null)
         {
             var viewportPoint = e.GetPosition(_previewScrollViewer);
-            var contentPoint = e.GetPosition(_previewZoomTransformControl);
-            PreviewZoomAtPoint(delta > 0, viewportPoint, contentPoint);
+            var contentPoint = e.GetPosition(_zoomTransformControl);
+            ZoomAtPoint(delta > 0, viewportPoint, contentPoint);
         }
         e.Handled = true;
     }
 
-    private void PreviewZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
+    private void ZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
     {
-        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+        if (_previewScrollViewer == null || _zoomTransformControl == null) return;
 
-        var oldZoom = _previewZoomLevel;
+        var oldZoom = _zoomLevel;
         var newZoom = zoomIn
             ? Math.Min(oldZoom + ZoomStep, MaxZoom)
             : Math.Max(oldZoom - ZoomStep, MinZoom);
@@ -278,9 +283,9 @@ public partial class InvoiceModals : UserControl
         var unscaledX = contentX / oldZoom;
         var unscaledY = contentY / oldZoom;
 
-        _previewZoomLevel = newZoom;
-        ApplyPreviewZoom();
-        _previewZoomTransformControl.UpdateLayout();
+        _zoomLevel = newZoom;
+        ApplyZoom();
+        _zoomTransformControl.UpdateLayout();
 
         // Calculate new offset to keep mouse position at same content point
         var newExtent = _previewScrollViewer.Extent;
@@ -308,7 +313,7 @@ public partial class InvoiceModals : UserControl
 
     #endregion
 
-    #region Preview Panning and Overscroll
+    #region Panning and Overscroll
 
     // Note: Panning is initiated in OnPreviewPointerPressed (Tunnel handler) to intercept
     // right-click before HtmlLabel's context menu can appear
@@ -317,7 +322,7 @@ public partial class InvoiceModals : UserControl
     {
         base.OnPointerMoved(e);
 
-        if (_isPanning && _previewScrollViewer != null && _previewOverscrollHelper != null)
+        if (_isPanning && _previewScrollViewer != null && _overscrollHelper != null)
         {
             var currentPoint = e.GetPosition(this);
             var delta = _panStartPoint - currentPoint;
@@ -329,10 +334,10 @@ public partial class InvoiceModals : UserControl
             var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
 
             var (clampedX, clampedY, overscrollX, overscrollY) =
-                _previewOverscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
+                _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
             _previewScrollViewer.Offset = new Vector(clampedX, clampedY);
-            _previewOverscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
+            _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
 
             e.Handled = true;
         }
@@ -348,9 +353,9 @@ public partial class InvoiceModals : UserControl
             e.Pointer.Capture(null);
             Cursor = Cursor.Default;
 
-            if (_previewOverscrollHelper?.HasOverscroll == true)
+            if (_overscrollHelper?.HasOverscroll == true)
             {
-                _ = _previewOverscrollHelper.AnimateSnapBackAsync();
+                _ = _overscrollHelper.AnimateSnapBackAsync();
             }
 
             e.Handled = true;

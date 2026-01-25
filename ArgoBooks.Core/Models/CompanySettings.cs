@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Models.Invoices;
+
 namespace ArgoBooks.Core.Models;
 
 /// <summary>
@@ -25,6 +27,7 @@ public class CompanySettings
     public EnabledModulesSettings EnabledModules { get; set; } = new();
     public NotificationSettings Notifications { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
+    public InvoiceEmailSettings InvoiceEmail { get; set; } = new();
 }
 
 public class CompanyInfo
