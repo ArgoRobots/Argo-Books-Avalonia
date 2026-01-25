@@ -57,7 +57,7 @@
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,0,1,0">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <StackPanel Margin="20" Spacing="20">
+                                    <StackPanel Margin="20" Spacing="16">
                                         <!-- Template Name -->
                                         <StackPanel Spacing="6">
                                             <TextBlock Text="{loc:Loc 'Template Name'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -79,106 +79,116 @@
                                         <CheckBox IsChecked="{Binding IsDefault}"
                                                   Content="{loc:Loc 'Set as default template'}" />
 
+                                        <Border Height="1" Background="{DynamicResource BorderBrush}" />
+
                                         <!-- Colors Section -->
-                                        <Expander Header="{loc:Loc Colors}" IsExpanded="True">
-                                            <StackPanel Spacing="12" Margin="0,10,0,0">
-                                                <!-- Primary Color -->
-                                                <Grid ColumnDefinitions="*,100">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Primary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                    <TextBox Grid.Column="1" Text="{Binding PrimaryColor, Mode=TwoWay}" Classes="form-input" />
-                                                </Grid>
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="{loc:Loc Colors}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                                                <!-- Secondary Color -->
-                                                <Grid ColumnDefinitions="*,100">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Secondary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                    <TextBox Grid.Column="1" Text="{Binding SecondaryColor, Mode=TwoWay}" Classes="form-input" />
-                                                </Grid>
+                                            <!-- Primary Color -->
+                                            <Grid ColumnDefinitions="*,150">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Primary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding PrimaryColor, Mode=TwoWay}" />
+                                            </Grid>
 
-                                                <!-- Accent Color -->
-                                                <Grid ColumnDefinitions="*,100">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Accent Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                    <TextBox Grid.Column="1" Text="{Binding AccentColor, Mode=TwoWay}" Classes="form-input" />
-                                                </Grid>
+                                            <!-- Secondary Color -->
+                                            <Grid ColumnDefinitions="*,150">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Secondary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding SecondaryColor, Mode=TwoWay}" />
+                                            </Grid>
 
-                                                <!-- Text Color -->
-                                                <Grid ColumnDefinitions="*,100">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Text Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                    <TextBox Grid.Column="1" Text="{Binding TextColor, Mode=TwoWay}" Classes="form-input" />
-                                                </Grid>
-                                            </StackPanel>
-                                        </Expander>
+                                            <!-- Accent Color -->
+                                            <Grid ColumnDefinitions="*,150">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Accent Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding AccentColor, Mode=TwoWay}" />
+                                            </Grid>
+
+                                            <!-- Text Color -->
+                                            <Grid ColumnDefinitions="*,150">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Text Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding TextColor, Mode=TwoWay}" />
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <Border Height="1" Background="{DynamicResource BorderBrush}" />
 
                                         <!-- Logo Section -->
-                                        <Expander Header="{loc:Loc Logo}" IsExpanded="False">
-                                            <StackPanel Spacing="12" Margin="0,10,0,0">
-                                                <CheckBox IsChecked="{Binding ShowLogo}"
-                                                          Content="{loc:Loc 'Show logo on invoice'}" />
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="{loc:Loc Logo}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <Button Classes="secondary-button"
-                                                            Content="{loc:Loc 'Select Logo'}"
-                                                            Command="{Binding SelectLogoCommand}" />
-                                                    <Button Classes="secondary-button danger"
-                                                            Content="{loc:Loc Remove}"
-                                                            Command="{Binding RemoveLogoCommand}"
-                                                            IsVisible="{Binding HasLogo}" />
-                                                </StackPanel>
+                                            <CheckBox IsChecked="{Binding ShowLogo}"
+                                                      Content="{loc:Loc 'Show logo on invoice'}" />
 
-                                                <Grid ColumnDefinitions="*,80" IsVisible="{Binding ShowLogo}">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                    <NumericUpDown Grid.Column="1"
-                                                                   Value="{Binding LogoWidth}"
-                                                                   Minimum="50"
-                                                                   Maximum="300"
-                                                                   FormatString="0"
-                                                                   ShowButtonSpinner="False"
-                                                                   Classes="form-input" />
-                                                </Grid>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button Classes="secondary-button"
+                                                        Content="{loc:Loc 'Select Logo'}"
+                                                        Command="{Binding SelectLogoCommand}" />
+                                                <Button Classes="secondary-button danger"
+                                                        Content="{loc:Loc Remove}"
+                                                        Command="{Binding RemoveLogoCommand}"
+                                                        IsVisible="{Binding HasLogo}" />
                                             </StackPanel>
-                                        </Expander>
+
+                                            <Grid ColumnDefinitions="*,80" IsVisible="{Binding ShowLogo}">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                <NumericUpDown Grid.Column="1"
+                                                               Value="{Binding LogoWidth}"
+                                                               Minimum="50"
+                                                               Maximum="300"
+                                                               FormatString="0"
+                                                               ShowButtonSpinner="False"
+                                                               Classes="form-input" />
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <Border Height="1" Background="{DynamicResource BorderBrush}" />
 
                                         <!-- Text Content Section -->
-                                        <Expander Header="{loc:Loc 'Text Content'}" IsExpanded="False">
-                                            <StackPanel Spacing="12" Margin="0,10,0,0">
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBox Text="{Binding HeaderText, Mode=TwoWay}" Classes="form-input" />
-                                                </StackPanel>
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="{loc:Loc 'Text Content'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="{loc:Loc 'Footer Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBox Text="{Binding FooterText, Mode=TwoWay}" Classes="form-input" />
-                                                </StackPanel>
-
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="{loc:Loc 'Payment Instructions'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBox Text="{Binding PaymentInstructions, Mode=TwoWay}"
-                                                             Classes="form-input"
-                                                             AcceptsReturn="True"
-                                                             TextWrapping="Wrap"
-                                                             MinHeight="60"
-                                                             Watermark="{loc:Loc 'Bank details, payment methods, etc.'}" />
-                                                </StackPanel>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding HeaderText, Mode=TwoWay}" Classes="form-input" />
                                             </StackPanel>
-                                        </Expander>
+
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'Footer Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding FooterText, Mode=TwoWay}" Classes="form-input" />
+                                            </StackPanel>
+
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'Payment Instructions'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding PaymentInstructions, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         AcceptsReturn="True"
+                                                         TextWrapping="Wrap"
+                                                         MinHeight="60"
+                                                         Watermark="{loc:Loc 'Bank details, payment methods, etc.'}" />
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <Border Height="1" Background="{DynamicResource BorderBrush}" />
 
                                         <!-- Display Options Section -->
-                                        <Expander Header="{loc:Loc 'Display Options'}" IsExpanded="False">
-                                            <StackPanel Spacing="8" Margin="0,10,0,0">
-                                                <CheckBox IsChecked="{Binding ShowCompanyAddress}"
-                                                          Content="{loc:Loc 'Show company address'}" />
-                                                <CheckBox IsChecked="{Binding ShowTaxBreakdown}"
-                                                          Content="{loc:Loc 'Show tax breakdown'}" />
-                                                <CheckBox IsChecked="{Binding ShowItemDescriptions}"
-                                                          Content="{loc:Loc 'Show item descriptions'}" />
-                                                <CheckBox IsChecked="{Binding ShowNotes}"
-                                                          Content="{loc:Loc 'Show notes section'}" />
-                                                <CheckBox IsChecked="{Binding ShowPaymentInstructions}"
-                                                          Content="{loc:Loc 'Show payment instructions'}" />
-                                                <CheckBox IsChecked="{Binding ShowDueDateProminent}"
-                                                          Content="{loc:Loc 'Highlight due date'}" />
-                                            </StackPanel>
-                                        </Expander>
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="{loc:Loc 'Display Options'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                                            <CheckBox IsChecked="{Binding ShowCompanyAddress}"
+                                                      Content="{loc:Loc 'Show company address'}" />
+                                            <CheckBox IsChecked="{Binding ShowTaxBreakdown}"
+                                                      Content="{loc:Loc 'Show tax breakdown'}" />
+                                            <CheckBox IsChecked="{Binding ShowItemDescriptions}"
+                                                      Content="{loc:Loc 'Show item descriptions'}" />
+                                            <CheckBox IsChecked="{Binding ShowNotes}"
+                                                      Content="{loc:Loc 'Show notes section'}" />
+                                            <CheckBox IsChecked="{Binding ShowPaymentInstructions}"
+                                                      Content="{loc:Loc 'Show payment instructions'}" />
+                                            <CheckBox IsChecked="{Binding ShowDueDateProminent}"
+                                                      Content="{loc:Loc 'Highlight due date'}" />
+                                        </StackPanel>
+
+                                        <Border Height="1" Background="{DynamicResource BorderBrush}" />
 
                                         <!-- Font -->
                                         <StackPanel Spacing="6">

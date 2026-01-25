@@ -17,6 +17,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     public event EventHandler? TemplateSaved;
     public event EventHandler? ModalClosed;
+    public event EventHandler? BrowseLogoRequested;
 
     #endregion
 
@@ -248,11 +249,29 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task SelectLogo()
+    private void SelectLogo()
     {
-        // This would open a file picker - implementation depends on platform
-        // For now, we'll handle this in the view's code-behind
-        await Task.CompletedTask;
+        // Raise event to open file picker in App.axaml.cs
+        BrowseLogoRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Sets the logo from a file path.
+    /// </summary>
+    /// <param name="filePath">Path to the image file.</param>
+    public void SetLogoFromFile(string filePath)
+    {
+        try
+        {
+            var bytes = System.IO.File.ReadAllBytes(filePath);
+            LogoBase64 = Convert.ToBase64String(bytes);
+            HasLogo = true;
+            UpdatePreview();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load logo: {ex.Message}");
+        }
     }
 
     [RelayCommand]

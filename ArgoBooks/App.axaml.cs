@@ -1142,6 +1142,32 @@ public class App : Application
         _appShellViewModel.InvoiceModalsViewModel.InvoiceSaved += MarkUnsavedChanges;
         _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
 
+        // Invoice template designer
+        _appShellViewModel.InvoiceTemplateDesignerViewModel.TemplateSaved += MarkUnsavedChanges;
+        _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
+        {
+            if (Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Logo".Translate(),
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                    }
+                ]
+            });
+
+            if (files.Count > 0)
+            {
+                _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
+            }
+        };
+
         // Expense modals
         _appShellViewModel.ExpenseModalsViewModel.ExpenseSaved += MarkUnsavedChanges;
         _appShellViewModel.ExpenseModalsViewModel.ExpenseDeleted += MarkUnsavedChanges;

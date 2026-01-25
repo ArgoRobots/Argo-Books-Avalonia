@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -90,6 +91,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
 
     public ObservableCollection<string> StatusOptions { get; } = ["Draft", "Pending", "Sent", "Partial", "Paid", "Cancelled"];
+
+    public ObservableCollection<InvoiceTemplate> TemplateOptions { get; } = [];
+
+    [ObservableProperty]
+    private InvoiceTemplate? _selectedTemplate;
 
     // Computed totals
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
@@ -267,6 +273,33 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    private void LoadTemplateOptions()
+    {
+        TemplateOptions.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.InvoiceTemplates == null || companyData.InvoiceTemplates.Count == 0)
+        {
+            // Create default templates if none exist
+            var factory = new Core.Services.InvoiceTemplates.InvoiceTemplateFactory();
+            var defaultTemplates = factory.CreateDefaultTemplates();
+            foreach (var template in defaultTemplates)
+            {
+                TemplateOptions.Add(template);
+            }
+            SelectedTemplate = TemplateOptions.FirstOrDefault(t => t.IsDefault) ?? TemplateOptions.FirstOrDefault();
+            return;
+        }
+
+        foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))
+        {
+            TemplateOptions.Add(template);
+        }
+
+        // Select default template or first one
+        SelectedTemplate = TemplateOptions.FirstOrDefault(t => t.IsDefault) ?? TemplateOptions.FirstOrDefault();
+    }
+
     #endregion
 
     #region Create Modal
@@ -275,6 +308,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
+        LoadTemplateOptions();
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Create Invoice";
