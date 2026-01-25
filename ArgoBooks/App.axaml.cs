@@ -191,7 +191,7 @@ public class App : Application
 
     /// <summary>
     /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
-    /// and sends notifications if enabled.
+    /// and sends notifications if enabled. Only sends once per day to avoid duplicates.
     /// </summary>
     private static void CheckAndSendNotifications()
     {
@@ -200,6 +200,14 @@ public class App : Application
             return;
 
         var settings = companyData.Settings.Notifications;
+
+        // Only send startup notifications once per day to avoid duplicates
+        var today = DateTime.Today;
+        if (settings.LastAlertCheckDate.HasValue && settings.LastAlertCheckDate.Value.Date == today)
+            return;
+
+        // Update the last check date
+        settings.LastAlertCheckDate = today;
 
         // Check for low stock items
         if (settings.LowStockAlert)

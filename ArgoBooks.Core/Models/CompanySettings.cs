@@ -71,6 +71,12 @@ public class NotificationSettings
     public bool RentalOverdueAlert { get; set; } = true;
     public bool UnsavedChangesReminder { get; set; } = true;
     public int UnsavedChangesReminderMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// The date when startup notifications were last checked/sent.
+    /// Used to avoid sending duplicate notifications on each app open.
+    /// </summary>
+    public DateTime? LastAlertCheckDate { get; set; }
 }
 
 public class SecuritySettings
