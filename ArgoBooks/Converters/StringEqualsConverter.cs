@@ -6,6 +6,24 @@ using Avalonia.Media;
 namespace ArgoBooks.Converters;
 
 /// <summary>
+/// Shared utility methods for converters.
+/// </summary>
+internal static class ConverterUtils
+{
+    /// <summary>
+    /// Checks if two objects are equal using reference equality or Equals.
+    /// </summary>
+    public static bool AreEqual(object? value1, object? value2)
+    {
+        if (value1 == null && value2 == null)
+            return true;
+        if (value1 == null || value2 == null)
+            return false;
+        return ReferenceEquals(value1, value2) || value1.Equals(value2);
+    }
+}
+
+/// <summary>
 /// Converter that returns true if the bound value equals the CompareValue.
 /// Optionally returns TrueValue/FalseValue instead of bool.
 /// </summary>
@@ -55,9 +73,7 @@ public class StringEqualsConverter : IValueConverter
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
 
 /// <summary>
@@ -105,9 +121,7 @@ public class EqualConverter : IValueConverter
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
 
 /// <summary>
@@ -117,20 +131,7 @@ public class EqualConverter : IValueConverter
 public class ObjectEqualsMultiConverter : IMultiValueConverter
 {
     public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (values.Count < 2)
-            return false;
-
-        var value1 = values[0];
-        var value2 = values[1];
-
-        if (value1 == null && value2 == null)
-            return true;
-        if (value1 == null || value2 == null)
-            return false;
-
-        return ReferenceEquals(value1, value2) || value1.Equals(value2);
-    }
+        => values.Count >= 2 && ConverterUtils.AreEqual(values[0], values[1]);
 }
 
 /// <summary>
@@ -141,7 +142,7 @@ public class HighlightBrushMultiConverter : IMultiValueConverter
 {
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (values.Count < 2 || !AreEqual(values[0], values[1]))
+        if (values.Count < 2 || !ConverterUtils.AreEqual(values[0], values[1]))
             return Brushes.Transparent;
 
         // Return SurfaceHoverBrush to match menu-item :focus style
@@ -153,15 +154,6 @@ public class HighlightBrushMultiConverter : IMultiValueConverter
         // Fallback hover color
         return new SolidColorBrush(Color.Parse("#F3F4F6"));
     }
-
-    private static bool AreEqual(object? value1, object? value2)
-    {
-        if (value1 == null && value2 == null)
-            return true;
-        if (value1 == null || value2 == null)
-            return false;
-        return ReferenceEquals(value1, value2) || value1.Equals(value2);
-    }
 }
 
 /// <summary>
@@ -172,7 +164,7 @@ public class HighlightBorderBrushMultiConverter : IMultiValueConverter
 {
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (values.Count < 2 || !AreEqual(values[0], values[1]))
+        if (values.Count < 2 || !ConverterUtils.AreEqual(values[0], values[1]))
             return Brushes.Transparent;
 
         // Return PrimaryBrush to match menu-item :focus border style
@@ -184,15 +176,6 @@ public class HighlightBorderBrushMultiConverter : IMultiValueConverter
         // Fallback primary color
         return new SolidColorBrush(Color.Parse("#3B82F6"));
     }
-
-    private static bool AreEqual(object? value1, object? value2)
-    {
-        if (value1 == null && value2 == null)
-            return true;
-        if (value1 == null || value2 == null)
-            return false;
-        return ReferenceEquals(value1, value2) || value1.Equals(value2);
-    }
 }
 
 /// <summary>
@@ -202,22 +185,9 @@ public class HighlightBorderBrushMultiConverter : IMultiValueConverter
 public class HighlightBorderThicknessMultiConverter : IMultiValueConverter
 {
     public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (values.Count < 2 || !AreEqual(values[0], values[1]))
-            return new Thickness(0);
-
-        // Return 2px left border to match menu-item :focus style
-        return new Thickness(2, 0, 0, 0);
-    }
-
-    private static bool AreEqual(object? value1, object? value2)
-    {
-        if (value1 == null && value2 == null)
-            return true;
-        if (value1 == null || value2 == null)
-            return false;
-        return ReferenceEquals(value1, value2) || value1.Equals(value2);
-    }
+        => values.Count >= 2 && ConverterUtils.AreEqual(values[0], values[1])
+            ? new Thickness(2, 0, 0, 0)
+            : new Thickness(0);
 }
 
 /// <summary>
@@ -255,9 +225,7 @@ public class ThemeBorderBrushConverter : IValueConverter
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
 
 /// <summary>
@@ -372,9 +340,7 @@ public class IntToRangeConverter : IValueConverter
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
 
 /// <summary>
@@ -401,7 +367,5 @@ public class BoolToFixedStringConverter : IValueConverter
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
