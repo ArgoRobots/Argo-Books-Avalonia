@@ -50,13 +50,40 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         if (_previewScrollViewer != null)
         {
             _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
+            // Intercept right-click at tunnel level to prevent HtmlLabel's context menu
+            _previewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
         }
 
-        // Disable context menu on HtmlLabel by handling the event
+        // Disable context menu on the preview area
         if (_htmlPreviewPanel != null)
         {
             _htmlPreviewPanel.ContextMenu = null;
             _htmlPreviewPanel.AddHandler(ContextRequestedEvent, OnContextRequested, RoutingStrategies.Tunnel);
+        }
+    }
+
+    private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(_previewScrollViewer);
+
+        // Intercept right-click to prevent context menu and enable panning
+        if (point.Properties.IsRightButtonPressed || point.Properties.IsMiddleButtonPressed)
+        {
+            if (_previewScrollViewer != null)
+            {
+                var pos = e.GetPosition(_previewScrollViewer);
+                if (pos.X >= 0 && pos.Y >= 0 &&
+                    pos.X <= _previewScrollViewer.Bounds.Width &&
+                    pos.Y <= _previewScrollViewer.Bounds.Height)
+                {
+                    _isPanning = true;
+                    _panStartPoint = e.GetPosition(this);
+                    _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
+                    e.Pointer.Capture(this);
+                    Cursor = new Cursor(StandardCursorType.Hand);
+                    e.Handled = true; // Prevent HtmlLabel from receiving the event
+                }
+            }
         }
     }
 
@@ -288,33 +315,8 @@ public partial class InvoiceTemplateDesignerModal : UserControl
 
     #region Panning and Overscroll
 
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-
-        var point = e.GetCurrentPoint(this);
-
-        // Start panning with right mouse button or middle mouse button
-        if (point.Properties.IsRightButtonPressed || point.Properties.IsMiddleButtonPressed)
-        {
-            // Only pan if we're over the preview area
-            if (_previewScrollViewer != null)
-            {
-                var pos = e.GetPosition(_previewScrollViewer);
-                if (pos.X >= 0 && pos.Y >= 0 &&
-                    pos.X <= _previewScrollViewer.Bounds.Width &&
-                    pos.Y <= _previewScrollViewer.Bounds.Height)
-                {
-                    _isPanning = true;
-                    _panStartPoint = e.GetPosition(this);
-                    _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
-                    e.Pointer.Capture(this);
-                    Cursor = new Cursor(StandardCursorType.Hand);
-                    e.Handled = true;
-                }
-            }
-        }
-    }
+    // Note: Panning is initiated in OnPreviewPointerPressed (Tunnel handler) to intercept
+    // right-click before HtmlLabel's context menu can appear
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {

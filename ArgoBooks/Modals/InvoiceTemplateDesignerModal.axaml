@@ -120,14 +120,14 @@
                                             <CheckBox IsChecked="{Binding ShowLogo}"
                                                       Content="{loc:Loc 'Show logo on invoice'}" />
 
-                                            <!-- Logo Path with Browse Button (like report designer) -->
                                             <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'Image Path'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBox Grid.Column="0"
                                                              Text="{Binding LogoPath}"
                                                              Watermark="{loc:Loc 'Path to logo image...'}"
-                                                             IsReadOnly="True" />
+                                                             IsReadOnly="True"
+                                                             TextWrapping="NoWrap" />
                                                     <Button Grid.Column="1"
                                                             Margin="4,0,0,0"
                                                             Padding="8,6"

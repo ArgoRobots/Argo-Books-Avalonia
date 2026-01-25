@@ -3,9 +3,13 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Views;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -150,20 +154,20 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
     {
         if (_invoice == null || SelectedTemplate == null)
         {
-            ShowError("Please select an invoice template.");
+            await ShowErrorAsync("Please select an invoice template.".Translate());
             return;
         }
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
         {
-            ShowError("Company data not available.");
+            await ShowErrorAsync("Company data not available.".Translate());
             return;
         }
 
         if (!InvoiceEmailSettings.IsConfigured)
         {
-            ShowError($"Email API is not configured. Please add {InvoiceEmailSettings.ApiEndpointEnvVar} and {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.");
+            await ShowErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiEndpointEnvVar} {"and".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
             return;
         }
 
@@ -171,7 +175,7 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
 
         if (!HasCustomerEmail)
         {
-            ShowError("Customer does not have an email address.");
+            await ShowErrorAsync("Customer does not have an email address.".Translate());
             return;
         }
 
@@ -221,12 +225,12 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
             }
             else
             {
-                ShowError(response.Message);
+                await ShowErrorAsync(response.Message);
             }
         }
         catch (Exception ex)
         {
-            ShowError($"Failed to send invoice: {ex.Message}");
+            await ShowErrorAsync($"{"Failed to send invoice:".Translate()} {ex.Message}");
         }
         finally
         {
@@ -384,11 +388,26 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
             currencySymbol);
     }
 
-    private void ShowError(string message)
+    private async Task ShowErrorAsync(string message)
     {
+        // Show inline error message
         StatusMessage = message;
         HasStatusMessage = true;
         IsError = true;
+
+        // Also show a MessageBox dialog
+        var messageBoxService = GetMessageBoxService();
+        if (messageBoxService != null)
+        {
+            await messageBoxService.ShowErrorAsync("Invoice Send Failed".Translate(), message);
+        }
+    }
+
+    private IMessageBoxService? GetMessageBoxService()
+    {
+        return Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            ? (desktop.MainWindow as MainWindow)?.MessageBoxService
+            : null;
     }
 
     #endregion
