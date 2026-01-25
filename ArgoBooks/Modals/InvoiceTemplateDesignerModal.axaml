@@ -220,7 +220,7 @@
                                         <Border Margin="20"
                                                 Background="White"
                                                 CornerRadius="4"
-                                                BoxShadow="0 2px 8px #20000000"
+                                                BoxShadow="0 2 8 0 #20000000"
                                                 Padding="0"
                                                 MinWidth="400"
                                                 HorizontalAlignment="Center">

@@ -231,7 +231,7 @@
                                         <Border Margin="20"
                                                 Background="White"
                                                 CornerRadius="4"
-                                                BoxShadow="0 2px 8px #20000000"
+                                                BoxShadow="0 2 8 0 #20000000"
                                                 MinWidth="400"
                                                 HorizontalAlignment="Center">
                                             <StackPanel Margin="30" Spacing="15" MaxWidth="450">
