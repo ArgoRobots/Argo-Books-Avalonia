@@ -136,23 +136,18 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="*,80,90,70,Auto">
-                                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                        <controls:SearchableDropdown
-                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).ProductOptions}"
-                                                                 SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                                                                 DisplayMemberPath="Name"
-                                                                 Placeholder="{loc:Loc 'Search for a product...'}"
-                                                                 ShowAddNew="False"
-                                                                 EmptyMessage="{loc:Loc 'No products found.'}"
-                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).NavigateToCreateProductCommand}"
-                                                                 HasError="{Binding HasProductError}" />
-                                                        <TextBlock Text="{loc:Loc 'Please select a product'}"
-                                                                   FontSize="12"
-                                                                   Foreground="#dc2626"
-                                                                   Margin="0,2,0,0"
-                                                                   IsVisible="{Binding HasProductError}" />
-                                                    </StackPanel>
+                                                    <controls:SearchableDropdown Grid.Column="0"
+                                                             Margin="0,0,8,0"
+                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).ProductOptions}"
+                                                             SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="{loc:Loc 'Search for a product...'}"
+                                                             ShowAddNew="False"
+                                                             EmptyMessage="{loc:Loc 'No products found.'}"
+                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                             HasError="{Binding HasProductError}"
+                                                             ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay, TargetNullValue=1}"
                                                                    Minimum="1"
@@ -182,6 +177,7 @@
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
                                                             VerticalAlignment="Top"
+                                                            Margin="8,0,0,0"
                                                             Command="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"
                                                             ToolTip.Tip="{loc:Loc 'Remove item'}">
@@ -212,36 +208,30 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Tax ($)'}" />
-                                    <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay}"
-                                                   Minimum="0"
-                                                   FormatString="C2"
-                                                   Classes="form-numericupdown"
-                                                   ShowButtonSpinner="False"
-                                                   HorizontalAlignment="Stretch" />
+                                    <TextBox Text="{Binding ModalTaxRate, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             HorizontalAlignment="Stretch"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
 
                                 <!-- Shipping -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Shipping'}" />
-                                    <NumericUpDown Value="{Binding ModalShipping, Mode=TwoWay}"
-                                                   Minimum="0"
-                                                   FormatString="C2"
-                                                   Classes="form-numericupdown"
-                                                   ShowButtonSpinner="False"
-                                                   HorizontalAlignment="Stretch" />
+                                    <TextBox Text="{Binding ModalShipping, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             HorizontalAlignment="Stretch"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
 
                                 <!-- Discount -->
                                 <StackPanel Grid.Column="4" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Discount'}" />
-                                    <NumericUpDown Value="{Binding ModalDiscount, Mode=TwoWay}"
-                                                   Minimum="0"
-                                                   FormatString="C2"
-                                                   Classes="form-numericupdown"
-                                                   ShowButtonSpinner="False"
-                                                   HorizontalAlignment="Stretch" />
+                                    <TextBox Text="{Binding ModalDiscount, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             HorizontalAlignment="Stretch"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 

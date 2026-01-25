@@ -222,10 +222,12 @@ public partial class WelcomeScreenViewModel : ViewModelBase
 
     /// <summary>
     /// Initializes the tutorial mode state based on whether this is a first-time user.
+    /// Don't show tutorial card if a tutorial is already in progress on a specific company.
     /// </summary>
     public void InitializeTutorialMode()
     {
-        IsTutorialMode = TutorialService.Instance.IsFirstTimeUser;
+        var tutorialService = TutorialService.Instance;
+        IsTutorialMode = tutorialService.IsFirstTimeUser && !tutorialService.IsTutorialInProgressOnCompany;
     }
 
     /// <summary>

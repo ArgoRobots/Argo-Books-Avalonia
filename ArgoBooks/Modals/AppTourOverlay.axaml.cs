@@ -83,7 +83,7 @@ public partial class AppTourOverlay : UserControl
         }
 
         // Get the bounds relative to this overlay
-        var bounds = GetElementBoundsRelativeToOverlay(element);
+        var bounds = GetElementBoundsRelativeToOverlay(element, targetArea);
         if (bounds == null)
         {
             _viewModel.HideHighlight();
@@ -102,7 +102,7 @@ public partial class AppTourOverlay : UserControl
 
         return targetArea switch
         {
-            "sidebar" => (FindElementByName<Control>(window, "AppSidebar"), new CornerRadius(0, 8, 8, 0)),
+            "sidebar" => (FindElementByName<Control>(window, "AppSidebar"), new CornerRadius(8)),
             "searchbar" => (FindElementByName<Control>(window, "SearchBox"), new CornerRadius(6)),
             "content" => (FindElementByName<Control>(window, "AppContent"), new CornerRadius(8)),
             "header" => (FindElementByName<Control>(window, "AppHeader"), new CornerRadius(0, 0, 8, 8)),
@@ -126,7 +126,7 @@ public partial class AppTourOverlay : UserControl
         return null;
     }
 
-    private Rect? GetElementBoundsRelativeToOverlay(Control element)
+    private Rect? GetElementBoundsRelativeToOverlay(Control element, string targetArea)
     {
         const double borderThickness = 3;
         const double edgeOffset = 8; // Extra offset when highlight is at window edge
@@ -149,17 +149,43 @@ public partial class AppTourOverlay : UserControl
             var overlayWidth = Bounds.Width;
             var overlayHeight = Bounds.Height;
 
-            // Inset the bounds by border thickness so the border draws INSIDE the element
-            // Add extra offset when at window edges to prevent overflow
-            var leftOffset = topLeft.X <= edgeOffset ? edgeOffset : borderThickness;
-            var topOffset = topLeft.Y <= edgeOffset ? edgeOffset : borderThickness;
-            var rightOffset = bottomRight.X >= overlayWidth - edgeOffset ? edgeOffset : borderThickness;
-            var bottomOffset = bottomRight.Y >= overlayHeight - edgeOffset ? edgeOffset : borderThickness;
+            double left, top, width, height;
 
-            var left = topLeft.X + leftOffset;
-            var top = topLeft.Y + topOffset;
-            var width = (bottomRight.X - topLeft.X) - leftOffset - rightOffset;
-            var height = (bottomRight.Y - topLeft.Y) - topOffset - bottomOffset;
+            if (targetArea == "searchbar")
+            {
+                // SearchBox: draw border OUTSIDE the control
+                left = topLeft.X - borderThickness;
+                top = topLeft.Y - borderThickness;
+                width = (bottomRight.X - topLeft.X) + (borderThickness * 2);
+                height = (bottomRight.Y - topLeft.Y) + (borderThickness * 2);
+            }
+            else if (targetArea == "content")
+            {
+                // Content/Dashboard: reduced margin (3px less on left, 1px less on top)
+                var leftOffset = topLeft.X <= edgeOffset ? edgeOffset - 3 : 0;
+                var topOffset = topLeft.Y <= edgeOffset ? edgeOffset - 1 : borderThickness - 1;
+                var rightOffset = bottomRight.X >= overlayWidth - edgeOffset ? edgeOffset : borderThickness;
+                var bottomOffset = bottomRight.Y >= overlayHeight - edgeOffset ? edgeOffset : borderThickness;
+
+                left = topLeft.X + leftOffset;
+                top = topLeft.Y + topOffset;
+                width = (bottomRight.X - topLeft.X) - leftOffset - rightOffset;
+                height = (bottomRight.Y - topLeft.Y) - topOffset - bottomOffset;
+            }
+            else
+            {
+                // Default: Inset the bounds by border thickness so the border draws INSIDE the element
+                // Add extra offset when at window edges to prevent overflow
+                var leftOffset = topLeft.X <= edgeOffset ? edgeOffset : borderThickness;
+                var topOffset = topLeft.Y <= edgeOffset ? edgeOffset : borderThickness;
+                var rightOffset = bottomRight.X >= overlayWidth - edgeOffset ? edgeOffset : borderThickness;
+                var bottomOffset = bottomRight.Y >= overlayHeight - edgeOffset ? edgeOffset : borderThickness;
+
+                left = topLeft.X + leftOffset;
+                top = topLeft.Y + topOffset;
+                width = (bottomRight.X - topLeft.X) - leftOffset - rightOffset;
+                height = (bottomRight.Y - topLeft.Y) - topOffset - bottomOffset;
+            }
 
             // Ensure we have valid dimensions
             if (width <= 0 || height <= 0)

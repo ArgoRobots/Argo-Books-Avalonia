@@ -9,6 +9,7 @@ namespace ArgoBooks.Services;
 public class TutorialService
 {
     private IGlobalSettingsService? _globalSettingsService;
+    private string? _currentCompanyPath;
 
     /// <summary>
     /// Gets the singleton instance of the TutorialService.
@@ -142,6 +143,12 @@ public class TutorialService
         !Settings.HasCompletedWelcomeTutorial && Settings.FirstLaunchDate == null;
 
     /// <summary>
+    /// Gets whether a tutorial is currently in progress on a specific company.
+    /// </summary>
+    public bool IsTutorialInProgressOnCompany =>
+        !string.IsNullOrEmpty(Settings.TutorialStartedOnCompanyPath);
+
+    /// <summary>
     /// Gets whether the welcome tutorial has been completed.
     /// </summary>
     public bool HasCompletedWelcomeTutorial => Settings.HasCompletedWelcomeTutorial;
@@ -176,7 +183,59 @@ public class TutorialService
     }
 
     /// <summary>
+    /// Sets the current company path for tutorial tracking.
+    /// </summary>
+    public void SetCurrentCompanyPath(string? companyPath)
+    {
+        _currentCompanyPath = companyPath;
+    }
+
+    /// <summary>
+    /// Checks if the tutorial should be shown on the current company.
+    /// Returns true if no tutorial is in progress, or if we're on the same company where it was started.
+    /// </summary>
+    public bool ShouldShowTutorialOnCurrentCompany()
+    {
+        if (string.IsNullOrEmpty(_currentCompanyPath))
+            return false;
+
+        var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
+        if (string.IsNullOrEmpty(tutorialCompanyPath))
+            return true;
+
+        return string.Equals(_currentCompanyPath, tutorialCompanyPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Records the current company as the company where the tutorial was started.
+    /// Only records if the company has been saved (has a path).
+    /// </summary>
+    public void SetTutorialStartedOnCurrentCompany()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null && !string.IsNullOrEmpty(_currentCompanyPath))
+        {
+            settings.Tutorial.TutorialStartedOnCompanyPath = _currentCompanyPath;
+            SaveSettings();
+        }
+    }
+
+    /// <summary>
+    /// Clears the tutorial company association (called when tutorial is completed).
+    /// </summary>
+    private void ClearTutorialCompanyPath()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null)
+        {
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
+            SaveSettings();
+        }
+    }
+
+    /// <summary>
     /// Initializes the tutorial service for a new user if needed.
+    /// Also records the current company as the tutorial company.
     /// </summary>
     public void InitializeForNewUser()
     {
@@ -186,6 +245,8 @@ public class TutorialService
             settings.Tutorial.FirstLaunchDate = DateTime.UtcNow;
             SaveSettings();
         }
+
+        SetTutorialStartedOnCurrentCompany();
     }
 
     /// <summary>
@@ -204,6 +265,8 @@ public class TutorialService
 
     /// <summary>
     /// Marks the app tour as completed.
+    /// Note: We don't clear TutorialStartedOnCompanyPath here because the checklist
+    /// should still show on this company until the user dismisses it.
     /// </summary>
     public void CompleteAppTour()
     {
@@ -226,35 +289,59 @@ public class TutorialService
 
     /// <summary>
     /// Marks a checklist item as completed.
+    /// Items must be completed in order: CreateCategory -> AddProduct -> RecordExpense -> VisitAnalytics
     /// </summary>
     public void CompleteChecklistItem(string itemId)
     {
         var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null && !settings.Tutorial.CompletedChecklistItems.Contains(itemId))
+        if (settings?.Tutorial == null || settings.Tutorial.CompletedChecklistItems.Contains(itemId))
+            return;
+
+        // Check if previous items in sequence are completed
+        if (!CanCompleteChecklistItem(itemId, settings.Tutorial.CompletedChecklistItems))
+            return;
+
+        settings.Tutorial.CompletedChecklistItems.Add(itemId);
+        SaveSettings();
+        ChecklistItemCompleted?.Invoke(this, itemId);
+
+        // Show completion guidance for main tutorial tasks
+        if (itemId == ChecklistItems.CreateCategory ||
+            itemId == ChecklistItems.AddProduct ||
+            itemId == ChecklistItems.RecordExpense)
         {
-            settings.Tutorial.CompletedChecklistItems.Add(itemId);
-            SaveSettings();
-            ChecklistItemCompleted?.Invoke(this, itemId);
-
-            // Show completion guidance for main tutorial tasks
-            if (itemId == ChecklistItems.CreateCategory ||
-                itemId == ChecklistItems.AddProduct ||
-                itemId == ChecklistItems.RecordExpense)
-            {
-                ShowGuidance(CompletionGuidanceType.Standard);
-            }
-            else if (itemId == ChecklistItems.VisitAnalytics)
-            {
-                ShowGuidance(CompletionGuidanceType.Analytics);
-            }
-
-            if (AreAllChecklistItemsCompleted())
-            {
-                AllChecklistItemsCompleted?.Invoke(this, EventArgs.Empty);
-            }
-
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
+            ShowGuidance(CompletionGuidanceType.Standard);
         }
+        else if (itemId == ChecklistItems.VisitAnalytics)
+        {
+            ShowGuidance(CompletionGuidanceType.Analytics);
+        }
+
+        if (AreAllChecklistItemsCompleted())
+        {
+            AllChecklistItemsCompleted?.Invoke(this, EventArgs.Empty);
+        }
+
+        TutorialStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Checks if a checklist item can be completed based on the required order.
+    /// </summary>
+    private static bool CanCompleteChecklistItem(string itemId, List<string> completedItems)
+    {
+        // Define the required order: each item requires all previous items to be completed
+        return itemId switch
+        {
+            ChecklistItems.CreateCategory => true, // First item, no prerequisites
+            ChecklistItems.AddProduct => completedItems.Contains(ChecklistItems.CreateCategory),
+            ChecklistItems.RecordExpense => completedItems.Contains(ChecklistItems.CreateCategory) &&
+                                            completedItems.Contains(ChecklistItems.AddProduct),
+            ChecklistItems.VisitAnalytics => completedItems.Contains(ChecklistItems.CreateCategory) &&
+                                             completedItems.Contains(ChecklistItems.AddProduct) &&
+                                             completedItems.Contains(ChecklistItems.RecordExpense),
+            _ => true // Other items (not in main checklist) can be completed anytime
+        };
     }
 
     /// <summary>
@@ -374,6 +461,7 @@ public class TutorialService
 
     /// <summary>
     /// Resets all tutorial progress (for restart functionality).
+    /// Clears the tutorial company so it will show on the next company opened.
     /// </summary>
     public void ResetAllTutorials()
     {
@@ -386,7 +474,7 @@ public class TutorialService
             settings.Tutorial.CompletedChecklistItems.Clear();
             settings.Tutorial.VisitedPages.Clear();
             settings.Tutorial.ShowFirstVisitHints = true;
-            // Keep FirstLaunchDate to track they're not actually new
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -394,6 +482,7 @@ public class TutorialService
 
     /// <summary>
     /// Resets only the app tour (allows re-watching).
+    /// Clears the tutorial company so it will show on the next company opened.
     /// </summary>
     public void ResetAppTour()
     {
@@ -401,6 +490,7 @@ public class TutorialService
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.HasCompletedAppTour = false;
+            settings.Tutorial.TutorialStartedOnCompanyPath = null;
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
