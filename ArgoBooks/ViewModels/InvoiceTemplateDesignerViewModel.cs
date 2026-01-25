@@ -86,6 +86,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasLogo;
 
+    [ObservableProperty]
+    private string _logoPath = string.Empty;
+
     // Text content
     [ObservableProperty]
     private string _headerText = "INVOICE";
@@ -265,6 +268,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         {
             var bytes = System.IO.File.ReadAllBytes(filePath);
             LogoBase64 = Convert.ToBase64String(bytes);
+            LogoPath = filePath;
             HasLogo = true;
             UpdatePreview();
         }
@@ -278,6 +282,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private void RemoveLogo()
     {
         LogoBase64 = null;
+        LogoPath = string.Empty;
         HasLogo = false;
         UpdatePreview();
     }
@@ -450,6 +455,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         BackgroundColor = defaults.BackgroundColor;
         SelectedFontFamily = defaults.FontFamily;
         LogoBase64 = null;
+        LogoPath = string.Empty;
         LogoWidth = 150;
         HeaderText = defaults.HeaderText;
         FooterText = defaults.FooterText;
@@ -475,6 +481,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         {
             var bytes = await File.ReadAllBytesAsync(filePath);
             LogoBase64 = Convert.ToBase64String(bytes);
+            LogoPath = filePath;
             HasLogo = true;
             UpdatePreview();
         }

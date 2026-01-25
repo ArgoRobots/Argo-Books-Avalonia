@@ -52,6 +52,19 @@ public partial class InvoiceModals : UserControl
         {
             _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnPreviewScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
         }
+
+        // Disable context menu on HtmlLabel by handling the event
+        if (_invoiceHtmlPreview != null)
+        {
+            _invoiceHtmlPreview.ContextMenu = null;
+            _invoiceHtmlPreview.AddHandler(ContextRequestedEvent, OnContextRequested, RoutingStrategies.Tunnel);
+        }
+    }
+
+    private void OnContextRequested(object? sender, ContextRequestedEventArgs e)
+    {
+        // Prevent the default context menu from showing
+        e.Handled = true;
     }
 
     private void FindPreviewControls()
@@ -153,17 +166,24 @@ public partial class InvoiceModals : UserControl
 
     private void PreviewZoomToFit()
     {
-        if (_previewScrollViewer == null || _invoiceHtmlPreview == null) return;
+        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
 
-        // Get the content dimensions at zoom level 1.0
-        var contentWidth = _invoiceHtmlPreview.Bounds.Width / _previewZoomLevel;
-        var contentHeight = _invoiceHtmlPreview.Bounds.Height / _previewZoomLevel;
+        // First reset to 1.0 zoom to get accurate content dimensions
+        _previewZoomLevel = 1.0;
+        ApplyPreviewZoom();
+        _previewZoomTransformControl.UpdateLayout();
 
-        if (contentWidth <= 0 || contentHeight <= 0) return;
+        // Get content dimensions from the scroll extent
+        var contentWidth = _previewScrollViewer.Extent.Width;
+        var contentHeight = _previewScrollViewer.Extent.Height;
 
-        // Get viewport size (accounting for padding)
-        var viewportWidth = _previewScrollViewer.Bounds.Width - 40;
-        var viewportHeight = _previewScrollViewer.Bounds.Height - 40;
+        // Fallback to reasonable defaults if extent is not yet calculated
+        if (contentWidth <= 0) contentWidth = 700;
+        if (contentHeight <= 0) contentHeight = 900;
+
+        // Get viewport size (accounting for margin)
+        var viewportWidth = _previewScrollViewer.Bounds.Width - 60;
+        var viewportHeight = _previewScrollViewer.Bounds.Height - 60;
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 
@@ -284,7 +304,7 @@ public partial class InvoiceModals : UserControl
                     _panStartPoint = e.GetPosition(this);
                     _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
                     e.Pointer.Capture(this);
-                    Cursor = new Cursor(StandardCursorType.SizeAll);
+                    Cursor = new Cursor(StandardCursorType.Hand);
                     e.Handled = true;
                 }
             }
