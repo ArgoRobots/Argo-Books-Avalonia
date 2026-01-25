@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services.InvoiceTemplates;
@@ -181,7 +182,7 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
 
         try
         {
-            var currencySymbol = CurrencyService.GetCurrencySymbol(
+            var currencySymbol = CurrencyService.GetSymbol(
                 companyData.Settings.Localization.Currency);
 
             var response = await _emailService.SendInvoiceAsync(
@@ -289,7 +290,7 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
         var customer = companyData?.GetCustomer(_invoice.CustomerId);
-        var currencySymbol = CurrencyService.GetCurrencySymbol(
+        var currencySymbol = CurrencyService.GetSymbol(
             companyData?.Settings.Localization.Currency ?? "USD");
 
         InvoiceId = _invoice.Id;
@@ -373,7 +374,7 @@ public partial class SendInvoiceModalViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        var currencySymbol = CurrencyService.GetCurrencySymbol(
+        var currencySymbol = CurrencyService.GetSymbol(
             companyData.Settings.Localization.Currency);
 
         PreviewHtml = _emailService.RenderInvoiceHtml(

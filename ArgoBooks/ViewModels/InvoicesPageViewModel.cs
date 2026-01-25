@@ -627,13 +627,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (invoice == null)
             return;
 
-        App.SendInvoiceModalViewModel?.Open(invoice);
+        App.SendInvoiceModalViewModel?.OpenForInvoice(invoice);
     }
 
     [RelayCommand]
     private void OpenTemplateDesigner()
     {
-        App.InvoiceTemplateDesignerViewModel?.OpenCommand.Execute(null);
+        App.InvoiceTemplateDesignerViewModel?.OpenCreateModal();
     }
 
     #endregion
