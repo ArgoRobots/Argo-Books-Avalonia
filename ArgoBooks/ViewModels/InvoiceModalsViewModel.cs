@@ -281,8 +281,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData?.InvoiceTemplates == null || companyData.InvoiceTemplates.Count == 0)
         {
             // Create default templates if none exist
-            var factory = new Core.Services.InvoiceTemplates.InvoiceTemplateFactory();
-            var defaultTemplates = factory.CreateDefaultTemplates();
+            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
             foreach (var template in defaultTemplates)
             {
                 TemplateOptions.Add(template);
