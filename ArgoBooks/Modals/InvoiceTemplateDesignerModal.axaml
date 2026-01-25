@@ -203,7 +203,7 @@
                             </Border>
 
                             <!-- Right Panel: Preview -->
-                            <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                            <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
                                 <Border Grid.Row="0" Padding="20,15" Background="{DynamicResource SurfaceAltBrush}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Grid.Column="0"
@@ -223,69 +223,159 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Preview iframe-like container -->
-                                <Border Grid.Row="1" Margin="20" Background="#f3f4f6" CornerRadius="8">
-                                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                                  VerticalScrollBarVisibility="Auto">
-                                        <Border Margin="20"
-                                                Background="White"
-                                                CornerRadius="4"
-                                                BoxShadow="0 2 8 0 #20000000"
-                                                Padding="0"
-                                                MinWidth="400"
-                                                HorizontalAlignment="Center">
-                                            <!-- Native preview - shows key invoice info -->
-                                            <StackPanel Margin="30" Spacing="20" MaxWidth="500">
-                                                <TextBlock Text="{loc:Loc 'HTML Preview'}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           HorizontalAlignment="Center" />
-                                                <TextBlock Text="{loc:Loc 'Click Open in Browser to see the exact invoice rendering'}"
-                                                           FontSize="13"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           TextWrapping="Wrap"
-                                                           TextAlignment="Center" />
-
+                                <!-- Preview container with zoom -->
+                                <Border Grid.Row="1" Margin="20,10,20,10" Background="#f3f4f6" CornerRadius="8">
+                                    <ScrollViewer x:Name="PreviewScrollViewer"
+                                                  HorizontalScrollBarVisibility="Auto"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  Padding="20">
+                                        <LayoutTransformControl x:Name="ZoomTransformControl"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Top">
+                                            <Border Background="White"
+                                                    CornerRadius="4"
+                                                    BoxShadow="0 2 8 0 #20000000"
+                                                    MinWidth="400"
+                                                    MaxWidth="600">
                                                 <!-- Visual representation of template -->
-                                                <Border Background="{Binding PrimaryColor}"
-                                                        CornerRadius="4,4,0,0"
-                                                        Padding="15">
-                                                    <TextBlock Text="{Binding HeaderText}"
-                                                               FontSize="16"
-                                                               FontWeight="Bold"
-                                                               Foreground="White"
-                                                               HorizontalAlignment="Right" />
-                                                </Border>
+                                                <StackPanel>
+                                                    <!-- Header -->
+                                                    <Border Background="{Binding PrimaryColor}"
+                                                            CornerRadius="4,4,0,0"
+                                                            Padding="20">
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                                <TextBlock Text="Your Company Name"
+                                                                           FontSize="16"
+                                                                           FontWeight="Bold"
+                                                                           Foreground="White" />
+                                                                <TextBlock Text="123 Business St, City, ST 12345"
+                                                                           FontSize="11"
+                                                                           Foreground="#ffffffcc"
+                                                                           IsVisible="{Binding ShowCompanyAddress}" />
+                                                            </StackPanel>
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding HeaderText}"
+                                                                       FontSize="24"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       VerticalAlignment="Center" />
+                                                        </Grid>
+                                                    </Border>
 
-                                                <StackPanel Spacing="8" Margin="0,10,0,0">
-                                                    <TextBlock Text="INV-2024-00001" FontSize="20" FontWeight="Light" Foreground="{Binding TextColor}" />
-                                                    <TextBlock Text="Acme Corporation" FontSize="14" Foreground="{Binding TextColor}" />
-                                                    <TextBlock Text="billing@acme.com" FontSize="12" Foreground="#6b7280" />
+                                                    <!-- Content -->
+                                                    <StackPanel Margin="20" Spacing="16">
+                                                        <!-- Invoice info row -->
+                                                        <Grid ColumnDefinitions="*,*">
+                                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                                <TextBlock Text="BILL TO" FontSize="10" FontWeight="SemiBold" Foreground="#6b7280" />
+                                                                <TextBlock Text="Acme Corporation" FontSize="14" FontWeight="Medium" Foreground="{Binding TextColor}" />
+                                                                <TextBlock Text="billing@acme.com" FontSize="12" Foreground="#6b7280" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right">
+                                                                <TextBlock Text="INV-2024-00001" FontSize="18" FontWeight="Light" Foreground="{Binding TextColor}" />
+                                                                <TextBlock Text="Issue: January 15, 2024" FontSize="11" Foreground="#6b7280" />
+                                                                <TextBlock Text="Due: February 14, 2024" FontSize="11" Foreground="{Binding AccentColor}" FontWeight="Medium" IsVisible="{Binding ShowDueDateProminent}" />
+                                                            </StackPanel>
+                                                        </Grid>
+
+                                                        <Border Height="1" Background="{Binding SecondaryColor}" />
+
+                                                        <!-- Line items header -->
+                                                        <Grid ColumnDefinitions="*,60,80,80">
+                                                            <TextBlock Grid.Column="0" Text="Description" FontSize="10" FontWeight="SemiBold" Foreground="#6b7280" />
+                                                            <TextBlock Grid.Column="1" Text="Qty" FontSize="10" FontWeight="SemiBold" Foreground="#6b7280" TextAlignment="Center" />
+                                                            <TextBlock Grid.Column="2" Text="Price" FontSize="10" FontWeight="SemiBold" Foreground="#6b7280" TextAlignment="Right" />
+                                                            <TextBlock Grid.Column="3" Text="Amount" FontSize="10" FontWeight="SemiBold" Foreground="#6b7280" TextAlignment="Right" />
+                                                        </Grid>
+
+                                                        <!-- Sample line items -->
+                                                        <StackPanel Spacing="8">
+                                                            <Grid ColumnDefinitions="*,60,80,80">
+                                                                <StackPanel Grid.Column="0">
+                                                                    <TextBlock Text="Website Design Services" FontSize="13" Foreground="{Binding TextColor}" />
+                                                                    <TextBlock Text="Complete website redesign with responsive layout" FontSize="11" Foreground="#6b7280" IsVisible="{Binding ShowItemDescriptions}" TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                                <TextBlock Grid.Column="1" Text="1" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Center" />
+                                                                <TextBlock Grid.Column="2" Text="$800.00" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Right" />
+                                                                <TextBlock Grid.Column="3" Text="$800.00" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Right" />
+                                                            </Grid>
+                                                            <Grid ColumnDefinitions="*,60,80,80">
+                                                                <TextBlock Grid.Column="0" Text="Logo Design" FontSize="13" Foreground="{Binding TextColor}" />
+                                                                <TextBlock Grid.Column="1" Text="1" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Center" />
+                                                                <TextBlock Grid.Column="2" Text="$250.00" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Right" />
+                                                                <TextBlock Grid.Column="3" Text="$250.00" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Right" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <Border Height="1" Background="{Binding SecondaryColor}" />
+
+                                                        <!-- Totals -->
+                                                        <StackPanel HorizontalAlignment="Right" Spacing="4" MinWidth="180">
+                                                            <Grid ColumnDefinitions="*,80">
+                                                                <TextBlock Grid.Column="0" Text="Subtotal" FontSize="13" Foreground="#6b7280" />
+                                                                <TextBlock Grid.Column="1" Text="$1,050.00" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Right" />
+                                                            </Grid>
+                                                            <Grid ColumnDefinitions="*,80" IsVisible="{Binding ShowTaxBreakdown}">
+                                                                <TextBlock Grid.Column="0" Text="Tax (10%)" FontSize="13" Foreground="#6b7280" />
+                                                                <TextBlock Grid.Column="1" Text="$105.00" FontSize="13" Foreground="{Binding TextColor}" TextAlignment="Right" />
+                                                            </Grid>
+                                                            <Border Height="1" Background="{Binding SecondaryColor}" Margin="0,4" />
+                                                            <Grid ColumnDefinitions="*,80">
+                                                                <TextBlock Grid.Column="0" Text="Total" FontSize="16" FontWeight="SemiBold" Foreground="{Binding TextColor}" />
+                                                                <TextBlock Grid.Column="1" Text="$1,155.00" FontSize="16" FontWeight="Bold" Foreground="{Binding PrimaryColor}" TextAlignment="Right" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <!-- Notes -->
+                                                        <Border Background="#f9fafb" CornerRadius="4" Padding="12" IsVisible="{Binding ShowNotes}">
+                                                            <StackPanel Spacing="4">
+                                                                <TextBlock Text="Notes" FontSize="10" FontWeight="SemiBold" Foreground="#6b7280" />
+                                                                <TextBlock Text="Thank you for your business!" FontSize="12" Foreground="#4b5563" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <!-- Payment Instructions -->
+                                                        <Border Background="#f0fdf4" BorderBrush="#bbf7d0" BorderThickness="1" CornerRadius="4" Padding="12" IsVisible="{Binding ShowPaymentInstructions}">
+                                                            <StackPanel Spacing="4">
+                                                                <TextBlock Text="Payment Instructions" FontSize="10" FontWeight="SemiBold" Foreground="#166534" />
+                                                                <TextBlock Text="{Binding PaymentInstructions}" FontSize="12" Foreground="#166534" TextWrapping="Wrap" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <!-- Footer -->
+                                                        <TextBlock Text="{Binding FooterText}"
+                                                                   FontSize="11"
+                                                                   Foreground="#9ca3af"
+                                                                   TextAlignment="Center"
+                                                                   Margin="0,8,0,0" />
+                                                    </StackPanel>
                                                 </StackPanel>
-
-                                                <Border Height="1" Background="{Binding SecondaryColor}" Margin="0,10" />
-
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0" Text="Website Design Services" FontSize="13" Foreground="{Binding TextColor}" />
-                                                    <TextBlock Grid.Column="1" Text="$800.00" FontSize="13" Foreground="{Binding TextColor}" />
-                                                </Grid>
-
-                                                <Border Height="1" Background="{Binding SecondaryColor}" />
-
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0" Text="Total" FontSize="16" FontWeight="SemiBold" Foreground="{Binding TextColor}" />
-                                                    <TextBlock Grid.Column="1" Text="$1,375.00" FontSize="16" FontWeight="Bold" Foreground="{Binding PrimaryColor}" />
-                                                </Grid>
-
-                                                <Border Background="#f9fafb" CornerRadius="4" Padding="15" Margin="0,10,0,0">
-                                                    <TextBlock Text="{Binding FooterText}"
-                                                               FontSize="12"
-                                                               Foreground="#6b7280"
-                                                               TextAlignment="Center" />
-                                                </Border>
-                                            </StackPanel>
-                                        </Border>
+                                            </Border>
+                                        </LayoutTransformControl>
                                     </ScrollViewer>
+                                </Border>
+
+                                <!-- Zoom Controls -->
+                                <Border Grid.Row="2" Padding="20,10" Background="{DynamicResource SurfaceAltBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                        <Button Classes="icon-button" Click="ZoomOut_Click" ToolTip.Tip="{loc:Loc 'Zoom Out'}">
+                                            <PathIcon Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z" Width="16" Height="16" />
+                                        </Button>
+                                        <Slider x:Name="ZoomSlider"
+                                                Minimum="0.25"
+                                                Maximum="3.0"
+                                                Value="1.0"
+                                                Width="120"
+                                                ValueChanged="ZoomSlider_ValueChanged" />
+                                        <Button Classes="icon-button" Click="ZoomIn_Click" ToolTip.Tip="{loc:Loc 'Zoom In'}">
+                                            <PathIcon Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z" Width="16" Height="16" />
+                                        </Button>
+                                        <TextBlock x:Name="ZoomPercentText" Text="100%" Width="45" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <Button Classes="icon-button" Click="ResetZoom_Click" ToolTip.Tip="{loc:Loc 'Reset Zoom'}">
+                                            <PathIcon Data="{x:Static icons:Icons.Refresh}" Width="16" Height="16" />
+                                        </Button>
+                                    </StackPanel>
                                 </Border>
                             </Grid>
                         </Grid>
