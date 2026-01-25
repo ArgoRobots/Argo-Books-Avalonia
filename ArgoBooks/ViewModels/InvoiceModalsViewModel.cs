@@ -613,6 +613,67 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public string PreviewIssueDate => ModalIssueDate?.ToString("MMMM d, yyyy") ?? "-";
     public string PreviewDueDate => ModalDueDate?.ToString("MMMM d, yyyy") ?? "-";
 
+    [ObservableProperty]
+    private string _previewHtml = string.Empty;
+
+    private void GeneratePreviewHtml()
+    {
+        var template = SelectedTemplate;
+        if (template == null)
+        {
+            // Use default template if none selected
+            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
+        }
+
+        var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
+
+        // Create a preview invoice from current form data
+        var previewInvoice = new Invoice
+        {
+            Id = "INV-PREVIEW",
+            InvoiceNumber = $"INV-{DateTime.Now:yyyy}-XXXXX",
+            CustomerId = SelectedCustomer?.Id ?? string.Empty,
+            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            TaxRate = TaxRate,
+            Notes = ModalNotes,
+            Status = InvoiceStatus.Draft,
+            LineItems = LineItems.Select(li => new InvoiceLineItem
+            {
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitPrice = li.UnitPrice
+            }).ToList()
+        };
+
+        // Calculate totals
+        previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
+        previewInvoice.TaxAmount = previewInvoice.Subtotal * (TaxRate / 100m);
+        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount;
+        previewInvoice.Balance = previewInvoice.Total;
+
+        // Render HTML using the same renderer as the template designer
+        var renderer = new Core.Services.InvoiceTemplates.InvoiceHtmlRenderer();
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData != null)
+        {
+            var currencySymbol = Core.Services.CurrencyService.GetSymbol(companySettings.Currency);
+            PreviewHtml = renderer.Render(previewInvoice, template, companyData, currencySymbol);
+        }
+        else
+        {
+            PreviewHtml = "<p>Unable to generate preview</p>";
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenPreviewInBrowser()
+    {
+        if (string.IsNullOrEmpty(PreviewHtml)) return;
+        await Core.Services.InvoiceTemplates.InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "invoice-preview");
+    }
+
     [RelayCommand]
     private void OpenPreviewModal()
     {
@@ -654,6 +715,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(PreviewCustomerName));
         OnPropertyChanged(nameof(PreviewIssueDate));
         OnPropertyChanged(nameof(PreviewDueDate));
+
+        // Generate HTML preview using the same renderer as the template designer
+        GeneratePreviewHtml();
 
         IsCreateEditModalOpen = false;
         IsPreviewModalOpen = true;
