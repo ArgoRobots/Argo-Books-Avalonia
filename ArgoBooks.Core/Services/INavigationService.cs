@@ -19,32 +19,19 @@ public interface INavigationService
     string CurrentPageName { get; }
 
     /// <summary>
-    /// Navigates to the specified page.
+    /// Navigates to the specified page with an optional parameter.
     /// </summary>
     /// <param name="pageName">Name of the page to navigate to.</param>
-    void NavigateTo(string pageName);
-
-    /// <summary>
-    /// Navigates to the specified page with a parameter.
-    /// </summary>
-    /// <param name="pageName">Name of the page to navigate to.</param>
-    /// <param name="parameter">Parameter to pass to the page.</param>
-    void NavigateTo(string pageName, object parameter);
+    /// <param name="parameter">Optional parameter to pass to the page.</param>
+    void NavigateTo(string pageName, object? parameter = null);
 
     /// <summary>
     /// Navigates to the specified page asynchronously, checking navigation guards.
     /// </summary>
     /// <param name="pageName">Name of the page to navigate to.</param>
+    /// <param name="parameter">Optional parameter to pass to the page.</param>
     /// <returns>True if navigation occurred, false if cancelled by a guard.</returns>
-    Task<bool> NavigateToAsync(string pageName);
-
-    /// <summary>
-    /// Navigates to the specified page with a parameter asynchronously, checking navigation guards.
-    /// </summary>
-    /// <param name="pageName">Name of the page to navigate to.</param>
-    /// <param name="parameter">Parameter to pass to the page.</param>
-    /// <returns>True if navigation occurred, false if cancelled by a guard.</returns>
-    Task<bool> NavigateToAsync(string pageName, object? parameter);
+    Task<bool> NavigateToAsync(string pageName, object? parameter = null);
 
     /// <summary>
     /// Navigates back to the previous page.

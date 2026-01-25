@@ -140,15 +140,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     protected override void LoadCounterpartyOptions()
     {
         CounterpartyOptions.Clear();
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Customers == null)
-            return;
-
-        foreach (var customer in companyData.Customers.OrderBy(c => c.Name))
-        {
-            CounterpartyOptions.Add(new CounterpartyOption { Id = customer.Id, Name = customer.Name });
-        }
+        LoadCounterpartyOptionsInternal();
     }
 
     protected override void LoadCounterpartyOptionsInternal()
