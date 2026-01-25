@@ -275,4 +275,20 @@ public static class Icons
     public const string Undo = "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z";
 
     #endregion
+
+    #region Email & Communication
+
+    /// <summary>Send/paper plane icon for sending emails.</summary>
+    public const string Send = "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z";
+
+    /// <summary>Email/envelope icon.</summary>
+    public const string Email = "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z";
+
+    /// <summary>Warning/alert triangle icon.</summary>
+    public const string Warning = "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z";
+
+    /// <summary>Open in new/external link icon.</summary>
+    public const string OpenInNew = "M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z";
+
+    #endregion
 }

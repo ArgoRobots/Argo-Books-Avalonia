@@ -2,6 +2,7 @@ using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Tracking;
@@ -189,6 +190,16 @@ public class CompanyData
 
     #endregion
 
+    #region Invoice Templates
+
+    /// <summary>
+    /// All custom invoice templates for email sending.
+    /// </summary>
+    [JsonPropertyName("invoiceTemplates")]
+    public List<InvoiceTemplate> InvoiceTemplates { get; init; } = [];
+
+    #endregion
+
     #region Insights
 
     /// <summary>
@@ -265,6 +276,18 @@ public class CompanyData
     /// </summary>
     public InventoryItem? GetInventoryItem(string productId, string locationId) =>
         Inventory.FirstOrDefault(i => i.ProductId == productId && i.LocationId == locationId);
+
+    /// <summary>
+    /// Gets an invoice template by ID.
+    /// </summary>
+    public InvoiceTemplate? GetInvoiceTemplate(string id) =>
+        InvoiceTemplates.FirstOrDefault(t => t.Id == id);
+
+    /// <summary>
+    /// Gets the default invoice template, or null if none is set.
+    /// </summary>
+    public InvoiceTemplate? GetDefaultInvoiceTemplate() =>
+        InvoiceTemplates.FirstOrDefault(t => t.IsDefault) ?? InvoiceTemplates.FirstOrDefault();
 
     /// <summary>
     /// Marks the data as modified.
@@ -358,4 +381,7 @@ public class IdCounters
 
     [JsonPropertyName("reportTemplate")]
     public int ReportTemplate { get; set; }
+
+    [JsonPropertyName("invoiceTemplate")]
+    public int InvoiceTemplate { get; set; }
 }

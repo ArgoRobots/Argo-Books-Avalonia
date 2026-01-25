@@ -616,6 +616,26 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.InvoiceModalsViewModel?.OpenHistoryModal(item);
     }
 
+    [RelayCommand]
+    private void SendInvoice(InvoiceDisplayItem? item)
+    {
+        if (item == null)
+            return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var invoice = companyData?.GetInvoice(item.Id);
+        if (invoice == null)
+            return;
+
+        App.SendInvoiceModalViewModel?.Open(invoice);
+    }
+
+    [RelayCommand]
+    private void OpenTemplateDesigner()
+    {
+        App.InvoiceTemplateDesignerViewModel?.OpenCommand.Execute(null);
+    }
+
     #endregion
 }
 
@@ -695,6 +715,11 @@ public partial class InvoiceDisplayItem : ObservableObject
     /// Whether this invoice can be edited (only Pending invoices - drafts use Continue instead).
     /// </summary>
     public bool CanEdit => Status == InvoiceStatus.Pending;
+
+    /// <summary>
+    /// Whether this invoice can be sent via email (not drafts or cancelled).
+    /// </summary>
+    public bool CanSend => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
 }
 
 /// <summary>

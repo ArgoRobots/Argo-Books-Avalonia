@@ -109,6 +109,16 @@ public class App : Application
     public static InvoiceModalsViewModel? InvoiceModalsViewModel => _appShellViewModel?.InvoiceModalsViewModel;
 
     /// <summary>
+    /// Gets the send invoice modal view model for shared access.
+    /// </summary>
+    public static SendInvoiceModalViewModel? SendInvoiceModalViewModel => _appShellViewModel?.SendInvoiceModalViewModel;
+
+    /// <summary>
+    /// Gets the invoice template designer view model for shared access.
+    /// </summary>
+    public static InvoiceTemplateDesignerViewModel? InvoiceTemplateDesignerViewModel => _appShellViewModel?.InvoiceTemplateDesignerViewModel;
+
+    /// <summary>
     /// Gets the expense modals view model for shared access.
     /// </summary>
     public static ExpenseModalsViewModel? ExpenseModalsViewModel => _appShellViewModel?.ExpenseModalsViewModel;

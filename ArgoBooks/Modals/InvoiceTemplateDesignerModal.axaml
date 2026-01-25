@@ -1,0 +1,310 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Modals.InvoiceTemplateDesignerModal"
+             x:DataType="vm:InvoiceTemplateDesignerViewModel">
+
+    <Design.DataContext>
+        <vm:InvoiceTemplateDesignerViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="1000"
+                        MaxHeight="750"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding ModalTitle}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Customize your invoice template'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Classes="icon-button"
+                                        Command="{Binding CloseCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}"
+                                              Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <Grid Grid.Row="1" ColumnDefinitions="350,*">
+                            <!-- Left Panel: Settings -->
+                            <Border Grid.Column="0"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,1,0">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Margin="20" Spacing="20">
+                                        <!-- Template Name -->
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Template Name'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding TemplateName, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     Watermark="{loc:Loc 'Enter template name...'}" />
+                                        </StackPanel>
+
+                                        <!-- Base Template -->
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Base Template'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding BaseTemplateOptions}"
+                                                      SelectedItem="{Binding SelectedBaseTemplate}"
+                                                      Classes="form-combobox"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+
+                                        <!-- Default Template -->
+                                        <CheckBox IsChecked="{Binding IsDefault}"
+                                                  Content="{loc:Loc 'Set as default template'}" />
+
+                                        <!-- Colors Section -->
+                                        <Expander Header="{loc:Loc Colors}" IsExpanded="True">
+                                            <StackPanel Spacing="12" Margin="0,10,0,0">
+                                                <!-- Primary Color -->
+                                                <Grid ColumnDefinitions="*,100">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Primary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBox Grid.Column="1" Text="{Binding PrimaryColor, Mode=TwoWay}" Classes="form-input" />
+                                                </Grid>
+
+                                                <!-- Secondary Color -->
+                                                <Grid ColumnDefinitions="*,100">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Secondary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBox Grid.Column="1" Text="{Binding SecondaryColor, Mode=TwoWay}" Classes="form-input" />
+                                                </Grid>
+
+                                                <!-- Accent Color -->
+                                                <Grid ColumnDefinitions="*,100">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Accent Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBox Grid.Column="1" Text="{Binding AccentColor, Mode=TwoWay}" Classes="form-input" />
+                                                </Grid>
+
+                                                <!-- Text Color -->
+                                                <Grid ColumnDefinitions="*,100">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Text Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBox Grid.Column="1" Text="{Binding TextColor, Mode=TwoWay}" Classes="form-input" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Expander>
+
+                                        <!-- Logo Section -->
+                                        <Expander Header="{loc:Loc Logo}" IsExpanded="False">
+                                            <StackPanel Spacing="12" Margin="0,10,0,0">
+                                                <CheckBox IsChecked="{Binding ShowLogo}"
+                                                          Content="{loc:Loc 'Show logo on invoice'}" />
+
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Button Classes="secondary-button"
+                                                            Content="{loc:Loc 'Select Logo'}"
+                                                            Command="{Binding SelectLogoCommand}" />
+                                                    <Button Classes="secondary-button danger"
+                                                            Content="{loc:Loc Remove}"
+                                                            Command="{Binding RemoveLogoCommand}"
+                                                            IsVisible="{Binding HasLogo}" />
+                                                </StackPanel>
+
+                                                <Grid ColumnDefinitions="*,80" IsVisible="{Binding ShowLogo}">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <NumericUpDown Grid.Column="1"
+                                                                   Value="{Binding LogoWidth}"
+                                                                   Minimum="50"
+                                                                   Maximum="300"
+                                                                   FormatString="0"
+                                                                   ShowButtonSpinner="False"
+                                                                   Classes="form-input" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Expander>
+
+                                        <!-- Text Content Section -->
+                                        <Expander Header="{loc:Loc 'Text Content'}" IsExpanded="False">
+                                            <StackPanel Spacing="12" Margin="0,10,0,0">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBox Text="{Binding HeaderText, Mode=TwoWay}" Classes="form-input" />
+                                                </StackPanel>
+
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{loc:Loc 'Footer Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBox Text="{Binding FooterText, Mode=TwoWay}" Classes="form-input" />
+                                                </StackPanel>
+
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{loc:Loc 'Payment Instructions'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBox Text="{Binding PaymentInstructions, Mode=TwoWay}"
+                                                             Classes="form-input"
+                                                             AcceptsReturn="True"
+                                                             TextWrapping="Wrap"
+                                                             MinHeight="60"
+                                                             Watermark="{loc:Loc 'Bank details, payment methods, etc.'}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Expander>
+
+                                        <!-- Display Options Section -->
+                                        <Expander Header="{loc:Loc 'Display Options'}" IsExpanded="False">
+                                            <StackPanel Spacing="8" Margin="0,10,0,0">
+                                                <CheckBox IsChecked="{Binding ShowCompanyAddress}"
+                                                          Content="{loc:Loc 'Show company address'}" />
+                                                <CheckBox IsChecked="{Binding ShowTaxBreakdown}"
+                                                          Content="{loc:Loc 'Show tax breakdown'}" />
+                                                <CheckBox IsChecked="{Binding ShowItemDescriptions}"
+                                                          Content="{loc:Loc 'Show item descriptions'}" />
+                                                <CheckBox IsChecked="{Binding ShowNotes}"
+                                                          Content="{loc:Loc 'Show notes section'}" />
+                                                <CheckBox IsChecked="{Binding ShowPaymentInstructions}"
+                                                          Content="{loc:Loc 'Show payment instructions'}" />
+                                                <CheckBox IsChecked="{Binding ShowDueDateProminent}"
+                                                          Content="{loc:Loc 'Highlight due date'}" />
+                                            </StackPanel>
+                                        </Expander>
+
+                                        <!-- Font -->
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding FontFamilyOptions}"
+                                                      SelectedItem="{Binding SelectedFontFamily}"
+                                                      Classes="form-combobox"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+
+                            <!-- Right Panel: Preview -->
+                            <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                                <Border Grid.Row="0" Padding="20,15" Background="{DynamicResource SurfaceAltBrush}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{loc:Loc Preview}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1"
+                                                Classes="secondary-button"
+                                                Command="{Binding PreviewInBrowserCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon Data="{x:Static icons:Icons.OpenInNew}" Width="14" Height="14" />
+                                                <TextBlock Text="{loc:Loc 'Open in Browser'}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Preview iframe-like container -->
+                                <Border Grid.Row="1" Margin="20" Background="#f3f4f6" CornerRadius="8">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                                  VerticalScrollBarVisibility="Auto">
+                                        <Border Margin="20"
+                                                Background="White"
+                                                CornerRadius="4"
+                                                BoxShadow="0 2px 8px #20000000"
+                                                Padding="0"
+                                                MinWidth="400"
+                                                HorizontalAlignment="Center">
+                                            <!-- Native preview - shows key invoice info -->
+                                            <StackPanel Margin="30" Spacing="20" MaxWidth="500">
+                                                <TextBlock Text="{loc:Loc 'HTML Preview'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           HorizontalAlignment="Center" />
+                                                <TextBlock Text="{loc:Loc 'Click \"Open in Browser\" to see the exact invoice rendering'}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap"
+                                                           TextAlignment="Center" />
+
+                                                <!-- Visual representation of template -->
+                                                <Border Background="{Binding PrimaryColor}"
+                                                        CornerRadius="4,4,0,0"
+                                                        Padding="15">
+                                                    <TextBlock Text="{Binding HeaderText}"
+                                                               FontSize="16"
+                                                               FontWeight="Bold"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Right" />
+                                                </Border>
+
+                                                <StackPanel Spacing="8" Margin="0,10,0,0">
+                                                    <TextBlock Text="INV-2024-00001" FontSize="20" FontWeight="Light" Foreground="{Binding TextColor}" />
+                                                    <TextBlock Text="Acme Corporation" FontSize="14" Foreground="{Binding TextColor}" />
+                                                    <TextBlock Text="billing@acme.com" FontSize="12" Foreground="#6b7280" />
+                                                </StackPanel>
+
+                                                <Border Height="1" Background="{Binding SecondaryColor}" Margin="0,10" />
+
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Website Design Services" FontSize="13" Foreground="{Binding TextColor}" />
+                                                    <TextBlock Grid.Column="1" Text="$800.00" FontSize="13" Foreground="{Binding TextColor}" />
+                                                </Grid>
+
+                                                <Border Height="1" Background="{Binding SecondaryColor}" />
+
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Total" FontSize="16" FontWeight="SemiBold" Foreground="{Binding TextColor}" />
+                                                    <TextBlock Grid.Column="1" Text="$1,375.00" FontSize="16" FontWeight="Bold" Foreground="{Binding PrimaryColor}" />
+                                                </Grid>
+
+                                                <Border Background="#f9fafb" CornerRadius="4" Padding="15" Margin="0,10,0,0">
+                                                    <TextBlock Text="{Binding FooterText}"
+                                                               FontSize="12"
+                                                               Foreground="#6b7280"
+                                                               TextAlignment="Center" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ValidationMessage}"
+                                           Foreground="#DC2626"
+                                           FontSize="13"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding HasValidationMessage}" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="secondary-button"
+                                            Content="{loc:Loc Cancel}"
+                                            Command="{Binding CloseCommand}" />
+                                    <Button Classes="primary-button"
+                                            Content="{loc:Loc 'Save Template'}"
+                                            Command="{Binding SaveCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+</UserControl>
