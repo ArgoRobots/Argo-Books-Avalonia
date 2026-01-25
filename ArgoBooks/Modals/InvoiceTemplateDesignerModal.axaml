@@ -259,8 +259,9 @@
                                             <PathIcon Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z" Width="16" Height="16" />
                                         </Button>
                                         <TextBlock x:Name="ZoomPercentText" Text="100%" Width="45" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <Button Classes="icon-button" Click="ResetZoom_Click" ToolTip.Tip="{loc:Loc 'Reset Zoom'}">
-                                            <PathIcon Data="{x:Static icons:Icons.Refresh}" Width="16" Height="16" />
+                                        <Button Classes="icon-button" Click="FitToWindow_Click" ToolTip.Tip="{loc:Loc 'Fit to Window'}">
+                                            <!-- Fit to window icon: corners with center focus dot -->
+                                            <PathIcon Data="M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zM5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" Width="16" Height="16" />
                                         </Button>
                                     </StackPanel>
                                 </Border>

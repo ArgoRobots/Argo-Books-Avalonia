@@ -280,48 +280,57 @@ public partial class InvoiceHtmlRenderer
 
     private string ProcessSections(string template, Dictionary<string, object?> context)
     {
-        // Process positive sections {{#Name}}content{{/Name}}
         var positiveSectionRegex = PositiveSectionRegex();
-        template = positiveSectionRegex.Replace(template, match =>
-        {
-            var name = match.Groups[1].Value;
-            var content = match.Groups[2].Value;
-
-            if (context.TryGetValue(name, out var value))
-            {
-                // If it's a list, skip here (handled by ProcessLoops)
-                if (value is IEnumerable<Dictionary<string, object?>>)
-                    return match.Value;
-
-                // If it's a truthy value, include the content
-                if (IsTruthy(value))
-                    return content;
-            }
-
-            return string.Empty;
-        });
-
-        // Process negative sections {{^Name}}content{{/Name}}
         var negativeSectionRegex = NegativeSectionRegex();
-        template = negativeSectionRegex.Replace(template, match =>
+
+        // Process sections in a loop to handle nested sections
+        string previous;
+        do
         {
-            var name = match.Groups[1].Value;
-            var content = match.Groups[2].Value;
+            previous = template;
 
-            if (context.TryGetValue(name, out var value))
+            // Process positive sections {{#Name}}content{{/Name}}
+            template = positiveSectionRegex.Replace(template, match =>
             {
-                // If it's a falsy value, include the content
-                if (!IsTruthy(value))
+                var name = match.Groups[1].Value;
+                var content = match.Groups[2].Value;
+
+                if (context.TryGetValue(name, out var value))
+                {
+                    // If it's a list, skip here (handled by ProcessLoops)
+                    if (value is IEnumerable<Dictionary<string, object?>>)
+                        return match.Value;
+
+                    // If it's a truthy value, include the content
+                    if (IsTruthy(value))
+                        return content;
+                }
+
+                return string.Empty;
+            });
+
+            // Process negative sections {{^Name}}content{{/Name}}
+            template = negativeSectionRegex.Replace(template, match =>
+            {
+                var name = match.Groups[1].Value;
+                var content = match.Groups[2].Value;
+
+                if (context.TryGetValue(name, out var value))
+                {
+                    // If it's a falsy value, include the content
+                    if (!IsTruthy(value))
+                        return content;
+                }
+                else
+                {
+                    // Variable not found, treat as falsy
                     return content;
-            }
-            else
-            {
-                // Variable not found, treat as falsy
-                return content;
-            }
+                }
 
-            return string.Empty;
-        });
+                return string.Empty;
+            });
+        }
+        while (template != previous); // Continue until no more changes
 
         return template;
     }

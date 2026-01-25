@@ -334,6 +334,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnShowNotesChanged(bool value) => UpdatePreview();
     partial void OnShowPaymentInstructionsChanged(bool value) => UpdatePreview();
     partial void OnShowDueDateProminentChanged(bool value) => UpdatePreview();
+    partial void OnLogoWidthChanged(int value) => UpdatePreview();
     partial void OnLogoBase64Changed(string? value)
     {
         HasLogo = !string.IsNullOrEmpty(value);
