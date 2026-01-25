@@ -1046,7 +1046,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Image Path'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" MaxWidth="220">
                                         <TextBox Grid.Column="0" Text="{Binding SelectedImageElement.ImagePath}" Watermark="{loc:Loc 'Path to image...'}" IsReadOnly="True" TextWrapping="NoWrap" />
                                         <Button Grid.Column="1" Margin="4,0,0,0" Padding="8,6" Command="{Binding BrowseImagePathCommand}" ToolTip.Tip="{loc:Loc 'Browse...'}">
                                             <PathIcon Data="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"

@@ -624,18 +624,18 @@
                     </Border>
 
                     <!-- HTML Preview Content -->
-                    <Border Grid.Row="1" Margin="16,8,16,8" Background="#f3f4f6" CornerRadius="8">
+                    <Border Grid.Row="1" Margin="8,8,8,8" Background="#f3f4f6" CornerRadius="8" ClipToBounds="True">
                         <ScrollViewer x:Name="PreviewScrollViewer"
                                       HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Auto">
+                                      VerticalScrollBarVisibility="Auto"
+                                      Padding="0">
                             <LayoutTransformControl x:Name="PreviewZoomTransformControl"
                                                     HorizontalAlignment="Center"
-                                                    VerticalAlignment="Top"
-                                                    Margin="20">
+                                                    VerticalAlignment="Top">
                                 <!-- HtmlLabel renders the same HTML as the browser preview -->
                                 <html:HtmlLabel x:Name="InvoiceHtmlPreview"
                                                 Text="{Binding PreviewHtml}"
-                                                Background="Transparent"
+                                                Background="White"
                                                 MinWidth="640"
                                                 MaxWidth="700" />
                             </LayoutTransformControl>

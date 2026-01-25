@@ -1,11 +1,16 @@
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Views;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.InvoiceTemplates;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -731,10 +736,24 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CreateAndSendInvoice()
+    private async Task CreateAndSendInvoice()
     {
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
+
+        // Validate that we have a template selected
+        if (SelectedTemplate?.Template == null)
+        {
+            await ShowSendErrorAsync("Please select an invoice template.".Translate());
+            return;
+        }
+
+        // Check if email API is configured
+        if (!InvoiceEmailSettings.IsConfigured)
+        {
+            await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiEndpointEnvVar} {"and".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
+            return;
+        }
 
         // Generate invoice ID
         var nextNumber = (companyData.Invoices.Count) + 1;
@@ -749,7 +768,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
             TaxRate = TaxRate,
             Notes = ModalNotes,
-            Status = InvoiceStatus.Sent, // Mark as Sent since we're "sending" it
+            Status = InvoiceStatus.Pending, // Start as pending until email is sent
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
             LineItems = LineItems.Select(i => new LineItem
@@ -760,6 +779,41 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 TaxRate = 0
             }).ToList()
         };
+
+        // Try to send the email
+        try
+        {
+            var emailService = new InvoiceEmailService();
+            var emailSettings = companyData.Settings.InvoiceEmail;
+            var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+
+            var response = await emailService.SendInvoiceAsync(
+                invoice,
+                SelectedTemplate.Template,
+                companyData,
+                emailSettings,
+                currencySymbol);
+
+            if (!response.Success)
+            {
+                await ShowSendErrorAsync(response.Message);
+                return;
+            }
+
+            // Email sent successfully - update invoice status
+            invoice.Status = InvoiceStatus.Sent;
+            invoice.History.Add(new InvoiceHistoryEntry
+            {
+                Action = "Sent",
+                Details = $"Invoice sent to {SelectedCustomer.Email}",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            await ShowSendErrorAsync($"{"Failed to send invoice:".Translate()} {ex.Message}");
+            return;
+        }
 
         // Create undo action
         var action = new DelegateAction(
@@ -782,12 +836,21 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
-        // TODO: Actually send email to customer here
-        // For now, we just mark it as sent
-
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         IsPreviewModalOpen = false;
         ResetForm();
+    }
+
+    private async Task ShowSendErrorAsync(string message)
+    {
+        var messageBoxService = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            ? (desktop.MainWindow as MainWindow)?.MessageBoxService
+            : null;
+
+        if (messageBoxService != null)
+        {
+            await messageBoxService.ShowErrorAsync("Invoice Send Failed".Translate(), message);
+        }
     }
 
     #endregion
