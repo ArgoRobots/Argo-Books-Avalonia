@@ -125,16 +125,20 @@ public partial class SetupChecklistViewModel : ViewModelBase
         RefreshCompletionState();
 
         var tutorialService = TutorialService.Instance;
+        tutorialService.SetCurrentCompanyPath(App.CompanyManager?.CurrentFilePath);
 
-        // If user explicitly dismissed the checklist, always hide it
         if (tutorialService.IsSetupChecklistDismissed)
         {
             IsVisible = false;
             return;
         }
 
-        // Show checklist if there are incomplete items, OR if all items are complete
-        // (so the user can see the completion state and close it manually)
+        if (!tutorialService.ShouldShowTutorialOnCurrentCompany())
+        {
+            IsVisible = false;
+            return;
+        }
+
         IsVisible = true;
     }
 

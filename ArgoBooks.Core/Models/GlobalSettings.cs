@@ -145,6 +145,12 @@ public class TutorialSettings
     public bool HasCompletedAppTour { get; set; } = false;
 
     /// <summary>
+    /// The file path of the company where the tutorial was started.
+    /// Tutorial will only show on this company until completed or dismissed.
+    /// </summary>
+    public string? TutorialStartedOnCompanyPath { get; set; }
+
+    /// <summary>
     /// Whether to show the setup checklist on the dashboard.
     /// </summary>
     public bool ShowSetupChecklist { get; set; } = true;
