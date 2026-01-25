@@ -22,6 +22,7 @@
             <controls:ModalOverlay.ModalContent>
                 <Border Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter=1000}"
                         Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter=750}"
+                        MinWidth="1000"
                         Margin="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
                         HorizontalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
                         VerticalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
@@ -60,14 +61,20 @@
                             <Border Grid.Column="0"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,0,1,0">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
                                     <StackPanel Margin="20" Spacing="16">
                                         <!-- Template Name -->
                                         <StackPanel Spacing="6">
                                             <TextBlock Text="{loc:Loc 'Template Name'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding TemplateName, Mode=TwoWay}"
                                                      Classes="form-input"
+                                                     BorderBrush="{Binding HasValidationMessage, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                      Watermark="{loc:Loc 'Enter template name...'}" />
+                                            <TextBlock Text="{Binding ValidationMessage}"
+                                                       FontSize="13"
+                                                       Foreground="#DC2626"
+                                                       IsVisible="{Binding HasValidationMessage}" />
                                         </StackPanel>
 
                                         <!-- Base Template -->
@@ -125,7 +132,7 @@
 
                                             <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'Image Path'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                <Grid ColumnDefinitions="*,Auto" MaxWidth="270">
+                                                <Grid ColumnDefinitions="*,Auto">
                                                     <TextBox Grid.Column="0"
                                                              Text="{Binding LogoPath}"
                                                              Watermark="{loc:Loc 'Path to logo image...'}"

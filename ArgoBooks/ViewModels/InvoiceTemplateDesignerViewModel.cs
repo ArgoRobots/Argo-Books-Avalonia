@@ -333,6 +333,16 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         UpdatePreview();
     }
 
+    partial void OnTemplateNameChanged(string value)
+    {
+        // Clear validation message when user starts typing
+        if (HasValidationMessage)
+        {
+            ValidationMessage = string.Empty;
+            HasValidationMessage = false;
+        }
+    }
+
     partial void OnPrimaryColorChanged(string value) => UpdatePreview();
     partial void OnSecondaryColorChanged(string value) => UpdatePreview();
     partial void OnAccentColorChanged(string value) => UpdatePreview();
