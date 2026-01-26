@@ -354,6 +354,7 @@
                                 <html:HtmlLabel x:Name="InvoiceHtmlPreview"
                                                 Text="{Binding PreviewHtml}"
                                                 Background="White"
+                                                HorizontalAlignment="Center"
                                                 MinWidth="640"
                                                 MaxWidth="700" />
                             </LayoutTransformControl>
