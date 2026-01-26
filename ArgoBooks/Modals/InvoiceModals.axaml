@@ -347,9 +347,7 @@
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Auto"
                                       Padding="0">
-                            <Panel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                   MinWidth="{Binding #PreviewScrollViewer.Bounds.Width}"
-                                   MinHeight="{Binding #PreviewScrollViewer.Bounds.Height}">
+                            <Panel x:Name="PreviewCenteringPanel">
                                 <LayoutTransformControl x:Name="PreviewZoomTransformControl"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center">

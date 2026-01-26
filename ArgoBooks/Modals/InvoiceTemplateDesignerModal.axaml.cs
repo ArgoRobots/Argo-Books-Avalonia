@@ -16,6 +16,7 @@ public partial class InvoiceTemplateDesignerModal : UserControl
     #region Private Fields
 
     private ScrollViewer? _previewScrollViewer;
+    private Panel? _previewCenteringPanel;
     private LayoutTransformControl? _zoomTransformControl;
     private Control? _htmlPreviewPanel;
     private OverscrollHelper? _overscrollHelper;
@@ -52,6 +53,10 @@ public partial class InvoiceTemplateDesignerModal : UserControl
             _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
             // Intercept right-click at tunnel level to prevent HtmlLabel's context menu
             _previewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            // Subscribe to size changes to update centering panel
+            _previewScrollViewer.SizeChanged += OnPreviewScrollViewerSizeChanged;
+            // Initial size update
+            UpdateCenteringPanelSize();
         }
 
         // Disable context menu on the preview area
@@ -100,6 +105,7 @@ public partial class InvoiceTemplateDesignerModal : UserControl
     private void FindControls()
     {
         _previewScrollViewer ??= this.FindControl<ScrollViewer>("PreviewScrollViewer");
+        _previewCenteringPanel ??= this.FindControl<Panel>("PreviewCenteringPanel");
         _zoomTransformControl ??= this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _htmlPreviewPanel ??= this.FindControl<Control>("HtmlPreviewPanel");
         _zoomSlider ??= this.FindControl<Slider>("ZoomSlider");
@@ -119,6 +125,20 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         }
 
         UpdateZoomDisplay();
+    }
+
+    private void OnPreviewScrollViewerSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        UpdateCenteringPanelSize();
+    }
+
+    private void UpdateCenteringPanelSize()
+    {
+        if (_previewScrollViewer != null && _previewCenteringPanel != null)
+        {
+            _previewCenteringPanel.MinWidth = _previewScrollViewer.Bounds.Width;
+            _previewCenteringPanel.MinHeight = _previewScrollViewer.Bounds.Height;
+        }
     }
 
     #region Zoom
