@@ -346,18 +346,20 @@
                         <ScrollViewer x:Name="PreviewScrollViewer"
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Auto"
-                                      HorizontalContentAlignment="Center"
                                       Padding="0">
-                            <LayoutTransformControl x:Name="PreviewZoomTransformControl"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center">
-                                <html:HtmlLabel x:Name="InvoiceHtmlPreview"
-                                                Text="{Binding PreviewHtml}"
-                                                Background="White"
-                                                HorizontalAlignment="Center"
-                                                MinWidth="640"
-                                                MaxWidth="700" />
-                            </LayoutTransformControl>
+                            <Panel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                   MinWidth="{Binding $parent[ScrollViewer].Viewport.Width}"
+                                   MinHeight="{Binding $parent[ScrollViewer].Viewport.Height}">
+                                <LayoutTransformControl x:Name="PreviewZoomTransformControl"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                    <html:HtmlLabel x:Name="InvoiceHtmlPreview"
+                                                    Text="{Binding PreviewHtml}"
+                                                    Background="White"
+                                                    MinWidth="640"
+                                                    MaxWidth="700" />
+                                </LayoutTransformControl>
+                            </Panel>
                         </ScrollViewer>
                     </Border>
 

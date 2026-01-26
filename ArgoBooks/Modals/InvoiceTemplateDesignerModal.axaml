@@ -259,19 +259,21 @@
                                     <ScrollViewer x:Name="PreviewScrollViewer"
                                                   HorizontalScrollBarVisibility="Auto"
                                                   VerticalScrollBarVisibility="Auto"
-                                                  HorizontalContentAlignment="Center"
                                                   Padding="0">
-                                        <LayoutTransformControl x:Name="ZoomTransformControl"
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center">
-                                            <!-- HtmlLabel renders the same HTML that the browser preview uses -->
-                                            <html:HtmlLabel x:Name="HtmlPreviewPanel"
-                                                            Text="{Binding PreviewHtml}"
-                                                            Background="White"
-                                                            HorizontalAlignment="Center"
-                                                            MinWidth="640"
-                                                            MaxWidth="700" />
-                                        </LayoutTransformControl>
+                                        <Panel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                               MinWidth="{Binding $parent[ScrollViewer].Viewport.Width}"
+                                               MinHeight="{Binding $parent[ScrollViewer].Viewport.Height}">
+                                            <LayoutTransformControl x:Name="ZoomTransformControl"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center">
+                                                <!-- HtmlLabel renders the same HTML that the browser preview uses -->
+                                                <html:HtmlLabel x:Name="HtmlPreviewPanel"
+                                                                Text="{Binding PreviewHtml}"
+                                                                Background="White"
+                                                                MinWidth="640"
+                                                                MaxWidth="700" />
+                                            </LayoutTransformControl>
+                                        </Panel>
                                     </ScrollViewer>
                                 </Border>
 
