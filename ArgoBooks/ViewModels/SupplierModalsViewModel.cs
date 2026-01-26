@@ -29,6 +29,12 @@ public partial class SupplierModalsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isFilterModalOpen;
 
+    [ObservableProperty]
+    private bool _hasValidationMessage;
+
+    [ObservableProperty]
+    private string _validationMessage = string.Empty;
+
     #endregion
 
     #region Modal Form Fields
@@ -381,6 +387,7 @@ public partial class SupplierModalsViewModel : ObservableObject
         ModalSupplierNameError = null;
         ModalEmailError = null;
         ModalPhoneError = null;
+        HasValidationMessage = false;
     }
 
     private bool ValidateModal()
@@ -422,6 +429,7 @@ public partial class SupplierModalsViewModel : ObservableObject
             isValid = false;
         }
 
+        HasValidationMessage = !isValid;
         return isValid;
     }
 

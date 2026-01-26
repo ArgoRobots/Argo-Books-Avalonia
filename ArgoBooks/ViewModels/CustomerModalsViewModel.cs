@@ -31,6 +31,12 @@ public partial class CustomerModalsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isHistoryFilterModalOpen;
 
+    [ObservableProperty]
+    private bool _hasValidationMessage;
+
+    [ObservableProperty]
+    private string _validationMessage = string.Empty;
+
     #endregion
 
     #region Modal Form Fields
@@ -709,6 +715,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         ModalFirstNameError = null;
         ModalLastNameError = null;
         ModalEmailError = null;
+        HasValidationMessage = false;
     }
 
     private bool ValidateModal()
@@ -737,6 +744,7 @@ public partial class CustomerModalsViewModel : ObservableObject
             }
         }
 
+        HasValidationMessage = !isValid;
         return isValid;
     }
 
