@@ -48,6 +48,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isPreviewModalOpen;
 
     [ObservableProperty]
+    private bool _isShowingPreview;
+
+    [ObservableProperty]
     private bool _isEditMode;
 
     [ObservableProperty]
@@ -743,15 +746,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Generate HTML preview using the same renderer as the template designer
         GeneratePreviewHtml();
 
-        IsCreateEditModalOpen = false;
-        IsPreviewModalOpen = true;
+        // Show preview in the same modal instead of opening a new one
+        IsShowingPreview = true;
     }
 
     [RelayCommand]
     private void ClosePreviewModal()
     {
-        IsPreviewModalOpen = false;
-        IsCreateEditModalOpen = true;
+        // Return to edit mode in the same modal
+        IsShowingPreview = false;
     }
 
     [RelayCommand]
@@ -864,7 +867,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
-        IsPreviewModalOpen = false;
+        IsCreateEditModalOpen = false;
+        IsShowingPreview = false;
         ResetForm();
     }
 
@@ -888,6 +892,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private void CloseCreateEditModal()
     {
         IsCreateEditModalOpen = false;
+        IsShowingPreview = false;
         ResetForm();
     }
 

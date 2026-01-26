@@ -83,8 +83,20 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private string? _logoBase64;
 
-    [ObservableProperty]
+    // Manual property to ensure clamping works correctly
     private int _logoWidth = 150;
+    public int LogoWidth
+    {
+        get => _logoWidth;
+        set
+        {
+            var clamped = Math.Clamp(value, 50, 300);
+            if (SetProperty(ref _logoWidth, clamped))
+            {
+                UpdatePreview();
+            }
+        }
+    }
 
     [ObservableProperty]
     private bool _hasLogo;
@@ -359,17 +371,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnShowNotesChanged(bool value) => UpdatePreview();
     partial void OnShowPaymentInstructionsChanged(bool value) => UpdatePreview();
     partial void OnShowDueDateProminentChanged(bool value) => UpdatePreview();
-    partial void OnLogoWidthChanged(int value)
-    {
-        // Clamp value to valid range
-        var clamped = Math.Clamp(value, 50, 300);
-        if (clamped != value)
-        {
-            LogoWidth = clamped;
-            return;
-        }
-        UpdatePreview();
-    }
     partial void OnLogoBase64Changed(string? value)
     {
         HasLogo = !string.IsNullOrEmpty(value);

@@ -130,6 +130,16 @@ public static class BoolConverters
     public static readonly IValueConverter ToFullscreenHeight = new FullscreenDimensionConverter(650);
 
     /// <summary>
+    /// Converts bool to width based on parameter "TrueValue,FalseValue".
+    /// </summary>
+    public static readonly IValueConverter ToWidth = new BoolToDoubleConverter();
+
+    /// <summary>
+    /// Converts bool to height based on parameter "TrueValue,FalseValue".
+    /// </summary>
+    public static readonly IValueConverter ToHeight = new BoolToDoubleConverter();
+
+    /// <summary>
     /// Converts bool (isFullscreen) to modal margin.
     /// Fullscreen = 24px margin, Normal = 0.
     /// </summary>
@@ -449,6 +459,34 @@ public class FullscreenDimensionConverter : IValueConverter
             return parsedValue;
 
         return _defaultValue;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converter that returns one of two double values based on a boolean.
+/// Parameter format: "TrueValue,FalseValue" (e.g., "850,750")
+/// </summary>
+public class BoolToDoubleConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool boolValue || parameter is not string paramString)
+            return 0.0;
+
+        var parts = paramString.Split(',');
+        if (parts.Length != 2)
+            return 0.0;
+
+        if (double.TryParse(parts[0].Trim(), out var trueValue) &&
+            double.TryParse(parts[1].Trim(), out var falseValue))
+        {
+            return boolValue ? trueValue : falseValue;
+        }
+
+        return 0.0;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
