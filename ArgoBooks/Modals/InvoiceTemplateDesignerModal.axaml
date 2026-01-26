@@ -7,7 +7,6 @@
              xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks.Converters"
-             xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
              xmlns:html="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.InvoiceTemplateDesignerModal"
@@ -22,6 +21,8 @@
             <controls:ModalOverlay.ModalContent>
                 <Border Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter=1000}"
                         Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter=750}"
+                        MinWidth="1000"
+                        MaxWidth="1300"
                         Margin="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
                         HorizontalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
                         VerticalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
@@ -60,14 +61,20 @@
                             <Border Grid.Column="0"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,0,1,0">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
                                     <StackPanel Margin="20" Spacing="16">
                                         <!-- Template Name -->
                                         <StackPanel Spacing="6">
                                             <TextBlock Text="{loc:Loc 'Template Name'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding TemplateName, Mode=TwoWay}"
                                                      Classes="form-input"
+                                                     BorderBrush="{Binding HasValidationMessage, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                      Watermark="{loc:Loc 'Enter template name...'}" />
+                                            <TextBlock Text="{Binding ValidationMessage}"
+                                                       FontSize="13"
+                                                       Foreground="#DC2626"
+                                                       IsVisible="{Binding HasValidationMessage}" />
                                         </StackPanel>
 
                                         <!-- Base Template -->
@@ -125,7 +132,7 @@
 
                                             <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'Image Path'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                <Grid ColumnDefinitions="*,Auto" MaxWidth="270">
+                                                <Grid ColumnDefinitions="*,Auto">
                                                     <TextBox Grid.Column="0"
                                                              Text="{Binding LogoPath}"
                                                              Watermark="{loc:Loc 'Path to logo image...'}"
@@ -150,16 +157,19 @@
                                                     IsVisible="{Binding HasLogo}"
                                                     HorizontalAlignment="Left" />
 
-                                            <Grid ColumnDefinitions="*,80" IsVisible="{Binding ShowLogo}">
-                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                <NumericUpDown Grid.Column="1"
-                                                               Value="{Binding LogoWidth}"
-                                                               Minimum="50"
-                                                               Maximum="300"
-                                                               FormatString="0"
-                                                               ShowButtonSpinner="False"
-                                                               Classes="form-input" />
-                                            </Grid>
+                                            <StackPanel Spacing="4" IsVisible="{Binding ShowLogo}">
+                                                <Grid ColumnDefinitions="*,80">
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Logo Width (px)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <NumericUpDown Grid.Column="1"
+                                                                   Value="{Binding LogoWidth}"
+                                                                   Minimum="50"
+                                                                   Maximum="300"
+                                                                   FormatString="0"
+                                                                   ShowButtonSpinner="False"
+                                                                   Classes="form-input" />
+                                                </Grid>
+                                                <TextBlock Text="{loc:Loc 'Range: 50-300 px'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
                                         </StackPanel>
 
                                         <Border Height="1" Background="{DynamicResource BorderBrush}" />
@@ -249,18 +259,19 @@
                                     <ScrollViewer x:Name="PreviewScrollViewer"
                                                   HorizontalScrollBarVisibility="Auto"
                                                   VerticalScrollBarVisibility="Auto"
-                                                  HorizontalContentAlignment="Center"
                                                   Padding="0">
-                                        <LayoutTransformControl x:Name="ZoomTransformControl"
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center">
-                                            <!-- HtmlLabel renders the same HTML that the browser preview uses -->
-                                            <html:HtmlLabel x:Name="HtmlPreviewPanel"
-                                                            Text="{Binding PreviewHtml}"
-                                                            Background="White"
-                                                            MinWidth="640"
-                                                            MaxWidth="700" />
-                                        </LayoutTransformControl>
+                                        <Panel x:Name="PreviewCenteringPanel">
+                                            <LayoutTransformControl x:Name="ZoomTransformControl"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center">
+                                                <!-- HtmlLabel renders the same HTML that the browser preview uses -->
+                                                <html:HtmlLabel x:Name="HtmlPreviewPanel"
+                                                                Text="{Binding PreviewHtml}"
+                                                                Background="White"
+                                                                MinWidth="640"
+                                                                MaxWidth="700" />
+                                            </LayoutTransformControl>
+                                        </Panel>
                                     </ScrollViewer>
                                 </Border>
 

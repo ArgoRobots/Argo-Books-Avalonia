@@ -16,6 +16,7 @@ public partial class InvoiceTemplateDesignerModal : UserControl
     #region Private Fields
 
     private ScrollViewer? _previewScrollViewer;
+    private Panel? _previewCenteringPanel;
     private LayoutTransformControl? _zoomTransformControl;
     private Control? _htmlPreviewPanel;
     private OverscrollHelper? _overscrollHelper;
@@ -52,6 +53,10 @@ public partial class InvoiceTemplateDesignerModal : UserControl
             _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
             // Intercept right-click at tunnel level to prevent HtmlLabel's context menu
             _previewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            // Subscribe to size changes to update centering panel
+            _previewScrollViewer.SizeChanged += OnPreviewScrollViewerSizeChanged;
+            // Initial size update
+            UpdateCenteringPanelSize();
         }
 
         // Disable context menu on the preview area
@@ -79,8 +84,12 @@ public partial class InvoiceTemplateDesignerModal : UserControl
                     _isPanning = true;
                     _panStartPoint = e.GetPosition(this);
                     _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
-                    e.Pointer.Capture(this);
-                    Cursor = new Cursor(StandardCursorType.Hand);
+                    e.Pointer.Capture(_previewScrollViewer);
+                    // Set cursor on all relevant controls to ensure hand cursor shows
+                    var handCursor = new Cursor(StandardCursorType.Hand);
+                    _previewScrollViewer.Cursor = handCursor;
+                    if (_htmlPreviewPanel != null) _htmlPreviewPanel.Cursor = handCursor;
+                    if (_zoomTransformControl != null) _zoomTransformControl.Cursor = handCursor;
                     e.Handled = true; // Prevent HtmlLabel from receiving the event
                 }
             }
@@ -96,6 +105,7 @@ public partial class InvoiceTemplateDesignerModal : UserControl
     private void FindControls()
     {
         _previewScrollViewer ??= this.FindControl<ScrollViewer>("PreviewScrollViewer");
+        _previewCenteringPanel ??= this.FindControl<Panel>("PreviewCenteringPanel");
         _zoomTransformControl ??= this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _htmlPreviewPanel ??= this.FindControl<Control>("HtmlPreviewPanel");
         _zoomSlider ??= this.FindControl<Slider>("ZoomSlider");
@@ -115,6 +125,20 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         }
 
         UpdateZoomDisplay();
+    }
+
+    private void OnPreviewScrollViewerSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        UpdateCenteringPanelSize();
+    }
+
+    private void UpdateCenteringPanelSize()
+    {
+        if (_previewScrollViewer != null && _previewCenteringPanel != null)
+        {
+            _previewCenteringPanel.MinWidth = _previewScrollViewer.Bounds.Width;
+            _previewCenteringPanel.MinHeight = _previewScrollViewer.Bounds.Height;
+        }
     }
 
     #region Zoom
@@ -351,7 +375,10 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         {
             _isPanning = false;
             e.Pointer.Capture(null);
-            Cursor = Cursor.Default;
+            // Reset cursors on all controls
+            if (_previewScrollViewer != null) _previewScrollViewer.Cursor = Cursor.Default;
+            if (_htmlPreviewPanel != null) _htmlPreviewPanel.Cursor = Cursor.Default;
+            if (_zoomTransformControl != null) _zoomTransformControl.Cursor = Cursor.Default;
 
             if (_overscrollHelper?.HasOverscroll == true)
             {

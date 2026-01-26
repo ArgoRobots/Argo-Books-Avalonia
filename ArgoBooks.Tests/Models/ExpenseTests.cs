@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using Xunit;

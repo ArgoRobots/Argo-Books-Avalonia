@@ -3,7 +3,6 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Data;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;

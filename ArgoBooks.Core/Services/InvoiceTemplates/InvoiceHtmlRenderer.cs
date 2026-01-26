@@ -124,7 +124,7 @@ public partial class InvoiceHtmlRenderer
         // Bill to
         sb.AppendLine("BILL TO:");
         sb.AppendLine(customer?.Name ?? "Unknown Customer");
-        var customerAddress = customer?.Address?.ToString();
+        var customerAddress = customer?.Address.ToString();
         if (!string.IsNullOrWhiteSpace(customerAddress))
             sb.AppendLine(customerAddress);
         if (!string.IsNullOrWhiteSpace(customer?.Email))

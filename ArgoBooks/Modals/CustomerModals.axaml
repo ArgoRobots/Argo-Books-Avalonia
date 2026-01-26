@@ -146,10 +146,18 @@
 
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="{loc:Loc 'Add Customer'}" Command="{Binding SaveNewCustomerCommand}" />
-                        </StackPanel>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{loc:Loc 'Please enter all required fields'}"
+                                       Foreground="#DC2626"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding HasValidationMessage}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseAddModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Add Customer'}" Command="{Binding SaveNewCustomerCommand}" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
                 </Grid>
                 </Border>
@@ -266,10 +274,18 @@
 
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseEditModalCommand}" />
-                            <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedCustomerCommand}" />
-                        </StackPanel>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{loc:Loc 'Please enter all required fields'}"
+                                       Foreground="#DC2626"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding HasValidationMessage}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseEditModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedCustomerCommand}" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
                 </Grid>
                 </Border>

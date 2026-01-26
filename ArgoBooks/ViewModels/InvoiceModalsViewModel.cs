@@ -7,7 +7,6 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -45,7 +44,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isHistoryModalOpen;
 
     [ObservableProperty]
-    private bool _isPreviewModalOpen;
+    private bool _isShowingPreview;
 
     [ObservableProperty]
     private bool _isEditMode;
@@ -178,16 +177,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #endregion
 
-    #region Delete Confirmation
-
-    [ObservableProperty]
-    private string _deleteInvoiceId = string.Empty;
-
-    [ObservableProperty]
-    private string _deleteInvoiceAmount = string.Empty;
-
-    #endregion
-
     #region Filter Modal Fields
 
     [ObservableProperty]
@@ -286,7 +275,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData?.InvoiceTemplates == null || companyData.InvoiceTemplates.Count == 0)
         {
             // Create default templates if none exist
-            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
             foreach (var template in defaultTemplates)
             {
                 TemplateOptions.Add(template);
@@ -627,7 +616,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (template == null)
         {
             // Use default template if none selected
-            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
 
@@ -659,11 +648,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         previewInvoice.Balance = previewInvoice.Total;
 
         // Render HTML using the same renderer as the template designer
-        var renderer = new Core.Services.InvoiceTemplates.InvoiceHtmlRenderer();
+        var renderer = new InvoiceHtmlRenderer();
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData != null)
         {
-            var currencySymbol = Services.CurrencyService.GetSymbol(companySettings.Localization.Currency);
+            var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
             PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
         }
         else
@@ -676,7 +665,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private async Task OpenPreviewInBrowser()
     {
         if (string.IsNullOrEmpty(PreviewHtml)) return;
-        await Core.Services.InvoiceTemplates.InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "invoice-preview");
+        await InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "invoice-preview");
     }
 
     [RelayCommand]
@@ -743,15 +732,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Generate HTML preview using the same renderer as the template designer
         GeneratePreviewHtml();
 
-        IsCreateEditModalOpen = false;
-        IsPreviewModalOpen = true;
+        // Show preview in the same modal instead of opening a new one
+        IsShowingPreview = true;
     }
 
     [RelayCommand]
     private void ClosePreviewModal()
     {
-        IsPreviewModalOpen = false;
-        IsCreateEditModalOpen = true;
+        // Return to edit mode in the same modal
+        IsShowingPreview = false;
     }
 
     [RelayCommand]
@@ -864,7 +853,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
-        IsPreviewModalOpen = false;
+        IsCreateEditModalOpen = false;
+        IsShowingPreview = false;
         ResetForm();
     }
 
@@ -888,6 +878,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private void CloseCreateEditModal()
     {
         IsCreateEditModalOpen = false;
+        IsShowingPreview = false;
         ResetForm();
     }
 

@@ -83,8 +83,20 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private string? _logoBase64;
 
-    [ObservableProperty]
+    // Manual property to ensure clamping works correctly
     private int _logoWidth = 150;
+    public int LogoWidth
+    {
+        get => _logoWidth;
+        set
+        {
+            var clamped = Math.Clamp(value, 50, 300);
+            if (SetProperty(ref _logoWidth, clamped))
+            {
+                UpdatePreview();
+            }
+        }
+    }
 
     [ObservableProperty]
     private bool _hasLogo;
@@ -145,14 +157,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         "system-ui, -apple-system, sans-serif",
         "'Courier New', Courier, monospace"
     ];
-
-    #endregion
-
-    #region Constructor
-
-    public InvoiceTemplateDesignerViewModel()
-    {
-    }
 
     #endregion
 
@@ -276,7 +280,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         try
         {
-            var bytes = System.IO.File.ReadAllBytes(filePath);
+            var bytes = File.ReadAllBytes(filePath);
             LogoBase64 = Convert.ToBase64String(bytes);
             LogoPath = filePath;
             HasLogo = true;
@@ -333,6 +337,16 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         UpdatePreview();
     }
 
+    partial void OnTemplateNameChanged(string value)
+    {
+        // Clear validation message when user starts typing
+        if (HasValidationMessage)
+        {
+            ValidationMessage = string.Empty;
+            HasValidationMessage = false;
+        }
+    }
+
     partial void OnPrimaryColorChanged(string value) => UpdatePreview();
     partial void OnSecondaryColorChanged(string value) => UpdatePreview();
     partial void OnAccentColorChanged(string value) => UpdatePreview();
@@ -349,7 +363,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnShowNotesChanged(bool value) => UpdatePreview();
     partial void OnShowPaymentInstructionsChanged(bool value) => UpdatePreview();
     partial void OnShowDueDateProminentChanged(bool value) => UpdatePreview();
-    partial void OnLogoWidthChanged(int value) => UpdatePreview();
     partial void OnLogoBase64Changed(string? value)
     {
         HasLogo = !string.IsNullOrEmpty(value);
@@ -480,25 +493,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         HasLogo = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
-    }
-
-    /// <summary>
-    /// Sets the logo from a file (called from view code-behind after file selection).
-    /// </summary>
-    public async Task SetLogoFromFileAsync(string filePath)
-    {
-        try
-        {
-            var bytes = await File.ReadAllBytesAsync(filePath);
-            LogoBase64 = Convert.ToBase64String(bytes);
-            LogoPath = filePath;
-            HasLogo = true;
-            UpdatePreview();
-        }
-        catch
-        {
-            // Handle error
-        }
     }
 
     #endregion

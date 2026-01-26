@@ -1,7 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 

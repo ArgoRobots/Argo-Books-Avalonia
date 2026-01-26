@@ -13,7 +13,9 @@
             CornerRadius="{StaticResource RadiusLg}"
             MinWidth="320"
             MaxWidth="480"
-            Padding="24">
+            Padding="24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
         <Grid RowDefinitions="Auto,*,Auto">
             <!-- Header with Icon and Title -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
@@ -98,21 +100,21 @@
                         Content="{Binding TertiaryButtonText, RelativeSource={RelativeSource AncestorType=controls:MessageBox}}"
                         Command="{Binding TertiaryCommand, RelativeSource={RelativeSource AncestorType=controls:MessageBox}}"
                         IsVisible="{Binding TertiaryButtonText, RelativeSource={RelativeSource AncestorType=controls:MessageBox}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                        MinWidth="80" />
+                        Width="100" />
 
                 <!-- Secondary/No Button -->
                 <Button Classes="secondary"
                         Content="{Binding SecondaryButtonText, RelativeSource={RelativeSource AncestorType=controls:MessageBox}}"
                         Command="{Binding SecondaryCommand, RelativeSource={RelativeSource AncestorType=controls:MessageBox}}"
                         IsVisible="{Binding SecondaryButtonText, RelativeSource={RelativeSource AncestorType=controls:MessageBox}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                        MinWidth="80" />
+                        Width="100" />
 
                 <!-- Primary/OK/Yes Button -->
                 <controls:ArgoButton x:Name="PrimaryButton"
                                      Text="{Binding PrimaryButtonText, RelativeSource={RelativeSource AncestorType=controls:MessageBox}}"
                                      Command="{Binding PrimaryCommand, RelativeSource={RelativeSource AncestorType=controls:MessageBox}}"
                                      IsVisible="{Binding PrimaryButtonText, RelativeSource={RelativeSource AncestorType=controls:MessageBox}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                     MinWidth="80">
+                                     Width="100">
                     <controls:ArgoButton.Styles>
                         <Style Selector="controls|ArgoButton.info">
                             <Setter Property="Variant" Value="Primary" />

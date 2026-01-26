@@ -8,6 +8,8 @@
              x:DataType="controls:ArgoButton">
 
     <Button x:Name="InnerButton"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
             Classes.primary="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Primary}}"
             Classes.secondary="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Secondary}}"
             Classes.ghost="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Ghost}}"
