@@ -359,7 +359,17 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnShowNotesChanged(bool value) => UpdatePreview();
     partial void OnShowPaymentInstructionsChanged(bool value) => UpdatePreview();
     partial void OnShowDueDateProminentChanged(bool value) => UpdatePreview();
-    partial void OnLogoWidthChanged(int value) => UpdatePreview();
+    partial void OnLogoWidthChanged(int value)
+    {
+        // Clamp value to valid range
+        var clamped = Math.Clamp(value, 50, 300);
+        if (clamped != value)
+        {
+            LogoWidth = clamped;
+            return;
+        }
+        UpdatePreview();
+    }
     partial void OnLogoBase64Changed(string? value)
     {
         HasLogo = !string.IsNullOrEmpty(value);
