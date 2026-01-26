@@ -495,24 +495,5 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         HasValidationMessage = false;
     }
 
-    /// <summary>
-    /// Sets the logo from a file (called from view code-behind after file selection).
-    /// </summary>
-    public async Task SetLogoFromFileAsync(string filePath)
-    {
-        try
-        {
-            var bytes = await File.ReadAllBytesAsync(filePath);
-            LogoBase64 = Convert.ToBase64String(bytes);
-            LogoPath = filePath;
-            HasLogo = true;
-            UpdatePreview();
-        }
-        catch
-        {
-            // Handle error
-        }
-    }
-
     #endregion
 }

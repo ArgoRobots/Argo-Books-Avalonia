@@ -44,9 +44,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isHistoryModalOpen;
 
     [ObservableProperty]
-    private bool _isPreviewModalOpen;
-
-    [ObservableProperty]
     private bool _isShowingPreview;
 
     [ObservableProperty]
@@ -177,16 +174,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Navigate to Products page with openAddModal parameter (Sales tab)
         App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 1 } });
     }
-
-    #endregion
-
-    #region Delete Confirmation
-
-    [ObservableProperty]
-    private string _deleteInvoiceId = string.Empty;
-
-    [ObservableProperty]
-    private string _deleteInvoiceAmount = string.Empty;
 
     #endregion
 
