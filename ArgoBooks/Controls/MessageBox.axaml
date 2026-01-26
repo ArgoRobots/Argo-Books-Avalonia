@@ -13,7 +13,9 @@
             CornerRadius="{StaticResource RadiusLg}"
             MinWidth="320"
             MaxWidth="480"
-            Padding="24">
+            Padding="24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
         <Grid RowDefinitions="Auto,*,Auto">
             <!-- Header with Icon and Title -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
