@@ -160,14 +160,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     #endregion
 
-    #region Constructor
-
-    public InvoiceTemplateDesignerViewModel()
-    {
-    }
-
-    #endregion
-
     #region Open Modal
 
     public void OpenCreateModal()
@@ -288,7 +280,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         try
         {
-            var bytes = System.IO.File.ReadAllBytes(filePath);
+            var bytes = File.ReadAllBytes(filePath);
             LogoBase64 = Convert.ToBase64String(bytes);
             LogoPath = filePath;
             HasLogo = true;

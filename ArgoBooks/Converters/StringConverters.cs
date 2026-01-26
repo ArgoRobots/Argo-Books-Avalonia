@@ -1,5 +1,4 @@
 using Avalonia.Data.Converters;
-using ArgoBooks.Services;
 
 namespace ArgoBooks.Converters;
 

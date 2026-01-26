@@ -1,4 +1,3 @@
-using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;

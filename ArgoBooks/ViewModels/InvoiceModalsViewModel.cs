@@ -7,7 +7,6 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -289,7 +288,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData?.InvoiceTemplates == null || companyData.InvoiceTemplates.Count == 0)
         {
             // Create default templates if none exist
-            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
             foreach (var template in defaultTemplates)
             {
                 TemplateOptions.Add(template);
@@ -630,7 +629,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (template == null)
         {
             // Use default template if none selected
-            var defaultTemplates = Core.Services.InvoiceTemplates.InvoiceTemplateFactory.CreateDefaultTemplates();
+            var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
 
@@ -662,11 +661,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         previewInvoice.Balance = previewInvoice.Total;
 
         // Render HTML using the same renderer as the template designer
-        var renderer = new Core.Services.InvoiceTemplates.InvoiceHtmlRenderer();
+        var renderer = new InvoiceHtmlRenderer();
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData != null)
         {
-            var currencySymbol = Services.CurrencyService.GetSymbol(companySettings.Localization.Currency);
+            var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
             PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
         }
         else
@@ -679,7 +678,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private async Task OpenPreviewInBrowser()
     {
         if (string.IsNullOrEmpty(PreviewHtml)) return;
-        await Core.Services.InvoiceTemplates.InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "invoice-preview");
+        await InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "invoice-preview");
     }
 
     [RelayCommand]

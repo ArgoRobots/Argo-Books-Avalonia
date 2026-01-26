@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Invoices;
@@ -151,10 +150,8 @@ public class InvoiceEmailService : IDisposable
             WriteIndented = false
         });
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InvoiceEmailSettings.ApiEndpoint)
-        {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
-        };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InvoiceEmailSettings.ApiEndpoint);
+        httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
         // Add API key authentication (from .env file)
         var apiKey = InvoiceEmailSettings.ApiKey;

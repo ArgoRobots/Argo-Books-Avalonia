@@ -294,7 +294,7 @@
                                                    Margin="16,0,0,0" />
                                     </StackPanel>
 
-                                    <Border Grid.Row="2" Grid.ColumnSpan="2"
+                                    <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                                             Height="1"
                                             Background="{DynamicResource BorderBrush}"
                                             Margin="0,12" />
