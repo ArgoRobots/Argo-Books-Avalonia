@@ -12,9 +12,10 @@
         <FileVersion>2.0.0</FileVersion>
     </PropertyGroup>
 
-    <!-- Define WINDOWS constant when targeting Windows -->
+    <!-- Define WINDOWS constant and enable Windows Forms when targeting Windows -->
     <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
         <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+        <UseWindowsForms>true</UseWindowsForms>
     </PropertyGroup>
 
     <ItemGroup>
