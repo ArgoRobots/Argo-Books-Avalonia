@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Controls.InvoicePreviewControl">
+
+    <Panel x:Name="RootPanel">
+        <!-- Windows: WebView2 content will be injected here programmatically -->
+
+        <!-- Non-Windows Fallback (shown when platform is not Windows) -->
+        <Border x:Name="FallbackPanel"
+                Background="{DynamicResource SurfaceAltBrush}"
+                CornerRadius="8"
+                Padding="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="False">
+            <StackPanel Spacing="20" MaxWidth="400" HorizontalAlignment="Center">
+                <!-- Icon -->
+                <Border Background="{DynamicResource PrimaryBrush}"
+                        Opacity="0.1"
+                        CornerRadius="50"
+                        Width="80" Height="80"
+                        HorizontalAlignment="Center">
+                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                              Width="40" Height="40"
+                              Foreground="{DynamicResource PrimaryBrush}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Title -->
+                <TextBlock Text="{loc:Loc 'Preview Not Available'}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           TextAlignment="Center"
+                           HorizontalAlignment="Center" />
+
+                <!-- Message -->
+                <TextBlock TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center">
+                    <Run Text="{loc:Loc 'The in-app invoice preview is currently only available on Windows.'}" />
+                    <LineBreak />
+                    <LineBreak />
+                    <Run Text="{loc:Loc 'macOS and Linux support is in development.'}" />
+                </TextBlock>
+
+                <!-- View in Browser Button -->
+                <Button x:Name="OpenInBrowserButton"
+                        Classes="primary-button"
+                        HorizontalAlignment="Center"
+                        Padding="20,12"
+                        Click="OpenInBrowserButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{x:Static icons:Icons.OpenInNew}" Width="16" Height="16" />
+                        <TextBlock Text="{loc:Loc 'View in Browser'}" FontSize="14" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Additional note -->
+                <TextBlock Text="{loc:Loc 'The browser preview shows the exact same invoice.'}"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           TextAlignment="Center"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+    </Panel>
+</UserControl>

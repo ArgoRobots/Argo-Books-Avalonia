@@ -27,8 +27,8 @@
         <!-- Color Picker -->
         <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.7" />
 
-        <!-- HTML Rendering -->
-        <PackageVersion Include="Avalonia.HtmlRenderer" Version="11.2.0" />
+        <!-- HTML Rendering (WebView2 for Windows) -->
+        <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
 
         <!-- Graphics (for report rendering) -->
         <PackageVersion Include="SkiaSharp" Version="3.116.1" />
