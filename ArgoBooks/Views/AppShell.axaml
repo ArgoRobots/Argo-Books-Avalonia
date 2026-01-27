@@ -134,6 +134,9 @@
         <!-- Prediction Info Modal -->
         <modals:PredictionInfoModal DataContext="{Binding PredictionInfoModalViewModel}" />
 
+        <!-- Past Predictions Modal -->
+        <modals:PastPredictionsModal DataContext="{Binding PastPredictionsModalViewModel}" />
+
         <!-- Import Modal -->
         <modals:ImportModal DataContext="{Binding ImportModalViewModel}" />
 
