@@ -1,0 +1,365 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.PastPredictionsModal"
+             x:DataType="vm:PastPredictionsModalViewModel">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay.ModalContent>
+            <!-- Modal Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                MaxWidth="900"
+                MaxHeight="700"
+                Margin="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Modal Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Past Predictions"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Historical forecast accuracy and comparison to actual results"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Width="32" Height="32"
+                                Command="{Binding CloseCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Modal Content -->
+                <ScrollViewer Grid.Row="1"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="20" Margin="24">
+                        <!-- Summary Stats -->
+                        <Grid ColumnDefinitions="*,*,*" IsVisible="{Binding HasPredictions}">
+                            <!-- Overall Accuracy -->
+                            <Border Grid.Column="0"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="0,0,8,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="Overall Accuracy"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding OverallAccuracy}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="{Binding AccuracyTrendIcon}"
+                                                   FontSize="12"
+                                                   FontWeight="Bold">
+                                            <TextBlock.Foreground>
+                                                <SolidColorBrush Color="{Binding AccuracyTrendColor}" />
+                                            </TextBlock.Foreground>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding AccuracyTrend}"
+                                                   FontSize="12">
+                                            <TextBlock.Foreground>
+                                                <SolidColorBrush Color="{Binding AccuracyTrendColor}" />
+                                            </TextBlock.Foreground>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Real Predictions Count -->
+                            <Border Grid.Column="1"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="4,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="Live Predictions"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding ValidatedCount}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="#3B82F6"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="validated"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Backtest Count -->
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="8,0,0,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="Backtested"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding BacktestCount}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="#8B5CF6"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="simulated"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Legend -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="12"
+                                IsVisible="{Binding HasPredictions}">
+                            <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Width="12" Height="12" CornerRadius="6" Background="#3B82F6" />
+                                    <TextBlock Text="Live Prediction"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="— Made before the period, then validated"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Width="12" Height="12" CornerRadius="6" Background="#8B5CF6" />
+                                    <TextBlock Text="Backtested"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="— Simulated using historical data"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- No Predictions Message -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="32"
+                                IsVisible="{Binding !HasPredictions}">
+                            <StackPanel HorizontalAlignment="Center" Spacing="12">
+                                <Border Width="56" Height="56"
+                                        CornerRadius="28"
+                                        Background="{DynamicResource BackgroundBrush}"
+                                        HorizontalAlignment="Center">
+                                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                              Width="28" Height="28"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </Border>
+                                <TextBlock Text="No Past Predictions"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding NoPredictionsMessage}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           MaxWidth="400"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Predictions Table -->
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                IsVisible="{Binding HasPredictions}">
+                            <StackPanel>
+                                <!-- Table Header -->
+                                <Border Padding="16,12"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8,8,0,0">
+                                    <Grid ColumnDefinitions="100,80,100,100,80,100,100,80,80">
+                                        <TextBlock Grid.Column="0" Text="Period" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="Type" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="2" Text="Forecast Rev" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="3" Text="Actual Rev" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="4" Text="Accuracy" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="5" Text="Forecast Exp" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="6" Text="Actual Exp" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="7" Text="Accuracy" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="8" Text="Confidence" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Table Rows -->
+                                <ItemsControl ItemsSource="{Binding Predictions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:PastPredictionItemViewModel">
+                                            <Border Padding="16,10"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="0,0,0,1">
+                                                <Grid ColumnDefinitions="100,80,100,100,80,100,100,80,80">
+                                                    <!-- Period -->
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding PeriodLabel}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- Type Badge -->
+                                                    <Border Grid.Column="1"
+                                                            CornerRadius="4"
+                                                            Padding="6,2"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center">
+                                                        <Border.Background>
+                                                            <SolidColorBrush Color="{Binding TypeBadgeColor}" Opacity="0.15" />
+                                                        </Border.Background>
+                                                        <TextBlock Text="{Binding TypeLabel}"
+                                                                   FontSize="10"
+                                                                   FontWeight="SemiBold"
+                                                                   VerticalAlignment="Center">
+                                                            <TextBlock.Foreground>
+                                                                <SolidColorBrush Color="{Binding TypeBadgeColor}" />
+                                                            </TextBlock.Foreground>
+                                                        </TextBlock>
+                                                    </Border>
+
+                                                    <!-- Forecasted Revenue -->
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding ForecastedRevenue}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- Actual Revenue -->
+                                                    <TextBlock Grid.Column="3"
+                                                               Text="{Binding ActualRevenue}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- Revenue Accuracy -->
+                                                    <TextBlock Grid.Column="4"
+                                                               Text="{Binding RevenueAccuracy}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Foreground>
+                                                            <SolidColorBrush Color="{Binding AccuracyColor}" />
+                                                        </TextBlock.Foreground>
+                                                    </TextBlock>
+
+                                                    <!-- Forecasted Expenses -->
+                                                    <TextBlock Grid.Column="5"
+                                                               Text="{Binding ForecastedExpenses}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- Actual Expenses -->
+                                                    <TextBlock Grid.Column="6"
+                                                               Text="{Binding ActualExpenses}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- Expenses Accuracy -->
+                                                    <TextBlock Grid.Column="7"
+                                                               Text="{Binding ExpensesAccuracy}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- Confidence -->
+                                                    <TextBlock Grid.Column="8"
+                                                               Text="{Binding ConfidenceScore}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Info Note -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="16"
+                                IsVisible="{Binding HasPredictions}">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <PathIcon Grid.Column="0"
+                                          Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          VerticalAlignment="Top"
+                                          Margin="0,2,12,0" />
+                                <TextBlock Grid.Column="1"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Live predictions were made before the forecast period began and then compared to actual results. Backtested predictions were simulated using historical data to help calibrate the forecasting model. Both types contribute to the overall accuracy measurement." />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Modal Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Button Classes="primary-button"
+                            HorizontalAlignment="Right"
+                            Command="{Binding CloseCommand}">
+                        <TextBlock Text="Close" />
+                    </Button>
+                </Border>
+            </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

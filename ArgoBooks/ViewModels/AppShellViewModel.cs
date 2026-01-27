@@ -104,6 +104,11 @@ public partial class AppShellViewModel : ViewModelBase
     public PredictionInfoModalViewModel PredictionInfoModalViewModel { get; }
 
     /// <summary>
+    /// Gets the past predictions modal view model.
+    /// </summary>
+    public PastPredictionsModalViewModel PastPredictionsModalViewModel { get; }
+
+    /// <summary>
     /// Gets the import modal view model.
     /// </summary>
     public ImportModalViewModel ImportModalViewModel { get; }
@@ -323,6 +328,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create prediction info modal
         PredictionInfoModalViewModel = new PredictionInfoModalViewModel();
+
+        // Create past predictions modal
+        PastPredictionsModalViewModel = new PastPredictionsModalViewModel();
 
         // Create import modal
         ImportModalViewModel = new ImportModalViewModel();

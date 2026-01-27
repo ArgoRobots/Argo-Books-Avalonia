@@ -366,6 +366,15 @@ public partial class InsightsPageViewModel : ViewModelBase
         App.PredictionInfoModalViewModel?.OpenCommand.Execute(null);
     }
 
+    /// <summary>
+    /// Opens the past predictions modal.
+    /// </summary>
+    [RelayCommand]
+    private void ShowPastPredictions()
+    {
+        App.PastPredictionsModalViewModel?.OpenCommand.Execute(null);
+    }
+
     #endregion
 
     #region Insights Period
