@@ -12,11 +12,15 @@
         <FileVersion>2.0.0</FileVersion>
     </PropertyGroup>
 
-    <!-- Define WINDOWS constant and enable Windows Forms when targeting Windows -->
+    <!-- Define WINDOWS constant when targeting Windows -->
     <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
         <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-        <UseWindowsForms>true</UseWindowsForms>
     </PropertyGroup>
+
+    <!-- Add Windows Forms framework reference for WebView2 (without implicit usings) -->
+    <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
+        <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+    </ItemGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
