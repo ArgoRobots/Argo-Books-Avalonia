@@ -23,8 +23,6 @@ public class CompanySettings
 
     public CompanyInfo Company { get; set; } = new();
     public LocalizationSettings Localization { get; set; } = new();
-    public AppearanceSettings Appearance { get; set; } = new();
-    public EnabledModulesSettings EnabledModules { get; set; } = new();
     public NotificationSettings Notifications { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
     public InvoiceEmailSettings InvoiceEmail { get; set; } = new();
@@ -49,21 +47,6 @@ public class LocalizationSettings
     public string Language { get; set; } = "English";
     public string Currency { get; set; } = "USD";
     public string DateFormat { get; set; } = "MM/DD/YYYY";
-}
-
-public class AppearanceSettings
-{
-    public string Theme { get; set; } = "System";
-    public string AccentColor { get; set; } = "Blue";
-}
-
-public class EnabledModulesSettings
-{
-    public bool Invoices { get; set; } = true;
-    public bool Payments { get; set; } = true;
-    public bool Inventory { get; set; } = true;
-    public bool Employees { get; set; } = true;
-    public bool Rentals { get; set; } = true;
 }
 
 public class NotificationSettings

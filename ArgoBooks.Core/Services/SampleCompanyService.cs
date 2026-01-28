@@ -127,16 +127,6 @@ public class SampleCompanyService
 
         companyData.Settings.AppVersion = "2.0.0";
 
-        // Enable all modules so users can explore everything
-        companyData.Settings.EnabledModules = new EnabledModulesSettings
-        {
-            Invoices = true,
-            Payments = true,
-            Inventory = true,
-            Employees = true,
-            Rentals = true
-        };
-
         // Set localization defaults
         companyData.Settings.Localization = new LocalizationSettings
         {
