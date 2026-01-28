@@ -1,0 +1,165 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Controls.InvoicePreviewControl">
+
+    <Grid RowDefinitions="*,Auto">
+        <!-- Main content panel -->
+        <Panel x:Name="RootPanel" Grid.Row="0">
+            <!-- Windows: WebView2 content will be injected here programmatically -->
+
+            <!-- Non-Windows Fallback (shown when platform is not Windows) -->
+            <Border x:Name="FallbackPanel"
+                    Background="{DynamicResource SurfaceAltBrush}"
+                    CornerRadius="8"
+                    Padding="40"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsVisible="False">
+                <StackPanel Spacing="20" MaxWidth="400" HorizontalAlignment="Center">
+                    <!-- Icon -->
+                    <Border Background="{DynamicResource PrimaryBrush}"
+                            Opacity="0.1"
+                            CornerRadius="50"
+                            Width="80" Height="80"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                  Width="40" Height="40"
+                                  Foreground="{DynamicResource PrimaryBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- Title -->
+                    <TextBlock Text="{loc:Loc 'Preview Not Available'}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               TextAlignment="Center"
+                               HorizontalAlignment="Center" />
+
+                    <!-- Message -->
+                    <TextBlock TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center">
+                        <Run Text="{loc:Loc 'The in-app invoice preview is currently only available on Windows.'}" />
+                        <LineBreak />
+                        <LineBreak />
+                        <Run Text="{loc:Loc 'macOS and Linux support is in development.'}" />
+                    </TextBlock>
+
+                    <!-- View in Browser Button -->
+                    <Button x:Name="OpenInBrowserButton"
+                            Classes="primary-button"
+                            HorizontalAlignment="Center"
+                            Padding="20,12"
+                            Click="OpenInBrowserButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{x:Static icons:Icons.OpenInNew}" Width="16" Height="16" />
+                            <TextBlock Text="{loc:Loc 'View in Browser'}" FontSize="14" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Additional note -->
+                    <TextBlock Text="{loc:Loc 'The browser preview shows the exact same invoice.'}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               TextAlignment="Center"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Zoom Controls Toolbar (Windows only, shown at bottom) -->
+        <Border x:Name="ZoomToolbar"
+                Grid.Row="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="8,6"
+                IsVisible="False">
+            <Grid ColumnDefinitions="*,Auto,*">
+                <!-- Centered zoom controls -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <!-- Fit to Window -->
+                    <Button x:Name="FitToWindowButton"
+                            Classes="icon-button"
+                            ToolTip.Tip="{loc:Loc 'Fit to Window'}"
+                            Click="FitToWindow_Click"
+                            Padding="6">
+                        <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
+                                  Width="14" Height="14" />
+                    </Button>
+
+                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="4,2" />
+
+                    <!-- Zoom Out -->
+                    <Button x:Name="ZoomOutButton"
+                            Classes="icon-button"
+                            ToolTip.Tip="{loc:Loc 'Zoom Out'}"
+                            Click="ZoomOut_Click"
+                            Padding="6">
+                        <PathIcon Data="M19 13H5v-2h14v2z"
+                                  Width="14" Height="14" />
+                    </Button>
+
+                    <!-- Zoom Percentage Display -->
+                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="4"
+                            Padding="8,4"
+                            MinWidth="60">
+                        <TextBlock x:Name="ZoomPercentageText"
+                                   Text="100%"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- Zoom In -->
+                    <Button x:Name="ZoomInButton"
+                            Classes="icon-button"
+                            ToolTip.Tip="{loc:Loc 'Zoom In'}"
+                            Click="ZoomIn_Click"
+                            Padding="6">
+                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                  Width="14" Height="14" />
+                    </Button>
+
+                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="4,2" />
+
+                    <!-- Reset Zoom -->
+                    <Button x:Name="ResetZoomButton"
+                            Classes="icon-button"
+                            ToolTip.Tip="{loc:Loc 'Reset Zoom (100%)'}"
+                            Click="ResetZoom_Click"
+                            Padding="6"
+                            MinWidth="28"
+                            MinHeight="28">
+                        <TextBlock Text="1:1"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Right side hint -->
+                <TextBlock Grid.Column="2"
+                           Text="{loc:Loc 'Ctrl+Scroll to zoom'}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,4,0" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
