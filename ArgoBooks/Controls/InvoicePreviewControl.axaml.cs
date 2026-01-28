@@ -83,6 +83,10 @@ public partial class InvoicePreviewControl : UserControl
 
         if (change.Property == HtmlProperty && _isInitialized)
         {
+            // If Html is being set and we're visible but WebView doesn't exist, create it.
+            // This handles cases where the control is always visible (no IsVisible binding)
+            // like in the template designer modal.
+            EnsureWebViewCreatedIfVisible();
             UpdateWebViewContent();
         }
 
@@ -118,6 +122,23 @@ public partial class InvoicePreviewControl : UserControl
         {
             ShowFallback();
         }
+    }
+
+    private void EnsureWebViewCreatedIfVisible()
+    {
+#if WINDOWS
+        // Only create if we don't have a WebView yet and the control is effectively visible
+        if (_webView == null && IsEffectivelyVisible && !string.IsNullOrEmpty(Html))
+        {
+            InitializePlatformPreview();
+        }
+#else
+        // On non-Windows, ensure fallback is shown
+        if (IsEffectivelyVisible)
+        {
+            ShowFallback();
+        }
+#endif
     }
 
     private void DestroyWebView()
