@@ -12,6 +12,16 @@
         <FileVersion>2.0.0</FileVersion>
     </PropertyGroup>
 
+    <!-- Define WINDOWS constant when targeting Windows -->
+    <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
+        <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+    </PropertyGroup>
+
+    <!-- Add Windows Forms framework reference for WebView2 (without implicit usings) -->
+    <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
+        <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+    </ItemGroup>
+
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
@@ -40,8 +50,8 @@
         <!-- Color Picker -->
         <PackageReference Include="PixiEditor.ColorPicker.AvaloniaUI" />
 
-        <!-- HTML Rendering (for invoice template preview) -->
-        <PackageReference Include="Avalonia.HtmlRenderer" />
+        <!-- HTML Rendering (WebView2 for Windows only) -->
+        <PackageReference Include="Microsoft.Web.WebView2" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))" />
     </ItemGroup>
 
     <ItemGroup>
