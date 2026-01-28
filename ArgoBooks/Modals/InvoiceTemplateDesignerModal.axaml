@@ -254,10 +254,12 @@
                                 </Border>
 
                                 <!-- Preview container using InvoicePreviewControl -->
+                                <!-- IsVisible bound to IsOpen so WebView is destroyed when modal closes -->
                                 <controls:InvoicePreviewControl Grid.Row="1"
                                                                 Grid.RowSpan="2"
                                                                 Html="{Binding PreviewHtml}"
-                                                                OpenInBrowserCommand="{Binding PreviewInBrowserCommand}" />
+                                                                OpenInBrowserCommand="{Binding PreviewInBrowserCommand}"
+                                                                IsVisible="{Binding IsOpen}" />
                             </Grid>
                         </Grid>
 
