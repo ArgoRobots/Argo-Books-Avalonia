@@ -71,11 +71,10 @@ public partial class InvoicePreviewControl : UserControl
 
         _isInitialized = true;
 
-        // Only initialize WebView if control is actually effectively visible
-        if (IsEffectivelyVisible)
-        {
-            InitializePlatformPreview();
-        }
+        // IMPORTANT: Do NOT create WebView here!
+        // OnLoaded fires before bindings evaluate, so IsVisible may incorrectly be true.
+        // NativeControlHost windows don't respect Avalonia visibility, so we must only
+        // create the WebView when IsVisible explicitly changes to true.
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -88,15 +87,22 @@ public partial class InvoicePreviewControl : UserControl
         }
 
         // Handle visibility changes - NativeControlHost doesn't respect IsVisible,
-        // so we must manually create/destroy the WebView when visibility changes
+        // so we must manually create/destroy the WebView when visibility changes.
+        // We check for an explicit change from false to true to avoid the initial
+        // binding evaluation race condition.
         if (change.Property == IsVisibleProperty && _isInitialized)
         {
-            if (IsEffectivelyVisible)
+            bool wasVisible = change.OldValue is bool oldVal && oldVal;
+            bool isNowVisible = change.NewValue is bool newVal && newVal;
+
+            if (isNowVisible && !wasVisible)
             {
+                // Visibility changed from false to true - create WebView
                 InitializePlatformPreview();
             }
-            else
+            else if (!isNowVisible && wasVisible)
             {
+                // Visibility changed from true to false - destroy WebView
                 DestroyWebView();
             }
         }
