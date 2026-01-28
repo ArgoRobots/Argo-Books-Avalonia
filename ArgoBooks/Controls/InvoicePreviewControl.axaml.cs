@@ -69,16 +69,14 @@ public partial class InvoicePreviewControl : UserControl
         _rootPanel = this.FindControl<Panel>("RootPanel");
         _fallbackPanel = this.FindControl<Border>("FallbackPanel");
 
-        if (OperatingSystem.IsWindows())
-        {
-            InitializeWindowsWebView();
-        }
-        else
-        {
-            ShowFallback();
-        }
-
         _isInitialized = true;
+
+        // Only initialize WebView if control is actually visible
+        // NativeControlHost doesn't respect IsVisible, so we must handle it manually
+        if (IsVisible)
+        {
+            InitializePlatformPreview();
+        }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -89,6 +87,52 @@ public partial class InvoicePreviewControl : UserControl
         {
             UpdateWebViewContent();
         }
+        else if (change.Property == IsVisibleProperty && _isInitialized)
+        {
+            HandleVisibilityChanged(IsVisible);
+        }
+    }
+
+    private void HandleVisibilityChanged(bool isVisible)
+    {
+        if (isVisible)
+        {
+            InitializePlatformPreview();
+        }
+        else
+        {
+            DestroyWebView();
+        }
+    }
+
+    private void InitializePlatformPreview()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            InitializeWindowsWebView();
+        }
+        else
+        {
+            ShowFallback();
+        }
+    }
+
+    private void DestroyWebView()
+    {
+#if WINDOWS
+        if (_webViewHost != null && _rootPanel != null)
+        {
+            _rootPanel.Children.Remove(_webViewHost);
+        }
+
+        if (_webView != null)
+        {
+            _webView.Dispose();
+            _webView = null;
+            _webViewHost = null;
+            _isWebViewInitialized = false;
+        }
+#endif
     }
 
     private void ShowFallback()
@@ -102,6 +146,10 @@ public partial class InvoicePreviewControl : UserControl
     private void InitializeWindowsWebView()
     {
 #if WINDOWS
+        // Don't re-initialize if already exists
+        if (_webView != null)
+            return;
+
         try
         {
             _webView = new Microsoft.Web.WebView2.WinForms.WebView2();
@@ -178,15 +226,7 @@ public partial class InvoicePreviewControl : UserControl
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
-
-#if WINDOWS
-        if (_webView != null)
-        {
-            _webView.Dispose();
-            _webView = null;
-            _isWebViewInitialized = false;
-        }
-#endif
+        DestroyWebView();
     }
 }
 
