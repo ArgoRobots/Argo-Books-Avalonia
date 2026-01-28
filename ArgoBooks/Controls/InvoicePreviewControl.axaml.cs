@@ -71,24 +71,24 @@ public partial class InvoicePreviewControl : UserControl
 
         _isInitialized = true;
 
-        // Subscribe to effective visibility changes
-        // We use a property observer since IsEffectivelyVisible can change when ancestors change visibility
-        this.GetObservable(IsEffectivelyVisibleProperty).Subscribe(OnEffectiveVisibilityChanged);
+        // Subscribe to visibility changes on this control
+        // When IsVisible changes (bound to IsShowingPreview in the modal), check if we should show/hide WebView
+        // NativeControlHost doesn't respect IsVisible, so we must handle it manually
+        this.GetObservable(IsVisibleProperty).Subscribe(_ => OnVisibilityChanged());
 
         // Only initialize WebView if control is actually effectively visible
-        // NativeControlHost doesn't respect IsVisible, so we must handle it manually
         if (IsEffectivelyVisible)
         {
             InitializePlatformPreview();
         }
     }
 
-    private void OnEffectiveVisibilityChanged(bool isEffectivelyVisible)
+    private void OnVisibilityChanged()
     {
         if (!_isInitialized)
             return;
 
-        if (isEffectivelyVisible)
+        if (IsEffectivelyVisible)
         {
             InitializePlatformPreview();
         }
