@@ -58,6 +58,7 @@ public partial class InvoicePreviewControl : UserControl
     private Microsoft.Web.WebView2.WinForms.WebView2? _webView;
     private WebView2Host? _webViewHost;
     private bool _isWebViewInitialized;
+    private bool _isHandlingZoom;
 #endif
 
     public InvoicePreviewControl()
@@ -152,10 +153,11 @@ public partial class InvoicePreviewControl : UserControl
     private void DestroyWebView()
     {
 #if WINDOWS
-        // Unsubscribe from zoom changes
-        if (_webView?.CoreWebView2 != null)
+        // Unsubscribe from events
+        if (_webView != null)
         {
             _webView.ZoomFactorChanged -= OnZoomFactorChanged;
+            _webView.MouseWheel -= OnWebViewMouseWheel;
         }
 
         if (_webViewHost != null && _rootPanel != null)
@@ -235,10 +237,13 @@ public partial class InvoicePreviewControl : UserControl
             {
                 _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
                 _webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-                _webView.CoreWebView2.Settings.IsZoomControlEnabled = true; // Allow Ctrl+scroll zoom
+                _webView.CoreWebView2.Settings.IsZoomControlEnabled = false; // We handle zoom ourselves for zoom-to-cursor
 
                 // Subscribe to zoom changes to update the percentage display
                 _webView.ZoomFactorChanged += OnZoomFactorChanged;
+
+                // Handle mouse wheel for zoom-to-cursor
+                _webView.MouseWheel += OnWebViewMouseWheel;
 
                 _isWebViewInitialized = true;
 
@@ -277,6 +282,147 @@ public partial class InvoicePreviewControl : UserControl
             _zoomPercentageText.Text = $"{percentage}%";
         }
     }
+
+    private void OnWebViewMouseWheel(object? sender, System.Windows.Forms.MouseEventArgs e)
+    {
+        // Only zoom if Ctrl is pressed
+        if ((System.Windows.Forms.Control.ModifierKeys & System.Windows.Forms.Keys.Control) == 0)
+            return;
+
+        if (_webView?.CoreWebView2 == null || _isHandlingZoom)
+            return;
+
+        _isHandlingZoom = true;
+
+        try
+        {
+            // Calculate zoom direction
+            double zoomDelta = e.Delta > 0 ? ZoomStep : -ZoomStep;
+            double oldZoom = _webView.ZoomFactor;
+            double newZoom = Math.Max(MinZoom, Math.Min(MaxZoom, oldZoom + zoomDelta));
+
+            if (Math.Abs(newZoom - oldZoom) > 0.001)
+            {
+                // Zoom to cursor position
+                ZoomToPoint(newZoom, e.X, e.Y);
+            }
+        }
+        finally
+        {
+            _isHandlingZoom = false;
+        }
+    }
+
+    private async void ZoomToPoint(double newZoom, int pointX, int pointY)
+    {
+        if (_webView?.CoreWebView2 == null)
+            return;
+
+        try
+        {
+            double oldZoom = _webView.ZoomFactor;
+
+            // JavaScript to get current scroll position and perform zoom-to-point
+            var script = $@"
+                (function() {{
+                    var scrollX = window.scrollX || document.documentElement.scrollLeft;
+                    var scrollY = window.scrollY || document.documentElement.scrollTop;
+
+                    // Point in document coordinates (accounting for current zoom)
+                    var docX = scrollX + {pointX} / {oldZoom.ToString(System.Globalization.CultureInfo.InvariantCulture)};
+                    var docY = scrollY + {pointY} / {oldZoom.ToString(System.Globalization.CultureInfo.InvariantCulture)};
+
+                    return JSON.stringify({{ scrollX: scrollX, scrollY: scrollY, docX: docX, docY: docY }});
+                }})()";
+
+            var result = await _webView.CoreWebView2.ExecuteScriptAsync(script);
+
+            if (string.IsNullOrEmpty(result) || result == "null")
+            {
+                _webView.ZoomFactor = newZoom;
+                return;
+            }
+
+            // Parse result
+            var json = System.Text.Json.JsonDocument.Parse(result.Trim('"').Replace("\\\"", "\""));
+            var docX = json.RootElement.GetProperty("docX").GetDouble();
+            var docY = json.RootElement.GetProperty("docY").GetDouble();
+
+            // Apply new zoom
+            _webView.ZoomFactor = newZoom;
+
+            // Calculate new scroll position to keep the point under cursor
+            var newScrollX = docX - (pointX / newZoom);
+            var newScrollY = docY - (pointY / newZoom);
+
+            // Scroll to new position
+            var scrollScript = $@"window.scrollTo({newScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {newScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
+            await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ZoomToPoint failed: {ex.Message}");
+            _webView.ZoomFactor = newZoom;
+        }
+    }
+
+    private async void ZoomToCenter(double newZoom)
+    {
+        if (_webView?.CoreWebView2 == null)
+            return;
+
+        try
+        {
+            double oldZoom = _webView.ZoomFactor;
+
+            // Get viewport center
+            var viewportWidth = _webView.Width;
+            var viewportHeight = _webView.Height;
+            var centerX = viewportWidth / 2;
+            var centerY = viewportHeight / 2;
+
+            // JavaScript to get current scroll position
+            var script = @"
+                (function() {
+                    var scrollX = window.scrollX || document.documentElement.scrollLeft;
+                    var scrollY = window.scrollY || document.documentElement.scrollTop;
+                    return JSON.stringify({ scrollX: scrollX, scrollY: scrollY });
+                })()";
+
+            var result = await _webView.CoreWebView2.ExecuteScriptAsync(script);
+
+            if (string.IsNullOrEmpty(result) || result == "null")
+            {
+                _webView.ZoomFactor = newZoom;
+                return;
+            }
+
+            // Parse result
+            var json = System.Text.Json.JsonDocument.Parse(result.Trim('"').Replace("\\\"", "\""));
+            var scrollX = json.RootElement.GetProperty("scrollX").GetDouble();
+            var scrollY = json.RootElement.GetProperty("scrollY").GetDouble();
+
+            // Calculate the document point at viewport center
+            var docCenterX = scrollX + (centerX / oldZoom);
+            var docCenterY = scrollY + (centerY / oldZoom);
+
+            // Apply new zoom
+            _webView.ZoomFactor = newZoom;
+
+            // Calculate new scroll position to keep center in view
+            var newScrollX = docCenterX - (centerX / newZoom);
+            var newScrollY = docCenterY - (centerY / newZoom);
+
+            // Scroll to new position
+            var scrollScript = $@"window.scrollTo({newScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {newScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
+            await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ZoomToCenter failed: {ex.Message}");
+            _webView.ZoomFactor = newZoom;
+        }
+    }
 #endif
 
     private void UpdateWebViewContent()
@@ -300,7 +446,7 @@ public partial class InvoicePreviewControl : UserControl
         if (_webView != null)
         {
             var newZoom = Math.Min(_webView.ZoomFactor + ZoomStep, MaxZoom);
-            _webView.ZoomFactor = newZoom;
+            ZoomToCenter(newZoom);
         }
 #endif
     }
@@ -311,7 +457,7 @@ public partial class InvoicePreviewControl : UserControl
         if (_webView != null)
         {
             var newZoom = Math.Max(_webView.ZoomFactor - ZoomStep, MinZoom);
-            _webView.ZoomFactor = newZoom;
+            ZoomToCenter(newZoom);
         }
 #endif
     }
