@@ -208,6 +208,9 @@ public partial class InvoiceHtmlRenderer
             ["PaymentInstructions"] = template.PaymentInstructions,
             ["ShowLogo"] = template.ShowLogo && !string.IsNullOrEmpty(template.LogoBase64),
             ["ShowCompanyAddress"] = template.ShowCompanyAddress,
+            ["ShowCompanyPhone"] = template.ShowCompanyPhone,
+            ["ShowCompanyCity"] = template.ShowCompanyCity,
+            ["ShowCompanyCountry"] = template.ShowCompanyCountry,
             ["ShowTaxBreakdown"] = template.ShowTaxBreakdown && invoice.TaxAmount > 0,
             ["ShowItemDescriptions"] = template.ShowItemDescriptions,
             ["ShowNotes"] = template.ShowNotes,
@@ -225,6 +228,8 @@ public partial class InvoiceHtmlRenderer
             ["CompanyAddress"] = FormatAddress(companySettings.Company.Address),
             ["CompanyEmail"] = companySettings.Company.Email,
             ["CompanyPhone"] = companySettings.Company.Phone,
+            ["CompanyCity"] = companySettings.Company.City,
+            ["CompanyCountry"] = companySettings.Company.Country,
 
             // Customer info
             ["CustomerName"] = customer?.Name ?? "Unknown Customer",

@@ -1,3 +1,4 @@
+using ArgoBooks.Controls;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -65,31 +66,22 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     #endregion
 
-    #region Step 2: Contact Information
+    #region Step 1: Contact Information
 
     [ObservableProperty]
-    private string? _streetAddress;
+    private string _phoneNumber = "";
 
     [ObservableProperty]
-    private string? _city;
-
-    [ObservableProperty]
-    private string? _stateProvince;
-
-    [ObservableProperty]
-    private string? _postalCode;
+    private CountryDialCode? _selectedPhoneCountry;
 
     [ObservableProperty]
     private string? _country;
 
     [ObservableProperty]
-    private string? _phoneNumber;
+    private string? _city;
 
     [ObservableProperty]
-    private string? _email;
-
-    [ObservableProperty]
-    private string? _website;
+    private string? _address;
 
     #endregion
 
@@ -200,19 +192,23 @@ public partial class CreateCompanyViewModel : ViewModelBase
     {
         if (!CanCreate) return;
 
+        // Build the full phone number with country code
+        string? fullPhone = null;
+        if (!string.IsNullOrWhiteSpace(PhoneNumber))
+        {
+            var dialCode = SelectedPhoneCountry?.DialCode ?? "";
+            fullPhone = string.IsNullOrEmpty(dialCode) ? PhoneNumber : $"{dialCode} {PhoneNumber}";
+        }
+
         var args = new CompanyCreatedEventArgs
         {
             CompanyName = CompanyName!,
             BusinessType = BusinessType,
             Industry = Industry,
-            StreetAddress = StreetAddress,
+            Address = Address,
             City = City,
-            StateProvince = StateProvince,
-            PostalCode = PostalCode,
             Country = Country,
-            PhoneNumber = PhoneNumber,
-            Email = Email,
-            Website = Website,
+            PhoneNumber = fullPhone,
             Password = EnablePassword ? Password : null,
             LogoPath = LogoPath
         };
@@ -244,14 +240,11 @@ public partial class CreateCompanyViewModel : ViewModelBase
         CompanyName = null;
         BusinessType = null;
         Industry = null;
-        StreetAddress = null;
-        City = null;
-        StateProvince = null;
-        PostalCode = null;
+        PhoneNumber = "";
+        SelectedPhoneCountry = null;
         Country = null;
-        PhoneNumber = null;
-        Email = null;
-        Website = null;
+        City = null;
+        Address = null;
         EnablePassword = false;
         Password = null;
         ConfirmPassword = null;
@@ -307,14 +300,10 @@ public class CompanyCreatedEventArgs : EventArgs
     public required string CompanyName { get; init; }
     public string? BusinessType { get; init; }
     public string? Industry { get; init; }
-    public string? StreetAddress { get; init; }
-    public string? City { get; init; }
-    public string? StateProvince { get; init; }
-    public string? PostalCode { get; init; }
-    public string? Country { get; init; }
     public string? PhoneNumber { get; init; }
-    public string? Email { get; init; }
-    public string? Website { get; init; }
+    public string? Country { get; init; }
+    public string? City { get; init; }
+    public string? Address { get; init; }
     public string? Password { get; init; }
     public string? LogoPath { get; init; }
 }

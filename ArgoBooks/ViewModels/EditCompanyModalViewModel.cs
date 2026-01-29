@@ -1,3 +1,4 @@
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
 using Avalonia.Media.Imaging;
@@ -31,6 +32,21 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _logoPath;
+
+    [ObservableProperty]
+    private string _phoneNumber = "";
+
+    [ObservableProperty]
+    private CountryDialCode? _selectedPhoneCountry;
+
+    [ObservableProperty]
+    private string? _country;
+
+    [ObservableProperty]
+    private string? _city;
+
+    [ObservableProperty]
+    private string? _address;
 
     /// <summary>
     /// Available business types (shared data source).
@@ -67,6 +83,11 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _originalBusinessType;
     private string? _originalIndustry;
     private Bitmap? _originalLogo;
+    private string _originalPhoneNumber = "";
+    private CountryDialCode? _originalSelectedPhoneCountry;
+    private string? _originalCountry;
+    private string? _originalCity;
+    private string? _originalAddress;
 
     /// <summary>
     /// Whether any changes have been made.
@@ -75,7 +96,12 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         CompanyName != _originalCompanyName ||
         BusinessType != _originalBusinessType ||
         Industry != _originalIndustry ||
-        LogoSource != _originalLogo;
+        LogoSource != _originalLogo ||
+        PhoneNumber != _originalPhoneNumber ||
+        SelectedPhoneCountry != _originalSelectedPhoneCountry ||
+        Country != _originalCountry ||
+        City != _originalCity ||
+        Address != _originalAddress;
 
     /// <summary>
     /// Whether the form is valid for saving.
@@ -92,7 +118,15 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// <summary>
     /// Opens the modal with the current company info.
     /// </summary>
-    public void Open(string companyName, string? businessType = null, string? industry = null, Bitmap? logo = null)
+    public void Open(
+        string companyName,
+        string? businessType = null,
+        string? industry = null,
+        Bitmap? logo = null,
+        string? phone = null,
+        string? country = null,
+        string? city = null,
+        string? address = null)
     {
         _originalCompanyName = companyName;
         _originalBusinessType = businessType;
@@ -105,6 +139,44 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         LogoSource = logo;
         HasLogo = logo != null;
         LogoPath = null;
+
+        // Parse the phone number to extract country code and local number
+        _originalPhoneNumber = "";
+        _originalSelectedPhoneCountry = null;
+        PhoneNumber = "";
+        SelectedPhoneCountry = null;
+
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            // Try to parse the phone number - format is typically "+1 (555) 555-5555"
+            // The PhoneInput control will handle parsing when we set the value
+            var dialCodes = PhoneInput.AllDialCodes;
+            foreach (var dialCode in dialCodes.OrderByDescending(d => d.DialCode.Length))
+            {
+                if (phone.StartsWith(dialCode.DialCode))
+                {
+                    _originalSelectedPhoneCountry = dialCode;
+                    _originalPhoneNumber = phone[dialCode.DialCode.Length..].Trim();
+                    SelectedPhoneCountry = dialCode;
+                    PhoneNumber = _originalPhoneNumber;
+                    break;
+                }
+            }
+
+            // If no country code matched, just set the raw phone number
+            if (SelectedPhoneCountry == null && !string.IsNullOrWhiteSpace(phone))
+            {
+                _originalPhoneNumber = phone;
+                PhoneNumber = phone;
+            }
+        }
+
+        _originalCountry = country;
+        _originalCity = city;
+        _originalAddress = address;
+        Country = country;
+        City = city;
+        Address = address;
 
         IsOpen = true;
     }
@@ -183,13 +255,25 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     {
         if (!CanSave) return;
 
+        // Build the full phone number with country code
+        string? fullPhone = null;
+        if (!string.IsNullOrWhiteSpace(PhoneNumber))
+        {
+            var dialCode = SelectedPhoneCountry?.DialCode ?? "";
+            fullPhone = string.IsNullOrEmpty(dialCode) ? PhoneNumber : $"{dialCode} {PhoneNumber}";
+        }
+
         CompanySaved?.Invoke(this, new CompanyEditedEventArgs
         {
             CompanyName = CompanyName,
             BusinessType = BusinessType,
             Industry = Industry,
             LogoSource = LogoSource,
-            LogoPath = LogoPath
+            LogoPath = LogoPath,
+            Phone = fullPhone,
+            Country = Country,
+            City = City,
+            Address = Address
         });
 
         IsOpen = false;
@@ -235,6 +319,11 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
     partial void OnBusinessTypeChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnIndustryChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnPhoneNumberChanged(string value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnSelectedPhoneCountryChanged(CountryDialCode? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnCountryChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnCityChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
 
     /// <summary>
     /// Event raised when the company is saved.
@@ -257,4 +346,8 @@ public class CompanyEditedEventArgs : EventArgs
     public string? Industry { get; set; }
     public Bitmap? LogoSource { get; set; }
     public string? LogoPath { get; set; }
+    public string? Phone { get; set; }
+    public string? Country { get; set; }
+    public string? City { get; set; }
+    public string? Address { get; set; }
 }

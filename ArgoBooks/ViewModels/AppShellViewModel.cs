@@ -184,11 +184,6 @@ public partial class AppShellViewModel : ViewModelBase
     public InvoiceModalsViewModel InvoiceModalsViewModel { get; }
 
     /// <summary>
-    /// Gets the send invoice modal view model.
-    /// </summary>
-    public SendInvoiceModalViewModel SendInvoiceModalViewModel { get; }
-
-    /// <summary>
     /// Gets the invoice template designer modal view model.
     /// </summary>
     public InvoiceTemplateDesignerViewModel InvoiceTemplateDesignerViewModel { get; }
@@ -376,9 +371,6 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create invoice modals
         InvoiceModalsViewModel = new InvoiceModalsViewModel();
-
-        // Create send invoice modal
-        SendInvoiceModalViewModel = new SendInvoiceModalViewModel();
 
         // Create invoice template designer modal
         InvoiceTemplateDesignerViewModel = new InvoiceTemplateDesignerViewModel();

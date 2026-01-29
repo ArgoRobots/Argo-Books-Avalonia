@@ -206,6 +206,12 @@
 
                                             <CheckBox IsChecked="{Binding ShowCompanyAddress}"
                                                       Content="{loc:Loc 'Show company address'}" />
+                                            <CheckBox IsChecked="{Binding ShowCompanyPhone}"
+                                                      Content="{loc:Loc 'Show company phone'}" />
+                                            <CheckBox IsChecked="{Binding ShowCompanyCity}"
+                                                      Content="{loc:Loc 'Show company city'}" />
+                                            <CheckBox IsChecked="{Binding ShowCompanyCountry}"
+                                                      Content="{loc:Loc 'Show company country'}" />
                                             <CheckBox IsChecked="{Binding ShowTaxBreakdown}"
                                                       Content="{loc:Loc 'Show tax breakdown'}" />
                                             <CheckBox IsChecked="{Binding ShowItemDescriptions}"
