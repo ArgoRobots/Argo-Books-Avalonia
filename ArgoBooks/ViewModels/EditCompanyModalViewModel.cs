@@ -220,7 +220,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Unsaved Changes".Translate(),
-                    Message = "You have unsaved changes. Do you want to save them before closing?".Translate(),
+                    Message = "You have unsaved changes to your company information. Do you want to save them before closing?".Translate(),
                     PrimaryButtonText = "Save".Translate(),
                     SecondaryButtonText = "Don't Save".Translate(),
                     CancelButtonText = "Cancel".Translate()
