@@ -44,7 +44,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Receipt Type -->
                             <StackPanel Spacing="8">
@@ -240,7 +240,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <Panel>
                             <!-- Loading State -->
                             <StackPanel IsVisible="{Binding IsScanning}"

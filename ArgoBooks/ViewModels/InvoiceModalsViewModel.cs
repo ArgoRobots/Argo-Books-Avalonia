@@ -695,8 +695,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LineItems = LineItems.Select(li => new LineItem
             {
                 Description = li.Description,
-                Quantity = li.Quantity,
-                UnitPrice = li.UnitPrice
+                Quantity = li.Quantity ?? 0,
+                UnitPrice = li.UnitPrice ?? 0
             }).ToList()
         };
 
@@ -868,8 +868,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.LineItems = LineItems.Select(i => new LineItem
             {
                 Description = i.Description,
-                Quantity = i.Quantity,
-                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity ?? 0,
+                UnitPrice = i.UnitPrice ?? 0,
                 TaxRate = 0
             }).ToList();
         }
@@ -894,8 +894,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 LineItems = LineItems.Select(i => new LineItem
                 {
                     Description = i.Description,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice,
+                    Quantity = i.Quantity ?? 0,
+                    UnitPrice = i.UnitPrice ?? 0,
                     TaxRate = 0
                 }).ToList()
             };
@@ -1066,8 +1066,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LineItems = LineItems.Select(i => new LineItem
             {
                 Description = i.Description,
-                Quantity = i.Quantity,
-                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity ?? 0,
+                UnitPrice = i.UnitPrice ?? 0,
                 TaxRate = 0
             }).ToList()
         };
@@ -1179,8 +1179,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LineItems = LineItems.Select(i => new LineItem
             {
                 Description = i.Description,
-                Quantity = i.Quantity,
-                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity ?? 0,
+                UnitPrice = i.UnitPrice ?? 0,
                 TaxRate = 0
             }).ToList()
         };
@@ -1236,8 +1236,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.LineItems = LineItems.Select(i => new LineItem
         {
             Description = i.Description,
-            Quantity = i.Quantity,
-            UnitPrice = i.UnitPrice,
+            Quantity = i.Quantity ?? 0,
+            UnitPrice = i.UnitPrice ?? 0,
             TaxRate = 0
         }).ToList();
 
@@ -1266,8 +1266,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 invoice.LineItems = LineItems.Select(i => new LineItem
                 {
                     Description = i.Description,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice,
+                    Quantity = i.Quantity ?? 0,
+                    UnitPrice = i.UnitPrice ?? 0,
                     TaxRate = 0
                 }).ToList();
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
@@ -1318,15 +1318,15 @@ public partial class LineItemDisplayModel : ObservableObject
     private string _description = string.Empty;
 
     [ObservableProperty]
-    private decimal _quantity = 1;
+    private decimal? _quantity = 1;
 
     [ObservableProperty]
-    private decimal _unitPrice;
+    private decimal? _unitPrice;
 
     [ObservableProperty]
     private bool _hasProductError;
 
-    public decimal Amount => Quantity * UnitPrice;
+    public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => $"${Amount:N2}";
 
     partial void OnSelectedProductChanged(ProductOption? value)
@@ -1339,13 +1339,13 @@ public partial class LineItemDisplayModel : ObservableObject
         }
     }
 
-    partial void OnQuantityChanged(decimal value)
+    partial void OnQuantityChanged(decimal? value)
     {
         OnPropertyChanged(nameof(Amount));
         OnPropertyChanged(nameof(AmountFormatted));
     }
 
-    partial void OnUnitPriceChanged(decimal value)
+    partial void OnUnitPriceChanged(decimal? value)
     {
         OnPropertyChanged(nameof(Amount));
         OnPropertyChanged(nameof(AmountFormatted));

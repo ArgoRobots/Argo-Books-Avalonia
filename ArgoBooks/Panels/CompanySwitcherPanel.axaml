@@ -312,7 +312,7 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Button.edit-button-inline:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SecondaryButtonHoverBrush}" />
         </Style>
         <Style Selector="Button.edit-button-inline:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />

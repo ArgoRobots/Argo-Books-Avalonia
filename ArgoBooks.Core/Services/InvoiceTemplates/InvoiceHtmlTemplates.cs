@@ -519,9 +519,9 @@ public static class InvoiceHtmlTemplates
 """;
 
     /// <summary>
-    /// Minimal template: Bare essentials, very simple and clean.
+    /// Elegant template: Sophisticated design with accent borders and refined typography.
     /// </summary>
-    public const string Minimal = """
+    public const string Elegant = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -529,46 +529,72 @@ public static class InvoiceHtmlTemplates
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice {{InvoiceNumber}}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: {{FontFamily}}; background-color: #ffffff;">
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
+<body style="margin: 0; padding: 0; font-family: {{FontFamily}}; background-color: #f8f9fa;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa;">
         <tr>
             <td align="center" style="padding: 40px 20px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="550">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: {{BackgroundColor}}; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                    <!-- Accent Top Border -->
+                    <tr>
+                        <td style="height: 4px; background: linear-gradient(90deg, {{PrimaryColor}}, {{AccentColor}});"></td>
+                    </tr>
+
                     <!-- Header -->
                     <tr>
-                        <td style="padding-bottom: 30px; border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 35px 40px 25px 40px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td>
+                                    <td style="width: 60%; vertical-align: top;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Logo" width="{{LogoWidth}}" style="display: block; max-height: 40px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; max-height: 55px; margin-bottom: 15px;">
                                         {{/ShowLogo}}
                                         {{^ShowLogo}}
-                                        <span style="font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CompanyName}}</span>
+                                        <p style="margin: 0 0 15px 0; font-size: 20px; font-weight: 600; color: {{TextColor}}; letter-spacing: -0.5px;">{{CompanyName}}</p>
                                         {{/ShowLogo}}
+                                        {{#ShowCompanyAddress}}
+                                        {{#CompanyAddress}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CompanyAddress}}</p>{{/CompanyAddress}}
+                                        {{#ShowCompanyCity}}{{#CompanyCity}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyCity}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyCity}}{{/ShowCompanyCity}}
+                                        {{^ShowCompanyCity}}{{#ShowCompanyCountry}}{{#CompanyCountry}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyCountry}}</p>{{/CompanyCountry}}{{/ShowCompanyCountry}}{{/ShowCompanyCity}}
+                                        {{#CompanyEmail}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyEmail}}</p>{{/CompanyEmail}}
+                                        {{#ShowCompanyPhone}}{{#CompanyPhone}}<p style="margin: 0; font-size: 13px; color: #6b7280;">{{CompanyPhone}}</p>{{/CompanyPhone}}{{/ShowCompanyPhone}}
+                                        {{/ShowCompanyAddress}}
                                     </td>
-                                    <td style="text-align: right;">
-                                        <span style="font-size: 14px; color: #6b7280;">{{InvoiceNumber}}</span>
+                                    <td style="width: 40%; text-align: right; vertical-align: top;">
+                                        <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: {{PrimaryColor}}; font-weight: 600;">{{HeaderText}}</p>
+                                        <p style="margin: 0 0 20px 0; font-size: 22px; font-weight: 300; color: {{TextColor}};">{{InvoiceNumber}}</p>
+                                        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-left: auto;">
+                                            <tr>
+                                                <td style="padding: 3px 12px 3px 0; font-size: 12px; color: #9ca3af; text-align: right;">Issued</td>
+                                                <td style="padding: 3px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{IssueDate}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 3px 12px 3px 0; font-size: 12px; color: #9ca3af; text-align: right;">Due</td>
+                                                <td style="padding: 3px 0; font-size: 13px; text-align: right; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                            </tr>
+                                        </table>
+                                        {{#ShowDueDateProminent}}
+                                        <p style="margin: 15px 0 0 0;">
+                                            <span style="display: inline-block; background-color: {{#IsOverdue}}#fef2f2{{/IsOverdue}}{{^IsOverdue}}{{SecondaryColor}}{{/IsOverdue}}; color: {{#IsOverdue}}#dc2626{{/IsOverdue}}{{^IsOverdue}}{{PrimaryColor}}{{/IsOverdue}}; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                {{#IsOverdue}}Overdue{{/IsOverdue}}{{^IsOverdue}}Due {{DueDate}}{{/IsOverdue}}
+                                            </span>
+                                        </p>
+                                        {{/ShowDueDateProminent}}
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
 
-                    <!-- Details -->
+                    <!-- Bill To Section -->
                     <tr>
-                        <td style="padding: 25px 0;">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <td style="padding: 0 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-left: 3px solid {{PrimaryColor}}; padding-left: 15px;">
                                 <tr>
-                                    <td style="vertical-align: top;">
-                                        <p style="margin: 0 0 3px 0; font-size: 12px; color: #9ca3af;">To</p>
-                                        <p style="margin: 0; font-size: 14px; color: {{TextColor}};">{{CustomerName}}</p>
-                                    </td>
-                                    <td style="text-align: right; vertical-align: top;">
-                                        <p style="margin: 0 0 3px 0; font-size: 12px; color: #9ca3af;">Date</p>
-                                        <p style="margin: 0 0 15px 0; font-size: 14px; color: {{TextColor}};">{{IssueDate}}</p>
-                                        <p style="margin: 0 0 3px 0; font-size: 12px; color: #9ca3af;">Due</p>
-                                        <p style="margin: 0; font-size: 14px; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</p>
+                                    <td>
+                                        <p style="margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Bill To</p>
+                                        <p style="margin: 0 0 3px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        {{#CustomerAddress}}<p style="margin: 0 0 2px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>{{/CustomerAddress}}
+                                        {{#CustomerEmail}}<p style="margin: 0; font-size: 13px; color: #6b7280;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
                                 </tr>
                             </table>
@@ -577,46 +603,73 @@ public static class InvoiceHtmlTemplates
 
                     <!-- Line Items -->
                     <tr>
-                        <td>
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <td style="padding: 30px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 12px 0; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid {{SecondaryColor}};">Description</td>
+                                    <td style="padding: 12px 0; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; width: 70px; border-bottom: 2px solid {{SecondaryColor}};">Qty</td>
+                                    <td style="padding: 12px 0; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; width: 90px; border-bottom: 2px solid {{SecondaryColor}};">Rate</td>
+                                    <td style="padding: 12px 0; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; width: 100px; border-bottom: 2px solid {{SecondaryColor}};">Amount</td>
+                                </tr>
                                 {{#LineItems}}
                                 <tr>
-                                    <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                            <tr>
-                                                <td>
-                                                    <p style="margin: 0; font-size: 14px; color: {{TextColor}};">{{Description}}</p>
-                                                    <p style="margin: 3px 0 0 0; font-size: 12px; color: #9ca3af;">{{Quantity}} × {{UnitPrice}}</p>
-                                                </td>
-                                                <td style="text-align: right; vertical-align: top;">
-                                                    <p style="margin: 0; font-size: 14px; color: {{TextColor}};">{{Amount}}</p>
-                                                </td>
-                                            </tr>
-                                        </table>
+                                    <td style="padding: 16px 0; font-size: 14px; color: {{TextColor}}; border-bottom: 1px solid {{SecondaryColor}};">
+                                        {{Description}}
+                                        {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 12px; color: #9ca3af; font-style: italic;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
                                     </td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};">{{Quantity}}</td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{UnitPrice}}</td>
+                                    <td style="padding: 16px 0; font-size: 14px; font-weight: 500; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{Amount}}</td>
                                 </tr>
                                 {{/LineItems}}
                             </table>
                         </td>
                     </tr>
 
-                    <!-- Total -->
+                    <!-- Totals -->
                     <tr>
-                        <td style="padding: 20px 0; border-top: 1px solid #e5e7eb;">
+                        <td style="padding: 0 40px 30px 40px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                                {{#ShowTaxBreakdown}}
                                 <tr>
-                                    <td style="font-size: 13px; color: #6b7280; padding-bottom: 8px;">Subtotal</td>
-                                    <td style="font-size: 13px; color: {{TextColor}}; text-align: right; padding-bottom: 8px;">{{Subtotal}}</td>
-                                </tr>
-                                <tr>
-                                    <td style="font-size: 13px; color: #6b7280; padding-bottom: 12px;">Tax</td>
-                                    <td style="font-size: 13px; color: {{TextColor}}; text-align: right; padding-bottom: 12px;">{{TaxAmount}}</td>
-                                </tr>
-                                {{/ShowTaxBreakdown}}
-                                <tr>
-                                    <td style="font-size: 16px; font-weight: 600; color: {{TextColor}};">Total</td>
-                                    <td style="font-size: 18px; font-weight: 600; color: {{PrimaryColor}}; text-align: right;">{{Total}}</td>
+                                    <td style="width: 55%; vertical-align: top; padding-right: 30px;">
+                                        {{#ShowNotes}}
+                                        {{#Notes}}
+                                        <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Notes</p>
+                                        <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6;">{{Notes}}</p>
+                                        {{/Notes}}
+                                        {{/ShowNotes}}
+                                    </td>
+                                    <td style="width: 45%;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Subtotal</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
+                                            </tr>
+                                            {{#ShowTaxBreakdown}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Tax ({{TaxRate}}%)</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                            </tr>
+                                            {{/ShowTaxBreakdown}}
+                                            <tr>
+                                                <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Total Due</td>
+                                                <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{PrimaryColor}}; text-align: right;">{{Total}}</td>
+                                            </tr>
+                                            {{#AmountPaid}}
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}};">Paid</td>
+                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{TextColor}};">Balance</td>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{PrimaryColor}}; text-align: right;">{{Balance}}</td>
+                                            </tr>
+                                            {{/AmountPaid}}
+                                        </table>
+                                    </td>
                                 </tr>
                             </table>
                         </td>
@@ -624,11 +677,17 @@ public static class InvoiceHtmlTemplates
 
                     {{#ShowPaymentInstructions}}
                     {{#PaymentInstructions}}
-                    <!-- Payment -->
+                    <!-- Payment Instructions -->
                     <tr>
-                        <td style="padding: 20px 0; border-top: 1px solid #e5e7eb;">
-                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #9ca3af;">Payment</p>
-                            <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.5; white-space: pre-line;">{{PaymentInstructions}}</p>
+                        <td style="padding: 0 40px 30px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: {{SecondaryColor}}; border-radius: 6px;">
+                                <tr>
+                                    <td style="padding: 20px 25px;">
+                                        <p style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: {{PrimaryColor}}; font-weight: 600;">Payment Instructions</p>
+                                        <p style="margin: 0; font-size: 13px; color: #4b5563; line-height: 1.6; white-space: pre-line;">{{PaymentInstructions}}</p>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                     {{/PaymentInstructions}}
@@ -636,8 +695,13 @@ public static class InvoiceHtmlTemplates
 
                     <!-- Footer -->
                     <tr>
-                        <td style="padding-top: 30px; text-align: center;">
-                            <p style="margin: 0; font-size: 13px; color: #9ca3af;">{{FooterText}}</p>
+                        <td style="padding: 25px 40px; background-color: {{SecondaryColor}}; text-align: center; border-radius: 0 0 4px 4px;">
+                            <p style="margin: 0; font-size: 13px; color: #6b7280;">{{FooterText}}</p>
+                            {{#ShowCompanyAddress}}
+                            <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
+                                {{CompanyName}}{{#CompanyEmail}} • {{CompanyEmail}}{{/CompanyEmail}}{{#ShowCompanyPhone}}{{#CompanyPhone}} • {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
+                            </p>
+                            {{/ShowCompanyAddress}}
                         </td>
                     </tr>
                 </table>
@@ -658,7 +722,7 @@ public static class InvoiceHtmlTemplates
             InvoiceTemplateType.Professional => Professional,
             InvoiceTemplateType.Modern => Modern,
             InvoiceTemplateType.Classic => Classic,
-            InvoiceTemplateType.Minimal => Minimal,
+            InvoiceTemplateType.Elegant => Elegant,
             _ => Professional
         };
     }

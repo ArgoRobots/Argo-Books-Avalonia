@@ -33,7 +33,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Location Name and Code -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -167,7 +167,7 @@
                     </Border>
 
                     <!-- Modal Content (same as Add) -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Location Name and Code -->
                             <Grid ColumnDefinitions="*,16,*">

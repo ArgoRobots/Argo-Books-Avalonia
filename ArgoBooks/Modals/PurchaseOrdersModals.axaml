@@ -40,7 +40,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Supplier Selection -->
                             <StackPanel Spacing="6">
@@ -245,7 +245,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Status Badge -->
                             <Border Background="{Binding ViewingOrder.StatusBackground}"
@@ -375,7 +375,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <TextBlock Text="{loc:Loc 'Enter the quantity received for each item. This will update your inventory.'}"
                                        FontSize="13"

@@ -17,7 +17,7 @@ public static class InvoiceTemplateFactory
             CreateProfessionalTemplate(),
             CreateModernTemplate(),
             CreateClassicTemplate(),
-            CreateMinimalTemplate()
+            CreateElegantTemplate()
         ];
     }
 
@@ -109,31 +109,31 @@ public static class InvoiceTemplateFactory
     }
 
     /// <summary>
-    /// Creates the Minimal template with default settings.
+    /// Creates the Elegant template with default settings.
     /// </summary>
-    public static InvoiceTemplate CreateMinimalTemplate()
+    public static InvoiceTemplate CreateElegantTemplate()
     {
         return new InvoiceTemplate
         {
-            Id = "default-minimal",
-            Name = "Minimal",
-            BaseTemplate = InvoiceTemplateType.Minimal,
+            Id = "default-elegant",
+            Name = "Elegant",
+            BaseTemplate = InvoiceTemplateType.Elegant,
             IsDefault = false,
-            PrimaryColor = "#374151",
-            SecondaryColor = "#e5e7eb",
-            AccentColor = "#374151",
-            TextColor = "#374151",
+            PrimaryColor = "#4f46e5",
+            SecondaryColor = "#f3f4f6",
+            AccentColor = "#0d9488",
+            TextColor = "#1f2937",
             BackgroundColor = "#ffffff",
-            FontFamily = "system-ui, -apple-system, sans-serif",
+            FontFamily = "Georgia, 'Times New Roman', Times, serif",
             HeaderText = "Invoice",
-            FooterText = "Thank you.",
+            FooterText = "Thank you for your business!",
             ShowLogo = true,
-            ShowCompanyAddress = false,
+            ShowCompanyAddress = true,
             ShowTaxBreakdown = true,
-            ShowItemDescriptions = false,
-            ShowNotes = false,
+            ShowItemDescriptions = true,
+            ShowNotes = true,
             ShowPaymentInstructions = true,
-            ShowDueDateProminent = false
+            ShowDueDateProminent = true
         };
     }
 
@@ -147,7 +147,7 @@ public static class InvoiceTemplateFactory
             InvoiceTemplateType.Professional => CreateProfessionalTemplate(),
             InvoiceTemplateType.Modern => CreateModernTemplate(),
             InvoiceTemplateType.Classic => CreateClassicTemplate(),
-            InvoiceTemplateType.Minimal => CreateMinimalTemplate(),
+            InvoiceTemplateType.Elegant => CreateElegantTemplate(),
             _ => CreateProfessionalTemplate()
         };
 

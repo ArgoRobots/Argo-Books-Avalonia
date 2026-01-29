@@ -64,6 +64,8 @@
 
     <!-- Secondary Button Background (slightly darker than SurfaceAlt for contrast in modal footers) -->
     <Color x:Key="SecondaryButtonBgColor">#DEE2E6</Color>
+    <!-- Secondary Button Hover (darker than SecondaryButtonBg for visible hover feedback) -->
+    <Color x:Key="SecondaryButtonHoverColor">#CED4DA</Color>
 
     <!-- Icon Background Tints (soft pastels) -->
     <Color x:Key="PrimaryIconBgColor">#E6F2FF</Color>
@@ -118,6 +120,7 @@
 
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
     <SolidColorBrush x:Key="SecondaryButtonBgBrush" Color="{StaticResource SecondaryButtonBgColor}" />
+    <SolidColorBrush x:Key="SecondaryButtonHoverBrush" Color="{StaticResource SecondaryButtonHoverColor}" />
 
     <!-- Icon Background Tint Brushes -->
     <SolidColorBrush x:Key="PrimaryIconBgBrush" Color="{StaticResource PrimaryIconBgColor}" />

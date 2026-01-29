@@ -201,7 +201,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Expense".Translate(),
-            Message = "Are you sure you want to delete this expense?\n\nID: {0}\nDescription: {1}\nAmount: {2}".TranslateFormat(item.Id, item.ProductDescription, item.TotalFormatted),
+            Message = "Are you sure you want to delete this expense?\n\nID: {0}\nProduct: {1}\nAmount: {2}".TranslateFormat(item.Id, item.ProductDescription, item.TotalFormatted),
             PrimaryButtonText = "Delete".Translate(),
             CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true

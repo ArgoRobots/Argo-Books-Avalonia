@@ -89,7 +89,7 @@
         <Setter Property="Background" Value="{DynamicResource SecondaryButtonBgBrush}" />
     </Style>
     <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SecondaryButtonHoverBrush}" />
     </Style>
 
     <!-- Danger Button (for destructive actions) -->

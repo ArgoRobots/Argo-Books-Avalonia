@@ -74,7 +74,7 @@
                     </Border>
 
                     <!-- Content - Edit Mode -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding ShowEditContent}">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding ShowEditContent}">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Template and Customer Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -481,7 +481,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Status and Customer Row -->
                             <Grid ColumnDefinitions="*,16,*">

@@ -38,7 +38,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Inventory Item Selection -->
                             <StackPanel Spacing="6">
@@ -182,7 +182,7 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Type Badge -->
                             <Border Background="{Binding ViewingAdjustment.TypeBackground}"
