@@ -59,6 +59,28 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _saveButtonText = "Create Invoice";
 
+    /// <summary>
+    /// Gets whether to show the edit form content.
+    /// </summary>
+    public bool ShowEditContent => !IsShowingPreview && !IsShowingSuccess;
+
+    /// <summary>
+    /// Gets whether to show the preview content.
+    /// </summary>
+    public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess;
+
+    partial void OnIsShowingPreviewChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEditContent));
+        OnPropertyChanged(nameof(ShowPreviewContent));
+    }
+
+    partial void OnIsShowingSuccessChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEditContent));
+        OnPropertyChanged(nameof(ShowPreviewContent));
+    }
+
     #endregion
 
     #region Create/Edit Modal Fields
@@ -97,6 +119,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasSendError;
+
+    [ObservableProperty]
+    private bool _isShowingSuccess;
+
+    [ObservableProperty]
+    private string _successTitle = "Invoice Sent!";
+
+    [ObservableProperty]
+    private string _successMessage = string.Empty;
 
     public ObservableCollection<LineItemDisplayModel> LineItems { get; } = [];
 
@@ -884,14 +915,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 Details = $"Invoice sent to {customer.Email}",
                 Timestamp = DateTime.UtcNow
             });
-
-            // Show success notification
-            App.AddNotification(
-                "Invoice Sent".Translate(),
-                !string.IsNullOrWhiteSpace(response.Message)
-                    ? response.Message
-                    : "Invoice sent successfully to {0}!".TranslateFormat(customer.Email),
-                NotificationType.Success);
         }
         catch (Exception ex)
         {
@@ -943,9 +966,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
-        IsCreateEditModalOpen = false;
+
+        // Show success animation instead of closing immediately
+        SuccessTitle = "Invoice Sent!".Translate();
+        SuccessMessage = "Your invoice has been sent to {0}".TranslateFormat(customer.Email);
         IsShowingPreview = false;
-        ResetForm();
+        IsShowingSuccess = true;
     }
 
     private Task ShowSendErrorAsync(string message)
@@ -979,6 +1005,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         IsCreateEditModalOpen = false;
         IsShowingPreview = false;
+        IsShowingSuccess = false;
+        ResetForm();
+    }
+
+    [RelayCommand]
+    private void CloseSuccessAndFinish()
+    {
+        IsShowingSuccess = false;
+        IsShowingPreview = false;
+        IsCreateEditModalOpen = false;
         ResetForm();
     }
 
@@ -1246,6 +1282,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         HasCustomerError = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
+        HasSendError = false;
+        SendErrorMessage = string.Empty;
+        IsShowingSuccess = false;
+        SuccessTitle = "Invoice Sent!".Translate();
+        SuccessMessage = string.Empty;
     }
 
     #endregion
