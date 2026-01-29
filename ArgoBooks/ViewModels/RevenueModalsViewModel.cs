@@ -195,7 +195,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Revenue",
-            Message = $"Are you sure you want to delete this revenue?\n\nID: {item.Id}\nDescription: {item.ProductDescription}\nAmount: {item.TotalFormatted}",
+            Message = $"Are you sure you want to delete this revenue?\n\nID: {item.Id}\nProduct: {item.ProductDescription}\nAmount: {item.TotalFormatted}",
             PrimaryButtonText = "Delete",
             CancelButtonText = "Cancel",
             IsPrimaryDestructive = true

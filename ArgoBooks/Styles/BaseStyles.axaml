@@ -234,6 +234,8 @@
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="MinWidth" Value="0" />
     </Style>
     <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />

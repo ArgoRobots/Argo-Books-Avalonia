@@ -715,8 +715,8 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             ProductId = li.SelectedProduct?.Id,
             Description = li.Description,
-            Quantity = li.Quantity,
-            UnitPrice = li.UnitPrice,
+            Quantity = li.Quantity ?? 0,
+            UnitPrice = li.UnitPrice ?? 0,
             TaxRate = 0,
             Discount = 0
         }).ToList();
@@ -727,8 +727,8 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var description = LineItems.Count == 1
             ? LineItems[0].Description
             : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
-        var totalQuantity = LineItems.Sum(li => li.Quantity);
-        var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+        var totalQuantity = LineItems.Sum(li => li.Quantity ?? 0);
+        var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice ?? 0) : 0;
         return (description, totalQuantity, averageUnitPrice);
     }
 
@@ -882,15 +882,15 @@ public abstract partial class TransactionLineItemBase : ObservableObject
     private string _description = string.Empty;
 
     [ObservableProperty]
-    private decimal _quantity = 1;
+    private decimal? _quantity = 1;
 
     [ObservableProperty]
-    private decimal _unitPrice;
+    private decimal? _unitPrice;
 
     [ObservableProperty]
     private bool _hasProductError;
 
-    public decimal Amount => Quantity * UnitPrice;
+    public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => $"${Amount:N2}";
 
     partial void OnSelectedProductChanged(ProductOption? value)
@@ -903,13 +903,13 @@ public abstract partial class TransactionLineItemBase : ObservableObject
         }
     }
 
-    partial void OnQuantityChanged(decimal value)
+    partial void OnQuantityChanged(decimal? value)
     {
         OnPropertyChanged(nameof(Amount));
         OnPropertyChanged(nameof(AmountFormatted));
     }
 
-    partial void OnUnitPriceChanged(decimal value)
+    partial void OnUnitPriceChanged(decimal? value)
     {
         OnPropertyChanged(nameof(Amount));
         OnPropertyChanged(nameof(AmountFormatted));

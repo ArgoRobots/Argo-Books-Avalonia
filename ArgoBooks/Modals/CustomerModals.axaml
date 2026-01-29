@@ -52,7 +52,7 @@
                     </Border>
 
                     <!-- Form Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- First Name and Last Name Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -188,7 +188,7 @@
                     </Border>
 
                     <!-- Form Content (Same as Add + Status) -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- First Name and Last Name Row -->
                             <Grid ColumnDefinitions="*,16,*">

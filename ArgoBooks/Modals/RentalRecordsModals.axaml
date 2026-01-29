@@ -37,7 +37,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Rental Item -->
                             <StackPanel Spacing="6">
@@ -178,7 +178,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Rental Item -->
                             <StackPanel Spacing="6">
@@ -318,7 +318,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Status -->
                             <StackPanel Spacing="6">
@@ -520,7 +520,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Record ID -->
                             <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">

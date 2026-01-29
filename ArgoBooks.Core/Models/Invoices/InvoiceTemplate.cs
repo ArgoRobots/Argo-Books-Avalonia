@@ -233,7 +233,7 @@ public enum InvoiceTemplateType
     Classic,
 
     /// <summary>
-    /// Minimal: Bare essentials, very simple and clean.
+    /// Elegant: Sophisticated design with accent borders and refined typography.
     /// </summary>
-    Minimal
+    Elegant
 }

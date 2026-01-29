@@ -51,7 +51,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Date and Payment Method Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -225,7 +225,7 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Tax ($)'}" />
-                                    <TextBox Text="{Binding ModalTaxRate, Mode=TwoWay}"
+                                    <TextBox Text="{Binding ModalTaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
@@ -235,7 +235,7 @@
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Shipping'}" />
-                                    <TextBox Text="{Binding ModalShipping, Mode=TwoWay}"
+                                    <TextBox Text="{Binding ModalShipping, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
@@ -245,7 +245,7 @@
                                 <StackPanel Grid.Column="4" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Discount'}" />
-                                    <TextBox Text="{Binding ModalDiscount, Mode=TwoWay}"
+                                    <TextBox Text="{Binding ModalDiscount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
@@ -406,7 +406,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Status -->
                             <StackPanel Spacing="6">
