@@ -4,26 +4,20 @@ namespace ArgoBooks.Core.Models.Invoices;
 
 /// <summary>
 /// Settings for the invoice email API integration.
-/// API credentials (endpoint and key) are loaded from .env file for security.
+/// API key is loaded from .env file for security.
 /// Company-specific settings (from name, email, etc.) are stored in company data.
 /// </summary>
 public class InvoiceEmailSettings
 {
     /// <summary>
-    /// Environment variable name for the API endpoint.
+    /// The invoice email API endpoint URL.
     /// </summary>
-    public const string ApiEndpointEnvVar = "INVOICE_EMAIL_API_ENDPOINT";
+    public const string ApiEndpoint = "https://argorobots.com/api/invoice/send-email.php";
 
     /// <summary>
     /// Environment variable name for the API key.
     /// </summary>
     public const string ApiKeyEnvVar = "INVOICE_EMAIL_API_KEY";
-
-    /// <summary>
-    /// Gets the API endpoint URL from .env file.
-    /// </summary>
-    [JsonIgnore]
-    public static string ApiEndpoint => DotEnv.Get(ApiEndpointEnvVar);
 
     /// <summary>
     /// Gets the API key from .env file.
@@ -68,11 +62,10 @@ public class InvoiceEmailSettings
     public bool IncludePdfAttachment { get; set; } = true;
 
     /// <summary>
-    /// Whether the email API is configured (credentials in .env file).
+    /// Whether the email API is configured (API key in .env file).
     /// </summary>
     [JsonIgnore]
-    public static bool IsConfigured => DotEnv.HasValue(ApiEndpointEnvVar) &&
-                                        DotEnv.HasValue(ApiKeyEnvVar);
+    public static bool IsConfigured => DotEnv.HasValue(ApiKeyEnvVar);
 }
 
 /// <summary>

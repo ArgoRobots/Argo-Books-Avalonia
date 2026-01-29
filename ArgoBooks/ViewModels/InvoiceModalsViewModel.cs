@@ -829,7 +829,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (!InvoiceEmailSettings.IsConfigured)
         {
             System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Not configured, calling ShowSendErrorAsync");
-            await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiEndpointEnvVar} {"and".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
+            await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
             return;
         }
 
