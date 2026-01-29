@@ -10,6 +10,7 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -50,6 +51,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isEditMode;
 
     [ObservableProperty]
+    private bool _allowPreview;
+
+    [ObservableProperty]
     private string _modalTitle = "Create Invoice";
 
     [ObservableProperty]
@@ -87,6 +91,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasValidationMessage;
+
+    [ObservableProperty]
+    private string _sendErrorMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasSendError;
 
     public ObservableCollection<LineItemDisplayModel> LineItems { get; } = [];
 
@@ -304,6 +314,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         LoadTemplateOptions();
         ResetForm();
         IsEditMode = false;
+        AllowPreview = true;
         ModalTitle = "Create Invoice";
         SaveButtonText = "Preview";
         IsCreateEditModalOpen = true;
@@ -319,6 +330,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
+        LoadTemplateOptions();
 
         var invoice = App.CompanyManager?.CompanyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
@@ -335,6 +347,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         _editingInvoiceId = invoice.Id;
         IsEditMode = true; // We're editing an existing invoice
+        AllowPreview = true; // Show Preview button like create mode
         ModalTitle = "Continue Invoice";
         SaveButtonText = "Preview"; // Show Preview button like create mode
 
@@ -400,6 +413,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         _editingInvoiceId = invoice.Id;
         IsEditMode = true;
+        AllowPreview = false; // Edit mode doesn't show preview
         ModalTitle = $"Edit Invoice {invoice.Id}";
         SaveButtonText = "Save Changes";
 
@@ -675,6 +689,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         HasCustomerError = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
+        HasSendError = false;
+        SendErrorMessage = string.Empty;
         foreach (var lineItem in LineItems)
         {
             lineItem.HasProductError = false;
@@ -746,19 +762,28 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateAndSendInvoice()
     {
+        System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: START");
+
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
+
+        System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Got companyData");
 
         // Validate that we have a template selected
         if (SelectedTemplate == null)
         {
+            System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: No template, calling ShowSendErrorAsync");
             await ShowSendErrorAsync("Please select an invoice template.".Translate());
             return;
         }
 
+        System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Template OK, checking IsConfigured");
+        System.Diagnostics.Debug.WriteLine($"CreateAndSendInvoice: InvoiceEmailSettings.IsConfigured = {InvoiceEmailSettings.IsConfigured}");
+
         // Check if email API is configured
         if (!InvoiceEmailSettings.IsConfigured)
         {
+            System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Not configured, calling ShowSendErrorAsync");
             await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiEndpointEnvVar} {"and".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
             return;
         }
@@ -771,30 +796,65 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
-        // Generate invoice ID
-        var nextNumber = (companyData.Invoices.Count) + 1;
-        var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
+        // Check if we're continuing a draft invoice or creating a new one
+        var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
+        Invoice invoice;
+        Invoice? existingDraft = null;
 
-        var invoice = new Invoice
+        if (isContinuingDraft)
         {
-            Id = invoiceId,
-            InvoiceNumber = invoiceId,
-            CustomerId = SelectedCustomer!.Id!,
-            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
-            TaxRate = TaxRate,
-            Notes = ModalNotes,
-            Status = InvoiceStatus.Pending, // Start as pending until email is sent
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
-            LineItems = LineItems.Select(i => new LineItem
+            // Find the existing draft invoice
+            existingDraft = companyData.Invoices.FirstOrDefault(i => i.Id == _editingInvoiceId);
+            if (existingDraft == null)
+            {
+                await ShowSendErrorAsync("Could not find the draft invoice.".Translate());
+                return;
+            }
+
+            // Update the existing invoice
+            invoice = existingDraft;
+            invoice.CustomerId = SelectedCustomer!.Id!;
+            invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
+            invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
+            invoice.TaxRate = TaxRate;
+            invoice.Notes = ModalNotes;
+            invoice.Status = InvoiceStatus.Pending;
+            invoice.UpdatedAt = DateTime.Now;
+            invoice.LineItems = LineItems.Select(i => new LineItem
             {
                 Description = i.Description,
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice,
                 TaxRate = 0
-            }).ToList()
-        };
+            }).ToList();
+        }
+        else
+        {
+            // Generate new invoice ID for new invoices
+            var nextNumber = (companyData.Invoices.Count) + 1;
+            var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
+
+            invoice = new Invoice
+            {
+                Id = invoiceId,
+                InvoiceNumber = invoiceId,
+                CustomerId = SelectedCustomer!.Id!,
+                IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
+                DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+                TaxRate = TaxRate,
+                Notes = ModalNotes,
+                Status = InvoiceStatus.Pending,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                LineItems = LineItems.Select(i => new LineItem
+                {
+                    Description = i.Description,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    TaxRate = 0
+                }).ToList()
+            };
+        }
 
         // Try to send the email
         try
@@ -831,22 +891,44 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
-        // Create undo action
-        var action = new DelegateAction(
-            $"Create and send invoice {invoiceId}",
-            () =>
-            {
-                companyData.Invoices.Remove(invoice);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                companyData.Invoices.Add(invoice);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            });
+        // Create undo action based on whether we're continuing a draft or creating new
+        DelegateAction action;
+        if (isContinuingDraft)
+        {
+            // For continued drafts, we just updated the existing invoice
+            // Undo would need to restore the previous state (simplified: just mark as changed)
+            action = new DelegateAction(
+                $"Send invoice {invoice.Id}",
+                () =>
+                {
+                    invoice.Status = InvoiceStatus.Draft;
+                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    invoice.Status = InvoiceStatus.Sent;
+                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                });
+        }
+        else
+        {
+            // For new invoices, undo removes the invoice
+            action = new DelegateAction(
+                $"Create and send invoice {invoice.Id}",
+                () =>
+                {
+                    companyData.Invoices.Remove(invoice);
+                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    companyData.Invoices.Add(invoice);
+                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                });
 
-        // Add the invoice
-        companyData.Invoices.Add(invoice);
+            // Add the new invoice to the collection
+            companyData.Invoices.Add(invoice);
+        }
 
         // Record undo action and mark as changed
         App.UndoRedoManager.RecordAction(action);
@@ -858,16 +940,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ResetForm();
     }
 
-    private async Task ShowSendErrorAsync(string message)
+    private Task ShowSendErrorAsync(string message)
     {
-        var messageBoxService = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-            ? (desktop.MainWindow as MainWindow)?.MessageBoxService
-            : null;
+        // Show inline error banner instead of message box (HTML renderer causes deadlock with message box)
+        SendErrorMessage = message;
+        HasSendError = true;
+        return Task.CompletedTask;
+    }
 
-        if (messageBoxService != null)
-        {
-            await messageBoxService.ShowErrorAsync("Invoice Send Failed".Translate(), message);
-        }
+    [RelayCommand]
+    private void DismissSendError()
+    {
+        HasSendError = false;
+        SendErrorMessage = string.Empty;
     }
 
     #endregion

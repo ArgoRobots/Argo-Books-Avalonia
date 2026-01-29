@@ -368,33 +368,69 @@
                                         Content="{loc:Loc 'Save as Draft'}"
                                         Command="{Binding SaveAsDraftCommand}"
                                         IsVisible="{Binding !IsEditMode}" />
-                                <!-- Preview button for new invoices -->
+                                <!-- Preview button for create/continue modes -->
                                 <Button Classes="primary-button"
                                         Content="{loc:Loc Preview}"
                                         Command="{Binding OpenPreviewModalCommand}"
-                                        IsVisible="{Binding !IsEditMode}" />
-                                <!-- Save Changes button for editing -->
+                                        IsVisible="{Binding AllowPreview}" />
+                                <!-- Save Changes button for editing only -->
                                 <Button Classes="primary-button"
                                         Content="{loc:Loc 'Save Changes'}"
                                         Command="{Binding SaveInvoiceCommand}"
-                                        IsVisible="{Binding IsEditMode}" />
+                                        IsVisible="{Binding !AllowPreview}" />
                             </StackPanel>
                         </Grid>
                     </Border>
 
                     <!-- Footer - Preview Mode -->
                     <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" IsVisible="{Binding IsShowingPreview}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'An email will be sent to the customer'}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Content="{loc:Loc 'Back to Edit'}" Command="{Binding ClosePreviewModalCommand}" />
-                                <Button Classes="primary-button" Content="{loc:Loc 'Create &amp; Send'}" Command="{Binding CreateAndSendInvoiceCommand}" />
-                            </StackPanel>
-                        </Grid>
+                        <StackPanel Spacing="12">
+                            <!-- Error Banner -->
+                            <Border Background="#FEE2E2"
+                                    BorderBrush="#DC2626"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    IsVisible="{Binding HasSendError}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                              Foreground="#DC2626"
+                                              Width="20"
+                                              Height="20"
+                                              VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding SendErrorMessage}"
+                                               Foreground="#DC2626"
+                                               FontSize="13"
+                                               Margin="10,0"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap" />
+                                    <Button Grid.Column="2"
+                                            Content="✕"
+                                            Command="{Binding DismissSendErrorCommand}"
+                                            Background="Transparent"
+                                            Foreground="#DC2626"
+                                            BorderThickness="0"
+                                            Padding="4"
+                                            VerticalAlignment="Center"
+                                            Cursor="Hand" />
+                                </Grid>
+                            </Border>
+                            <!-- Footer Content -->
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{loc:Loc 'An email will be sent to the customer'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !HasSendError}" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="secondary-button" Content="{loc:Loc 'Back to Edit'}" Command="{Binding ClosePreviewModalCommand}" />
+                                    <Button Classes="primary-button" Content="{loc:Loc 'Create &amp; Send'}" Command="{Binding CreateAndSendInvoiceCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>

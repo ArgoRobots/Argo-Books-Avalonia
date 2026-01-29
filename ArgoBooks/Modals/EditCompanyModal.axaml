@@ -6,7 +6,7 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks"
-             mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="500"
+             mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.EditCompanyModal"
              x:DataType="vm:EditCompanyModalViewModel">
 
@@ -18,8 +18,8 @@
                 Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
                 BoxShadow="0 8 32 0 #40000000"
-                Width="480"
-                MaxHeight="550"
+                Width="620"
+                MaxHeight="600"
                 ClipToBounds="True">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
@@ -51,7 +51,7 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="16" Margin="24,16">
-                        <!-- Company Name -->
+                        <!-- Company Name (full width) -->
                         <StackPanel Spacing="6">
                             <TextBlock FontSize="13"
                                        FontWeight="Medium"
@@ -64,31 +64,75 @@
                                      Watermark="{loc:Loc 'Enter company name'}" />
                         </StackPanel>
 
-                        <!-- Business Type -->
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="{loc:Loc 'Business Type'}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding BusinessTypes}"
-                                      SelectedItem="{Binding BusinessType}"
-                                      Classes="form-combobox"
-                                      PlaceholderText="{loc:Loc 'Select business type'}"
-                                      HorizontalAlignment="Stretch" />
-                        </StackPanel>
+                        <!-- Two column layout for fields -->
+                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto">
+                            <!-- Business Type -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Business Type'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding BusinessTypes}"
+                                          SelectedItem="{Binding BusinessType}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="{loc:Loc 'Select business type'}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
 
-                        <!-- Industry -->
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="{loc:Loc Industry}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding Industries}"
-                                      SelectedItem="{Binding Industry}"
-                                      Classes="form-combobox"
-                                      PlaceholderText="{loc:Loc 'Select industry'}"
-                                      HorizontalAlignment="Stretch" />
-                        </StackPanel>
+                            <!-- Industry -->
+                            <StackPanel Grid.Row="0" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc Industry}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding Industries}"
+                                          SelectedItem="{Binding Industry}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="{loc:Loc 'Select industry'}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Phone Number -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Phone Number'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:PhoneInput SelectedCountry="{Binding SelectedPhoneCountry, Mode=TwoWay}"
+                                                     PhoneNumber="{Binding PhoneNumber, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!-- Country -->
+                            <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc Country}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:CountryInput SelectedCountryName="{Binding Country, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!-- City -->
+                            <StackPanel Grid.Row="4" Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{loc:Loc City}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Classes="form-input"
+                                         Text="{Binding City, Mode=TwoWay}"
+                                         Watermark="{loc:Loc 'Enter city'}" />
+                            </StackPanel>
+
+                            <!-- Address -->
+                            <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc Address}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Classes="form-input"
+                                         Text="{Binding Address, Mode=TwoWay}"
+                                         Watermark="{loc:Loc 'Enter address'}" />
+                            </StackPanel>
+                        </Grid>
 
                         <!-- Logo Section -->
                         <StackPanel Spacing="8">

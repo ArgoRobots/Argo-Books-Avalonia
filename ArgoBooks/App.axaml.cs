@@ -108,11 +108,6 @@ public class App : Application
     public static InvoiceModalsViewModel? InvoiceModalsViewModel => _appShellViewModel?.InvoiceModalsViewModel;
 
     /// <summary>
-    /// Gets the send invoice modal view model for shared access.
-    /// </summary>
-    public static SendInvoiceModalViewModel? SendInvoiceModalViewModel => _appShellViewModel?.SendInvoiceModalViewModel;
-
-    /// <summary>
     /// Gets the invoice template designer view model for shared access.
     /// </summary>
     public static InvoiceTemplateDesignerViewModel? InvoiceTemplateDesignerViewModel => _appShellViewModel?.InvoiceTemplateDesignerViewModel;
@@ -1316,9 +1311,12 @@ public class App : Application
                 var companyInfo = new CompanyInfo
                 {
                     Name = args.CompanyName,
-                    Email = args.Email,
+                    BusinessType = args.BusinessType,
+                    Industry = args.Industry,
                     Phone = args.PhoneNumber,
-                    Address = BuildAddress(args)
+                    Country = args.Country,
+                    City = args.City,
+                    Address = args.Address
                 };
 
                 await CompanyManager!.CreateCompanyAsync(
@@ -1598,7 +1596,11 @@ public class App : Application
             settings?.Company.Name ?? "",
             settings?.Company.BusinessType,
             settings?.Company.Industry,
-            logo);
+            logo,
+            settings?.Company.Phone,
+            settings?.Company.Country,
+            settings?.Company.City,
+            settings?.Company.Address);
     }
 
     /// <summary>
@@ -1628,6 +1630,10 @@ public class App : Application
                     settings.Company.Name = args.CompanyName;
                     settings.Company.BusinessType = args.BusinessType;
                     settings.Company.Industry = args.Industry;
+                    settings.Company.Phone = args.Phone;
+                    settings.Company.Country = args.Country;
+                    settings.Company.City = args.City;
+                    settings.Company.Address = args.Address;
 
                     // Handle logo update if a new one was uploaded
                     if (!string.IsNullOrEmpty(args.LogoPath))
@@ -2844,25 +2850,6 @@ public class App : Application
         var categories = ChangeTrackingService?.GetAllChangeCategories();
 
         return await UnsavedChangesDialog.ShowAsync(categories);
-    }
-
-    /// <summary>
-    /// Builds an address string from the create company args.
-    /// </summary>
-    private static string BuildAddress(CompanyCreatedEventArgs args)
-    {
-        var parts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(args.StreetAddress))
-            parts.Add(args.StreetAddress);
-        if (!string.IsNullOrWhiteSpace(args.City))
-            parts.Add(args.City);
-        if (!string.IsNullOrWhiteSpace(args.StateProvince))
-            parts.Add(args.StateProvince);
-        if (!string.IsNullOrWhiteSpace(args.PostalCode))
-            parts.Add(args.PostalCode);
-        if (!string.IsNullOrWhiteSpace(args.Country))
-            parts.Add(args.Country);
-        return string.Join(", ", parts);
     }
 
     /// <summary>

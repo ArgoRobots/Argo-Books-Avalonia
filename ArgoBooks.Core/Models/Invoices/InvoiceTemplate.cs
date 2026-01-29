@@ -114,6 +114,24 @@ public class InvoiceTemplate
     public bool ShowCompanyAddress { get; set; } = true;
 
     /// <summary>
+    /// Whether to show the company phone number.
+    /// </summary>
+    [JsonPropertyName("showCompanyPhone")]
+    public bool ShowCompanyPhone { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show the company city.
+    /// </summary>
+    [JsonPropertyName("showCompanyCity")]
+    public bool ShowCompanyCity { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show the company country.
+    /// </summary>
+    [JsonPropertyName("showCompanyCountry")]
+    public bool ShowCompanyCountry { get; set; } = true;
+
+    /// <summary>
     /// Whether to show the tax breakdown.
     /// </summary>
     [JsonPropertyName("showTaxBreakdown")]
@@ -180,6 +198,9 @@ public class InvoiceTemplate
             PaymentInstructions = PaymentInstructions,
             ShowLogo = ShowLogo,
             ShowCompanyAddress = ShowCompanyAddress,
+            ShowCompanyPhone = ShowCompanyPhone,
+            ShowCompanyCity = ShowCompanyCity,
+            ShowCompanyCountry = ShowCompanyCountry,
             ShowTaxBreakdown = ShowTaxBreakdown,
             ShowItemDescriptions = ShowItemDescriptions,
             ShowNotes = ShowNotes,

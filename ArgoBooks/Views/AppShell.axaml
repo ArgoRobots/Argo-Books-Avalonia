@@ -181,9 +181,6 @@
         <!-- Invoice Modals -->
         <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
 
-        <!-- Send Invoice Modal -->
-        <modals:SendInvoiceModal DataContext="{Binding SendInvoiceModalViewModel}" />
-
         <!-- Invoice Template Designer Modal -->
         <modals:InvoiceTemplateDesignerModal DataContext="{Binding InvoiceTemplateDesignerViewModel}" />
 

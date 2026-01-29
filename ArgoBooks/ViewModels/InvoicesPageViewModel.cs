@@ -617,20 +617,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     }
 
     [RelayCommand]
-    private void SendInvoice(InvoiceDisplayItem? item)
-    {
-        if (item == null)
-            return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        var invoice = companyData?.GetInvoice(item.Id);
-        if (invoice == null)
-            return;
-
-        App.SendInvoiceModalViewModel?.OpenForInvoice(invoice);
-    }
-
-    [RelayCommand]
     private void OpenTemplateDesigner()
     {
         App.InvoiceTemplateDesignerViewModel?.OpenCreateModal();
