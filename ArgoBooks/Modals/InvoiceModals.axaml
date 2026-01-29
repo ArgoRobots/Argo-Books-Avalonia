@@ -22,8 +22,8 @@
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="{Binding IsShowingPreview, Converter={x:Static local:BoolConverters.ToWidth}, ConverterParameter='850,750'}"
-                    Height="{Binding IsShowingPreview, Converter={x:Static local:BoolConverters.ToHeight}, ConverterParameter='700,700'}"
+                    Width="{Binding ModalWidth}"
+                    Height="{Binding ModalHeight}"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
@@ -354,6 +354,7 @@
                                                Message="{Binding SuccessMessage}"
                                                ShowContinueButton="True"
                                                ContinueButtonText="{loc:Loc Done}"
+                                               ContinueButtonDelayMs="300"
                                                ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
                                                IsPlaying="{Binding IsShowingSuccess}"
                                                IsVisible="{Binding IsShowingSuccess}" />

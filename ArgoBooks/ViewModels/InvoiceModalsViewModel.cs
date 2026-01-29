@@ -69,16 +69,30 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// </summary>
     public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess;
 
+    /// <summary>
+    /// Gets the modal width based on current state.
+    /// </summary>
+    public double ModalWidth => IsShowingSuccess ? 400 : (IsShowingPreview ? 850 : 750);
+
+    /// <summary>
+    /// Gets the modal height based on current state.
+    /// </summary>
+    public double ModalHeight => IsShowingSuccess ? 320 : 700;
+
     partial void OnIsShowingPreviewChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowEditContent));
         OnPropertyChanged(nameof(ShowPreviewContent));
+        OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
     }
 
     partial void OnIsShowingSuccessChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowEditContent));
         OnPropertyChanged(nameof(ShowPreviewContent));
+        OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
     }
 
     #endregion
