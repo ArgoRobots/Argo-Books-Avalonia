@@ -22,8 +22,8 @@
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="{Binding IsShowingPreview, Converter={x:Static local:BoolConverters.ToWidth}, ConverterParameter='850,750'}"
-                    Height="{Binding IsShowingPreview, Converter={x:Static local:BoolConverters.ToHeight}, ConverterParameter='700,700'}"
+                    Width="{Binding ModalWidth}"
+                    Height="{Binding ModalHeight}"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
@@ -33,7 +33,7 @@
                             Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1"
-                            IsVisible="{Binding !IsShowingPreview}">
+                            IsVisible="{Binding ShowEditContent}">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{Binding ModalTitle}"
@@ -55,7 +55,7 @@
                             Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1"
-                            IsVisible="{Binding IsShowingPreview}">
+                            IsVisible="{Binding ShowPreviewContent}">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{loc:Loc 'Invoice Preview'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -74,7 +74,7 @@
                     </Border>
 
                     <!-- Content - Edit Mode -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsShowingPreview}">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" IsVisible="{Binding ShowEditContent}">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Template and Customer Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -345,14 +345,26 @@
                                                     Grid.RowSpan="2"
                                                     Html="{Binding PreviewHtml}"
                                                     OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}"
-                                                    IsVisible="{Binding IsShowingPreview}" />
+                                                    IsVisible="{Binding ShowPreviewContent}" />
+
+                    <!-- Content - Success Animation -->
+                    <controls:SuccessAnimation Grid.Row="1"
+                                               Grid.RowSpan="3"
+                                               Title="{Binding SuccessTitle}"
+                                               Message="{Binding SuccessMessage}"
+                                               ShowContinueButton="True"
+                                               ContinueButtonText="{loc:Loc Done}"
+                                               ContinueButtonDelayMs="300"
+                                               ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
+                                               IsPlaying="{Binding IsShowingSuccess}"
+                                               IsVisible="{Binding IsShowingSuccess}" />
 
                     <!-- Footer - Edit Mode -->
                     <Border Grid.Row="3"
                             Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0"
-                            IsVisible="{Binding !IsShowingPreview}">
+                            IsVisible="{Binding ShowEditContent}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{loc:Loc 'Please enter all required fields'}"
@@ -383,7 +395,7 @@
                     </Border>
 
                     <!-- Footer - Preview Mode -->
-                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" IsVisible="{Binding IsShowingPreview}">
+                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" IsVisible="{Binding ShowPreviewContent}">
                         <StackPanel Spacing="12">
                             <!-- Error Banner -->
                             <Border Background="#FEE2E2"

@@ -16,7 +16,7 @@ namespace ArgoBooks.ViewModels;
 public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-    private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
+    private const string LicenseValidationUrl = "https://argorobots.com/api/license/validate.php";
     private const string ApiHostUrl = "https://argorobots.com";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";

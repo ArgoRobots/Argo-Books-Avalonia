@@ -48,7 +48,7 @@ public class InvoiceEmailService : IDisposable
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiEndpointEnvVar} and {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
+                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -227,7 +227,7 @@ public class InvoiceEmailService : IDisposable
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiEndpointEnvVar} and {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
+                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
