@@ -884,6 +884,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 Details = $"Invoice sent to {customer.Email}",
                 Timestamp = DateTime.UtcNow
             });
+
+            // Show success notification
+            App.AddNotification(
+                "Invoice Sent".Translate(),
+                !string.IsNullOrWhiteSpace(response.Message)
+                    ? response.Message
+                    : "Invoice sent successfully to {0}!".TranslateFormat(customer.Email),
+                NotificationType.Success);
         }
         catch (Exception ex)
         {
@@ -945,6 +953,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Show inline error banner instead of message box (HTML renderer causes deadlock with message box)
         SendErrorMessage = message;
         HasSendError = true;
+
+        // Also show error notification
+        App.AddNotification(
+            "Invoice Send Failed".Translate(),
+            message,
+            NotificationType.Error);
+
         return Task.CompletedTask;
     }
 
