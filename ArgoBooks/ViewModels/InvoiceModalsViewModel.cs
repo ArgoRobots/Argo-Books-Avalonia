@@ -77,7 +77,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// <summary>
     /// Gets the modal height based on current state.
     /// </summary>
-    public double ModalHeight => IsShowingSuccess ? 320 : 700;
+    public double ModalHeight => IsShowingSuccess ? 380 : 700;
 
     partial void OnIsShowingPreviewChanged(bool value)
     {
