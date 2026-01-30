@@ -272,7 +272,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
         </Style>
         <Style Selector="DatePicker.form-date /template/ Grid#PART_FlyoutButtonContentGrid">
             <Setter Property="VerticalAlignment" Value="Center" />
