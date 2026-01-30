@@ -100,6 +100,11 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedInventoryItem));
         OnPropertyChanged(nameof(CurrentStock));
         OnPropertyChanged(nameof(CalculatedNewStock));
+        // Clear error when user selects an inventory item
+        if (value != null)
+        {
+            HasInventoryError = false;
+        }
     }
 
     #endregion

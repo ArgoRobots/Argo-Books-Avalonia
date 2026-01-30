@@ -195,6 +195,18 @@ public partial class DepartmentModalsViewModel : ObservableObject
 
     #endregion
 
+    #region Property Changed Handlers
+
+    partial void OnModalDepartmentNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalDepartmentNameError = null;
+        }
+    }
+
+    #endregion
+
     #region Helpers
 
     private void ClearModalFields()

@@ -93,8 +93,24 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private Product? _selectedProduct;
 
+    partial void OnSelectedProductChanged(Product? value)
+    {
+        if (value != null)
+        {
+            AddItemProductError = null;
+        }
+    }
+
     [ObservableProperty]
     private Location? _selectedLocation;
+
+    partial void OnSelectedLocationChanged(Location? value)
+    {
+        if (value != null)
+        {
+            HasLocationError = false;
+        }
+    }
 
     [ObservableProperty]
     private string _addItemSku = string.Empty;

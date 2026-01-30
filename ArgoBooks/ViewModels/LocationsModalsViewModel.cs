@@ -418,6 +418,18 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
     #endregion
 
+    #region Property Changed Handlers
+
+    partial void OnModalNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalNameError = null;
+        }
+    }
+
+    #endregion
+
     #region Modal Helpers
 
     private void ClearModalFields()

@@ -119,6 +119,14 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
     partial void OnIsEditModeChanged(bool value) => OnPropertyChanged(nameof(AddModalTitle));
 
+    partial void OnSelectedSupplierChanged(Supplier? value)
+    {
+        if (value != null)
+        {
+            HasSupplierError = false;
+        }
+    }
+
     private void UpdateCalculatedTotals()
     {
         OnPropertyChanged(nameof(CalculatedSubtotal));

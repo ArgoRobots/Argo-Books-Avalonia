@@ -148,6 +148,41 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     partial void OnRentOutQuantityChanged(string value)
     {
         OnPropertyChanged(nameof(RentOutEstimatedTotal));
+        // Clear error when user modifies the field
+        if (int.TryParse(value, out var qty) && qty > 0)
+        {
+            RentOutQuantityError = null;
+        }
+    }
+
+    partial void OnRentOutCustomerChanged(CustomerOption? value)
+    {
+        if (value != null)
+        {
+            RentOutCustomerError = null;
+        }
+    }
+
+    partial void OnModalItemNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalItemNameError = null;
+        }
+    }
+
+    partial void OnModalTotalQuantityChanged(string value)
+    {
+        if (int.TryParse(value, out var qty) && qty > 0)
+        {
+            ModalQuantityError = null;
+        }
+    }
+
+    partial void OnModalDailyRateChanged(string value)
+    {
+        // Clear error when user modifies any rate field
+        ModalDailyRateError = null;
     }
 
     partial void OnRentOutRateTypeChanged(string value)

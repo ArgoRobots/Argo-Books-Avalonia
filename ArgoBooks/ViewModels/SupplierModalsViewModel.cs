@@ -369,6 +369,30 @@ public partial class SupplierModalsViewModel : ObservableObject
 
     #endregion
 
+    #region Property Changed Handlers
+
+    partial void OnModalSupplierNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalSupplierNameError = null;
+        }
+    }
+
+    partial void OnModalEmailChanged(string value)
+    {
+        // Clear error when user modifies the field
+        ModalEmailError = null;
+    }
+
+    partial void OnModalPhoneChanged(string value)
+    {
+        // Clear error when user modifies the field
+        ModalPhoneError = null;
+    }
+
+    #endregion
+
     #region Helpers
 
     private void ClearModalFields()
