@@ -51,6 +51,11 @@
         <Thickness x:Key="BorderMedium">2</Thickness>
         <Thickness x:Key="BorderThick">3</Thickness>
 
+        <!-- Form Control Heights -->
+        <x:Double x:Key="FormControlHeight">40</x:Double>
+        <x:Double x:Key="FormControlHeightCompact">36</x:Double>
+        <x:Double x:Key="FormControlHeightSmall">32</x:Double>
+
         <!-- Animation Colors (must be defined locally for StaticResource in animations) -->
         <Color x:Key="HighlightAnimationColor">#3060A5FA</Color>
     </Styles.Resources>
@@ -131,7 +136,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeightSmall}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton#PART_IncreaseButton">
@@ -236,6 +241,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
     </Style>
     <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -254,6 +260,7 @@
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
     </Style>
 
     <!-- Form DatePicker -->
@@ -261,7 +268,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="MinWidth" Value="0" />
     </Style>
     <Style Selector="DatePicker.form-datepicker /template/ Button">
@@ -277,6 +284,65 @@
     </Style>
     <Style Selector="DatePicker.form-datepicker /template/ Button TextBlock">
         <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Compact Form TextBox Input (for line items) -->
+    <Style Selector="TextBox.form-input-compact">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
+    </Style>
+    <Style Selector="TextBox.form-input-compact /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    </Style>
+    <Style Selector="TextBox.form-input-compact:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+
+    <!-- Compact Form ComboBox (for line items) -->
+    <Style Selector="ComboBox.form-combobox-compact">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
+    </Style>
+
+    <!-- Standard Form NumericUpDown (matches form-input class naming) -->
+    <Style Selector="NumericUpDown.form-input">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+    </Style>
+    <Style Selector="NumericUpDown.form-numericupdown">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+    </Style>
+
+    <!-- Compact Form NumericUpDown (for line items) -->
+    <Style Selector="NumericUpDown.form-input-compact">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
+        <Setter Property="ShowButtonSpinner" Value="False" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
 
 </Styles>
