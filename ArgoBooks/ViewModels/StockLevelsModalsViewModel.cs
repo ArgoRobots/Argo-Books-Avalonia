@@ -385,24 +385,28 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         HasLocationError = false;
         HasAddItemQuantityError = false;
 
-        // Validate
+        // Validate all fields before returning
+        var hasErrors = false;
+
         if (SelectedProduct == null)
         {
             AddItemProductError = "Please select a product.".Translate();
-            return;
+            hasErrors = true;
         }
 
         if (SelectedLocation == null)
         {
             HasLocationError = true;
-            return;
+            hasErrors = true;
         }
 
         if (!int.TryParse(AddItemQuantity, out var quantity) || quantity < 0)
         {
             HasAddItemQuantityError = true;
-            return;
+            hasErrors = true;
         }
+
+        if (hasErrors) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;

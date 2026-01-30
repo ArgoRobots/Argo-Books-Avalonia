@@ -183,18 +183,22 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         HasInventoryError = false;
         HasQuantityError = false;
 
-        // Validate
+        // Validate all fields before returning
+        var hasErrors = false;
+
         if (SelectedInventoryItem == null)
         {
             HasInventoryError = true;
-            return;
+            hasErrors = true;
         }
 
         if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
         {
             HasQuantityError = true;
-            return;
+            hasErrors = true;
         }
+
+        if (hasErrors) return;
 
         var companyData = App.CompanyManager?.CompanyData;
 

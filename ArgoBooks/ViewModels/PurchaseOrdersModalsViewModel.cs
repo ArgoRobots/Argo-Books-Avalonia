@@ -264,6 +264,16 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Navigates to Products page and opens the create product modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateProduct()
+    {
+        IsAddModalOpen = false;
+        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
+    /// <summary>
     /// Adds a new line item to the order.
     /// </summary>
     [RelayCommand]
@@ -295,44 +305,57 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         AddModalError = null;
         HasSupplierError = false;
 
+        // Clear all line item errors
+        foreach (var li in LineItems)
+        {
+            li.HasProductError = false;
+        }
+
+        // Validate all fields before returning
+        var hasErrors = false;
+
         // Validate supplier
         if (SelectedSupplier == null)
         {
             HasSupplierError = true;
-            return;
+            hasErrors = true;
         }
 
         // Validate line items
         if (LineItems.Count == 0)
         {
             AddModalError = "Please add at least one line item.".Translate();
-            return;
+            hasErrors = true;
         }
-
-        foreach (var li in LineItems)
+        else
         {
-            if (string.IsNullOrWhiteSpace(li.ProductId))
+            foreach (var li in LineItems)
             {
-                AddModalError = "Please select a product for all line items.".Translate();
-                return;
-            }
-            if (!int.TryParse(li.Quantity, out var qty) || qty <= 0)
-            {
-                AddModalError = "Please enter valid quantities for all line items.".Translate();
-                return;
-            }
-            if (!decimal.TryParse(li.UnitCost, out var cost) || cost < 0)
-            {
-                AddModalError = "Please enter valid unit costs for all line items.".Translate();
-                return;
+                if (string.IsNullOrWhiteSpace(li.ProductId))
+                {
+                    li.HasProductError = true;
+                    hasErrors = true;
+                }
+                if (!int.TryParse(li.Quantity, out var qty) || qty <= 0)
+                {
+                    AddModalError = "Please enter valid quantities for all line items.".Translate();
+                    hasErrors = true;
+                }
+                if (!decimal.TryParse(li.UnitCost, out var cost) || cost < 0)
+                {
+                    AddModalError = "Please enter valid unit costs for all line items.".Translate();
+                    hasErrors = true;
+                }
             }
         }
 
         if (!decimal.TryParse(ShippingCost, out var shipping) || shipping < 0)
         {
             AddModalError = "Please enter a valid shipping cost.".Translate();
-            return;
+            hasErrors = true;
         }
+
+        if (hasErrors) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
@@ -888,6 +911,9 @@ public partial class OrderLineItemViewModel : ObservableObject
     [ObservableProperty]
     private string _unitCost = "0.00";
 
+    [ObservableProperty]
+    private bool _hasProductError;
+
     /// <summary>
     /// Available products for the dropdown.
     /// </summary>
@@ -906,6 +932,7 @@ public partial class OrderLineItemViewModel : ObservableObject
                 ProductId = value.Id;
                 ProductName = value.Name;
                 UnitCost = value.CostPrice.ToString("F2");
+                HasProductError = false;
                 OnPropertyChanged();
             }
         }

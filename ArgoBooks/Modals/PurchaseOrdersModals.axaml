@@ -134,17 +134,18 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                                    <ComboBox Grid.Column="0"
-                                                              ItemsSource="{Binding AvailableProducts}"
-                                                              SelectedItem="{Binding SelectedProduct}"
-                                                              Classes="form-combobox-compact"
-                                                              Margin="0,0,8,0">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate DataType="entities:Product">
-                                                                <TextBlock Text="{Binding Name}" />
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
+                                                    <controls:SearchableDropdown Grid.Column="0"
+                                                             Margin="0,0,8,0"
+                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).AvailableProducts}"
+                                                             SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="{loc:Loc 'Search for a product...'}"
+                                                             ShowAddNew="False"
+                                                             EmptyMessage="{loc:Loc 'No products found.'}"
+                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                             HasError="{Binding HasProductError}"
+                                                             ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <TextBox Grid.Column="1"
                                                              Text="{Binding Quantity, Mode=TwoWay}"
                                                              Classes="form-input-compact"
