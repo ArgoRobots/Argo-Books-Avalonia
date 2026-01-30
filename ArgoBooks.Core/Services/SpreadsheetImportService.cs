@@ -829,6 +829,9 @@ public class SpreadsheetImportService
             case "Purchase Orders":
                 ImportPurchaseOrders(data, headers, rows);
                 break;
+            case "Purchase Order Line Items":
+                ImportPurchaseOrderLineItems(data, headers, rows);
+                break;
         }
     }
 
@@ -1531,6 +1534,43 @@ public class SpreadsheetImportService
 
             if (existing == null)
                 data.PurchaseOrders.Add(po);
+        }
+    }
+
+    private void ImportPurchaseOrderLineItems(CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        // Group line items by purchase order ID
+        var lineItemsByPo = new Dictionary<string, List<PurchaseOrderLineItem>>();
+
+        foreach (var row in rows)
+        {
+            var poId = GetString(row, headers, "PO ID");
+            if (string.IsNullOrEmpty(poId)) continue;
+
+            var lineItem = new PurchaseOrderLineItem
+            {
+                ProductId = GetString(row, headers, "Product ID"),
+                Quantity = GetInt(row, headers, "Quantity"),
+                UnitCost = GetDecimal(row, headers, "Unit Cost"),
+                QuantityReceived = GetInt(row, headers, "Quantity Received")
+            };
+
+            if (!lineItemsByPo.ContainsKey(poId))
+                lineItemsByPo[poId] = [];
+
+            lineItemsByPo[poId].Add(lineItem);
+        }
+
+        // Assign line items to purchase orders
+        foreach (var (poId, lineItems) in lineItemsByPo)
+        {
+            var po = data.PurchaseOrders.FirstOrDefault(p => p.Id == poId);
+            if (po != null)
+            {
+                po.LineItems = lineItems;
+                // Calculate subtotal from line items
+                po.Subtotal = lineItems.Sum(li => li.Total);
+            }
         }
     }
 

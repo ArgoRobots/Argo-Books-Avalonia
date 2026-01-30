@@ -45,7 +45,7 @@
                             <!-- Supplier Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
                                                             SelectedItem="{Binding SelectedSupplier}"
@@ -64,7 +64,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Order Date'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Order Date'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding OrderDate}"
                                                 Classes="form-datepicker"
@@ -72,7 +72,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Expected Delivery'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Expected Delivery'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ExpectedDeliveryDate}"
                                                 Classes="form-datepicker"
@@ -81,83 +81,111 @@
                             </Grid>
 
                             <!-- Line Items Section -->
-                            <StackPanel Spacing="8">
+                            <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Line Items'}" /><Run Text="*" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <Button Grid.Column="1" Classes="link-button" Command="{Binding AddLineItemCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{loc:Loc 'Line Items'}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <Button Grid.Column="1"
+                                            Classes="secondary-button"
+                                            Command="{Binding AddLineItemCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
                                             <PathIcon Data="{x:Static icons:Icons.Add}" Width="14" Height="14" />
                                             <TextBlock Text="{loc:Loc 'Add Item'}" />
                                         </StackPanel>
                                     </Button>
                                 </Grid>
 
-                                <!-- Line Items List -->
+                                <!-- Line Items Header -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="12"
-                                        MinHeight="100">
-                                    <StackPanel>
-                                        <!-- Header -->
-                                        <Grid ColumnDefinitions="2*,*,*,80,Auto" Margin="0,0,0,8"
-                                              IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Product'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Cost'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Grid>
-
-                                        <!-- Line Items -->
-                                        <ItemsControl ItemsSource="{Binding LineItems}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="vm:OrderLineItemViewModel">
-                                                    <Border Margin="0,4" Padding="8" Background="{DynamicResource SurfaceBrush}" CornerRadius="6">
-                                                        <Grid ColumnDefinitions="2*,*,*,80,Auto" RowDefinitions="Auto">
-                                                            <ComboBox Grid.Column="0"
-                                                                      ItemsSource="{Binding AvailableProducts}"
-                                                                      SelectedItem="{Binding SelectedProduct}"
-                                                                      Classes="form-combobox-compact"
-                                                                      Margin="0,0,8,0">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate DataType="entities:Product">
-                                                                        <TextBlock Text="{Binding Name}" />
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                            </ComboBox>
-                                                            <TextBox Grid.Column="1"
-                                                                     Text="{Binding Quantity, Mode=TwoWay}"
-                                                                     Classes="form-input-compact"
-                                                                     Margin="0,0,8,0" />
-                                                            <TextBox Grid.Column="2"
-                                                                     Text="{Binding UnitCost, Mode=TwoWay}"
-                                                                     Classes="form-input-compact"
-                                                                     Margin="0,0,8,0" />
-                                                            <TextBlock Grid.Column="3"
-                                                                       Text="{Binding TotalDisplay}"
-                                                                       FontWeight="Medium"
-                                                                       VerticalAlignment="Center" />
-                                                            <Button Grid.Column="4"
-                                                                    Classes="icon-button-small danger"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).RemoveLineItemCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Delete}" Width="14" Height="14" />
-                                                            </Button>
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-
-                                        <!-- Empty State -->
-                                        <TextBlock Text="{loc:Loc 'No line items added. Click \'Add Item\' to add products.'}"
-                                                   FontSize="13"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
+                                    <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
+                                            <TextBlock Text="{loc:Loc 'Product'}" FontSize="12" FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text=" *" FontSize="12" FontWeight="Medium"
+                                                       Foreground="{DynamicResource DangerBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
-                                                   Margin="0,20"
-                                                   IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsZero}}" />
-                                    </StackPanel>
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Cost'}" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="4" Width="32" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Line Items List -->
+                                <ItemsControl ItemsSource="{Binding LineItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:OrderLineItemViewModel">
+                                            <Border Padding="12,8"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="0,0,0,1">
+                                                <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                                    <ComboBox Grid.Column="0"
+                                                              ItemsSource="{Binding AvailableProducts}"
+                                                              SelectedItem="{Binding SelectedProduct}"
+                                                              Classes="form-combobox-compact"
+                                                              Margin="0,0,8,0">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate DataType="entities:Product">
+                                                                <TextBlock Text="{Binding Name}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <TextBox Grid.Column="1"
+                                                             Text="{Binding Quantity, Mode=TwoWay}"
+                                                             Classes="form-input-compact"
+                                                             HorizontalContentAlignment="Center"
+                                                             Margin="0,0,8,0" />
+                                                    <TextBox Grid.Column="2"
+                                                             Text="{Binding UnitCost, Mode=TwoWay}"
+                                                             Classes="form-input-compact"
+                                                             HorizontalContentAlignment="Center"
+                                                             Margin="0,0,8,0" />
+                                                    <TextBlock Grid.Column="3"
+                                                               Text="{Binding TotalDisplay}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               HorizontalAlignment="Right" />
+                                                    <Button Grid.Column="4"
+                                                            Classes="icon-button danger"
+                                                            VerticalAlignment="Center"
+                                                            Margin="8,0,0,0"
+                                                            Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).RemoveLineItemCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="{loc:Loc 'Remove item'}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}" Width="14" Height="14" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty State for Line Items -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="24,16"
+                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                    <TextBlock Text="{loc:Loc 'No line items added. Click \'Add Item\' to add products.'}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
                                 </Border>
                             </StackPanel>
 
