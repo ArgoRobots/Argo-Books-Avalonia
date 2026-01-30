@@ -23,7 +23,7 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 90;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 120;
+    private double _actionsColumnWidth = 84;
 
     public SuppliersTableColumnWidths()
     {
@@ -34,6 +34,6 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Country", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 130 }, w => CountryColumnWidth = w);
         RegisterColumn("Products", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 }, w => ProductsColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.6, MinWidth = 70, PreferredWidth = 90 }, w => StatusColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 120, MinWidth = 120 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
     }
 }

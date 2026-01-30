@@ -504,9 +504,9 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Orientation="Horizontal" Spacing="12">
-                                <TextBlock Text="{loc:Loc 'Rental Details'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Rental Details'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                                 <Border Background="{Binding ViewStatus, Converter={x:Static conv:StringConverters.ToRentalStatusBackground}}"
-                                        CornerRadius="4" Padding="8,4">
+                                        CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding ViewStatus}"
                                                Foreground="{Binding ViewStatus, Converter={x:Static conv:StringConverters.ToRentalStatusForeground}}"
                                                FontSize="12" FontWeight="Medium" />
@@ -542,17 +542,11 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Accountant and Quantity -->
-                            <Grid ColumnDefinitions="*,*">
-                                <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="{loc:Loc Accountant}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Text="{Binding ViewAccountantName}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="4">
-                                    <TextBlock Text="{loc:Loc Quantity}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Text="{Binding ViewQuantity}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- Quantity -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{loc:Loc Quantity}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ViewQuantity}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </StackPanel>
 
                             <!-- Rate and Deposit -->
                             <Grid ColumnDefinitions="*,*">

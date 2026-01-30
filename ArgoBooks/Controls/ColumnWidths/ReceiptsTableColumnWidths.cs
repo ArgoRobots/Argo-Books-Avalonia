@@ -23,7 +23,7 @@ public partial class ReceiptsTableColumnWidths : TableColumnWidthsBase
     private double _amountColumnWidth = 100;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 120;
+    private double _actionsColumnWidth = 84;
 
     public ReceiptsTableColumnWidths()
     {
@@ -34,6 +34,6 @@ public partial class ReceiptsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Date", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => DateColumnWidth = w);
         RegisterColumn("Type", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => TypeColumnWidth = w);
         RegisterColumn("Amount", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => AmountColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 120, MinWidth = 120 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
     }
 }

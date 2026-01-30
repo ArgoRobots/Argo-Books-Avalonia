@@ -415,6 +415,15 @@ public partial class Header : UserControl
     }
 
     /// <summary>
+    /// Focuses the search input when clicking anywhere on the search box.
+    /// </summary>
+    private void SearchBox_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var searchInput = this.FindControl<TextBox>("SearchInput");
+        searchInput?.Focus();
+    }
+
+    /// <summary>
     /// Handles keyboard navigation in the search input for Quick Actions panel.
     /// </summary>
     private void SearchInput_KeyDown(object? sender, KeyEventArgs e)

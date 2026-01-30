@@ -32,7 +32,7 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
     private double _expectedColumnWidth = 110;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 120;
+    private double _actionsColumnWidth = 192;
 
     #endregion
 
@@ -96,12 +96,12 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 110
         }, w => ExpectedColumnWidth = w);
 
-        // Actions column (fixed width)
+        // Actions column (fixed width - 5 buttons)
         RegisterColumn("Actions", new ColumnDef
         {
             IsFixed = true,
-            FixedWidth = 120,
-            MinWidth = 120
+            FixedWidth = ActionsWidth(5),
+            MinWidth = ActionsWidth(5)
         }, w => ActionsColumnWidth = w);
 
         // Initial calculation

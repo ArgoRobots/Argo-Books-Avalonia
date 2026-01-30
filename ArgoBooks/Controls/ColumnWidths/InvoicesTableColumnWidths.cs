@@ -29,7 +29,7 @@ public partial class InvoicesTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 100;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 120;
+    private double _actionsColumnWidth = 156;
 
     public InvoicesTableColumnWidths()
     {
@@ -42,6 +42,6 @@ public partial class InvoicesTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("DueDate", new ColumnDef { StarValue = 0.9, MinWidth = 90, PreferredWidth = 110 }, w => DueDateColumnWidth = w);
         RegisterColumn("Amount", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => AmountColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => StatusColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 120, MinWidth = 120 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
     }
 }

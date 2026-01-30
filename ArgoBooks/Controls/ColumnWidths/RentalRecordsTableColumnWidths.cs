@@ -38,7 +38,7 @@ public partial class RentalRecordsTableColumnWidths : TableColumnWidthsBase
     private double _depositColumnWidth = 100;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 120;
+    private double _actionsColumnWidth = 156;
 
     public RentalRecordsTableColumnWidths()
     {
@@ -55,6 +55,6 @@ public partial class RentalRecordsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Status", new ColumnDef { StarValue = 0.7, MinWidth = 90, PreferredWidth = 110 }, w => StatusColumnWidth = w);
         RegisterColumn("Total", new ColumnDef { StarValue = 0.6, MinWidth = 80, PreferredWidth = 100 }, w => TotalColumnWidth = w);
         RegisterColumn("Deposit", new ColumnDef { StarValue = 0.6, MinWidth = 80, PreferredWidth = 100 }, w => DepositColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 120, MinWidth = 120 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
     }
 }

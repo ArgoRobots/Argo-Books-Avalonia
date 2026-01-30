@@ -1133,7 +1133,13 @@ public class SpreadsheetImportService
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
-            var existing = data.Products.FirstOrDefault(p => p.Id == id);
+            var name = GetString(row, headers, "Name");
+
+            // Check for existing product by ID first, then by name to prevent duplicates
+            // (auto-created placeholder products may have different IDs but same names)
+            var existing = data.Products.FirstOrDefault(p => p.Id == id)
+                ?? data.Products.FirstOrDefault(p =>
+                    string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
             var typeStr = GetString(row, headers, "Type");
             var productType = typeStr.ToLowerInvariant() switch

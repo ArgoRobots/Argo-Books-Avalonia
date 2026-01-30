@@ -33,9 +33,9 @@ public partial class PurchaseOrdersPage : UserControl
     /// </summary>
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        if (DataContext is PurchaseOrdersPageViewModel viewModel)
+        if (DataContext is PurchaseOrdersPageViewModel viewModel && e.WidthChanged)
         {
-            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width - 48); // Account for padding
+            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
         }
     }
 

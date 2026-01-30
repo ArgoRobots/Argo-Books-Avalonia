@@ -50,7 +50,7 @@ public partial class TableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 90;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 160;
+    private double _actionsColumnWidth = 156;
 
     public TableColumnWidths()
     {
@@ -74,6 +74,6 @@ public partial class TableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Total", new ColumnDef { StarValue = 0.8, MinWidth = 70, PreferredWidth = 110 }, w => TotalColumnWidth = w);
         RegisterColumn("Receipt", new ColumnDef { StarValue = 0.5, MinWidth = 50, PreferredWidth = 80 }, w => ReceiptColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.9, MinWidth = 80, PreferredWidth = 110 }, w => StatusColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 160, MinWidth = 160 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
     }
 }

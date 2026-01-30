@@ -32,7 +32,7 @@ public partial class LostDamagedTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 85;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 70;
+    private double _actionsColumnWidth = 84;
 
     public LostDamagedTableColumnWidths()
     {
@@ -46,6 +46,6 @@ public partial class LostDamagedTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Staff", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => StaffColumnWidth = w);
         RegisterColumn("Loss", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 80 }, w => LossColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.7, MinWidth = 70, PreferredWidth = 85 }, w => StatusColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 70, MinWidth = 70 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
     }
 }

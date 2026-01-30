@@ -202,7 +202,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == SelectedInventoryItem.Id);
+        var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == SelectedInventoryItem!.Id);
         if (inventoryItem == null) return;
 
         // Store old values for undo
