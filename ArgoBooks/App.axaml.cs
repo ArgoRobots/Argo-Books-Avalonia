@@ -491,6 +491,59 @@ public class App : Application
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
 
+    // Cached page ViewModels to prevent memory leaks from event subscriptions
+    private static DashboardPageViewModel? _dashboardPageViewModel;
+    private static AnalyticsPageViewModel? _analyticsPageViewModel;
+    private static InsightsPageViewModel? _insightsPageViewModel;
+    private static ReportsPageViewModel? _reportsPageViewModel;
+    private static RevenuePageViewModel? _revenuePageViewModel;
+    private static ExpensesPageViewModel? _expensesPageViewModel;
+    private static InvoicesPageViewModel? _invoicesPageViewModel;
+    private static PaymentsPageViewModel? _paymentsPageViewModel;
+    private static ProductsPageViewModel? _productsPageViewModel;
+    private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
+    private static LocationsPageViewModel? _locationsPageViewModel;
+    private static StockAdjustmentsPageViewModel? _stockAdjustmentsPageViewModel;
+    private static PurchaseOrdersPageViewModel? _purchaseOrdersPageViewModel;
+    private static CategoriesPageViewModel? _categoriesPageViewModel;
+    private static CustomersPageViewModel? _customersPageViewModel;
+    private static SuppliersPageViewModel? _suppliersPageViewModel;
+    private static DepartmentsPageViewModel? _departmentsPageViewModel;
+    private static RentalInventoryPageViewModel? _rentalInventoryPageViewModel;
+    private static RentalRecordsPageViewModel? _rentalRecordsPageViewModel;
+    private static ReturnsPageViewModel? _returnsPageViewModel;
+    private static LostDamagedPageViewModel? _lostDamagedPageViewModel;
+    private static ReceiptsPageViewModel? _receiptsPageViewModel;
+
+    /// <summary>
+    /// Clears all cached page ViewModels to ensure fresh state when opening a new company.
+    /// </summary>
+    private static void ClearPageCaches()
+    {
+        _dashboardPageViewModel = null;
+        _analyticsPageViewModel = null;
+        _insightsPageViewModel = null;
+        _reportsPageViewModel = null;
+        _revenuePageViewModel = null;
+        _expensesPageViewModel = null;
+        _invoicesPageViewModel = null;
+        _paymentsPageViewModel = null;
+        _productsPageViewModel = null;
+        _stockLevelsPageViewModel = null;
+        _locationsPageViewModel = null;
+        _stockAdjustmentsPageViewModel = null;
+        _purchaseOrdersPageViewModel = null;
+        _categoriesPageViewModel = null;
+        _customersPageViewModel = null;
+        _suppliersPageViewModel = null;
+        _departmentsPageViewModel = null;
+        _rentalInventoryPageViewModel = null;
+        _rentalRecordsPageViewModel = null;
+        _returnsPageViewModel = null;
+        _lostDamagedPageViewModel = null;
+        _receiptsPageViewModel = null;
+    }
+
     // File watchers for recent companies - watches directories containing recent company files
     private static readonly Dictionary<string, FileSystemWatcher> _recentCompanyWatchers = new();
 
@@ -975,6 +1028,9 @@ public class App : Application
             UndoRedoManager.Clear();
             ChangeTrackingService?.ClearAllChanges();
             _appShellViewModel.HeaderViewModel.ClearNotifications();
+
+            // Clear cached page ViewModels to ensure fresh state when opening a new company
+            ClearPageCaches();
 
             var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
             await LanguageService.Instance.SetLanguageAsync(globalLanguage);
@@ -2867,148 +2923,156 @@ public class App : Application
         // Main Section
         navigationService.RegisterPage("Dashboard", _ =>
         {
-            var viewModel = new DashboardPageViewModel();
+            if (_dashboardPageViewModel == null)
+            {
+                _dashboardPageViewModel = new DashboardPageViewModel();
+                // Wire up Google Sheets export notifications (only once)
+                _dashboardPageViewModel.GoogleSheetsExportStatusChanged += (_, args) =>
+                {
+                    if (args.IsExporting)
+                    {
+                        _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...".Translate());
+                    }
+                    else if (args.IsSuccess)
+                    {
+                        _mainWindowViewModel?.HideLoading();
+                        // No notification - the browser opens automatically
+                    }
+                    else if (!string.IsNullOrEmpty(args.ErrorMessage))
+                    {
+                        _mainWindowViewModel?.HideLoading();
+                        appShellViewModel.AddNotification("Export Failed".Translate(), args.ErrorMessage, NotificationType.Error);
+                    }
+                };
+            }
             if (CompanyManager?.IsCompanyOpen == true)
             {
-                viewModel.Initialize(CompanyManager);
+                _dashboardPageViewModel.Initialize(CompanyManager);
             }
-
-            // Wire up Google Sheets export notifications
-            viewModel.GoogleSheetsExportStatusChanged += (_, args) =>
-            {
-                if (args.IsExporting)
-                {
-                    _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...".Translate());
-                }
-                else if (args.IsSuccess)
-                {
-                    _mainWindowViewModel?.HideLoading();
-                    // No notification - the browser opens automatically
-                }
-                else if (!string.IsNullOrEmpty(args.ErrorMessage))
-                {
-                    _mainWindowViewModel?.HideLoading();
-                    appShellViewModel.AddNotification("Export Failed".Translate(), args.ErrorMessage, NotificationType.Error);
-                }
-            };
-
-            return new DashboardPage { DataContext = viewModel };
+            return new DashboardPage { DataContext = _dashboardPageViewModel };
         });
         navigationService.RegisterPage("Analytics", _ =>
         {
-            var viewModel = new AnalyticsPageViewModel();
+            _analyticsPageViewModel ??= new AnalyticsPageViewModel();
             if (CompanyManager?.IsCompanyOpen == true)
             {
-                viewModel.Initialize(CompanyManager);
+                _analyticsPageViewModel.Initialize(CompanyManager);
             }
-            return new AnalyticsPage { DataContext = viewModel };
+            return new AnalyticsPage { DataContext = _analyticsPageViewModel };
         });
-        navigationService.RegisterPage("Insights", _ => new InsightsPage { DataContext = new InsightsPageViewModel() });
-        navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = new ReportsPageViewModel() });
+        navigationService.RegisterPage("Insights", _ => new InsightsPage { DataContext = _insightsPageViewModel ??= new InsightsPageViewModel() });
+        navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = _reportsPageViewModel ??= new ReportsPageViewModel() });
 
         // Transactions Section
         navigationService.RegisterPage("Revenue", param =>
         {
-            var viewModel = new RevenuePageViewModel();
+            _revenuePageViewModel ??= new RevenuePageViewModel();
+            // Clear any previous highlight first
+            _revenuePageViewModel.HighlightTransactionId = null;
             if (param is TransactionNavigationParameter navParam)
             {
-                viewModel.HighlightTransactionId = navParam.TransactionId;
-                viewModel.ApplyHighlight();
+                _revenuePageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _revenuePageViewModel.ApplyHighlight();
             }
-            return new RevenuePage { DataContext = viewModel };
+            return new RevenuePage { DataContext = _revenuePageViewModel };
         });
         navigationService.RegisterPage("Expenses", param =>
         {
-            var viewModel = new ExpensesPageViewModel();
+            _expensesPageViewModel ??= new ExpensesPageViewModel();
+            // Clear any previous highlight first
+            _expensesPageViewModel.HighlightTransactionId = null;
             if (param is TransactionNavigationParameter navParam)
             {
-                viewModel.HighlightTransactionId = navParam.TransactionId;
-                viewModel.ApplyHighlight();
+                _expensesPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _expensesPageViewModel.ApplyHighlight();
             }
-            return new ExpensesPage { DataContext = viewModel };
+            return new ExpensesPage { DataContext = _expensesPageViewModel };
         });
-        navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = new InvoicesPageViewModel() });
-        navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
+        navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = _invoicesPageViewModel ??= new InvoicesPageViewModel() });
+        navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = _paymentsPageViewModel ??= new PaymentsPageViewModel() });
 
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
         {
-            var viewModel = new ProductsPageViewModel
+            if (_productsPageViewModel == null)
             {
-                // Set plan status from app shell
-                HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false
-            };
-            // Wire up upgrade request to open upgrade modal
-            viewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+                _productsPageViewModel = new ProductsPageViewModel();
+                // Wire up upgrade request to open upgrade modal (only once)
+                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+            }
+            // Update plan status each time (may have changed)
+            _productsPageViewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            // Reset modal state
+            _productsPageViewModel.IsAddModalOpen = false;
             if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
                 if (dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
                 {
-                    viewModel.SelectedTabIndex = index;
+                    _productsPageViewModel.SelectedTabIndex = index;
                 }
                 // Check if we should open the add modal
                 if (dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
                 {
-                    viewModel.IsAddModalOpen = true;
+                    _productsPageViewModel.IsAddModalOpen = true;
                 }
             }
-            return new ProductsPage { DataContext = viewModel };
+            return new ProductsPage { DataContext = _productsPageViewModel };
         });
-        navigationService.RegisterPage("StockLevels", _ => new StockLevelsPage { DataContext = new StockLevelsPageViewModel() });
+        navigationService.RegisterPage("StockLevels", _ => new StockLevelsPage { DataContext = _stockLevelsPageViewModel ??= new StockLevelsPageViewModel() });
         navigationService.RegisterPage("Locations", param =>
         {
-            var viewModel = new LocationsPageViewModel();
+            _locationsPageViewModel ??= new LocationsPageViewModel();
             // Check if we should open the add modal
             if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
             {
                 LocationsModalsViewModel?.OpenAddModal();
             }
-            return new LocationsPage { DataContext = viewModel };
+            return new LocationsPage { DataContext = _locationsPageViewModel };
         });
-        navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = new StockAdjustmentsPageViewModel() });
-        navigationService.RegisterPage("PurchaseOrders", _ => new PurchaseOrdersPage { DataContext = new PurchaseOrdersPageViewModel() });
+        navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = _stockAdjustmentsPageViewModel ??= new StockAdjustmentsPageViewModel() });
+        navigationService.RegisterPage("PurchaseOrders", _ => new PurchaseOrdersPage { DataContext = _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel() });
         navigationService.RegisterPage("Categories", param =>
         {
-            var viewModel = new CategoriesPageViewModel();
+            _categoriesPageViewModel ??= new CategoriesPageViewModel();
+            // Reset modal state
+            _categoriesPageViewModel.IsAddModalOpen = false;
             if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
                 if (dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
                 {
-                    viewModel.SelectedTabIndex = index;
+                    _categoriesPageViewModel.SelectedTabIndex = index;
                 }
                 // Check if we should open the add modal
                 if (dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
                 {
-                    viewModel.IsAddModalOpen = true;
+                    _categoriesPageViewModel.IsAddModalOpen = true;
                 }
             }
-            return new CategoriesPage { DataContext = viewModel };
+            return new CategoriesPage { DataContext = _categoriesPageViewModel };
         });
 
         // Contacts Section
-        navigationService.RegisterPage("Customers", _ => new CustomersPage { DataContext = new CustomersPageViewModel() });
-        navigationService.RegisterPage("Suppliers", _ => new SuppliersPage { DataContext = new SuppliersPageViewModel() });
+        navigationService.RegisterPage("Customers", _ => new CustomersPage { DataContext = _customersPageViewModel ??= new CustomersPageViewModel() });
+        navigationService.RegisterPage("Suppliers", _ => new SuppliersPage { DataContext = _suppliersPageViewModel ??= new SuppliersPageViewModel() });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
-        navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = new DepartmentsPageViewModel() });
+        navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
         navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
 
         // Rentals Section
-        navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = new RentalInventoryPageViewModel() });
-        navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = new RentalRecordsPageViewModel() });
+        navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = _rentalInventoryPageViewModel ??= new RentalInventoryPageViewModel() });
+        navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = _rentalRecordsPageViewModel ??= new RentalRecordsPageViewModel() });
 
         // Tracking Section
-        navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = new ReturnsPageViewModel() });
-        navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = new LostDamagedPageViewModel() });
+        navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = _returnsPageViewModel ??= new ReturnsPageViewModel() });
+        navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = _lostDamagedPageViewModel ??= new LostDamagedPageViewModel() });
         navigationService.RegisterPage("Receipts", _ =>
         {
-            var viewModel = new ReceiptsPageViewModel
-            {
-                // Set plan status from app shell
-                HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false
-            };
-            return new ReceiptsPage { DataContext = viewModel };
+            _receiptsPageViewModel ??= new ReceiptsPageViewModel();
+            // Update plan status each time (may have changed)
+            _receiptsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            return new ReceiptsPage { DataContext = _receiptsPageViewModel };
         });
 
     }
