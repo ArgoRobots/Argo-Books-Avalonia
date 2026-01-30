@@ -123,6 +123,15 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _addItemSku = string.Empty;
 
+    partial void OnAddItemQuantityChanged(string value)
+    {
+        // Clear error when user starts typing
+        if (!string.IsNullOrEmpty(value))
+        {
+            HasAddItemQuantityError = false;
+        }
+    }
+
     [ObservableProperty]
     private string _addItemQuantity = string.Empty;
 
@@ -350,6 +359,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemError = null;
         AddItemProductError = null;
         HasLocationError = false;
+        HasAddItemQuantityError = false;
 
         IsAddItemModalOpen = true;
     }
@@ -373,6 +383,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemError = null;
         AddItemProductError = null;
         HasLocationError = false;
+        HasAddItemQuantityError = false;
 
         // Validate
         if (SelectedProduct == null)
@@ -389,7 +400,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
         if (!int.TryParse(AddItemQuantity, out var quantity) || quantity < 0)
         {
-            AddItemError = "Please enter a valid quantity.".Translate();
+            HasAddItemQuantityError = true;
             return;
         }
 
@@ -464,6 +475,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemError = null;
         AddItemProductError = null;
         HasLocationError = false;
+        HasAddItemQuantityError = false;
     }
 
     #endregion

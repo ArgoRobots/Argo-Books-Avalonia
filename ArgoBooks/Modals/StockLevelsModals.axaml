@@ -209,6 +209,10 @@
                                              Classes="form-input"
                                              Watermark="0"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding HasAddItemQuantityError}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">
