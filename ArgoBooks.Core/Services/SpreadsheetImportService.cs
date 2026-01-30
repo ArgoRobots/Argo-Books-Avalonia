@@ -192,6 +192,7 @@ public class SpreadsheetImportService
             "Invoices" => "Invoices",
             "Inventory" => "Inventory",
             "Rental Inventory" => "RentalInventory",
+            "Purchase Orders" => "PurchaseOrders",
             _ => string.Empty
         };
     }

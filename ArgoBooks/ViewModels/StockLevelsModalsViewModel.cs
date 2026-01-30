@@ -48,6 +48,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _adjustmentError;
 
+    [ObservableProperty]
+    private bool _hasAdjustmentQuantityError;
+
     /// <summary>
     /// Adjustment type options for dropdown.
     /// </summary>
@@ -76,6 +79,11 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     partial void OnAdjustmentQuantityChanged(string value)
     {
         OnPropertyChanged(nameof(CalculatedNewStock));
+        // Clear error when user starts typing
+        if (!string.IsNullOrEmpty(value))
+        {
+            HasAdjustmentQuantityError = false;
+        }
     }
 
     partial void OnAdjustmentTypeChanged(string value)
@@ -133,6 +141,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasLocationError;
 
+    [ObservableProperty]
+    private bool _hasAddItemQuantityError;
+
     /// <summary>
     /// Available products for Add Item modal.
     /// </summary>
@@ -181,11 +192,12 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (string.IsNullOrEmpty(SelectedItemId)) return;
 
         AdjustmentError = null;
+        HasAdjustmentQuantityError = false;
 
         // Validate quantity
         if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
         {
-            AdjustmentError = "Please enter a valid quantity.".Translate();
+            HasAdjustmentQuantityError = true;
             return;
         }
 
@@ -273,6 +285,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AdjustmentType = "Add";
         AdjustmentReason = string.Empty;
         AdjustmentError = null;
+        HasAdjustmentQuantityError = false;
     }
 
     #endregion

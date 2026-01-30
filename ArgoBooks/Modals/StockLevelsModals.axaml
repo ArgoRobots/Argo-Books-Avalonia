@@ -81,6 +81,10 @@
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter quantity'}"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding HasAdjustmentQuantityError}" />
                                 </StackPanel>
 
                                 <!-- New Stock Level -->
