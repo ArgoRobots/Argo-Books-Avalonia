@@ -276,6 +276,7 @@ public class SpreadsheetExportService
             "Recurring Invoices" => GetRecurringInvoicesData(data),
             "Stock Adjustments" => GetStockAdjustmentsData(data, startDate, endDate),
             "Purchase Orders" => GetPurchaseOrdersData(data, startDate, endDate),
+            "Purchase Order Line Items" => GetPurchaseOrderLineItemsData(data, startDate, endDate),
             _ => ([], [])
         };
     }
@@ -607,6 +608,23 @@ public class SpreadsheetExportService
             p.Total,
             p.Status.ToString()
         }).ToList();
+        return (headers, rows);
+    }
+
+    private (string[] Headers, List<object[]> Rows) GetPurchaseOrderLineItemsData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    {
+        var headers = new[] { "PO ID", "Product ID", "Quantity", "Unit Cost", "Quantity Received" };
+        var filtered = data.PurchaseOrders.Where(p => IsInDateRange(p.OrderDate, startDate, endDate));
+        var rows = filtered
+            .SelectMany(p => p.LineItems.Select(li => new object[]
+            {
+                p.Id,
+                li.ProductId,
+                li.Quantity,
+                li.UnitCost,
+                li.QuantityReceived
+            }))
+            .ToList();
         return (headers, rows);
     }
 

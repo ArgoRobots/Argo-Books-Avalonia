@@ -107,6 +107,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasCustomerError;
 
+    partial void OnSelectedCustomerChanged(CustomerOption? value)
+    {
+        // Clear customer error when a valid customer is selected
+        if (value != null && !string.IsNullOrEmpty(value.Id))
+        {
+            HasCustomerError = false;
+        }
+    }
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
@@ -867,6 +876,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.UpdatedAt = DateTime.Now;
             invoice.LineItems = LineItems.Select(i => new LineItem
             {
+                ProductId = i.SelectedProduct?.Id,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -893,6 +903,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 UpdatedAt = DateTime.Now,
                 LineItems = LineItems.Select(i => new LineItem
                 {
+                    ProductId = i.SelectedProduct?.Id,
                     Description = i.Description,
                     Quantity = i.Quantity ?? 0,
                     UnitPrice = i.UnitPrice ?? 0,
@@ -1065,6 +1076,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             UpdatedAt = DateTime.Now,
             LineItems = LineItems.Select(i => new LineItem
             {
+                ProductId = i.SelectedProduct?.Id,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1178,6 +1190,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             UpdatedAt = DateTime.Now,
             LineItems = LineItems.Select(i => new LineItem
             {
+                ProductId = i.SelectedProduct?.Id,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1235,6 +1248,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.UpdatedAt = DateTime.Now;
         invoice.LineItems = LineItems.Select(i => new LineItem
         {
+            ProductId = i.SelectedProduct?.Id,
             Description = i.Description,
             Quantity = i.Quantity ?? 0,
             UnitPrice = i.UnitPrice ?? 0,
@@ -1265,6 +1279,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 invoice.TaxRate = TaxRate;
                 invoice.LineItems = LineItems.Select(i => new LineItem
                 {
+                    ProductId = i.SelectedProduct?.Id,
                     Description = i.Description,
                     Quantity = i.Quantity ?? 0,
                     UnitPrice = i.UnitPrice ?? 0,

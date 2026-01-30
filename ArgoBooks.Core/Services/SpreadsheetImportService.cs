@@ -192,6 +192,7 @@ public class SpreadsheetImportService
             "Invoices" => "Invoices",
             "Inventory" => "Inventory",
             "Rental Inventory" => "RentalInventory",
+            "Purchase Orders" => "PurchaseOrders",
             _ => string.Empty
         };
     }
@@ -273,6 +274,9 @@ public class SpreadsheetImportService
                 break;
             case "Purchase Orders":
                 ValidateExpenseOrderReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Purchase Order Line Items":
+                ValidatePurchaseOrderLineItemReferences(rows, headers, data, importedIds, result);
                 break;
         }
     }
@@ -626,6 +630,37 @@ public class SpreadsheetImportService
         }
     }
 
+    private void ValidatePurchaseOrderLineItemReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
+        var existingPurchaseOrders = data.PurchaseOrders.Select(p => p.Id).ToHashSet();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
+        var importedPurchaseOrders = importedIds.GetValueOrDefault("PurchaseOrders") ?? [];
+
+        foreach (var row in rows)
+        {
+            var productId = GetNullableString(row, headers, "Product ID");
+            var poId = GetNullableString(row, headers, "PO ID");
+
+            if (!string.IsNullOrEmpty(productId) &&
+                !existingProducts.Contains(productId) &&
+                !importedProducts.Contains(productId))
+            {
+                result.AddMissingReference("Products", productId);
+            }
+
+            if (!string.IsNullOrEmpty(poId) &&
+                !existingPurchaseOrders.Contains(poId) &&
+                !importedPurchaseOrders.Contains(poId))
+            {
+                result.AddMissingReference("Purchase Orders", poId);
+            }
+        }
+    }
+
     #endregion
 
     #region Auto-Create Missing References
@@ -828,6 +863,9 @@ public class SpreadsheetImportService
                 break;
             case "Purchase Orders":
                 ImportPurchaseOrders(data, headers, rows);
+                break;
+            case "Purchase Order Line Items":
+                ImportPurchaseOrderLineItems(data, headers, rows);
                 break;
         }
     }
@@ -1531,6 +1569,43 @@ public class SpreadsheetImportService
 
             if (existing == null)
                 data.PurchaseOrders.Add(po);
+        }
+    }
+
+    private void ImportPurchaseOrderLineItems(CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        // Group line items by purchase order ID
+        var lineItemsByPo = new Dictionary<string, List<PurchaseOrderLineItem>>();
+
+        foreach (var row in rows)
+        {
+            var poId = GetString(row, headers, "PO ID");
+            if (string.IsNullOrEmpty(poId)) continue;
+
+            var lineItem = new PurchaseOrderLineItem
+            {
+                ProductId = GetString(row, headers, "Product ID"),
+                Quantity = GetInt(row, headers, "Quantity"),
+                UnitCost = GetDecimal(row, headers, "Unit Cost"),
+                QuantityReceived = GetInt(row, headers, "Quantity Received")
+            };
+
+            if (!lineItemsByPo.ContainsKey(poId))
+                lineItemsByPo[poId] = [];
+
+            lineItemsByPo[poId].Add(lineItem);
+        }
+
+        // Assign line items to purchase orders
+        foreach (var (poId, lineItems) in lineItemsByPo)
+        {
+            var po = data.PurchaseOrders.FirstOrDefault(p => p.Id == poId);
+            if (po != null)
+            {
+                po.LineItems = lineItems;
+                // Calculate subtotal from line items
+                po.Subtotal = lineItems.Sum(li => li.Total);
+            }
         }
     }
 

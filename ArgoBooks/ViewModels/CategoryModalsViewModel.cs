@@ -466,6 +466,18 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     #endregion
 
+    #region Property Changed Handlers
+
+    partial void OnModalCategoryNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalCategoryNameError = null;
+        }
+    }
+
+    #endregion
+
     #region Helpers
 
     private void ClearModalFields()

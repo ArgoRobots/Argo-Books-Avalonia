@@ -83,6 +83,12 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
     partial void OnModalItemChanged(RentalItemOption? value)
     {
+        // Clear error when item is selected
+        if (value != null)
+        {
+            ModalItemError = null;
+        }
+
         if (value != null && _editingRecord == null)
         {
             var companyData = App.CompanyManager?.CompanyData;
@@ -97,6 +103,33 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
                 };
                 ModalSecurityDeposit = item.SecurityDeposit.ToString("0.00");
             }
+        }
+    }
+
+    partial void OnModalCustomerChanged(CustomerOption? value)
+    {
+        // Clear error when customer is selected
+        if (value != null)
+        {
+            ModalCustomerError = null;
+        }
+    }
+
+    partial void OnModalQuantityChanged(string value)
+    {
+        // Clear error when quantity is modified
+        if (int.TryParse(value, out var qty) && qty > 0)
+        {
+            ModalQuantityError = null;
+        }
+    }
+
+    partial void OnModalRateAmountChanged(string value)
+    {
+        // Clear error when rate is modified
+        if (decimal.TryParse(value, out var rate) && rate >= 0)
+        {
+            ModalRateError = null;
         }
     }
 

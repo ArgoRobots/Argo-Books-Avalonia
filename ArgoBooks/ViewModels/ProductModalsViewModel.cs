@@ -89,6 +89,22 @@ public partial class ProductModalsViewModel : ObservableObject
     [ObservableProperty]
     private string? _modalCategoryError;
 
+    partial void OnModalProductNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalProductNameError = null;
+        }
+    }
+
+    partial void OnModalCategoryChanged(CategoryOption? value)
+    {
+        if (value != null)
+        {
+            ModalCategoryError = null;
+        }
+    }
+
     /// <summary>
     /// The product being edited (null for add).
     /// </summary>

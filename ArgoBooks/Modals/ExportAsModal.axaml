@@ -22,9 +22,10 @@
                 CornerRadius="12"
                 Width="550"
                 MaxHeight="700"
+                VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000">
 
-            <Grid RowDefinitions="Auto,*,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
                         Padding="24,20"
@@ -153,8 +154,8 @@
                                                     <DataTemplate x:DataType="vm:ExportDataItem">
                                                         <Border Padding="10,8"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                                BorderThickness="0,0,0,1"
-                                                                Classes="data-item">
+                                                                Classes="data-item"
+                                                                Classes.data-item-last="{Binding IsLast}">
                                                             <Grid ColumnDefinitions="*,Auto">
                                                                 <CheckBox Grid.Column="0"
                                                                           IsChecked="{Binding IsSelected}"
@@ -271,7 +272,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
         </Style>
         <Style Selector="DatePicker.form-date /template/ Grid#PART_FlyoutButtonContentGrid">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -283,9 +284,17 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!-- Data Item base style -->
+        <Style Selector="Border.data-item">
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
         <!-- Data Item hover -->
         <Style Selector="Border.data-item:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <!-- Remove bottom border from last data item -->
+        <Style Selector="Border.data-item-last">
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
 
         <!-- Animated Checkbox -->

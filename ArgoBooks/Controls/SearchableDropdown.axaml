@@ -38,7 +38,8 @@
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                Padding="12,10"
+                Padding="8,6"
+                MinHeight="{StaticResource FormControlHeightCompact}"
                 IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
@@ -58,6 +59,7 @@
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
+                MinHeight="{StaticResource FormControlHeightCompact}"
                 Classes.error="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                 Classes.focused="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                 IsVisible="{Binding !ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
@@ -81,7 +83,7 @@
                          Watermark="{Binding Placeholder, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                          Background="Transparent"
                          BorderThickness="0"
-                         Padding="12,10"
+                         Padding="8,6"
                          VerticalAlignment="Center" />
 
                 <!-- Dropdown Arrow -->

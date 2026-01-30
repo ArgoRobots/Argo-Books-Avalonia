@@ -137,6 +137,8 @@ public partial class PaymentModalsViewModel : ObservableObject
     partial void OnSelectedInvoiceChanged(InvoiceOption? value)
     {
         ModalInvoiceId = value?.Id;
+        // Clear error when user selects an invoice
+        ModalInvoiceError = null;
         // Auto-fill customer when invoice is selected
         if (value?.Id != null)
         {
@@ -547,6 +549,18 @@ public partial class PaymentModalsViewModel : ObservableObject
         foreach (var customer in companyData.Customers.OrderBy(c => c.Name))
         {
             CustomerOptions.Add(new CustomerOption { Id = customer.Id, Name = customer.Name });
+        }
+    }
+
+    #endregion
+
+    #region Property Changed Handlers
+
+    partial void OnModalAmountChanged(string value)
+    {
+        if (decimal.TryParse(value, out var amount) && amount != 0)
+        {
+            ModalAmountError = null;
         }
     }
 

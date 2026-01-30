@@ -21,9 +21,10 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="500"
+                VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000">
 
-            <Grid RowDefinitions="Auto,*,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
                         Padding="24,20"

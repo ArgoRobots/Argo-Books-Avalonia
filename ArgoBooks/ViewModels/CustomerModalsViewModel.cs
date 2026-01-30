@@ -86,6 +86,28 @@ public partial class CustomerModalsViewModel : ObservableObject
     [ObservableProperty]
     private string? _modalEmailError;
 
+    partial void OnModalFirstNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalFirstNameError = null;
+        }
+    }
+
+    partial void OnModalLastNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            ModalLastNameError = null;
+        }
+    }
+
+    partial void OnModalEmailChanged(string value)
+    {
+        // Clear error when email is modified (validation will happen on save)
+        ModalEmailError = null;
+    }
+
     /// <summary>
     /// The customer being edited (null for add).
     /// </summary>

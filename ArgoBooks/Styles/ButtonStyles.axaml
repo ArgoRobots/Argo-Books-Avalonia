@@ -18,9 +18,14 @@
     </Style>
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Foreground" Value="White" />
     </Style>
     <Style Selector="Button.primary:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
     </Style>
     <Style Selector="Button.primary:disabled">
         <Setter Property="Opacity" Value="0.5" />
@@ -28,7 +33,13 @@
     <Style Selector="Button.primary PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
+    <Style Selector="Button.primary:pointerover PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
     <Style Selector="Button.primary TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary:pointerover TextBlock">
         <Setter Property="Foreground" Value="White" />
     </Style>
 
@@ -64,14 +75,25 @@
     </Style>
     <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
     </Style>
     <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary-button:pointerover">
+        <Setter Property="Foreground" Value="White" />
     </Style>
     <Style Selector="Button.primary-button PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
+    <Style Selector="Button.primary-button:pointerover PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
     <Style Selector="Button.primary-button TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary-button:pointerover TextBlock">
         <Setter Property="Foreground" Value="White" />
     </Style>
 
@@ -105,14 +127,25 @@
     </Style>
     <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
     </Style>
     <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ErrorDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.danger-button:pointerover">
+        <Setter Property="Foreground" Value="White" />
     </Style>
     <Style Selector="Button.danger-button PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
+    <Style Selector="Button.danger-button:pointerover PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
     <Style Selector="Button.danger-button TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.danger-button:pointerover TextBlock">
         <Setter Property="Foreground" Value="White" />
     </Style>
 
@@ -129,9 +162,26 @@
     </Style>
     <Style Selector="Button.success-button /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
     </Style>
     <Style Selector="Button.success-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SuccessDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success-button:pointerover">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success-button PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success-button:pointerover PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success-button TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success-button:pointerover TextBlock">
+        <Setter Property="Foreground" Value="White" />
     </Style>
 
     <!-- Warning Button (for cautionary actions) -->
@@ -147,9 +197,26 @@
     </Style>
     <Style Selector="Button.warning-button /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
     </Style>
     <Style Selector="Button.warning-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource WarningDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning-button:pointerover">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning-button PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning-button:pointerover PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning-button TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning-button:pointerover TextBlock">
+        <Setter Property="Foreground" Value="White" />
     </Style>
 
     <!-- Text Button (no background, text only) -->

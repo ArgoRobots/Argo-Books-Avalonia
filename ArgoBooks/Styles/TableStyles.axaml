@@ -109,8 +109,18 @@
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Padding" Value="8,6" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
         <Setter Property="ShowButtonSpinner" Value="False" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="NumericUpDown.line-item-input /template/ TextBox#PART_TextBox">
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="NumericUpDown.line-item-input:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
     </Style>
 
 </Styles>

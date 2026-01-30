@@ -65,7 +65,7 @@
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="6"
                                             Padding="12,10"
-                                            MinHeight="40">
+                                            MinHeight="{StaticResource FormControlHeight}">
                                         <TextBlock Text="{Binding CurrentStock}"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    VerticalAlignment="Center" />
@@ -81,6 +81,10 @@
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter quantity'}"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding HasAdjustmentQuantityError}" />
                                 </StackPanel>
 
                                 <!-- New Stock Level -->
@@ -89,7 +93,7 @@
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="6"
                                             Padding="12,10"
-                                            MinHeight="40">
+                                            MinHeight="{StaticResource FormControlHeight}">
                                         <TextBlock Text="{Binding CalculatedNewStock}"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    VerticalAlignment="Center" />
@@ -205,6 +209,10 @@
                                              Classes="form-input"
                                              Watermark="0"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding HasAddItemQuantityError}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">

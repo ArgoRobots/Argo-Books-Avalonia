@@ -48,6 +48,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _adjustmentError;
 
+    [ObservableProperty]
+    private bool _hasAdjustmentQuantityError;
+
     /// <summary>
     /// Adjustment type options for dropdown.
     /// </summary>
@@ -76,6 +79,11 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     partial void OnAdjustmentQuantityChanged(string value)
     {
         OnPropertyChanged(nameof(CalculatedNewStock));
+        // Clear error when user starts typing
+        if (!string.IsNullOrEmpty(value))
+        {
+            HasAdjustmentQuantityError = false;
+        }
     }
 
     partial void OnAdjustmentTypeChanged(string value)
@@ -93,11 +101,36 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private Product? _selectedProduct;
 
+    partial void OnSelectedProductChanged(Product? value)
+    {
+        if (value != null)
+        {
+            AddItemProductError = null;
+        }
+    }
+
     [ObservableProperty]
     private Location? _selectedLocation;
 
+    partial void OnSelectedLocationChanged(Location? value)
+    {
+        if (value != null)
+        {
+            HasLocationError = false;
+        }
+    }
+
     [ObservableProperty]
     private string _addItemSku = string.Empty;
+
+    partial void OnAddItemQuantityChanged(string value)
+    {
+        // Clear error when user starts typing
+        if (!string.IsNullOrEmpty(value))
+        {
+            HasAddItemQuantityError = false;
+        }
+    }
 
     [ObservableProperty]
     private string _addItemQuantity = string.Empty;
@@ -116,6 +149,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasLocationError;
+
+    [ObservableProperty]
+    private bool _hasAddItemQuantityError;
 
     /// <summary>
     /// Available products for Add Item modal.
@@ -165,11 +201,12 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (string.IsNullOrEmpty(SelectedItemId)) return;
 
         AdjustmentError = null;
+        HasAdjustmentQuantityError = false;
 
         // Validate quantity
         if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
         {
-            AdjustmentError = "Please enter a valid quantity.".Translate();
+            HasAdjustmentQuantityError = true;
             return;
         }
 
@@ -257,6 +294,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AdjustmentType = "Add";
         AdjustmentReason = string.Empty;
         AdjustmentError = null;
+        HasAdjustmentQuantityError = false;
     }
 
     #endregion
@@ -321,6 +359,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemError = null;
         AddItemProductError = null;
         HasLocationError = false;
+        HasAddItemQuantityError = false;
 
         IsAddItemModalOpen = true;
     }
@@ -344,25 +383,30 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemError = null;
         AddItemProductError = null;
         HasLocationError = false;
+        HasAddItemQuantityError = false;
 
-        // Validate
+        // Validate all fields before returning
+        var hasErrors = false;
+
         if (SelectedProduct == null)
         {
             AddItemProductError = "Please select a product.".Translate();
-            return;
+            hasErrors = true;
         }
 
         if (SelectedLocation == null)
         {
             HasLocationError = true;
-            return;
+            hasErrors = true;
         }
 
         if (!int.TryParse(AddItemQuantity, out var quantity) || quantity < 0)
         {
-            AddItemError = "Please enter a valid quantity.".Translate();
-            return;
+            HasAddItemQuantityError = true;
+            hasErrors = true;
         }
+
+        if (hasErrors) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
@@ -435,6 +479,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemError = null;
         AddItemProductError = null;
         HasLocationError = false;
+        HasAddItemQuantityError = false;
     }
 
     #endregion

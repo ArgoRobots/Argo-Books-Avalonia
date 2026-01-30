@@ -20,6 +20,9 @@ public partial class ExportDataItem : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
+    [ObservableProperty]
+    private bool _isLast;
+
     /// <summary>
     /// Internal key used for data lookup (may differ from display name).
     /// </summary>
@@ -127,7 +130,7 @@ public partial class ExportAsModalViewModel : ViewModelBase
 
         // Rentals
         AddDataItem(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0, IsSelected = true });
-        AddDataItem(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true, IsLast = true });
 
         // Initialize SelectAllData based on initial state
         UpdateSelectAllState();
