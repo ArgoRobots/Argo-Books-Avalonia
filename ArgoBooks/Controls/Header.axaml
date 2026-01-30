@@ -30,7 +30,9 @@
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="6">
+                    CornerRadius="6"
+                    PointerPressed="SearchBox_PointerPressed"
+                    Cursor="IBeam">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <!-- Search Icon -->
                     <PathIcon Grid.Column="0"

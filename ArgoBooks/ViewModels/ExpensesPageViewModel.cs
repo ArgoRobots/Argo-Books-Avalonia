@@ -88,7 +88,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
-    private bool _showAccountantColumn = true;
+    private bool _showAccountantColumn; // No Accountant column in Expenses UI
 
     [ObservableProperty]
     private bool _showProductColumn = true;

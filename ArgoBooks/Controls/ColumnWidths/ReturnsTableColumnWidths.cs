@@ -32,7 +32,7 @@ public partial class ReturnsTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 80;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 70;
+    private double _actionsColumnWidth = 84;
 
     public ReturnsTableColumnWidths()
     {
@@ -47,6 +47,6 @@ public partial class ReturnsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Processed", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => ProcessedColumnWidth = w);
         RegisterColumn("Refund", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 80 }, w => RefundColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 80 }, w => StatusColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 70, MinWidth = 70 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
     }
 }

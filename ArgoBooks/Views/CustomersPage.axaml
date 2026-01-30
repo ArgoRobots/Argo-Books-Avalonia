@@ -6,6 +6,7 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CustomersPage"
@@ -71,7 +72,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="6"
                                         Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                        MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}">
+                                        MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                        behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
                                     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                         <PathIcon Grid.Column="0"
                                                   Data="{x:Static icons:Icons.Search}"

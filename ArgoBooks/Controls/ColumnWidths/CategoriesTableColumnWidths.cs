@@ -23,7 +23,7 @@ public partial class CategoriesTableColumnWidths : TableColumnWidthsBase
     private double _productCountColumnWidth = 120;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 140;
+    private double _actionsColumnWidth = 156;
 
     public CategoriesTableColumnWidths()
     {
@@ -34,6 +34,6 @@ public partial class CategoriesTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Description", new ColumnDef { StarValue = 1.5, MinWidth = 150, PreferredWidth = 200 }, w => DescriptionColumnWidth = w);
         RegisterColumn("Type", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => TypeColumnWidth = w);
         RegisterColumn("ProductCount", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 120 }, w => ProductCountColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = 140, MinWidth = 140 }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
     }
 }

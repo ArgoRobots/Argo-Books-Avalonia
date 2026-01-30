@@ -38,7 +38,7 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
     private double _reasonColumnWidth = 160;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 100;
+    private double _actionsColumnWidth = 84;
 
     #endregion
 
@@ -51,7 +51,7 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Date", new ColumnDef
         {
             StarValue = 0.9,
-            MinWidth = 100,
+            MinWidth = 84,
             PreferredWidth = 120
         }, w => DateColumnWidth = w);
 
@@ -75,7 +75,7 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Location", new ColumnDef
         {
             StarValue = 1.0,
-            MinWidth = 100,
+            MinWidth = 84,
             PreferredWidth = 120
         }, w => LocationColumnWidth = w);
 
@@ -119,12 +119,12 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 160
         }, w => ReasonColumnWidth = w);
 
-        // Actions column (fixed width)
+        // Actions column (fixed width - 2 buttons)
         RegisterColumn("Actions", new ColumnDef
         {
             IsFixed = true,
-            FixedWidth = 100,
-            MinWidth = 100
+            FixedWidth = ActionsWidth(2),
+            MinWidth = ActionsWidth(2)
         }, w => ActionsColumnWidth = w);
 
         // Initial calculation

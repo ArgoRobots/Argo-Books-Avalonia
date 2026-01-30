@@ -11,6 +11,8 @@
     <!-- Windows-specific settings for WinRT APIs -->
     <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <!-- Suppress WebView2/WindowsBase version conflict warning (WebView2 references v5.0, .NET provides v4.0) -->
+        <NoWarn>$(NoWarn);MSB3277</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

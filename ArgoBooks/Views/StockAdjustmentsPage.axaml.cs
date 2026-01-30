@@ -28,9 +28,9 @@ public partial class StockAdjustmentsPage : UserControl
     /// </summary>
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        if (DataContext is StockAdjustmentsPageViewModel viewModel)
+        if (DataContext is StockAdjustmentsPageViewModel viewModel && e.WidthChanged)
         {
-            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width - 48); // Account for padding
+            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
         }
     }
 

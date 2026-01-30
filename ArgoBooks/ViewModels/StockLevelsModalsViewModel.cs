@@ -413,7 +413,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
         // Check if item already exists for this product/location
         var existingItem = companyData.Inventory.FirstOrDefault(i =>
-            i.ProductId == SelectedProduct.Id && i.LocationId == SelectedLocation.Id);
+            i.ProductId == SelectedProduct!.Id && i.LocationId == SelectedLocation!.Id);
 
         if (existingItem != null)
         {
@@ -432,9 +432,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         var newItem = new InventoryItem
         {
             Id = newId,
-            ProductId = SelectedProduct.Id,
+            ProductId = SelectedProduct!.Id,
             Sku = AddItemSku.Trim(),
-            LocationId = SelectedLocation.Id,
+            LocationId = SelectedLocation!.Id,
             InStock = quantity,
             Reserved = 0,
             ReorderPoint = reorderPoint,
