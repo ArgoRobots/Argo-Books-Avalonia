@@ -154,7 +154,6 @@
                                                     <DataTemplate x:DataType="vm:ExportDataItem">
                                                         <Border Padding="10,8"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                                BorderThickness="0,0,0,1"
                                                                 Classes="data-item"
                                                                 Classes.data-item-last="{Binding IsLast}">
                                                             <Grid ColumnDefinitions="*,Auto">
@@ -285,6 +284,10 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!-- Data Item base style -->
+        <Style Selector="Border.data-item">
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
         <!-- Data Item hover -->
         <Style Selector="Border.data-item:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
