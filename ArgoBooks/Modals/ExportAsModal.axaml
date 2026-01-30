@@ -288,6 +288,10 @@
         <Style Selector="Border.data-item:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
+        <!-- Remove bottom border from last data item -->
+        <Style Selector="ItemsControl > ContentPresenter:last-child Border.data-item">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
 
         <!-- Animated Checkbox -->
         <Style Selector="CheckBox">
