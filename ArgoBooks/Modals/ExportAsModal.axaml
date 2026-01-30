@@ -155,7 +155,8 @@
                                                         <Border Padding="10,8"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="0,0,0,1"
-                                                                Classes="data-item">
+                                                                Classes="data-item"
+                                                                Classes.data-item-last="{Binding IsLast}">
                                                             <Grid ColumnDefinitions="*,Auto">
                                                                 <CheckBox Grid.Column="0"
                                                                           IsChecked="{Binding IsSelected}"
@@ -289,7 +290,7 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <!-- Remove bottom border from last data item -->
-        <Style Selector="ContentPresenter:last-child > Border.data-item">
+        <Style Selector="Border.data-item-last">
             <Setter Property="BorderThickness" Value="0" />
         </Style>
 
