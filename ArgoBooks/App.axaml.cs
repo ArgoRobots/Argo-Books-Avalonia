@@ -491,7 +491,7 @@ public class App : Application
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
 
-    // Cached page ViewModels to prevent memory leaks from event subscriptions
+    // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
     private static AnalyticsPageViewModel? _analyticsPageViewModel;
     private static InsightsPageViewModel? _insightsPageViewModel;
