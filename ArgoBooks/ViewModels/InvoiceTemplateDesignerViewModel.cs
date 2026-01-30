@@ -41,6 +41,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasValidationMessage;
 
+    [ObservableProperty]
+    private int _propertiesTabIndex;
+
     #endregion
 
     #region Template Properties
@@ -83,26 +86,91 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private string? _logoBase64;
 
-    // Manual property to ensure clamping works correctly
+    // The actual logo width value used for rendering (always valid)
     private int _logoWidth = 150;
     public int LogoWidth
     {
         get => _logoWidth;
+        set => SetLogoWidth(value, updateText: true);
+    }
+
+    // String property for TextBox binding with validation
+    private string _logoWidthText = "150";
+    public string LogoWidthText
+    {
+        get => _logoWidthText;
         set
         {
-            var clamped = Math.Clamp(value, 50, 300);
-            if (SetProperty(ref _logoWidth, clamped))
+            if (SetProperty(ref _logoWidthText, value))
             {
-                UpdatePreview();
+                ValidateLogoWidth(value);
             }
         }
+    }
+
+    [ObservableProperty]
+    private string _logoWidthWarning = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasLogoWidthWarning;
+
+    private void SetLogoWidth(int value, bool updateText)
+    {
+        if (SetProperty(ref _logoWidth, value, nameof(LogoWidth)))
+        {
+            if (updateText)
+            {
+                _logoWidthText = value.ToString();
+                OnPropertyChanged(nameof(LogoWidthText));
+            }
+            LogoWidthWarning = string.Empty;
+            HasLogoWidthWarning = false;
+            UpdatePreview();
+        }
+    }
+
+    private void ValidateLogoWidth(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            LogoWidthWarning = "Please enter a value";
+            HasLogoWidthWarning = true;
+            return;
+        }
+
+        if (!int.TryParse(value, out var width))
+        {
+            LogoWidthWarning = "Please enter a valid number";
+            HasLogoWidthWarning = true;
+            return;
+        }
+
+        if (width < 20 || width > 300)
+        {
+            LogoWidthWarning = "Value must be between 20 and 300";
+            HasLogoWidthWarning = true;
+            return;
+        }
+
+        // Valid value - clear warning first, then update width
+        LogoWidthWarning = string.Empty;
+        HasLogoWidthWarning = false;
+        SetLogoWidth(width, updateText: false);
     }
 
     [ObservableProperty]
     private bool _hasLogo;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LogoFileName))]
     private string _logoPath = string.Empty;
+
+    public string LogoFileName => string.IsNullOrEmpty(LogoPath)
+        ? string.Empty
+        : Path.GetFileName(LogoPath);
+
+    [ObservableProperty]
+    private bool _lockAspectRatio = true;
 
     // Text content
     [ObservableProperty]
@@ -293,6 +361,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             LogoBase64 = Convert.ToBase64String(bytes);
             LogoPath = filePath;
             HasLogo = true;
+            LockAspectRatio = true;
             UpdatePreview();
         }
         catch (Exception ex)
@@ -315,6 +384,15 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         UpdatePreview();
         await InvoicePreviewService.PreviewInBrowserAsync(PreviewHtml, "template-preview");
+    }
+
+    [RelayCommand]
+    private void SetPropertiesTab(string index)
+    {
+        if (int.TryParse(index, out var tabIndex))
+        {
+            PropertiesTabIndex = tabIndex;
+        }
     }
 
     #endregion
@@ -381,6 +459,12 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         UpdatePreview();
     }
 
+    partial void OnLockAspectRatioChanged(bool value)
+    {
+        // Update preview since aspect ratio setting affects template output
+        UpdatePreview();
+    }
+
     #endregion
 
     #region Helper Methods
@@ -390,7 +474,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         var template = BuildTemplateFromForm();
         var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
         var emailService = new InvoiceEmailService();
-        PreviewHtml = emailService.RenderTemplatePreview(template, companySettings);
+        PreviewHtml = emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);
     }
 
     private InvoiceTemplate BuildTemplateFromForm()
@@ -468,6 +552,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         SelectedFontFamily = template.FontFamily;
         LogoBase64 = template.LogoBase64;
         LogoWidth = template.LogoWidth;
+        LockAspectRatio = true;
         HeaderText = template.HeaderText;
         FooterText = template.FooterText;
         PaymentInstructions = template.PaymentInstructions;
@@ -490,6 +575,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         TemplateName = string.Empty;
         SelectedBaseTemplate = InvoiceTemplateType.Professional;
         IsDefault = false;
+        PropertiesTabIndex = 0;
 
         var defaults = InvoiceTemplateFactory.CreateProfessionalTemplate();
         PrimaryColor = defaults.PrimaryColor;
@@ -501,6 +587,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         LogoBase64 = null;
         LogoPath = string.Empty;
         LogoWidth = 150;
+        LockAspectRatio = true;
         HeaderText = defaults.HeaderText;
         FooterText = defaults.FooterText;
         PaymentInstructions = string.Empty;

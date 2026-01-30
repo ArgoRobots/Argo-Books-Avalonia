@@ -414,6 +414,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedChartStyleOption));
         OnPropertyChanged(nameof(SelectedLabelElement));
         OnPropertyChanged(nameof(SelectedImageElement));
+        OnPropertyChanged(nameof(SelectedImageFileName));
+        OnPropertyChanged(nameof(HasSelectedImage));
         OnPropertyChanged(nameof(SelectedTableElement));
         OnPropertyChanged(nameof(SelectedDateRangeElement));
         OnPropertyChanged(nameof(SelectedSummaryElement));
@@ -458,6 +460,10 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ChartReportElement? SelectedChartElement => SelectedElement as ChartReportElement;
     public LabelReportElement? SelectedLabelElement => SelectedElement as LabelReportElement;
     public ImageReportElement? SelectedImageElement => SelectedElement as ImageReportElement;
+    public string SelectedImageFileName => string.IsNullOrEmpty(SelectedImageElement?.ImagePath)
+        ? string.Empty
+        : Path.GetFileName(SelectedImageElement.ImagePath);
+    public bool HasSelectedImage => !string.IsNullOrEmpty(SelectedImageElement?.ImagePath);
     public TableReportElement? SelectedTableElement => SelectedElement as TableReportElement;
     public DateRangeReportElement? SelectedDateRangeElement => SelectedElement as DateRangeReportElement;
     public SummaryReportElement? SelectedSummaryElement => SelectedElement as SummaryReportElement;
@@ -1035,6 +1041,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 SelectedImageElement.ImagePath = result[0].Path.LocalPath;
                 OnPropertyChanged(nameof(SelectedImageElement));
+                OnPropertyChanged(nameof(SelectedImageFileName));
+                OnPropertyChanged(nameof(HasSelectedImage));
                 OnPropertyChanged(nameof(Configuration));
             }
         }
@@ -1046,6 +1054,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (SelectedImageElement == null) return;
         SelectedImageElement.ImagePath = string.Empty;
         OnPropertyChanged(nameof(SelectedImageElement));
+        OnPropertyChanged(nameof(SelectedImageFileName));
+        OnPropertyChanged(nameof(HasSelectedImage));
         OnPropertyChanged(nameof(Configuration));
     }
 

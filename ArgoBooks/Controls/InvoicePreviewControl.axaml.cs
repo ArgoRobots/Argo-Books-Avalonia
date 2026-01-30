@@ -59,6 +59,9 @@ public partial class InvoicePreviewControl : UserControl
     private WebView2Host? _webViewHost;
     private bool _isWebViewInitialized;
     private bool _isHandlingZoom;
+    private double _pendingScrollX;
+    private double _pendingScrollY;
+    private bool _hasPendingScroll;
 
 #endif
 
@@ -161,6 +164,7 @@ public partial class InvoicePreviewControl : UserControl
             if (_webView.CoreWebView2 != null)
             {
                 _webView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
+                _webView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
             }
         }
 
@@ -247,6 +251,9 @@ public partial class InvoicePreviewControl : UserControl
 
                 // Subscribe to messages from JavaScript for zoom-to-cursor
                 _webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
+
+                // Subscribe to navigation completed to restore scroll position
+                _webView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
 
                 _isWebViewInitialized = true;
 
@@ -357,6 +364,25 @@ public partial class InvoicePreviewControl : UserControl
         }
     }
 
+    private async void OnNavigationCompleted(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
+    {
+        if (!_hasPendingScroll || _webView?.CoreWebView2 == null)
+            return;
+
+        _hasPendingScroll = false;
+
+        try
+        {
+            // Restore scroll position after navigation
+            var scrollScript = $@"window.scrollTo({_pendingScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {_pendingScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
+            await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
+        }
+        catch (Exception)
+        {
+            // Ignore scroll restoration errors
+        }
+    }
+
     private async void ZoomToCenter(double newZoom)
     {
         if (_webView?.CoreWebView2 == null)
@@ -423,11 +449,34 @@ public partial class InvoicePreviewControl : UserControl
     }
 #endif
 
-    private void UpdateWebViewContent()
+    private async void UpdateWebViewContent()
     {
 #if WINDOWS
         if (_isWebViewInitialized && _webView?.CoreWebView2 != null && !string.IsNullOrEmpty(Html))
         {
+            // Save scroll position before navigating
+            try
+            {
+                var scrollScript = @"(function() {
+                    var scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
+                    var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+                    return JSON.stringify({ x: scrollX, y: scrollY });
+                })()";
+                var result = await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
+                if (!string.IsNullOrEmpty(result) && result != "null")
+                {
+                    var json = System.Text.Json.JsonDocument.Parse(result.Trim('"').Replace("\\\"", "\""));
+                    _pendingScrollX = json.RootElement.GetProperty("x").GetDouble();
+                    _pendingScrollY = json.RootElement.GetProperty("y").GetDouble();
+                    _hasPendingScroll = true;
+                }
+            }
+            catch
+            {
+                // If we can't get scroll position, just don't restore it
+                _hasPendingScroll = false;
+            }
+
             // Inject styles and scripts for zoom and pan handling
             var interactionScript = @"
 <script>

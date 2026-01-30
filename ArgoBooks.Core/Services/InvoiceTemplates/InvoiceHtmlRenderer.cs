@@ -34,7 +34,7 @@ public partial class InvoiceHtmlRenderer
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
 
         // Build the data context for template rendering
-        var context = BuildContext(invoice, template, customer, companySettings, currencySymbol);
+        var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true);
 
         // Process the template
         html = ProcessTemplate(html, context);
@@ -45,13 +45,13 @@ public partial class InvoiceHtmlRenderer
     /// <summary>
     /// Renders a preview invoice (for template designer) with sample data.
     /// </summary>
-    public string RenderPreview(InvoiceTemplate template, CompanySettings companySettings)
+    public string RenderPreview(InvoiceTemplate template, CompanySettings companySettings, bool lockAspectRatio = true)
     {
         // Create sample invoice data for preview
         var sampleInvoice = new Invoice
         {
-            Id = "INV-2024-00001",
-            InvoiceNumber = "INV-2024-00001",
+            Id = "INV-0001",
+            InvoiceNumber = "INV-0001",
             IssueDate = DateTime.Today,
             DueDate = DateTime.Today.AddDays(30),
             Subtotal = 1250.00m,
@@ -60,32 +60,46 @@ public partial class InvoiceHtmlRenderer
             Total = 1375.00m,
             AmountPaid = 0m,
             Balance = 1375.00m,
-            Notes = "Thank you for your business. Please remit payment within 30 days.",
+            Notes = "Example notes section. This area can contain additional information for your customer.",
             LineItems =
             [
-                new() { Description = "Website Design Services", Quantity = 1, UnitPrice = 800.00m },
-                new() { Description = "Logo Design", Quantity = 1, UnitPrice = 250.00m },
-                new() { Description = "Business Card Design", Quantity = 2, UnitPrice = 100.00m }
+                new() { Description = "Example Product 1", Quantity = 1, UnitPrice = 800.00m },
+                new() { Description = "Example Product 2", Quantity = 1, UnitPrice = 250.00m },
+                new() { Description = "Example Product 3", Quantity = 2, UnitPrice = 100.00m }
             ]
         };
 
         // Create sample customer
         var sampleCustomer = new Models.Entities.Customer
         {
-            Name = "Acme Corporation",
-            Email = "billing@acme.com",
+            Name = "Example Customer",
+            Email = "customer@example.com",
             Address = new Models.Common.Address
             {
-                Street = "123 Business Ave, Suite 100",
-                City = "New York",
-                State = "NY",
-                ZipCode = "10001",
-                Country = "USA"
+                Street = "123 Example Street",
+                City = "Example City",
+                State = "EX",
+                ZipCode = "12345",
+                Country = "Example Country"
+            }
+        };
+
+        // Override company info with generic placeholders for the preview
+        var previewCompanySettings = new CompanySettings
+        {
+            Company = new CompanyInfo
+            {
+                Name = "Your Company",
+                Address = companySettings.Company.Address ?? "Your Address",
+                Email = companySettings.Company.Email ?? "your@email.com",
+                Phone = companySettings.Company.Phone ?? "Your Phone",
+                City = companySettings.Company.City ?? "Your City",
+                Country = companySettings.Company.Country ?? "Your Country"
             }
         };
 
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
-        var context = BuildContext(sampleInvoice, template, sampleCustomer, companySettings, "$");
+        var context = BuildContext(sampleInvoice, template, sampleCustomer, previewCompanySettings, "$", lockAspectRatio);
         return ProcessTemplate(html, context);
     }
 
@@ -187,7 +201,8 @@ public partial class InvoiceHtmlRenderer
         InvoiceTemplate template,
         Models.Entities.Customer? customer,
         CompanySettings companySettings,
-        string currencySymbol)
+        string currencySymbol,
+        bool lockAspectRatio)
     {
         var isOverdue = invoice.DueDate.Date < DateTime.Today &&
                         invoice.Balance > 0;
@@ -222,6 +237,7 @@ public partial class InvoiceHtmlRenderer
                 ? $"data:image/png;base64,{template.LogoBase64}"
                 : "",
             ["LogoWidth"] = template.LogoWidth.ToString(),
+            ["LockAspectRatio"] = lockAspectRatio,
 
             // Company info
             ["CompanyName"] = companySettings.Company.Name,

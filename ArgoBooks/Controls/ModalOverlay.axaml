@@ -17,10 +17,10 @@
                     VerticalAlignment="Stretch"
                     PointerPressed="OnBackdropPointerPressed" />
 
-            <!-- Modal content container - centered, sizes to content -->
+            <!-- Modal content container - stretches to fill, content controls its own alignment -->
             <ContentPresenter x:Name="ModalContentPresenter"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch" />
         </Panel>
     </Panel>
 </UserControl>

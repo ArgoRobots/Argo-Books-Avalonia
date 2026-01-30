@@ -70,7 +70,7 @@ public static class InvoiceTemplateFactory
             HeaderText = "Invoice",
             FooterText = "Thank you for your business.",
             ShowLogo = true,
-            ShowCompanyAddress = false,
+            ShowCompanyAddress = true,
             ShowTaxBreakdown = true,
             ShowItemDescriptions = true,
             ShowNotes = true,

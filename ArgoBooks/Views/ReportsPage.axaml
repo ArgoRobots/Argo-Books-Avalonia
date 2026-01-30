@@ -1044,22 +1044,48 @@
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="{loc:Loc 'Image Path'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <Grid ColumnDefinitions="*,Auto" MaxWidth="220">
-                                        <TextBox Grid.Column="0" Text="{Binding SelectedImageElement.ImagePath}" Watermark="{loc:Loc 'Path to image...'}" IsReadOnly="True" TextWrapping="NoWrap" />
-                                        <Button Grid.Column="1" Margin="4,0,0,0" Padding="8,6" Command="{Binding BrowseImagePathCommand}" ToolTip.Tip="{loc:Loc 'Browse...'}">
-                                            <PathIcon Data="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"
-                                                      Width="14" Height="14"
-                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </Button>
+
+                                <!-- No image selected state -->
+                                <Button Classes="secondary-button"
+                                        Command="{Binding BrowseImagePathCommand}"
+                                        IsVisible="{Binding !HasSelectedImage}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Padding="12,10">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"
+                                                  Width="16" Height="16" />
+                                        <TextBlock Text="{loc:Loc 'Select Image...'}" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Image selected state -->
+                                <StackPanel Spacing="8" IsVisible="{Binding HasSelectedImage}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <PathIcon Grid.Column="0"
+                                                  Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                                  Width="16" Height="16"
+                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding SelectedImageFileName}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"
+                                                   ToolTip.Tip="{Binding SelectedImageElement.ImagePath}" />
                                     </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Classes="secondary-button"
+                                                Content="{loc:Loc 'Change'}"
+                                                Command="{Binding BrowseImagePathCommand}"
+                                                Padding="12,6" />
+                                        <Button Classes="secondary-button danger"
+                                                Content="{loc:Loc 'Remove'}"
+                                                Command="{Binding RemoveImageCommand}"
+                                                Padding="12,6" />
+                                    </StackPanel>
                                 </StackPanel>
-                                <Button Classes="secondary-button danger"
-                                        Content="{loc:Loc 'Remove Image'}"
-                                        Command="{Binding RemoveImageCommand}"
-                                        IsVisible="{Binding SelectedImageElement.ImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                        HorizontalAlignment="Left" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Scale Mode'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ImageScaleModes}"

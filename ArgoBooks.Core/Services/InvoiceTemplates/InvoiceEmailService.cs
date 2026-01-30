@@ -285,9 +285,9 @@ public class InvoiceEmailService : IDisposable
     /// <summary>
     /// Renders a preview with sample data.
     /// </summary>
-    public string RenderTemplatePreview(InvoiceTemplate template, CompanySettings companySettings)
+    public string RenderTemplatePreview(InvoiceTemplate template, CompanySettings companySettings, bool lockAspectRatio = true)
     {
-        return _htmlRenderer.RenderPreview(template, companySettings);
+        return _htmlRenderer.RenderPreview(template, companySettings, lockAspectRatio);
     }
 
     private static string BuildSubject(string template, Invoice invoice, CompanySettings settings)

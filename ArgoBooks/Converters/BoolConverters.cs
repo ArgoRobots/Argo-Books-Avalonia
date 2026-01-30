@@ -101,11 +101,11 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal horizontal alignment.
-    /// Fullscreen = Stretch, Normal = Center.
+    /// Both fullscreen and normal modes use Center alignment.
     /// </summary>
     public static readonly IValueConverter ToFullscreenHorizontalAlignment =
         new FuncValueConverter<bool, Avalonia.Layout.HorizontalAlignment>(value =>
-            value ? Avalonia.Layout.HorizontalAlignment.Stretch : Avalonia.Layout.HorizontalAlignment.Center);
+            Avalonia.Layout.HorizontalAlignment.Center);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal vertical alignment.
@@ -141,10 +141,22 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal margin.
-    /// Fullscreen = 24px margin, Normal = 0.
+    /// Fullscreen = 24px vertical margin only (width is fixed), Normal = 0.
     /// </summary>
     public static readonly IValueConverter ToFullscreenMargin =
-        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24) : new Thickness(0));
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 24, 0, 24) : new Thickness(0));
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal min width.
+    /// Fullscreen = 0 (no min), Normal = parameter or 800.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenMinWidth = new FullscreenMinMaxConverter(800, true);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal max width.
+    /// Fullscreen = Infinity (no max), Normal = parameter or 1200.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenMaxWidth = new FullscreenMinMaxConverter(1200, false);
 
     /// <summary>
     /// Converts bool (isFullscreen) to fullscreen icon path data.
@@ -432,7 +444,9 @@ public class BoolToTextDecorationConverter : IValueConverter
 
 /// <summary>
 /// Converter for fullscreen modal dimensions.
-/// When fullscreen is true, returns NaN (stretch). When false, returns the default or parameter value.
+/// Parameter format: "normalValue" or "normalValue,fullscreenValue"
+/// When fullscreen is true: returns fullscreenValue if provided, otherwise NaN (stretch).
+/// When fullscreen is false: returns normalValue or the default.
 /// </summary>
 public class FullscreenDimensionConverter : IValueConverter
 {
@@ -448,17 +462,26 @@ public class FullscreenDimensionConverter : IValueConverter
         if (value is not bool isFullscreen)
             return _defaultValue;
 
+        double normalValue = _defaultValue;
+        double? fullscreenValue = null;
+
+        if (parameter is string stringParam)
+        {
+            var parts = stringParam.Split(',');
+            if (double.TryParse(parts[0].Trim(), out var parsed))
+                normalValue = parsed;
+            if (parts.Length > 1 && double.TryParse(parts[1].Trim(), out var parsedFullscreen))
+                fullscreenValue = parsedFullscreen;
+        }
+        else if (parameter is double doubleParam)
+        {
+            normalValue = doubleParam;
+        }
+
         if (isFullscreen)
-            return double.NaN;
+            return fullscreenValue ?? double.NaN;
 
-        // Use parameter if provided, otherwise use default
-        if (parameter is double doubleParam)
-            return doubleParam;
-
-        if (parameter is string stringParam && double.TryParse(stringParam, out var parsedValue))
-            return parsedValue;
-
-        return _defaultValue;
+        return normalValue;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -487,6 +510,44 @@ public class BoolToDoubleConverter : IValueConverter
         }
 
         return 0.0;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converter for fullscreen modal min/max width constraints.
+/// When fullscreen is true: returns 0 for min, Infinity for max (no constraints).
+/// When fullscreen is false: returns the default or parameter value.
+/// </summary>
+public class FullscreenMinMaxConverter : IValueConverter
+{
+    private readonly double _defaultValue;
+    private readonly bool _isMin;
+
+    public FullscreenMinMaxConverter(double defaultValue, bool isMin)
+    {
+        _defaultValue = defaultValue;
+        _isMin = isMin;
+    }
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool isFullscreen)
+            return _defaultValue;
+
+        if (isFullscreen)
+            return _isMin ? 0.0 : double.PositiveInfinity;
+
+        // Use parameter if provided, otherwise use default
+        if (parameter is double doubleParam)
+            return doubleParam;
+
+        if (parameter is string stringParam && double.TryParse(stringParam, out var parsedValue))
+            return parsedValue;
+
+        return _defaultValue;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
