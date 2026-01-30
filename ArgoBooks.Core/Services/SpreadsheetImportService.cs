@@ -274,6 +274,9 @@ public class SpreadsheetImportService
             case "Purchase Orders":
                 ValidateExpenseOrderReferences(rows, headers, data, importedIds, result);
                 break;
+            case "Purchase Order Line Items":
+                ValidatePurchaseOrderLineItemReferences(rows, headers, data, importedIds, result);
+                break;
         }
     }
 
@@ -622,6 +625,37 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddMissingReference("Suppliers", supplierId);
+            }
+        }
+    }
+
+    private void ValidatePurchaseOrderLineItemReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
+        var existingPurchaseOrders = data.PurchaseOrders.Select(p => p.Id).ToHashSet();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
+        var importedPurchaseOrders = importedIds.GetValueOrDefault("PurchaseOrders") ?? [];
+
+        foreach (var row in rows)
+        {
+            var productId = GetNullableString(row, headers, "Product ID");
+            var poId = GetNullableString(row, headers, "PO ID");
+
+            if (!string.IsNullOrEmpty(productId) &&
+                !existingProducts.Contains(productId) &&
+                !importedProducts.Contains(productId))
+            {
+                result.AddMissingReference("Products", productId);
+            }
+
+            if (!string.IsNullOrEmpty(poId) &&
+                !existingPurchaseOrders.Contains(poId) &&
+                !importedPurchaseOrders.Contains(poId))
+            {
+                result.AddMissingReference("Purchase Orders", poId);
             }
         }
     }

@@ -58,6 +58,9 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasInventoryError;
 
+    [ObservableProperty]
+    private bool _hasQuantityError;
+
     /// <summary>
     /// Adjustment type options for dropdown.
     /// </summary>
@@ -93,7 +96,15 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// </summary>
     public int CurrentStock => SelectedInventoryItem?.InStock ?? 0;
 
-    partial void OnAdjustmentQuantityChanged(string value) => OnPropertyChanged(nameof(CalculatedNewStock));
+    partial void OnAdjustmentQuantityChanged(string value)
+    {
+        OnPropertyChanged(nameof(CalculatedNewStock));
+        // Clear error when user starts typing
+        if (!string.IsNullOrEmpty(value))
+        {
+            HasQuantityError = false;
+        }
+    }
     partial void OnAdjustmentTypeChanged(string value) => OnPropertyChanged(nameof(CalculatedNewStock));
     partial void OnSelectedInventoryOptionChanged(InventoryItemDisplayOption? value)
     {
@@ -170,6 +181,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     {
         AddModalError = null;
         HasInventoryError = false;
+        HasQuantityError = false;
 
         // Validate
         if (SelectedInventoryItem == null)
@@ -180,7 +192,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
 
         if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
         {
-            AddModalError = "Please enter a valid quantity.".Translate();
+            HasQuantityError = true;
             return;
         }
 
@@ -303,6 +315,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         ReferenceNumber = string.Empty;
         AddModalError = null;
         HasInventoryError = false;
+        HasQuantityError = false;
     }
 
     #endregion
