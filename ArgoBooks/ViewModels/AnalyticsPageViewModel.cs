@@ -1355,7 +1355,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 ChartLoaderService.ResetZoom(ExpensesTrendsXAxes, ExpensesTrendsYAxes);
                 break;
             case "Total Transactions":
-                ChartLoaderService.ResetZoom(WorkloadDistributionXAxes, WorkloadDistributionYAxes);
+                ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
                 break;
             case "Average Transaction Value":
                 ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
@@ -1364,16 +1364,17 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 ChartLoaderService.ResetZoom(AvgShippingCostsXAxes, AvgShippingCostsYAxes);
                 break;
             case "Growth Rates":
+            case "Customer Growth":
+                // Customer Growth uses GrowthRates axes
                 ChartLoaderService.ResetZoom(GrowthRatesXAxes, GrowthRatesYAxes);
                 break;
-            case "Customer Growth":
-                ChartLoaderService.ResetZoom(CustomerGrowthXAxes, CustomerGrowthYAxes);
-                break;
             case "Customer Lifetime Value":
-                ChartLoaderService.ResetZoom(CustomerLifetimeValueXAxes, CustomerLifetimeValueYAxes);
+                // Uses AvgTransactionValue axes
+                ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
                 break;
             case "Rentals per Customer":
-                ChartLoaderService.ResetZoom(RentalsPerCustomerXAxes, RentalsPerCustomerYAxes);
+                // Uses TotalTransactions axes
+                ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
                 break;
             case "Returns Over Time":
                 ChartLoaderService.ResetZoom(ReturnsOverTimeXAxes, ReturnsOverTimeYAxes);
