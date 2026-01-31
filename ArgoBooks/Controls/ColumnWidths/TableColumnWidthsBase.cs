@@ -203,54 +203,6 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     }
 
     /// <summary>
-    /// Gets the current width of a column.
-    /// </summary>
-    public double GetColumnWidth(string columnName)
-    {
-        if (Columns.TryGetValue(columnName, out var col))
-        {
-            return col.CurrentWidth > 0 ? col.CurrentWidth : col.MinWidth;
-        }
-        return 100;
-    }
-
-    /// <summary>
-    /// Sets the width of a column directly.
-    /// </summary>
-    public void SetColumnWidth(string columnName, double width)
-    {
-        if (!Columns.TryGetValue(columnName, out var col)) return;
-        if (col.IsFixed) return;
-
-        width = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, width));
-        col.CurrentWidth = width;
-        ApplyWidthToProperty(columnName, width);
-    }
-
-    /// <summary>
-    /// Gets the minimum width of a column.
-    /// </summary>
-    public double GetMinWidth(string columnName)
-    {
-        return Columns.TryGetValue(columnName, out var col) ? col.MinWidth : 50;
-    }
-
-    /// <summary>
-    /// Registers a measured content width for a column.
-    /// </summary>
-    public void RegisterContentWidth(string columnName, double contentWidth)
-    {
-        if (Columns.TryGetValue(columnName, out var col))
-        {
-            var widthWithPadding = contentWidth + 20;
-            if (widthWithPadding > col.MeasuredContentWidth)
-            {
-                col.MeasuredContentWidth = widthWithPadding;
-            }
-        }
-    }
-
-    /// <summary>
     /// Auto-sizes a column to fit its content or preferred width.
     /// </summary>
     public void AutoSizeColumn(string columnName)
