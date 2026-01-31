@@ -180,14 +180,6 @@
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         </Panel>
 
-                                        <!-- Status Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                            <TextBlock Text="{loc:Loc 'Status'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
-
                                         <!-- Actions Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
                                             <TextBlock Text="{loc:Loc 'Actions'}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" HorizontalAlignment="Left" />
@@ -299,23 +291,6 @@
                                                                            Foreground="#DC2626"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Status Badge -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowStatusColumn}">
-                                                                <Border CornerRadius="4"
-                                                                        Padding="6,3"
-                                                                        Background="{Binding StatusBadgeBackground}"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Margin="8,0">
-                                                                    <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
-                                                                               FontSize="10"
-                                                                               FontWeight="Medium"
-                                                                               Foreground="{Binding StatusBadgeForeground}" />
-                                                                </Border>
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                             </Panel>
 
@@ -478,7 +453,6 @@
                     <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowStaffColumn}" Content="{loc:Loc Staff}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowLossColumn}" Content="{loc:Loc Loss}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
                 </StackPanel>
             </controls:ColumnVisibilityMenu.ColumnsContent>
         </controls:ColumnVisibilityMenu>

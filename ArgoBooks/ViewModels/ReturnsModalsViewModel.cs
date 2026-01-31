@@ -43,15 +43,7 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     private DateTimeOffset? _filterDateTo;
 
     [ObservableProperty]
-    private string _filterStatus = "All";
-
-    [ObservableProperty]
     private string _filterReason = "All";
-
-    /// <summary>
-    /// Status filter options.
-    /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Pending", "Approved", "Rejected", "Refunded"];
 
     /// <summary>
     /// Reason filter options.
@@ -68,7 +60,6 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     public bool HasFilterChanges =>
         FilterDateFrom != null ||
         FilterDateTo != null ||
-        FilterStatus != "All" ||
         FilterReason != "All";
 
     /// <summary>
@@ -78,7 +69,6 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     {
         FilterDateFrom = null;
         FilterDateTo = null;
-        FilterStatus = "All";
         FilterReason = "All";
     }
 

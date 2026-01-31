@@ -64,9 +64,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showLossColumn = true;
 
-    [ObservableProperty]
-    private bool _showStatusColumn = true;
-
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
     partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
@@ -74,7 +71,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
     partial void OnShowStaffColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Staff", value);
     partial void OnShowLossColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Loss", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -354,7 +350,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         var productName = GetProductName(item.ProductId);
         var staffName = GetStaffName(item);
         var itemType = GetItemType(item.Reason);
-        var status = GetItemStatus(item);
 
         return new LostDamagedDisplayItem
         {
@@ -366,7 +361,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             Reason = item.Reason.ToString(),
             StaffName = staffName,
             ValueLost = item.ValueLost,
-            Status = status,
             Notes = item.Notes,
             Quantity = item.Quantity,
             InsuranceClaim = item.InsuranceClaim
@@ -395,19 +389,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             LostDamagedReason.Damaged or LostDamagedReason.Expired or LostDamagedReason.Other => "Damaged",
             _ => "Unknown"
         };
-    }
-
-    private static string GetItemStatus(LostDamaged item)
-    {
-        if (item.InsuranceClaim)
-            return "Insurance Claim";
-
-        // Default status logic based on age of record
-        var daysSinceDiscovery = (DateTime.UtcNow - item.DateDiscovered).TotalDays;
-        if (daysSinceDiscovery > 30)
-            return "Written Off";
-
-        return "Pending";
     }
 
     private void UpdatePageNumbers()
@@ -505,9 +486,6 @@ public partial class LostDamagedDisplayItem : ObservableObject
     private decimal _valueLost;
 
     [ObservableProperty]
-    private string _status = string.Empty;
-
-    [ObservableProperty]
     private string _notes = string.Empty;
 
     [ObservableProperty]
@@ -535,24 +513,6 @@ public partial class LostDamagedDisplayItem : ObservableObject
     {
         "Lost" => "#D97706",
         "Damaged" => "#DC2626",
-        _ => "#6B7280"
-    };
-
-    public string StatusBadgeBackground => Status switch
-    {
-        "Written Off" => "#F3F4F6",
-        "Insurance Claim" => "#DBEAFE",
-        "Recovered" => "#DCFCE7",
-        "Pending" => "#FEF3C7",
-        _ => "#F3F4F6"
-    };
-
-    public string StatusBadgeForeground => Status switch
-    {
-        "Written Off" => "#6B7280",
-        "Insurance Claim" => "#2563EB",
-        "Recovered" => "#16A34A",
-        "Pending" => "#D97706",
         _ => "#6B7280"
     };
 }

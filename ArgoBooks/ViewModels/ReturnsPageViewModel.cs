@@ -60,9 +60,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showRefundColumn = true;
 
-    [ObservableProperty]
-    private bool _showStatusColumn = true;
-
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowSupplierCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("SupplierCustomer", value);
@@ -70,7 +67,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
     partial void OnShowProcessedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Processed", value);
     partial void OnShowRefundColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Refund", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -287,7 +283,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Get filter values from modals view model
         var modals = App.ReturnsModalsViewModel;
-        var filterStatus = modals?.FilterStatus ?? "All";
         var filterReason = modals?.FilterReason ?? "All";
         var filterDateFrom = modals?.FilterDateFrom;
         var filterDateTo = modals?.FilterDateTo;
@@ -306,12 +301,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
                 GetProductNames(r).ToLowerInvariant().Contains(query) ||
                 GetSupplierOrCustomerName(r).ToLowerInvariant().Contains(query)
             ).ToList();
-        }
-
-        // Apply status filter
-        if (filterStatus != "All")
-        {
-            filtered = filtered.Where(r => r.Status.ToString() == filterStatus).ToList();
         }
 
         // Apply reason filter
@@ -376,7 +365,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
             Reason = reason,
             ProcessedBy = processedByName,
             RefundAmount = returnRecord.NetRefund,
-            Status = returnRecord.Status,
             Notes = returnRecord.Notes,
             ItemCount = returnRecord.Items.Sum(i => i.Quantity)
         };
@@ -536,9 +524,6 @@ public partial class ReturnDisplayItem : ObservableObject
     private decimal _refundAmount;
 
     [ObservableProperty]
-    private ReturnStatus _status;
-
-    [ObservableProperty]
     private string _notes = string.Empty;
 
     [ObservableProperty]
@@ -547,28 +532,4 @@ public partial class ReturnDisplayItem : ObservableObject
     // Computed properties for display
     public string DateFormatted => ReturnDate.ToString("MMM d, yyyy");
     public string RefundAmountFormatted => $"${RefundAmount:N2}";
-    public string StatusText => Status.ToString();
-
-    public bool IsPending => Status == ReturnStatus.Pending;
-    public bool IsApproved => Status == ReturnStatus.Approved;
-    public bool IsCompleted => Status == ReturnStatus.Completed;
-    public bool IsRejected => Status == ReturnStatus.Rejected;
-
-    public string StatusBadgeBackground => Status switch
-    {
-        ReturnStatus.Pending => "#FEF3C7",
-        ReturnStatus.Approved => "#DBEAFE",
-        ReturnStatus.Completed => "#DCFCE7",
-        ReturnStatus.Rejected => "#FEE2E2",
-        _ => "#F3F4F6"
-    };
-
-    public string StatusBadgeForeground => Status switch
-    {
-        ReturnStatus.Pending => "#D97706",
-        ReturnStatus.Approved => "#2563EB",
-        ReturnStatus.Completed => "#16A34A",
-        ReturnStatus.Rejected => "#DC2626",
-        _ => "#6B7280"
-    };
 }
