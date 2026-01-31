@@ -249,38 +249,38 @@ public partial class ReturnsModalsViewModel : ViewModelBase
         companyData.Returns.Remove(_undoReturn);
 
         // Restore the original transaction quantity
-        if (_undoReturn.Type == ReturnType.Expense)
+        if (_undoReturn.ReturnType == "Expense")
         {
             var expense = companyData.Expenses.FirstOrDefault(e => e.Id == _undoReturn.OriginalTransactionId);
             if (expense != null)
             {
                 foreach (var returnedItem in _undoReturn.Items)
                 {
-                    var expenseItem = expense.Items.FirstOrDefault(i => i.ProductId == returnedItem.ProductId);
-                    if (expenseItem != null)
+                    var lineItem = expense.LineItems.FirstOrDefault(i => i.ProductId == returnedItem.ProductId);
+                    if (lineItem != null)
                     {
-                        expenseItem.Quantity += returnedItem.Quantity;
+                        lineItem.Quantity += returnedItem.Quantity;
                     }
                 }
             }
         }
-        else if (_undoReturn.Type == ReturnType.Customer)
+        else if (_undoReturn.ReturnType == "Customer")
         {
             var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == _undoReturn.OriginalTransactionId);
             if (revenue != null)
             {
                 foreach (var returnedItem in _undoReturn.Items)
                 {
-                    var revenueItem = revenue.Items.FirstOrDefault(i => i.ProductId == returnedItem.ProductId);
-                    if (revenueItem != null)
+                    var lineItem = revenue.LineItems.FirstOrDefault(i => i.ProductId == returnedItem.ProductId);
+                    if (lineItem != null)
                     {
-                        revenueItem.Quantity += returnedItem.Quantity;
+                        lineItem.Quantity += returnedItem.Quantity;
                     }
                 }
             }
         }
 
-        App.CompanyManager?.MarkDataAsModified();
+        App.CompanyManager?.MarkAsChanged();
         CloseUndoReturnModal();
         ReturnUndone?.Invoke(this, EventArgs.Empty);
     }
