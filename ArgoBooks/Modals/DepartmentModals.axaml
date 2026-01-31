@@ -8,7 +8,8 @@
              x:DataType="vm:DepartmentModalsViewModel">
     <Panel>
         <!-- Add Department Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}"
+                               ClosingCommand="{Binding RequestCloseAddModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -48,7 +49,8 @@
         </controls:ModalOverlay>
 
         <!-- Edit Department Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}"
+                               ClosingCommand="{Binding RequestCloseEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"

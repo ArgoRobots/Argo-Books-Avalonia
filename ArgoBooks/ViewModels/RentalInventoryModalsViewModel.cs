@@ -72,6 +72,54 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
     private RentalItem? _editingItem;
 
+    // Original values for change detection in edit mode
+    private string _originalItemName = string.Empty;
+    private SupplierOption? _originalSupplier;
+    private string _originalTotalQuantity = string.Empty;
+    private string _originalDailyRate = string.Empty;
+    private string _originalWeeklyRate = string.Empty;
+    private string _originalMonthlyRate = string.Empty;
+    private string _originalSecurityDeposit = string.Empty;
+    private string _originalNotes = string.Empty;
+    private string _originalStatus = "Active";
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrWhiteSpace(ModalItemName) ||
+        ModalSupplier != null ||
+        !string.IsNullOrWhiteSpace(ModalTotalQuantity) ||
+        !string.IsNullOrWhiteSpace(ModalDailyRate) ||
+        !string.IsNullOrWhiteSpace(ModalWeeklyRate) ||
+        !string.IsNullOrWhiteSpace(ModalMonthlyRate) ||
+        !string.IsNullOrWhiteSpace(ModalSecurityDeposit) ||
+        !string.IsNullOrWhiteSpace(ModalNotes) ||
+        ModalStatus != "Active";
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalItemName != _originalItemName ||
+        ModalSupplier?.Id != _originalSupplier?.Id ||
+        ModalTotalQuantity != _originalTotalQuantity ||
+        ModalDailyRate != _originalDailyRate ||
+        ModalWeeklyRate != _originalWeeklyRate ||
+        ModalMonthlyRate != _originalMonthlyRate ||
+        ModalSecurityDeposit != _originalSecurityDeposit ||
+        ModalNotes != _originalNotes ||
+        ModalStatus != _originalStatus;
+
+    /// <summary>
+    /// Returns true if any filter differs from default values.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterStatus != "All" ||
+        FilterAvailability != "All" ||
+        !string.IsNullOrWhiteSpace(FilterDailyRateMin) ||
+        !string.IsNullOrWhiteSpace(FilterDailyRateMax);
+
     #endregion
 
     #region Rent Out Modal Fields
@@ -276,6 +324,34 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
+    }
+
+    /// <summary>
     /// Navigates to Suppliers page and opens the create supplier modal.
     /// </summary>
     [RelayCommand]
@@ -381,6 +457,17 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         ModalStatus = rentalItem.Status == EntityStatus.Inactive ? "In Maintenance" : "Active";
         ModalNotes = rentalItem.Notes;
 
+        // Store original values for change detection
+        _originalItemName = ModalItemName;
+        _originalSupplier = ModalSupplier;
+        _originalTotalQuantity = ModalTotalQuantity;
+        _originalDailyRate = ModalDailyRate;
+        _originalWeeklyRate = ModalWeeklyRate;
+        _originalMonthlyRate = ModalMonthlyRate;
+        _originalSecurityDeposit = ModalSecurityDeposit;
+        _originalNotes = ModalNotes;
+        _originalStatus = ModalStatus;
+
         ClearModalErrors();
         IsEditModalOpen = true;
     }
@@ -391,6 +478,34 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         IsEditModalOpen = false;
         _editingItem = null;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Edit modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseEditModal();
     }
 
     [RelayCommand]
@@ -569,6 +684,36 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         IsFilterModalOpen = false;
     }
 
+    /// <summary>
+    /// Requests to close the Filter modal, showing confirmation if filters have been changed.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
     [RelayCommand]
     public void ApplyFilters()
     {
@@ -579,11 +724,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     [RelayCommand]
     public void ClearFilters()
     {
-        FilterStatus = "All";
+        ResetFilterDefaults();
         FilterSupplier = null;
-        FilterDailyRateMin = null;
-        FilterDailyRateMax = null;
-        FilterAvailability = "All";
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -785,6 +927,14 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         ModalItemNameError = null;
         ModalQuantityError = null;
         ModalDailyRateError = null;
+    }
+
+    private void ResetFilterDefaults()
+    {
+        FilterStatus = "All";
+        FilterAvailability = "All";
+        FilterDailyRateMin = null;
+        FilterDailyRateMax = null;
     }
 
     private bool ValidateModal()

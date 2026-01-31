@@ -14,7 +14,8 @@
 
     <Panel>
         <!-- Add/Edit Order Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}"
+                               ClosingCommand="{Binding RequestCloseAddModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -470,7 +471,8 @@
         </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -524,10 +526,9 @@
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding FilterSupplierOptions}"
-                                      SelectedItem="{Binding FilterSupplier}"
-                                      Classes="form-combobox"
-                                      HorizontalAlignment="Stretch" />
+                            <controls:SearchableDropdown ItemsSource="{Binding FilterSupplierOptions}"
+                                                         SelectedItem="{Binding FilterSupplier}"
+                                                         Placeholder="{loc:Loc 'Search suppliers...'}" />
                         </StackPanel>
 
                         <!-- Status -->

@@ -90,6 +90,45 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     private Location? _editingLocation;
 
+    // Original values for change detection in edit mode
+    private string _originalName = string.Empty;
+    private string _originalCode = string.Empty;
+    private string _originalType = "Warehouse";
+    private string _originalStreetAddress = string.Empty;
+    private string _originalCity = string.Empty;
+    private string _originalStateProvince = string.Empty;
+    private string _originalPostalCode = string.Empty;
+    private string _originalCountry = string.Empty;
+    private string _originalNotes = string.Empty;
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrWhiteSpace(ModalName) ||
+        !string.IsNullOrWhiteSpace(ModalCode) ||
+        ModalType != "Warehouse" ||
+        !string.IsNullOrWhiteSpace(ModalStreetAddress) ||
+        !string.IsNullOrWhiteSpace(ModalCity) ||
+        !string.IsNullOrWhiteSpace(ModalStateProvince) ||
+        !string.IsNullOrWhiteSpace(ModalPostalCode) ||
+        !string.IsNullOrWhiteSpace(ModalCountry) ||
+        !string.IsNullOrWhiteSpace(ModalNotes);
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalName != _originalName ||
+        ModalCode != _originalCode ||
+        ModalType != _originalType ||
+        ModalStreetAddress != _originalStreetAddress ||
+        ModalCity != _originalCity ||
+        ModalStateProvince != _originalStateProvince ||
+        ModalPostalCode != _originalPostalCode ||
+        ModalCountry != _originalCountry ||
+        ModalNotes != _originalNotes;
+
     #endregion
 
     #region Dropdown Options
@@ -120,6 +159,13 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FilterStatusOptions { get; } = ["All", "Active", "Inactive"];
 
+    /// <summary>
+    /// Returns true if any filter differs from default values.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterType != "All" ||
+        FilterStatus != "All";
+
     #endregion
 
     #region Add Location
@@ -141,6 +187,34 @@ public partial class LocationsModalsViewModel : ViewModelBase
     {
         IsAddModalOpen = false;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
     }
 
     /// <summary>
@@ -240,6 +314,17 @@ public partial class LocationsModalsViewModel : ViewModelBase
         ModalNameError = null;
         ModalError = null;
 
+        // Store original values for change detection
+        _originalName = ModalName;
+        _originalCode = ModalCode;
+        _originalType = ModalType;
+        _originalStreetAddress = ModalStreetAddress;
+        _originalCity = ModalCity;
+        _originalStateProvince = ModalStateProvince;
+        _originalPostalCode = ModalPostalCode;
+        _originalCountry = ModalCountry;
+        _originalNotes = ModalNotes;
+
         IsEditModalOpen = true;
     }
 
@@ -252,6 +337,34 @@ public partial class LocationsModalsViewModel : ViewModelBase
         IsEditModalOpen = false;
         _editingLocation = null;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Edit modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseEditModal();
     }
 
     /// <summary>
@@ -396,6 +509,37 @@ public partial class LocationsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Requests to close the filter modal, showing confirmation if filters have been changed.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            // Reset filter values to defaults
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    /// <summary>
     /// Applies the current filters and closes the modal.
     /// </summary>
     [RelayCommand]
@@ -411,9 +555,17 @@ public partial class LocationsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
+        ResetFilterDefaults();
+        CloseFilterModal();
+    }
+
+    /// <summary>
+    /// Resets filter values to their defaults.
+    /// </summary>
+    private void ResetFilterDefaults()
+    {
         FilterType = "All";
         FilterStatus = "All";
-        CloseFilterModal();
     }
 
     #endregion

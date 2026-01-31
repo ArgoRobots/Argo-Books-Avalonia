@@ -57,6 +57,29 @@ public partial class CategoryModalsViewModel : ObservableObject
     private CategoryDisplayItem? _movingCategory;
     private bool _isExpensesTab = true;
 
+    // Original values for change detection in edit mode
+    private string _originalCategoryName = string.Empty;
+    private string _originalDescription = string.Empty;
+    private string _originalItemType = "Product";
+    private string? _originalIconOption;
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrWhiteSpace(ModalCategoryName) ||
+        !string.IsNullOrWhiteSpace(ModalDescription) ||
+        ModalSelectedIconOption != null;
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalCategoryName != _originalCategoryName ||
+        ModalDescription != _originalDescription ||
+        ModalItemType != _originalItemType ||
+        ModalSelectedIconOption?.Icon != _originalIconOption;
+
     #endregion
 
     #region Move Modal Properties
@@ -164,6 +187,34 @@ public partial class CategoryModalsViewModel : ObservableObject
         ClearModalFields();
     }
 
+    /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
+    }
+
     [RelayCommand]
     public void SaveNewCategory()
     {
@@ -224,6 +275,13 @@ public partial class CategoryModalsViewModel : ObservableObject
         ModalDescription = category.Description ?? string.Empty;
         ModalItemType = category.ItemType;
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault(i => i.Icon == category.Icon) ?? AvailableIcons.First();
+
+        // Store original values for change detection
+        _originalCategoryName = ModalCategoryName;
+        _originalDescription = ModalDescription;
+        _originalItemType = ModalItemType;
+        _originalIconOption = ModalSelectedIconOption?.Icon;
+
         ModalError = null;
         IsEditModalOpen = true;
     }
@@ -234,6 +292,34 @@ public partial class CategoryModalsViewModel : ObservableObject
         IsEditModalOpen = false;
         _editingCategory = null;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Edit modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseEditModal();
     }
 
     [RelayCommand]

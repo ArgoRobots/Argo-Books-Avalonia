@@ -19,7 +19,8 @@
 
     <Panel>
         <!-- ======================= ADD / EDIT EXPENSE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddEditModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddEditModalOpen}"
+                               ClosingCommand="{Binding RequestCloseAddEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -358,7 +359,8 @@
         <modals:SaveErrorModal />
 
         <!-- ======================= FILTER MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"

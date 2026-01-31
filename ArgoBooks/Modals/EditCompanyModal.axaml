@@ -10,7 +10,8 @@
              x:Class="ArgoBooks.Modals.EditCompanyModal"
              x:DataType="vm:EditCompanyModalViewModel">
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CloseCommand}">
         <controls:ModalOverlay.ModalContent>
             <!-- Modal -->
             <Border HorizontalAlignment="Center"

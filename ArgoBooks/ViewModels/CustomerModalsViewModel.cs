@@ -118,6 +118,51 @@ public partial class CustomerModalsViewModel : ObservableObject
     /// </summary>
     private CustomerDisplayItem? _historyCustomer;
 
+    // Original values for change detection in edit mode
+    private string _originalFirstName = string.Empty;
+    private string _originalLastName = string.Empty;
+    private string _originalCompanyName = string.Empty;
+    private string _originalEmail = string.Empty;
+    private string _originalPhone = string.Empty;
+    private string _originalStreetAddress = string.Empty;
+    private string _originalCity = string.Empty;
+    private string _originalStateProvince = string.Empty;
+    private string _originalZipCode = string.Empty;
+    private string _originalCountry = string.Empty;
+    private string _originalNotes = string.Empty;
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrWhiteSpace(ModalFirstName) ||
+        !string.IsNullOrWhiteSpace(ModalLastName) ||
+        !string.IsNullOrWhiteSpace(ModalCompanyName) ||
+        !string.IsNullOrWhiteSpace(ModalEmail) ||
+        !string.IsNullOrWhiteSpace(ModalPhone) ||
+        !string.IsNullOrWhiteSpace(ModalStreetAddress) ||
+        !string.IsNullOrWhiteSpace(ModalCity) ||
+        !string.IsNullOrWhiteSpace(ModalStateProvince) ||
+        !string.IsNullOrWhiteSpace(ModalZipCode) ||
+        !string.IsNullOrWhiteSpace(ModalCountry) ||
+        !string.IsNullOrWhiteSpace(ModalNotes);
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalFirstName != _originalFirstName ||
+        ModalLastName != _originalLastName ||
+        ModalCompanyName != _originalCompanyName ||
+        ModalEmail != _originalEmail ||
+        ModalPhone != _originalPhone ||
+        ModalStreetAddress != _originalStreetAddress ||
+        ModalCity != _originalCity ||
+        ModalStateProvince != _originalStateProvince ||
+        ModalZipCode != _originalZipCode ||
+        ModalCountry != _originalCountry ||
+        ModalNotes != _originalNotes;
+
     #endregion
 
     #region Filter Fields
@@ -221,6 +266,34 @@ public partial class CustomerModalsViewModel : ObservableObject
         ClearModalFields();
     }
 
+    /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
+    }
+
     [RelayCommand]
     public void SaveNewCustomer()
     {
@@ -314,6 +387,19 @@ public partial class CustomerModalsViewModel : ObservableObject
             _ => "Active"
         };
 
+        // Store original values for change detection
+        _originalFirstName = ModalFirstName;
+        _originalLastName = ModalLastName;
+        _originalCompanyName = ModalCompanyName;
+        _originalEmail = ModalEmail;
+        _originalPhone = ModalPhone;
+        _originalStreetAddress = ModalStreetAddress;
+        _originalCity = ModalCity;
+        _originalStateProvince = ModalStateProvince;
+        _originalZipCode = ModalZipCode;
+        _originalCountry = ModalCountry;
+        _originalNotes = ModalNotes;
+
         ClearModalErrors();
         IsEditModalOpen = true;
     }
@@ -324,6 +410,34 @@ public partial class CustomerModalsViewModel : ObservableObject
         IsEditModalOpen = false;
         _editingCustomer = null;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Edit modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseEditModal();
     }
 
     [RelayCommand]
@@ -494,6 +608,17 @@ public partial class CustomerModalsViewModel : ObservableObject
 
     #region Filter Modal
 
+    /// <summary>
+    /// Returns true if any filter has been changed from its default value.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterPaymentStatus != "All" ||
+        FilterCustomerStatus != "All" ||
+        !string.IsNullOrWhiteSpace(FilterOutstandingMin) ||
+        !string.IsNullOrWhiteSpace(FilterOutstandingMax) ||
+        FilterLastRentalFrom != null ||
+        FilterLastRentalTo != null;
+
     [RelayCommand]
     public void OpenFilterModal()
     {
@@ -507,6 +632,43 @@ public partial class CustomerModalsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    private void ResetFilterDefaults()
+    {
+        FilterPaymentStatus = "All";
+        FilterCustomerStatus = "All";
+        FilterOutstandingMin = null;
+        FilterOutstandingMax = null;
+        FilterLastRentalFrom = null;
+        FilterLastRentalTo = null;
+    }
+
+    [RelayCommand]
     public void ApplyFilters()
     {
         FiltersApplied?.Invoke(this, EventArgs.Empty);
@@ -516,12 +678,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     [RelayCommand]
     public void ClearFilters()
     {
-        FilterPaymentStatus = "All";
-        FilterCustomerStatus = "All";
-        FilterOutstandingMin = null;
-        FilterOutstandingMax = null;
-        FilterLastRentalFrom = null;
-        FilterLastRentalTo = null;
+        ResetFilterDefaults();
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -673,6 +830,17 @@ public partial class CustomerModalsViewModel : ObservableObject
         CustomerHistory.Clear();
     }
 
+    /// <summary>
+    /// Returns true if any history filter has been changed from its default value.
+    /// </summary>
+    public bool HasHistoryFilterChanges =>
+        HistoryFilterType != "All" ||
+        HistoryFilterStatus != "All" ||
+        HistoryFilterDateFrom != null ||
+        HistoryFilterDateTo != null ||
+        !string.IsNullOrWhiteSpace(HistoryFilterAmountMin) ||
+        !string.IsNullOrWhiteSpace(HistoryFilterAmountMax);
+
     [RelayCommand]
     public void OpenHistoryFilterModal()
     {
@@ -683,6 +851,43 @@ public partial class CustomerModalsViewModel : ObservableObject
     public void CloseHistoryFilterModal()
     {
         IsHistoryFilterModalOpen = false;
+    }
+
+    [RelayCommand]
+    public async Task RequestCloseHistoryFilterModalAsync()
+    {
+        if (HasHistoryFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetHistoryFilterDefaults();
+        }
+
+        CloseHistoryFilterModal();
+    }
+
+    private void ResetHistoryFilterDefaults()
+    {
+        HistoryFilterType = "All";
+        HistoryFilterStatus = "All";
+        HistoryFilterDateFrom = null;
+        HistoryFilterDateTo = null;
+        HistoryFilterAmountMin = null;
+        HistoryFilterAmountMax = null;
     }
 
     [RelayCommand]
@@ -698,12 +903,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     [RelayCommand]
     public void ClearHistoryFilters()
     {
-        HistoryFilterType = "All";
-        HistoryFilterStatus = "All";
-        HistoryFilterDateFrom = null;
-        HistoryFilterDateTo = null;
-        HistoryFilterAmountMin = null;
-        HistoryFilterAmountMax = null;
+        ResetHistoryFilterDefaults();
         if (_historyCustomer != null)
         {
             LoadCustomerHistory(_historyCustomer.Id);

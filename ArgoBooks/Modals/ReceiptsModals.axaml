@@ -14,7 +14,8 @@
 
     <Panel>
         <!-- Filter Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"

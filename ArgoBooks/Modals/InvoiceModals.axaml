@@ -18,7 +18,8 @@
 
     <Panel>
         <!-- ======================= CREATE / EDIT INVOICE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}"
+                               ClosingCommand="{Binding RequestCloseCreateEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -450,7 +451,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= FILTER MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"

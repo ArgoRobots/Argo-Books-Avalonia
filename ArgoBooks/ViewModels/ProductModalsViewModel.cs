@@ -115,6 +115,47 @@ public partial class ProductModalsViewModel : ObservableObject
     /// </summary>
     private bool _isExpensesTab = true;
 
+    // Original values for change detection in edit mode
+    private string _originalProductName = string.Empty;
+    private string _originalDescription = string.Empty;
+    private string _originalItemType = "Product";
+    private string? _originalCategoryId;
+    private string? _originalSupplierId;
+    private string _originalReorderPoint = string.Empty;
+    private string _originalOverstockThreshold = string.Empty;
+    private string _originalUnitPrice = string.Empty;
+    private string _originalCostPrice = string.Empty;
+    private string _originalSku = string.Empty;
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrWhiteSpace(ModalProductName) ||
+        !string.IsNullOrWhiteSpace(ModalDescription) ||
+        ModalCategory != null ||
+        ModalSupplier != null ||
+        !string.IsNullOrWhiteSpace(ModalReorderPoint) ||
+        !string.IsNullOrWhiteSpace(ModalOverstockThreshold) ||
+        !string.IsNullOrWhiteSpace(ModalUnitPrice) ||
+        !string.IsNullOrWhiteSpace(ModalCostPrice) ||
+        !string.IsNullOrWhiteSpace(ModalSku);
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalProductName != _originalProductName ||
+        ModalDescription != _originalDescription ||
+        ModalItemType != _originalItemType ||
+        ModalCategory?.Id != _originalCategoryId ||
+        ModalSupplier?.Id != _originalSupplierId ||
+        ModalReorderPoint != _originalReorderPoint ||
+        ModalOverstockThreshold != _originalOverstockThreshold ||
+        ModalUnitPrice != _originalUnitPrice ||
+        ModalCostPrice != _originalCostPrice ||
+        ModalSku != _originalSku;
+
     #endregion
 
     #region Filter Fields
@@ -127,6 +168,14 @@ public partial class ProductModalsViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _filterSupplier;
+
+    /// <summary>
+    /// Returns true if any filter differs from default values.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterItemType != "All" ||
+        FilterCategory != null ||
+        FilterSupplier != null;
 
     #endregion
 
@@ -175,6 +224,34 @@ public partial class ProductModalsViewModel : ObservableObject
     {
         IsAddModalOpen = false;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
     }
 
     [RelayCommand]
@@ -293,6 +370,18 @@ public partial class ProductModalsViewModel : ObservableObject
         ModalReorderPoint = product.ReorderPoint > 0 ? product.ReorderPoint.ToString() : string.Empty;
         ModalOverstockThreshold = product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : string.Empty;
 
+        // Store original values for change detection
+        _originalProductName = ModalProductName;
+        _originalDescription = ModalDescription;
+        _originalItemType = ModalItemType;
+        _originalCategoryId = ModalCategory?.Id;
+        _originalSupplierId = ModalSupplier?.Id;
+        _originalReorderPoint = ModalReorderPoint;
+        _originalOverstockThreshold = ModalOverstockThreshold;
+        _originalUnitPrice = ModalUnitPrice;
+        _originalCostPrice = ModalCostPrice;
+        _originalSku = ModalSku;
+
         ModalError = null;
         IsEditModalOpen = true;
     }
@@ -309,6 +398,34 @@ public partial class ProductModalsViewModel : ObservableObject
         IsEditModalOpen = false;
         _editingProduct = null;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Edit modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseEditModal();
     }
 
     [RelayCommand]
@@ -492,6 +609,36 @@ public partial class ProductModalsViewModel : ObservableObject
         IsFilterModalOpen = false;
     }
 
+    /// <summary>
+    /// Requests to close the Filter modal, showing confirmation if filter changes exist.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
     [RelayCommand]
     public void ApplyFilters()
     {
@@ -502,11 +649,16 @@ public partial class ProductModalsViewModel : ObservableObject
     [RelayCommand]
     public void ClearFilters()
     {
+        ResetFilterDefaults();
+        FiltersCleared?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    private void ResetFilterDefaults()
+    {
         FilterItemType = "All";
         FilterCategory = null;
         FilterSupplier = null;
-        FiltersCleared?.Invoke(this, EventArgs.Empty);
-        CloseFilterModal();
     }
 
     #endregion
