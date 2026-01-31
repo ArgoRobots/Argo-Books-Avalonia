@@ -41,16 +41,6 @@ public partial class HeaderViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showSearchHint = true;
 
-    /// <summary>
-    /// Recent search queries for autocomplete.
-    /// </summary>
-    public ObservableCollection<string> RecentSearches { get; } = [];
-
-    /// <summary>
-    /// Search suggestions based on current query.
-    /// </summary>
-    public ObservableCollection<SearchSuggestion> SearchSuggestions { get; } = [];
-
     #endregion
 
     #region Buttons Visibility
@@ -306,18 +296,6 @@ public partial class HeaderViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(SearchQuery))
             return;
 
-        // Add to recent searches if not already present
-        if (!RecentSearches.Contains(SearchQuery))
-        {
-            RecentSearches.Insert(0, SearchQuery);
-
-            // Keep only last 10 searches
-            while (RecentSearches.Count > 10)
-            {
-                RecentSearches.RemoveAt(RecentSearches.Count - 1);
-            }
-        }
-
         _navigationService?.NavigateTo("Search", new Dictionary<string, object?> { { "query", SearchQuery } });
     }
 
@@ -328,7 +306,6 @@ public partial class HeaderViewModel : ViewModelBase
     private void ClearSearch()
     {
         SearchQuery = null;
-        SearchSuggestions.Clear();
     }
 
     /// <summary>
@@ -625,87 +602,6 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     #endregion
-
-    partial void OnSearchQueryChanged(string? value)
-    {
-        // Update search suggestions as user types
-        UpdateSearchSuggestions(value);
-    }
-
-    private void UpdateSearchSuggestions(string? query)
-    {
-        SearchSuggestions.Clear();
-
-        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
-            return;
-
-        // Add matching recent searches
-        foreach (var recent in RecentSearches.Where(s => s.Contains(query, StringComparison.OrdinalIgnoreCase)).Take(3))
-        {
-            SearchSuggestions.Add(new SearchSuggestion
-            {
-                Text = recent,
-                Type = SearchSuggestionType.Recent
-            });
-        }
-    }
-}
-
-/// <summary>
-/// Represents a search suggestion item.
-/// </summary>
-public class SearchSuggestion
-{
-    /// <summary>
-    /// The suggestion text.
-    /// </summary>
-    public string? Text { get; set; }
-
-    /// <summary>
-    /// Secondary text (e.g., category or description).
-    /// </summary>
-    public string? SecondaryText { get; set; }
-
-    /// <summary>
-    /// Type of suggestion for styling.
-    /// </summary>
-    public SearchSuggestionType Type { get; set; }
-
-    /// <summary>
-    /// Optional icon data.
-    /// </summary>
-    public string? IconData { get; set; }
-}
-
-/// <summary>
-/// Types of search suggestions.
-/// </summary>
-public enum SearchSuggestionType
-{
-    /// <summary>
-    /// Recent search query.
-    /// </summary>
-    Recent,
-
-    /// <summary>
-    /// Customer suggestion.
-    /// </summary>
-    Customer,
-
-    /// <summary>
-    /// Product suggestion.
-    /// </summary>
-    Product,
-
-    /// <summary>
-    /// Invoice suggestion.
-    /// </summary>
-    Invoice,
-
-    /// <summary>
-    /// Page/navigation suggestion.
-    /// </summary>
-    Page
 }
 
 /// <summary>
