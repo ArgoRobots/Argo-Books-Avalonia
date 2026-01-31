@@ -340,7 +340,7 @@
                                                     XAxes="{Binding AccuracyChartXAxes}"
                                                     YAxes="{Binding AccuracyChartYAxes}"
                                                     Height="220"
-                                                    ZoomMode="None"
+                                                    ZoomMode="Both"
                                                     TooltipPosition="Top"
                                                     PointerPressed="OnChartPointerPressed" />
                                 <!-- Chart Legend -->

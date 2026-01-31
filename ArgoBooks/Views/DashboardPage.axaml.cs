@@ -290,6 +290,9 @@ public partial class DashboardPage : UserControl
             return; // Don't intercept - let LiveCharts zoom
         }
 
+        // Mark as handled to prevent LiveCharts from zooming when no modifier is held
+        e.Handled = true;
+
         // Find the ScrollViewer and manually scroll it
         var scrollViewer = chart?.FindAncestorOfType<ScrollViewer>();
         if (scrollViewer != null)

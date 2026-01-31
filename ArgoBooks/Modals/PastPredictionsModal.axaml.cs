@@ -85,6 +85,7 @@ public partial class PastPredictionsModal : UserControl
 
     /// <summary>
     /// Intercepts scroll wheel events on charts and redirects them to the parent ScrollViewer.
+    /// When CTRL or Shift is held, allow LiveCharts to handle zooming instead.
     /// </summary>
     private void OnChartPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
@@ -94,6 +95,15 @@ public partial class PastPredictionsModal : UserControl
 
         if (chart == null)
             return;
+
+        // If CTRL or Shift is held, allow LiveCharts to handle zooming
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            return; // Don't intercept - let LiveCharts zoom
+        }
+
+        // Mark as handled to prevent LiveCharts from zooming when no modifier is held
+        e.Handled = true;
 
         // Find the ScrollViewer and manually scroll it
         var scrollViewer = chart.FindAncestorOfType<ScrollViewer>();
@@ -108,8 +118,6 @@ public partial class PastPredictionsModal : UserControl
                 else
                     scrollViewer.LineDown();
             }
-
-            e.Handled = true;
         }
     }
 
