@@ -9,9 +9,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
-using LiveChartsCore.SkiaSharpView.SKCharts;
 using LiveChartsCore.SkiaSharpView.VisualElements;
-using SkiaSharp;
 
 namespace ArgoBooks.Views;
 
@@ -202,94 +200,13 @@ public partial class AnalyticsPage : UserControl
     {
         if (_clickedChart == null) return;
 
-        // Get the top-level window for the file picker
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
 
-        // Create file-safe name from chart title
-        var safeName = string.Join("_", _clickedChartName.Split(Path.GetInvalidFileNameChars()));
-        safeName = safeName.Replace(" ", "_");
-        var suggestedFileName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
-
-        // Show save file dialog
-        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save Chart as Image",
-            SuggestedFileName = suggestedFileName,
-            DefaultExtension = "png",
-            FileTypeChoices =
-            [
-                new FilePickerFileType("PNG Image") { Patterns = ["*.png"] },
-                new FilePickerFileType("JPEG Image") { Patterns = ["*.jpg", "*.jpeg"] }
-            ]
-        });
-
-        if (file == null) return;
-
-        try
-        {
-            var filePath = file.Path.LocalPath;
-
-            // Determine format based on file extension
-            var extension = Path.GetExtension(filePath).ToLowerInvariant();
-            var format = extension switch
-            {
-                ".jpg" or ".jpeg" => SKEncodedImageFormat.Jpeg,
-                _ => SKEncodedImageFormat.Png
-            };
-
-            // Save the chart based on its type
-            switch (_clickedChart)
-            {
-                case CartesianChart cartesianChart:
-                    var skCartesianChart = new SKCartesianChart(cartesianChart)
-                    {
-                        Width = (int)cartesianChart.Bounds.Width,
-                        Height = (int)cartesianChart.Bounds.Height,
-                        Background = SKColors.Transparent
-                    };
-                    skCartesianChart.SaveImage(filePath, format, 100);
-                    break;
-
-                case PieChart pieChart:
-                    var skPieChart = new SKPieChart(pieChart)
-                    {
-                        Width = (int)pieChart.Bounds.Width,
-                        Height = (int)pieChart.Bounds.Height,
-                        Background = SKColors.Transparent
-                    };
-                    skPieChart.SaveImage(filePath, format, 100);
-                    break;
-
-                case GeoMap geoMap:
-                    var skGeoMap = new SKGeoMap(geoMap)
-                    {
-                        Width = (int)geoMap.Bounds.Width,
-                        Height = (int)geoMap.Bounds.Height,
-                        Background = SKColors.Transparent
-                    };
-                    skGeoMap.SaveImage(filePath, format, 100);
-                    break;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Save Failed".Translate(),
-                    Message = "Failed to save the chart image: {0}".TranslateFormat(ex.Message),
-                    PrimaryButtonText = "OK".Translate(),
-                    SecondaryButtonText = null,
-                    CancelButtonText = null
-                });
-            }
-        }
+        await ChartImageExportService.SaveChartAsImageAsync(
+            topLevel,
+            _clickedChart,
+            ChartImageExportService.CreateSafeFileName(_clickedChartName));
     }
 
     /// <summary>

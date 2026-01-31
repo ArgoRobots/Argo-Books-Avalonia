@@ -4,12 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.PastPredictionsModal"
              x:DataType="vm:PastPredictionsModalViewModel">
 
     <controls:ModalOverlay IsOpen="{Binding IsOpen}">
         <controls:ModalOverlay.ModalContent>
+            <Panel>
             <!-- Modal Container -->
             <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -325,6 +327,42 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Accuracy Over Time Chart -->
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                IsVisible="{Binding HasChartData}">
+                            <StackPanel Spacing="12">
+                                <lvc:CartesianChart Title="{Binding AccuracyChartTitle}"
+                                                    Series="{Binding AccuracyChartSeries}"
+                                                    XAxes="{Binding AccuracyChartXAxes}"
+                                                    YAxes="{Binding AccuracyChartYAxes}"
+                                                    Height="220"
+                                                    ZoomMode="None"
+                                                    TooltipPosition="Top"
+                                                    PointerPressed="OnChartPointerPressed" />
+                                <!-- Chart Legend -->
+                                <StackPanel Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="12" Height="3" Background="#3B82F6" CornerRadius="1" VerticalAlignment="Center" />
+                                        <TextBlock Text="Revenue Accuracy"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="12" Height="3" Background="#8B5CF6" CornerRadius="1" VerticalAlignment="Center" />
+                                        <TextBlock Text="Expenses Accuracy"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Info Note -->
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
@@ -360,6 +398,19 @@
                 </Border>
             </Grid>
             </Border>
+
+            <!-- Chart Context Menu -->
+            <controls:ChartContextMenu IsOpen="{Binding IsChartContextMenuOpen}"
+                                       MenuX="{Binding ChartContextMenuX}"
+                                       MenuY="{Binding ChartContextMenuY}"
+                                       SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
+                                       ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
+                                       ExportToExcelCommand="{Binding ExportToExcelCommand}"
+                                       ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
+                                       CloseCommand="{Binding CloseChartContextMenuCommand}"
+                                       ShowExportOptions="True"
+                                       ShowResetZoom="True" />
+            </Panel>
         </controls:ModalOverlay.ModalContent>
     </controls:ModalOverlay>
 </UserControl>

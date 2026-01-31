@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -10,9 +9,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
-using LiveChartsCore.SkiaSharpView.SKCharts;
 using LiveChartsCore.SkiaSharpView.VisualElements;
-using SkiaSharp;
 
 namespace ArgoBooks.Views;
 
@@ -60,105 +57,32 @@ public partial class DashboardPage : UserControl
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, SaveChartImageEventArgs e)
     {
-        // Get the top-level window for the file picker
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
 
-        // Determine the chart name for the file and get chart bounds
-        string suggestedFileName;
-        Size chartBounds;
+        // Find the chart and determine the file name
+        Control? chart = null;
+        string chartName = "Chart";
 
         switch (e.ChartId)
         {
             case "ExpensesChart":
-                var expensesChart = this.FindControl<CartesianChart>("ExpensesChart");
-                if (expensesChart == null) return;
-                suggestedFileName = $"Total_Expenses_{DateTime.Now:yyyy-MM-dd}";
-                chartBounds = new Size(expensesChart.Bounds.Width, expensesChart.Bounds.Height);
+                chart = this.FindControl<CartesianChart>("ExpensesChart");
+                chartName = "Total_Expenses";
                 break;
 
             case "ExpenseDistributionChart":
-                var pieChart = this.FindControl<PieChart>("ExpenseDistributionChart");
-                if (pieChart == null) return;
-                suggestedFileName = $"Distribution_of_Expenses_{DateTime.Now:yyyy-MM-dd}";
-                chartBounds = new Size(pieChart.Bounds.Width, pieChart.Bounds.Height);
+                chart = this.FindControl<PieChart>("ExpenseDistributionChart");
+                chartName = "Distribution_of_Expenses";
                 break;
-
-            default:
-                return;
         }
 
-        // Show save file dialog
-        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save Chart as Image",
-            SuggestedFileName = suggestedFileName,
-            DefaultExtension = "png",
-            FileTypeChoices =
-            [
-                new FilePickerFileType("PNG Image") { Patterns = ["*.png"] },
-                new FilePickerFileType("JPEG Image") { Patterns = ["*.jpg", "*.jpeg"] }
-            ]
-        });
+        if (chart == null) return;
 
-        if (file == null) return;
-
-        try
-        {
-            var filePath = file.Path.LocalPath;
-
-            // Determine format based on file extension
-            var extension = Path.GetExtension(filePath).ToLowerInvariant();
-            var format = extension switch
-            {
-                ".jpg" or ".jpeg" => SKEncodedImageFormat.Jpeg,
-                _ => SKEncodedImageFormat.Png
-            };
-
-            // Save the chart based on its type
-            switch (e.ChartId)
-            {
-                case "ExpensesChart":
-                    var expensesChart = this.FindControl<CartesianChart>("ExpensesChart")!;
-                    var skCartesianChart = new SKCartesianChart(expensesChart)
-                    {
-                        Width = (int)chartBounds.Width,
-                        Height = (int)chartBounds.Height,
-                        Background = SKColors.Transparent
-                    };
-                    skCartesianChart.SaveImage(filePath, format, 100);
-                    break;
-
-                case "ExpenseDistributionChart":
-                    var pieChart = this.FindControl<PieChart>("ExpenseDistributionChart")!;
-                    var skPieChart = new SKPieChart(pieChart)
-                    {
-                        Width = (int)chartBounds.Width,
-                        Height = (int)chartBounds.Height,
-                        Background = SKColors.Transparent
-                    };
-                    skPieChart.SaveImage(filePath, format, 100);
-                    break;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Save Failed".Translate(),
-                    Message = "Failed to save the chart image: {0}".TranslateFormat(ex.Message),
-                    PrimaryButtonText = "OK".Translate(),
-                    SecondaryButtonText = null,
-                    CancelButtonText = null
-                });
-            }
-        }
+        await ChartImageExportService.SaveChartAsImageAsync(
+            topLevel,
+            chart,
+            ChartImageExportService.CreateSafeFileName(chartName));
     }
 
     /// <summary>
