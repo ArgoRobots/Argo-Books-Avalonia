@@ -179,22 +179,23 @@
                                                     <!-- Department Name with Icon -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.DepartmentColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowDepartmentColumn}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Margin="8,0">
-                                                            <Border Width="40" Height="40"
+                                                        <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="8,0">
+                                                            <Border Grid.Column="0" Width="40" Height="40"
                                                                     CornerRadius="8"
-                                                                    Background="{Binding IconColor, Converter={StaticResource DepartmentColorToBrushConverter}}">
+                                                                    Background="{Binding IconColor, Converter={StaticResource DepartmentColorToBrushConverter}}"
+                                                                    Margin="0,0,12,0">
                                                                 <TextBlock Text="{Binding Icon}"
                                                                            FontSize="16"
                                                                            HorizontalAlignment="Center"
                                                                            VerticalAlignment="Center" />
                                                             </Border>
-                                                            <TextBlock Text="{Binding Name}"
+                                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
                                                                        FontSize="14"
                                                                        FontWeight="Medium"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis" />
-                                                        </StackPanel>
+                                                        </Grid>
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
