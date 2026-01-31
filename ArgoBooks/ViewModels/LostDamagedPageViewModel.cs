@@ -59,9 +59,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private bool _showReasonColumn = true;
 
     [ObservableProperty]
-    private bool _showStaffColumn = true;
-
-    [ObservableProperty]
     private bool _showLossColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
@@ -69,7 +66,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
-    partial void OnShowStaffColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Staff", value);
     partial void OnShowLossColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Loss", value);
 
     [RelayCommand]
@@ -348,7 +344,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private LostDamagedDisplayItem CreateDisplayItem(LostDamaged item)
     {
         var productName = GetProductName(item.ProductId);
-        var staffName = GetStaffName(item);
         var itemType = GetItemType(item.Reason);
 
         return new LostDamagedDisplayItem
@@ -359,7 +354,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             ItemType = itemType,
             DateDiscovered = item.DateDiscovered,
             Reason = item.Reason.ToString(),
-            StaffName = staffName,
             ValueLost = item.ValueLost,
             Notes = item.Notes,
             Quantity = item.Quantity,
@@ -372,13 +366,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         var product = companyData?.GetProduct(productId);
         return product?.Name ?? "Unknown Product";
-    }
-
-    private string GetStaffName(LostDamaged item)
-    {
-        // For now, return a placeholder since we don't have a specific field for who reported it
-        // In a real implementation, this would come from a "ReportedBy" field
-        return "Staff Member";
     }
 
     private static string GetItemType(LostDamagedReason reason)
@@ -478,9 +465,6 @@ public partial class LostDamagedDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _reason = string.Empty;
-
-    [ObservableProperty]
-    private string _staffName = string.Empty;
 
     [ObservableProperty]
     private decimal _valueLost;

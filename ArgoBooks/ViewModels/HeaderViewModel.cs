@@ -648,8 +648,6 @@ public partial class HeaderViewModel : ViewModelBase
                 Type = SearchSuggestionType.Recent
             });
         }
-
-        // TODO: Add suggestions from actual data (customers, products, etc.)
     }
 }
 
