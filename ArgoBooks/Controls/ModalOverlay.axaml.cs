@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
@@ -21,13 +22,16 @@ public partial class ModalOverlay : UserControl
         AvaloniaProperty.Register<ModalOverlay, bool>(nameof(IsOpen), defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<bool> CloseOnBackdropClickProperty =
-        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnBackdropClick));
+        AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnBackdropClick), defaultValue: true);
 
     public static readonly StyledProperty<bool> CloseOnEscapeProperty =
         AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnEscape), true);
 
     public static readonly StyledProperty<object?> ModalContentProperty =
         AvaloniaProperty.Register<ModalOverlay, object?>(nameof(ModalContent));
+
+    public static readonly StyledProperty<ICommand?> ClosingCommandProperty =
+        AvaloniaProperty.Register<ModalOverlay, ICommand?>(nameof(ClosingCommand));
 
     #endregion
 
@@ -58,6 +62,17 @@ public partial class ModalOverlay : UserControl
     {
         get => GetValue(ModalContentProperty);
         set => SetValue(ModalContentProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the command to execute when a close is requested (backdrop click or Escape).
+    /// If set, this command is executed instead of firing the Closing event and setting IsOpen = false.
+    /// The command should handle any confirmation dialogs and set IsOpen = false if appropriate.
+    /// </summary>
+    public ICommand? ClosingCommand
+    {
+        get => GetValue(ClosingCommandProperty);
+        set => SetValue(ClosingCommandProperty, value);
     }
 
     #endregion
@@ -144,6 +159,16 @@ public partial class ModalOverlay : UserControl
 
     public void RequestClose()
     {
+        // If a ClosingCommand is set, use it instead of the event
+        // The command is responsible for handling confirmation and setting IsOpen = false
+        if (ClosingCommand != null)
+        {
+            if (ClosingCommand.CanExecute(null))
+                ClosingCommand.Execute(null);
+            return;
+        }
+
+        // Fallback to existing event-based behavior
         var args = new ModalClosingEventArgs();
         Closing?.Invoke(this, args);
 

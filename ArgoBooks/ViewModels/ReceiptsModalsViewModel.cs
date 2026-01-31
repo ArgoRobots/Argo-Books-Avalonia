@@ -79,6 +79,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FileTypeOptions { get; } = ["All", "Image", "PDF"];
 
+    /// <summary>
+    /// Gets whether any filter has been changed from its default value.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterType != "All" ||
+        FilterDateFrom != null ||
+        FilterDateTo != null ||
+        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
+        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
+        FilterSource != "All" ||
+        FilterFileType != "All";
+
     #endregion
 
     #region Filter Modal Commands
@@ -101,6 +113,37 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Requests to close the filter modal, showing confirmation if there are unapplied changes.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            // Reset filter values to defaults
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    /// <summary>
     /// Applies the current filters.
     /// </summary>
     [RelayCommand]
@@ -116,13 +159,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
-        FilterType = "All";
-        FilterDateFrom = null;
-        FilterDateTo = null;
-        FilterAmountMin = null;
-        FilterAmountMax = null;
-        FilterSource = "All";
-        FilterFileType = "All";
+        ResetFilterDefaults();
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -1102,6 +1139,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     #endregion
 
     #region Helper Methods
+
+    private void ResetFilterDefaults()
+    {
+        FilterType = "All";
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        FilterAmountMin = null;
+        FilterAmountMax = null;
+        FilterSource = "All";
+        FilterFileType = "All";
+    }
 
     private void ResetScanModal()
     {

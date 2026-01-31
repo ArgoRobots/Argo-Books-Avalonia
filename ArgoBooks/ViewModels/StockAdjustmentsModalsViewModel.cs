@@ -62,6 +62,16 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     private bool _hasQuantityError;
 
     /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        SelectedInventoryOption != null ||
+        AdjustmentType != "Add" ||
+        !string.IsNullOrWhiteSpace(AdjustmentQuantity) ||
+        !string.IsNullOrWhiteSpace(AdjustmentReason) ||
+        !string.IsNullOrWhiteSpace(ReferenceNumber);
+
+    /// <summary>
     /// Adjustment type options for dropdown.
     /// </summary>
     public ObservableCollection<string> AdjustmentTypes { get; } = ["Add", "Remove", "Set"];
@@ -161,6 +171,34 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     {
         IsAddModalOpen = false;
         ClearAddModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
     }
 
     /// <summary>
@@ -499,15 +537,63 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Clears all filters.
+    /// Resets filter values to their defaults.
     /// </summary>
-    [RelayCommand]
-    private void ClearFilters()
+    private void ResetFilterDefaults()
     {
         FilterStartDate = null;
         FilterEndDate = null;
         FilterProduct = "All";
         FilterType = "All";
+    }
+
+    /// <summary>
+    /// Clears all filters.
+    /// </summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        ResetFilterDefaults();
+        CloseFilterModal();
+    }
+
+    /// <summary>
+    /// Returns true if any filter has been changed from default values.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterStartDate != null ||
+        FilterEndDate != null ||
+        FilterProduct != "All" ||
+        FilterType != "All";
+
+    /// <summary>
+    /// Requests to close the filter modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
     }
 
     #endregion

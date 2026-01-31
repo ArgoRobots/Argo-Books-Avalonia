@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Localization;
@@ -193,6 +194,41 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Returns true if any data has been entered in the Adjust Stock modal.
+    /// </summary>
+    private bool HasAdjustStockEnteredData =>
+        !string.IsNullOrWhiteSpace(AdjustmentQuantity) ||
+        !string.IsNullOrWhiteSpace(AdjustmentReason);
+
+    /// <summary>
+    /// Requests to close the Adjust Stock modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseAdjustStockModalAsync()
+    {
+        if (HasAdjustStockEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAdjustStockModal();
+    }
+
+    /// <summary>
     /// Saves the stock adjustment.
     /// </summary>
     [RelayCommand]
@@ -350,7 +386,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         }
 
         // Set defaults
-        SelectedProduct = AvailableProducts.FirstOrDefault();
+        SelectedProduct = null;
         SelectedLocation = AvailableLocations.FirstOrDefault();
         AddItemSku = string.Empty;
         AddItemQuantity = "0";
@@ -372,6 +408,42 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     {
         IsAddItemModalOpen = false;
         ClearAddItemFields();
+    }
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add Item modal.
+    /// </summary>
+    private bool HasAddItemEnteredData =>
+        SelectedProduct != null ||
+        SelectedLocation != null ||
+        !string.IsNullOrWhiteSpace(AddItemQuantity);
+
+    /// <summary>
+    /// Requests to close the Add Item modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseAddItemModalAsync()
+    {
+        if (HasAddItemEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddItemModal();
     }
 
     /// <summary>
@@ -550,6 +622,44 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Returns true if any filter differs from default values.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterCategory != "All" ||
+        FilterLocation != "All" ||
+        FilterStatus != "All";
+
+    /// <summary>
+    /// Requests to close the Filter modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    /// <summary>
     /// Applies the current filters.
     /// </summary>
     [RelayCommand]
@@ -564,6 +674,15 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// </summary>
     [RelayCommand]
     private void ClearFilters()
+    {
+        ResetFilterDefaults();
+        CloseFilterModal();
+    }
+
+    /// <summary>
+    /// Resets filter values to their defaults.
+    /// </summary>
+    private void ResetFilterDefaults()
     {
         FilterCategory = "All";
         FilterLocation = "All";

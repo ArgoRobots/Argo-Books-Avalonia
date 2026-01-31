@@ -12,7 +12,8 @@
 
     <Panel>
         <!-- Add Location Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}"
+                               ClosingCommand="{Binding RequestCloseAddModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -146,7 +147,8 @@
         </controls:ModalOverlay>
 
         <!-- Edit Location Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}"
+                               ClosingCommand="{Binding RequestCloseEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -281,7 +283,8 @@
         </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"

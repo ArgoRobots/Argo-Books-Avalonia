@@ -71,6 +71,55 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasSupplierError;
 
+    // Original values for change detection in edit mode
+    private Supplier? _originalSupplier;
+    private DateTimeOffset? _originalOrderDate;
+    private DateTimeOffset? _originalExpectedDeliveryDate;
+    private string _originalShippingCost = "0";
+    private string _originalNotes = string.Empty;
+    private List<(string ProductId, string Quantity, string UnitCost)> _originalLineItems = [];
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal (when not in edit mode).
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !IsEditMode && (
+            SelectedSupplier != null ||
+            ShippingCost != "0" ||
+            !string.IsNullOrWhiteSpace(Notes) ||
+            LineItems.Any(li => !string.IsNullOrWhiteSpace(li.ProductId)));
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges
+    {
+        get
+        {
+            if (!IsEditMode) return false;
+
+            if (SelectedSupplier?.Id != _originalSupplier?.Id) return true;
+            if (OrderDate != _originalOrderDate) return true;
+            if (ExpectedDeliveryDate != _originalExpectedDeliveryDate) return true;
+            if (ShippingCost != _originalShippingCost) return true;
+            if (Notes != _originalNotes) return true;
+
+            // Compare line items
+            if (LineItems.Count != _originalLineItems.Count) return true;
+            for (int i = 0; i < LineItems.Count; i++)
+            {
+                var current = LineItems[i];
+                var original = _originalLineItems[i];
+                if (current.ProductId != original.ProductId ||
+                    current.Quantity != original.Quantity ||
+                    current.UnitCost != original.UnitCost)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
     /// <summary>
     /// Line items for the order being created/edited.
     /// </summary>
@@ -240,6 +289,14 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
         UpdateCalculatedTotals();
 
+        // Store original values for change detection
+        _originalSupplier = SelectedSupplier;
+        _originalOrderDate = OrderDate;
+        _originalExpectedDeliveryDate = ExpectedDeliveryDate;
+        _originalShippingCost = ShippingCost;
+        _originalNotes = Notes;
+        _originalLineItems = LineItems.Select(li => (li.ProductId, li.Quantity, li.UnitCost)).ToList();
+
         IsAddModalOpen = true;
     }
 
@@ -251,6 +308,37 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     {
         IsAddModalOpen = false;
         ClearAddModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Add/Edit modal, showing confirmation if data was entered or changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        var hasChanges = IsEditMode ? HasEditModalChanges : HasAddModalEnteredData;
+        if (hasChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = IsEditMode
+                        ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
+                        : "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
     }
 
     /// <summary>
@@ -836,6 +924,15 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
 
     /// <summary>
+    /// Returns true if any filter has been changed from its default value.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterStartDate != null ||
+        FilterEndDate != null ||
+        FilterSupplier != "All" ||
+        FilterStatus != "All";
+
+    /// <summary>
     /// Opens the filter modal.
     /// </summary>
     public void OpenFilterModal()
@@ -854,6 +951,36 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Requests to close the filter modal, showing confirmation if filters have been changed.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    /// <summary>
     /// Applies the current filters.
     /// </summary>
     [RelayCommand]
@@ -869,12 +996,17 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
+        ResetFilterDefaults();
+        FiltersCleared?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    private void ResetFilterDefaults()
+    {
         FilterStartDate = null;
         FilterEndDate = null;
         FilterSupplier = "All";
         FilterStatus = "All";
-        FiltersCleared?.Invoke(this, EventArgs.Empty);
-        CloseFilterModal();
     }
 
     private void LoadFilterSupplierOptions()

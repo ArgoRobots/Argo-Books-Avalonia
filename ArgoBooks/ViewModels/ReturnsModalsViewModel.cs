@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -55,6 +57,26 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     #region Filter Modal Commands
 
     /// <summary>
+    /// Gets whether any filter values differ from their defaults.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterDateFrom != null ||
+        FilterDateTo != null ||
+        FilterStatus != "All" ||
+        FilterReason != "All";
+
+    /// <summary>
+    /// Resets all filter values to their defaults.
+    /// </summary>
+    private void ResetFilterDefaults()
+    {
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        FilterStatus = "All";
+        FilterReason = "All";
+    }
+
+    /// <summary>
     /// Opens the filter modal.
     /// </summary>
     public void OpenFilterModal()
@@ -69,6 +91,36 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     private void CloseFilterModal()
     {
         IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Requests to close the filter modal, showing confirmation if there are unapplied changes.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+
+                ResetFilterDefaults();
+            }
+        }
+
+        CloseFilterModal();
     }
 
     /// <summary>
@@ -87,10 +139,7 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
-        FilterDateFrom = null;
-        FilterDateTo = null;
-        FilterStatus = "All";
-        FilterReason = "All";
+        ResetFilterDefaults();
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }

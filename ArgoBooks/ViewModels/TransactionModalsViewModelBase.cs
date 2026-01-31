@@ -226,6 +226,18 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Bank Card", "Bank Transfer", "Check", "PayPal", "Other"];
     public ObservableCollection<TLineItem> LineItems { get; } = [];
 
+    /// <summary>
+    /// Returns true if any data has been entered in the Add/Edit modal.
+    /// </summary>
+    public bool HasEnteredData =>
+        SelectedCounterparty != null ||
+        SelectedCategory != null ||
+        !string.IsNullOrWhiteSpace(ModalNotes) ||
+        ModalTaxRate > 0 ||
+        ModalShipping > 0 ||
+        ModalDiscount > 0 ||
+        LineItems.Any(li => li.SelectedProduct != null || !string.IsNullOrWhiteSpace(li.Description) || (li.UnitPrice ?? 0) > 0);
+
     // Computed totals
     public decimal Subtotal => LineItems.Count > 0
         ? LineItems.Sum(li => li.Amount)
@@ -492,6 +504,29 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     #region Filter Modal
 
+    /// <summary>
+    /// Returns true if any filter has been changed from its default value.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterStatus != "All" ||
+        FilterSelectedCounterparty != null ||
+        FilterSelectedCategory != null ||
+        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
+        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
+        FilterDateFrom != null ||
+        FilterDateTo != null;
+
+    private void ResetFilterDefaults()
+    {
+        FilterStatus = "All";
+        FilterSelectedCounterparty = null;
+        FilterSelectedCategory = null;
+        FilterAmountMin = null;
+        FilterAmountMax = null;
+        FilterDateFrom = null;
+        FilterDateTo = null;
+    }
+
     public void OpenFilterModal()
     {
         LoadCounterpartyOptionsForFilter();
@@ -506,6 +541,34 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     }
 
     [RelayCommand]
+    protected async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            // Reset filter values to defaults
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    [RelayCommand]
     protected void ApplyFilters()
     {
         FilterCounterpartyId = FilterSelectedCounterparty?.Id;
@@ -517,15 +580,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [RelayCommand]
     protected virtual void ClearFilters()
     {
-        FilterStatus = "All";
-        FilterSelectedCounterparty = null;
+        ResetFilterDefaults();
         FilterCounterpartyId = null;
-        FilterSelectedCategory = null;
         FilterCategoryId = null;
-        FilterAmountMin = null;
-        FilterAmountMax = null;
-        FilterDateFrom = null;
-        FilterDateTo = null;
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -587,6 +644,34 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     {
         IsAddEditModalOpen = false;
         ResetForm();
+    }
+
+    /// <summary>
+    /// Requests to close the Add/Edit modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    protected async Task RequestCloseAddEditModalAsync()
+    {
+        if (HasEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddEditModal();
     }
 
     [RelayCommand]

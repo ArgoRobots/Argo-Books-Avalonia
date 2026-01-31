@@ -154,6 +154,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public ObservableCollection<LineItemDisplayModel> LineItems { get; } = [];
 
+    /// <summary>
+    /// Returns true if any data has been entered in the Create/Edit modal.
+    /// </summary>
+    public bool HasEnteredData =>
+        SelectedCustomer != null ||
+        !string.IsNullOrWhiteSpace(ModalNotes) ||
+        TaxRate > 0 ||
+        LineItems.Any(i => !string.IsNullOrWhiteSpace(i.Description) || i.SelectedProduct != null || (i.UnitPrice ?? 0) > 0);
+
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
 
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
@@ -271,6 +280,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private DateTimeOffset? _filterDueDateTo;
 
     public ObservableCollection<string> StatusFilterOptions { get; } = ["All", "Draft", "Pending", "Sent", "Partial", "Paid", "Overdue", "Cancelled"];
+
+    /// <summary>
+    /// Returns true if any filter value differs from its default.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterStatus != "All" ||
+        FilterSelectedCustomer != null ||
+        FilterIssueDateFrom != null ||
+        FilterIssueDateTo != null ||
+        FilterDueDateFrom != null ||
+        FilterDueDateTo != null ||
+        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
+        !string.IsNullOrWhiteSpace(FilterAmountMax);
 
     #endregion
 
@@ -568,6 +590,37 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsFilterModalOpen = false;
     }
 
+    /// <summary>
+    /// Requests to close the Filter modal, showing confirmation if filter values have been changed.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            // Reset filter values to defaults
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
     [RelayCommand]
     private void ApplyFilters()
     {
@@ -580,6 +633,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
+        ResetFilterDefaults();
+        FiltersCleared?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    private void ResetFilterDefaults()
+    {
         FilterStatus = "All";
         FilterSelectedCustomer = null;
         FilterCustomerId = null;
@@ -589,8 +649,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         FilterIssueDateTo = null;
         FilterDueDateFrom = null;
         FilterDueDateTo = null;
-        FiltersCleared?.Invoke(this, EventArgs.Empty);
-        CloseFilterModal();
     }
 
     #endregion
@@ -1032,6 +1090,35 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsShowingPreview = false;
         IsShowingSuccess = false;
         ResetForm();
+    }
+
+    /// <summary>
+    /// Requests to close the Create/Edit modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseCreateEditModalAsync()
+    {
+        // Don't show confirmation if showing success screen or if no data entered
+        if (!IsShowingSuccess && HasEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseCreateEditModal();
     }
 
     [RelayCommand]

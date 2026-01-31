@@ -41,6 +41,24 @@ public partial class DepartmentModalsViewModel : ObservableObject
 
     private Department? _editingDepartment;
 
+    // Original values for change detection in edit mode
+    private string _originalDepartmentName = string.Empty;
+    private string _originalDescription = string.Empty;
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrWhiteSpace(ModalDepartmentName) ||
+        !string.IsNullOrWhiteSpace(ModalDescription);
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalDepartmentName != _originalDepartmentName ||
+        ModalDescription != _originalDescription;
+
     #endregion
 
     #region Events
@@ -65,6 +83,29 @@ public partial class DepartmentModalsViewModel : ObservableObject
     {
         IsAddModalOpen = false;
         ClearModalFields();
+    }
+
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+        CloseAddModal();
     }
 
     [RelayCommand]
@@ -114,6 +155,8 @@ public partial class DepartmentModalsViewModel : ObservableObject
         _editingDepartment = department;
         ModalDepartmentName = department.Name;
         ModalDescription = department.Description ?? string.Empty;
+        _originalDepartmentName = ModalDepartmentName;
+        _originalDescription = ModalDescription;
         ModalError = null;
         IsEditModalOpen = true;
     }
@@ -124,6 +167,29 @@ public partial class DepartmentModalsViewModel : ObservableObject
         IsEditModalOpen = false;
         _editingDepartment = null;
         ClearModalFields();
+    }
+
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+        CloseEditModal();
     }
 
     [RelayCommand]

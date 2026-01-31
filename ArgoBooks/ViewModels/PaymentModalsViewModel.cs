@@ -63,6 +63,32 @@ public partial class PaymentModalsViewModel : ObservableObject
     /// </summary>
     private Payment? _editingPayment;
 
+    // Original values for change detection in edit mode
+    private string? _originalInvoiceId;
+    private string _originalAmount = string.Empty;
+    private string _originalPaymentMethod = "Cash";
+    private string _originalReferenceNumber = string.Empty;
+    private string _originalNotes = string.Empty;
+
+    /// <summary>
+    /// Returns true if any data has been entered in the Add modal.
+    /// </summary>
+    public bool HasAddModalEnteredData =>
+        !string.IsNullOrEmpty(ModalInvoiceId) ||
+        !string.IsNullOrWhiteSpace(ModalAmount) ||
+        !string.IsNullOrWhiteSpace(ModalReferenceNumber) ||
+        !string.IsNullOrWhiteSpace(ModalNotes);
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal.
+    /// </summary>
+    public bool HasEditModalChanges =>
+        ModalInvoiceId != _originalInvoiceId ||
+        ModalAmount != _originalAmount ||
+        ModalPaymentMethod != _originalPaymentMethod ||
+        ModalReferenceNumber != _originalReferenceNumber ||
+        ModalNotes != _originalNotes;
+
     #endregion
 
     #region Filter Fields
@@ -209,6 +235,34 @@ public partial class PaymentModalsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Requests to close the Add modal, showing confirmation if data was entered.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseAddModalAsync()
+    {
+        if (HasAddModalEnteredData)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseAddModal();
+    }
+
+    /// <summary>
     /// Navigates to Invoices page and opens the create invoice modal.
     /// </summary>
     [RelayCommand]
@@ -310,6 +364,13 @@ public partial class PaymentModalsViewModel : ObservableObject
         ModalReferenceNumber = payment.ReferenceNumber ?? string.Empty;
         ModalNotes = payment.Notes;
 
+        // Store original values for change detection
+        _originalInvoiceId = ModalInvoiceId;
+        _originalAmount = ModalAmount;
+        _originalPaymentMethod = ModalPaymentMethod;
+        _originalReferenceNumber = ModalReferenceNumber;
+        _originalNotes = ModalNotes;
+
         ClearModalErrors();
         IsEditModalOpen = true;
     }
@@ -320,6 +381,34 @@ public partial class PaymentModalsViewModel : ObservableObject
         IsEditModalOpen = false;
         _editingPayment = null;
         ClearModalFields();
+    }
+
+    /// <summary>
+    /// Requests to close the Edit modal, showing confirmation if changes were made.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseEditModalAsync()
+    {
+        if (HasEditModalChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseEditModal();
     }
 
     [RelayCommand]
@@ -484,6 +573,48 @@ public partial class PaymentModalsViewModel : ObservableObject
         IsFilterModalOpen = false;
     }
 
+    /// <summary>
+    /// Returns true if any filter differs from its default value.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterDateFrom != null ||
+        FilterDateTo != null ||
+        FilterPaymentMethod != "All" ||
+        FilterStatus != "All" ||
+        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
+        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
+        SelectedCustomerFilter != null;
+
+    /// <summary>
+    /// Requests to close the Filter modal, showing confirmation if filter changes exist.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
     [RelayCommand]
     public void ApplyFilters()
     {
@@ -494,14 +625,7 @@ public partial class PaymentModalsViewModel : ObservableObject
     [RelayCommand]
     public void ClearFilters()
     {
-        FilterPaymentMethod = "All";
-        FilterStatus = "All";
-        FilterCustomerId = null;
-        SelectedCustomerFilter = CustomerOptions.FirstOrDefault();
-        FilterAmountMin = null;
-        FilterAmountMax = null;
-        FilterDateFrom = null;
-        FilterDateTo = null;
+        ResetFilterDefaults();
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }
@@ -585,6 +709,17 @@ public partial class PaymentModalsViewModel : ObservableObject
     {
         ModalInvoiceError = null;
         ModalAmountError = null;
+    }
+
+    private void ResetFilterDefaults()
+    {
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        FilterPaymentMethod = "All";
+        FilterStatus = "All";
+        FilterAmountMin = null;
+        FilterAmountMax = null;
+        SelectedCustomerFilter = null;
     }
 
     private bool ValidateModal()

@@ -1,4 +1,7 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -50,6 +53,15 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> ReasonOptions { get; } = ["All", "Theft", "Breakage", "Spoilage", "Missing", "Other"];
 
+    /// <summary>
+    /// Gets whether any filter values differ from their defaults.
+    /// </summary>
+    public bool HasFilterChanges =>
+        FilterType != "All" ||
+        FilterDateFrom != null ||
+        FilterDateTo != null ||
+        FilterReason != "All";
+
     #endregion
 
     #region Filter Modal Commands
@@ -72,6 +84,47 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Resets all filter values to their defaults.
+    /// </summary>
+    private void ResetFilterDefaults()
+    {
+        FilterType = "All";
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        FilterReason = "All";
+    }
+
+    /// <summary>
+    /// Requests to close the filter modal, showing confirmation if there are unapplied changes.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            ResetFilterDefaults();
+        }
+
+        CloseFilterModal();
+    }
+
+    /// <summary>
     /// Applies the current filters.
     /// </summary>
     [RelayCommand]
@@ -87,10 +140,7 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
-        FilterType = "All";
-        FilterDateFrom = null;
-        FilterDateTo = null;
-        FilterReason = "All";
+        ResetFilterDefaults();
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
     }

@@ -16,7 +16,8 @@
 
     <Panel>
         <!-- Add Product Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddModalOpen}"
+                               ClosingCommand="{Binding RequestCloseAddModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -127,7 +128,8 @@
         </controls:ModalOverlay>
 
         <!-- Edit Product Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsEditModalOpen}"
+                               ClosingCommand="{Binding RequestCloseEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -238,7 +240,8 @@
         </controls:ModalOverlay>
 
         <!-- Filter Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -268,23 +271,17 @@
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc Category}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding AvailableCategories}" SelectedItem="{Binding FilterCategory}" Classes="form-combobox" PlaceholderText="{loc:Loc 'All Categories'}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate DataType="vm:CategoryOption">
-                                        <TextBlock Text="{Binding Name}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                            <controls:SearchableDropdown ItemsSource="{Binding AvailableCategories}"
+                                                         SelectedItem="{Binding FilterCategory}"
+                                                         DisplayMemberPath="Name"
+                                                         Placeholder="{loc:Loc 'Search categories...'}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding FilterSupplier}" Classes="form-combobox" PlaceholderText="{loc:Loc 'All Suppliers'}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate DataType="vm:SupplierOption">
-                                        <TextBlock Text="{Binding Name}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                            <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                         SelectedItem="{Binding FilterSupplier}"
+                                                         DisplayMemberPath="Name"
+                                                         Placeholder="{loc:Loc 'Search suppliers...'}" />
                         </StackPanel>
                     </StackPanel>
 
