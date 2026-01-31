@@ -413,7 +413,8 @@
                             TooltipPosition="Top"
                             ZoomMode="Both"
                             IsVisible="{Binding HasProfitsChartData}"
-                            PointerPressed="OnChartPointerPressed" />
+                            PointerPressed="OnChartPointerPressed"
+                            PointerReleased="OnChartPointerReleased" />
 
                         <!-- Empty state placeholder -->
                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -443,7 +444,8 @@
                             TooltipPosition="Top"
                             ZoomMode="Both"
                             IsVisible="{Binding HasRevenueVsExpensesData}"
-                            PointerPressed="OnChartPointerPressed" />
+                            PointerPressed="OnChartPointerPressed"
+                            PointerReleased="OnChartPointerReleased" />
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
                                 IsVisible="{Binding !HasRevenueVsExpensesData}">

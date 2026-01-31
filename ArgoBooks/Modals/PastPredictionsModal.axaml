@@ -342,7 +342,8 @@
                                                     Height="220"
                                                     ZoomMode="Both"
                                                     TooltipPosition="Top"
-                                                    PointerPressed="OnChartPointerPressed" />
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased" />
                                 <!-- Chart Legend -->
                                 <StackPanel Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="6">

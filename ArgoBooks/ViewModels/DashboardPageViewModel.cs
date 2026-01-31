@@ -1094,8 +1094,26 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
-        ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+        // Only reset the zoom on the chart that was right-clicked
+        if (string.IsNullOrEmpty(SelectedChartId))
+        {
+            // Fallback: reset all charts if no chart selected
+            ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
+            ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+            return;
+        }
+
+        // Match by chart name or title
+        if (SelectedChartId == "ProfitsChart" ||
+            SelectedChartId.StartsWith("Total profit", StringComparison.OrdinalIgnoreCase))
+        {
+            ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
+        }
+        else if (SelectedChartId == "ExpensesVsRevenueChart" ||
+                 SelectedChartId.Contains("Revenue", StringComparison.OrdinalIgnoreCase))
+        {
+            ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+        }
     }
 
     /// <summary>

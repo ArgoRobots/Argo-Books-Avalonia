@@ -221,6 +221,24 @@ public partial class DashboardPage : UserControl
             {
                 viewModel.HideChartContextMenuCommand.Execute(null);
             }
+
+            // Set hand cursor when panning with CTRL/Shift held
+            if (sender is CartesianChart chart &&
+                (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
+            {
+                chart.Cursor = new Cursor(StandardCursorType.Hand);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores the default cursor when pointer is released after panning.
+    /// </summary>
+    private void OnChartPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (sender is CartesianChart chart)
+        {
+            chart.Cursor = Cursor.Default;
         }
     }
 
@@ -284,8 +302,12 @@ public partial class DashboardPage : UserControl
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
 
+        // Only intercept events that originate from a chart
+        if (chart == null)
+            return;
+
         // If CTRL or Shift is held, allow LiveCharts to handle zooming
-        if ((e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift)) && chart != null)
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
         {
             return; // Don't intercept - let LiveCharts zoom
         }
@@ -294,7 +316,7 @@ public partial class DashboardPage : UserControl
         e.Handled = true;
 
         // Find the ScrollViewer and manually scroll it
-        var scrollViewer = chart?.FindAncestorOfType<ScrollViewer>();
+        var scrollViewer = chart.FindAncestorOfType<ScrollViewer>();
         if (scrollViewer != null)
         {
             // Use ScrollViewer's built-in line scroll methods for natural scroll feel

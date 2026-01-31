@@ -81,6 +81,26 @@ public partial class PastPredictionsModal : UserControl
 
             e.Handled = true;
         }
+        else if (properties.IsLeftButtonPressed)
+        {
+            // Set hand cursor when panning with CTRL/Shift held
+            if (sender is CartesianChart chart &&
+                (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
+            {
+                chart.Cursor = new Cursor(StandardCursorType.Hand);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores the default cursor when pointer is released after panning.
+    /// </summary>
+    private void OnChartPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (sender is CartesianChart chart)
+        {
+            chart.Cursor = Cursor.Default;
+        }
     }
 
     /// <summary>
