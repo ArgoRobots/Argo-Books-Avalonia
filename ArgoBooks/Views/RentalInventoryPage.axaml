@@ -177,7 +177,7 @@
                                     </Panel>
                                     <!-- Available -->
                                     <Panel Width="{Binding ColumnWidths.AvailableColumnWidth}" IsVisible="{Binding ShowAvailableColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Avail.'}" ColumnName="Available"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Available'}" ColumnName="Available"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />

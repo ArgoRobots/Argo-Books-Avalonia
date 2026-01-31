@@ -137,9 +137,8 @@ public partial class AnalyticsPage : UserControl
                 viewModel.HideChartContextMenuCommand.Execute(null);
             }
 
-            // Set hand cursor when panning with CTRL/Shift held
-            if (sender is CartesianChart chart &&
-                (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
+            // Set hand cursor when panning
+            if (sender is CartesianChart chart)
             {
                 chart.Cursor = new Cursor(StandardCursorType.Hand);
             }

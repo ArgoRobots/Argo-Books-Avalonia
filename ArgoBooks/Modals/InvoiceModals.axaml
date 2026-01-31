@@ -633,8 +633,8 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
-                        <Panel>
+                    <ScrollViewer Grid.Row="1">
+                        <Panel Margin="24">
                             <!-- Timeline -->
                             <ItemsControl ItemsSource="{Binding HistoryItems}">
                                 <ItemsControl.ItemTemplate>
