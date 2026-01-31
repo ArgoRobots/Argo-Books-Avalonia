@@ -214,7 +214,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowIdColumn}">
                                                                 <TextBlock Text="{Binding Id}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            FontWeight="Medium"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
@@ -245,11 +245,11 @@
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowProductColumn}">
                                                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                     <TextBlock Text="{Binding ProductName}"
-                                                                               FontSize="12"
+                                                                               FontSize="14"
                                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                TextTrimming="CharacterEllipsis" />
                                                                     <TextBlock Text="{Binding QuantityFormatted}"
-                                                                               FontSize="10"
+                                                                               FontSize="12"
                                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                                 </StackPanel>
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -259,7 +259,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowDateColumn}">
                                                                 <TextBlock Text="{Binding DateFormatted}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
@@ -270,7 +270,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowReasonColumn}">
                                                                 <TextBlock Text="{Binding Reason}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
@@ -282,7 +282,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.StaffColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowStaffColumn}">
                                                                 <TextBlock Text="{Binding StaffName}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
@@ -294,7 +294,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.LossColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowLossColumn}">
                                                                 <TextBlock Text="{Binding ValueLostFormatted}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            FontWeight="SemiBold"
                                                                            Foreground="#DC2626"
                                                                            VerticalAlignment="Center"

@@ -241,7 +241,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowIdColumn}">
                                                                 <TextBlock Text="{Binding Id}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            FontWeight="Medium"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
@@ -255,11 +255,11 @@
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowProductColumn}">
                                                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                     <TextBlock Text="{Binding ProductNames}"
-                                                                               FontSize="12"
+                                                                               FontSize="14"
                                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                TextTrimming="CharacterEllipsis" />
                                                                     <TextBlock Text="{Binding ItemCount, StringFormat='{}{0} item(s)'}"
-                                                                               FontSize="10"
+                                                                               FontSize="12"
                                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                                 </StackPanel>
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -269,7 +269,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.SupplierCustomerColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowSupplierCustomerColumn}">
                                                                 <TextBlock Text="{Binding SupplierOrCustomerName}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
@@ -281,7 +281,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowDateColumn}">
                                                                 <TextBlock Text="{Binding DateFormatted}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
@@ -292,7 +292,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowReasonColumn}">
                                                                 <TextBlock Text="{Binding Reason}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
@@ -304,7 +304,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProcessedColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowProcessedColumn}">
                                                                 <TextBlock Text="{Binding ProcessedBy}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
@@ -316,7 +316,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.RefundColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowRefundColumn}">
                                                                 <TextBlock Text="{Binding RefundAmountFormatted}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            FontWeight="SemiBold"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
