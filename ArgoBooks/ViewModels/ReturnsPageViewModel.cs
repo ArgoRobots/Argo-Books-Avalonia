@@ -204,11 +204,12 @@ public partial class ReturnsPageViewModel : ViewModelBase
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
-        // Subscribe to filter modal events
+        // Subscribe to modal events
         if (App.ReturnsModalsViewModel != null)
         {
             App.ReturnsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReturnsModalsViewModel.FiltersCleared += OnFiltersCleared;
+            App.ReturnsModalsViewModel.ReturnUndone += OnReturnUndone;
         }
 
         // Subscribe to language changes to refresh translated content
@@ -233,6 +234,11 @@ public partial class ReturnsPageViewModel : ViewModelBase
         SearchQuery = null;
         CurrentPage = 1;
         FilterReturns();
+    }
+
+    private void OnReturnUndone(object? sender, EventArgs e)
+    {
+        LoadReturns();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -465,46 +471,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     #endregion
 
-    #region View Details Modal
-
-    [ObservableProperty]
-    private bool _isViewDetailsModalOpen;
-
-    [ObservableProperty]
-    private string _viewDetailsId = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsProduct = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsReason = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsNotes = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsDate = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsRefund = string.Empty;
-
-    #endregion
-
-    #region Undo Return Modal
-
-    private ReturnDisplayItem? _undoReturnItem;
-
-    [ObservableProperty]
-    private bool _isUndoReturnModalOpen;
-
-    [ObservableProperty]
-    private string _undoReturnItemDescription = string.Empty;
-
-    [ObservableProperty]
-    private string _undoReturnReason = string.Empty;
-
-    #endregion
-
     #region Action Commands
 
     [RelayCommand]
@@ -512,19 +478,13 @@ public partial class ReturnsPageViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        ViewDetailsId = item.Id;
-        ViewDetailsProduct = item.ProductNames;
-        ViewDetailsReason = item.Reason;
-        ViewDetailsNotes = string.IsNullOrWhiteSpace(item.Notes) ? "No notes provided" : item.Notes;
-        ViewDetailsDate = item.DateFormatted;
-        ViewDetailsRefund = item.RefundAmountFormatted;
-        IsViewDetailsModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseViewDetailsModal()
-    {
-        IsViewDetailsModalOpen = false;
+        App.ReturnsModalsViewModel?.OpenViewDetailsModal(
+            item.Id,
+            item.ProductNames,
+            item.DateFormatted,
+            item.RefundAmountFormatted,
+            item.Reason,
+            item.Notes);
     }
 
     [RelayCommand]
@@ -532,41 +492,12 @@ public partial class ReturnsPageViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        _undoReturnItem = item;
-        UndoReturnItemDescription = $"{item.Id} - {item.ProductNames}";
-        UndoReturnReason = string.Empty;
-        IsUndoReturnModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseUndoReturnModal()
-    {
-        IsUndoReturnModalOpen = false;
-        _undoReturnItem = null;
-        UndoReturnReason = string.Empty;
-    }
-
-    [RelayCommand]
-    private void ConfirmUndoReturn()
-    {
-        if (_undoReturnItem == null) return;
-
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-        {
-            CloseUndoReturnModal();
-            return;
-        }
-
-        var returnRecord = companyData.Returns.FirstOrDefault(r => r.Id == _undoReturnItem.Id);
+        var returnRecord = companyData?.Returns.FirstOrDefault(r => r.Id == item.Id);
         if (returnRecord != null)
         {
-            companyData.Returns.Remove(returnRecord);
-            App.CompanyManager?.MarkAsChanged();
+            App.ReturnsModalsViewModel?.OpenUndoReturnModal(returnRecord, $"{item.Id} - {item.ProductNames}");
         }
-
-        CloseUndoReturnModal();
-        LoadReturns();
     }
 
     #endregion
