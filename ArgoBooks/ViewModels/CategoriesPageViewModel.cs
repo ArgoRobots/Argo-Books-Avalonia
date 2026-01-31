@@ -146,9 +146,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     private bool _showNameColumn = true;
 
     [ObservableProperty]
-    private bool _showParentColumn = true;
-
-    [ObservableProperty]
     private bool _showDescriptionColumn = true;
 
     [ObservableProperty]
@@ -158,7 +155,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     private bool _showProductCountColumn = true;
 
     partial void OnShowNameColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Name", value);
-    partial void OnShowParentColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Parent", value);
     partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
     partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
     partial void OnShowProductCountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("ProductCount", value);
