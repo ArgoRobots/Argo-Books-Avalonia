@@ -177,8 +177,8 @@
                         </Border>
 
                         <!-- Modal Content -->
-                        <ScrollViewer Grid.Row="1" Padding="24">
-                            <StackPanel Spacing="20">
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="20">
                                 <!-- Product and Type -->
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0" Spacing="6">

@@ -235,13 +235,7 @@
                                                             BorderBrush="{DynamicResource BorderBrush}"
                                                             BorderThickness="0,0,0,1"
                                                             Background="{DynamicResource SurfaceBrush}"
-                                                            MinHeight="52"
-                                                            Cursor="Hand">
-                                                        <Border.Styles>
-                                                            <Style Selector="Border:pointerover">
-                                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-                                                            </Style>
-                                                        </Border.Styles>
+                                                            MinHeight="52">
                                                         <StackPanel Orientation="Horizontal">
                                                             <!-- Transaction ID -->
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
@@ -249,7 +243,7 @@
                                                                 <TextBlock Text="{Binding Id}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
-                                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
