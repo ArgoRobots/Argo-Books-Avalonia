@@ -276,12 +276,19 @@ public partial class DashboardPage : UserControl
     /// <summary>
     /// Handles pointer wheel events on charts to allow scroll passthrough to parent ScrollViewer.
     /// LiveCharts captures wheel events for zooming, so we intercept them and forward to the ScrollViewer.
+    /// When CTRL or Shift is held, allow LiveCharts to handle zooming instead.
     /// </summary>
     private void OnChartPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         // Check if the event originated from a CartesianChart
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+
+        // If CTRL or Shift is held, allow LiveCharts to handle zooming
+        if ((e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift)) && chart != null)
+        {
+            return; // Don't intercept - let LiveCharts zoom
+        }
 
         // Find the ScrollViewer and manually scroll it
         var scrollViewer = chart?.FindAncestorOfType<ScrollViewer>();
