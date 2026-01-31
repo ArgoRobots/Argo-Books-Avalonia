@@ -411,6 +411,7 @@
                             XAxes="{Binding ProfitsChartXAxes}"
                             YAxes="{Binding ProfitsChartYAxes}"
                             TooltipPosition="Top"
+                            ZoomMode="Both"
                             IsVisible="{Binding HasProfitsChartData}"
                             PointerPressed="OnChartPointerPressed" />
 
@@ -440,6 +441,7 @@
                             XAxes="{Binding RevenueVsExpensesXAxes}"
                             YAxes="{Binding RevenueVsExpensesYAxes}"
                             TooltipPosition="Top"
+                            ZoomMode="Both"
                             IsVisible="{Binding HasRevenueVsExpensesData}"
                             PointerPressed="OnChartPointerPressed" />
                         <Border Background="{DynamicResource SurfaceAltBrush}"
