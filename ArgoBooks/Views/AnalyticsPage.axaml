@@ -833,15 +833,14 @@
                     </Grid>
 
                     <!-- Charts Row 2 -->
-                    <Grid ColumnDefinitions="*,*" Height="300">
+                    <Grid ColumnDefinitions="*" Height="300">
                         <!-- Average Shipping Costs -->
                         <Border Grid.Column="0"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
-                                Padding="10"
-                                Margin="0,0,12,0">
+                                Padding="10">
                             <Panel>
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding AverageShippingCostsTitle}"
@@ -857,37 +856,6 @@
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasAvgShippingCostsData}">
                                     <TextBlock Text="{loc:Loc 'No shipping data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
-                            </Panel>
-                        </Border>
-
-                        <!-- Growth Rates -->
-                        <Border Grid.Column="1"
-                                Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="10"
-                                Margin="12,0,0,0">
-                            <Panel>
-                                <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding GrowthRatesTitle}"
-                                                    PointerPressed="OnChartPointerPressed"
-                                                    PointerReleased="OnChartPointerReleased"
-                                                    Series="{Binding GrowthRatesSeries}"
-                                                    XAxes="{Binding GrowthRatesXAxes}"
-                                                    YAxes="{Binding GrowthRatesYAxes}"
-                                                    ZoomMode="Both"
-                                                    IsVisible="{Binding HasGrowthRatesData}" />
-                                <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasGrowthRatesData}">
-                                    <TextBlock Text="{loc:Loc 'No growth data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"

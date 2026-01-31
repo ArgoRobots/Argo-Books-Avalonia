@@ -1363,9 +1363,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             case "Average Shipping Costs":
                 ChartLoaderService.ResetZoom(AvgShippingCostsXAxes, AvgShippingCostsYAxes);
                 break;
-            case "Growth Rates":
             case "Customer Growth":
-                // Customer Growth uses GrowthRates axes
                 ChartLoaderService.ResetZoom(GrowthRatesXAxes, GrowthRatesYAxes);
                 break;
             case "Customer Lifetime Value":
