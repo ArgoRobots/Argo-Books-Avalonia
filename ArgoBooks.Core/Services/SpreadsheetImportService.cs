@@ -1634,7 +1634,7 @@ public class SpreadsheetImportService
             var id = GetString(row, headers, "ID");
             var existing = data.Returns.FirstOrDefault(r => r.Id == id);
 
-            var returnRecord = existing ?? new Tracking.Return();
+            var returnRecord = existing ?? new Return();
             returnRecord.Id = id;
             returnRecord.OriginalTransactionId = GetString(row, headers, "Original Transaction ID");
             returnRecord.ReturnType = GetString(row, headers, "Return Type");
@@ -1688,7 +1688,7 @@ public class SpreadsheetImportService
             var id = GetString(row, headers, "ID");
             var existing = data.LostDamaged.FirstOrDefault(ld => ld.Id == id);
 
-            var lostDamaged = existing ?? new Tracking.LostDamaged();
+            var lostDamaged = existing ?? new LostDamaged();
             lostDamaged.Id = id;
 
             // Handle product - prefer ID, fall back to name lookup
