@@ -145,16 +145,6 @@
                                         <controls:ColumnResizeGripper ColumnName="Item" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
-                                    <!-- Supplier -->
-                                    <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Supplier'}" ColumnName="Supplier"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
                                     <!-- Status -->
                                     <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
                                         <controls:SortableColumnHeader Text="{loc:Loc 'Status'}" ColumnName="Status"
@@ -264,18 +254,6 @@
                                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                                            TextTrimming="CharacterEllipsis" />
                                                             </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Supplier -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).ShowSupplierColumn}">
-                                                            <TextBlock Text="{Binding SupplierName}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
@@ -541,7 +519,6 @@
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowItemColumn}" Content="{loc:Loc 'Item'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc 'Supplier'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="{loc:Loc 'Total Qty'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="{loc:Loc 'Available'}" Classes="column-toggle" />

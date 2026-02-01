@@ -35,10 +35,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     #region Modal Form Fields
 
     [ObservableProperty]
-    private string _modalItemName = string.Empty;
-
-    [ObservableProperty]
-    private SupplierOption? _modalSupplier;
+    private ProductOption? _modalProduct;
 
     [ObservableProperty]
     private string _modalTotalQuantity = string.Empty;
@@ -62,7 +59,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     private string _modalStatus = "Active";
 
     [ObservableProperty]
-    private string? _modalItemNameError;
+    private string? _modalProductError;
 
     [ObservableProperty]
     private string? _modalQuantityError;
@@ -73,8 +70,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     private RentalItem? _editingItem;
 
     // Original values for change detection in edit mode
-    private string _originalItemName = string.Empty;
-    private SupplierOption? _originalSupplier;
+    private ProductOption? _originalProduct;
     private string _originalTotalQuantity = string.Empty;
     private string _originalDailyRate = string.Empty;
     private string _originalWeeklyRate = string.Empty;
@@ -87,8 +83,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     /// Returns true if any data has been entered in the Add modal.
     /// </summary>
     public bool HasAddModalEnteredData =>
-        !string.IsNullOrWhiteSpace(ModalItemName) ||
-        ModalSupplier != null ||
+        ModalProduct != null ||
         !string.IsNullOrWhiteSpace(ModalTotalQuantity) ||
         !string.IsNullOrWhiteSpace(ModalDailyRate) ||
         !string.IsNullOrWhiteSpace(ModalWeeklyRate) ||
@@ -101,8 +96,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     /// Returns true if any changes have been made in the Edit modal.
     /// </summary>
     public bool HasEditModalChanges =>
-        ModalItemName != _originalItemName ||
-        ModalSupplier?.Id != _originalSupplier?.Id ||
+        ModalProduct?.Id != _originalProduct?.Id ||
         ModalTotalQuantity != _originalTotalQuantity ||
         ModalDailyRate != _originalDailyRate ||
         ModalWeeklyRate != _originalWeeklyRate ||
@@ -211,11 +205,11 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         }
     }
 
-    partial void OnModalItemNameChanged(string value)
+    partial void OnModalProductChanged(ProductOption? value)
     {
-        if (!string.IsNullOrWhiteSpace(value))
+        if (value != null)
         {
-            ModalItemNameError = null;
+            ModalProductError = null;
         }
     }
 
@@ -285,7 +279,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
     #region Dropdown Options
 
-    public ObservableCollection<SupplierOption> AvailableSuppliers { get; } = [];
+    public ObservableCollection<ProductOption> AvailableProducts { get; } = [];
     public ObservableCollection<CustomerOption> AvailableCustomers { get; } = [];
     public ObservableCollection<AccountantOption> AvailableAccountants { get; } = [];
     public ObservableCollection<string> StatusOptions { get; } = ["Active", "In Maintenance"];
@@ -392,8 +386,9 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         var newItem = new RentalItem
         {
             Id = newId,
-            Name = ModalItemName.Trim(),
-            SupplierId = ModalSupplier?.Id,
+            ProductId = ModalProduct?.Id,
+            Name = ModalProduct?.Name ?? string.Empty,
+            SupplierId = ModalProduct?.SupplierId,
             TotalQuantity = totalQty,
             AvailableQuantity = totalQty,
             RentedQuantity = 0,
@@ -447,8 +442,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         _editingItem = rentalItem;
         UpdateDropdownOptions();
 
-        ModalItemName = rentalItem.Name;
-        ModalSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == rentalItem.SupplierId);
+        ModalProduct = AvailableProducts.FirstOrDefault(p => p.Id == rentalItem.ProductId);
         ModalTotalQuantity = rentalItem.TotalQuantity.ToString();
         ModalDailyRate = rentalItem.DailyRate.ToString("0.00");
         ModalWeeklyRate = rentalItem.WeeklyRate.ToString("0.00");
@@ -458,8 +452,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         ModalNotes = rentalItem.Notes;
 
         // Store original values for change detection
-        _originalItemName = ModalItemName;
-        _originalSupplier = ModalSupplier;
+        _originalProduct = ModalProduct;
         _originalTotalQuantity = ModalTotalQuantity;
         _originalDailyRate = ModalDailyRate;
         _originalWeeklyRate = ModalWeeklyRate;
@@ -518,6 +511,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         if (companyData == null)
             return;
 
+        var oldProductId = _editingItem.ProductId;
         var oldName = _editingItem.Name;
         var oldSupplierId = _editingItem.SupplierId;
         var oldTotalQuantity = _editingItem.TotalQuantity;
@@ -532,8 +526,9 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         var newTotalQty = int.TryParse(ModalTotalQuantity, out var qty) ? qty : 0;
         var qtyDiff = newTotalQty - oldTotalQuantity;
 
-        var newName = ModalItemName.Trim();
-        var newSupplierId = ModalSupplier?.Id;
+        var newProductId = ModalProduct?.Id;
+        var newName = ModalProduct?.Name ?? string.Empty;
+        var newSupplierId = ModalProduct?.SupplierId;
         var newDailyRate = decimal.TryParse(ModalDailyRate, out var daily) ? daily : 0;
         var newWeeklyRate = decimal.TryParse(ModalWeeklyRate, out var weekly) ? weekly : 0;
         var newMonthlyRate = decimal.TryParse(ModalMonthlyRate, out var monthly) ? monthly : 0;
@@ -543,8 +538,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         var newAvailableQuantity = Math.Max(0, oldAvailableQuantity + qtyDiff);
 
         // Check if anything actually changed
-        var hasChanges = oldName != newName ||
-                         oldSupplierId != newSupplierId ||
+        var hasChanges = oldProductId != newProductId ||
                          oldTotalQuantity != newTotalQty ||
                          oldDailyRate != newDailyRate ||
                          oldWeeklyRate != newWeeklyRate ||
@@ -561,6 +555,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         }
 
         var itemToEdit = _editingItem;
+        itemToEdit.ProductId = newProductId;
         itemToEdit.Name = newName;
         itemToEdit.SupplierId = newSupplierId;
         itemToEdit.TotalQuantity = newTotalQty;
@@ -579,6 +574,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             $"Edit rental item '{newName}'",
             () =>
             {
+                itemToEdit.ProductId = oldProductId;
                 itemToEdit.Name = oldName;
                 itemToEdit.SupplierId = oldSupplierId;
                 itemToEdit.TotalQuantity = oldTotalQuantity;
@@ -594,6 +590,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             },
             () =>
             {
+                itemToEdit.ProductId = newProductId;
                 itemToEdit.Name = newName;
                 itemToEdit.SupplierId = newSupplierId;
                 itemToEdit.TotalQuantity = newTotalQty;
@@ -889,10 +886,12 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         if (companyData == null)
             return;
 
-        AvailableSuppliers.Clear();
-        foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
+        AvailableProducts.Clear();
+        foreach (var product in companyData.Products
+            .Where(p => p.Type == Core.Enums.CategoryType.Revenue && p.Status == EntityStatus.Active)
+            .OrderBy(p => p.Name))
         {
-            AvailableSuppliers.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
+            AvailableProducts.Add(new ProductOption { Id = product.Id, Name = product.Name, SupplierId = product.SupplierId });
         }
 
         AvailableCustomers.Clear();
@@ -910,8 +909,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
     private void ClearModalFields()
     {
-        ModalItemName = string.Empty;
-        ModalSupplier = null;
+        ModalProduct = null;
         ModalTotalQuantity = string.Empty;
         ModalDailyRate = string.Empty;
         ModalWeeklyRate = string.Empty;
@@ -924,7 +922,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
     private void ClearModalErrors()
     {
-        ModalItemNameError = null;
+        ModalProductError = null;
         ModalQuantityError = null;
         ModalDailyRateError = null;
     }
@@ -942,21 +940,21 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         ClearModalErrors();
         var isValid = true;
 
-        if (string.IsNullOrWhiteSpace(ModalItemName))
+        if (ModalProduct == null)
         {
-            ModalItemNameError = "Item name is required.".Translate();
+            ModalProductError = "Product is required.".Translate();
             isValid = false;
         }
         else
         {
             var companyData = App.CompanyManager?.CompanyData;
-            var existingWithSameName = companyData?.RentalInventory.Any(i =>
-                i.Name.Equals(ModalItemName.Trim(), StringComparison.OrdinalIgnoreCase) &&
+            var existingWithSameProduct = companyData?.RentalInventory.Any(i =>
+                i.ProductId == ModalProduct.Id &&
                 (_editingItem == null || i.Id != _editingItem.Id)) ?? false;
 
-            if (existingWithSameName)
+            if (existingWithSameProduct)
             {
-                ModalItemNameError = "An item with this name already exists.".Translate();
+                ModalProductError = "This product is already in the rental inventory.".Translate();
                 isValid = false;
             }
         }
@@ -991,6 +989,18 @@ public class AccountantOption
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+
+    public override string ToString() => Name;
+}
+
+/// <summary>
+/// Option model for product dropdown.
+/// </summary>
+public class ProductOption
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? SupplierId { get; set; }
 
     public override string ToString() => Name;
 }

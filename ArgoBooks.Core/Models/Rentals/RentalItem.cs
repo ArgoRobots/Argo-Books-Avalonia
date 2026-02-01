@@ -14,13 +14,19 @@ public class RentalItem
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Item name.
+    /// Product ID (linked to a revenue product).
+    /// </summary>
+    [JsonPropertyName("productId")]
+    public string? ProductId { get; set; }
+
+    /// <summary>
+    /// Item name (derived from product name).
     /// </summary>
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Supplier ID.
+    /// Supplier ID (derived from product supplier).
     /// </summary>
     [JsonPropertyName("supplierId")]
     public string? SupplierId { get; set; }
