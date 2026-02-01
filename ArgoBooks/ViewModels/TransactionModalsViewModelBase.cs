@@ -1020,5 +1020,6 @@ public class ProductOption
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
+    public string? SupplierId { get; set; }
     public override string ToString() => Name;
 }
