@@ -33,6 +33,9 @@ public partial class ProductModalsViewModel : ObservableObject
     #region Modal Form Fields
 
     [ObservableProperty]
+    private string _modalId = string.Empty;
+
+    [ObservableProperty]
     private string _modalProductName = string.Empty;
 
     [ObservableProperty]
@@ -280,8 +283,16 @@ public partial class ProductModalsViewModel : ObservableObject
         if (companyData == null)
             return;
 
-        companyData.IdCounters.Product++;
-        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
+        string newId;
+        if (!string.IsNullOrWhiteSpace(ModalId))
+        {
+            newId = ModalId.Trim();
+        }
+        else
+        {
+            companyData.IdCounters.Product++;
+            newId = $"PRD-{companyData.IdCounters.Product:D3}";
+        }
 
         var reorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
         var overstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
@@ -348,6 +359,7 @@ public partial class ProductModalsViewModel : ObservableObject
         _editingProduct = product;
         UpdateDropdownOptions();
 
+        ModalId = product.Id;
         ModalProductName = product.Name;
         ModalDescription = product.Description;
         ModalSku = product.Sku;
@@ -698,6 +710,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
     private void ClearModalFields()
     {
+        ModalId = string.Empty;
         ModalProductName = string.Empty;
         ModalDescription = string.Empty;
         ModalItemType = "Product";

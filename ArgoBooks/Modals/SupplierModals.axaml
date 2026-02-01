@@ -26,13 +26,19 @@
                    </Border>
                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                        <StackPanel Margin="24" Spacing="16">
-                           <StackPanel Spacing="6">
-                               <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                   <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="#dc2626" />
-                               </TextBlock>
-                               <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
-                               <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                           </StackPanel>
+                           <Grid ColumnDefinitions="Auto,16,*">
+                               <StackPanel Grid.Column="0" Spacing="6" Width="120">
+                                   <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                   <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'SUP-xxx'}" />
+                               </StackPanel>
+                               <StackPanel Grid.Column="2" Spacing="6">
+                                   <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                       <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                   </TextBlock>
+                                   <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
+                                   <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                               </StackPanel>
+                           </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -118,13 +124,19 @@
                    </Border>
                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                        <StackPanel Margin="24" Spacing="16">
-                           <StackPanel Spacing="6">
-                               <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                   <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="#dc2626" />
-                               </TextBlock>
-                               <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
-                               <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                           </StackPanel>
+                           <Grid ColumnDefinitions="Auto,16,*">
+                               <StackPanel Grid.Column="0" Spacing="6" Width="120">
+                                   <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                   <TextBox Text="{Binding ModalId}" Classes="form-input" IsReadOnly="True" />
+                               </StackPanel>
+                               <StackPanel Grid.Column="2" Spacing="6">
+                                   <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                       <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                   </TextBlock>
+                                   <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
+                                   <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                               </StackPanel>
+                           </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />

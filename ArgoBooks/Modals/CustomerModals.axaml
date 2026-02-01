@@ -55,9 +55,13 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- First Name and Last Name Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
+                            <!-- ID, First Name and Last Name Row -->
+                            <Grid ColumnDefinitions="Auto,16,*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6" Width="100">
+                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'CUS-xxx'}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
@@ -69,7 +73,7 @@
                                                Foreground="#dc2626"
                                                IsVisible="{Binding ModalFirstNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
+                                <StackPanel Grid.Column="4" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
@@ -192,9 +196,13 @@
                     <!-- Form Content (Same as Add + Status) -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- First Name and Last Name Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
+                            <!-- ID, First Name and Last Name Row -->
+                            <Grid ColumnDefinitions="Auto,16,*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6" Width="100">
+                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalId}" Classes="form-input" IsReadOnly="True" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
@@ -202,7 +210,7 @@
                                     <TextBlock Text="{Binding ModalFirstNameError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalFirstNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
+                                <StackPanel Grid.Column="4" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>

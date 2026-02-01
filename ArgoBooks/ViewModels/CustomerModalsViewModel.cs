@@ -42,6 +42,9 @@ public partial class CustomerModalsViewModel : ObservableObject
     #region Modal Form Fields
 
     [ObservableProperty]
+    private string _modalId = string.Empty;
+
+    [ObservableProperty]
     private string _modalFirstName = string.Empty;
 
     [ObservableProperty]
@@ -304,8 +307,16 @@ public partial class CustomerModalsViewModel : ObservableObject
         if (companyData == null)
             return;
 
-        companyData.IdCounters.Customer++;
-        var newId = $"CUS-{companyData.IdCounters.Customer:D3}";
+        string newId;
+        if (!string.IsNullOrWhiteSpace(ModalId))
+        {
+            newId = ModalId.Trim();
+        }
+        else
+        {
+            companyData.IdCounters.Customer++;
+            newId = $"CUS-{companyData.IdCounters.Customer:D3}";
+        }
 
         var newCustomer = new Customer
         {
@@ -367,6 +378,7 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         _editingCustomer = customer;
 
+        ModalId = customer.Id;
         var nameParts = customer.Name.Split(' ', 2);
         ModalFirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty;
         ModalLastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
@@ -917,6 +929,7 @@ public partial class CustomerModalsViewModel : ObservableObject
 
     private void ClearModalFields()
     {
+        ModalId = string.Empty;
         ModalFirstName = string.Empty;
         ModalLastName = string.Empty;
         ModalCompanyName = string.Empty;
