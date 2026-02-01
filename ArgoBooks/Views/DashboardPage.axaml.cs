@@ -41,6 +41,28 @@ public partial class DashboardPage : UserControl
             OnChartPointerWheelChanged,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+
+        // Intercept right-button pointer events to prevent LiveCharts selection box
+        AddHandler(
+            PointerMovedEvent,
+            OnChartPointerMoved,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+    }
+
+    /// <summary>
+    /// Intercepts pointer move events to prevent LiveCharts selection box on right-click drag.
+    /// </summary>
+    private void OnChartPointerMoved(object? sender, PointerEventArgs e)
+    {
+        // Check if this is over a chart and right button is pressed
+        var source = e.Source as Control;
+        var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+
+        if (chart != null && e.GetCurrentPoint(chart).Properties.IsRightButtonPressed)
+        {
+            e.Handled = true;
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
