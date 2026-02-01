@@ -38,7 +38,7 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter category name'}" />
                                 <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="#dc2626"
@@ -108,7 +108,7 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter category name'}" />
                                 <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="#dc2626"

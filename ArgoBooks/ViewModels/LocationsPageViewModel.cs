@@ -68,14 +68,10 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _showManagerColumn = true;
 
-    [ObservableProperty]
-    private bool _showStatusColumn = true;
-
     partial void OnShowLocationColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Location", value);
     partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
     partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
     partial void OnShowManagerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Manager", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -346,8 +342,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
                     ["Location"] = l => l.Name,
                     ["Type"] = l => l.Type,
                     ["Address"] = l => l.Address,
-                    ["Manager"] = l => l.Manager,
-                    ["Status"] = l => l.IsActive
+                    ["Manager"] = l => l.Manager
                 },
                 l => l.Name);
         }

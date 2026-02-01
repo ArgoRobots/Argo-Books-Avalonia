@@ -44,7 +44,7 @@
                             <!-- Adjustment Type -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding AdjustmentTypes}"
                                           SelectedItem="{Binding AdjustmentType}"
@@ -76,7 +76,7 @@
                                 <!-- Adjustment Quantity -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Quantity}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
@@ -161,7 +161,7 @@
                             <!-- Product Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Product}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Product}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
                                                             SelectedItem="{Binding SelectedProduct}"
@@ -205,7 +205,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Initial Quantity'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Initial Quantity'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AddItemQuantity, Mode=TwoWay}"
                                              Classes="form-input"

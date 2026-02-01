@@ -40,7 +40,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalName, Mode=TwoWay}"
                                              Classes="form-input"
@@ -175,7 +175,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalName, Mode=TwoWay}"
                                              Classes="form-input"

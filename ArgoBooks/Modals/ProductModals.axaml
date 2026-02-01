@@ -47,7 +47,7 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Product Name'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Product Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" />
                                 <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="#dc2626"
@@ -63,7 +63,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Item Type'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Item Type'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="{loc:Loc 'Select type'}">
                                         <ComboBox.ItemTemplate>
@@ -75,7 +75,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Category}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Category}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
@@ -159,7 +159,7 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Product Name'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Product Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" />
                                 <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="#dc2626"
@@ -175,7 +175,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Item Type'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Item Type'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="{loc:Loc 'Select type'}">
                                         <ComboBox.ItemTemplate>
@@ -187,7 +187,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Category}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Category}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
