@@ -305,16 +305,20 @@ public class TutorialService
         SaveSettings();
         ChecklistItemCompleted?.Invoke(this, itemId);
 
-        // Show completion guidance for main tutorial tasks
-        if (itemId == ChecklistItems.CreateCategory ||
-            itemId == ChecklistItems.AddProduct ||
-            itemId == ChecklistItems.RecordExpense)
+        // Only show completion guidance if tutorial is active on current company
+        if (ShouldShowTutorialOnCurrentCompany())
         {
-            ShowGuidance(CompletionGuidanceType.Standard);
-        }
-        else if (itemId == ChecklistItems.VisitAnalytics)
-        {
-            ShowGuidance(CompletionGuidanceType.Analytics);
+            // Show completion guidance for main tutorial tasks
+            if (itemId == ChecklistItems.CreateCategory ||
+                itemId == ChecklistItems.AddProduct ||
+                itemId == ChecklistItems.RecordExpense)
+            {
+                ShowGuidance(CompletionGuidanceType.Standard);
+            }
+            else if (itemId == ChecklistItems.VisitAnalytics)
+            {
+                ShowGuidance(CompletionGuidanceType.Analytics);
+            }
         }
 
         if (AreAllChecklistItemsCompleted())
