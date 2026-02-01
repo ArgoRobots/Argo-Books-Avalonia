@@ -170,19 +170,19 @@
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
 
-                                <!-- Contact Column Header -->
-                                <Panel Width="{Binding ColumnWidths.ContactColumnWidth}" IsVisible="{Binding ShowContactColumn}">
+                                <!-- Email Column Header -->
+                                <Panel Width="{Binding ColumnWidths.EmailColumnWidth}" IsVisible="{Binding ShowEmailColumn}">
                                     <Button Classes="column-header" Margin="8,12"
-                                            Command="{Binding SortByCommand}" CommandParameter="Contact">
+                                            Command="{Binding SortByCommand}" CommandParameter="Email">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="{loc:Loc 'Contact'}" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc 'Email'}" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
                                                     <PathIcon.IsVisible>
                                                         <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                      ConverterParameter="Contact:Ascending">
+                                                                      ConverterParameter="Email:Ascending">
                                                             <Binding Path="SortColumn" />
                                                             <Binding Path="SortDirection" />
                                                         </MultiBinding>
@@ -192,7 +192,7 @@
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
                                                     <PathIcon.IsVisible>
                                                         <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                      ConverterParameter="Contact:Descending">
+                                                                      ConverterParameter="Email:Descending">
                                                             <Binding Path="SortColumn" />
                                                             <Binding Path="SortDirection" />
                                                         </MultiBinding>
@@ -202,7 +202,79 @@
                                         </StackPanel>
                                     </Button>
                                     <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    <controls:ColumnResizeGripper ColumnName="Contact" ColumnWidths="{Binding ColumnWidths}"
+                                    <controls:ColumnResizeGripper ColumnName="Email" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                </Panel>
+
+                                <!-- Phone Column Header -->
+                                <Panel Width="{Binding ColumnWidths.PhoneColumnWidth}" IsVisible="{Binding ShowPhoneColumn}">
+                                    <Button Classes="column-header" Margin="8,12"
+                                            Command="{Binding SortByCommand}" CommandParameter="Phone">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Phone'}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <Panel Width="12" Height="12">
+                                                <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}">
+                                                    <PathIcon.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
+                                                                      ConverterParameter="Phone:Ascending">
+                                                            <Binding Path="SortColumn" />
+                                                            <Binding Path="SortDirection" />
+                                                        </MultiBinding>
+                                                    </PathIcon.IsVisible>
+                                                </PathIcon>
+                                                <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}">
+                                                    <PathIcon.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
+                                                                      ConverterParameter="Phone:Descending">
+                                                            <Binding Path="SortColumn" />
+                                                            <Binding Path="SortDirection" />
+                                                        </MultiBinding>
+                                                    </PathIcon.IsVisible>
+                                                </PathIcon>
+                                            </Panel>
+                                        </StackPanel>
+                                    </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    <controls:ColumnResizeGripper ColumnName="Phone" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                </Panel>
+
+                                <!-- Address Column Header -->
+                                <Panel Width="{Binding ColumnWidths.AddressColumnWidth}" IsVisible="{Binding ShowAddressColumn}">
+                                    <Button Classes="column-header" Margin="8,12"
+                                            Command="{Binding SortByCommand}" CommandParameter="Address">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Address'}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <Panel Width="12" Height="12">
+                                                <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}">
+                                                    <PathIcon.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
+                                                                      ConverterParameter="Address:Ascending">
+                                                            <Binding Path="SortColumn" />
+                                                            <Binding Path="SortDirection" />
+                                                        </MultiBinding>
+                                                    </PathIcon.IsVisible>
+                                                </PathIcon>
+                                                <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}">
+                                                    <PathIcon.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
+                                                                      ConverterParameter="Address:Descending">
+                                                            <Binding Path="SortColumn" />
+                                                            <Binding Path="SortDirection" />
+                                                        </MultiBinding>
+                                                    </PathIcon.IsVisible>
+                                                </PathIcon>
+                                            </Panel>
+                                        </StackPanel>
+                                    </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    <controls:ColumnResizeGripper ColumnName="Address" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
 
@@ -369,10 +441,34 @@
                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             </Panel>
 
-                                            <!-- Contact Person -->
-                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ContactColumnWidth}"
-                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowContactColumn}">
-                                                <TextBlock Text="{Binding ContactPerson, TargetNullValue='-', FallbackValue='-'}"
+                                            <!-- Email -->
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.EmailColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowEmailColumn}">
+                                                <TextBlock Text="{Binding Email, TargetNullValue='-', FallbackValue='-'}"
+                                                           FontSize="14"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Margin="8,0" />
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                            </Panel>
+
+                                            <!-- Phone -->
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.PhoneColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowPhoneColumn}">
+                                                <TextBlock Text="{Binding Phone, TargetNullValue='-', FallbackValue='-'}"
+                                                           FontSize="14"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Margin="8,0" />
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                            </Panel>
+
+                                            <!-- Address -->
+                                            <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}"
+                                                   IsVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowAddressColumn}">
+                                                <TextBlock Text="{Binding Address, TargetNullValue='-', FallbackValue='-'}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center"
@@ -585,7 +681,9 @@
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc Supplier}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowContactColumn}" Content="{loc:Loc Contact}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowEmailColumn}" Content="{loc:Loc Email}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPhoneColumn}" Content="{loc:Loc Phone}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAddressColumn}" Content="{loc:Loc Address}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCountryColumn}" Content="{loc:Loc Country}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowProductsColumn}" Content="{loc:Loc Products}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />

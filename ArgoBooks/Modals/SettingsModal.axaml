@@ -162,40 +162,32 @@
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             Padding="16">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="4">
-                                                <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data'}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           TextWrapping="Wrap" />
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding AnonymousDataCollection}"
-                                                          VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Telemetry Data Management (only visible when data collection is enabled) -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16"
-                                            IsVisible="{Binding AnonymousDataCollection}">
                                         <StackPanel Spacing="12">
-                                            <StackPanel Spacing="4">
-                                                <TextBlock Text="{loc:Loc 'Collected Data'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data.'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{loc:Loc 'No financial or business information is ever sent.'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1"
+                                                              IsChecked="{Binding AnonymousDataCollection}"
+                                                              VerticalAlignment="Center" />
+                                            </Grid>
+                                            <!-- Collected Data buttons (only visible when data collection is enabled) -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                                        IsVisible="{Binding AnonymousDataCollection}">
                                                 <Button Classes="secondary-button"
                                                         Content="{loc:Loc 'View Data'}"
-                                                        Command="{Binding ExportTelemetryDataCommand}"
-                                                        IsEnabled="{Binding !IsExportingTelemetry}"
+                                                        Command="{Binding OpenTelemetryFolderCommand}"
                                                         Padding="12,6" />
                                                 <Button Classes="danger-button"
                                                         Content="{loc:Loc 'Delete All Data'}"
@@ -714,6 +706,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding AutoLockOptions}"
                                               SelectedItem="{Binding SelectedAutoLock}"
+                                              IsEnabled="{Binding !NeedsPasswordForAutoLock}"
                                               Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
@@ -721,9 +714,16 @@
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
+                                    <!-- Show description when password is set -->
                                     <TextBlock Text="{loc:Loc 'Automatically lock the application after inactivity'}"
                                                FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding !NeedsPasswordForAutoLock}" />
+                                    <!-- Show "requires password" message when no password is set -->
+                                    <TextBlock Text="{loc:Loc 'Requires a password to be set first'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               IsVisible="{Binding NeedsPasswordForAutoLock}" />
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

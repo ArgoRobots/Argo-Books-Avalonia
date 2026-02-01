@@ -92,9 +92,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
-    private bool _showAccountantColumn = true;
-
-    [ObservableProperty]
     private bool _showItemColumn = true;
 
     [ObservableProperty]
@@ -119,7 +116,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     private bool _showDepositColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);

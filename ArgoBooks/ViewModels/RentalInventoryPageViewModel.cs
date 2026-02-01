@@ -56,9 +56,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     private bool _showItemColumn = true;
 
     [ObservableProperty]
-    private bool _showSupplierColumn = true;
-
-    [ObservableProperty]
     private bool _showStatusColumn = true;
 
     [ObservableProperty]
@@ -80,7 +77,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     private bool _showDepositColumn = true;
 
     partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
-    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
     partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
     partial void OnShowTotalQtyColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("TotalQty", value);
     partial void OnShowAvailableColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Available", value);

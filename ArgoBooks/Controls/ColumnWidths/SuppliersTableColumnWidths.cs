@@ -11,7 +11,13 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
     private double _supplierColumnWidth = 200;
 
     [ObservableProperty]
-    private double _contactColumnWidth = 150;
+    private double _emailColumnWidth = 180;
+
+    [ObservableProperty]
+    private double _phoneColumnWidth = 130;
+
+    [ObservableProperty]
+    private double _addressColumnWidth = 180;
 
     [ObservableProperty]
     private double _countryColumnWidth = 130;
@@ -27,10 +33,12 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
 
     public SuppliersTableColumnWidths()
     {
-        ColumnOrder = ["Supplier", "Contact", "Country", "Products", "Status", "Actions"];
+        ColumnOrder = ["Supplier", "Email", "Phone", "Address", "Country", "Products", "Status", "Actions"];
 
         RegisterColumn("Supplier", new ColumnDef { StarValue = 1.5, MinWidth = 150, PreferredWidth = 200 }, w => SupplierColumnWidth = w);
-        RegisterColumn("Contact", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 150 }, w => ContactColumnWidth = w);
+        RegisterColumn("Email", new ColumnDef { StarValue = 1.2, MinWidth = 120, PreferredWidth = 180 }, w => EmailColumnWidth = w);
+        RegisterColumn("Phone", new ColumnDef { StarValue = 0.9, MinWidth = 100, PreferredWidth = 130 }, w => PhoneColumnWidth = w);
+        RegisterColumn("Address", new ColumnDef { StarValue = 1.2, MinWidth = 120, PreferredWidth = 180 }, w => AddressColumnWidth = w);
         RegisterColumn("Country", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 130 }, w => CountryColumnWidth = w);
         RegisterColumn("Products", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 }, w => ProductsColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.6, MinWidth = 70, PreferredWidth = 90 }, w => StatusColumnWidth = w);

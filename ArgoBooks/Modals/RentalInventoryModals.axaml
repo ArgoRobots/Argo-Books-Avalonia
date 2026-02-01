@@ -42,29 +42,19 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- Item Name -->
+                            <!-- Product -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Item Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    <Run Text="{loc:Loc 'Product'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalItemName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter item name'}" />
-                                <TextBlock Text="{Binding ModalItemNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                           IsVisible="{Binding ModalItemNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-
-                            <!-- Supplier -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Supplier}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
-                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
-                                                            SelectedItem="{Binding ModalSupplier}"
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
+                                                            SelectedItem="{Binding ModalProduct}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Search suppliers...'}"
+                                                            Placeholder="{loc:Loc 'Search products...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="{loc:Loc 'No suppliers available.'}"
-                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
+                                                            EmptyMessage="{loc:Loc 'No products available.'}" />
+                                <TextBlock Text="{Binding ModalProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding ModalProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Quantity -->
@@ -160,29 +150,19 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- Item Name -->
+                            <!-- Product -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Item Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    <Run Text="{loc:Loc 'Product'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalItemName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter item name'}" />
-                                <TextBlock Text="{Binding ModalItemNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                           IsVisible="{Binding ModalItemNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-
-                            <!-- Supplier -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Supplier}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
-                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
-                                                            SelectedItem="{Binding ModalSupplier}"
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
+                                                            SelectedItem="{Binding ModalProduct}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Search suppliers...'}"
+                                                            Placeholder="{loc:Loc 'Search products...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="{loc:Loc 'No suppliers available.'}"
-                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
+                                                            EmptyMessage="{loc:Loc 'No products available.'}" />
+                                <TextBlock Text="{Binding ModalProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding ModalProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Quantity and Status Row -->

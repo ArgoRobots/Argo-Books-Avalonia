@@ -41,7 +41,13 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     private bool _showSupplierColumn = true;
 
     [ObservableProperty]
-    private bool _showContactColumn = true;
+    private bool _showEmailColumn = true;
+
+    [ObservableProperty]
+    private bool _showPhoneColumn = true;
+
+    [ObservableProperty]
+    private bool _showAddressColumn = true;
 
     [ObservableProperty]
     private bool _showCountryColumn = true;
@@ -53,7 +59,9 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     private bool _showStatusColumn = true;
 
     partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowContactColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Contact", value);
+    partial void OnShowEmailColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Email", value);
+    partial void OnShowPhoneColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Phone", value);
+    partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
     partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
     partial void OnShowProductsColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Products", value);
     partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
@@ -457,14 +465,25 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             var productCount = companyData.Products.Count(p => p.SupplierId == supplier.Id);
             var isActive = productCount > 0;
 
+            // Format address as comma-separated parts
+            var addressParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(supplier.Address.Street))
+                addressParts.Add(supplier.Address.Street);
+            if (!string.IsNullOrWhiteSpace(supplier.Address.City))
+                addressParts.Add(supplier.Address.City);
+            if (!string.IsNullOrWhiteSpace(supplier.Address.State))
+                addressParts.Add(supplier.Address.State);
+            var addressString = addressParts.Count > 0 ? string.Join(", ", addressParts) : "-";
+
             return new SupplierDisplayItem
             {
                 Id = supplier.Id,
                 Name = supplier.Name,
                 ContactPerson = supplier.ContactPerson,
-                Email = supplier.Email,
-                Phone = supplier.Phone,
-                Country = supplier.Address.Country,
+                Email = string.IsNullOrWhiteSpace(supplier.Email) ? "-" : supplier.Email,
+                Phone = string.IsNullOrWhiteSpace(supplier.Phone) ? "-" : supplier.Phone,
+                Address = addressString,
+                Country = string.IsNullOrWhiteSpace(supplier.Address.Country) ? "-" : supplier.Address.Country,
                 ProductCount = productCount,
                 IsActive = isActive,
                 Initials = GetInitials(supplier.Name)
@@ -480,7 +499,9 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 new Dictionary<string, Func<SupplierDisplayItem, object?>>
                 {
                     ["Name"] = s => s.Name,
-                    ["Contact"] = s => s.ContactPerson,
+                    ["Email"] = s => s.Email,
+                    ["Phone"] = s => s.Phone,
+                    ["Address"] = s => s.Address,
                     ["Country"] = s => s.Country,
                     ["Products"] = s => s.ProductCount,
                     ["Status"] = s => s.IsActive
@@ -978,6 +999,9 @@ public partial class SupplierDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _phone = string.Empty;
+
+    [ObservableProperty]
+    private string _address = string.Empty;
 
     [ObservableProperty]
     private string _country = string.Empty;

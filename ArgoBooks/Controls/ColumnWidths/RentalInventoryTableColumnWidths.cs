@@ -8,10 +8,7 @@ namespace ArgoBooks.Controls.ColumnWidths;
 public partial class RentalInventoryTableColumnWidths : TableColumnWidthsBase
 {
     [ObservableProperty]
-    private double _itemColumnWidth = 150;
-
-    [ObservableProperty]
-    private double _supplierColumnWidth = 120;
+    private double _itemColumnWidth = 180;
 
     [ObservableProperty]
     private double _statusColumnWidth = 110;
@@ -39,11 +36,9 @@ public partial class RentalInventoryTableColumnWidths : TableColumnWidthsBase
 
     public RentalInventoryTableColumnWidths()
     {
-        ColumnOrder = ["Item", "Supplier", "Status", "TotalQty", "Available", "Rented", "DailyRate", "WeeklyRate", "Deposit", "Actions"
-        ];
+        ColumnOrder = ["Item", "Status", "TotalQty", "Available", "Rented", "DailyRate", "WeeklyRate", "Deposit", "Actions"];
 
-        RegisterColumn("Item", new ColumnDef { StarValue = 1.4, MinWidth = 120, PreferredWidth = 150 }, w => ItemColumnWidth = w);
-        RegisterColumn("Supplier", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => SupplierColumnWidth = w);
+        RegisterColumn("Item", new ColumnDef { StarValue = 1.6, MinWidth = 140, PreferredWidth = 180 }, w => ItemColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.9, MinWidth = 90, PreferredWidth = 110 }, w => StatusColumnWidth = w);
         RegisterColumn("TotalQty", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 80 }, w => TotalQtyColumnWidth = w);
         RegisterColumn("Available", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 80 }, w => AvailableColumnWidth = w);

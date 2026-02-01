@@ -135,11 +135,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDeletingTelemetry;
 
-    /// <summary>
-    /// Event raised when telemetry data should be exported.
-    /// </summary>
-    public event EventHandler<string>? TelemetryDataExported;
-
     [ObservableProperty]
     private int _maxPieSlices = 6;
 
@@ -296,6 +291,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     public bool NeedsPasswordForWindowsHello => HasStandard && !HasPassword;
 
     /// <summary>
+    /// Whether the user needs to set a password before enabling Auto-Lock.
+    /// </summary>
+    public bool NeedsPasswordForAutoLock => !HasPassword;
+
+    /// <summary>
     /// Event raised when Windows Hello setting changes (after successful authentication).
     /// </summary>
     public event EventHandler<WindowsHelloEventArgs>? WindowsHelloChanged;
@@ -423,9 +423,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         FileEncryptionEnabled = value;
         _isUpdatingEncryption = false;
 
-        // Notify Windows Hello computed properties
+        // Notify Windows Hello and Auto-Lock computed properties
         OnPropertyChanged(nameof(CanEnableWindowsHello));
         OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
+        OnPropertyChanged(nameof(NeedsPasswordForAutoLock));
 
         // Disable Windows Hello if password is removed
         if (!value && WindowsHelloEnabled)
@@ -1137,27 +1138,42 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Exports telemetry data as JSON for user review.
+    /// Opens the telemetry data folder in the system file explorer.
     /// </summary>
     [RelayCommand]
-    private async Task ExportTelemetryDataAsync()
+    private void OpenTelemetryFolder()
     {
-        if (App.TelemetryManager == null) return;
-
-        IsExportingTelemetry = true;
         try
         {
-            var json = await App.TelemetryManager.ExportDataAsJsonAsync();
-            TelemetryDataExported?.Invoke(this, json);
+            // Use Roaming AppData on Windows to match TelemetryStorageService
+            var telemetryPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "ArgoBooks",
+                "telemetry");
+
+            if (!Directory.Exists(telemetryPath))
+            {
+                Directory.CreateDirectory(telemetryPath);
+            }
+
+            // Open folder using platform-specific method
+            if (OperatingSystem.IsWindows())
+            {
+                System.Diagnostics.Process.Start("explorer.exe", telemetryPath);
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                System.Diagnostics.Process.Start("open", telemetryPath);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                System.Diagnostics.Process.Start("xdg-open", telemetryPath);
+            }
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to export telemetry data");
-            App.AddNotification("Error".Translate(), "Failed to export telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
-        }
-        finally
-        {
-            IsExportingTelemetry = false;
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to open telemetry folder");
+            App.AddNotification("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message), NotificationType.Error);
         }
     }
 
