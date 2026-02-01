@@ -72,12 +72,16 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private bool _showAddressColumn = true;
 
     [ObservableProperty]
+    private bool _showCountryColumn = true;
+
+    [ObservableProperty]
     private bool _showLastRentalColumn = true;
 
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowEmailColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Email", value);
     partial void OnShowPhoneColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Phone", value);
     partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
+    partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
     partial void OnShowLastRentalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("LastRental", value);
 
     [RelayCommand]
@@ -412,6 +416,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 Email = string.IsNullOrWhiteSpace(customer.Email) ? "-" : customer.Email,
                 Phone = string.IsNullOrWhiteSpace(customer.Phone) ? "-" : customer.Phone,
                 Address = addressString,
+                Country = string.IsNullOrWhiteSpace(customer.Address.Country) ? "-" : customer.Address.Country,
                 LastRental = customer.LastTransactionDate,
                 Status = customer.Status
             };
@@ -885,6 +890,9 @@ public partial class CustomerDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _address = string.Empty;
+
+    [ObservableProperty]
+    private string _country = string.Empty;
 
     [ObservableProperty]
     private DateTime? _lastRental;

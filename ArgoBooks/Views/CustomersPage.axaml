@@ -276,6 +276,42 @@
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
 
+                                <!-- Country Column Header -->
+                                <Panel Width="{Binding ColumnWidths.CountryColumnWidth}" IsVisible="{Binding ShowCountryColumn}">
+                                    <Button Classes="column-header" Margin="8,12"
+                                            Command="{Binding SortByCommand}" CommandParameter="Country">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{loc:Loc Country}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <Panel Width="12" Height="12">
+                                                <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}">
+                                                    <PathIcon.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
+                                                                      ConverterParameter="Country:Ascending">
+                                                            <Binding Path="SortColumn" />
+                                                            <Binding Path="SortDirection" />
+                                                        </MultiBinding>
+                                                    </PathIcon.IsVisible>
+                                                </PathIcon>
+                                                <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}">
+                                                    <PathIcon.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
+                                                                      ConverterParameter="Country:Descending">
+                                                            <Binding Path="SortColumn" />
+                                                            <Binding Path="SortDirection" />
+                                                        </MultiBinding>
+                                                    </PathIcon.IsVisible>
+                                                </PathIcon>
+                                            </Panel>
+                                        </StackPanel>
+                                    </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    <controls:ColumnResizeGripper ColumnName="Country" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                </Panel>
+
                                 <!-- Last Rental Column Header -->
                                 <Panel Width="{Binding ColumnWidths.LastRentalColumnWidth}" IsVisible="{Binding ShowLastRentalColumn}">
                                     <Button Classes="column-header" Margin="8,12"
@@ -396,6 +432,18 @@
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowAddressColumn}">
                                                         <TextBlock Text="{Binding Address, TargetNullValue='-', FallbackValue='-'}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                                    </Panel>
+
+                                                    <!-- Country -->
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.CountryColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowCountryColumn}">
+                                                        <TextBlock Text="{Binding Country, TargetNullValue='-', FallbackValue='-'}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
@@ -593,6 +641,7 @@
                 <CheckBox IsChecked="{Binding ShowEmailColumn}" Content="{loc:Loc Email}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowPhoneColumn}" Content="{loc:Loc Phone}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowAddressColumn}" Content="{loc:Loc Address}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowCountryColumn}" Content="{loc:Loc Country}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowLastRentalColumn}" Content="{loc:Loc 'Last Rental'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>

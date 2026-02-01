@@ -258,6 +258,419 @@ public static class Countries
     /// </summary>
     public static CountryInfo? FindByCode(string code) =>
         All.FirstOrDefault(c => c.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Mapping of common country aliases, abbreviations, and alternative names to their canonical names.
+    /// </summary>
+    private static readonly Dictionary<string, string> CountryAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // United States
+        { "US", "United States" },
+        { "USA", "United States" },
+        { "U.S.", "United States" },
+        { "U.S.A.", "United States" },
+        { "United States of America", "United States" },
+        { "America", "United States" },
+        { "States", "United States" },
+        { "The States", "United States" },
+
+        // United Kingdom
+        { "GB", "United Kingdom" },
+        { "GBR", "United Kingdom" },
+        { "UK", "United Kingdom" },
+        { "U.K.", "United Kingdom" },
+        { "Great Britain", "United Kingdom" },
+        { "Britain", "United Kingdom" },
+        { "England", "United Kingdom" },
+        { "Scotland", "United Kingdom" },
+        { "Wales", "United Kingdom" },
+        { "Northern Ireland", "United Kingdom" },
+
+        // Canada
+        { "CA", "Canada" },
+        { "CAN", "Canada" },
+
+        // Australia
+        { "AU", "Australia" },
+        { "AUS", "Australia" },
+
+        // Germany
+        { "DE", "Germany" },
+        { "DEU", "Germany" },
+        { "Deutschland", "Germany" },
+        { "Federal Republic of Germany", "Germany" },
+
+        // France
+        { "FR", "France" },
+        { "FRA", "France" },
+        { "French Republic", "France" },
+
+        // Italy
+        { "IT", "Italy" },
+        { "ITA", "Italy" },
+        { "Italian Republic", "Italy" },
+
+        // Spain
+        { "ES", "Spain" },
+        { "ESP", "Spain" },
+        { "Kingdom of Spain", "Spain" },
+
+        // Netherlands
+        { "NL", "Netherlands" },
+        { "NLD", "Netherlands" },
+        { "Holland", "Netherlands" },
+        { "Kingdom of the Netherlands", "Netherlands" },
+
+        // Belgium
+        { "BE", "Belgium" },
+        { "BEL", "Belgium" },
+        { "Kingdom of Belgium", "Belgium" },
+
+        // Switzerland
+        { "CH", "Switzerland" },
+        { "CHE", "Switzerland" },
+        { "Swiss Confederation", "Switzerland" },
+
+        // Austria
+        { "AT", "Austria" },
+        { "AUT", "Austria" },
+        { "Republic of Austria", "Austria" },
+
+        // Sweden
+        { "SE", "Sweden" },
+        { "SWE", "Sweden" },
+        { "Kingdom of Sweden", "Sweden" },
+
+        // Norway
+        { "NO", "Norway" },
+        { "NOR", "Norway" },
+        { "Kingdom of Norway", "Norway" },
+
+        // Denmark
+        { "DK", "Denmark" },
+        { "DNK", "Denmark" },
+        { "Kingdom of Denmark", "Denmark" },
+
+        // Finland
+        { "FI", "Finland" },
+        { "FIN", "Finland" },
+        { "Republic of Finland", "Finland" },
+
+        // Ireland
+        { "IE", "Ireland" },
+        { "IRL", "Ireland" },
+        { "Republic of Ireland", "Ireland" },
+
+        // Portugal
+        { "PT", "Portugal" },
+        { "PRT", "Portugal" },
+        { "Portuguese Republic", "Portugal" },
+
+        // Greece
+        { "GR", "Greece" },
+        { "GRC", "Greece" },
+        { "Hellenic Republic", "Greece" },
+
+        // Poland
+        { "PL", "Poland" },
+        { "POL", "Poland" },
+        { "Republic of Poland", "Poland" },
+
+        // Czechia
+        { "CZ", "Czechia" },
+        { "CZE", "Czechia" },
+        { "Czech Republic", "Czechia" },
+
+        // New Zealand
+        { "NZ", "New Zealand" },
+        { "NZL", "New Zealand" },
+        { "Aotearoa", "New Zealand" },
+
+        // Japan
+        { "JP", "Japan" },
+        { "JPN", "Japan" },
+        { "Nippon", "Japan" },
+
+        // China
+        { "CN", "China" },
+        { "CHN", "China" },
+        { "PRC", "China" },
+        { "People's Republic of China", "China" },
+        { "Mainland China", "China" },
+
+        // South Korea
+        { "KR", "South Korea" },
+        { "KOR", "South Korea" },
+        { "Korea", "South Korea" },
+        { "Republic of Korea", "South Korea" },
+        { "ROK", "South Korea" },
+
+        // India
+        { "IN", "India" },
+        { "IND", "India" },
+        { "Republic of India", "India" },
+        { "Bharat", "India" },
+
+        // Brazil
+        { "BR", "Brazil" },
+        { "BRA", "Brazil" },
+        { "Federative Republic of Brazil", "Brazil" },
+
+        // Mexico
+        { "MX", "Mexico" },
+        { "MEX", "Mexico" },
+        { "United Mexican States", "Mexico" },
+
+        // Argentina
+        { "AR", "Argentina" },
+        { "ARG", "Argentina" },
+        { "Argentine Republic", "Argentina" },
+
+        // Russia
+        { "RU", "Russia" },
+        { "RUS", "Russia" },
+        { "Russian Federation", "Russia" },
+        { "USSR", "Russia" },
+        { "Soviet Union", "Russia" },
+
+        // United Arab Emirates
+        { "AE", "United Arab Emirates" },
+        { "ARE", "United Arab Emirates" },
+        { "UAE", "United Arab Emirates" },
+
+        // Singapore
+        { "SG", "Singapore" },
+        { "SGP", "Singapore" },
+        { "Republic of Singapore", "Singapore" },
+
+        // Israel
+        { "IL", "Israel" },
+        { "ISR", "Israel" },
+        { "State of Israel", "Israel" },
+
+        // South Africa
+        { "ZA", "South Africa" },
+        { "ZAF", "South Africa" },
+        { "Republic of South Africa", "South Africa" },
+
+        // Taiwan
+        { "TW", "Taiwan" },
+        { "TWN", "Taiwan" },
+        { "ROC", "Taiwan" },
+        { "Republic of China", "Taiwan" },
+
+        // Thailand
+        { "TH", "Thailand" },
+        { "THA", "Thailand" },
+        { "Kingdom of Thailand", "Thailand" },
+
+        // Malaysia
+        { "MY", "Malaysia" },
+        { "MYS", "Malaysia" },
+
+        // Indonesia
+        { "ID", "Indonesia" },
+        { "IDN", "Indonesia" },
+
+        // Philippines
+        { "PH", "Philippines" },
+        { "PHL", "Philippines" },
+
+        // Vietnam
+        { "VN", "Vietnam" },
+        { "VNM", "Vietnam" },
+        { "Socialist Republic of Vietnam", "Vietnam" },
+
+        // Egypt
+        { "EG", "Egypt" },
+        { "EGY", "Egypt" },
+        { "Arab Republic of Egypt", "Egypt" },
+
+        // Turkey
+        { "TR", "Turkey" },
+        { "TUR", "Turkey" },
+        { "Republic of Turkey", "Turkey" },
+
+        // Ukraine
+        { "UA", "Ukraine" },
+        { "UKR", "Ukraine" },
+
+        // Hungary
+        { "HU", "Hungary" },
+        { "HUN", "Hungary" },
+
+        // Romania
+        { "RO", "Romania" },
+        { "ROU", "Romania" },
+
+        // Bulgaria
+        { "BG", "Bulgaria" },
+        { "BGR", "Bulgaria" },
+        { "Republic of Bulgaria", "Bulgaria" },
+
+        // Croatia
+        { "HR", "Croatia" },
+        { "HRV", "Croatia" },
+        { "Republic of Croatia", "Croatia" },
+
+        // Slovakia
+        { "SK", "Slovakia" },
+        { "SVK", "Slovakia" },
+        { "Slovak Republic", "Slovakia" },
+
+        // Slovenia
+        { "SI", "Slovenia" },
+        { "SVN", "Slovenia" },
+        { "Republic of Slovenia", "Slovenia" },
+
+        // Estonia
+        { "EE", "Estonia" },
+        { "EST", "Estonia" },
+        { "Republic of Estonia", "Estonia" },
+
+        // Latvia
+        { "LV", "Latvia" },
+        { "LVA", "Latvia" },
+        { "Republic of Latvia", "Latvia" },
+
+        // Lithuania
+        { "LT", "Lithuania" },
+        { "LTU", "Lithuania" },
+        { "Republic of Lithuania", "Lithuania" },
+
+        // Luxembourg
+        { "LU", "Luxembourg" },
+        { "LUX", "Luxembourg" },
+
+        // Iceland
+        { "IS", "Iceland" },
+        { "ISL", "Iceland" },
+
+        // Malta
+        { "MT", "Malta" },
+        { "MLT", "Malta" },
+
+        // Cyprus
+        { "CY", "Cyprus" },
+        { "CYP", "Cyprus" },
+
+        // North Macedonia
+        { "MK", "North Macedonia" },
+        { "MKD", "North Macedonia" },
+        { "Macedonia", "North Macedonia" },
+
+        // Serbia
+        { "RS", "Serbia" },
+        { "SRB", "Serbia" },
+
+        // Montenegro
+        { "ME", "Montenegro" },
+        { "MNE", "Montenegro" },
+
+        // Bosnia and Herzegovina
+        { "BA", "Bosnia and Herzegovina" },
+        { "BIH", "Bosnia and Herzegovina" },
+
+        // Albania
+        { "AL", "Albania" },
+        { "ALB", "Albania" },
+
+        // Moldova
+        { "MD", "Moldova" },
+        { "MDA", "Moldova" },
+        { "Republic of Moldova", "Moldova" },
+
+        // Belarus
+        { "BY", "Belarus" },
+        { "BLR", "Belarus" },
+        { "Republic of Belarus", "Belarus" },
+
+        // North Korea
+        { "KP", "North Korea" },
+        { "PRK", "North Korea" },
+        { "Democratic People's Republic of Korea", "North Korea" },
+        { "DPRK", "North Korea" },
+
+        // Ivory Coast
+        { "CI", "Ivory Coast" },
+        { "CIV", "Ivory Coast" },
+        { "Côte d'Ivoire", "Ivory Coast" },
+
+        // Democratic Republic of the Congo
+        { "CD", "The Democratic Republic of the Congo" },
+        { "COD", "The Democratic Republic of the Congo" },
+        { "DRC", "The Democratic Republic of the Congo" },
+        { "Congo-Kinshasa", "The Democratic Republic of the Congo" },
+
+        // Republic of the Congo
+        { "CG", "The Republic of the Congo" },
+        { "COG", "The Republic of the Congo" },
+        { "Congo-Brazzaville", "The Republic of the Congo" },
+
+        // Myanmar
+        { "MM", "Myanmar" },
+        { "MMR", "Myanmar" },
+        { "Burma", "Myanmar" },
+
+        // Lao
+        { "LA", "Lao" },
+        { "LAO", "Lao" },
+        { "Laos", "Lao" },
+
+        // Timor-Leste
+        { "TL", "Timor-Leste" },
+        { "TLS", "Timor-Leste" },
+        { "East Timor", "Timor-Leste" },
+
+        // Eswatini
+        { "SZ", "Eswatini" },
+        { "SWZ", "Eswatini" },
+        { "Swaziland", "Eswatini" },
+
+        // Cabo Verde
+        { "CV", "Cabo Verde" },
+        { "CPV", "Cabo Verde" },
+        { "Cape Verde", "Cabo Verde" },
+    };
+
+    /// <summary>
+    /// Normalizes a country input string to its canonical country name.
+    /// Handles ISO codes (US, USA), common abbreviations, and alternative names.
+    /// Returns null if no match is found.
+    /// </summary>
+    /// <param name="input">The country input to normalize (can be code, abbreviation, or name).</param>
+    /// <returns>The canonical country name, or null if not found.</returns>
+    public static string? NormalizeCountry(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
+
+        var trimmed = input.Trim();
+
+        // First check if it's already a canonical name
+        if (All.Any(c => c.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
+            return All.First(c => c.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase)).Name;
+
+        // Check aliases
+        if (CountryAliases.TryGetValue(trimmed, out var canonicalName))
+            return canonicalName;
+
+        // No match found
+        return null;
+    }
+
+    /// <summary>
+    /// Normalizes a country input string, returning the original value if no match is found.
+    /// </summary>
+    /// <param name="input">The country input to normalize.</param>
+    /// <returns>The canonical country name, or the original input if not found.</returns>
+    public static string NormalizeCountryOrKeep(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        return NormalizeCountry(input) ?? input.Trim();
+    }
 }
 
 /// <summary>

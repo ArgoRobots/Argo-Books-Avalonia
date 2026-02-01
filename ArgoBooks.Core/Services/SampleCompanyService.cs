@@ -68,6 +68,9 @@ public class SampleCompanyService
                 importOptions,
                 cancellationToken);
 
+            // Diversify country data for customers and suppliers
+            DiversifyCountryData(companyData);
+
             // Save company data to temp directory
             await _fileService.SaveCompanyDataAsync(companyDir, companyData, cancellationToken);
 
@@ -136,6 +139,51 @@ public class SampleCompanyService
         };
 
         return companyData;
+    }
+
+    /// <summary>
+    /// Western countries to use for diversified sample data.
+    /// </summary>
+    private static readonly string[] WesternCountries =
+    [
+        "United States",
+        "Canada",
+        "United Kingdom",
+        "Germany",
+        "France",
+        "Australia",
+        "Netherlands",
+        "Sweden",
+        "Norway",
+        "Denmark",
+        "Switzerland",
+        "Austria",
+        "Belgium",
+        "Ireland",
+        "New Zealand",
+        "Italy",
+        "Spain",
+        "Finland"
+    ];
+
+    /// <summary>
+    /// Diversifies country data for customers and suppliers with Western countries.
+    /// </summary>
+    private static void DiversifyCountryData(CompanyData data)
+    {
+        var random = new Random(42); // Use fixed seed for reproducibility
+
+        // Diversify customer countries
+        foreach (var customer in data.Customers)
+        {
+            customer.Address.Country = WesternCountries[random.Next(WesternCountries.Length)];
+        }
+
+        // Diversify supplier countries
+        foreach (var supplier in data.Suppliers)
+        {
+            supplier.Address.Country = WesternCountries[random.Next(WesternCountries.Length)];
+        }
     }
 
     /// <summary>
