@@ -686,7 +686,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 Id = product.Id,
                 Name = product.Name,
                 Sku = product.Sku,
-                Description = product.Description,
+                Description = string.IsNullOrWhiteSpace(product.Description) ? "-" : product.Description,
                 ItemType = product.ItemType,
                 CategoryName = category?.Name ?? "-",
                 SupplierName = supplier?.Name ?? "-",
