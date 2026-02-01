@@ -169,7 +169,7 @@
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data'}"
+                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data. No financial or business information is ever sent.'}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                TextWrapping="Wrap" />

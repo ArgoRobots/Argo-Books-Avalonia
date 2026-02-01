@@ -1145,8 +1145,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         try
         {
+            // Use Roaming AppData on Windows to match TelemetryStorageService
             var telemetryPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "ArgoBooks",
                 "telemetry");
 
