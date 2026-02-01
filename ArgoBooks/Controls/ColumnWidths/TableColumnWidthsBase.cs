@@ -89,7 +89,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
 
         var totalCurrentWidth = Columns.Values
             .Where(c => c.IsVisible)
-            .Sum(c => c.CurrentWidth) + 24;
+            .Sum(c => c.CurrentWidth) + 48;
 
         if (_hasManualOverflow)
         {
@@ -138,8 +138,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
 
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
 
-        double totalCurrentWidth = visibleColumns.Sum(name => Columns[name].CurrentWidth);
-        double maxTotalWidth = _availableWidth - 24;
+        double maxTotalWidth = _availableWidth - 48;
 
         var newColWidth = col.CurrentWidth + delta;
         newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newColWidth));
@@ -186,7 +185,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     /// </summary>
     protected void UpdateScrollState(List<string> visibleColumns)
     {
-        double totalWidth = visibleColumns.Sum(name => Columns[name].CurrentWidth) + 24;
+        double totalWidth = visibleColumns.Sum(name => Columns[name].CurrentWidth) + 48;
 
         if (totalWidth > _availableWidth + 1)
         {
@@ -199,55 +198,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             NeedsHorizontalScroll = false;
             MinimumTotalWidth = Columns.Values
                 .Where(c => c.IsVisible)
-                .Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 24;
-        }
-    }
-
-    /// <summary>
-    /// Gets the current width of a column.
-    /// </summary>
-    public double GetColumnWidth(string columnName)
-    {
-        if (Columns.TryGetValue(columnName, out var col))
-        {
-            return col.CurrentWidth > 0 ? col.CurrentWidth : col.MinWidth;
-        }
-        return 100;
-    }
-
-    /// <summary>
-    /// Sets the width of a column directly.
-    /// </summary>
-    public void SetColumnWidth(string columnName, double width)
-    {
-        if (!Columns.TryGetValue(columnName, out var col)) return;
-        if (col.IsFixed) return;
-
-        width = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, width));
-        col.CurrentWidth = width;
-        ApplyWidthToProperty(columnName, width);
-    }
-
-    /// <summary>
-    /// Gets the minimum width of a column.
-    /// </summary>
-    public double GetMinWidth(string columnName)
-    {
-        return Columns.TryGetValue(columnName, out var col) ? col.MinWidth : 50;
-    }
-
-    /// <summary>
-    /// Registers a measured content width for a column.
-    /// </summary>
-    public void RegisterContentWidth(string columnName, double contentWidth)
-    {
-        if (Columns.TryGetValue(columnName, out var col))
-        {
-            var widthWithPadding = contentWidth + 20;
-            if (widthWithPadding > col.MeasuredContentWidth)
-            {
-                col.MeasuredContentWidth = widthWithPadding;
-            }
+                .Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
         }
     }
 
@@ -285,11 +236,11 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             var visibleColumns = Columns.Values.Where(c => c.IsVisible).ToList();
             if (visibleColumns.Count == 0) return;
 
-            double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 24;
+            double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
 
             if (_hasManualOverflow)
             {
-                double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 24;
+                double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
                 if (totalWidth + 50 > _availableWidth)
                 {
                     MinimumTotalWidth = totalWidth;
@@ -304,7 +255,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
 
             double fixedTotal = visibleColumns.Where(c => c.IsFixed).Sum(c => c.FixedWidth);
             double totalStars = visibleColumns.Where(c => !c.IsFixed).Sum(c => c.StarValue);
-            double availableForProportional = Math.Max(100, _availableWidth - fixedTotal - 24);
+            double availableForProportional = Math.Max(100, _availableWidth - fixedTotal - 48);
 
             if (NeedsHorizontalScroll)
             {

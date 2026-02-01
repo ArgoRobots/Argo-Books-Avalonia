@@ -55,22 +55,14 @@ public partial class ReturnsPageViewModel : ViewModelBase
     private bool _showReasonColumn = true;
 
     [ObservableProperty]
-    private bool _showProcessedColumn = true;
-
-    [ObservableProperty]
     private bool _showRefundColumn = true;
-
-    [ObservableProperty]
-    private bool _showStatusColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowSupplierCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("SupplierCustomer", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
-    partial void OnShowProcessedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Processed", value);
     partial void OnShowRefundColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Refund", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -204,11 +196,12 @@ public partial class ReturnsPageViewModel : ViewModelBase
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
-        // Subscribe to filter modal events
+        // Subscribe to modal events
         if (App.ReturnsModalsViewModel != null)
         {
             App.ReturnsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReturnsModalsViewModel.FiltersCleared += OnFiltersCleared;
+            App.ReturnsModalsViewModel.ReturnUndone += OnReturnUndone;
         }
 
         // Subscribe to language changes to refresh translated content
@@ -233,6 +226,11 @@ public partial class ReturnsPageViewModel : ViewModelBase
         SearchQuery = null;
         CurrentPage = 1;
         FilterReturns();
+    }
+
+    private void OnReturnUndone(object? sender, EventArgs e)
+    {
+        LoadReturns();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -281,7 +279,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Get filter values from modals view model
         var modals = App.ReturnsModalsViewModel;
-        var filterStatus = modals?.FilterStatus ?? "All";
         var filterReason = modals?.FilterReason ?? "All";
         var filterDateFrom = modals?.FilterDateFrom;
         var filterDateTo = modals?.FilterDateTo;
@@ -300,12 +297,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
                 GetProductNames(r).ToLowerInvariant().Contains(query) ||
                 GetSupplierOrCustomerName(r).ToLowerInvariant().Contains(query)
             ).ToList();
-        }
-
-        // Apply status filter
-        if (filterStatus != "All")
-        {
-            filtered = filtered.Where(r => r.Status.ToString() == filterStatus).ToList();
         }
 
         // Apply reason filter
@@ -370,7 +361,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
             Reason = reason,
             ProcessedBy = processedByName,
             RefundAmount = returnRecord.NetRefund,
-            Status = returnRecord.Status,
             Notes = returnRecord.Notes,
             ItemCount = returnRecord.Items.Sum(i => i.Quantity)
         };
@@ -403,9 +393,10 @@ public partial class ReturnsPageViewModel : ViewModelBase
             if (purchase != null)
             {
                 var supplier = companyData.GetSupplier(purchase.SupplierId ?? "");
-                return supplier?.Name ?? "Unknown Supplier";
+                // Fall back to expense description if supplier not found
+                return supplier?.Name ?? (string.IsNullOrEmpty(purchase.Description) ? "-" : purchase.Description);
             }
-            return "Unknown Supplier";
+            return "-";
         }
         else
         {
@@ -465,46 +456,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     #endregion
 
-    #region View Details Modal
-
-    [ObservableProperty]
-    private bool _isViewDetailsModalOpen;
-
-    [ObservableProperty]
-    private string _viewDetailsId = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsProduct = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsReason = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsNotes = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsDate = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsRefund = string.Empty;
-
-    #endregion
-
-    #region Undo Return Modal
-
-    private ReturnDisplayItem? _undoReturnItem;
-
-    [ObservableProperty]
-    private bool _isUndoReturnModalOpen;
-
-    [ObservableProperty]
-    private string _undoReturnItemDescription = string.Empty;
-
-    [ObservableProperty]
-    private string _undoReturnReason = string.Empty;
-
-    #endregion
-
     #region Action Commands
 
     [RelayCommand]
@@ -512,19 +463,13 @@ public partial class ReturnsPageViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        ViewDetailsId = item.Id;
-        ViewDetailsProduct = item.ProductNames;
-        ViewDetailsReason = item.Reason;
-        ViewDetailsNotes = string.IsNullOrWhiteSpace(item.Notes) ? "No notes provided" : item.Notes;
-        ViewDetailsDate = item.DateFormatted;
-        ViewDetailsRefund = item.RefundAmountFormatted;
-        IsViewDetailsModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseViewDetailsModal()
-    {
-        IsViewDetailsModalOpen = false;
+        App.ReturnsModalsViewModel?.OpenViewDetailsModal(
+            item.Id,
+            item.ProductNames,
+            item.DateFormatted,
+            item.RefundAmountFormatted,
+            item.Reason,
+            item.Notes);
     }
 
     [RelayCommand]
@@ -532,41 +477,12 @@ public partial class ReturnsPageViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        _undoReturnItem = item;
-        UndoReturnItemDescription = $"{item.Id} - {item.ProductNames}";
-        UndoReturnReason = string.Empty;
-        IsUndoReturnModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseUndoReturnModal()
-    {
-        IsUndoReturnModalOpen = false;
-        _undoReturnItem = null;
-        UndoReturnReason = string.Empty;
-    }
-
-    [RelayCommand]
-    private void ConfirmUndoReturn()
-    {
-        if (_undoReturnItem == null) return;
-
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-        {
-            CloseUndoReturnModal();
-            return;
-        }
-
-        var returnRecord = companyData.Returns.FirstOrDefault(r => r.Id == _undoReturnItem.Id);
+        var returnRecord = companyData?.Returns.FirstOrDefault(r => r.Id == item.Id);
         if (returnRecord != null)
         {
-            companyData.Returns.Remove(returnRecord);
-            App.CompanyManager?.MarkAsChanged();
+            App.ReturnsModalsViewModel?.OpenUndoReturnModal(returnRecord, $"{item.Id} - {item.ProductNames}");
         }
-
-        CloseUndoReturnModal();
-        LoadReturns();
     }
 
     #endregion
@@ -605,9 +521,6 @@ public partial class ReturnDisplayItem : ObservableObject
     private decimal _refundAmount;
 
     [ObservableProperty]
-    private ReturnStatus _status;
-
-    [ObservableProperty]
     private string _notes = string.Empty;
 
     [ObservableProperty]
@@ -616,28 +529,4 @@ public partial class ReturnDisplayItem : ObservableObject
     // Computed properties for display
     public string DateFormatted => ReturnDate.ToString("MMM d, yyyy");
     public string RefundAmountFormatted => $"${RefundAmount:N2}";
-    public string StatusText => Status.ToString();
-
-    public bool IsPending => Status == ReturnStatus.Pending;
-    public bool IsApproved => Status == ReturnStatus.Approved;
-    public bool IsCompleted => Status == ReturnStatus.Completed;
-    public bool IsRejected => Status == ReturnStatus.Rejected;
-
-    public string StatusBadgeBackground => Status switch
-    {
-        ReturnStatus.Pending => "#FEF3C7",
-        ReturnStatus.Approved => "#DBEAFE",
-        ReturnStatus.Completed => "#DCFCE7",
-        ReturnStatus.Rejected => "#FEE2E2",
-        _ => "#F3F4F6"
-    };
-
-    public string StatusBadgeForeground => Status switch
-    {
-        ReturnStatus.Pending => "#D97706",
-        ReturnStatus.Approved => "#2563EB",
-        ReturnStatus.Completed => "#16A34A",
-        ReturnStatus.Rejected => "#DC2626",
-        _ => "#6B7280"
-    };
 }

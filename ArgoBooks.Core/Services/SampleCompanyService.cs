@@ -125,7 +125,7 @@ public class SampleCompanyService
             Phone = "555-100-0000"
         };
 
-        companyData.Settings.AppVersion = "2.0.0";
+        companyData.Settings.AppVersion = "2.2.1";
 
         // Set localization defaults
         companyData.Settings.Localization = new LocalizationSettings

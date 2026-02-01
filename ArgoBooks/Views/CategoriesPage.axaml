@@ -126,16 +126,6 @@
                                         <controls:ColumnResizeGripper ColumnName="Name" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
-                                    <!-- Parent Category -->
-                                    <Panel Width="{Binding ColumnWidths.ParentColumnWidth}" IsVisible="{Binding ShowParentColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Parent Category'}" ColumnName="Parent"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Parent" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
                                     <!-- Description -->
                                     <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
                                         <controls:SortableColumnHeader Text="{loc:Loc Description}" ColumnName="Description"
@@ -194,35 +184,24 @@
                                                         <!-- Category Name with Icon -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowNameColumn}">
-                                                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center"
-                                                                        Margin="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildIndent}}">
-                                                                <Border Width="36" Height="36"
+                                                            <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center"
+                                                                  Margin="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildIndent}}">
+                                                                <Border Grid.Column="0" Width="36" Height="36"
                                                                         CornerRadius="8"
-                                                                        Background="{DynamicResource SurfaceAltBrush}">
+                                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                                        Margin="0,0,12,0">
                                                                     <TextBlock Text="{Binding Icon}"
                                                                                FontSize="18"
                                                                                HorizontalAlignment="Center"
                                                                                VerticalAlignment="Center" />
                                                                 </Border>
-                                                                <TextBlock Text="{Binding Name}"
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}"
                                                                            FontSize="14"
                                                                            FontWeight="Medium"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
                                                                            TextTrimming="CharacterEllipsis" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Parent Category -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.ParentColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowParentColumn}">
-                                                            <TextBlock Text="{Binding ParentName, TargetNullValue='-', FallbackValue='-'}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
+                                                            </Grid>
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
@@ -443,7 +422,6 @@
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Category Name'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowParentColumn}" Content="{loc:Loc 'Parent Category'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="{loc:Loc 'Products/Services'}" Classes="column-toggle" />

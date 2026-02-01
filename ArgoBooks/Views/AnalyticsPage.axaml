@@ -121,9 +121,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding ProfitOverTimeTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ProfitTrendsSeries}"
                                                     XAxes="{Binding ProfitTrendsXAxes}"
                                                     YAxes="{Binding ProfitTrendsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasProfitTrendsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -150,9 +152,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding RevenueVsExpensesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding RevenueVsExpensesSeries}"
                                                     XAxes="{Binding RevenueVsExpensesXAxes}"
                                                     YAxes="{Binding RevenueVsExpensesYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasRevenueVsExpensesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -182,9 +186,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding RevenueTrendsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding RevenueTrendsSeries}"
                                                     XAxes="{Binding RevenueTrendsXAxes}"
                                                     YAxes="{Binding RevenueTrendsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasRevenueTrendsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -220,10 +226,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding RevenueDistributionSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding RevenueDistributionLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -259,9 +267,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding ExpenseTrendsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpensesTrendsSeries}"
                                                     XAxes="{Binding ExpensesTrendsXAxes}"
                                                     YAxes="{Binding ExpensesTrendsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasExpensesTrendsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -297,10 +307,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -349,10 +361,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CountriesOfOriginSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding CountriesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -394,10 +408,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding CompaniesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -442,10 +458,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CountriesOfDestinationSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding CountriesOfDestinationLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -487,10 +505,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CompaniesOfDestinationSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding CompaniesOfDestinationLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -554,12 +574,14 @@
                                     <lvc:GeoMap Series="{Binding OriginGeoMapSeries}"
                                                 MapProjection="Mercator"
                                                 IsVisible="{Binding IsMapModeOrigin}"
-                                                PointerPressed="OnChartPointerPressed" />
+                                                PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased" />
                                     <!-- Destination GeoMap (customer countries from sales) -->
                                     <lvc:GeoMap Series="{Binding DestinationGeoMapSeries}"
                                                 MapProjection="Mercator"
                                                 IsVisible="{Binding IsMapModeDestination}"
-                                                PointerPressed="OnChartPointerPressed" />
+                                                PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased" />
                                     <!-- No data message for Origin (only show when in origin mode AND no data) -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8">
@@ -651,10 +673,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding AccountantsTransactionsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding AccountantsTransactionsLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -687,9 +711,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding WorkloadDistributionTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TotalTransactionsSeries}"
                                                     XAxes="{Binding TotalTransactionsXAxes}"
                                                     YAxes="{Binding TotalTransactionsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -755,9 +781,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding AverageTransactionValueTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding AvgTransactionValueSeries}"
                                                     XAxes="{Binding AvgTransactionValueXAxes}"
                                                     YAxes="{Binding AvgTransactionValueYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasAvgTransactionValueData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -784,9 +812,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding TotalTransactionsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TotalTransactionsSeries}"
                                                     XAxes="{Binding TotalTransactionsXAxes}"
                                                     YAxes="{Binding TotalTransactionsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -803,57 +833,29 @@
                     </Grid>
 
                     <!-- Charts Row 2 -->
-                    <Grid ColumnDefinitions="*,*" Height="300">
+                    <Grid ColumnDefinitions="*" Height="300">
                         <!-- Average Shipping Costs -->
                         <Border Grid.Column="0"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
-                                Padding="10"
-                                Margin="0,0,12,0">
+                                Padding="10">
                             <Panel>
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding AverageShippingCostsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding AvgShippingCostsSeries}"
                                                     XAxes="{Binding AvgShippingCostsXAxes}"
                                                     YAxes="{Binding AvgShippingCostsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasAvgShippingCostsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasAvgShippingCostsData}">
                                     <TextBlock Text="{loc:Loc 'No shipping data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
-                            </Panel>
-                        </Border>
-
-                        <!-- Growth Rates -->
-                        <Border Grid.Column="1"
-                                Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="10"
-                                Margin="12,0,0,0">
-                            <Panel>
-                                <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding GrowthRatesTitle}"
-                                                    PointerPressed="OnChartPointerPressed"
-                                                    Series="{Binding GrowthRatesSeries}"
-                                                    XAxes="{Binding GrowthRatesXAxes}"
-                                                    YAxes="{Binding GrowthRatesYAxes}"
-                                                    IsVisible="{Binding HasGrowthRatesData}" />
-                                <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasGrowthRatesData}">
-                                    <TextBlock Text="{loc:Loc 'No growth data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -922,10 +924,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding CompaniesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -967,10 +971,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CustomerPaymentStatusSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding CustomerPaymentStatusLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1006,9 +1012,11 @@
                                 <!-- Chart - using Growth Rates -->
                                 <lvc:CartesianChart Title="{Binding CustomerGrowthTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding GrowthRatesSeries}"
                                                     XAxes="{Binding GrowthRatesXAxes}"
                                                     YAxes="{Binding GrowthRatesYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasGrowthRatesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1035,9 +1043,11 @@
                                 <!-- Chart - using Avg Transaction Value -->
                                 <lvc:CartesianChart Title="{Binding CustomerLifetimeValueTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding AvgTransactionValueSeries}"
                                                     XAxes="{Binding AvgTransactionValueXAxes}"
                                                     YAxes="{Binding AvgTransactionValueYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasAvgTransactionValueData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1076,10 +1086,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ActiveInactiveCustomersSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding ActiveInactiveCustomersLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1112,9 +1124,11 @@
                                 <!-- Chart - using Total Transactions -->
                                 <lvc:CartesianChart Title="{Binding RentalsPerCustomerTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TotalTransactionsSeries}"
                                                     XAxes="{Binding TotalTransactionsXAxes}"
                                                     YAxes="{Binding TotalTransactionsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1180,9 +1194,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding ReturnsOverTimeTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ReturnsOverTimeSeries}"
                                                     XAxes="{Binding ReturnsOverTimeXAxes}"
                                                     YAxes="{Binding ReturnsOverTimeYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasReturnsOverTimeData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1218,10 +1234,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding ReturnReasonsLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1257,9 +1275,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding FinancialImpactOfReturnsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ReturnFinancialImpactSeries}"
                                                     XAxes="{Binding ReturnFinancialImpactXAxes}"
                                                     YAxes="{Binding ReturnFinancialImpactYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasReturnFinancialImpactData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1295,10 +1315,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding ReturnReasonsLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1343,10 +1365,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ReturnsByProductSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding ReturnsByProductLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1379,9 +1403,11 @@
                                 <!-- Chart - Expense vs Revenue Returns -->
                                 <lvc:CartesianChart Title="{Binding ExpenseVsRevenueReturnsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpenseVsRevenueReturnsSeries}"
                                                     XAxes="{Binding ExpenseVsRevenueReturnsXAxes}"
                                                     YAxes="{Binding ExpenseVsRevenueReturnsYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasExpenseVsRevenueReturnsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1447,9 +1473,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding LossesOverTimeTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding LossesOverTimeSeries}"
                                                     XAxes="{Binding LossesOverTimeXAxes}"
                                                     YAxes="{Binding LossesOverTimeYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasLossesOverTimeData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1485,10 +1513,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding LossReasonsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding LossReasonsLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1524,9 +1554,11 @@
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart Title="{Binding FinancialImpactOfLossesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding LossFinancialImpactSeries}"
                                                     XAxes="{Binding LossFinancialImpactXAxes}"
                                                     YAxes="{Binding LossFinancialImpactYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasLossFinancialImpactData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1562,10 +1594,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding LossesByCategorySeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding LossesByCategoryLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1610,10 +1644,12 @@
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
                                                       PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding LossesByProductSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
                                                                  PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                                  Items="{Binding LossesByProductLegend}"
                                                                  MaxHeightOverride="240"
                                                                  Width="200"
@@ -1646,9 +1682,11 @@
                                 <!-- Chart - Expense vs Revenue Losses -->
                                 <lvc:CartesianChart Title="{Binding ExpenseVsRevenueLossesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpenseVsRevenueLossesSeries}"
                                                     XAxes="{Binding ExpenseVsRevenueLossesXAxes}"
                                                     YAxes="{Binding ExpenseVsRevenueLossesYAxes}"
+                                                    ZoomMode="Both"
                                                     IsVisible="{Binding HasExpenseVsRevenueLossesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"

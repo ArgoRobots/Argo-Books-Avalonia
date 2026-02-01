@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -7,7 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for Returns modals (Filter).
+/// ViewModel for Returns modals (Filter, View Details, Undo).
 /// </summary>
 public partial class ReturnsModalsViewModel : ViewModelBase
 {
@@ -23,6 +24,11 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? FiltersCleared;
 
+    /// <summary>
+    /// Raised when a return is undone.
+    /// </summary>
+    public event EventHandler? ReturnUndone;
+
     #endregion
 
     #region Filter Modal State
@@ -37,15 +43,7 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     private DateTimeOffset? _filterDateTo;
 
     [ObservableProperty]
-    private string _filterStatus = "All";
-
-    [ObservableProperty]
     private string _filterReason = "All";
-
-    /// <summary>
-    /// Status filter options.
-    /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Pending", "Approved", "Rejected", "Refunded"];
 
     /// <summary>
     /// Reason filter options.
@@ -62,7 +60,6 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     public bool HasFilterChanges =>
         FilterDateFrom != null ||
         FilterDateTo != null ||
-        FilterStatus != "All" ||
         FilterReason != "All";
 
     /// <summary>
@@ -72,7 +69,6 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     {
         FilterDateFrom = null;
         FilterDateTo = null;
-        FilterStatus = "All";
         FilterReason = "All";
     }
 
@@ -142,6 +138,141 @@ public partial class ReturnsModalsViewModel : ViewModelBase
         ResetFilterDefaults();
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
+    }
+
+    #endregion
+
+    #region View Details Modal State
+
+    [ObservableProperty]
+    private bool _isViewDetailsModalOpen;
+
+    [ObservableProperty]
+    private string _viewDetailsId = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsProduct = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsDate = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsRefund = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsReason = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsNotes = string.Empty;
+
+    /// <summary>
+    /// Opens the view details modal with the specified return details.
+    /// </summary>
+    public void OpenViewDetailsModal(string id, string product, string date, string refund, string reason, string notes)
+    {
+        ViewDetailsId = id;
+        ViewDetailsProduct = product;
+        ViewDetailsDate = date;
+        ViewDetailsRefund = refund;
+        ViewDetailsReason = reason;
+        ViewDetailsNotes = string.IsNullOrWhiteSpace(notes) ? "No notes provided" : notes;
+        IsViewDetailsModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the view details modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseViewDetailsModal()
+    {
+        IsViewDetailsModalOpen = false;
+    }
+
+    #endregion
+
+    #region Undo Return Modal State
+
+    private Return? _undoReturn;
+
+    [ObservableProperty]
+    private bool _isUndoReturnModalOpen;
+
+    [ObservableProperty]
+    private string _undoReturnItemDescription = string.Empty;
+
+    [ObservableProperty]
+    private string _undoReturnReason = string.Empty;
+
+    /// <summary>
+    /// Opens the undo return modal for the specified return.
+    /// </summary>
+    public void OpenUndoReturnModal(Return returnItem, string description)
+    {
+        _undoReturn = returnItem;
+        UndoReturnItemDescription = description;
+        UndoReturnReason = string.Empty;
+        IsUndoReturnModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the undo return modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseUndoReturnModal()
+    {
+        IsUndoReturnModalOpen = false;
+        _undoReturn = null;
+    }
+
+    /// <summary>
+    /// Confirms the undo return action.
+    /// </summary>
+    [RelayCommand]
+    private void ConfirmUndoReturn()
+    {
+        if (_undoReturn == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        // Remove the return record
+        companyData.Returns.Remove(_undoReturn);
+
+        // Restore the original transaction quantity
+        if (_undoReturn.ReturnType == "Expense")
+        {
+            var expense = companyData.Expenses.FirstOrDefault(e => e.Id == _undoReturn.OriginalTransactionId);
+            if (expense != null)
+            {
+                foreach (var returnedItem in _undoReturn.Items)
+                {
+                    var lineItem = expense.LineItems.FirstOrDefault(i => i.ProductId == returnedItem.ProductId);
+                    if (lineItem != null)
+                    {
+                        lineItem.Quantity += returnedItem.Quantity;
+                    }
+                }
+            }
+        }
+        else if (_undoReturn.ReturnType == "Customer")
+        {
+            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == _undoReturn.OriginalTransactionId);
+            if (revenue != null)
+            {
+                foreach (var returnedItem in _undoReturn.Items)
+                {
+                    var lineItem = revenue.LineItems.FirstOrDefault(i => i.ProductId == returnedItem.ProductId);
+                    if (lineItem != null)
+                    {
+                        lineItem.Quantity += returnedItem.Quantity;
+                    }
+                }
+            }
+        }
+
+        App.CompanyManager?.MarkAsChanged();
+        CloseUndoReturnModal();
+        ReturnUndone?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion

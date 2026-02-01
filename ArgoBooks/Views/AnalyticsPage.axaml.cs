@@ -53,6 +53,62 @@ public partial class AnalyticsPage : UserControl
             OnChartPointerWheelChanged,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+
+        // Intercept right-click in tunneling phase to prevent LiveCharts selection box
+        AddHandler(
+            PointerPressedEvent,
+            OnChartPointerPressedTunnel,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+    }
+
+    /// <summary>
+    /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
+    /// </summary>
+    private void OnChartPointerPressedTunnel(object? sender, PointerPressedEventArgs e)
+    {
+        var source = e.Source as Control;
+        var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+        var pieChart = source?.FindAncestorOfType<PieChart>() ?? source as PieChart;
+        var geoMap = source?.FindAncestorOfType<GeoMap>() ?? source as GeoMap;
+
+        if ((chart != null || pieChart != null || geoMap != null) && e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+        {
+            // Show context menu and mark as handled to prevent LiveCharts selection box
+            if (DataContext is AnalyticsPageViewModel viewModel)
+            {
+                var clickedControl = source;
+
+                // For PieChartLegend, find the associated PieChart sibling
+                var legend = source?.FindAncestorOfType<PieChartLegend>() ?? source as PieChartLegend;
+                if (legend != null && legend.Parent is Grid parentGrid)
+                {
+                    foreach (var child in parentGrid.Children)
+                    {
+                        if (child is PieChart siblingChart)
+                        {
+                            _clickedChart = siblingChart;
+                            clickedControl = siblingChart;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    _clickedChart = (Control?)chart ?? (Control?)pieChart ?? geoMap;
+                    clickedControl = _clickedChart;
+                }
+
+                _clickedChartName = GetChartTitle(clickedControl) ?? "Chart";
+                var position = e.GetPosition(this);
+                var isPieChart = pieChart != null || legend != null;
+                var isGeoMap = geoMap != null;
+
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart, isGeoMap: isGeoMap,
+                    parentWidth: Bounds.Width, parentHeight: Bounds.Height);
+            }
+            e.Handled = true;
+        }
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
@@ -136,6 +192,23 @@ public partial class AnalyticsPage : UserControl
             {
                 viewModel.HideChartContextMenuCommand.Execute(null);
             }
+
+            // Set hand cursor when panning
+            if (sender is CartesianChart chart)
+            {
+                chart.Cursor = new Cursor(StandardCursorType.Hand);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores the default cursor when pointer is released after panning.
+    /// </summary>
+    private void OnChartPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (sender is CartesianChart chart)
+        {
+            chart.Cursor = Cursor.Default;
         }
     }
 
@@ -336,6 +409,7 @@ public partial class AnalyticsPage : UserControl
     /// <summary>
     /// Handles pointer wheel events on charts to allow scroll passthrough to parent ScrollViewer.
     /// LiveCharts captures wheel events for zooming, so we intercept them and forward to the ScrollViewer.
+    /// When CTRL or Shift is held, allow LiveCharts to handle zooming instead.
     /// </summary>
     private void OnChartPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
@@ -343,8 +417,21 @@ public partial class AnalyticsPage : UserControl
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
 
+        // Only intercept events that originate from a chart
+        if (chart == null)
+            return;
+
+        // If CTRL or Shift is held, allow LiveCharts to handle zooming
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            return; // Don't intercept - let LiveCharts zoom
+        }
+
+        // Mark as handled to prevent LiveCharts from zooming when no modifier is held
+        e.Handled = true;
+
         // Find the ScrollViewer and manually scroll it
-        var scrollViewer = chart?.FindAncestorOfType<ScrollViewer>();
+        var scrollViewer = chart.FindAncestorOfType<ScrollViewer>();
         if (scrollViewer != null)
         {
             // Use ScrollViewer's built-in line scroll methods for natural scroll feel

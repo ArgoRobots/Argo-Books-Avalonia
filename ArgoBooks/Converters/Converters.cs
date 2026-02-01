@@ -13,11 +13,6 @@ public static class Converters
     public static readonly IMultiValueConverter ThemeBorderBrushMulti = new ThemeBorderBrushMultiConverter();
 
     /// <summary>
-    /// Converts an integer to a range of integers (0 to value-1) for ItemsControls.
-    /// </summary>
-    public static readonly IValueConverter IntToRange = new IntToRangeConverter();
-
-    /// <summary>
     /// Converts a boolean to "Finish" or "Next" text.
     /// </summary>
     public static readonly IValueConverter BoolToFinishNext = new BoolToFixedStringConverter("Finish", "Next");

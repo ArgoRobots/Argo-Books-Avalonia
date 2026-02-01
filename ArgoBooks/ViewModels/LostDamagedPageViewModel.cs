@@ -47,9 +47,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
-
-    [ObservableProperty]
     private bool _showProductColumn = true;
 
     [ObservableProperty]
@@ -59,22 +56,13 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private bool _showReasonColumn = true;
 
     [ObservableProperty]
-    private bool _showStaffColumn = true;
-
-    [ObservableProperty]
     private bool _showLossColumn = true;
 
-    [ObservableProperty]
-    private bool _showStatusColumn = true;
-
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
-    partial void OnShowStaffColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Staff", value);
     partial void OnShowLossColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Loss", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -193,11 +181,12 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
-        // Subscribe to filter modal events
+        // Subscribe to modal events
         if (App.LostDamagedModalsViewModel != null)
         {
             App.LostDamagedModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.LostDamagedModalsViewModel.FiltersCleared += OnFiltersCleared;
+            App.LostDamagedModalsViewModel.ItemUndone += OnItemUndone;
         }
 
         // Subscribe to language changes to refresh translated content
@@ -220,6 +209,11 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         SearchQuery = null;
         CurrentPage = 1;
         FilterItems();
+    }
+
+    private void OnItemUndone(object? sender, EventArgs e)
+    {
+        LoadItems();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -346,9 +340,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private LostDamagedDisplayItem CreateDisplayItem(LostDamaged item)
     {
         var productName = GetProductName(item.ProductId);
-        var staffName = GetStaffName(item);
         var itemType = GetItemType(item.Reason);
-        var status = GetItemStatus(item);
 
         return new LostDamagedDisplayItem
         {
@@ -358,9 +350,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             ItemType = itemType,
             DateDiscovered = item.DateDiscovered,
             Reason = item.Reason.ToString(),
-            StaffName = staffName,
             ValueLost = item.ValueLost,
-            Status = status,
             Notes = item.Notes,
             Quantity = item.Quantity,
             InsuranceClaim = item.InsuranceClaim
@@ -374,13 +364,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         return product?.Name ?? "Unknown Product";
     }
 
-    private string GetStaffName(LostDamaged item)
-    {
-        // For now, return a placeholder since we don't have a specific field for who reported it
-        // In a real implementation, this would come from a "ReportedBy" field
-        return "Staff Member";
-    }
-
     private static string GetItemType(LostDamagedReason reason)
     {
         return reason switch
@@ -389,19 +372,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             LostDamagedReason.Damaged or LostDamagedReason.Expired or LostDamagedReason.Other => "Damaged",
             _ => "Unknown"
         };
-    }
-
-    private static string GetItemStatus(LostDamaged item)
-    {
-        if (item.InsuranceClaim)
-            return "Insurance Claim";
-
-        // Default status logic based on age of record
-        var daysSinceDiscovery = (DateTime.UtcNow - item.DateDiscovered).TotalDays;
-        if (daysSinceDiscovery > 30)
-            return "Written Off";
-
-        return "Pending";
     }
 
     private void UpdatePageNumbers()
@@ -435,52 +405,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     #endregion
 
-    #region View Details Modal
-
-    [ObservableProperty]
-    private bool _isViewDetailsModalOpen;
-
-    [ObservableProperty]
-    private string _viewDetailsId = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsProduct = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsType = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsReason = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsNotes = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsDate = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsValue = string.Empty;
-
-    [ObservableProperty]
-    private string _viewDetailsQuantity = string.Empty;
-
-    #endregion
-
-    #region Undo Item Modal
-
-    private LostDamagedDisplayItem? _undoItem;
-
-    [ObservableProperty]
-    private bool _isUndoItemModalOpen;
-
-    [ObservableProperty]
-    private string _undoItemDescription = string.Empty;
-
-    [ObservableProperty]
-    private string _undoItemReason = string.Empty;
-
-    #endregion
-
     #region Action Commands
 
     [RelayCommand]
@@ -488,21 +412,15 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        ViewDetailsId = item.Id;
-        ViewDetailsProduct = item.ProductName;
-        ViewDetailsType = item.ItemType;
-        ViewDetailsReason = item.Reason;
-        ViewDetailsNotes = string.IsNullOrWhiteSpace(item.Notes) ? "No notes provided" : item.Notes;
-        ViewDetailsDate = item.DateFormatted;
-        ViewDetailsValue = item.ValueLostFormatted;
-        ViewDetailsQuantity = item.QuantityFormatted;
-        IsViewDetailsModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseViewDetailsModal()
-    {
-        IsViewDetailsModalOpen = false;
+        App.LostDamagedModalsViewModel?.OpenViewDetailsModal(
+            item.Id,
+            item.ProductName,
+            item.ItemType,
+            item.Reason,
+            item.Notes,
+            item.DateFormatted,
+            item.ValueLostFormatted,
+            item.QuantityFormatted);
     }
 
     [RelayCommand]
@@ -510,41 +428,12 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        _undoItem = item;
-        UndoItemDescription = $"{item.Id} - {item.ProductName}";
-        UndoItemReason = string.Empty;
-        IsUndoItemModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseUndoItemModal()
-    {
-        IsUndoItemModalOpen = false;
-        _undoItem = null;
-        UndoItemReason = string.Empty;
-    }
-
-    [RelayCommand]
-    private void ConfirmUndoItem()
-    {
-        if (_undoItem == null) return;
-
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-        {
-            CloseUndoItemModal();
-            return;
-        }
-
-        var lostDamagedRecord = companyData.LostDamaged.FirstOrDefault(ld => ld.Id == _undoItem.Id);
+        var lostDamagedRecord = companyData?.LostDamaged.FirstOrDefault(ld => ld.Id == item.Id);
         if (lostDamagedRecord != null)
         {
-            companyData.LostDamaged.Remove(lostDamagedRecord);
-            App.CompanyManager?.MarkAsChanged();
+            App.LostDamagedModalsViewModel?.OpenUndoItemModal(lostDamagedRecord, $"{item.Id} - {item.ProductName}");
         }
-
-        CloseUndoItemModal();
-        LoadItems();
     }
 
     #endregion
@@ -574,13 +463,7 @@ public partial class LostDamagedDisplayItem : ObservableObject
     private string _reason = string.Empty;
 
     [ObservableProperty]
-    private string _staffName = string.Empty;
-
-    [ObservableProperty]
     private decimal _valueLost;
-
-    [ObservableProperty]
-    private string _status = string.Empty;
 
     [ObservableProperty]
     private string _notes = string.Empty;
@@ -610,24 +493,6 @@ public partial class LostDamagedDisplayItem : ObservableObject
     {
         "Lost" => "#D97706",
         "Damaged" => "#DC2626",
-        _ => "#6B7280"
-    };
-
-    public string StatusBadgeBackground => Status switch
-    {
-        "Written Off" => "#F3F4F6",
-        "Insurance Claim" => "#DBEAFE",
-        "Recovered" => "#DCFCE7",
-        "Pending" => "#FEF3C7",
-        _ => "#F3F4F6"
-    };
-
-    public string StatusBadgeForeground => Status switch
-    {
-        "Written Off" => "#6B7280",
-        "Insurance Claim" => "#2563EB",
-        "Recovered" => "#16A34A",
-        "Pending" => "#D97706",
         _ => "#6B7280"
     };
 }

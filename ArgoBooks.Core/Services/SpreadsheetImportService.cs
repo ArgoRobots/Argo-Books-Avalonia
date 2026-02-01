@@ -7,6 +7,7 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ClosedXML.Excel;
 
@@ -867,6 +868,13 @@ public class SpreadsheetImportService
             case "Purchase Order Line Items":
                 ImportPurchaseOrderLineItems(data, headers, rows);
                 break;
+            case "Returns":
+                ImportReturns(data, headers, rows);
+                break;
+            case "Lost Damaged":
+            case "Lost/Damaged":
+                ImportLostDamaged(data, headers, rows);
+                break;
         }
     }
 
@@ -1100,11 +1108,13 @@ public class SpreadsheetImportService
             purchase.Total = GetDecimal(row, headers, "Total");
             purchase.ReferenceNumber = GetString(row, headers, "Reference");
             purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
+            purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
 
             // Set USD values (assume imported data is in USD)
             purchase.OriginalCurrency = "USD";
             purchase.TotalUSD = purchase.Total;
             purchase.TaxAmountUSD = purchase.TaxAmount;
+            purchase.ShippingCostUSD = purchase.ShippingCost;
 
             // Link product by looking up by name and creating a LineItem
             if (!string.IsNullOrEmpty(description))
@@ -1310,11 +1320,13 @@ public class SpreadsheetImportService
             revenue.Total = GetDecimal(row, headers, "Total");
             revenue.ReferenceNumber = GetString(row, headers, "Reference");
             revenue.PaymentStatus = GetString(row, headers, "Payment Status");
+            revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
             // Set USD values (assume imported data is in USD)
             revenue.OriginalCurrency = "USD";
             revenue.TotalUSD = revenue.Total;
             revenue.TaxAmountUSD = revenue.TaxAmount;
+            revenue.ShippingCostUSD = revenue.ShippingCost;
 
             if (string.IsNullOrEmpty(revenue.PaymentStatus))
                 revenue.PaymentStatus = "Paid";
@@ -1615,6 +1627,104 @@ public class SpreadsheetImportService
         }
     }
 
+    private void ImportReturns(CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        foreach (var row in rows)
+        {
+            var id = GetString(row, headers, "ID");
+            var existing = data.Returns.FirstOrDefault(r => r.Id == id);
+
+            var returnRecord = existing ?? new Return();
+            returnRecord.Id = id;
+            returnRecord.OriginalTransactionId = GetString(row, headers, "Original Transaction ID");
+            returnRecord.ReturnType = GetString(row, headers, "Return Type");
+            if (string.IsNullOrEmpty(returnRecord.ReturnType))
+                returnRecord.ReturnType = "Customer";
+            returnRecord.CustomerId = GetString(row, headers, "Customer ID");
+            returnRecord.SupplierId = GetString(row, headers, "Supplier ID");
+            returnRecord.ReturnDate = GetDateTime(row, headers, "Return Date");
+            returnRecord.RefundAmount = GetDecimal(row, headers, "Refund Amount");
+            returnRecord.RestockingFee = GetDecimal(row, headers, "Restocking Fee");
+            returnRecord.Status = ParseEnum(GetString(row, headers, "Status"), ReturnStatus.Pending);
+            returnRecord.Notes = GetString(row, headers, "Notes");
+            returnRecord.ProcessedBy = GetNullableString(row, headers, "Processed By");
+
+            // Handle items - simple single product per return row
+            var productId = GetNullableString(row, headers, "Product ID");
+            var productName = GetNullableString(row, headers, "Product");
+            var quantity = GetInt(row, headers, "Quantity");
+            var reason = GetString(row, headers, "Reason");
+
+            if (!string.IsNullOrEmpty(productId) || !string.IsNullOrEmpty(productName))
+            {
+                // Look up product by name if ID not provided
+                if (string.IsNullOrEmpty(productId) && !string.IsNullOrEmpty(productName))
+                {
+                    var product = data.Products.FirstOrDefault(p =>
+                        string.Equals(p.Name, productName, StringComparison.OrdinalIgnoreCase));
+                    productId = product?.Id ?? "";
+                }
+
+                returnRecord.Items =
+                [
+                    new ReturnItem
+                    {
+                        ProductId = productId ?? "",
+                        Quantity = quantity > 0 ? quantity : 1,
+                        Reason = reason
+                    }
+                ];
+            }
+
+            if (existing == null)
+                data.Returns.Add(returnRecord);
+        }
+    }
+
+    private void ImportLostDamaged(CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        foreach (var row in rows)
+        {
+            var id = GetString(row, headers, "ID");
+            var existing = data.LostDamaged.FirstOrDefault(ld => ld.Id == id);
+
+            var lostDamaged = existing ?? new LostDamaged();
+            lostDamaged.Id = id;
+
+            // Handle product - prefer ID, fall back to name lookup
+            var productId = GetNullableString(row, headers, "Product ID");
+            if (string.IsNullOrEmpty(productId))
+            {
+                var productName = GetNullableString(row, headers, "Product");
+                if (!string.IsNullOrEmpty(productName))
+                {
+                    var product = data.Products.FirstOrDefault(p =>
+                        string.Equals(p.Name, productName, StringComparison.OrdinalIgnoreCase));
+                    productId = product?.Id;
+                }
+            }
+            lostDamaged.ProductId = productId ?? "";
+
+            lostDamaged.InventoryItemId = GetNullableString(row, headers, "Inventory Item ID");
+            lostDamaged.Quantity = GetInt(row, headers, "Quantity");
+            if (lostDamaged.Quantity == 0)
+                lostDamaged.Quantity = 1;
+            lostDamaged.Reason = ParseEnum(GetString(row, headers, "Reason"), LostDamagedReason.Damaged);
+            lostDamaged.DateDiscovered = GetDateTime(row, headers, "Date Discovered");
+            if (lostDamaged.DateDiscovered == DateTime.MinValue)
+                lostDamaged.DateDiscovered = GetDateTime(row, headers, "Date");
+            lostDamaged.ValueLost = GetDecimal(row, headers, "Value Lost");
+            lostDamaged.Notes = GetString(row, headers, "Notes");
+
+            var insuranceClaim = GetString(row, headers, "Insurance Claim");
+            lostDamaged.InsuranceClaim = insuranceClaim.Equals("Yes", StringComparison.OrdinalIgnoreCase) ||
+                                          insuranceClaim.Equals("True", StringComparison.OrdinalIgnoreCase);
+
+            if (existing == null)
+                data.LostDamaged.Add(lostDamaged);
+        }
+    }
+
     #endregion
 
     #region ID Counter Update
@@ -1638,6 +1748,8 @@ public class SpreadsheetImportService
         data.IdCounters.PurchaseOrder = GetMaxIdNumber(data.PurchaseOrders.Select(p => p.Id), "PO-");
         data.IdCounters.RentalItem = GetMaxIdNumber(data.RentalInventory.Select(r => r.Id), "RNT-ITM-");
         data.IdCounters.Rental = GetMaxIdNumber(data.Rentals.Select(r => r.Id), "RNT-");
+        data.IdCounters.Return = GetMaxIdNumber(data.Returns.Select(r => r.Id), "RET-");
+        data.IdCounters.LostDamaged = GetMaxIdNumber(data.LostDamaged.Select(ld => ld.Id), "LOST-");
     }
 
     private static int GetMaxIdNumber(IEnumerable<string> ids, string prefix)

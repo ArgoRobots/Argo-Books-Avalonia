@@ -132,14 +132,6 @@
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         </Panel>
 
-                                        <!-- Type Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
-                                            <TextBlock Text="{loc:Loc 'Type'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Type" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
-
                                         <!-- Product Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
                                             <TextBlock Text="{loc:Loc 'Product'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
@@ -164,27 +156,11 @@
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         </Panel>
 
-                                        <!-- Staff Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.StaffColumnWidth}" IsVisible="{Binding ShowStaffColumn}">
-                                            <TextBlock Text="{loc:Loc 'Staff'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Staff" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
-
                                         <!-- Loss Column Header -->
                                         <Panel Width="{Binding ColumnWidths.LossColumnWidth}" IsVisible="{Binding ShowLossColumn}">
                                             <TextBlock Text="{loc:Loc 'Loss'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Loss" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
-
-                                        <!-- Status Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                            <TextBlock Text="{loc:Loc 'Status'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         </Panel>
 
@@ -208,41 +184,18 @@
                                                             BorderBrush="{DynamicResource BorderBrush}"
                                                             BorderThickness="0,0,0,1"
                                                             Background="{DynamicResource SurfaceBrush}"
-                                                            MinHeight="52"
-                                                            Cursor="Hand">
-                                                        <Border.Styles>
-                                                            <Style Selector="Border:pointerover">
-                                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-                                                            </Style>
-                                                        </Border.Styles>
+                                                            MinHeight="52">
                                                         <StackPanel Orientation="Horizontal">
                                                             <!-- ID -->
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowIdColumn}">
                                                                 <TextBlock Text="{Binding Id}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            FontWeight="Medium"
-                                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Type Badge -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowTypeColumn}">
-                                                                <Border CornerRadius="4"
-                                                                        Padding="6,3"
-                                                                        Background="{Binding TypeBadgeBackground}"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Margin="8,0">
-                                                                    <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
-                                                                               FontSize="10"
-                                                                               FontWeight="Medium"
-                                                                               Foreground="{Binding TypeBadgeForeground}" />
-                                                                </Border>
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                             </Panel>
 
@@ -251,11 +204,11 @@
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowProductColumn}">
                                                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                     <TextBlock Text="{Binding ProductName}"
-                                                                               FontSize="12"
+                                                                               FontSize="14"
                                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                TextTrimming="CharacterEllipsis" />
                                                                     <TextBlock Text="{Binding QuantityFormatted}"
-                                                                               FontSize="10"
+                                                                               FontSize="12"
                                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                                 </StackPanel>
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -265,7 +218,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowDateColumn}">
                                                                 <TextBlock Text="{Binding DateFormatted}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
@@ -276,19 +229,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowReasonColumn}">
                                                                 <TextBlock Text="{Binding Reason}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis"
-                                                                           VerticalAlignment="Center"
-                                                                           Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Staff -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.StaffColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowStaffColumn}">
-                                                                <TextBlock Text="{Binding StaffName}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
@@ -300,28 +241,11 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.LossColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowLossColumn}">
                                                                 <TextBlock Text="{Binding ValueLostFormatted}"
-                                                                           FontSize="12"
+                                                                           FontSize="14"
                                                                            FontWeight="SemiBold"
                                                                            Foreground="#DC2626"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Status Badge -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowStatusColumn}">
-                                                                <Border CornerRadius="4"
-                                                                        Padding="6,3"
-                                                                        Background="{Binding StatusBadgeBackground}"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Margin="8,0">
-                                                                    <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
-                                                                               FontSize="10"
-                                                                               FontWeight="Medium"
-                                                                               Foreground="{Binding StatusBadgeForeground}" />
-                                                                </Border>
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                             </Panel>
 
@@ -470,248 +394,6 @@
             </Grid>
         </ScrollViewer>
 
-        <!-- View Details Modal Overlay -->
-        <Border Background="#80000000"
-                IsVisible="{Binding IsViewDetailsModalOpen}">
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Width="500"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Modal Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <Border Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="#FEE2E2">
-                                    <PathIcon Data="{x:Static icons:Icons.Info}"
-                                              Width="20" Height="20"
-                                              Foreground="#DC2626" />
-                                </Border>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{loc:Loc 'Lost/Damaged Details'}"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{Binding ViewDetailsId}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                            </StackPanel>
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseViewDetailsModalCommand}">
-                                <PathIcon Data="{x:Static icons:Icons.Close}"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
-                        <StackPanel Spacing="20">
-                            <!-- Product and Type -->
-                            <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Product'}"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewDetailsProduct}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right">
-                                    <TextBlock Text="{loc:Loc 'Type'}"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewDetailsType}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Date, Quantity, and Value -->
-                            <Grid ColumnDefinitions="*,*,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Date Discovered'}"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewDetailsDate}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Quantity'}"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewDetailsQuantity}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Loss Value'}"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewDetailsValue}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="#DC2626" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Reason -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Reason'}"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="12">
-                                    <TextBlock Text="{Binding ViewDetailsReason}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextWrapping="Wrap" />
-                                </Border>
-                            </StackPanel>
-
-                            <!-- Notes -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Notes'}"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="12"
-                                        MinHeight="80">
-                                    <TextBlock Text="{Binding ViewDetailsNotes}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextWrapping="Wrap" />
-                                </Border>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Modal Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Button Content="{loc:Loc 'Close'}"
-                                Classes="secondary-button"
-                                HorizontalAlignment="Right"
-                                Command="{Binding CloseViewDetailsModalCommand}" />
-                    </Border>
-                </Grid>
-            </Border>
-        </Border>
-
-        <!-- Undo Item Modal Overlay -->
-        <Border Background="#80000000"
-                IsVisible="{Binding IsUndoItemModalOpen}">
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Width="450"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Modal Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <Border Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="#FEF3C7">
-                                    <PathIcon Data="{x:Static icons:Icons.Returns}"
-                                              Width="20" Height="20"
-                                              Foreground="#D97706" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'Undo Lost/Damaged'}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseUndoItemModalCommand}">
-                                <PathIcon Data="{x:Static icons:Icons.Close}"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Modal Content -->
-                    <StackPanel Grid.Row="1" Spacing="16" Margin="24">
-                        <!-- Item Description -->
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="{loc:Loc 'Item to undo:'}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{Binding UndoItemDescription}"
-                                       FontSize="14"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                        </StackPanel>
-
-                        <!-- Reason (Optional) -->
-                        <StackPanel Spacing="8">
-                            <TextBlock FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}">
-                                <Run Text="{loc:Loc 'Reason for undo'}" />
-                                <Run Text="{loc:Loc '(optional)'}" Foreground="{DynamicResource TextTertiaryBrush}" />
-                            </TextBlock>
-                            <TextBox Text="{Binding UndoItemReason, Mode=TwoWay}"
-                                     Watermark="{loc:Loc 'Enter reason for undoing this record...'}"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     MinHeight="80"
-                                     MaxHeight="120" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Modal Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
-                            <Button Grid.Column="1"
-                                    Content="{loc:Loc 'Cancel'}"
-                                    Classes="secondary-button"
-                                    Margin="0,0,12,0"
-                                    Command="{Binding CloseUndoItemModalCommand}" />
-                            <Button Grid.Column="2"
-                                    Content="{loc:Loc 'Undo Record'}"
-                                    Classes="danger-button"
-                                    Command="{Binding ConfirmUndoItemCommand}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
-        </Border>
-
         <!-- Column Visibility Menu -->
         <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
                                         MenuX="{Binding ColumnMenuX}"
@@ -720,13 +402,10 @@
             <controls:ColumnVisibilityMenu.ColumnsContent>
                 <StackPanel Spacing="4">
                     <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'ID'}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowStaffColumn}" Content="{loc:Loc Staff}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowLossColumn}" Content="{loc:Loc Loss}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
                 </StackPanel>
             </controls:ColumnVisibilityMenu.ColumnsContent>
         </controls:ColumnVisibilityMenu>

@@ -47,6 +47,35 @@ public partial class PastPredictionsModal : UserControl
             OnChartPointerWheelChanged,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+
+        // Intercept right-click in tunneling phase to prevent LiveCharts selection box
+        AddHandler(
+            PointerPressedEvent,
+            OnChartPointerPressedTunnel,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+    }
+
+    /// <summary>
+    /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
+    /// </summary>
+    private void OnChartPointerPressedTunnel(object? sender, PointerPressedEventArgs e)
+    {
+        var source = e.Source as Control;
+        var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+
+        if (chart != null && e.GetCurrentPoint(this).Properties.IsRightButtonPressed && ViewModel != null)
+        {
+            _accuracyChart = chart;
+            ViewModel.AccuracyChart = _accuracyChart;
+
+            var position = e.GetPosition(this);
+            ViewModel.ChartContextMenuX = position.X;
+            ViewModel.ChartContextMenuY = position.Y;
+            ViewModel.IsChartContextMenuOpen = true;
+
+            e.Handled = true;
+        }
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
@@ -81,10 +110,30 @@ public partial class PastPredictionsModal : UserControl
 
             e.Handled = true;
         }
+        else if (properties.IsLeftButtonPressed)
+        {
+            // Set hand cursor when panning
+            if (sender is CartesianChart chart)
+            {
+                chart.Cursor = new Cursor(StandardCursorType.Hand);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores the default cursor when pointer is released after panning.
+    /// </summary>
+    private void OnChartPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (sender is CartesianChart chart)
+        {
+            chart.Cursor = Cursor.Default;
+        }
     }
 
     /// <summary>
     /// Intercepts scroll wheel events on charts and redirects them to the parent ScrollViewer.
+    /// When CTRL or Shift is held, allow LiveCharts to handle zooming instead.
     /// </summary>
     private void OnChartPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
@@ -94,6 +143,15 @@ public partial class PastPredictionsModal : UserControl
 
         if (chart == null)
             return;
+
+        // If CTRL or Shift is held, allow LiveCharts to handle zooming
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            return; // Don't intercept - let LiveCharts zoom
+        }
+
+        // Mark as handled to prevent LiveCharts from zooming when no modifier is held
+        e.Handled = true;
 
         // Find the ScrollViewer and manually scroll it
         var scrollViewer = chart.FindAncestorOfType<ScrollViewer>();
@@ -108,8 +166,6 @@ public partial class PastPredictionsModal : UserControl
                 else
                     scrollViewer.LineDown();
             }
-
-            e.Handled = true;
         }
     }
 
