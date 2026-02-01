@@ -267,14 +267,6 @@
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            TextWrapping="Wrap" />
                             </StackPanel>
-
-                            <!-- User -->
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{loc:Loc 'Adjusted By'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.UserDisplay}"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
 
