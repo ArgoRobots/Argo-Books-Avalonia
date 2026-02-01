@@ -314,7 +314,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -326,7 +326,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -338,7 +338,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -350,7 +350,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -362,7 +362,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -374,7 +374,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -386,7 +386,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -398,7 +398,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -410,7 +410,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -422,7 +422,7 @@
                                                                    FontSize="14"
                                                                    Foreground="#22C55E"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -435,7 +435,7 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="#DC2626"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
