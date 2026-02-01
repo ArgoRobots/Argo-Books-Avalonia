@@ -1707,7 +1707,7 @@
     </Grid>
 
     <!-- Customer Activity Info Modal -->
-    <Border Background="#80000000"
+    <Border Background="{DynamicResource OverlayBrush}"
             IsVisible="{Binding IsCustomerActivityInfoOpen}"
             IsHitTestVisible="True"
             PointerPressed="CustomerActivityInfoBackdrop_PointerPressed">

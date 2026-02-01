@@ -267,13 +267,13 @@
                                         Spacing="16"
                                         Margin="48"
                                         MaxWidth="400">
-                                <Border Background="#FEE2E2"
+                                <Border Background="{DynamicResource ErrorLightBrush}"
                                         CornerRadius="50"
                                         Padding="16"
                                         HorizontalAlignment="Center">
                                     <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                               Width="32" Height="32"
-                                              Foreground="#DC2626" />
+                                              Foreground="{DynamicResource ErrorBrush}" />
                                 </Border>
                                 <TextBlock Text="{loc:Loc 'Scan Failed'}"
                                            FontSize="18"
@@ -345,7 +345,7 @@
                                                                FontSize="24"
                                                                FontWeight="Bold"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <Border Background="#DCFCE7"
+                                                    <Border Background="{DynamicResource SuccessLightBrush}"
                                                             CornerRadius="4"
                                                             Padding="8,4"
                                                             VerticalAlignment="Center"
@@ -355,7 +355,7 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="#16A34A" />
                                                     </Border>
-                                                    <Border Background="#FEF3C7"
+                                                    <Border Background="{DynamicResource WarningLightBrush}"
                                                             CornerRadius="4"
                                                             Padding="8,4"
                                                             VerticalAlignment="Center"
@@ -365,7 +365,7 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="#CA8A04" />
                                                     </Border>
-                                                    <Border Background="#FEE2E2"
+                                                    <Border Background="{DynamicResource ErrorLightBrush}"
                                                             CornerRadius="4"
                                                             Padding="8,4"
                                                             VerticalAlignment="Center"
@@ -373,7 +373,7 @@
                                                         <TextBlock Text="{loc:Loc 'Low - Review Carefully'}"
                                                                    FontSize="12"
                                                                    FontWeight="Medium"
-                                                                   Foreground="#DC2626" />
+                                                                   Foreground="{DynamicResource ErrorBrush}" />
                                                     </Border>
                                                 </StackPanel>
                                             </StackPanel>
@@ -406,7 +406,7 @@
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <Run Text="{loc:Loc 'Total'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                    <Run Text="{loc:Loc 'Total'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
                                                 <TextBox Text="{Binding ExtractedTotal}"
                                                          Watermark="0.00"
@@ -415,7 +415,7 @@
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                                 <TextBlock Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
-                                                           Foreground="#dc2626"
+                                                           Foreground="{DynamicResource ErrorBrush}"
                                                            IsVisible="{Binding HasTotalError}" />
                                             </StackPanel>
                                         </Grid>
@@ -506,7 +506,7 @@
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />
                                                                 <!-- Create Product Suggestion -->
                                                                 <Border IsVisible="{Binding ShowCreateProductSuggestion}"
-                                                                        Background="#FEF3C7"
+                                                                        Background="{DynamicResource WarningLightBrush}"
                                                                         CornerRadius="6"
                                                                         Padding="8"
                                                                         Margin="0,4,0,0">
@@ -616,7 +616,7 @@
                                         <Grid ColumnDefinitions="*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
                                                 <controls:SearchableDropdown
                                                     ItemsSource="{Binding SupplierOptions}"
@@ -631,7 +631,7 @@
                                                     ErrorMessage="{Binding SupplierErrorMessage}" />
                                                 <!-- AI Create Supplier Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
-                                                        Background="#FEF3C7"
+                                                        Background="{DynamicResource WarningLightBrush}"
                                                         CornerRadius="6"
                                                         Padding="10">
                                                     <Grid ColumnDefinitions="*,Auto,Auto">
@@ -667,7 +667,7 @@
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                    <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
                                                 <controls:SearchableDropdown
                                                     ItemsSource="{Binding CategoryOptions}"
@@ -682,7 +682,7 @@
                                                     ErrorMessage="{Binding CategoryErrorMessage}" />
                                                 <!-- AI Create Category Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
-                                                        Background="#FEF3C7"
+                                                        Background="{DynamicResource WarningLightBrush}"
                                                         CornerRadius="6"
                                                         Padding="10">
                                                     <Grid ColumnDefinitions="*,Auto,Auto">

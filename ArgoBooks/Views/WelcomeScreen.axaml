@@ -107,7 +107,7 @@
                                         Background="#E6F4EA">
                                     <PathIcon Data="{x:Static local:Icons.Folder}"
                                               Width="28" Height="28"
-                                              Foreground="#22C55E" />
+                                              Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Open Company'}"
@@ -283,11 +283,11 @@
                             <Border Grid.Column="0"
                                     Width="48" Height="48"
                                     CornerRadius="24"
-                                    Background="#FEF3C7"
+                                    Background="{DynamicResource WarningLightBrush}"
                                     Margin="0,0,16,0">
                                 <PathIcon Data="{x:Static local:Icons.Star}"
                                           Width="24" Height="24"
-                                          Foreground="#F59E0B" />
+                                          Foreground="{DynamicResource WarningBrush}" />
                             </Border>
 
                             <!-- Text -->

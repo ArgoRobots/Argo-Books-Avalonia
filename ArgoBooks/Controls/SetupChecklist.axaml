@@ -178,7 +178,7 @@
                                         HorizontalAlignment="Center">
                                     <PathIcon Data="{x:Static local:Icons.Check}"
                                               Width="24" Height="24"
-                                              Foreground="#22C55E" />
+                                              Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <TextBlock Text="{loc:Loc 'Tutorial Complete!'}"
                                            FontSize="16"

@@ -44,7 +44,7 @@
                             <!-- Adjustment Type -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding AdjustmentTypes}"
                                           SelectedItem="{Binding AdjustmentType}"
@@ -76,7 +76,7 @@
                                 <!-- Adjustment Quantity -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Quantity}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
@@ -84,7 +84,7 @@
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding HasAdjustmentQuantityError}" />
                                 </StackPanel>
 
@@ -117,7 +117,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding AdjustmentError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AdjustmentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>
@@ -161,7 +161,7 @@
                             <!-- Product Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Product}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Product}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
                                                             SelectedItem="{Binding SelectedProduct}"
@@ -171,7 +171,7 @@
                                                             EmptyMessage="{loc:Loc 'No products available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateProductCommand}" />
-                                <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="#dc2626"
+                                <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding AddItemProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -205,7 +205,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Initial Quantity'}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Initial Quantity'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AddItemQuantity, Mode=TwoWay}"
                                              Classes="form-input"
@@ -213,7 +213,7 @@
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding HasAddItemQuantityError}" />
                                 </StackPanel>
 
@@ -238,7 +238,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding AddItemError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AddItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>

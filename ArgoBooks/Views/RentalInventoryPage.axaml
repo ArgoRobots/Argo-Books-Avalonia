@@ -314,7 +314,7 @@
                                                             <TextBlock Text="{Binding AvailableQuantity}"
                                                                        FontSize="14"
                                                                        FontWeight="Medium"
-                                                                       Foreground="#22C55E"
+                                                                       Foreground="{DynamicResource SuccessBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />

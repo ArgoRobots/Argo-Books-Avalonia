@@ -40,6 +40,9 @@ public partial class SupplierModalsViewModel : ObservableObject
     #region Modal Form Fields
 
     [ObservableProperty]
+    private string _modalId = string.Empty;
+
+    [ObservableProperty]
     private string _modalSupplierName = string.Empty;
 
     [ObservableProperty]
@@ -209,8 +212,16 @@ public partial class SupplierModalsViewModel : ObservableObject
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        companyData.IdCounters.Supplier++;
-        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
+        string newId;
+        if (!string.IsNullOrWhiteSpace(ModalId))
+        {
+            newId = ModalId.Trim();
+        }
+        else
+        {
+            companyData.IdCounters.Supplier++;
+            newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
+        }
 
         var newSupplier = new Supplier
         {
@@ -258,6 +269,7 @@ public partial class SupplierModalsViewModel : ObservableObject
         if (supplier == null) return;
 
         _editingSupplier = supplier;
+        ModalId = supplier.Id;
         ModalSupplierName = supplier.Name;
         ModalEmail = supplier.Email;
         ModalPhone = supplier.Phone;
@@ -551,6 +563,7 @@ public partial class SupplierModalsViewModel : ObservableObject
 
     private void ClearModalFields()
     {
+        ModalId = string.Empty;
         ModalSupplierName = string.Empty;
         ModalEmail = string.Empty;
         ModalPhone = string.Empty;

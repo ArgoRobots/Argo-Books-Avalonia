@@ -702,8 +702,9 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowReorderColumn}">
                                                             <TextBlock Text="{Binding ReorderPoint}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
@@ -713,8 +714,9 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowOverstockColumn}">
                                                             <TextBlock Text="{Binding OverstockThreshold}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>

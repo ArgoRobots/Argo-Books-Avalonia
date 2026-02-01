@@ -62,11 +62,11 @@
                         <Border Grid.Column="0"
                                 Width="32" Height="32"
                                 CornerRadius="8"
-                                Background="#DBEAFE"
+                                Background="{DynamicResource PrimaryLightBrush}"
                                 Margin="0,0,12,0">
                             <PathIcon Data="{x:Static local:Icons.TrendUp}"
                                       Width="16" Height="16"
-                                      Foreground="#3B82F6" />
+                                      Foreground="{DynamicResource PrimaryBrush}" />
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -165,7 +165,7 @@
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{x:Static local:Icons.CircleCheck}"
                                               Width="16" Height="16"
-                                              Foreground="#22C55E" />
+                                              Foreground="{DynamicResource SuccessBrush}" />
                                     <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -173,7 +173,7 @@
                                     <TextBlock Text="{Binding PredictionConfidence}"
                                                FontSize="13"
                                                FontWeight="SemiBold"
-                                               Foreground="#22C55E"
+                                               Foreground="{DynamicResource SuccessBrush}"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
                                 <TextBlock Grid.Column="2"
@@ -205,7 +205,7 @@
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{x:Static local:Icons.Check}"
                                               Width="14" Height="14"
-                                              Foreground="#3B82F6" />
+                                              Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="Historical Accuracy:"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
@@ -213,7 +213,7 @@
                                     <TextBlock Text="{Binding HistoricalAccuracy}"
                                                FontSize="12"
                                                FontWeight="SemiBold"
-                                               Foreground="#3B82F6"
+                                               Foreground="{DynamicResource PrimaryBrush}"
                                                VerticalAlignment="Center" />
                                     <!-- View Past Predictions Button -->
                                     <Button Classes="link-button"
@@ -247,7 +247,7 @@
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{x:Static local:Icons.Clock}"
                                               Width="14" Height="14"
-                                              Foreground="#8B5CF6" />
+                                              Foreground="{DynamicResource VioletBrush}" />
                                     <TextBlock Text="Seasonal Pattern:"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
@@ -328,11 +328,11 @@
                                     <Border Grid.Column="0"
                                             Width="32" Height="32"
                                             CornerRadius="8"
-                                            Background="#DCFCE7"
+                                            Background="{DynamicResource SuccessLightBrush}"
                                             Margin="0,0,12,0">
                                         <PathIcon Data="{x:Static local:Icons.TrendUp}"
                                                   Width="16" Height="16"
-                                                  Foreground="#22C55E" />
+                                                  Foreground="{DynamicResource SuccessBrush}" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
                                                Text="{loc:Loc 'Revenue Trends'}"
@@ -349,11 +349,11 @@
                                     <Border Grid.Column="0"
                                             Width="32" Height="32"
                                             CornerRadius="8"
-                                            Background="#DCFCE7"
+                                            Background="{DynamicResource SuccessLightBrush}"
                                             Margin="0,0,12,0">
                                         <PathIcon Data="{x:Static local:Icons.TrendUp}"
                                                   Width="16" Height="16"
-                                                  Foreground="#22C55E" />
+                                                  Foreground="{DynamicResource SuccessBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{loc:Loc 'Revenue Trends'}"
@@ -421,11 +421,11 @@
                                     <Border Grid.Column="0"
                                             Width="32" Height="32"
                                             CornerRadius="8"
-                                            Background="#FEF3C7"
+                                            Background="{DynamicResource WarningLightBrush}"
                                             Margin="0,0,12,0">
                                         <PathIcon Data="{x:Static local:Icons.LostDamaged}"
                                                   Width="16" Height="16"
-                                                  Foreground="#F59E0B" />
+                                                  Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
                                                Text="{loc:Loc 'Anomaly Detection'}"
@@ -442,11 +442,11 @@
                                     <Border Grid.Column="0"
                                             Width="32" Height="32"
                                             CornerRadius="8"
-                                            Background="#FEF3C7"
+                                            Background="{DynamicResource WarningLightBrush}"
                                             Margin="0,0,12,0">
                                         <PathIcon Data="{x:Static local:Icons.LostDamaged}"
                                                   Width="16" Height="16"
-                                                  Foreground="#F59E0B" />
+                                                  Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{loc:Loc 'Anomaly Detection'}"
@@ -511,11 +511,11 @@
                                     <Border Grid.Column="0"
                                             Width="32" Height="32"
                                             CornerRadius="8"
-                                            Background="#DBEAFE"
+                                            Background="{DynamicResource PrimaryLightBrush}"
                                             Margin="0,0,12,0">
                                         <PathIcon Data="{x:Static local:Icons.Star}"
                                                   Width="16" Height="16"
-                                                  Foreground="#3B82F6" />
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
                                                Text="{loc:Loc Recommendations}"
@@ -532,11 +532,11 @@
                                     <Border Grid.Column="0"
                                             Width="32" Height="32"
                                             CornerRadius="8"
-                                            Background="#DBEAFE"
+                                            Background="{DynamicResource PrimaryLightBrush}"
                                             Margin="0,0,12,0">
                                         <PathIcon Data="{x:Static local:Icons.Star}"
                                                   Width="16" Height="16"
-                                                  Foreground="#3B82F6" />
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{loc:Loc Recommendations}"
@@ -594,7 +594,7 @@
 
     <!-- Backtest Loading Overlay -->
     <Border IsVisible="{Binding IsRunningBacktest}"
-            Background="#80000000"
+            Background="{DynamicResource OverlayBrush}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch">
         <Border Background="{DynamicResource SurfaceBrush}"
@@ -608,11 +608,11 @@
                 <!-- Animated Icon -->
                 <Border Width="72" Height="72"
                         CornerRadius="36"
-                        Background="#DBEAFE"
+                        Background="{DynamicResource PrimaryLightBrush}"
                         HorizontalAlignment="Center">
                     <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                               Width="32" Height="32"
-                              Foreground="#3B82F6" />
+                              Foreground="{DynamicResource PrimaryBrush}" />
                 </Border>
 
                 <!-- Title -->
@@ -634,7 +634,7 @@
                                  Minimum="0"
                                  Maximum="100"
                                  Height="8"
-                                 Foreground="#3B82F6"
+                                 Foreground="{DynamicResource PrimaryBrush}"
                                  IsIndeterminate="{Binding !BacktestProgressTotal}" />
                     <TextBlock HorizontalAlignment="Center"
                                FontSize="12"

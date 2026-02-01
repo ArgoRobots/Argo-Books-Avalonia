@@ -104,7 +104,7 @@
                                                      Watermark="{loc:Loc 'Enter template name...'}" />
                                             <TextBlock Text="{Binding ValidationMessage}"
                                                        FontSize="13"
-                                                       Foreground="#DC2626"
+                                                       Foreground="{DynamicResource ErrorBrush}"
                                                        IsVisible="{Binding HasValidationMessage}" />
                                         </StackPanel>
 
@@ -240,7 +240,7 @@
                                                                IsVisible="{Binding !HasLogoWidthWarning}" />
                                                     <TextBlock Text="{Binding LogoWidthWarning}"
                                                                FontSize="11"
-                                                               Foreground="#DC2626"
+                                                               Foreground="{DynamicResource ErrorBrush}"
                                                                IsVisible="{Binding HasLogoWidthWarning}" />
                                                     <CheckBox IsChecked="{Binding LockAspectRatio}"
                                                               Content="{loc:Loc 'Lock aspect ratio'}"
@@ -350,7 +350,7 @@
                                 </Button>
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding ValidationMessage}"
-                                           Foreground="#DC2626"
+                                           Foreground="{DynamicResource ErrorBrush}"
                                            FontSize="13"
                                            Margin="12,0,0,0"
                                            VerticalAlignment="Center"

@@ -280,7 +280,7 @@
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
-                                                                       Margin="8,16,8,16"
+                                                                       Margin="8,0"
                                                                        TextTrimming="CharacterEllipsis" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
@@ -345,7 +345,7 @@
                                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                                 <TextBlock Text="{Binding DaysOverdueText}"
                                                                            FontSize="12"
-                                                                           Foreground="#DC2626"
+                                                                           Foreground="{DynamicResource ErrorBrush}"
                                                                            IsVisible="{Binding DaysOverdue, Converter={x:Static local:IntConverters.IsPositive}}" />
                                                             </StackPanel>
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />

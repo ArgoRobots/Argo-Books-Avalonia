@@ -314,7 +314,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -326,7 +326,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -338,7 +338,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -350,7 +350,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -362,7 +362,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -374,7 +374,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -386,7 +386,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -398,7 +398,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -410,7 +410,7 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -420,9 +420,9 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDiscountColumn}">
                                                         <TextBlock Text="{Binding DiscountFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="#22C55E"
+                                                                   Foreground="{DynamicResource SuccessBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -433,9 +433,9 @@
                                                         <TextBlock Text="{Binding TotalFormatted}"
                                                                    FontSize="14"
                                                                    FontWeight="Medium"
-                                                                   Foreground="#DC2626"
+                                                                   Foreground="{DynamicResource ErrorBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   Margin="8,16,8,16"
+                                                                   Margin="8,0"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
@@ -445,7 +445,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowReceiptColumn}">
                                                         <PathIcon Data="{x:Static icons:Icons.Check}"
                                                                   Width="16" Height="16"
-                                                                  Foreground="#22C55E"
+                                                                  Foreground="{DynamicResource SuccessBrush}"
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center"
                                                                   IsVisible="{Binding HasReceipt}" />

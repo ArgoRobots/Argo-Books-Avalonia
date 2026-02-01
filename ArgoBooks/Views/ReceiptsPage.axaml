@@ -321,7 +321,7 @@
                                                                 <!-- PDF Icon -->
                                                                 <PathIcon Data="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"
                                                                           Width="40" Height="40"
-                                                                          Foreground="#DC2626"
+                                                                          Foreground="{DynamicResource ErrorBrush}"
                                                                           IsVisible="{Binding IsPdf}" />
                                                             </Panel>
 
@@ -332,7 +332,7 @@
                                                                       Margin="12,12,0,0" />
 
                                                             <!-- AI Badge (top-right) -->
-                                                            <Border Background="#F3E8FF"
+                                                            <Border Background="{DynamicResource PurpleLightBrush}"
                                                                     CornerRadius="4"
                                                                     Padding="6,3"
                                                                     HorizontalAlignment="Right"
@@ -342,7 +342,7 @@
                                                                 <TextBlock Text="{loc:Loc 'AI'}"
                                                                            FontSize="10"
                                                                            FontWeight="Bold"
-                                                                           Foreground="#9333EA" />
+                                                                           Foreground="{DynamicResource PurpleDarkBrush}" />
                                                             </Border>
                                                         </Panel>
                                                     </Border>
@@ -380,11 +380,11 @@
                                                                 </Border.Background>
                                                                 <Border.Styles>
                                                                     <Style Selector="Border">
-                                                                        <Setter Property="Background" Value="#DCFCE7" />
+                                                                        <Setter Property="Background" Value="{DynamicResource SuccessLightBrush}" />
                                                                     </Style>
                                                                 </Border.Styles>
                                                                 <Panel>
-                                                                    <Border Background="#FEE2E2"
+                                                                    <Border Background="{DynamicResource ErrorLightBrush}"
                                                                             IsVisible="{Binding IsExpense}"
                                                                             CornerRadius="4"
                                                                             Margin="-8,-4"
@@ -392,9 +392,9 @@
                                                                         <TextBlock Text="{loc:Loc 'Expense'}"
                                                                                    FontSize="11"
                                                                                    FontWeight="Medium"
-                                                                                   Foreground="#DC2626" />
+                                                                                   Foreground="{DynamicResource ErrorBrush}" />
                                                                     </Border>
-                                                                    <Border Background="#DCFCE7"
+                                                                    <Border Background="{DynamicResource SuccessLightBrush}"
                                                                             IsVisible="{Binding IsRevenue}"
                                                                             CornerRadius="4"
                                                                             Margin="-8,-4"
@@ -402,7 +402,7 @@
                                                                         <TextBlock Text="{loc:Loc 'Revenue'}"
                                                                                    FontSize="11"
                                                                                    FontWeight="Medium"
-                                                                                   Foreground="#22C55E" />
+                                                                                   Foreground="{DynamicResource SuccessBrush}" />
                                                                     </Border>
                                                                 </Panel>
                                                             </Border>
@@ -536,14 +536,14 @@
                                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                            TextTrimming="CharacterEllipsis" />
                                                                                 <!-- AI Badge -->
-                                                                                <Border Background="#F3E8FF"
+                                                                                <Border Background="{DynamicResource PurpleLightBrush}"
                                                                                         CornerRadius="4"
                                                                                         Padding="6,2"
                                                                                         IsVisible="{Binding IsAiScanned}">
                                                                                     <TextBlock Text="{loc:Loc 'AI'}"
                                                                                                FontSize="10"
                                                                                                FontWeight="Bold"
-                                                                                               Foreground="#9333EA" />
+                                                                                               Foreground="{DynamicResource PurpleDarkBrush}" />
                                                                                 </Border>
                                                                             </StackPanel>
                                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -577,23 +577,23 @@
                                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
                                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowTypeColumn}">
                                                                             <Panel VerticalAlignment="Center" HorizontalAlignment="Left" Margin="8,0">
-                                                                                <Border Background="#FEE2E2"
+                                                                                <Border Background="{DynamicResource ErrorLightBrush}"
                                                                                         CornerRadius="4"
                                                                                         Padding="8,4"
                                                                                         IsVisible="{Binding IsExpense}">
                                                                                     <TextBlock Text="{loc:Loc 'Expense'}"
                                                                                                FontSize="11"
                                                                                                FontWeight="Medium"
-                                                                                               Foreground="#DC2626" />
+                                                                                               Foreground="{DynamicResource ErrorBrush}" />
                                                                                 </Border>
-                                                                                <Border Background="#DCFCE7"
+                                                                                <Border Background="{DynamicResource SuccessLightBrush}"
                                                                                         CornerRadius="4"
                                                                                         Padding="8,4"
                                                                                         IsVisible="{Binding IsRevenue}">
                                                                                     <TextBlock Text="{loc:Loc 'Revenue'}"
                                                                                                FontSize="11"
                                                                                                FontWeight="Medium"
-                                                                                               Foreground="#22C55E" />
+                                                                                               Foreground="{DynamicResource SuccessBrush}" />
                                                                                 </Border>
                                                                             </Panel>
                                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />

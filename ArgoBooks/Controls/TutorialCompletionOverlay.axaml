@@ -26,11 +26,11 @@
                     <!-- Success Icon -->
                     <Border Width="56" Height="56"
                             CornerRadius="28"
-                            Background="#DCFCE7"
+                            Background="{DynamicResource SuccessLightBrush}"
                             HorizontalAlignment="Center">
                         <PathIcon Data="{x:Static local:Icons.Check}"
                                   Width="28" Height="28"
-                                  Foreground="#22C55E" />
+                                  Foreground="{DynamicResource SuccessBrush}" />
                     </Border>
 
                     <!-- Message -->

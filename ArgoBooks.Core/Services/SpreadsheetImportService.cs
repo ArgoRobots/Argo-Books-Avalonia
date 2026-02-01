@@ -1145,11 +1145,19 @@ public class SpreadsheetImportService
             var id = GetString(row, headers, "ID");
             var name = GetString(row, headers, "Name");
 
-            // Check for existing product by ID first, then by name to prevent duplicates
-            // (auto-created placeholder products may have different IDs but same names)
-            var existing = data.Products.FirstOrDefault(p => p.Id == id)
-                ?? data.Products.FirstOrDefault(p =>
-                    string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+            // Check for existing product by ID first
+            var existing = data.Products.FirstOrDefault(p => p.Id == id);
+
+            // Only match by name for auto-created placeholder products (those with "[Imported]" prefix)
+            // This prevents products with duplicate names but different IDs from overwriting each other
+            if (existing == null)
+            {
+                var placeholder = data.Products.FirstOrDefault(p =>
+                    p.Name.StartsWith("[Imported]", StringComparison.OrdinalIgnoreCase) &&
+                    p.Name.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+                if (placeholder != null)
+                    existing = placeholder;
+            }
 
             var typeStr = GetString(row, headers, "Type");
             var productType = typeStr.ToLowerInvariant() switch
@@ -1170,7 +1178,7 @@ public class SpreadsheetImportService
 
             var product = existing ?? new Product();
             product.Id = id;
-            product.Name = GetString(row, headers, "Name");
+            product.Name = name;
             product.Type = productType;
             product.ItemType = itemType;
             product.Sku = GetString(row, headers, "SKU");

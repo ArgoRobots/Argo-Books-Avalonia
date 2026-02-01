@@ -55,30 +55,34 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- First Name and Last Name Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
+                            <!-- ID, First Name and Last Name Row -->
+                            <Grid ColumnDefinitions="Auto,16,*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6" Width="100">
+                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'CUS-xxx'}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalFirstName, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter first name'}" />
                                     <TextBlock Text="{Binding ModalFirstNameError}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalFirstNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
+                                <StackPanel Grid.Column="4" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalLastName, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter last name'}" />
                                     <TextBlock Text="{Binding ModalLastNameError}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalLastNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -94,7 +98,7 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter email address'}" />
-                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
+                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -150,7 +154,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{loc:Loc 'Please enter all required fields'}"
-                                       Foreground="#DC2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        FontSize="13"
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding HasValidationMessage}" />
@@ -192,22 +196,26 @@
                     <!-- Form Content (Same as Add + Status) -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- First Name and Last Name Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <TextBox Text="{Binding ModalFirstName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter first name'}" />
-                                    <TextBlock Text="{Binding ModalFirstNameError}" FontSize="12" Foreground="#dc2626"
-                                               IsVisible="{Binding ModalFirstNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <!-- ID, First Name and Last Name Row -->
+                            <Grid ColumnDefinitions="Auto,16,*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6" Width="100">
+                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <TextBox Text="{Binding ModalFirstName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter first name'}" />
+                                    <TextBlock Text="{Binding ModalFirstNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding ModalFirstNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalLastName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter last name'}" />
-                                    <TextBlock Text="{Binding ModalLastNameError}" FontSize="12" Foreground="#dc2626"
+                                    <TextBlock Text="{Binding ModalLastNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalLastNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -223,7 +231,7 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter email address'}" />
-                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
+                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -279,7 +287,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{loc:Loc 'Please enter all required fields'}"
-                                       Foreground="#DC2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        FontSize="13"
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding HasValidationMessage}" />

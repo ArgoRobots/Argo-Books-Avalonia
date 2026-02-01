@@ -44,7 +44,7 @@
                             <!-- Inventory Item Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Inventory Item'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Inventory Item'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableInventoryItems}"
                                                             SelectedItem="{Binding SelectedInventoryOption}"
@@ -55,14 +55,14 @@
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateInventoryItemCommand}" />
                                 <TextBlock Text="{loc:Loc 'Please select an inventory item'}"
-                                           FontSize="12" Foreground="#dc2626"
+                                           FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding HasInventoryError}" />
                             </StackPanel>
 
                             <!-- Adjustment Type -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding AdjustmentTypes}"
                                           SelectedItem="{Binding AdjustmentType}"
@@ -94,7 +94,7 @@
                                 <!-- Adjustment Quantity -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Quantity}" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
@@ -102,7 +102,7 @@
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding HasQuantityError}" />
                                 </StackPanel>
 
@@ -143,7 +143,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding AddModalError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AddModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>
@@ -266,14 +266,6 @@
                                            FontSize="14"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            TextWrapping="Wrap" />
-                            </StackPanel>
-
-                            <!-- User -->
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{loc:Loc 'Adjusted By'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.UserDisplay}"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

@@ -89,7 +89,7 @@
                                         </StackPanel>
                                         <!-- Active Badge (when has Standard but not Premium) -->
                                         <Border Grid.Column="2"
-                                                Background="#22C55E"
+                                                Background="{DynamicResource SuccessBrush}"
                                                 CornerRadius="4"
                                                 Padding="8,4"
                                                 VerticalAlignment="Top"
@@ -120,7 +120,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Unlimited Products'}" />
                                             </Grid>
@@ -130,7 +130,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Biometric Login Security'}" />
                                             </Grid>
@@ -140,7 +140,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Priority Support'}" />
                                             </Grid>
@@ -150,7 +150,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Lifetime Updates'}" />
                                             </Grid>
@@ -207,7 +207,7 @@
                                         </StackPanel>
                                         <!-- Active Badge (when has Premium) -->
                                         <Border Grid.Column="2"
-                                                Background="#22C55E"
+                                                Background="{DynamicResource SuccessBrush}"
                                                 CornerRadius="4"
                                                 Padding="8,4"
                                                 VerticalAlignment="Top"
@@ -226,7 +226,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Everything in Standard'}" />
                                             </Grid>
@@ -236,7 +236,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Invoices &amp; payments'}" />
                                             </Grid>
@@ -246,7 +246,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'AI Receipt Scanning'}" />
                                             </Grid>
@@ -256,7 +256,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Predictive Sales Analysis'}" />
                                             </Grid>
@@ -266,7 +266,7 @@
                                                 <PathIcon Grid.Column="0"
                                                           Data="{x:Static local:Icons.Check}"
                                                           Width="14" Height="14"
-                                                          Foreground="#22C55E"
+                                                          Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'AI Business Insights'}" />
                                             </Grid>
@@ -417,7 +417,7 @@
                                     VerticalAlignment="Center">
                                 <Border.Background>
                                     <RadialGradientBrush>
-                                        <GradientStop Color="#22C55E" Offset="0" />
+                                        <GradientStop Color="{StaticResource SuccessColor}" Offset="0" />
                                         <GradientStop Color="Transparent" Offset="1" />
                                     </RadialGradientBrush>
                                 </Border.Background>
@@ -435,7 +435,7 @@
                                     BoxShadow="0 4 20 0 #4022C55E">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                        <GradientStop Color="#22C55E" Offset="0" />
+                                        <GradientStop Color="{StaticResource SuccessColor}" Offset="0" />
                                         <GradientStop Color="#16A34A" Offset="1" />
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -458,7 +458,7 @@
                             <TextBlock Text="{loc:Loc 'License Activated!'}"
                                        FontSize="20"
                                        FontWeight="SemiBold"
-                                       Foreground="#22C55E"
+                                       Foreground="{DynamicResource SuccessBrush}"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="{Binding SuccessMessage}"
                                        FontSize="14"
