@@ -411,7 +411,7 @@
                             XAxes="{Binding ProfitsChartXAxes}"
                             YAxes="{Binding ProfitsChartYAxes}"
                             TooltipPosition="Top"
-                            ZoomMode="X, Y, PanX, PanY, NoZoomBySection"
+                            ZoomMode="Both"
                             IsVisible="{Binding HasProfitsChartData}"
                             PointerPressed="OnChartPointerPressed"
                             PointerReleased="OnChartPointerReleased" />
@@ -442,7 +442,7 @@
                             XAxes="{Binding RevenueVsExpensesXAxes}"
                             YAxes="{Binding RevenueVsExpensesYAxes}"
                             TooltipPosition="Top"
-                            ZoomMode="X, Y, PanX, PanY, NoZoomBySection"
+                            ZoomMode="Both"
                             IsVisible="{Binding HasRevenueVsExpensesData}"
                             PointerPressed="OnChartPointerPressed"
                             PointerReleased="OnChartPointerReleased" />
