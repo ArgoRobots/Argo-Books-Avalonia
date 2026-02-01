@@ -1837,10 +1837,10 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
         <Style Selector="Button.toolbar-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#FEE2E2" />
+            <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
         </Style>
         <Style Selector="Button.toolbar-button.danger:pointerover PathIcon">
-            <Setter Property="Foreground" Value="#DC2626" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
         </Style>
 
         <!-- Toolbar Toggle Button -->

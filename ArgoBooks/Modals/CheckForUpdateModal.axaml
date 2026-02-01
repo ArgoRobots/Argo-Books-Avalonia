@@ -162,7 +162,7 @@
                                         Spacing="8">
                                 <Border Width="40" Height="40"
                                         CornerRadius="20"
-                                        Background="#DC2626"
+                                        Background="{DynamicResource ErrorBrush}"
                                         HorizontalAlignment="Center">
                                     <PathIcon Data="{x:Static local:Icons.Info}"
                                               Width="20" Height="20"

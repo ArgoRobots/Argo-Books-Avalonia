@@ -27,10 +27,10 @@
                     <StackPanel Grid.Row="1" Margin="24" Spacing="16">
                         <StackPanel Spacing="6">
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="{loc:Loc 'Department Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                <Run Text="{loc:Loc 'Department Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                             </TextBlock>
                             <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" />
-                            <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -68,10 +68,10 @@
                     <StackPanel Grid.Row="1" Margin="24" Spacing="16">
                         <StackPanel Spacing="6">
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="{loc:Loc 'Department Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                <Run Text="{loc:Loc 'Department Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                             </TextBlock>
                             <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" />
-                            <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />

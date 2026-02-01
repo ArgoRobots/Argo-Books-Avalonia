@@ -40,14 +40,14 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalName, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter location name'}" />
                                     <TextBlock Text="{Binding ModalNameError}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -129,7 +129,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding ModalError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding ModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>
@@ -175,14 +175,14 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Location Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalName, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter location name'}" />
                                     <TextBlock Text="{Binding ModalNameError}"
                                                FontSize="12"
-                                               Foreground="#dc2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -265,7 +265,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding ModalError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding ModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>

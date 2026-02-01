@@ -38,10 +38,10 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter category name'}" />
-                                <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="#dc2626"
+                                <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalCategoryNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
                             <StackPanel Spacing="6">
@@ -108,10 +108,10 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter category name'}" />
-                                <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="#dc2626"
+                                <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalCategoryNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
                             <StackPanel Spacing="6">
@@ -190,7 +190,7 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
-                        <TextBlock Text="{Binding MoveError}" FontSize="12" Foreground="#dc2626"
+                        <TextBlock Text="{Binding MoveError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding MoveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">

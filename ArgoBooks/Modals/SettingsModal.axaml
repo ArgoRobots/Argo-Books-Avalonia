@@ -474,7 +474,7 @@
                                                 Command="{Binding SelectAccentColorCommand}"
                                                 CommandParameter="Blue">
                                             <Grid>
-                                                <Border Width="48" Height="48" CornerRadius="24" Background="#3B82F6">
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="{DynamicResource PrimaryBrush}">
                                                     <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
@@ -512,7 +512,7 @@
                                                 Command="{Binding SelectAccentColorCommand}"
                                                 CommandParameter="Purple">
                                             <Grid>
-                                                <Border Width="48" Height="48" CornerRadius="24" Background="#8B5CF6">
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="{DynamicResource VioletBrush}">
                                                     <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
@@ -807,7 +807,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -895,7 +895,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -947,7 +947,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">

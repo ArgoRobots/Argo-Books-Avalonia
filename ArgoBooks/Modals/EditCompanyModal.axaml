@@ -57,7 +57,7 @@
                             <TextBlock FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                             </TextBlock>
                             <TextBox Classes="form-input"
                                      Text="{Binding CompanyName, Mode=TwoWay}"

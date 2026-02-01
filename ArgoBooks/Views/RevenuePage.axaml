@@ -424,7 +424,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowDiscountColumn}">
                                                         <TextBlock Text="{Binding DiscountFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="#22C55E"
+                                                                   Foreground="{DynamicResource SuccessBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -436,7 +436,7 @@
                                                         <TextBlock Text="{Binding TotalFormatted}"
                                                                    FontSize="14"
                                                                    FontWeight="Medium"
-                                                                   Foreground="#22C55E"
+                                                                   Foreground="{DynamicResource SuccessBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -448,7 +448,7 @@
                                                         <Panel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                             <PathIcon Data="{x:Static icons:Icons.Check}"
                                                                       Width="16" Height="16"
-                                                                      Foreground="#22C55E"
+                                                                      Foreground="{DynamicResource SuccessBrush}"
                                                                       IsVisible="{Binding HasReceipt}" />
                                                             <PathIcon Data="{x:Static icons:Icons.Close}"
                                                                       Width="16" Height="16"

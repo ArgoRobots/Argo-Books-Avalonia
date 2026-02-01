@@ -66,14 +66,14 @@
                                                             EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
                                 <TextBlock Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
-                                           Foreground="#dc2626"
+                                           Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalInvoiceError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Amount -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
@@ -81,14 +81,14 @@
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
-                                           Foreground="#dc2626"
+                                           Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalAmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -96,7 +96,7 @@
                             <!-- Payment Method -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding ModalPaymentMethodOptions}"
                                           SelectedItem="{Binding ModalPaymentMethod}"
@@ -185,7 +185,7 @@
                             <!-- Amount -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
@@ -193,14 +193,14 @@
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
-                                           Foreground="#dc2626"
+                                           Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalAmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -208,7 +208,7 @@
                             <!-- Payment Method -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding ModalPaymentMethodOptions}"
                                           SelectedItem="{Binding ModalPaymentMethod}"

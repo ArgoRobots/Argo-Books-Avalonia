@@ -128,7 +128,7 @@
 
         <!-- Loading Overlay (shows during long operations like import) -->
         <Border IsVisible="{Binding IsLoading}"
-                Background="#80000000"
+                Background="{DynamicResource OverlayBrush}"
                 ZIndex="225"
                 IsHitTestVisible="True">
             <Border Background="{DynamicResource SurfaceBrush}"

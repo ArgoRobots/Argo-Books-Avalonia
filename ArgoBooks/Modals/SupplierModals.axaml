@@ -33,22 +33,22 @@
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                       <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                       <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                    </TextBlock>
                                    <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
-                                   <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                   <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                            </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'supplier@email.com'}" />
-                                   <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                   <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Phone'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
-                                   <TextBlock Text="{Binding ModalPhoneError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                   <TextBlock Text="{Binding ModalPhoneError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                            </Grid>
                            <StackPanel Spacing="6">
@@ -90,7 +90,7 @@
                        <Grid ColumnDefinitions="Auto,*,Auto">
                            <TextBlock Grid.Column="0"
                                       Text="{loc:Loc 'Please enter all required fields'}"
-                                      Foreground="#DC2626"
+                                      Foreground="{DynamicResource ErrorBrush}"
                                       FontSize="13"
                                       VerticalAlignment="Center"
                                       IsVisible="{Binding HasValidationMessage}" />
@@ -131,22 +131,22 @@
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                       <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="#dc2626" />
+                                       <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                    </TextBlock>
                                    <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
-                                   <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                   <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                            </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'supplier@email.com'}" />
-                                   <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                   <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Phone'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
-                                   <TextBlock Text="{Binding ModalPhoneError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                   <TextBlock Text="{Binding ModalPhoneError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                            </Grid>
                            <StackPanel Spacing="6">
@@ -188,7 +188,7 @@
                        <Grid ColumnDefinitions="Auto,*,Auto">
                            <TextBlock Grid.Column="0"
                                       Text="{loc:Loc 'Please enter all required fields'}"
-                                      Foreground="#DC2626"
+                                      Foreground="{DynamicResource ErrorBrush}"
                                       FontSize="13"
                                       VerticalAlignment="Center"
                                       IsVisible="{Binding HasValidationMessage}" />

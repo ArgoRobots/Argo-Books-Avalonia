@@ -135,10 +135,10 @@
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <Border Width="40" Height="40"
                                             CornerRadius="8"
-                                            Background="#DBEAFE">
+                                            Background="{DynamicResource PrimaryLightBrush}">
                                         <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
                                                   Width="20" Height="20"
-                                                  Foreground="#3B82F6" />
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{loc:Loc 'Return Details'}"
@@ -269,7 +269,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <Border Width="40" Height="40"
                                             CornerRadius="8"
-                                            Background="#FEF3C7">
+                                            Background="{DynamicResource WarningLightBrush}">
                                         <PathIcon Data="{x:Static local:Icons.Returns}"
                                                   Width="20" Height="20"
                                                   Foreground="#D97706" />

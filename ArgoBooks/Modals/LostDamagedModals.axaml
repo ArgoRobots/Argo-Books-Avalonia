@@ -152,10 +152,10 @@
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <Border Width="40" Height="40"
                                             CornerRadius="8"
-                                            Background="#FEE2E2">
+                                            Background="{DynamicResource ErrorLightBrush}">
                                         <PathIcon Data="{x:Static local:Icons.Info}"
                                                   Width="20" Height="20"
-                                                  Foreground="#DC2626" />
+                                                  Foreground="{DynamicResource ErrorBrush}" />
                                     </Border>
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{loc:Loc 'Lost/Damaged Details'}"
@@ -231,7 +231,7 @@
                                         <TextBlock Text="{Binding ViewDetailsValue}"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
-                                                   Foreground="#DC2626" />
+                                                   Foreground="{DynamicResource ErrorBrush}" />
                                     </StackPanel>
                                 </Grid>
 
@@ -307,7 +307,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <Border Width="40" Height="40"
                                             CornerRadius="8"
-                                            Background="#FEF3C7">
+                                            Background="{DynamicResource WarningLightBrush}">
                                         <PathIcon Data="{x:Static local:Icons.Returns}"
                                                   Width="20" Height="20"
                                                   Foreground="#D97706" />

@@ -47,6 +47,13 @@
     <Color x:Key="PurpleLightColor">#F3E8FF</Color>
     <Color x:Key="PurpleDarkColor">#9333EA</Color>
 
+    <!-- Semantic Colors - Violet (for predictions/insights) -->
+    <Color x:Key="VioletColor">#8B5CF6</Color>
+
+    <!-- Overlay Colors -->
+    <Color x:Key="OverlayColor">#80000000</Color>
+    <Color x:Key="ShadowColor">#40000000</Color>
+
     <!-- Selection Colors -->
     <Color x:Key="SelectionHoverColor">#3060A5FA</Color>
 
@@ -89,6 +96,13 @@
     <SolidColorBrush x:Key="PurpleBrush" Color="{StaticResource PurpleColor}" />
     <SolidColorBrush x:Key="PurpleLightBrush" Color="{StaticResource PurpleLightColor}" />
     <SolidColorBrush x:Key="PurpleDarkBrush" Color="{StaticResource PurpleDarkColor}" />
+
+    <!-- Violet Brushes -->
+    <SolidColorBrush x:Key="VioletBrush" Color="{StaticResource VioletColor}" />
+
+    <!-- Overlay Brushes -->
+    <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />
+    <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
 
     <!-- Selection Brushes -->
     <SolidColorBrush x:Key="SelectionHoverBrush" Color="{StaticResource SelectionHoverColor}" />

@@ -59,7 +59,7 @@
                                 <!-- Date -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ModalDate}"
                                                 Classes="form-datepicker"
@@ -333,7 +333,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{loc:Loc 'Please enter all required fields'}"
-                                       Foreground="#DC2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        FontSize="13"
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding HasValidationMessage}" />
@@ -560,7 +560,7 @@
                         <!-- Reason Selection -->
                         <StackPanel Spacing="6">
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="{loc:Loc 'Reason'}" /><Run Text=" *" Foreground="#dc2626" />
+                                <Run Text="{loc:Loc 'Reason'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                             </TextBlock>
                             <ComboBox ItemsSource="{Binding CurrentReasonOptions}"
                                       SelectedItem="{Binding SelectedItemStatusReason}"
@@ -577,7 +577,7 @@
                             <TextBlock Text="{Binding ItemStatusReasonErrorMessage}"
                                        IsVisible="{Binding HasItemStatusReasonError}"
                                        FontSize="12"
-                                       Foreground="#dc2626" />
+                                       Foreground="{DynamicResource ErrorBrush}" />
                         </StackPanel>
 
                         <!-- Notes -->

@@ -36,7 +36,7 @@
 
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Backdrop with fade animation -->
-        <Border Background="#80000000">
+        <Border Background="{DynamicResource OverlayBrush}">
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" />

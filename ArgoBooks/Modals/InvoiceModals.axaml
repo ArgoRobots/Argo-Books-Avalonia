@@ -105,7 +105,7 @@
                                 <!-- Customer Selection (right) -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
                                                                 SelectedItem="{Binding SelectedCustomer}"
@@ -126,7 +126,7 @@
                                 <!-- Issue Date -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ModalIssueDate}"
                                                 Classes="form-datepicker"
@@ -136,7 +136,7 @@
                                 <!-- Due Date -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ModalDueDate}"
                                                 Classes="form-datepicker"
@@ -369,7 +369,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{loc:Loc 'Please enter all required fields'}"
-                                       Foreground="#DC2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        FontSize="13"
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding HasValidationMessage}" />
@@ -399,8 +399,8 @@
                     <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" IsVisible="{Binding ShowPreviewContent}">
                         <StackPanel Spacing="12">
                             <!-- Error Banner -->
-                            <Border Background="#FEE2E2"
-                                    BorderBrush="#DC2626"
+                            <Border Background="{DynamicResource ErrorLightBrush}"
+                                    BorderBrush="{DynamicResource ErrorBrush}"
                                     BorderThickness="1"
                                     CornerRadius="6"
                                     Padding="12,8"
@@ -408,13 +408,13 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <PathIcon Grid.Column="0"
                                               Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                              Foreground="#DC2626"
+                                              Foreground="{DynamicResource ErrorBrush}"
                                               Width="20"
                                               Height="20"
                                               VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding SendErrorMessage}"
-                                               Foreground="#DC2626"
+                                               Foreground="{DynamicResource ErrorBrush}"
                                                FontSize="13"
                                                Margin="10,0"
                                                VerticalAlignment="Center"
@@ -423,7 +423,7 @@
                                             Content="✕"
                                             Command="{Binding DismissSendErrorCommand}"
                                             Background="Transparent"
-                                            Foreground="#DC2626"
+                                            Foreground="{DynamicResource ErrorBrush}"
                                             BorderThickness="0"
                                             Padding="4"
                                             VerticalAlignment="Center"

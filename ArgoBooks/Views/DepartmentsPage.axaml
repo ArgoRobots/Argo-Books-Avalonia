@@ -219,11 +219,11 @@
                                                                 Padding="8,4"
                                                                 CornerRadius="4"
                                                                 Margin="8,0"
-                                                                Background="#DBEAFE">
+                                                                Background="{DynamicResource PrimaryLightBrush}">
                                                             <TextBlock Text="{Binding EmployeeCountDisplay}"
                                                                        FontSize="12"
                                                                        FontWeight="Medium"
-                                                                       Foreground="#3B82F6" />
+                                                                       Foreground="{DynamicResource PrimaryBrush}" />
                                                         </Border>
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>

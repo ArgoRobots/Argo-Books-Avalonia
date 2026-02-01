@@ -46,7 +46,7 @@
                             <!-- Supplier Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
                                                             SelectedItem="{Binding SelectedSupplier}"
@@ -57,7 +57,7 @@
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
                                 <TextBlock Text="{loc:Loc 'Please select a supplier'}"
-                                           FontSize="12" Foreground="#dc2626"
+                                           FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding HasSupplierError}" />
                             </StackPanel>
 
@@ -65,7 +65,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Order Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Order Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding OrderDate}"
                                                 Classes="form-datepicker"
@@ -73,7 +73,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Expected Delivery'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Expected Delivery'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ExpectedDeliveryDate}"
                                                 Classes="form-datepicker"
@@ -233,7 +233,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding AddModalError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AddModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>
@@ -453,7 +453,7 @@
                             <!-- Error Message -->
                             <TextBlock Text="{Binding ReceiveModalError}"
                                        FontSize="12"
-                                       Foreground="#dc2626"
+                                       Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding ReceiveModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                     </ScrollViewer>
@@ -599,10 +599,10 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
         <Style Selector="Button.icon-button-small.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#FEE2E2" />
+            <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
         </Style>
         <Style Selector="Button.icon-button-small.danger:pointerover PathIcon">
-            <Setter Property="Foreground" Value="#DC2626" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

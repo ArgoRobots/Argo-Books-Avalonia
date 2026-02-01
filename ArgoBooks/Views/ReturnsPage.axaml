@@ -291,7 +291,7 @@
                                                                 <TextBlock Text="{Binding RefundAmountFormatted}"
                                                                            FontSize="14"
                                                                            FontWeight="SemiBold"
-                                                                           Foreground="#DC2626"
+                                                                           Foreground="{DynamicResource ErrorBrush}"
                                                                            VerticalAlignment="Center"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            Margin="8,0" />
