@@ -393,8 +393,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
             if (purchase != null)
             {
                 var supplier = companyData.GetSupplier(purchase.SupplierId ?? "");
-                // Fall back to payee name if supplier not found
-                return supplier?.Name ?? purchase.Payee ?? "-";
+                // Fall back to expense description if supplier not found
+                return supplier?.Name ?? (string.IsNullOrEmpty(purchase.Description) ? "-" : purchase.Description);
             }
             return "-";
         }
