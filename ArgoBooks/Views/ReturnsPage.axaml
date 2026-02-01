@@ -190,14 +190,6 @@
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         </Panel>
 
-                                        <!-- Processed Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ProcessedColumnWidth}" IsVisible="{Binding ShowProcessedColumn}">
-                                            <TextBlock Text="{loc:Loc 'Processed'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Processed" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
-
                                         <!-- Refund Column Header -->
                                         <Panel Width="{Binding ColumnWidths.RefundColumnWidth}" IsVisible="{Binding ShowRefundColumn}">
                                             <TextBlock Text="{loc:Loc 'Refund'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
@@ -292,25 +284,13 @@
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                             </Panel>
 
-                                                            <!-- Processed By -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProcessedColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowProcessedColumn}">
-                                                                <TextBlock Text="{Binding ProcessedBy}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis"
-                                                                           VerticalAlignment="Center"
-                                                                           Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
                                                             <!-- Refund Amount -->
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.RefundColumnWidth}"
                                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ShowRefundColumn}">
                                                                 <TextBlock Text="{Binding RefundAmountFormatted}"
                                                                            FontSize="14"
                                                                            FontWeight="SemiBold"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           Foreground="#DC2626"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -474,7 +454,6 @@
                     <CheckBox IsChecked="{Binding ShowSupplierCustomerColumn}" Content="{loc:Loc 'Supplier/Customer'}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowProcessedColumn}" Content="{loc:Loc Processed}" Classes="column-toggle" />
                     <CheckBox IsChecked="{Binding ShowRefundColumn}" Content="{loc:Loc Refund}" Classes="column-toggle" />
                 </StackPanel>
             </controls:ColumnVisibilityMenu.ColumnsContent>

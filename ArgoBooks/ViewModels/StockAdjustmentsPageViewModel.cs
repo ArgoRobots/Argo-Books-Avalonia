@@ -74,9 +74,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     private bool _showLocationColumn = true;
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
-
-    [ObservableProperty]
     private bool _showQuantityColumn = true;
 
     [ObservableProperty]
@@ -92,7 +89,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     partial void OnShowReferenceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reference", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowLocationColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Location", value);
-    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
     partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
     partial void OnShowPreviousColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Previous", value);
     partial void OnShowNewColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("New", value);

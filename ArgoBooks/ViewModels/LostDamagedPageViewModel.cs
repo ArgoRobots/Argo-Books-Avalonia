@@ -47,9 +47,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
-
-    [ObservableProperty]
     private bool _showProductColumn = true;
 
     [ObservableProperty]
@@ -62,7 +59,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private bool _showLossColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);

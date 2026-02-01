@@ -55,9 +55,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
     private bool _showReasonColumn = true;
 
     [ObservableProperty]
-    private bool _showProcessedColumn = true;
-
-    [ObservableProperty]
     private bool _showRefundColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
@@ -65,7 +62,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
     partial void OnShowSupplierCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("SupplierCustomer", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
     partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
-    partial void OnShowProcessedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Processed", value);
     partial void OnShowRefundColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Refund", value);
 
     [RelayCommand]
@@ -397,9 +393,10 @@ public partial class ReturnsPageViewModel : ViewModelBase
             if (purchase != null)
             {
                 var supplier = companyData.GetSupplier(purchase.SupplierId ?? "");
-                return supplier?.Name ?? "Unknown Supplier";
+                // Fall back to payee name if supplier not found
+                return supplier?.Name ?? purchase.Payee ?? "-";
             }
-            return "Unknown Supplier";
+            return "-";
         }
         else
         {
