@@ -11,9 +11,6 @@ public partial class InvoicesTableColumnWidths : TableColumnWidthsBase
     private double _idColumnWidth = 100;
 
     [ObservableProperty]
-    private double _accountantColumnWidth = 120;
-
-    [ObservableProperty]
     private double _customerColumnWidth = 180;
 
     [ObservableProperty]
@@ -29,19 +26,18 @@ public partial class InvoicesTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 100;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 156;
+    private double _actionsColumnWidth = 116;
 
     public InvoicesTableColumnWidths()
     {
-        ColumnOrder = ["Id", "Accountant", "Customer", "IssueDate", "DueDate", "Amount", "Status", "Actions"];
+        ColumnOrder = ["Id", "Customer", "IssueDate", "DueDate", "Amount", "Status", "Actions"];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => IdColumnWidth = w);
-        RegisterColumn("Accountant", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => AccountantColumnWidth = w);
         RegisterColumn("Customer", new ColumnDef { StarValue = 1.4, MinWidth = 140, PreferredWidth = 180 }, w => CustomerColumnWidth = w);
         RegisterColumn("IssueDate", new ColumnDef { StarValue = 0.9, MinWidth = 90, PreferredWidth = 110 }, w => IssueDateColumnWidth = w);
         RegisterColumn("DueDate", new ColumnDef { StarValue = 0.9, MinWidth = 90, PreferredWidth = 110 }, w => DueDateColumnWidth = w);
         RegisterColumn("Amount", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => AmountColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => StatusColumnWidth = w);
-        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(3), MinWidth = ActionsWidth(3) }, w => ActionsColumnWidth = w);
     }
 }

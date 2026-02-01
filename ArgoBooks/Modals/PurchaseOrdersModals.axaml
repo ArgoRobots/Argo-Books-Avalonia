@@ -528,7 +528,7 @@
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <controls:SearchableDropdown ItemsSource="{Binding FilterSupplierOptions}"
                                                          SelectedItem="{Binding FilterSupplier}"
-                                                         Placeholder="{loc:Loc 'Search suppliers...'}" />
+                                                         ShowAddNew="False" />
                         </StackPanel>
 
                         <!-- Status -->

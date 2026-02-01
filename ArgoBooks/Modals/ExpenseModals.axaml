@@ -417,7 +417,6 @@
                                 <controls:SearchableDropdown ItemsSource="{Binding CategoryOptions}"
                                                             SelectedItem="{Binding FilterSelectedCategory}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Select category...'}"
                                                             ShowAddNew="False" />
                             </StackPanel>
 
