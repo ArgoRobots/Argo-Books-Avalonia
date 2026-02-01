@@ -142,15 +142,6 @@ Output files are saved to `./translations/` by default (e.g., `en.json`, `fr.jso
 3. **Translate via Azure** - Sends only untranslated strings to Azure Translator API in batches
 4. **Save JSON files** - Outputs `{isoCode}.json` files for each language
 
-### Incremental Translation
-
-The generator compares current strings against a reference file and only translates what's changed:
-
-```csharp
-// Only returns strings not already in reference file
-var newStrings = generator.GetChangedStrings(currentStrings, "en.json");
-```
-
 This avoids re-translating existing content, saving API costs and preserving any manual translation fixes.
 
 **Limitations:** Key collisions can cause issues:
