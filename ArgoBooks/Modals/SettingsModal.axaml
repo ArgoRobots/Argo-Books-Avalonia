@@ -164,12 +164,16 @@
                                             Padding="16">
                                         <StackPanel Spacing="12">
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                <StackPanel Grid.Column="0" Spacing="2">
                                                     <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data. No financial or business information is ever sent.'}"
+                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data.'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{loc:Loc 'No financial or business information is ever sent.'}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                TextWrapping="Wrap" />
