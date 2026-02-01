@@ -162,40 +162,28 @@
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             Padding="16">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="4">
-                                                <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data'}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           TextWrapping="Wrap" />
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding AnonymousDataCollection}"
-                                                          VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Telemetry Data Management (only visible when data collection is enabled) -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16"
-                                            IsVisible="{Binding AnonymousDataCollection}">
                                         <StackPanel Spacing="12">
-                                            <StackPanel Spacing="4">
-                                                <TextBlock Text="{loc:Loc 'Collected Data'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1"
+                                                              IsChecked="{Binding AnonymousDataCollection}"
+                                                              VerticalAlignment="Center" />
+                                            </Grid>
+                                            <!-- Collected Data buttons (only visible when data collection is enabled) -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                                        IsVisible="{Binding AnonymousDataCollection}">
                                                 <Button Classes="secondary-button"
                                                         Content="{loc:Loc 'View Data'}"
-                                                        Command="{Binding ExportTelemetryDataCommand}"
-                                                        IsEnabled="{Binding !IsExportingTelemetry}"
+                                                        Command="{Binding OpenTelemetryFolderCommand}"
                                                         Padding="12,6" />
                                                 <Button Classes="danger-button"
                                                         Content="{loc:Loc 'Delete All Data'}"

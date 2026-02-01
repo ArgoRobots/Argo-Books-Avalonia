@@ -1143,27 +1143,29 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Exports telemetry data as JSON for user review.
+    /// Opens the telemetry data folder in the system file explorer.
     /// </summary>
     [RelayCommand]
-    private async Task ExportTelemetryDataAsync()
+    private void OpenTelemetryFolder()
     {
-        if (App.TelemetryManager == null) return;
-
-        IsExportingTelemetry = true;
         try
         {
-            var json = await App.TelemetryManager.ExportDataAsJsonAsync();
-            TelemetryDataExported?.Invoke(this, json);
+            var telemetryPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ArgoBooks",
+                "telemetry");
+
+            if (!Directory.Exists(telemetryPath))
+            {
+                Directory.CreateDirectory(telemetryPath);
+            }
+
+            App.PlatformService?.OpenFolder(telemetryPath);
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to export telemetry data");
-            App.AddNotification("Error".Translate(), "Failed to export telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
-        }
-        finally
-        {
-            IsExportingTelemetry = false;
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to open telemetry folder");
+            App.AddNotification("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message), NotificationType.Error);
         }
     }
 

@@ -41,7 +41,10 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     private bool _showSupplierColumn = true;
 
     [ObservableProperty]
-    private bool _showContactColumn = true;
+    private bool _showEmailColumn = true;
+
+    [ObservableProperty]
+    private bool _showPhoneColumn = true;
 
     [ObservableProperty]
     private bool _showCountryColumn = true;
@@ -53,7 +56,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     private bool _showStatusColumn = true;
 
     partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowContactColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Contact", value);
+    partial void OnShowEmailColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Email", value);
+    partial void OnShowPhoneColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Phone", value);
     partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
     partial void OnShowProductsColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Products", value);
     partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
@@ -480,7 +484,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 new Dictionary<string, Func<SupplierDisplayItem, object?>>
                 {
                     ["Name"] = s => s.Name,
-                    ["Contact"] = s => s.ContactPerson,
+                    ["Email"] = s => s.Email,
+                    ["Phone"] = s => s.Phone,
                     ["Country"] = s => s.Country,
                     ["Products"] = s => s.ProductCount,
                     ["Status"] = s => s.IsActive

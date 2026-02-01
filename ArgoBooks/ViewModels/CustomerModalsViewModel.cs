@@ -177,6 +177,9 @@ public partial class CustomerModalsViewModel : ObservableObject
     private string _filterCustomerStatus = "All";
 
     [ObservableProperty]
+    private string _filterCountry = "All";
+
+    [ObservableProperty]
     private string? _filterOutstandingMin;
 
     [ObservableProperty]
@@ -225,6 +228,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     public ObservableCollection<string> StatusOptions { get; } = ["Active", "Inactive", "Banned"];
     public ObservableCollection<string> PaymentStatusOptions { get; } = ["All", "Current", "Overdue", "Delinquent"];
     public ObservableCollection<string> CustomerStatusOptions { get; } = ["All", "Active", "Inactive", "Banned"];
+    public ObservableCollection<string> CountryOptions { get; } = ["All"];
 
     #endregion
 
@@ -626,6 +630,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     public bool HasFilterChanges =>
         FilterPaymentStatus != "All" ||
         FilterCustomerStatus != "All" ||
+        FilterCountry != "All" ||
         !string.IsNullOrWhiteSpace(FilterOutstandingMin) ||
         !string.IsNullOrWhiteSpace(FilterOutstandingMax) ||
         FilterLastRentalFrom != null ||
@@ -634,7 +639,28 @@ public partial class CustomerModalsViewModel : ObservableObject
     [RelayCommand]
     public void OpenFilterModal()
     {
+        UpdateCountryOptions();
         IsFilterModalOpen = true;
+    }
+
+    private void UpdateCountryOptions()
+    {
+        CountryOptions.Clear();
+        CountryOptions.Add("All");
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var countries = companyData.Customers
+            .Select(c => c.Address.Country)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .OrderBy(c => c);
+
+        foreach (var country in countries)
+        {
+            CountryOptions.Add(country);
+        }
     }
 
     [RelayCommand]
@@ -674,6 +700,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     {
         FilterPaymentStatus = "All";
         FilterCustomerStatus = "All";
+        FilterCountry = "All";
         FilterOutstandingMin = null;
         FilterOutstandingMax = null;
         FilterLastRentalFrom = null;
