@@ -135,11 +135,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDeletingTelemetry;
 
-    /// <summary>
-    /// Event raised when telemetry data should be exported.
-    /// </summary>
-    public event EventHandler<string>? TelemetryDataExported;
-
     [ObservableProperty]
     private int _maxPieSlices = 6;
 
@@ -1160,7 +1155,19 @@ public partial class SettingsModalViewModel : ViewModelBase
                 Directory.CreateDirectory(telemetryPath);
             }
 
-            App.PlatformService?.OpenFolder(telemetryPath);
+            // Open folder using platform-specific method
+            if (OperatingSystem.IsWindows())
+            {
+                System.Diagnostics.Process.Start("explorer.exe", telemetryPath);
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                System.Diagnostics.Process.Start("open", telemetryPath);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                System.Diagnostics.Process.Start("xdg-open", telemetryPath);
+            }
         }
         catch (Exception ex)
         {

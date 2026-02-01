@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -202,7 +203,7 @@ public static partial class NumericInputBehavior
         if (clipboard == null)
             return;
 
-        var clipboardText = await clipboard.GetTextAsync();
+        var clipboardText = await clipboard.TryGetTextAsync();
         if (string.IsNullOrEmpty(clipboardText))
             return;
 
@@ -242,7 +243,7 @@ public static partial class NumericInputBehavior
         if (clipboard == null)
             return;
 
-        var clipboardText = await clipboard.GetTextAsync();
+        var clipboardText = await clipboard.TryGetTextAsync();
         if (string.IsNullOrEmpty(clipboardText))
             return;
 
