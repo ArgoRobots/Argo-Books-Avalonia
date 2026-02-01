@@ -993,14 +993,3 @@ public class AccountantOption
     public override string ToString() => Name;
 }
 
-/// <summary>
-/// Option model for product dropdown.
-/// </summary>
-public class ProductOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? SupplierId { get; set; }
-
-    public override string ToString() => Name;
-}
