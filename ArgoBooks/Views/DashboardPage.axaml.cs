@@ -42,25 +42,42 @@ public partial class DashboardPage : UserControl
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
 
-        // Intercept right-button pointer events to prevent LiveCharts selection box
+        // Intercept right-click in tunneling phase to prevent LiveCharts selection box
         AddHandler(
-            PointerMovedEvent,
-            OnChartPointerMoved,
+            PointerPressedEvent,
+            OnChartPointerPressedTunnel,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
     }
 
     /// <summary>
-    /// Intercepts pointer move events to prevent LiveCharts selection box on right-click drag.
+    /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
     /// </summary>
-    private void OnChartPointerMoved(object? sender, PointerEventArgs e)
+    private void OnChartPointerPressedTunnel(object? sender, PointerPressedEventArgs e)
     {
-        // Check if this is over a chart and right button is pressed
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+        var pieChart = source?.FindAncestorOfType<PieChart>() ?? source as PieChart;
 
-        if (chart != null && e.GetCurrentPoint(chart).Properties.IsRightButtonPressed)
+        if ((chart != null || pieChart != null) && e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
         {
+            // Show context menu and mark as handled to prevent LiveCharts selection box
+            if (DataContext is DashboardPageViewModel viewModel)
+            {
+                var position = e.GetPosition(this);
+                var isPieChart = pieChart != null;
+                var targetChart = (Control?)chart ?? pieChart;
+
+                var chartId = GetChartTitle(targetChart) ?? (targetChart switch
+                {
+                    CartesianChart cc => cc.Name ?? "ExpensesChart",
+                    PieChart pc => pc.Name ?? "ExpenseDistributionChart",
+                    _ => string.Empty
+                });
+
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart,
+                    parentWidth: Bounds.Width, parentHeight: Bounds.Height);
+            }
             e.Handled = true;
         }
     }

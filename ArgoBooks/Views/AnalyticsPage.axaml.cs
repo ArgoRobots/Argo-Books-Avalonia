@@ -54,25 +54,59 @@ public partial class AnalyticsPage : UserControl
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
 
-        // Intercept right-button pointer events to prevent LiveCharts selection box
+        // Intercept right-click in tunneling phase to prevent LiveCharts selection box
         AddHandler(
-            PointerMovedEvent,
-            OnChartPointerMoved,
+            PointerPressedEvent,
+            OnChartPointerPressedTunnel,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
     }
 
     /// <summary>
-    /// Intercepts pointer move events to prevent LiveCharts selection box on right-click drag.
+    /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
     /// </summary>
-    private void OnChartPointerMoved(object? sender, PointerEventArgs e)
+    private void OnChartPointerPressedTunnel(object? sender, PointerPressedEventArgs e)
     {
-        // Check if this is over a chart and right button is pressed
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+        var pieChart = source?.FindAncestorOfType<PieChart>() ?? source as PieChart;
+        var geoMap = source?.FindAncestorOfType<GeoMap>() ?? source as GeoMap;
 
-        if (chart != null && e.GetCurrentPoint(chart).Properties.IsRightButtonPressed)
+        if ((chart != null || pieChart != null || geoMap != null) && e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
         {
+            // Show context menu and mark as handled to prevent LiveCharts selection box
+            if (DataContext is AnalyticsPageViewModel viewModel)
+            {
+                var clickedControl = source;
+
+                // For PieChartLegend, find the associated PieChart sibling
+                var legend = source?.FindAncestorOfType<PieChartLegend>() ?? source as PieChartLegend;
+                if (legend != null && legend.Parent is Grid parentGrid)
+                {
+                    foreach (var child in parentGrid.Children)
+                    {
+                        if (child is PieChart siblingChart)
+                        {
+                            _clickedChart = siblingChart;
+                            clickedControl = siblingChart;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    _clickedChart = (Control?)chart ?? pieChart ?? geoMap;
+                    clickedControl = _clickedChart;
+                }
+
+                _clickedChartName = GetChartTitle(clickedControl) ?? "Chart";
+                var position = e.GetPosition(this);
+                var isPieChart = pieChart != null || legend != null;
+                var isGeoMap = geoMap != null;
+
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart, isGeoMap: isGeoMap,
+                    parentWidth: Bounds.Width, parentHeight: Bounds.Height);
+            }
             e.Handled = true;
         }
     }

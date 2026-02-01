@@ -48,25 +48,32 @@ public partial class PastPredictionsModal : UserControl
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
 
-        // Intercept right-button pointer events to prevent LiveCharts selection box
+        // Intercept right-click in tunneling phase to prevent LiveCharts selection box
         AddHandler(
-            PointerMovedEvent,
-            OnChartPointerMoved,
+            PointerPressedEvent,
+            OnChartPointerPressedTunnel,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
     }
 
     /// <summary>
-    /// Intercepts pointer move events to prevent LiveCharts selection box on right-click drag.
+    /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
     /// </summary>
-    private void OnChartPointerMoved(object? sender, PointerEventArgs e)
+    private void OnChartPointerPressedTunnel(object? sender, PointerPressedEventArgs e)
     {
-        // Check if this is over a chart and right button is pressed
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
 
-        if (chart != null && e.GetCurrentPoint(chart).Properties.IsRightButtonPressed)
+        if (chart != null && e.GetCurrentPoint(this).Properties.IsRightButtonPressed && ViewModel != null)
         {
+            _accuracyChart = chart;
+            ViewModel.AccuracyChart = _accuracyChart;
+
+            var position = e.GetPosition(this);
+            ViewModel.ChartContextMenuX = position.X;
+            ViewModel.ChartContextMenuY = position.Y;
+            ViewModel.IsChartContextMenuOpen = true;
+
             e.Handled = true;
         }
     }
