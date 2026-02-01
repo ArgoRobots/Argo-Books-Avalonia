@@ -95,7 +95,7 @@ public partial class AnalyticsPage : UserControl
                 }
                 else
                 {
-                    _clickedChart = (Control?)chart ?? pieChart ?? geoMap;
+                    _clickedChart = (Control?)chart ?? (Control?)pieChart ?? geoMap;
                     clickedControl = _clickedChart;
                 }
 
