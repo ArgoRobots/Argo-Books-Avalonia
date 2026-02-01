@@ -336,7 +336,7 @@
                                                         <!-- Address -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}"
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowAddressColumn}">
-                                                            <TextBlock Text="{Binding Address}"
+                                                            <TextBlock Text="{Binding Address, TargetNullValue='-', FallbackValue='-'}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
@@ -348,7 +348,7 @@
                                                         <!-- Manager -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.ManagerColumnWidth}"
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ShowManagerColumn}">
-                                                            <TextBlock Text="{Binding Manager}"
+                                                            <TextBlock Text="{Binding Manager, TargetNullValue='-', FallbackValue='-'}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"

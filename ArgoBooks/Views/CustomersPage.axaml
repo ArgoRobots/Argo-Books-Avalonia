@@ -371,7 +371,7 @@
                                                     <!-- Email -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.EmailColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowEmailColumn}">
-                                                        <TextBlock Text="{Binding Email}"
+                                                        <TextBlock Text="{Binding Email, TargetNullValue='-', FallbackValue='-'}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
@@ -383,7 +383,7 @@
                                                     <!-- Phone -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.PhoneColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowPhoneColumn}">
-                                                        <TextBlock Text="{Binding Phone}"
+                                                        <TextBlock Text="{Binding Phone, TargetNullValue='-', FallbackValue='-'}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
@@ -395,7 +395,7 @@
                                                     <!-- Address -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowAddressColumn}">
-                                                        <TextBlock Text="{Binding Address}"
+                                                        <TextBlock Text="{Binding Address, TargetNullValue='-', FallbackValue='-'}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
@@ -407,7 +407,7 @@
                                                     <!-- Last Rental -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.LastRentalColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowLastRentalColumn}">
-                                                        <TextBlock Text="{Binding LastRentalFormatted}"
+                                                        <TextBlock Text="{Binding LastRentalFormatted, TargetNullValue='-', FallbackValue='-'}"
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"

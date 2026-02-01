@@ -127,7 +127,7 @@
                            <Grid ColumnDefinitions="Auto,16,*">
                                <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalId}" Classes="form-input" IsReadOnly="True" />
+                                   <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
