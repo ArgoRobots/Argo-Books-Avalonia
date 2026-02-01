@@ -704,6 +704,7 @@
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                                        VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
@@ -715,6 +716,7 @@
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                                        VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
