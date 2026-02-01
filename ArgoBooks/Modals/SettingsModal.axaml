@@ -714,6 +714,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding AutoLockOptions}"
                                               SelectedItem="{Binding SelectedAutoLock}"
+                                              IsEnabled="{Binding !NeedsPasswordForAutoLock}"
                                               Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
@@ -721,9 +722,16 @@
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
+                                    <!-- Show description when password is set -->
                                     <TextBlock Text="{loc:Loc 'Automatically lock the application after inactivity'}"
                                                FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding !NeedsPasswordForAutoLock}" />
+                                    <!-- Show "requires password" message when no password is set -->
+                                    <TextBlock Text="{loc:Loc 'Requires a password to be set first'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               IsVisible="{Binding NeedsPasswordForAutoLock}" />
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

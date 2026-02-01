@@ -296,6 +296,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     public bool NeedsPasswordForWindowsHello => HasStandard && !HasPassword;
 
     /// <summary>
+    /// Whether the user needs to set a password before enabling Auto-Lock.
+    /// </summary>
+    public bool NeedsPasswordForAutoLock => !HasPassword;
+
+    /// <summary>
     /// Event raised when Windows Hello setting changes (after successful authentication).
     /// </summary>
     public event EventHandler<WindowsHelloEventArgs>? WindowsHelloChanged;
@@ -423,9 +428,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         FileEncryptionEnabled = value;
         _isUpdatingEncryption = false;
 
-        // Notify Windows Hello computed properties
+        // Notify Windows Hello and Auto-Lock computed properties
         OnPropertyChanged(nameof(CanEnableWindowsHello));
         OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
+        OnPropertyChanged(nameof(NeedsPasswordForAutoLock));
 
         // Disable Windows Hello if password is removed
         if (!value && WindowsHelloEnabled)
