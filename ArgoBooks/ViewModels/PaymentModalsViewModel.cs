@@ -114,6 +114,44 @@ public partial class PaymentModalsViewModel : ObservableObject
     [ObservableProperty]
     private DateTimeOffset? _filterDateTo;
 
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterPaymentMethod = "All";
+    private string _originalFilterStatus = "All";
+    private string? _originalFilterCustomerId;
+    private string? _originalFilterAmountMin;
+    private string? _originalFilterAmountMax;
+    private DateTimeOffset? _originalFilterDateFrom;
+    private DateTimeOffset? _originalFilterDateTo;
+    private CustomerOption? _originalSelectedCustomerFilter;
+
+    /// <summary>
+    /// Returns true if any filter has been changed from the state when the modal was opened.
+    /// </summary>
+    public bool HasFilterModalChanges =>
+        FilterPaymentMethod != _originalFilterPaymentMethod ||
+        FilterStatus != _originalFilterStatus ||
+        FilterCustomerId != _originalFilterCustomerId ||
+        FilterAmountMin != _originalFilterAmountMin ||
+        FilterAmountMax != _originalFilterAmountMax ||
+        FilterDateFrom != _originalFilterDateFrom ||
+        FilterDateTo != _originalFilterDateTo ||
+        SelectedCustomerFilter?.Id != _originalSelectedCustomerFilter?.Id;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterPaymentMethod = FilterPaymentMethod;
+        _originalFilterStatus = FilterStatus;
+        _originalFilterCustomerId = FilterCustomerId;
+        _originalFilterAmountMin = FilterAmountMin;
+        _originalFilterAmountMax = FilterAmountMax;
+        _originalFilterDateFrom = FilterDateFrom;
+        _originalFilterDateTo = FilterDateTo;
+        _originalSelectedCustomerFilter = SelectedCustomerFilter;
+    }
+
     #endregion
 
     #region Dropdown Options
@@ -564,6 +602,7 @@ public partial class PaymentModalsViewModel : ObservableObject
     {
         LoadCustomerOptionsForFilter();
         SelectedCustomerFilter = CustomerOptions.FirstOrDefault(c => c.Id == FilterCustomerId);
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -574,24 +613,12 @@ public partial class PaymentModalsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Returns true if any filter differs from its default value.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterDateFrom != null ||
-        FilterDateTo != null ||
-        FilterPaymentMethod != "All" ||
-        FilterStatus != "All" ||
-        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
-        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
-        SelectedCustomerFilter != null;
-
-    /// <summary>
     /// Requests to close the Filter modal, showing confirmation if filter changes exist.
     /// </summary>
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -609,7 +636,15 @@ public partial class PaymentModalsViewModel : ObservableObject
                     return;
             }
 
-            ResetFilterDefaults();
+            // Restore filter values to the state when modal was opened
+            FilterPaymentMethod = _originalFilterPaymentMethod;
+            FilterStatus = _originalFilterStatus;
+            FilterCustomerId = _originalFilterCustomerId;
+            FilterAmountMin = _originalFilterAmountMin;
+            FilterAmountMax = _originalFilterAmountMax;
+            FilterDateFrom = _originalFilterDateFrom;
+            FilterDateTo = _originalFilterDateTo;
+            SelectedCustomerFilter = _originalSelectedCustomerFilter;
         }
 
         CloseFilterModal();

@@ -155,13 +155,67 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public ObservableCollection<LineItemDisplayModel> LineItems { get; } = [];
 
     /// <summary>
-    /// Returns true if any data has been entered in the Create/Edit modal.
+    /// Returns true if any data has been entered in the Create modal.
     /// </summary>
     public bool HasEnteredData =>
         SelectedCustomer != null ||
         !string.IsNullOrWhiteSpace(ModalNotes) ||
         TaxRate > 0 ||
         LineItems.Any(i => !string.IsNullOrWhiteSpace(i.Description) || i.SelectedProduct != null || (i.UnitPrice ?? 0) > 0);
+
+    // Original values for change detection in edit mode
+    private string? _originalCustomerId;
+    private DateTimeOffset? _originalIssueDate;
+    private DateTimeOffset? _originalDueDate;
+    private string _originalStatus = "Draft";
+    private string _originalNotes = string.Empty;
+    private decimal _originalTaxRate;
+    private List<(string? ProductId, string Description, decimal? Quantity, decimal? UnitPrice)> _originalLineItems = [];
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal compared to original values.
+    /// </summary>
+    public bool HasEditModalChanges
+    {
+        get
+        {
+            if (SelectedCustomer?.Id != _originalCustomerId) return true;
+            if (ModalIssueDate != _originalIssueDate) return true;
+            if (ModalDueDate != _originalDueDate) return true;
+            if (ModalStatus != _originalStatus) return true;
+            if (ModalNotes != _originalNotes) return true;
+            if (TaxRate != _originalTaxRate) return true;
+
+            // Compare line items
+            if (LineItems.Count != _originalLineItems.Count) return true;
+            for (int i = 0; i < LineItems.Count; i++)
+            {
+                var current = LineItems[i];
+                var original = _originalLineItems[i];
+                if (current.SelectedProduct?.Id != original.ProductId ||
+                    current.Description != original.Description ||
+                    current.Quantity != original.Quantity ||
+                    current.UnitPrice != original.UnitPrice)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Captures the current form state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalValues()
+    {
+        _originalCustomerId = SelectedCustomer?.Id;
+        _originalIssueDate = ModalIssueDate;
+        _originalDueDate = ModalDueDate;
+        _originalStatus = ModalStatus;
+        _originalNotes = ModalNotes;
+        _originalTaxRate = TaxRate;
+        _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.Description, li.Quantity, li.UnitPrice)).ToList();
+    }
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
 
@@ -281,18 +335,43 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public ObservableCollection<string> StatusFilterOptions { get; } = ["All", "Draft", "Pending", "Sent", "Partial", "Paid", "Overdue", "Cancelled"];
 
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterStatus = "All";
+    private string? _originalFilterCustomerId;
+    private string? _originalFilterAmountMin;
+    private string? _originalFilterAmountMax;
+    private DateTimeOffset? _originalFilterIssueDateFrom;
+    private DateTimeOffset? _originalFilterIssueDateTo;
+    private DateTimeOffset? _originalFilterDueDateFrom;
+    private DateTimeOffset? _originalFilterDueDateTo;
+
     /// <summary>
-    /// Returns true if any filter value differs from its default.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterStatus != "All" ||
-        FilterSelectedCustomer != null ||
-        FilterIssueDateFrom != null ||
-        FilterIssueDateTo != null ||
-        FilterDueDateFrom != null ||
-        FilterDueDateTo != null ||
-        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
-        !string.IsNullOrWhiteSpace(FilterAmountMax);
+    public bool HasFilterModalChanges =>
+        FilterStatus != _originalFilterStatus ||
+        FilterSelectedCustomer?.Id != _originalFilterCustomerId ||
+        FilterAmountMin != _originalFilterAmountMin ||
+        FilterAmountMax != _originalFilterAmountMax ||
+        FilterIssueDateFrom != _originalFilterIssueDateFrom ||
+        FilterIssueDateTo != _originalFilterIssueDateTo ||
+        FilterDueDateFrom != _originalFilterDueDateFrom ||
+        FilterDueDateTo != _originalFilterDueDateTo;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterStatus = FilterStatus;
+        _originalFilterCustomerId = FilterSelectedCustomer?.Id;
+        _originalFilterAmountMin = FilterAmountMin;
+        _originalFilterAmountMax = FilterAmountMax;
+        _originalFilterIssueDateFrom = FilterIssueDateFrom;
+        _originalFilterIssueDateTo = FilterIssueDateTo;
+        _originalFilterDueDateFrom = FilterDueDateFrom;
+        _originalFilterDueDateTo = FilterDueDateTo;
+    }
 
     #endregion
 
@@ -460,6 +539,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         HasCustomerError = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
+
+        // Capture original values for change detection
+        CaptureOriginalValues();
+
         IsCreateEditModalOpen = true;
     }
 
@@ -519,6 +602,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         HasCustomerError = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
+
+        // Capture original values for change detection
+        CaptureOriginalValues();
+
         IsCreateEditModalOpen = true;
     }
 
@@ -581,6 +668,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public void OpenFilterModal()
     {
         LoadCustomerOptions(includeAllOption: true);
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -596,7 +684,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -614,8 +702,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                     return;
             }
 
-            // Reset filter values to defaults
-            ResetFilterDefaults();
+            // Restore filter values to the state when modal was opened
+            FilterStatus = _originalFilterStatus;
+            FilterSelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == _originalFilterCustomerId);
+            FilterAmountMin = _originalFilterAmountMin;
+            FilterAmountMax = _originalFilterAmountMax;
+            FilterIssueDateFrom = _originalFilterIssueDateFrom;
+            FilterIssueDateTo = _originalFilterIssueDateTo;
+            FilterDueDateFrom = _originalFilterDueDateFrom;
+            FilterDueDateTo = _originalFilterDueDateTo;
         }
 
         CloseFilterModal();
@@ -1093,21 +1188,34 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Requests to close the Create/Edit modal, showing confirmation if data was entered.
+    /// Requests to close the Create/Edit modal, showing confirmation if data was entered (Add mode) or changed (Edit mode).
     /// </summary>
     [RelayCommand]
     private async Task RequestCloseCreateEditModalAsync()
     {
-        // Don't show confirmation if showing success screen or if no data entered
-        if (!IsShowingSuccess && HasEnteredData)
+        // Don't show confirmation if showing success screen
+        if (IsShowingSuccess)
+        {
+            CloseCreateEditModal();
+            return;
+        }
+
+        // In edit mode, check if changes were made; in add mode, check if data was entered
+        var hasUnsavedWork = IsEditMode ? HasEditModalChanges : HasEnteredData;
+
+        if (hasUnsavedWork)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {
+                var message = IsEditMode
+                    ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
+                    : "You have entered data that will be lost. Are you sure you want to close?".Translate();
+
                 var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Discard Changes?".Translate(),
-                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    Message = message,
                     PrimaryButtonText = "Discard".Translate(),
                     CancelButtonText = "Cancel".Translate(),
                     IsPrimaryDestructive = true

@@ -141,12 +141,25 @@ public partial class SupplierModalsViewModel : ObservableObject
     public ObservableCollection<string> CountryOptions { get; } = ["All"];
     public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Inactive"];
 
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterCountry = "All";
+    private string _originalFilterStatus = "All";
+
     /// <summary>
-    /// Returns true if any filter differs from its default value.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterCountry != "All" ||
-        FilterStatus != "All";
+    public bool HasFilterModalChanges =>
+        FilterCountry != _originalFilterCountry ||
+        FilterStatus != _originalFilterStatus;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterCountry = FilterCountry;
+        _originalFilterStatus = FilterStatus;
+    }
 
     #endregion
 
@@ -454,6 +467,7 @@ public partial class SupplierModalsViewModel : ObservableObject
     public void OpenFilterModal()
     {
         UpdateCountryOptions();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -469,7 +483,7 @@ public partial class SupplierModalsViewModel : ObservableObject
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -486,8 +500,9 @@ public partial class SupplierModalsViewModel : ObservableObject
                 if (result != ConfirmationResult.Primary)
                     return;
 
-                // Reset filter values to defaults
-                ResetFilterDefaults();
+                // Restore filter values to the state when modal was opened
+                FilterCountry = _originalFilterCountry;
+                FilterStatus = _originalFilterStatus;
             }
         }
 
