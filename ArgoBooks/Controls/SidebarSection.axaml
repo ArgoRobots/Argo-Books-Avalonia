@@ -50,15 +50,11 @@
         </Border>
 
         <!-- Section Items with animated expand/collapse -->
-        <Border ClipToBounds="True"
-                Classes="section-content"
-                Classes.collapsed="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="MaxHeight" Duration="0:0:0.2" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
-            <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+        <Border x:Name="ContentBorder"
+                ClipToBounds="True"
+                MaxHeight="{Binding ContentMaxHeight, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+            <ItemsControl x:Name="ContentItems"
+                          ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
                           Padding="10,0">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -81,14 +77,6 @@
     </StackPanel>
 
     <UserControl.Styles>
-        <!-- Section Content Expand/Collapse Animation -->
-        <Style Selector="Border.section-content">
-            <Setter Property="MaxHeight" Value="1000" />
-        </Style>
-        <Style Selector="Border.section-content.collapsed">
-            <Setter Property="MaxHeight" Value="0" />
-        </Style>
-
         <!-- Section Toggle Button Style -->
         <Style Selector="Button.section-toggle">
             <Setter Property="Background" Value="Transparent" />
