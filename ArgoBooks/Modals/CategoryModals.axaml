@@ -64,7 +64,8 @@
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Button Classes="form-combobox" Command="{Binding OpenEmojiPickerCommand}"
-                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,10">
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                            Padding="12,8" CornerRadius="6">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBlock Text="{Binding ModalSelectedIcon}" FontSize="16" VerticalAlignment="Center" />
                                             <TextBlock Text="{loc:Loc 'Choose...'}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
@@ -131,7 +132,8 @@
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Button Classes="form-combobox" Command="{Binding OpenEmojiPickerCommand}"
-                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,10">
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                            Padding="12,8" CornerRadius="6">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBlock Text="{Binding ModalSelectedIcon}" FontSize="16" VerticalAlignment="Center" />
                                             <TextBlock Text="{loc:Loc 'Choose...'}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />

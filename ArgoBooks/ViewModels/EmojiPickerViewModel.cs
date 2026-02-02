@@ -156,7 +156,14 @@ public partial class EmojiPickerViewModel : ObservableObject
         }
 
         SelectedTab = tab;
+        SearchText = string.Empty; // Clear search when switching tabs
         UpdateDisplayedEmojis();
+    }
+
+    [RelayCommand]
+    public void ClearSearch()
+    {
+        SearchText = string.Empty;
     }
 
     [RelayCommand]
