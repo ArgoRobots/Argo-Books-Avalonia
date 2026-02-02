@@ -30,24 +30,21 @@
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
 
-                <!-- Collapse/Expand button (optional) -->
+                <!-- Collapse/Expand button with animated arrow (hidden when sidebar is collapsed) -->
                 <Button Grid.Column="1"
                         Classes="section-toggle"
                         Width="20" Height="20"
-                        Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
-                        IsVisible="{Binding IsCollapsible, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
-                    <Panel>
-                        <!-- Expanded icon (down arrow) -->
-                        <PathIcon Width="12" Height="12"
-                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                  Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
-                                  IsVisible="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
-                        <!-- Collapsed icon (right arrow) -->
-                        <PathIcon Width="12" Height="12"
-                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                  Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
-                                  IsVisible="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
-                    </Panel>
+                        Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+                    <Button.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="IsCollapsible" RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}" />
+                            <Binding Path="!IsCollapsed" RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}" />
+                        </MultiBinding>
+                    </Button.IsVisible>
+                    <controls:ToggleArrow IconSize="12"
+                                          Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                          Orientation="Vertical"
+                                          IsCollapsed="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
                 </Button>
             </Grid>
         </Border>

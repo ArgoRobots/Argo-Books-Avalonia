@@ -166,40 +166,47 @@
                 <!-- Main Section -->
                 <controls:SidebarSection Title="{loc:Loc Main}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding MainItems}" />
 
                 <!-- Transactions Section -->
                 <controls:SidebarSection Title="{loc:Loc Transactions}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding TransactionItems}"
                                          IsVisible="{Binding ShowTransactions}" />
 
                 <!-- Rentals Section -->
                 <controls:SidebarSection Title="{loc:Loc Rentals}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding RentalItems}"
                                          IsVisible="{Binding ShowRentals}" />
 
                 <!-- Management Section -->
                 <controls:SidebarSection Title="{loc:Loc Management}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding ManagementItems}" />
 
                 <!-- Inventory Section -->
                 <controls:SidebarSection Title="{loc:Loc Inventory}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding InventoryItems}"
                                          IsVisible="{Binding ShowInventory}" />
 
                 <!-- Team Section -->
                 <controls:SidebarSection Title="{loc:Loc Team}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding TeamItems}"
                                          IsVisible="{Binding ShowTeam}" />
 
                 <!-- Tracking Section -->
                 <controls:SidebarSection Title="{loc:Loc Tracking}"
                                          IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
                                          Items="{Binding TrackingItems}" />
             </StackPanel>
         </ScrollViewer>
