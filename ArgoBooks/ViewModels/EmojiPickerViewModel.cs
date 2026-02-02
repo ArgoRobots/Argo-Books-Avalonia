@@ -65,6 +65,13 @@ public partial class EmojiPickerViewModel : ObservableObject
                                    SelectedTab?.IsSpecial == true;
 
     /// <summary>
+    /// Whether to show the clear recent button.
+    /// </summary>
+    public bool ShowClearRecent => SelectedTab?.Name == "Recent" &&
+                                    _settings?.RecentEmojis.Count > 0 &&
+                                    string.IsNullOrWhiteSpace(SearchText);
+
+    /// <summary>
     /// Gets the empty state message for the current tab.
     /// </summary>
     public string EmptyStateMessage => SelectedTab?.Name switch
@@ -164,6 +171,17 @@ public partial class EmojiPickerViewModel : ObservableObject
     public void ClearSearch()
     {
         SearchText = string.Empty;
+    }
+
+    [RelayCommand]
+    public void ClearRecent()
+    {
+        if (_settings == null) return;
+
+        _settings.RecentEmojis.Clear();
+        SaveSettings();
+        OnPropertyChanged(nameof(HasRecentEmojis));
+        UpdateDisplayedEmojis();
     }
 
     [RelayCommand]
@@ -269,6 +287,7 @@ public partial class EmojiPickerViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(EmptyStateMessage));
         OnPropertyChanged(nameof(EmptyStateHint));
+        OnPropertyChanged(nameof(ShowClearRecent));
     }
 
     private void AddToRecent(string emoji)
