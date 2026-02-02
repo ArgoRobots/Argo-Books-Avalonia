@@ -48,6 +48,25 @@ public class UiSettings
     public string TimeFormat { get; set; } = "12h";
     public ChartSettings Chart { get; set; } = new();
     public QuickActionsSettings QuickActions { get; set; } = new();
+    public EmojiPickerSettings EmojiPicker { get; set; } = new();
+}
+
+public class EmojiPickerSettings
+{
+    /// <summary>
+    /// Recently used emojis (most recent first).
+    /// </summary>
+    public List<string> RecentEmojis { get; set; } = [];
+
+    /// <summary>
+    /// User's favorite emojis.
+    /// </summary>
+    public List<string> FavoriteEmojis { get; set; } = [];
+
+    /// <summary>
+    /// Maximum number of recent emojis to store.
+    /// </summary>
+    public int MaxRecentEmojis { get; set; } = 24;
 }
 
 public class QuickActionsSettings

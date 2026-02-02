@@ -3,6 +3,7 @@ using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -41,7 +42,7 @@ public partial class CategoryModalsViewModel : ObservableObject
     private string _modalItemType = "Product";
 
     [ObservableProperty]
-    private IconOption? _modalSelectedIconOption;
+    private string _modalSelectedIcon = "📦";
 
     [ObservableProperty]
     private string? _modalError;
@@ -69,7 +70,7 @@ public partial class CategoryModalsViewModel : ObservableObject
     public bool HasAddModalEnteredData =>
         !string.IsNullOrWhiteSpace(ModalCategoryName) ||
         !string.IsNullOrWhiteSpace(ModalDescription) ||
-        ModalSelectedIconOption != null;
+        ModalSelectedIcon != "📦";
 
     /// <summary>
     /// Returns true if any changes have been made in the Edit modal.
@@ -78,7 +79,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         ModalCategoryName != _originalCategoryName ||
         ModalDescription != _originalDescription ||
         ModalItemType != _originalItemType ||
-        ModalSelectedIconOption?.Icon != _originalIconOption;
+        ModalSelectedIcon != _originalIconOption;
 
     #endregion
 
@@ -115,23 +116,10 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
 
-    public ObservableCollection<IconOption> AvailableIcons { get; } =
-    [
-        new("📦", "Box"),
-        new("🏷️", "Tag"),
-        new("📁", "Folder"),
-        new("🛒", "Shopping Cart"),
-        new("🚚", "Truck"),
-        new("🔧", "Tools"),
-        new("🏠", "Home"),
-        new("💻", "Computer"),
-        new("📱", "Phone"),
-        new("💡", "Light Bulb"),
-        new("⚙️", "Settings"),
-        new("⭐", "Star"),
-        new("❤️", "Heart"),
-        new("💵", "Dollar")
-    ];
+    /// <summary>
+    /// ViewModel for the emoji picker modal.
+    /// </summary>
+    public EmojiPickerViewModel EmojiPicker { get; } = new();
 
     #endregion
 
@@ -144,7 +132,18 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     public CategoryModalsViewModel()
     {
-        _modalSelectedIconOption = AvailableIcons.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Opens the emoji picker modal.
+    /// </summary>
+    [RelayCommand]
+    public void OpenEmojiPicker()
+    {
+        EmojiPicker.Open(ModalSelectedIcon, emoji =>
+        {
+            ModalSelectedIcon = emoji;
+        });
     }
 
     #region Add Category
@@ -237,7 +236,7 @@ public partial class CategoryModalsViewModel : ObservableObject
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
             Color = "#4A90D9",
-            Icon = ModalSelectedIconOption?.Icon ?? "📦"
+            Icon = ModalSelectedIcon
         };
 
         companyData.Categories.Add(newCategory);
@@ -274,13 +273,13 @@ public partial class CategoryModalsViewModel : ObservableObject
         ModalCategoryName = category.Name;
         ModalDescription = category.Description ?? string.Empty;
         ModalItemType = category.ItemType;
-        ModalSelectedIconOption = AvailableIcons.FirstOrDefault(i => i.Icon == category.Icon) ?? AvailableIcons.First();
+        ModalSelectedIcon = category.Icon;
 
         // Store original values for change detection
         _originalCategoryName = ModalCategoryName;
         _originalDescription = ModalDescription;
         _originalItemType = ModalItemType;
-        _originalIconOption = ModalSelectedIconOption?.Icon;
+        _originalIconOption = ModalSelectedIcon;
 
         ModalError = null;
         IsEditModalOpen = true;
@@ -338,7 +337,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         var newName = ModalCategoryName.Trim();
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
         var newItemType = ModalItemType;
-        var newIcon = ModalSelectedIconOption?.Icon ?? "📦";
+        var newIcon = ModalSelectedIcon;
 
         // Check if anything actually changed
         var hasChanges = oldName != newName ||
@@ -571,7 +570,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         ModalCategoryName = string.Empty;
         ModalDescription = string.Empty;
         ModalItemType = "Product";
-        ModalSelectedIconOption = AvailableIcons.FirstOrDefault();
+        ModalSelectedIcon = "📦";
         ModalError = null;
         ModalCategoryNameError = null;
         _addingSubCategoryParent = null;

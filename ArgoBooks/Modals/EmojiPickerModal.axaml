@@ -1,0 +1,202 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.EmojiPickerModal"
+             x:DataType="vm:EmojiPickerViewModel">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CloseCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="600" Height="560"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto,Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{loc:Loc 'Select Icon'}" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}">
+                                <PathIcon Data="{x:Static local:Icons.Close}" Width="18" Height="18" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Search Box -->
+                    <Border Grid.Row="1" Padding="16,12">
+                        <TextBox Text="{Binding SearchText, Mode=TwoWay}"
+                                 Classes="form-input"
+                                 Watermark="{loc:Loc 'Search emojis...'}">
+                            <TextBox.InnerRightContent>
+                                <Button Classes="icon-button"
+                                        Command="{Binding ClearSearchCommand}"
+                                        IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                        Margin="0,0,4,0"
+                                        Padding="4"
+                                        ToolTip.Tip="{loc:Loc 'Clear search'}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="12" Height="12" />
+                                </Button>
+                            </TextBox.InnerRightContent>
+                        </TextBox>
+                    </Border>
+
+                    <!-- Main Content: Tabs + Emojis -->
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*">
+                        <!-- Category Tabs (Vertical) -->
+                        <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Tabs}" Margin="8,4">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:EmojiTabItem">
+                                            <Button Classes="emoji-tab-button"
+                                                    Command="{Binding $parent[UserControl].((vm:EmojiPickerViewModel)DataContext).SelectTabCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Width="44" Height="44"
+                                                    Margin="0,2"
+                                                    ToolTip.Tip="{Binding Name}">
+                                                <Button.Styles>
+                                                    <Style Selector="Button.emoji-tab-button">
+                                                        <Setter Property="Background" Value="Transparent" />
+                                                        <Setter Property="CornerRadius" Value="8" />
+                                                        <Setter Property="Padding" Value="0" />
+                                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                                                    </Style>
+                                                    <Style Selector="Button.emoji-tab-button:pointerover /template/ ContentPresenter">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Button.emoji-tab-button[Tag=True]">
+                                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                                    </Style>
+                                                </Button.Styles>
+                                                <Button.Tag>
+                                                    <Binding Path="IsSelected" />
+                                                </Button.Tag>
+                                                <TextBlock Text="{Binding Icon}" FontSize="22"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- Emoji Grid -->
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                            <!-- Clear Recent Link -->
+                            <Button Grid.Row="0" Classes="link-button"
+                                    Content="{loc:Loc 'Clear recent'}"
+                                    Command="{Binding ClearRecentCommand}"
+                                    HorizontalAlignment="Right"
+                                    Margin="12,8,12,0"
+                                    IsVisible="{Binding ShowClearRecent}" />
+
+                            <!-- Empty State -->
+                            <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Spacing="8" Margin="20"
+                                        IsVisible="{Binding ShowEmptyState}">
+                                <TextBlock Text="{Binding EmptyStateMessage}"
+                                           FontSize="15" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding EmptyStateHint}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Emoji Items -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                          IsVisible="{Binding !ShowEmptyState}">
+                                <ItemsControl ItemsSource="{Binding DisplayedEmojis}" Margin="12,8">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:EmojiDisplayItem">
+                                            <Button Classes="emoji-button"
+                                                    Command="{Binding $parent[UserControl].((vm:EmojiPickerViewModel)DataContext).SelectEmojiCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Width="52" Height="52"
+                                                    Margin="3"
+                                                    ToolTip.Tip="{Binding Name}">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="{loc:Loc 'Toggle Favorite'}"
+                                                                  Command="{Binding $parent[UserControl].((vm:EmojiPickerViewModel)DataContext).ToggleFavoriteCommand}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="⭐" FontSize="14" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
+                                                <Button.Styles>
+                                                    <Style Selector="Button.emoji-button">
+                                                        <Setter Property="Background" Value="Transparent" />
+                                                        <Setter Property="CornerRadius" Value="8" />
+                                                        <Setter Property="Padding" Value="0" />
+                                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                                                    </Style>
+                                                    <Style Selector="Button.emoji-button:pointerover /template/ ContentPresenter">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Button.emoji-button:pressed /template/ ContentPresenter">
+                                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                                    </Style>
+                                                </Button.Styles>
+                                                <Grid>
+                                                    <TextBlock Text="{Binding Emoji}" FontSize="28"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <!-- Favorite indicator -->
+                                                    <TextBlock Text="⭐" FontSize="10"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                               Margin="0,-2,-2,0"
+                                                               IsVisible="{Binding IsFavorite}" />
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Footer with selected emoji preview -->
+                    <Border Grid.Row="3" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc 'Selected:'}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding SelectedEmoji, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8" Width="40" Height="40"
+                                        IsVisible="{Binding SelectedEmoji, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="{Binding SelectedEmoji}" FontSize="24"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Click an emoji to select'}"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding SelectedEmoji, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+                            <Button Grid.Column="2" Classes="secondary-button" Content="{loc:Loc Cancel}"
+                                    Command="{Binding CloseCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>
