@@ -49,30 +49,46 @@
             </Grid>
         </Border>
 
-        <!-- Section Items -->
-        <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
-                      IsVisible="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
-                      Padding="10,0">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <controls:SidebarItem Text="{Binding Text}"
-                                          Icon="{Binding Icon}"
-                                          PageName="{Binding PageName}"
-                                          IsActive="{Binding IsActive}"
-                                          IsCollapsed="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
-                                          Command="{Binding Command}"
-                                          CommandParameter="{Binding PageName}"
-                                          BadgeText="{Binding BadgeText}"
-                                          ShowBadge="{Binding ShowBadge}"
-                                          TooltipText="{Binding Text}"
-                                          IsVisible="{Binding IsVisible}"
-                                          Margin="0,2" />
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <!-- Section Items with animated expand/collapse -->
+        <Border ClipToBounds="True"
+                Classes="section-content"
+                Classes.collapsed="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="MaxHeight" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+            <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                          Padding="10,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:SidebarItem Text="{Binding Text}"
+                                              Icon="{Binding Icon}"
+                                              PageName="{Binding PageName}"
+                                              IsActive="{Binding IsActive}"
+                                              IsCollapsed="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                                              Command="{Binding Command}"
+                                              CommandParameter="{Binding PageName}"
+                                              BadgeText="{Binding BadgeText}"
+                                              ShowBadge="{Binding ShowBadge}"
+                                              TooltipText="{Binding Text}"
+                                              IsVisible="{Binding IsVisible}"
+                                              Margin="0,2" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
     </StackPanel>
 
     <UserControl.Styles>
+        <!-- Section Content Expand/Collapse Animation -->
+        <Style Selector="Border.section-content">
+            <Setter Property="MaxHeight" Value="1000" />
+        </Style>
+        <Style Selector="Border.section-content.collapsed">
+            <Setter Property="MaxHeight" Value="0" />
+        </Style>
+
         <!-- Section Toggle Button Style -->
         <Style Selector="Button.section-toggle">
             <Setter Property="Background" Value="Transparent" />
