@@ -57,6 +57,33 @@ public partial class EmojiPickerViewModel : ObservableObject
     public bool HasRecentEmojis => _settings?.RecentEmojis.Count > 0;
     public bool HasFavoriteEmojis => _settings?.FavoriteEmojis.Count > 0;
 
+    /// <summary>
+    /// Whether to show the empty state message (on Recent/Favorites tab with no items).
+    /// </summary>
+    public bool ShowEmptyState => DisplayedEmojis.Count == 0 &&
+                                   string.IsNullOrWhiteSpace(SearchText) &&
+                                   SelectedTab?.IsSpecial == true;
+
+    /// <summary>
+    /// Gets the empty state message for the current tab.
+    /// </summary>
+    public string EmptyStateMessage => SelectedTab?.Name switch
+    {
+        "Recent" => "No recent emojis yet",
+        "Favorites" => "No favorite emojis yet",
+        _ => ""
+    };
+
+    /// <summary>
+    /// Gets the empty state hint for the current tab.
+    /// </summary>
+    public string EmptyStateHint => SelectedTab?.Name switch
+    {
+        "Recent" => "Emojis you select will appear here",
+        "Favorites" => "Right-click an emoji to add it to favorites",
+        _ => ""
+    };
+
     public EmojiPickerViewModel()
     {
         InitializeTabs();
@@ -231,6 +258,10 @@ public partial class EmojiPickerViewModel : ObservableObject
                 IsFavorite = _settings.FavoriteEmojis.Contains(emoji.Emoji)
             });
         }
+
+        OnPropertyChanged(nameof(ShowEmptyState));
+        OnPropertyChanged(nameof(EmptyStateMessage));
+        OnPropertyChanged(nameof(EmptyStateHint));
     }
 
     private void AddToRecent(string emoji)
