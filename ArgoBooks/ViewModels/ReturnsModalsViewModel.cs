@@ -54,13 +54,38 @@ public partial class ReturnsModalsViewModel : ViewModelBase
 
     #region Filter Modal Commands
 
+    // Original filter values for change detection
+    private DateTimeOffset? _originalFilterDateFrom;
+    private DateTimeOffset? _originalFilterDateTo;
+    private string _originalFilterReason = "All";
+
     /// <summary>
-    /// Gets whether any filter values differ from their defaults.
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterDateFrom != null ||
-        FilterDateTo != null ||
-        FilterReason != "All";
+    public bool HasFilterModalChanges =>
+        FilterDateFrom != _originalFilterDateFrom ||
+        FilterDateTo != _originalFilterDateTo ||
+        FilterReason != _originalFilterReason;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterDateFrom = FilterDateFrom;
+        _originalFilterDateTo = FilterDateTo;
+        _originalFilterReason = FilterReason;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterDateFrom = _originalFilterDateFrom;
+        FilterDateTo = _originalFilterDateTo;
+        FilterReason = _originalFilterReason;
+    }
 
     /// <summary>
     /// Resets all filter values to their defaults.
@@ -77,6 +102,7 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     /// </summary>
     public void OpenFilterModal()
     {
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -95,7 +121,7 @@ public partial class ReturnsModalsViewModel : ViewModelBase
     [RelayCommand]
     private async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -112,7 +138,7 @@ public partial class ReturnsModalsViewModel : ViewModelBase
                 if (result != ConfirmationResult.Primary)
                     return;
 
-                ResetFilterDefaults();
+                RestoreOriginalFilterValues();
             }
         }
 

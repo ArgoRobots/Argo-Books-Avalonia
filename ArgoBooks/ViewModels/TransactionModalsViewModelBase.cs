@@ -226,8 +226,19 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Bank Card", "Bank Transfer", "Check", "PayPal", "Other"];
     public ObservableCollection<TLineItem> LineItems { get; } = [];
 
+    // Original values for change detection in edit mode
+    private DateTimeOffset? _originalModalDate;
+    private string? _originalCounterpartyId;
+    private string? _originalCategoryId;
+    private decimal _originalTaxRate;
+    private decimal _originalShipping;
+    private decimal _originalDiscount;
+    private string _originalPaymentMethod = "Cash";
+    private string _originalNotes = string.Empty;
+    private List<(string? ProductId, string Description, decimal? Quantity, decimal? UnitPrice)> _originalLineItems = [];
+
     /// <summary>
-    /// Returns true if any data has been entered in the Add/Edit modal.
+    /// Returns true if any data has been entered in the Add modal.
     /// </summary>
     public bool HasEnteredData =>
         SelectedCounterparty != null ||
@@ -237,6 +248,55 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalShipping > 0 ||
         ModalDiscount > 0 ||
         LineItems.Any(li => li.SelectedProduct != null || !string.IsNullOrWhiteSpace(li.Description) || (li.UnitPrice ?? 0) > 0);
+
+    /// <summary>
+    /// Returns true if any changes have been made in the Edit modal compared to original values.
+    /// </summary>
+    public bool HasEditModalChanges
+    {
+        get
+        {
+            if (ModalDate != _originalModalDate) return true;
+            if (SelectedCounterparty?.Id != _originalCounterpartyId) return true;
+            if (SelectedCategory?.Id != _originalCategoryId) return true;
+            if (ModalTaxRate != _originalTaxRate) return true;
+            if (ModalShipping != _originalShipping) return true;
+            if (ModalDiscount != _originalDiscount) return true;
+            if (SelectedPaymentMethod != _originalPaymentMethod) return true;
+            if (ModalNotes != _originalNotes) return true;
+
+            // Compare line items
+            if (LineItems.Count != _originalLineItems.Count) return true;
+            for (int i = 0; i < LineItems.Count; i++)
+            {
+                var current = LineItems[i];
+                var original = _originalLineItems[i];
+                if (current.SelectedProduct?.Id != original.ProductId ||
+                    current.Description != original.Description ||
+                    current.Quantity != original.Quantity ||
+                    current.UnitPrice != original.UnitPrice)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Captures the current form state as original values for change detection.
+    /// </summary>
+    protected void CaptureOriginalValues()
+    {
+        _originalModalDate = ModalDate;
+        _originalCounterpartyId = SelectedCounterparty?.Id;
+        _originalCategoryId = SelectedCategory?.Id;
+        _originalTaxRate = ModalTaxRate;
+        _originalShipping = ModalShipping;
+        _originalDiscount = ModalDiscount;
+        _originalPaymentMethod = SelectedPaymentMethod;
+        _originalNotes = ModalNotes;
+        _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.Description, li.Quantity, li.UnitPrice)).ToList();
+    }
 
     // Computed totals
     public decimal Subtotal => LineItems.Count > 0
@@ -316,6 +376,15 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     [ObservableProperty]
     private DateTimeOffset? _filterDateTo;
+
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterStatus = "All";
+    private string? _originalFilterCounterpartyId;
+    private string? _originalFilterCategoryId;
+    private string? _originalFilterAmountMin;
+    private string? _originalFilterAmountMax;
+    private DateTimeOffset? _originalFilterDateFrom;
+    private DateTimeOffset? _originalFilterDateTo;
 
     public ObservableCollection<string> StatusFilterOptions { get; } = ["All", "Completed", "Pending", "Partial Return", "Returned", "Cancelled"];
 
@@ -485,6 +554,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             : Path.GetFileName(transaction.ReferenceNumber);
 
         ClearValidationErrors();
+
+        // Capture original values for change detection
+        CaptureOriginalValues();
     }
 
     #endregion
@@ -505,16 +577,30 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     #region Filter Modal
 
     /// <summary>
-    /// Returns true if any filter has been changed from its default value.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterStatus != "All" ||
-        FilterSelectedCounterparty != null ||
-        FilterSelectedCategory != null ||
-        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
-        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
-        FilterDateFrom != null ||
-        FilterDateTo != null;
+    public bool HasFilterModalChanges =>
+        FilterStatus != _originalFilterStatus ||
+        FilterSelectedCounterparty?.Id != _originalFilterCounterpartyId ||
+        FilterSelectedCategory?.Id != _originalFilterCategoryId ||
+        FilterAmountMin != _originalFilterAmountMin ||
+        FilterAmountMax != _originalFilterAmountMax ||
+        FilterDateFrom != _originalFilterDateFrom ||
+        FilterDateTo != _originalFilterDateTo;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterStatus = FilterStatus;
+        _originalFilterCounterpartyId = FilterSelectedCounterparty?.Id;
+        _originalFilterCategoryId = FilterSelectedCategory?.Id;
+        _originalFilterAmountMin = FilterAmountMin;
+        _originalFilterAmountMax = FilterAmountMax;
+        _originalFilterDateFrom = FilterDateFrom;
+        _originalFilterDateTo = FilterDateTo;
+    }
 
     private void ResetFilterDefaults()
     {
@@ -531,6 +617,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     {
         LoadCounterpartyOptionsForFilter();
         LoadCategoryOptionsForFilter();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -543,7 +630,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [RelayCommand]
     protected async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -561,8 +648,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     return;
             }
 
-            // Reset filter values to defaults
-            ResetFilterDefaults();
+            // Reset filter values to the state when modal was opened
+            FilterStatus = _originalFilterStatus;
+            FilterSelectedCounterparty = CounterpartyOptions.FirstOrDefault(c => c.Id == _originalFilterCounterpartyId);
+            FilterSelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == _originalFilterCategoryId);
+            FilterAmountMin = _originalFilterAmountMin;
+            FilterAmountMax = _originalFilterAmountMax;
+            FilterDateFrom = _originalFilterDateFrom;
+            FilterDateTo = _originalFilterDateTo;
         }
 
         CloseFilterModal();
@@ -647,20 +740,27 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     }
 
     /// <summary>
-    /// Requests to close the Add/Edit modal, showing confirmation if data was entered.
+    /// Requests to close the Add/Edit modal, showing confirmation if data was entered (Add mode) or changed (Edit mode).
     /// </summary>
     [RelayCommand]
     protected async Task RequestCloseAddEditModalAsync()
     {
-        if (HasEnteredData)
+        // In edit mode, check if changes were made; in add mode, check if data was entered
+        var hasUnsavedWork = IsEditMode ? HasEditModalChanges : HasEnteredData;
+
+        if (hasUnsavedWork)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {
+                var message = IsEditMode
+                    ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
+                    : "You have entered data that will be lost. Are you sure you want to close?".Translate();
+
                 var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Discard Changes?".Translate(),
-                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                    Message = message,
                     PrimaryButtonText = "Discard".Translate(),
                     CancelButtonText = "Cancel".Translate(),
                     IsPrimaryDestructive = true

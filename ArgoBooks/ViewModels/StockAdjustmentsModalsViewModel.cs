@@ -497,6 +497,43 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FilterTypeOptions { get; } = ["All", "Add", "Remove", "Set"];
 
+    // Original filter values for change detection
+    private DateTimeOffset? _originalFilterStartDate;
+    private DateTimeOffset? _originalFilterEndDate;
+    private string _originalFilterProduct = "All";
+    private string _originalFilterType = "All";
+
+    /// <summary>
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
+    /// </summary>
+    public bool HasFilterModalChanges =>
+        FilterStartDate != _originalFilterStartDate ||
+        FilterEndDate != _originalFilterEndDate ||
+        FilterProduct != _originalFilterProduct ||
+        FilterType != _originalFilterType;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterStartDate = FilterStartDate;
+        _originalFilterEndDate = FilterEndDate;
+        _originalFilterProduct = FilterProduct;
+        _originalFilterType = FilterType;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterStartDate = _originalFilterStartDate;
+        FilterEndDate = _originalFilterEndDate;
+        FilterProduct = _originalFilterProduct;
+        FilterType = _originalFilterType;
+    }
+
     /// <summary>
     /// Opens the filter modal.
     /// </summary>
@@ -513,6 +550,8 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         FilterEndDate = endDate;
         FilterProduct = currentProduct;
         FilterType = currentType;
+
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -558,21 +597,12 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Returns true if any filter has been changed from default values.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterStartDate != null ||
-        FilterEndDate != null ||
-        FilterProduct != "All" ||
-        FilterType != "All";
-
-    /// <summary>
     /// Requests to close the filter modal, showing confirmation if changes were made.
     /// </summary>
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -590,7 +620,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
                     return;
             }
 
-            ResetFilterDefaults();
+            RestoreOriginalFilterValues();
         }
 
         CloseFilterModal();

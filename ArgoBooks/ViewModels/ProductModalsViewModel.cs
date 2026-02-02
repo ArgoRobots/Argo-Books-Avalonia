@@ -172,13 +172,28 @@ public partial class ProductModalsViewModel : ObservableObject
     [ObservableProperty]
     private string? _filterSupplier;
 
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterItemType = "All";
+    private string? _originalFilterCategory;
+    private string? _originalFilterSupplier;
+
     /// <summary>
-    /// Returns true if any filter differs from default values.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterItemType != "All" ||
-        FilterCategory != null ||
-        FilterSupplier != null;
+    public bool HasFilterModalChanges =>
+        FilterItemType != _originalFilterItemType ||
+        FilterCategory != _originalFilterCategory ||
+        FilterSupplier != _originalFilterSupplier;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterItemType = FilterItemType;
+        _originalFilterCategory = FilterCategory;
+        _originalFilterSupplier = FilterSupplier;
+    }
 
     #endregion
 
@@ -606,6 +621,7 @@ public partial class ProductModalsViewModel : ObservableObject
     public void OpenFilterModal()
     {
         UpdateDropdownOptions();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -627,7 +643,7 @@ public partial class ProductModalsViewModel : ObservableObject
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -645,7 +661,10 @@ public partial class ProductModalsViewModel : ObservableObject
                     return;
             }
 
-            ResetFilterDefaults();
+            // Restore filter values to the state when modal was opened
+            FilterItemType = _originalFilterItemType;
+            FilterCategory = _originalFilterCategory;
+            FilterSupplier = _originalFilterSupplier;
         }
 
         CloseFilterModal();

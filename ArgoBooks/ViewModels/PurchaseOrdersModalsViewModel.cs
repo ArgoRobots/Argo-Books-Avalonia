@@ -923,14 +923,42 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     public ObservableCollection<string> FilterStatusOptions { get; } =
         ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
 
+    // Original filter values for change detection
+    private DateTimeOffset? _originalFilterStartDate;
+    private DateTimeOffset? _originalFilterEndDate;
+    private string _originalFilterSupplier = "All";
+    private string _originalFilterStatus = "All";
+
     /// <summary>
-    /// Returns true if any filter has been changed from its default value.
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterStartDate != null ||
-        FilterEndDate != null ||
-        FilterSupplier != "All" ||
-        FilterStatus != "All";
+    public bool HasFilterModalChanges =>
+        FilterStartDate != _originalFilterStartDate ||
+        FilterEndDate != _originalFilterEndDate ||
+        FilterSupplier != _originalFilterSupplier ||
+        FilterStatus != _originalFilterStatus;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterStartDate = FilterStartDate;
+        _originalFilterEndDate = FilterEndDate;
+        _originalFilterSupplier = FilterSupplier;
+        _originalFilterStatus = FilterStatus;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterStartDate = _originalFilterStartDate;
+        FilterEndDate = _originalFilterEndDate;
+        FilterSupplier = _originalFilterSupplier;
+        FilterStatus = _originalFilterStatus;
+    }
 
     /// <summary>
     /// Opens the filter modal.
@@ -938,6 +966,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     public void OpenFilterModal()
     {
         LoadFilterSupplierOptions();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -956,7 +985,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -974,7 +1003,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     return;
             }
 
-            ResetFilterDefaults();
+            RestoreOriginalFilterValues();
         }
 
         CloseFilterModal();

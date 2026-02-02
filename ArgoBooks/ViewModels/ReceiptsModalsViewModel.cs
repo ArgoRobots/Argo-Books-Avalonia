@@ -79,17 +79,54 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FileTypeOptions { get; } = ["All", "Image", "PDF"];
 
+    // Original filter values for change detection
+    private string _originalFilterType = "All";
+    private DateTimeOffset? _originalFilterDateFrom;
+    private DateTimeOffset? _originalFilterDateTo;
+    private string? _originalFilterAmountMin;
+    private string? _originalFilterAmountMax;
+    private string _originalFilterSource = "All";
+    private string _originalFilterFileType = "All";
+
     /// <summary>
-    /// Gets whether any filter has been changed from its default value.
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterType != "All" ||
-        FilterDateFrom != null ||
-        FilterDateTo != null ||
-        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
-        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
-        FilterSource != "All" ||
-        FilterFileType != "All";
+    public bool HasFilterModalChanges =>
+        FilterType != _originalFilterType ||
+        FilterDateFrom != _originalFilterDateFrom ||
+        FilterDateTo != _originalFilterDateTo ||
+        FilterAmountMin != _originalFilterAmountMin ||
+        FilterAmountMax != _originalFilterAmountMax ||
+        FilterSource != _originalFilterSource ||
+        FilterFileType != _originalFilterFileType;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterType = FilterType;
+        _originalFilterDateFrom = FilterDateFrom;
+        _originalFilterDateTo = FilterDateTo;
+        _originalFilterAmountMin = FilterAmountMin;
+        _originalFilterAmountMax = FilterAmountMax;
+        _originalFilterSource = FilterSource;
+        _originalFilterFileType = FilterFileType;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterType = _originalFilterType;
+        FilterDateFrom = _originalFilterDateFrom;
+        FilterDateTo = _originalFilterDateTo;
+        FilterAmountMin = _originalFilterAmountMin;
+        FilterAmountMax = _originalFilterAmountMax;
+        FilterSource = _originalFilterSource;
+        FilterFileType = _originalFilterFileType;
+    }
 
     #endregion
 
@@ -100,6 +137,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public void OpenFilterModal()
     {
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -118,7 +156,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -136,8 +174,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     return;
             }
 
-            // Reset filter values to defaults
-            ResetFilterDefaults();
+            // Restore filter values to original values
+            RestoreOriginalFilterValues();
         }
 
         CloseFilterModal();
