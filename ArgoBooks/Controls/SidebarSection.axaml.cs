@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -11,6 +12,19 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class SidebarSection : UserControl
 {
+    #region Animation Fields
+
+    private DispatcherTimer? _animationTimer;
+    private double _startHeight;
+    private double _targetHeight;
+    private double _animationProgress;
+    private const double AnimationDuration = 200.0; // milliseconds (matches sidebar animation)
+    private const double FrameInterval = 16.0; // ~60fps
+    private double _measuredContentHeight;
+    private bool _isFirstLayout = true;
+
+    #endregion
+
     #region Styled Properties
 
     public static readonly StyledProperty<string?> TitleProperty =
@@ -30,6 +44,9 @@ public partial class SidebarSection : UserControl
 
     public static readonly StyledProperty<ObservableCollection<SidebarItemModel>?> ItemsProperty =
         AvaloniaProperty.Register<SidebarSection, ObservableCollection<SidebarItemModel>?>(nameof(Items));
+
+    public static readonly StyledProperty<double> ContentMaxHeightProperty =
+        AvaloniaProperty.Register<SidebarSection, double>(nameof(ContentMaxHeight), double.PositiveInfinity);
 
     #endregion
 
@@ -90,6 +107,15 @@ public partial class SidebarSection : UserControl
     }
 
     /// <summary>
+    /// Gets or sets the maximum height for the content area (used for animation).
+    /// </summary>
+    public double ContentMaxHeight
+    {
+        get => GetValue(ContentMaxHeightProperty);
+        set => SetValue(ContentMaxHeightProperty, value);
+    }
+
+    /// <summary>
     /// Command to toggle the expanded state.
     /// </summary>
     public ICommand ToggleExpandedCommand { get; }
@@ -102,9 +128,92 @@ public partial class SidebarSection : UserControl
         InitializeComponent();
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == IsExpandedProperty)
+        {
+            var isExpanded = change.GetNewValue<bool>();
+            AnimateExpandCollapse(isExpanded);
+        }
+    }
+
+    protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        base.OnLoaded(e);
+
+        // Measure and set initial state without animation
+        if (ContentItems != null)
+        {
+            ContentItems.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            _measuredContentHeight = ContentItems.DesiredSize.Height;
+
+            // Set initial height based on IsExpanded state (no animation on load)
+            ContentMaxHeight = IsExpanded ? double.PositiveInfinity : 0;
+            _isFirstLayout = false;
+        }
+    }
+
     private void ToggleExpanded()
     {
         IsExpanded = !IsExpanded;
+    }
+
+    private void AnimateExpandCollapse(bool isExpanding)
+    {
+        // Skip animation on first layout
+        if (_isFirstLayout || ContentItems == null)
+            return;
+
+        _animationTimer?.Stop();
+
+        // Measure current content height
+        ContentItems.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        _measuredContentHeight = ContentItems.DesiredSize.Height;
+
+        // Set start and target heights
+        _startHeight = isExpanding ? 0 : _measuredContentHeight;
+        _targetHeight = isExpanding ? _measuredContentHeight : 0;
+
+        // If already at target, no animation needed
+        if (Math.Abs(ContentMaxHeight - _targetHeight) < 0.1 && !double.IsPositiveInfinity(ContentMaxHeight))
+            return;
+
+        // Start from current position if mid-animation
+        if (!double.IsPositiveInfinity(ContentMaxHeight))
+        {
+            _startHeight = ContentMaxHeight;
+        }
+
+        _animationProgress = 0;
+
+        _animationTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(FrameInterval)
+        };
+        _animationTimer.Tick += OnAnimationTick;
+        _animationTimer.Start();
+    }
+
+    private void OnAnimationTick(object? sender, EventArgs e)
+    {
+        _animationProgress += FrameInterval;
+        var t = Math.Min(_animationProgress / AnimationDuration, 1.0);
+
+        // Cubic ease-in-out (same as ToggleArrow)
+        var easedT = t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.Pow(-2 * t + 2, 3) / 2;
+
+        ContentMaxHeight = _startHeight + (_targetHeight - _startHeight) * easedT;
+
+        if (t >= 1.0)
+        {
+            _animationTimer?.Stop();
+            // Set to infinity when fully expanded for proper layout
+            ContentMaxHeight = _targetHeight == 0 ? 0 : double.PositiveInfinity;
+        }
     }
 }
 
