@@ -106,13 +106,30 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         ModalStatus != _originalStatus;
 
     /// <summary>
-    /// Returns true if any filter differs from default values.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterStatus != "All" ||
-        FilterAvailability != "All" ||
-        !string.IsNullOrWhiteSpace(FilterDailyRateMin) ||
-        !string.IsNullOrWhiteSpace(FilterDailyRateMax);
+    public bool HasFilterModalChanges =>
+        FilterStatus != _originalFilterStatus ||
+        FilterAvailability != _originalFilterAvailability ||
+        FilterDailyRateMin != _originalFilterDailyRateMin ||
+        FilterDailyRateMax != _originalFilterDailyRateMax;
+
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterStatus = "All";
+    private string _originalFilterAvailability = "All";
+    private string? _originalFilterDailyRateMin;
+    private string? _originalFilterDailyRateMax;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterStatus = FilterStatus;
+        _originalFilterAvailability = FilterAvailability;
+        _originalFilterDailyRateMin = FilterDailyRateMin;
+        _originalFilterDailyRateMax = FilterDailyRateMax;
+    }
 
     #endregion
 
@@ -672,6 +689,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     public void OpenFilterModal()
     {
         UpdateDropdownOptions();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -687,7 +705,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -705,7 +723,11 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
                     return;
             }
 
-            ResetFilterDefaults();
+            // Restore filter values to the state when modal was opened
+            FilterStatus = _originalFilterStatus;
+            FilterAvailability = _originalFilterAvailability;
+            FilterDailyRateMin = _originalFilterDailyRateMin;
+            FilterDailyRateMax = _originalFilterDailyRateMax;
         }
 
         CloseFilterModal();

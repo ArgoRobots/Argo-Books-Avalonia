@@ -191,6 +191,15 @@ public partial class CustomerModalsViewModel : ObservableObject
     [ObservableProperty]
     private DateTime? _filterLastRentalTo;
 
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterPaymentStatus = "All";
+    private string _originalFilterCustomerStatus = "All";
+    private string _originalFilterCountry = "All";
+    private string? _originalFilterOutstandingMin;
+    private string? _originalFilterOutstandingMax;
+    private DateTime? _originalFilterLastRentalFrom;
+    private DateTime? _originalFilterLastRentalTo;
+
     #endregion
 
     #region Customer History
@@ -625,21 +634,36 @@ public partial class CustomerModalsViewModel : ObservableObject
     #region Filter Modal
 
     /// <summary>
-    /// Returns true if any filter has been changed from its default value.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterPaymentStatus != "All" ||
-        FilterCustomerStatus != "All" ||
-        FilterCountry != "All" ||
-        !string.IsNullOrWhiteSpace(FilterOutstandingMin) ||
-        !string.IsNullOrWhiteSpace(FilterOutstandingMax) ||
-        FilterLastRentalFrom != null ||
-        FilterLastRentalTo != null;
+    public bool HasFilterModalChanges =>
+        FilterPaymentStatus != _originalFilterPaymentStatus ||
+        FilterCustomerStatus != _originalFilterCustomerStatus ||
+        FilterCountry != _originalFilterCountry ||
+        FilterOutstandingMin != _originalFilterOutstandingMin ||
+        FilterOutstandingMax != _originalFilterOutstandingMax ||
+        FilterLastRentalFrom != _originalFilterLastRentalFrom ||
+        FilterLastRentalTo != _originalFilterLastRentalTo;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterPaymentStatus = FilterPaymentStatus;
+        _originalFilterCustomerStatus = FilterCustomerStatus;
+        _originalFilterCountry = FilterCountry;
+        _originalFilterOutstandingMin = FilterOutstandingMin;
+        _originalFilterOutstandingMax = FilterOutstandingMax;
+        _originalFilterLastRentalFrom = FilterLastRentalFrom;
+        _originalFilterLastRentalTo = FilterLastRentalTo;
+    }
 
     [RelayCommand]
     public void OpenFilterModal()
     {
         UpdateCountryOptions();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -672,7 +696,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -690,7 +714,14 @@ public partial class CustomerModalsViewModel : ObservableObject
                     return;
             }
 
-            ResetFilterDefaults();
+            // Restore filter values to the state when modal was opened
+            FilterPaymentStatus = _originalFilterPaymentStatus;
+            FilterCustomerStatus = _originalFilterCustomerStatus;
+            FilterCountry = _originalFilterCountry;
+            FilterOutstandingMin = _originalFilterOutstandingMin;
+            FilterOutstandingMax = _originalFilterOutstandingMax;
+            FilterLastRentalFrom = _originalFilterLastRentalFrom;
+            FilterLastRentalTo = _originalFilterLastRentalTo;
         }
 
         CloseFilterModal();
