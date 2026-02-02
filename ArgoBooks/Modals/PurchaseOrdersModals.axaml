@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
-             xmlns:entities="using:ArgoBooks.Core.Models.Entities"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"

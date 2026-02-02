@@ -6,16 +6,11 @@
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.ProductsPage"
              x:DataType="vm:ProductsPageViewModel">
-
-    <UserControl.Resources>
-        <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
-        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
-    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:ProductsPageViewModel />
@@ -123,863 +118,309 @@
                     </Border>
             </Grid>
 
-            <!-- Main Content Card (Row 1) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                        CornerRadius="12"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        SizeChanged="OnHeaderSizeChanged">
+            <!-- Main Content Card using ArgoTable -->
+            <table:ArgoTable Grid.Row="1"
+                                Title="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
+                                ItemsSource="{Binding CurrentProducts}"
+                                SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                SearchPlaceholder="{loc:Loc 'Search products...'}"
+                                SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                FilterCommand="{Binding OpenFilterModalCommand}"
+                                AddCommand="{Binding OpenAddModalCommand}"
+                                AddButtonText="{loc:Loc 'Add Product'}"
+                                AddButtonTooltip="{loc:Loc 'Add Product'}"
+                                ColumnWidthsManager="{Binding ColumnWidths}"
+                                CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                TotalPages="{Binding TotalPages}"
+                                PageSize="{Binding PageSize, Mode=TwoWay}"
+                                PaginationText="{Binding PaginationText}"
+                                GoToPageCommand="{Binding GoToPageCommand}"
+                                GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                                EmptyIcon="{x:Static icons:Icons.Products}"
+                                EmptyTitle="{loc:Loc 'No products found'}"
+                                EmptyMessage="{loc:Loc 'Add your first product to start tracking your inventory.'}"
+                                BorderSizeChanged="OnHeaderSizeChanged"
+                                TableGridSizeChanged="OnTableSizeChanged">
 
-                    <Grid RowDefinitions="Auto,*,Auto">
-                        <!-- Header with Title, Search and Buttons -->
-                        <Border Grid.Row="0"
-                                Padding="{Binding ResponsiveHeader.HeaderPadding}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <!-- Title -->
-                                <TextBlock Grid.Column="0"
-                                           Text="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           VerticalAlignment="Center" />
+                <!-- Extra Buttons Content (Remaining Products + Upgrade) -->
+                <table:ArgoTable.ExtraButtonsContent>
+                    <StackPanel Orientation="Horizontal" Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
+                        <!-- Remaining Products Label (only shown without standard plan) -->
+                        <TextBlock Text="{Binding RemainingProductsText}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding ShowRemainingProducts}" />
 
-                                <!-- Search + Filter + Add Button (Right aligned) -->
-                                <StackPanel Grid.Column="1"
-                                            Orientation="Horizontal"
-                                            Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                                    <!-- Search Box -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="6"
-                                            Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                            MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
-                                            behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
-                                        <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                            <PathIcon Grid.Column="0"
-                                                      Data="{x:Static icons:Icons.Search}"
-                                                      Width="16" Height="16"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
-                                            <TextBox Grid.Column="1"
-                                                     Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                     Watermark="{loc:Loc 'Search products...'}"
-                                                     Classes="search-input"
-                                                     VerticalAlignment="Center" />
-                                        </Grid>
+                        <!-- Upgrade Button (shown when limit reached) -->
+                        <Button Classes="secondary-button"
+                                Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
+                                Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                                Content="{loc:Loc Upgrade}"
+                                Command="{Binding UpgradeCommand}"
+                                IsVisible="{Binding ShowUpgradeButton}"
+                                ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc Upgrade}}"
+                                Padding="12,6" />
+                    </StackPanel>
+                </table:ArgoTable.ExtraButtonsContent>
+
+                <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
+                <table:ArgoTable.HeaderContent>
+                    <Panel>
+                        <!-- Table Header - Expenses Tab (8 columns) -->
+                        <StackPanel Orientation="Horizontal" IsVisible="{Binding IsExpensesTabSelected}">
+                            <table:ArgoTableHeader Header="{loc:Loc 'Product Name'}" ColumnName="Name" SortProperty="Name"
+                                                       ColumnWidth="{Binding ColumnWidths.NameColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowNameColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Type}" ColumnName="Type" SortProperty="Type"
+                                                       ColumnWidth="{Binding ColumnWidths.TypeColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowTypeColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" SortProperty="Description"
+                                                       ColumnWidth="{Binding ColumnWidths.DescriptionColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowDescriptionColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Category}" ColumnName="Category" SortProperty="Category"
+                                                       ColumnWidth="{Binding ColumnWidths.CategoryColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowCategoryColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Supplier}" ColumnName="Supplier" SortProperty="Supplier"
+                                                       ColumnWidth="{Binding ColumnWidths.SupplierColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowSupplierColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Reorder}" ColumnName="Reorder"
+                                                       ColumnWidth="{Binding ColumnWidths.ReorderColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowReorderColumn}"
+                                                       IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Overstock}" ColumnName="Overstock"
+                                                       ColumnWidth="{Binding ColumnWidths.OverstockColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowOverstockColumn}"
+                                                       IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                                       ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                       IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                        </StackPanel>
+
+                        <!-- Table Header - Revenue Tab (5 columns) -->
+                        <StackPanel Orientation="Horizontal" IsVisible="{Binding IsRevenueTabSelected}">
+                            <table:ArgoTableHeader Header="{loc:Loc 'Product Name'}" ColumnName="Name" SortProperty="Name"
+                                                       ColumnWidth="{Binding ColumnWidths.NameColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowNameColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Type}" ColumnName="Type" SortProperty="Type"
+                                                       ColumnWidth="{Binding ColumnWidths.TypeColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowTypeColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" SortProperty="Description"
+                                                       ColumnWidth="{Binding ColumnWidths.DescriptionColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowDescriptionColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Category}" ColumnName="Category" SortProperty="Category"
+                                                       ColumnWidth="{Binding ColumnWidths.CategoryColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowCategoryColumn}"
+                                                       SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                       SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                            <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                                       ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                       IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                        </StackPanel>
+                    </Panel>
+                </table:ArgoTable.HeaderContent>
+
+                <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
+                <table:ArgoTable.RowsContent>
+                    <Panel>
+                        <!-- Expenses Tab Products -->
+                        <ItemsControl ItemsSource="{Binding ExpenseProducts}"
+                                      IsVisible="{Binding IsExpensesTabSelected}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:ProductDisplayItem">
+                                    <Border Padding="24,0"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            MinHeight="52">
+                                        <StackPanel Orientation="Horizontal">
+                                            <!-- Product Name with ID - Custom content required -->
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowNameColumn}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Id}" FontSize="12"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+
+                                            <!-- Type Badge - Custom content required -->
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowTypeColumn}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <Border VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                            Padding="8,4" CornerRadius="4"
+                                                            Background="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeBackground}}">
+                                                        <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
+                                                                   FontSize="12" FontWeight="Medium"
+                                                                   Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
+                                                    </Border>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+
+                                            <!-- Simple text cells using ArgoTableCell -->
+                                            <table:ArgoTableCell Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowDescriptionColumn}" />
+
+                                            <table:ArgoTableCell Text="{Binding CategoryName}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowCategoryColumn}" />
+
+                                            <table:ArgoTableCell Text="{Binding SupplierName}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowSupplierColumn}" />
+
+                                            <table:ArgoTableCell Text="{Binding ReorderPoint}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ReorderColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowReorderColumn}" />
+
+                                            <table:ArgoTableCell Text="{Binding OverstockThreshold}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.OverstockColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowOverstockColumn}" />
+
+                                            <!-- Actions - Custom content required -->
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                     ShowSeparator="False">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
+                                                        <Button Classes="icon-button" ToolTip.Tip="{loc:Loc Edit}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenEditModalCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                        </Button>
+                                                        <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc Delete}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                        </StackPanel>
                                     </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                                    <!-- Filter Button -->
-                                    <Button Classes="secondary-button"
-                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                            Command="{Binding OpenFilterModalCommand}"
-                                            ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc Filter}}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                                      Width="16" Height="16" />
-                                            <TextBlock Text="{loc:Loc Filter}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Remaining Products Label (only shown without standard plan) -->
-                                    <TextBlock Text="{Binding RemainingProductsText}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               VerticalAlignment="Center"
-                                               IsVisible="{Binding ShowRemainingProducts}" />
-
-                                    <!-- Upgrade Button (shown when limit reached) -->
-                                    <Button Classes="secondary-button"
-                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                            Content="{loc:Loc Upgrade}"
-                                            Command="{Binding UpgradeCommand}"
-                                            IsVisible="{Binding ShowUpgradeButton}"
-                                            ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc Upgrade}}"
-                                            Padding="12,6" />
-
-                                    <!-- Add Product Button -->
-                                    <Button Classes="primary-button"
-                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                            Command="{Binding OpenAddModalCommand}"
-                                            IsEnabled="{Binding CanAddProduct}"
-                                            ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc 'Add Product'}}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                      Width="16" Height="16"
-                                                      Foreground="White" />
-                                            <TextBlock Text="{loc:Loc 'Add Product'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Products Table -->
-                        <ScrollViewer Grid.Row="1"
-                                      x:Name="HorizontalTableScroll"
-                                      HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
-                                      VerticalScrollBarVisibility="Disabled">
-                            <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
-                                  MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
-                            <!-- Table Header - Expenses Tab (9 columns) -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,0"
-                                    MinHeight="40"
-                                    IsVisible="{Binding IsExpensesTabSelected}"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <StackPanel Orientation="Horizontal">
-                                    <!-- Product Name Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.NameColumnWidth}" IsVisible="{Binding ShowNameColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Name">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc 'Product Name'}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Name:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Name:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Name" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Type Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Type">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Type}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Type:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Type:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Type" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Description Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Description">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Description}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Description:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Description:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Description" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Category Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.CategoryColumnWidth}" IsVisible="{Binding ShowCategoryColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Category">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Category}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Category:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Category:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Category" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Supplier Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Supplier">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Supplier}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Supplier:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Supplier:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Reorder Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReorderColumnWidth}" IsVisible="{Binding ShowReorderColumn}">
-                                        <TextBlock Text="{loc:Loc Reorder}"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   Margin="8,12" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Reorder" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Overstock Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.OverstockColumnWidth}" IsVisible="{Binding ShowOverstockColumn}">
-                                        <TextBlock Text="{loc:Loc Overstock}"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   Margin="8,12" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Overstock" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Actions Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="{loc:Loc Actions}"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   HorizontalAlignment="Left"
-                                                   Margin="8,12" />
-                                    </Panel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Table Header - Revenue Tab (5 columns) -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,0"
-                                    MinHeight="40"
-                                    IsVisible="{Binding IsRevenueTabSelected}"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <StackPanel Orientation="Horizontal">
-                                    <!-- Product Name Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.NameColumnWidth}" IsVisible="{Binding ShowNameColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Name">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc 'Product Name'}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Name:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Name:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Name" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Type Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Type">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Type}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Type:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Type:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Type" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Description Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Description">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Description}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Description:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Description:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Description" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Category Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.CategoryColumnWidth}" IsVisible="{Binding ShowCategoryColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Category">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Category}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Category:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Category:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Category" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Actions Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="{loc:Loc Actions}"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   HorizontalAlignment="Left"
-                                                   Margin="8,12" />
-                                    </Panel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Table Content (scrollable vertically only) -->
-                            <ScrollViewer Grid.Row="1"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <Panel>
-                                    <!-- Expenses Tab Products -->
-                                    <ItemsControl ItemsSource="{Binding ExpenseProducts}"
-                                                  IsVisible="{Binding IsExpensesTabSelected}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="vm:ProductDisplayItem">
-                                                <Border Padding="24,0"
-                                                        BorderBrush="{DynamicResource BorderBrush}"
-                                                        BorderThickness="0,0,0,1"
-                                                        MinHeight="52">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <!-- Product Name with ID -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowNameColumn}">
-                                                            <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                <TextBlock Text="{Binding Name}"
-                                                                           FontSize="14"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock Text="{Binding Id}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Type Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowTypeColumn}">
-                                                            <Border VerticalAlignment="Center"
-                                                                    HorizontalAlignment="Left"
-                                                                    Padding="8,4"
-                                                                    CornerRadius="4"
-                                                                    Margin="8,0"
-                                                                    Background="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeBackground}}">
-                                                                <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
-                                                                           FontSize="12"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
-                                                            </Border>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Description -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowDescriptionColumn}">
-                                                            <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Category -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowCategoryColumn}">
-                                                            <TextBlock Text="{Binding CategoryName}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Supplier -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowSupplierColumn}">
-                                                            <TextBlock Text="{Binding SupplierName}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Reorder Point -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ReorderColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowReorderColumn}">
-                                                            <TextBlock Text="{Binding ReorderPoint}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Overstock -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.OverstockColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowOverstockColumn}">
-                                                            <TextBlock Text="{Binding OverstockThreshold}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Actions -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                            <StackPanel Orientation="Horizontal"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Spacing="4"
-                                                                        Margin="8,0">
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc Edit}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenEditModalCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="{loc:Loc Delete}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Panel>
+                        <!-- Revenue Tab Products -->
+                        <ItemsControl ItemsSource="{Binding RevenueProducts}"
+                                      IsVisible="{Binding IsRevenueTabSelected}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:ProductDisplayItem">
+                                    <Border Padding="24,0"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            MinHeight="52">
+                                        <StackPanel Orientation="Horizontal">
+                                            <!-- Product Name with ID - Custom content required -->
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowNameColumn}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Id}" FontSize="12"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
                                                     </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
 
-                                    <!-- Revenue Tab Products -->
-                                    <ItemsControl ItemsSource="{Binding RevenueProducts}"
-                                                  IsVisible="{Binding IsRevenueTabSelected}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="vm:ProductDisplayItem">
-                                                <Border Padding="24,0"
-                                                        BorderBrush="{DynamicResource BorderBrush}"
-                                                        BorderThickness="0,0,0,1"
-                                                        MinHeight="52">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <!-- Product Name with ID -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowNameColumn}">
-                                                            <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                <TextBlock Text="{Binding Name}"
-                                                                           FontSize="14"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock Text="{Binding Id}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                            <!-- Type Badge - Custom content required -->
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowTypeColumn}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <Border VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                            Padding="8,4" CornerRadius="4"
+                                                            Background="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeBackground}}">
+                                                        <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
+                                                                   FontSize="12" FontWeight="Medium"
+                                                                   Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
+                                                    </Border>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
 
-                                                        <!-- Type Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowTypeColumn}">
-                                                            <Border VerticalAlignment="Center"
-                                                                    HorizontalAlignment="Left"
-                                                                    Padding="8,4"
-                                                                    CornerRadius="4"
-                                                                    Margin="8,0"
-                                                                    Background="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeBackground}}">
-                                                                <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
-                                                                           FontSize="12"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
-                                                            </Border>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                            <!-- Simple text cells using ArgoTableCell -->
+                                            <table:ArgoTableCell Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowDescriptionColumn}" />
 
-                                                        <!-- Description -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowDescriptionColumn}">
-                                                            <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                            <table:ArgoTableCell Text="{Binding CategoryName}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowCategoryColumn}" />
 
-                                                        <!-- Category -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowCategoryColumn}">
-                                                            <TextBlock Text="{Binding CategoryName}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Actions -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                            <StackPanel Orientation="Horizontal"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Spacing="4"
-                                                                        Margin="8,0">
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc Edit}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenEditModalCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="{loc:Loc Delete}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Panel>
+                                            <!-- Actions - Custom content required -->
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                     ShowSeparator="False">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
+                                                        <Button Classes="icon-button" ToolTip.Tip="{loc:Loc Edit}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenEditModalCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                        </Button>
+                                                        <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc Delete}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                        </Button>
                                                     </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-
-                                <!-- Empty State -->
-                                <Border Padding="40"
-                                        IsVisible="{Binding CurrentProducts.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="16">
-                                        <Border Width="64" Height="64"
-                                                CornerRadius="32"
-                                                Background="{DynamicResource SurfaceAltBrush}"
-                                                HorizontalAlignment="Center">
-                                            <PathIcon Data="{x:Static icons:Icons.Products}"
-                                                      Width="28" Height="28"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                        <TextBlock Text="{loc:Loc 'No products found'}"
-                                                   FontSize="16"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   HorizontalAlignment="Center" />
-                                        <TextBlock Text="{loc:Loc 'Add your first product to start tracking your inventory.'}"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   TextWrapping="Wrap"
-                                                   MaxWidth="300" />
-                                        <Button Classes="primary-button"
-                                                HorizontalAlignment="Center"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding OpenAddModalCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                          Width="16" Height="16"
-                                                          Foreground="White" />
-                                                <TextBlock Text="{loc:Loc 'Add Product'}" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
-                                </Panel>
-                            </ScrollViewer>
-                        </Grid>
-                    </ScrollViewer>
-
-                        <!-- Pagination Footer -->
-                        <Border Grid.Row="2"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,12"
-                                CornerRadius="0,0,11,11"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,1,0,0">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <!-- Rows per page selector -->
-                                <StackPanel Grid.Column="0"
-                                            Orientation="Horizontal"
-                                            Spacing="8"
-                                            VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding PaginationText}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center" />
-                                    <TextBlock Text="|"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               VerticalAlignment="Center"
-                                               Margin="8,0" />
-                                    <TextBlock Text="{loc:Loc 'Rows per page:'}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center" />
-                                    <ComboBox ItemsSource="{Binding PageSizeOptions}"
-                                              SelectedItem="{Binding PageSize}"
-                                              Classes="page-size-combobox"
-                                              Width="70" />
-                                </StackPanel>
-
-                                <!-- Page Numbers -->
-                                <StackPanel Grid.Column="2"
-                                            Orientation="Horizontal"
-                                            Spacing="4"
-                                            IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                                    <!-- Previous Button -->
-                                    <Button Classes="pagination-button"
-                                            Command="{Binding GoToPreviousPageCommand}"
-                                            IsEnabled="{Binding CanGoToPreviousPage}">
-                                        <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
-                                                  Width="16" Height="16" />
-                                    </Button>
-
-                                    <!-- Page Number Buttons -->
-                                    <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" Spacing="4" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Button Classes="pagination-button"
-                                                        Content="{Binding}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).GoToPageCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <controls:PaginationHelper.IsActivePage>
-                                                        <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                            <Binding />
-                                                            <Binding Path="$parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).CurrentPage" />
-                                                        </MultiBinding>
-                                                    </controls:PaginationHelper.IsActivePage>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-
-                                    <!-- Next Button -->
-                                    <Button Classes="pagination-button"
-                                            Command="{Binding GoToNextPageCommand}"
-                                            IsEnabled="{Binding CanGoToNextPage}">
-                                        <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
-                                                  Width="16" Height="16" />
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Border>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Panel>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
         </Grid>
 
-        <!-- Note: Modals are now rendered at AppShell level for full-screen coverage -->
     </Grid>
 
     <!-- Column Visibility Menu -->
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                    MenuX="{Binding ColumnMenuX}"
-                                    MenuY="{Binding ColumnMenuY}"
+                                    MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                    MenuY="{Binding ColumnWidths.ColumnMenuY}"
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
@@ -995,5 +436,4 @@
     </controls:ColumnVisibilityMenu>
     </Panel>
 
-    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

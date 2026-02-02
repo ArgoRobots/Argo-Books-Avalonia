@@ -59,6 +59,18 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     private bool _needsHorizontalScroll;
 
     /// <summary>
+    /// Gets or sets the X position for the column visibility menu.
+    /// </summary>
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    /// <summary>
+    /// Gets or sets the Y position for the column visibility menu.
+    /// </summary>
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    /// <summary>
     /// Registers a column with its definition and width setter.
     /// </summary>
     protected void RegisterColumn(string name, ColumnDef def, Action<double> setter)

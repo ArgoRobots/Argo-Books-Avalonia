@@ -3,43 +3,37 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
-             xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.StockAdjustmentsPage"
              x:DataType="vm:StockAdjustmentsPageViewModel">
 
-    <UserControl.Resources>
-        <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
-        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
-    </UserControl.Resources>
-
     <Design.DataContext>
         <vm:StockAdjustmentsPageViewModel />
     </Design.DataContext>
 
     <Panel>
-        <Grid RowDefinitions="Auto,*">
-            <!-- Tab Bar -->
-            <Border Grid.Row="0"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,0,1">
-                <TabControl SelectedIndex="{Binding SelectedTabIndex}"
-                            Margin="0"
-                            Classes="page-tabs">
-                    <TabItem Header="{loc:Loc All}" />
-                    <TabItem Header="{loc:Loc Added}" />
-                    <TabItem Header="{loc:Loc Removed}" />
-                    <TabItem Header="{loc:Loc Set}" />
-                </TabControl>
-            </Border>
+    <Grid RowDefinitions="Auto,*">
+        <!-- Tab Bar -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                        Margin="0"
+                        Classes="page-tabs">
+                <TabItem Header="{loc:Loc All}" />
+                <TabItem Header="{loc:Loc Added}" />
+                <TabItem Header="{loc:Loc Removed}" />
+                <TabItem Header="{loc:Loc Set}" />
+            </TabControl>
+        </Border>
 
-            <!-- Main Content -->
-            <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
+        <!-- Main Content -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'Total Adjustments'}"
@@ -60,691 +54,238 @@
                                    IconColor="Warning" />
             </controls:StatCardsRow>
 
-            <!-- Main Content Card -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    SizeChanged="OnHeaderSizeChanged">
+            <!-- Main Content Card using ArgoTable -->
+            <table:ArgoTable Grid.Row="1"
+                                Title="{loc:Loc 'Stock Adjustments'}"
+                                ItemsSource="{Binding Adjustments}"
+                                SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                SearchPlaceholder="{loc:Loc 'Search adjustments...'}"
+                                SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                FilterCommand="{Binding OpenFilterModalCommand}"
+                                AddCommand="{Binding OpenAddModalCommand}"
+                                AddButtonText="{loc:Loc 'New Adjustment'}"
+                                AddButtonTooltip="{loc:Loc 'New Adjustment'}"
+                                ColumnWidthsManager="{Binding ColumnWidths}"
+                                CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                TotalPages="{Binding TotalPages}"
+                                PageSize="{Binding PageSize, Mode=TwoWay}"
+                                PaginationText="{Binding PaginationText}"
+                                GoToPageCommand="{Binding GoToPageCommand}"
+                                GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                                EmptyIcon="{x:Static icons:Icons.Adjustments}"
+                                EmptyTitle="{loc:Loc 'No adjustments found'}"
+                                EmptyMessage="{loc:Loc 'Stock adjustments will appear here when you add, remove, or set inventory quantities.'}"
+                                BorderSizeChanged="OnHeaderSizeChanged"
+                                TableGridSizeChanged="OnTableSizeChanged">
 
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Header with Title, Search and Buttons -->
-                    <Border Grid.Row="0"
-                            Padding="{Binding ResponsiveHeader.HeaderPadding}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Title -->
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Stock Adjustments'}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       VerticalAlignment="Center" />
+                <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" SortProperty="Date"
+                                                   ColumnWidth="{Binding ColumnWidths.DateColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDateColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                            <!-- Search + Filter + Add Button (Right aligned) -->
-                            <StackPanel Grid.Column="2"
-                                        Orientation="Horizontal"
-                                        Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                                <!-- Search Box -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="6"
-                                        Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                        MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
-                                        behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
-                                    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                        <PathIcon Grid.Column="0"
-                                                  Data="{x:Static icons:Icons.Search}"
-                                                  Width="16" Height="16"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                  Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
-                                        <TextBox Grid.Column="1"
-                                                 Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="{loc:Loc 'Search adjustments...'}"
-                                                 Classes="search-input"
-                                                 VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Reference}" ColumnName="Reference" SortProperty="Reference"
+                                                   ColumnWidth="{Binding ColumnWidths.ReferenceColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowReferenceColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Filter Button -->
-                                <Button Classes="secondary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenFilterModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'Filter'}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                                  Width="16" Height="16" />
-                                        <TextBlock Text="{loc:Loc Filter}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
+                        <table:ArgoTableHeader Header="{loc:Loc Product}" ColumnName="Product" SortProperty="Product"
+                                                   ColumnWidth="{Binding ColumnWidths.ProductColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowProductColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Add Adjustment Button -->
-                                <Button Classes="primary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenAddModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'New Adjustment'}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                  Width="16" Height="16"
-                                                  Foreground="White" />
-                                        <TextBlock Text="{loc:Loc 'New Adjustment'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Location}" ColumnName="Location" SortProperty="Location"
+                                                   ColumnWidth="{Binding ColumnWidths.LocationColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowLocationColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                    <!-- Adjustments Table -->
-                    <ScrollViewer Grid.Row="1"
-                                  x:Name="HorizontalTableScroll"
-                                  HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
-                                  VerticalScrollBarVisibility="Disabled">
-                        <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
-                              MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
-                            <!-- Table Header -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,0"
-                                    MinHeight="40"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
-                                    <!-- Date Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Date">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Date}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Date:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Date:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc Adjustment}" ColumnName="Quantity" SortProperty="Quantity"
+                                                   ColumnWidth="{Binding ColumnWidths.QuantityColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowQuantityColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                    <!-- Reference Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReferenceColumnWidth}" IsVisible="{Binding ShowReferenceColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Reference">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Reference}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Reference:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Reference:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Reference" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc Before}" ColumnName="Previous" SortProperty="Previous"
+                                                   ColumnWidth="{Binding ColumnWidths.PreviousColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowPreviousColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                    <!-- Product Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Product">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Product}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Product:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Product:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc After}" ColumnName="New" SortProperty="New"
+                                                   ColumnWidth="{Binding ColumnWidths.NewColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowNewColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                    <!-- Location Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.LocationColumnWidth}" IsVisible="{Binding ShowLocationColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Location">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Location}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Location:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Location:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Location" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc Reason}" ColumnName="Reason" SortProperty="Reason"
+                                                   ColumnWidth="{Binding ColumnWidths.ReasonColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowReasonColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                    <!-- Adjustment Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Quantity">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Adjustment}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Quantity:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Quantity:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Quantity" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                                   ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                   IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
 
-                                    <!-- Previous Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.PreviousColumnWidth}" IsVisible="{Binding ShowPreviousColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Previous">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Before}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Previous:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Previous:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Previous" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- New Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.NewColumnWidth}" IsVisible="{Binding ShowNewColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="New">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc After}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="New:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="New:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="New" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Reason Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}" IsVisible="{Binding ShowReasonColumn}">
-                                        <Button Classes="column-header" Margin="8,12"
-                                                Command="{Binding SortByCommand}" CommandParameter="Reason">
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{loc:Loc Reason}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <Panel Width="12" Height="12">
-                                                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Reason:Ascending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                          ConverterParameter="Reason:Descending">
-                                                                <Binding Path="SortColumn" />
-                                                                <Binding Path="SortDirection" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Panel>
-                                            </StackPanel>
-                                        </Button>
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Reason" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-
-                                    <!-- Actions Column Header -->
-                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="{loc:Loc Actions}"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   HorizontalAlignment="Left"
-                                                   Margin="8,12" />
-                                    </Panel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Table Content -->
-                            <ScrollViewer Grid.Row="1"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <Panel>
-                                    <!-- Adjustments List -->
-                                    <ItemsControl ItemsSource="{Binding Adjustments}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="vm:StockAdjustmentDisplayItem">
-                                                <Border Padding="24,0"
-                                                        BorderBrush="{DynamicResource BorderBrush}"
-                                                        BorderThickness="0,0,0,1"
-                                                        MinHeight="52">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <!-- Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowDateColumn}">
-                                                            <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                <TextBlock Text="{Binding DateDisplay}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                                <TextBlock Text="{Binding TimeDisplay}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Reference -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReferenceColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowReferenceColumn}">
-                                                            <TextBlock Text="{Binding Id}"
-                                                                       FontSize="13"
-                                                                       FontFamily="Consolas, monospace"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Product -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowProductColumn}">
-                                                            <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                <TextBlock Text="{Binding ProductName}"
-                                                                           FontSize="14"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock Text="{Binding ProductSku}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Location -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowLocationColumn}">
-                                                            <TextBlock Text="{Binding LocationName}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Adjustment -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowQuantityColumn}">
-                                                            <TextBlock Text="{Binding QuantityDisplay}"
-                                                                       FontSize="14"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{Binding QuantityColor}"
-                                                                       VerticalAlignment="Center"
-                                                                       HorizontalAlignment="Left"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Previous Stock -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.PreviousColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowPreviousColumn}">
-                                                            <TextBlock Text="{Binding PreviousStock}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       HorizontalAlignment="Left"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- New Stock -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.NewColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowNewColumn}">
-                                                            <TextBlock Text="{Binding NewStock}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       HorizontalAlignment="Left"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Reason -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowReasonColumn}">
-                                                            <TextBlock Text="{Binding Reason}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
-
-                                                        <!-- Actions -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                            <StackPanel Orientation="Horizontal"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Spacing="4"
-                                                                        Margin="8,0">
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc 'View Details'}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ViewAdjustmentCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="{loc:Loc Delete}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Panel>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-
-                                    <!-- Empty State -->
-                                    <Border Padding="40"
-                                            IsVisible="{Binding Adjustments.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="16">
-                                            <Border Width="64" Height="64"
-                                                    CornerRadius="32"
-                                                    Background="{DynamicResource SurfaceAltBrush}"
-                                                    HorizontalAlignment="Center">
-                                                <PathIcon Data="{x:Static icons:Icons.Adjustments}"
-                                                          Width="28" Height="28"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </Border>
-                                            <TextBlock Text="{loc:Loc 'No adjustments found'}"
-                                                       FontSize="16"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       HorizontalAlignment="Center" />
-                                            <TextBlock Text="{loc:Loc 'Stock adjustments will appear here when you add, remove, or set inventory quantities.'}"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       HorizontalAlignment="Center"
-                                                       TextAlignment="Center"
-                                                       TextWrapping="Wrap"
-                                                       MaxWidth="300" />
-                                            <Button Classes="primary-button"
-                                                    HorizontalAlignment="Center"
-                                                    Margin="0,8,0,0"
-                                                    Command="{Binding OpenAddModalCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                              Width="16" Height="16"
-                                                              Foreground="White" />
-                                                    <TextBlock Text="{loc:Loc 'New Adjustment'}" />
+                <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl ItemsSource="{Binding Adjustments}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:StockAdjustmentDisplayItem">
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="52">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Date - Custom content with date and time -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowDateColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DateDisplay}"
+                                                               FontSize="14"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding TimeDisplay}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
-                                </Panel>
-                            </ScrollViewer>
-                        </Grid>
-                    </ScrollViewer>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                    <!-- Pagination Footer -->
-                    <Border Grid.Row="2"
-                            Background="{DynamicResource SurfaceAltBrush}"
-                            Padding="24,12"
-                            CornerRadius="0,0,11,11"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Rows per page selector -->
-                            <StackPanel Grid.Column="0"
-                                        Orientation="Horizontal"
-                                        Spacing="8"
-                                        VerticalAlignment="Center">
-                                <TextBlock Text="{Binding PaginationText}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <TextBlock Text="|"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           VerticalAlignment="Center"
-                                           Margin="8,0" />
-                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <ComboBox ItemsSource="{Binding PageSizeOptions}"
-                                          SelectedItem="{Binding PageSize}"
-                                          Classes="page-size-combobox"
-                                          Width="70" />
-                            </StackPanel>
+                                        <!-- Reference -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReferenceColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowReferenceColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <TextBlock Text="{Binding Id}"
+                                                           FontSize="13"
+                                                           FontFamily="Consolas, monospace"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                            <!-- Page Numbers -->
-                            <StackPanel Grid.Column="2"
-                                        Orientation="Horizontal"
-                                        Spacing="4"
-                                        IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                                <!-- Previous Button -->
-                                <Button Classes="pagination-button"
-                                        Command="{Binding GoToPreviousPageCommand}"
-                                        IsEnabled="{Binding CanGoToPreviousPage}">
-                                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
-                                              Width="16" Height="16" />
-                                </Button>
+                                        <!-- Product - Custom content with name and SKU -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowProductColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ProductName}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding ProductSku}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                <!-- Page Number Buttons -->
-                                <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="4" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Classes="pagination-button"
-                                                    Content="{Binding}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).GoToPageCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <controls:PaginationHelper.IsActivePage>
-                                                    <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                        <Binding />
-                                                        <Binding Path="$parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).CurrentPage" />
-                                                    </MultiBinding>
-                                                </controls:PaginationHelper.IsActivePage>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                        <!-- Location -->
+                                        <table:ArgoTableCell Text="{Binding LocationName}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.LocationColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowLocationColumn}" />
 
-                                <!-- Next Button -->
-                                <Button Classes="pagination-button"
-                                        Command="{Binding GoToNextPageCommand}"
-                                        IsEnabled="{Binding CanGoToNextPage}">
-                                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
-                                              Width="16" Height="16" />
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
-            </Grid>
+                                        <!-- Adjustment - Custom content with colored text -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowQuantityColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <TextBlock Text="{Binding QuantityDisplay}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{Binding QuantityColor}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Left" />
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+
+                                        <!-- Previous Stock -->
+                                        <table:ArgoTableCell Text="{Binding PreviousStock}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.PreviousColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowPreviousColumn}" />
+
+                                        <!-- New Stock -->
+                                        <table:ArgoTableCell Text="{Binding NewStock}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.NewColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowNewColumn}" />
+
+                                        <!-- Reason -->
+                                        <table:ArgoTableCell Text="{Binding Reason}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ShowReasonColumn}" />
+
+                                        <!-- Actions - Custom content with buttons -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                 ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="4">
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'View Details'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ViewAdjustmentCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button danger"
+                                                            ToolTip.Tip="{loc:Loc Delete}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
         </Grid>
 
-        <!-- Column Visibility Menu -->
-        <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                        MenuX="{Binding ColumnMenuX}"
-                                        MenuY="{Binding ColumnMenuY}"
-                                        CloseCommand="{Binding CloseColumnMenuCommand}">
-            <controls:ColumnVisibilityMenu.ColumnsContent>
-                <StackPanel Spacing="4">
-                    <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowReferenceColumn}" Content="{loc:Loc Reference}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowLocationColumn}" Content="{loc:Loc Location}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc Adjustment}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowPreviousColumn}" Content="{loc:Loc Before}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowNewColumn}" Content="{loc:Loc After}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
-                </StackPanel>
-            </controls:ColumnVisibilityMenu.ColumnsContent>
-        </controls:ColumnVisibilityMenu>
+    </Grid>
+
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                    MenuY="{Binding ColumnWidths.ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowReferenceColumn}" Content="{loc:Loc Reference}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowLocationColumn}" Content="{loc:Loc Location}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc Adjustment}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPreviousColumn}" Content="{loc:Loc Before}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowNewColumn}" Content="{loc:Loc After}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
     </Panel>
 
-    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>
