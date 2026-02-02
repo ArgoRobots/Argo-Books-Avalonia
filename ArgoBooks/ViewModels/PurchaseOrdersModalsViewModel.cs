@@ -923,15 +923,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     public ObservableCollection<string> FilterStatusOptions { get; } =
         ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
 
-    /// <summary>
-    /// Returns true if any filter has been changed from its default value.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterStartDate != null ||
-        FilterEndDate != null ||
-        FilterSupplier != "All" ||
-        FilterStatus != "All";
-
     // Original filter values for change detection
     private DateTimeOffset? _originalFilterStartDate;
     private DateTimeOffset? _originalFilterEndDate;

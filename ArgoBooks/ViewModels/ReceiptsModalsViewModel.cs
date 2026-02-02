@@ -79,18 +79,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FileTypeOptions { get; } = ["All", "Image", "PDF"];
 
-    /// <summary>
-    /// Gets whether any filter has been changed from its default value.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterType != "All" ||
-        FilterDateFrom != null ||
-        FilterDateTo != null ||
-        !string.IsNullOrWhiteSpace(FilterAmountMin) ||
-        !string.IsNullOrWhiteSpace(FilterAmountMax) ||
-        FilterSource != "All" ||
-        FilterFileType != "All";
-
     // Original filter values for change detection
     private string _originalFilterType = "All";
     private DateTimeOffset? _originalFilterDateFrom;

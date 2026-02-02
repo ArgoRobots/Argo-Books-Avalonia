@@ -657,14 +657,6 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Returns true if any filter differs from default values.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterCategory != "All" ||
-        FilterLocation != "All" ||
-        FilterStatus != "All";
-
-    /// <summary>
     /// Requests to close the Filter modal, showing confirmation if changes were made.
     /// </summary>
     [RelayCommand]

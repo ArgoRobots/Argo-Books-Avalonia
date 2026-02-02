@@ -59,15 +59,6 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> ReasonOptions { get; } = ["All", "Theft", "Breakage", "Spoilage", "Missing", "Other"];
 
-    /// <summary>
-    /// Gets whether any filter values differ from their defaults.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterType != "All" ||
-        FilterDateFrom != null ||
-        FilterDateTo != null ||
-        FilterReason != "All";
-
     // Original filter values for change detection
     private string _originalFilterType = "All";
     private DateTimeOffset? _originalFilterDateFrom;

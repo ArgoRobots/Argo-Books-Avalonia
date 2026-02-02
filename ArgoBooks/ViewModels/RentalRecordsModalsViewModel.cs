@@ -985,18 +985,6 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     private DateTimeOffset? _originalFilterDueDateTo;
 
     /// <summary>
-    /// Returns true if any filter differs from default values.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterStatus != "All" ||
-        FilterCustomer != null ||
-        FilterItem != null ||
-        FilterStartDateFrom != null ||
-        FilterStartDateTo != null ||
-        FilterDueDateFrom != null ||
-        FilterDueDateTo != null;
-
-    /// <summary>
     /// Returns true if any filter has been changed from its original value when the modal was opened.
     /// </summary>
     public bool HasFilterModalChanges =>

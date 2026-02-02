@@ -597,15 +597,6 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Returns true if any filter has been changed from default values.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterStartDate != null ||
-        FilterEndDate != null ||
-        FilterProduct != "All" ||
-        FilterType != "All";
-
-    /// <summary>
     /// Requests to close the filter modal, showing confirmation if changes were made.
     /// </summary>
     [RelayCommand]

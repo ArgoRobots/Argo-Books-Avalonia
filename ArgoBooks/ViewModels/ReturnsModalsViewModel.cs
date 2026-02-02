@@ -54,14 +54,6 @@ public partial class ReturnsModalsViewModel : ViewModelBase
 
     #region Filter Modal Commands
 
-    /// <summary>
-    /// Gets whether any filter values differ from their defaults.
-    /// </summary>
-    public bool HasFilterChanges =>
-        FilterDateFrom != null ||
-        FilterDateTo != null ||
-        FilterReason != "All";
-
     // Original filter values for change detection
     private DateTimeOffset? _originalFilterDateFrom;
     private DateTimeOffset? _originalFilterDateTo;
