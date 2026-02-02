@@ -590,6 +590,39 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FilterStatusOptions { get; } = ["All", "In Stock", "Low Stock", "Out of Stock", "Overstock"];
 
+    // Original filter values for change detection
+    private string _originalFilterCategory = "All";
+    private string _originalFilterLocation = "All";
+    private string _originalFilterStatus = "All";
+
+    /// <summary>
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
+    /// </summary>
+    public bool HasFilterModalChanges =>
+        FilterCategory != _originalFilterCategory ||
+        FilterLocation != _originalFilterLocation ||
+        FilterStatus != _originalFilterStatus;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterCategory = FilterCategory;
+        _originalFilterLocation = FilterLocation;
+        _originalFilterStatus = FilterStatus;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterCategory = _originalFilterCategory;
+        FilterLocation = _originalFilterLocation;
+        FilterStatus = _originalFilterStatus;
+    }
+
     /// <summary>
     /// Opens the filter modal.
     /// </summary>
@@ -609,6 +642,8 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         FilterCategory = currentCategory;
         FilterLocation = currentLocation;
         FilterStatus = currentStatus;
+
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -635,7 +670,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -653,7 +688,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
                     return;
             }
 
-            ResetFilterDefaults();
+            RestoreOriginalFilterValues();
         }
 
         CloseFilterModal();

@@ -975,6 +975,15 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
     #region Filter Modal
 
+    // Original filter values for change detection
+    private string _originalFilterStatus = "All";
+    private string? _originalFilterCustomer;
+    private string? _originalFilterItem;
+    private DateTimeOffset? _originalFilterStartDateFrom;
+    private DateTimeOffset? _originalFilterStartDateTo;
+    private DateTimeOffset? _originalFilterDueDateFrom;
+    private DateTimeOffset? _originalFilterDueDateTo;
+
     /// <summary>
     /// Returns true if any filter differs from default values.
     /// </summary>
@@ -987,10 +996,51 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         FilterDueDateFrom != null ||
         FilterDueDateTo != null;
 
+    /// <summary>
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
+    /// </summary>
+    public bool HasFilterModalChanges =>
+        FilterStatus != _originalFilterStatus ||
+        FilterCustomer != _originalFilterCustomer ||
+        FilterItem != _originalFilterItem ||
+        FilterStartDateFrom != _originalFilterStartDateFrom ||
+        FilterStartDateTo != _originalFilterStartDateTo ||
+        FilterDueDateFrom != _originalFilterDueDateFrom ||
+        FilterDueDateTo != _originalFilterDueDateTo;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterStatus = FilterStatus;
+        _originalFilterCustomer = FilterCustomer;
+        _originalFilterItem = FilterItem;
+        _originalFilterStartDateFrom = FilterStartDateFrom;
+        _originalFilterStartDateTo = FilterStartDateTo;
+        _originalFilterDueDateFrom = FilterDueDateFrom;
+        _originalFilterDueDateTo = FilterDueDateTo;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterStatus = _originalFilterStatus;
+        FilterCustomer = _originalFilterCustomer;
+        FilterItem = _originalFilterItem;
+        FilterStartDateFrom = _originalFilterStartDateFrom;
+        FilterStartDateTo = _originalFilterStartDateTo;
+        FilterDueDateFrom = _originalFilterDueDateFrom;
+        FilterDueDateTo = _originalFilterDueDateTo;
+    }
+
     [RelayCommand]
     public void OpenFilterModal()
     {
         UpdateDropdownOptions();
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -1006,7 +1056,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -1024,7 +1074,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
                     return;
             }
 
-            ResetFilterDefaults();
+            RestoreOriginalFilterValues();
         }
 
         CloseFilterModal();

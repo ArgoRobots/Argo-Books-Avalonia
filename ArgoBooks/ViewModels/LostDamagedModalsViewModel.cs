@@ -68,6 +68,43 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
         FilterDateTo != null ||
         FilterReason != "All";
 
+    // Original filter values for change detection
+    private string _originalFilterType = "All";
+    private DateTimeOffset? _originalFilterDateFrom;
+    private DateTimeOffset? _originalFilterDateTo;
+    private string _originalFilterReason = "All";
+
+    /// <summary>
+    /// Returns true if any filter has been changed from its original value when the modal was opened.
+    /// </summary>
+    public bool HasFilterModalChanges =>
+        FilterType != _originalFilterType ||
+        FilterDateFrom != _originalFilterDateFrom ||
+        FilterDateTo != _originalFilterDateTo ||
+        FilterReason != _originalFilterReason;
+
+    /// <summary>
+    /// Captures the current filter values as the original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterType = FilterType;
+        _originalFilterDateFrom = FilterDateFrom;
+        _originalFilterDateTo = FilterDateTo;
+        _originalFilterReason = FilterReason;
+    }
+
+    /// <summary>
+    /// Restores filter values to their original values when the modal was opened.
+    /// </summary>
+    private void RestoreOriginalFilterValues()
+    {
+        FilterType = _originalFilterType;
+        FilterDateFrom = _originalFilterDateFrom;
+        FilterDateTo = _originalFilterDateTo;
+        FilterReason = _originalFilterReason;
+    }
+
     #endregion
 
     #region Filter Modal Commands
@@ -77,6 +114,7 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     /// </summary>
     public void OpenFilterModal()
     {
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -106,7 +144,7 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -124,7 +162,7 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
                     return;
             }
 
-            ResetFilterDefaults();
+            RestoreOriginalFilterValues();
         }
 
         CloseFilterModal();

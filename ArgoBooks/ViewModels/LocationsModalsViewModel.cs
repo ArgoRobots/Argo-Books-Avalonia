@@ -159,12 +159,25 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FilterStatusOptions { get; } = ["All", "Active", "Inactive"];
 
+    // Original filter values for change detection (captured when modal opens)
+    private string _originalFilterType = "All";
+    private string _originalFilterStatus = "All";
+
     /// <summary>
-    /// Returns true if any filter differs from default values.
+    /// Returns true if any filter has been changed from the state when the modal was opened.
     /// </summary>
-    public bool HasFilterChanges =>
-        FilterType != "All" ||
-        FilterStatus != "All";
+    public bool HasFilterModalChanges =>
+        FilterType != _originalFilterType ||
+        FilterStatus != _originalFilterStatus;
+
+    /// <summary>
+    /// Captures the current filter state as original values for change detection.
+    /// </summary>
+    private void CaptureOriginalFilterValues()
+    {
+        _originalFilterType = FilterType;
+        _originalFilterStatus = FilterStatus;
+    }
 
     #endregion
 
@@ -496,6 +509,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     public void OpenFilterModal()
     {
+        CaptureOriginalFilterValues();
         IsFilterModalOpen = true;
     }
 
@@ -514,7 +528,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
     [RelayCommand]
     public async Task RequestCloseFilterModalAsync()
     {
-        if (HasFilterChanges)
+        if (HasFilterModalChanges)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -532,8 +546,9 @@ public partial class LocationsModalsViewModel : ViewModelBase
                     return;
             }
 
-            // Reset filter values to defaults
-            ResetFilterDefaults();
+            // Restore filter values to the state when modal was opened
+            FilterType = _originalFilterType;
+            FilterStatus = _originalFilterStatus;
         }
 
         CloseFilterModal();
