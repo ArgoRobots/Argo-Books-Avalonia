@@ -1,6 +1,5 @@
 using ArgoBooks.ViewModels;
 using Avalonia.Controls;
-using Avalonia.Input;
 
 namespace ArgoBooks.Views;
 
@@ -31,23 +30,6 @@ public partial class StockAdjustmentsPage : UserControl
         if (DataContext is StockAdjustmentsPageViewModel viewModel && e.WidthChanged)
         {
             viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
-        }
-    }
-
-    /// <summary>
-    /// Handles right-click on table header to show column visibility menu.
-    /// </summary>
-    private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
-        {
-            if (DataContext is StockAdjustmentsPageViewModel viewModel)
-            {
-                var position = e.GetPosition(this);
-                viewModel.ColumnMenuX = position.X;
-                viewModel.ColumnMenuY = position.Y;
-                viewModel.IsColumnMenuOpen = true;
-            }
         }
     }
 }

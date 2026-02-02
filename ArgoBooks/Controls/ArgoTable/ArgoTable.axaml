@@ -1,0 +1,266 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
+             xmlns:local="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Controls.ArgoTable.ArgoTable"
+             x:DataType="table:ArgoTable"
+             x:Name="Root">
+
+    <UserControl.Resources>
+        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            CornerRadius="12"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            SizeChanged="OnBorderSizeChanged">
+
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header with Title, Search and Buttons -->
+            <Border Grid.Row="0"
+                    Padding="{Binding #Root.HeaderPadding}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    IsVisible="{Binding #Root.ShowHeader}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Title -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding #Root.Title}"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding #Root.Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                    <!-- Search + Filter + Add Button (Right aligned) -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="{Binding #Root.HeaderSpacing}">
+                        <!-- Search Box -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="6"
+                                Width="{Binding #Root.SearchBoxWidth}"
+                                MinHeight="{Binding #Root.SearchBoxMinHeight}"
+                                IsVisible="{Binding #Root.ShowSearch}"
+                                behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
+                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                <PathIcon Grid.Column="0"
+                                          Data="{x:Static icons:Icons.Search}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          Margin="{Binding #Root.SearchIconMargin}" />
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding #Root.SearchQuery, Mode=TwoWay}"
+                                         Watermark="{Binding #Root.SearchPlaceholder}"
+                                         Classes="search-input"
+                                         VerticalAlignment="Center" />
+                                <Button Grid.Column="2"
+                                        Classes="icon-button"
+                                        Width="24" Height="24"
+                                        Margin="0,0,8,0"
+                                        IsVisible="{Binding #Root.SearchQuery, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                        Command="{Binding #Root.ClearSearchCommand}"
+                                        ToolTip.Tip="{loc:Loc Clear}">
+                                    <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                              Width="12" Height="12"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Filter Button -->
+                        <Button Classes="secondary-button"
+                                Classes.compact="{Binding #Root.IsCompactMode}"
+                                Classes.medium="{Binding #Root.IsMediumMode}"
+                                IsVisible="{Binding #Root.ShowFilterButton}"
+                                Command="{Binding #Root.FilterCommand}"
+                                ToolTip.Tip="{loc:Loc 'Filter'}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="{loc:Loc Filter}" IsVisible="{Binding #Root.ShowButtonText}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Extra Buttons Content (slot for additional buttons) -->
+                        <ContentPresenter Content="{Binding #Root.ExtraButtonsContent}" />
+
+                        <!-- Add Button -->
+                        <Button Classes="primary-button"
+                                Classes.compact="{Binding #Root.IsCompactMode}"
+                                Classes.medium="{Binding #Root.IsMediumMode}"
+                                IsVisible="{Binding #Root.ShowAddButton}"
+                                Command="{Binding #Root.AddCommand}"
+                                ToolTip.Tip="{Binding #Root.AddButtonTooltip}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="{x:Static icons:Icons.Add}"
+                                          Width="16" Height="16"
+                                          Foreground="White" />
+                                <TextBlock Text="{Binding #Root.AddButtonText}" IsVisible="{Binding #Root.ShowButtonText}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Table Content -->
+            <ScrollViewer Grid.Row="1"
+                          x:Name="HorizontalTableScroll"
+                          HorizontalScrollBarVisibility="{Binding #Root.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
+                          VerticalScrollBarVisibility="Disabled">
+                <Grid RowDefinitions="Auto,*" x:Name="TableGrid"
+                      MinWidth="{Binding #Root.MinimumTotalWidth}"
+                      SizeChanged="OnTableGridSizeChanged">
+                    <!-- Table Header (content slot - provided by page) -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            Padding="24,0"
+                            MinHeight="40"
+                            PointerPressed="OnTableHeaderPointerPressed">
+                        <ContentPresenter Content="{Binding #Root.HeaderContent}" />
+                    </Border>
+
+                    <!-- Table Content (scrollable vertically only) -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <Panel>
+                            <!-- Rows (content slot - provided by page) -->
+                            <ContentPresenter Content="{Binding #Root.RowsContent}" />
+
+                            <!-- Empty State -->
+                            <Border Padding="40"
+                                    IsVisible="{Binding #Root.IsEmpty}">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="16">
+                                    <Border Width="64" Height="64"
+                                            CornerRadius="32"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            HorizontalAlignment="Center">
+                                        <PathIcon Data="{Binding #Root.EmptyIcon}"
+                                                  Width="28" Height="28"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding #Root.EmptyTitle}"
+                                               FontSize="16"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding #Root.EmptyMessage}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"
+                                               MaxWidth="300" />
+                                    <Button Classes="primary-button"
+                                            HorizontalAlignment="Center"
+                                            Margin="0,8,0,0"
+                                            Command="{Binding #Root.AddCommand}"
+                                            IsVisible="{Binding #Root.ShowAddButton}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="{x:Static icons:Icons.Add}"
+                                                      Width="16" Height="16"
+                                                      Foreground="White" />
+                                            <TextBlock Text="{Binding #Root.AddButtonText}" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Panel>
+                    </ScrollViewer>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Pagination Footer -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource SurfaceAltBrush}"
+                    Padding="24,12"
+                    CornerRadius="0,0,11,11"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    IsVisible="{Binding #Root.ShowPagination}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Rows per page selector -->
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding #Root.PaginationText}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="|"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0" />
+                        <TextBlock Text="{loc:Loc 'Rows per page:'}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{Binding #Root.PageSizeOptions}"
+                                  SelectedItem="{Binding #Root.PageSize, Mode=TwoWay}"
+                                  Classes="page-size-combobox"
+                                  Width="70" />
+                    </StackPanel>
+
+                    <!-- Page Numbers -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="4"
+                                IsVisible="{Binding #Root.ShowPageNumbers}">
+                        <!-- Previous Button -->
+                        <Button Classes="pagination-button"
+                                Command="{Binding #Root.GoToPreviousPageCommand}"
+                                IsEnabled="{Binding #Root.CanGoToPreviousPage}">
+                            <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
+                                      Width="16" Height="16" />
+                        </Button>
+
+                        <!-- Page Number Buttons -->
+                        <ItemsControl ItemsSource="{Binding #Root.PageNumbers}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="4" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Classes="pagination-button"
+                                            Content="{Binding}"
+                                            Command="{Binding #Root.GoToPageCommand}"
+                                            CommandParameter="{Binding}">
+                                        <controls:PaginationHelper.IsActivePage>
+                                            <MultiBinding Converter="{StaticResource PageEqualsConverter}">
+                                                <Binding />
+                                                <Binding Path="#Root.CurrentPage" />
+                                            </MultiBinding>
+                                        </controls:PaginationHelper.IsActivePage>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Next Button -->
+                        <Button Classes="pagination-button"
+                                Command="{Binding #Root.GoToNextPageCommand}"
+                                IsEnabled="{Binding #Root.CanGoToNextPage}">
+                            <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

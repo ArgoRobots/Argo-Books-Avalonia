@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
+             mc:Ignorable="d" d:DesignWidth="150" d:DesignHeight="52"
+             x:Class="ArgoBooks.Controls.ArgoTable.ArgoTableCell"
+             x:DataType="table:ArgoTableCell"
+             x:Name="Root"
+             Width="{Binding #Root.ColumnWidth}"
+             IsVisible="{Binding #Root.IsColumnVisible}">
+
+    <Panel>
+        <!-- Custom Content or Default TextBlock -->
+        <ContentPresenter Content="{Binding #Root.CellContent}"
+                          IsVisible="{Binding #Root.HasCustomContent}"
+                          VerticalAlignment="Center"
+                          Margin="8,0" />
+
+        <!-- Default Text Display -->
+        <TextBlock Text="{Binding #Root.DisplayText}"
+                   FontSize="14"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
+                   VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis"
+                   Margin="8,0"
+                   IsVisible="{Binding !#Root.HasCustomContent}" />
+
+        <!-- Right Border -->
+        <Border Width="1"
+                Background="{DynamicResource BorderBrush}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
+                IsVisible="{Binding #Root.ShowSeparator}" />
+    </Panel>
+</UserControl>

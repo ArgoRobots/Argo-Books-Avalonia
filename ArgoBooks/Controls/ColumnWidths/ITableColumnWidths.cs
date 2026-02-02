@@ -6,9 +6,24 @@ namespace ArgoBooks.Controls.ColumnWidths;
 public interface ITableColumnWidths
 {
     /// <summary>
+    /// Gets the minimum total width required for all visible columns.
+    /// </summary>
+    double MinimumTotalWidth { get; }
+
+    /// <summary>
+    /// Gets whether the table needs horizontal scrolling.
+    /// </summary>
+    bool NeedsHorizontalScroll { get; }
+
+    /// <summary>
     /// Sets the available width for the table and recalculates column widths.
     /// </summary>
     void SetAvailableWidth(double width);
+
+    /// <summary>
+    /// Sets column visibility and recalculates widths.
+    /// </summary>
+    void SetColumnVisibility(string columnName, bool isVisible);
 
     /// <summary>
     /// Resize a column by a delta amount.
@@ -20,6 +35,16 @@ public interface ITableColumnWidths
     /// Auto-size a column to fit content.
     /// </summary>
     void AutoSizeColumn(string columnName);
+
+    /// <summary>
+    /// Gets or sets the X position for the column visibility menu.
+    /// </summary>
+    double ColumnMenuX { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Y position for the column visibility menu.
+    /// </summary>
+    double ColumnMenuY { get; set; }
 }
 
 /// <summary>

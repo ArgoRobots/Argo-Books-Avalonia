@@ -5,16 +5,12 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InvoicesPage"
              x:DataType="vm:InvoicesPageViewModel">
-
-    <UserControl.Resources>
-        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
-    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:InvoicesPageViewModel />
@@ -37,11 +33,8 @@
         </Border>
 
         <!-- Main Content -->
-        <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,*" Margin="24">
-                <!-- Statistics Cards Row -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
+            <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'Total Outstanding'}"
                                    Value="{Binding TotalOutstanding}"
@@ -61,465 +54,227 @@
                                    IconColor="Info" />
             </controls:StatCardsRow>
 
-            <!-- Main Content Card (Row 1) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    SizeChanged="OnHeaderSizeChanged">
+            <!-- Main Content Card using ArgoTable -->
+            <table:ArgoTable Grid.Row="1"
+                                Title="{loc:Loc Invoices}"
+                                ItemsSource="{Binding Invoices}"
+                                SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                SearchPlaceholder="{loc:Loc 'Search invoices...'}"
+                                SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                FilterCommand="{Binding OpenFilterModalCommand}"
+                                AddCommand="{Binding OpenCreateModalCommand}"
+                                AddButtonText="{loc:Loc 'Create Invoice'}"
+                                AddButtonTooltip="{loc:Loc 'Create Invoice'}"
+                                ColumnWidthsManager="{Binding ColumnWidths}"
+                                CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                TotalPages="{Binding TotalPages}"
+                                PageSize="{Binding PageSize, Mode=TwoWay}"
+                                PaginationText="{Binding PaginationText}"
+                                GoToPageCommand="{Binding GoToPageCommand}"
+                                GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                                EmptyIcon="{x:Static icons:Icons.Invoices}"
+                                EmptyTitle="{Binding EmptyStateTitle}"
+                                EmptyMessage="{Binding EmptyStateMessage}"
+                                BorderSizeChanged="OnHeaderSizeChanged"
+                                TableGridSizeChanged="OnTableSizeChanged">
 
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Header with Title, Search and Buttons -->
-                    <Border Grid.Row="0"
-                            Padding="{Binding ResponsiveHeader.HeaderPadding}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <!-- Title -->
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc Invoices}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       VerticalAlignment="Center" />
+                <!-- Extra Buttons Content (Template Designer) -->
+                <table:ArgoTable.ExtraButtonsContent>
+                    <Button Classes="secondary-button"
+                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
+                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                            Command="{Binding OpenTemplateDesignerCommand}"
+                            ToolTip.Tip="{loc:Loc 'Invoice Templates'}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H5v-2h7v2zm5-4H5v-2h12v2zm0-4H5V7h12v2z"
+                                      Width="16" Height="16" />
+                            <TextBlock Text="{loc:Loc Templates}"
+                                       IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                        </StackPanel>
+                    </Button>
+                </table:ArgoTable.ExtraButtonsContent>
 
-                            <!-- Search + Filter + Create Button (Right aligned) -->
-                            <StackPanel Grid.Column="1"
-                                        Orientation="Horizontal"
-                                        Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                                <!-- Search Box -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="6"
-                                        Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                        MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
-                                        behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
-                                    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                        <PathIcon Grid.Column="0"
-                                                  Data="{x:Static icons:Icons.Search}"
-                                                  Width="16" Height="16"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                  Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
-                                        <TextBox Grid.Column="1"
-                                                 Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="{loc:Loc 'Search invoices...'}"
-                                                 Classes="search-input"
-                                                 VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
+                <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="{loc:Loc 'Invoice #'}" ColumnName="Id" SortProperty="Id"
+                                                   ColumnWidth="{Binding ColumnWidths.IdColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowIdColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Filter Button -->
-                                <Button Classes="secondary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenFilterModalCommand}"
-                                        ToolTip.Tip="{loc:Loc Filter}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                                  Width="16" Height="16" />
-                                        <TextBlock Text="{loc:Loc Filter}"
-                                                   IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
+                        <table:ArgoTableHeader Header="{loc:Loc Customer}" ColumnName="Customer" SortProperty="Customer"
+                                                   ColumnWidth="{Binding ColumnWidths.CustomerColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowCustomerColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Template Designer Button -->
-                                <Button Classes="secondary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenTemplateDesignerCommand}"
-                                        ToolTip.Tip="{loc:Loc 'Invoice Templates'}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H5v-2h7v2zm5-4H5v-2h12v2zm0-4H5V7h12v2z"
-                                                  Width="16" Height="16" />
-                                        <TextBlock Text="{loc:Loc Templates}"
-                                                   IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Issue Date'}" ColumnName="IssueDate" SortProperty="IssueDate"
+                                                   ColumnWidth="{Binding ColumnWidths.IssueDateColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowIssueDateColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Create Invoice Button -->
-                                <Button Classes="primary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenCreateModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'Create Invoice'}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                  Width="16" Height="16"
-                                                  Foreground="White" />
-                                        <TextBlock Text="{loc:Loc 'Create Invoice'}"
-                                                   IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Due Date'}" ColumnName="DueDate" SortProperty="DueDate"
+                                                   ColumnWidth="{Binding ColumnWidths.DueDateColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDueDateColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                    <!-- Table Content -->
-                    <ScrollViewer Grid.Row="1"
-                                  x:Name="HorizontalTableScroll"
-                                  HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
-                                  VerticalScrollBarVisibility="Disabled">
-                        <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
-                              MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
-                            <!-- Table Header -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,0"
-                                    MinHeight="40"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
-                                    <!-- Invoice # -->
-                                    <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Invoice #'}" ColumnName="Id"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Customer -->
-                                    <Panel Width="{Binding ColumnWidths.CustomerColumnWidth}" IsVisible="{Binding ShowCustomerColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc Customer}" ColumnName="Customer"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Customer" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Issue Date -->
-                                    <Panel Width="{Binding ColumnWidths.IssueDateColumnWidth}" IsVisible="{Binding ShowIssueDateColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Issue Date'}" ColumnName="IssueDate"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="IssueDate" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Due Date -->
-                                    <Panel Width="{Binding ColumnWidths.DueDateColumnWidth}" IsVisible="{Binding ShowDueDateColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Due Date'}" ColumnName="DueDate"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="DueDate" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Amount -->
-                                    <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc Amount}" ColumnName="Amount"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Amount" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Status -->
-                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc Status}" ColumnName="Status"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Actions (Fixed) -->
-                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="{loc:Loc Actions}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   HorizontalAlignment="Left"
-                                                   Margin="8,12,8,12" />
-                                    </Panel>
-                                </StackPanel>
-                            </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" SortProperty="Amount"
+                                                   ColumnWidth="{Binding ColumnWidths.AmountColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowAmountColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                            <!-- Table Content (scrollable vertically only) -->
-                            <ScrollViewer Grid.Row="1"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <Panel>
-                                    <!-- Invoices List -->
-                                    <ItemsControl ItemsSource="{Binding Invoices}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="vm:InvoiceDisplayItem">
-                                                <Border Padding="24,0"
-                                                        BorderBrush="{DynamicResource BorderBrush}"
-                                                        BorderThickness="0,0,0,1"
-                                                        MinHeight="56">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <!-- Invoice # -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIdColumn}">
-                                                            <TextBlock Text="{Binding Id}"
-                                                                       FontSize="14"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc Status}" ColumnName="Status" SortProperty="Status"
+                                                   ColumnWidth="{Binding ColumnWidths.StatusColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowStatusColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                                        <!-- Customer with Avatar -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowCustomerColumn}">
-                                                            <Grid ColumnDefinitions="Auto,*" Margin="8,0" VerticalAlignment="Center">
-                                                                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
-                                                                        Background="{DynamicResource PrimaryBrush}" Margin="0,0,10,0">
-                                                                    <TextBlock Text="{Binding CustomerInitials}"
-                                                                               FontSize="12"
-                                                                               FontWeight="SemiBold"
-                                                                               Foreground="White"
-                                                                               HorizontalAlignment="Center"
-                                                                               VerticalAlignment="Center" />
-                                                                </Border>
-                                                                <TextBlock Grid.Column="1" Text="{Binding CustomerName}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           VerticalAlignment="Center"
-                                                                           TextTrimming="CharacterEllipsis" />
-                                                            </Grid>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                                   ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                   IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
 
-                                                        <!-- Issue Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.IssueDateColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIssueDateColumn}">
-                                                            <TextBlock Text="{Binding IssueDateFormatted}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl ItemsSource="{Binding Invoices}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:InvoiceDisplayItem">
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="56">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Invoice # -->
+                                        <table:ArgoTableCell Text="{Binding Id}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIdColumn}"
+                                                                 FontWeight="Medium" />
 
-                                                        <!-- Due Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.DueDateColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowDueDateColumn}">
-                                                            <TextBlock Text="{Binding DueDateFormatted}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                        <!-- Customer with Avatar - Custom content required -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowCustomerColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                                                    <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
+                                                            Background="{DynamicResource PrimaryBrush}" Margin="0,0,10,0">
+                                                        <TextBlock Text="{Binding CustomerInitials}"
+                                                                   FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="White"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="{Binding CustomerName}"
+                                                               FontSize="14"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                                        <!-- Amount -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowAmountColumn}">
-                                                            <TextBlock Text="{Binding TotalFormatted}"
-                                                                       FontSize="14"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                        <!-- Issue Date -->
+                                        <table:ArgoTableCell Text="{Binding IssueDateFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.IssueDateColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIssueDateColumn}" />
 
-                                                        <!-- Status Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowStatusColumn}">
-                                                            <Border VerticalAlignment="Center"
-                                                                    HorizontalAlignment="Left"
-                                                                    Padding="8,4"
-                                                                    CornerRadius="4"
-                                                                    Margin="8,0"
-                                                                    Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusBackground}}">
-                                                                <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
-                                                                           FontSize="12"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusForeground}}" />
-                                                            </Border>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                        <!-- Due Date -->
+                                        <table:ArgoTableCell Text="{Binding DueDateFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.DueDateColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowDueDateColumn}" />
 
-                                                        <!-- Actions -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                            <StackPanel Orientation="Horizontal"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Spacing="4"
-                                                                        Margin="8,0">
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc Continue}"
-                                                                        IsVisible="{Binding IsDraft}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M8 5v14l11-7z"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc Edit}"
-                                                                        IsVisible="{Binding CanEdit}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc 'View History'}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="{loc:Loc Delete}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Panel>
-                                                    </StackPanel>
+                                        <!-- Amount -->
+                                        <table:ArgoTableCell Text="{Binding TotalFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowAmountColumn}"
+                                                                 FontWeight="Medium" />
+
+                                        <!-- Status Badge - Custom content required -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowStatusColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Border VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Padding="8,4"
+                                                        CornerRadius="4"
+                                                        Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusBackground}}">
+                                                    <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusForeground}}" />
                                                 </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                    <!-- Empty State -->
-                                    <Border Padding="40"
-                                            IsVisible="{Binding Invoices.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="16">
-                                            <Border Width="64" Height="64"
-                                                    CornerRadius="32"
-                                                    Background="{DynamicResource SurfaceAltBrush}"
-                                                    HorizontalAlignment="Center">
-                                                <PathIcon Data="{x:Static icons:Icons.Invoices}"
-                                                          Width="28" Height="28"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </Border>
-                                            <TextBlock Text="{Binding EmptyStateTitle}"
-                                                       FontSize="16"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       HorizontalAlignment="Center" />
-                                            <TextBlock Text="{Binding EmptyStateMessage}"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       HorizontalAlignment="Center"
-                                                       TextAlignment="Center"
-                                                       TextWrapping="Wrap"
-                                                       MaxWidth="300" />
-                                            <Button Classes="primary-button"
-                                                    HorizontalAlignment="Center"
-                                                    Margin="0,8,0,0"
-                                                    Command="{Binding OpenCreateModalCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                              Width="16" Height="16"
-                                                              Foreground="White" />
-                                                    <TextBlock Text="{loc:Loc 'Create Invoice'}" />
+                                        <!-- Actions - Custom content required -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                 ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="4">
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc Continue}"
+                                                            IsVisible="{Binding IsDraft}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M8 5v14l11-7z"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc Edit}"
+                                                            IsVisible="{Binding CanEdit}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'View History'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button danger"
+                                                            ToolTip.Tip="{loc:Loc Delete}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
                                                 </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
-                                </Panel>
-                            </ScrollViewer>
-                        </Grid>
-                    </ScrollViewer>
-
-                    <!-- Pagination Footer -->
-                    <Border Grid.Row="2"
-                            Background="{DynamicResource SurfaceAltBrush}"
-                            Padding="24,12"
-                            CornerRadius="0,0,11,11"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Rows per page selector -->
-                            <StackPanel Grid.Column="0"
-                                        Orientation="Horizontal"
-                                        Spacing="8"
-                                        VerticalAlignment="Center">
-                                <TextBlock Text="{Binding PaginationText}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <TextBlock Text="|"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           VerticalAlignment="Center"
-                                           Margin="8,0" />
-                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <ComboBox ItemsSource="{Binding PageSizeOptions}"
-                                          SelectedItem="{Binding PageSize}"
-                                          Classes="page-size-combobox"
-                                          Width="70" />
-                            </StackPanel>
-
-                            <!-- Page Numbers -->
-                            <StackPanel Grid.Column="2"
-                                        Orientation="Horizontal"
-                                        Spacing="4"
-                                        IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                                <!-- Previous Button -->
-                                <Button Classes="pagination-button"
-                                        Command="{Binding GoToPreviousPageCommand}"
-                                        IsEnabled="{Binding CanGoToPreviousPage}">
-                                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
-                                              Width="16" Height="16" />
-                                </Button>
-
-                                <!-- Page Number Buttons -->
-                                <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="4" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Classes="pagination-button"
-                                                    Content="{Binding}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).GoToPageCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <controls:PaginationHelper.IsActivePage>
-                                                    <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                        <Binding />
-                                                        <Binding Path="$parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).CurrentPage" />
-                                                    </MultiBinding>
-                                                </controls:PaginationHelper.IsActivePage>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <!-- Next Button -->
-                                <Button Classes="pagination-button"
-                                        Command="{Binding GoToNextPageCommand}"
-                                        IsEnabled="{Binding CanGoToNextPage}">
-                                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
-                                              Width="16" Height="16" />
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
-            </Grid>
-        </ScrollViewer>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
+        </Grid>
     </Grid>
 
     <!-- Column Visibility Menu -->
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                    MenuX="{Binding ColumnMenuX}"
-                                    MenuY="{Binding ColumnMenuY}"
+                                    MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                    MenuY="{Binding ColumnWidths.ColumnMenuY}"
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
@@ -534,5 +289,4 @@
     </controls:ColumnVisibilityMenu>
     </Panel>
 
-    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

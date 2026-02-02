@@ -71,6 +71,12 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     [ObservableProperty]
     private bool _needsHorizontalScroll = false;
 
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
     #endregion
 
     public ProductsTableColumnWidths()

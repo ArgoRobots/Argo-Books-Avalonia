@@ -5,7 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -14,7 +14,6 @@
 
     <UserControl.Resources>
         <local:DepartmentColorToBrushConverter x:Key="DepartmentColorToBrushConverter" />
-        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -22,381 +21,192 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid RowDefinitions="Auto,*" Margin="24">
-        <!-- Statistics Cards Row -->
-        <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-            <controls:StatCard Label="{loc:Loc 'Total Departments'}"
-                               Value="{Binding TotalDepartments}"
-                               Icon="{x:Static icons:Icons.Departments}"
-                               IconColor="Primary" />
-            <controls:StatCard Label="{loc:Loc 'Active Departments'}"
-                               Value="{Binding ActiveDepartments}"
-                               Icon="{x:Static icons:Icons.CircleCheck}"
-                               IconColor="Success" />
-            <controls:StatCard Label="{loc:Loc 'Total Employees'}"
-                               Value="{Binding TotalEmployees}"
-                               Icon="{x:Static icons:Icons.Customers}"
-                               IconColor="Warning" />
-            <controls:StatCard Label="{loc:Loc 'New This Month'}"
-                               Value="{Binding NewThisMonth}"
-                               Icon="{x:Static icons:Icons.Add}"
-                               IconColor="Info" />
-        </controls:StatCardsRow>
+    <Grid RowDefinitions="*">
+        <!-- Main Content -->
+        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+            <!-- Statistics Cards Row -->
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                <controls:StatCard Label="{loc:Loc 'Total Departments'}"
+                                   Value="{Binding TotalDepartments}"
+                                   Icon="{x:Static icons:Icons.Departments}"
+                                   IconColor="Primary" />
+                <controls:StatCard Label="{loc:Loc 'Active Departments'}"
+                                   Value="{Binding ActiveDepartments}"
+                                   Icon="{x:Static icons:Icons.CircleCheck}"
+                                   IconColor="Success" />
+                <controls:StatCard Label="{loc:Loc 'Total Employees'}"
+                                   Value="{Binding TotalEmployees}"
+                                   Icon="{x:Static icons:Icons.Customers}"
+                                   IconColor="Warning" />
+                <controls:StatCard Label="{loc:Loc 'New This Month'}"
+                                   Value="{Binding NewThisMonth}"
+                                   Icon="{x:Static icons:Icons.Add}"
+                                   IconColor="Info" />
+            </controls:StatCardsRow>
 
-        <!-- Main Content Card (Row 1) -->
-        <Border Grid.Row="1"
-                Background="{DynamicResource SurfaceBrush}"
-                CornerRadius="12"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
-                SizeChanged="OnHeaderSizeChanged">
+            <!-- Main Content Card using ArgoTable -->
+            <table:ArgoTable Grid.Row="1"
+                                Title="{loc:Loc Departments}"
+                                ItemsSource="{Binding Departments}"
+                                SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                SearchPlaceholder="{loc:Loc 'Search departments...'}"
+                                SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                AddCommand="{Binding OpenAddModalCommand}"
+                                AddButtonText="{loc:Loc 'Add Department'}"
+                                AddButtonTooltip="{loc:Loc 'Add Department'}"
+                                ColumnWidthsManager="{Binding ColumnWidths}"
+                                CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                TotalPages="{Binding TotalPages}"
+                                PageSize="{Binding PageSize, Mode=TwoWay}"
+                                PaginationText="{Binding PaginationText}"
+                                GoToPageCommand="{Binding GoToPageCommand}"
+                                GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                                EmptyIcon="{x:Static icons:Icons.Departments}"
+                                EmptyTitle="{loc:Loc 'No departments found'}"
+                                EmptyMessage="{loc:Loc 'Add your first department to organize your company structure.'}"
+                                BorderSizeChanged="OnHeaderSizeChanged"
+                                TableGridSizeChanged="OnTableSizeChanged">
 
-            <Grid RowDefinitions="Auto,*,Auto">
-                <!-- Header with Title, Search and Buttons -->
-                <Border Grid.Row="0"
-                        Padding="{Binding ResponsiveHeader.HeaderPadding}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <!-- Title -->
-                        <TextBlock Grid.Column="0"
-                                   Text="{loc:Loc 'Departments'}"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   VerticalAlignment="Center" />
+                <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="{loc:Loc Department}" ColumnName="Department" SortProperty="Name"
+                                                   ColumnWidth="{Binding ColumnWidths.DepartmentColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDepartmentColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <!-- Search + Add Button (Right aligned) -->
-                        <StackPanel Grid.Column="2"
-                                    Orientation="Horizontal"
-                                    Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                            <!-- Search Box -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="6"
-                                    Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                    MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
-                                    behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
-                                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                    <PathIcon Grid.Column="0"
-                                              Data="{x:Static icons:Icons.Search}"
-                                              Width="16" Height="16"
-                                              Foreground="{DynamicResource TextTertiaryBrush}"
-                                              Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
-                                    <TextBox Grid.Column="1"
-                                             Text="{Binding SearchQuery, Mode=TwoWay}"
-                                             Watermark="{loc:Loc 'Search departments...'}"
-                                             Classes="search-input"
-                                             VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" SortProperty="Description"
+                                                   ColumnWidth="{Binding ColumnWidths.DescriptionColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDescriptionColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                            <!-- Add Department Button -->
-                            <Button Classes="primary-button"
-                                    Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                    Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                    Command="{Binding OpenAddModalCommand}"
-                                    ToolTip.Tip="{loc:Loc 'Add Department'}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="{x:Static icons:Icons.Add}"
-                                              Width="16" Height="16"
-                                              Foreground="White" />
-                                    <TextBlock Text="{loc:Loc 'Add Department'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Employees}" ColumnName="Employees" SortProperty="EmployeeCount"
+                                                   ColumnWidth="{Binding ColumnWidths.EmployeesColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowEmployeesColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                <!-- Departments Table (Row 1) -->
-                <ScrollViewer Grid.Row="1"
-                              x:Name="HorizontalTableScroll"
-                              HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
-                              VerticalScrollBarVisibility="Disabled">
-                    <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
-                          MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
-                        <!-- Table Header -->
-                        <Border Grid.Row="0"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,0"
-                                MinHeight="40"
-                                PointerPressed="OnTableHeaderPointerPressed">
-                            <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
-                                <!-- Department -->
-                                <Panel Width="{Binding ColumnWidths.DepartmentColumnWidth}" IsVisible="{Binding ShowDepartmentColumn}">
-                                    <controls:SortableColumnHeader Text="{loc:Loc 'Department'}" ColumnName="Name"
-                                                                    Command="{Binding SortByCommand}"
-                                                                    SortColumn="{Binding SortColumn}"
-                                                                    SortDirection="{Binding SortDirection}" />
-                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    <controls:ColumnResizeGripper ColumnName="Department" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                </Panel>
-                                <!-- Description -->
-                                <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
-                                    <controls:SortableColumnHeader Text="{loc:Loc 'Description'}" ColumnName="Description"
-                                                                    Command="{Binding SortByCommand}"
-                                                                    SortColumn="{Binding SortColumn}"
-                                                                    SortDirection="{Binding SortDirection}" />
-                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    <controls:ColumnResizeGripper ColumnName="Description" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                </Panel>
-                                <!-- Employees -->
-                                <Panel Width="{Binding ColumnWidths.EmployeesColumnWidth}" IsVisible="{Binding ShowEmployeesColumn}">
-                                    <controls:SortableColumnHeader Text="{loc:Loc 'Employees'}" ColumnName="EmployeeCount"
-                                                                    Command="{Binding SortByCommand}"
-                                                                    SortColumn="{Binding SortColumn}"
-                                                                    SortDirection="{Binding SortDirection}" />
-                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    <controls:ColumnResizeGripper ColumnName="Employees" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                </Panel>
-                                <!-- Actions (Fixed) -->
-                                <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                    <TextBlock Text="{loc:Loc 'Actions'}" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                               HorizontalAlignment="Left"
-                                               Margin="8,12,8,12" />
-                                </Panel>
-                            </StackPanel>
-                        </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                                   ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                   IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
 
-                        <!-- Table Content (scrollable vertically only) -->
-                        <ScrollViewer Grid.Row="1"
-                                      VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled">
-                            <Panel>
-                                <!-- Departments List -->
-                                <ItemsControl ItemsSource="{Binding Departments}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:DepartmentDisplayItem">
-                                            <Border Padding="24,0"
-                                                    BorderBrush="{DynamicResource BorderBrush}"
-                                                    BorderThickness="0,0,0,1"
-                                                    MinHeight="56">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <!-- Department Name with Icon -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.DepartmentColumnWidth}"
-                                                           IsVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowDepartmentColumn}">
-                                                        <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="8,0">
-                                                            <Border Grid.Column="0" Width="40" Height="40"
-                                                                    CornerRadius="8"
-                                                                    Background="{Binding IconColor, Converter={StaticResource DepartmentColorToBrushConverter}}"
-                                                                    Margin="0,0,12,0">
-                                                                <TextBlock Text="{Binding Icon}"
-                                                                           FontSize="16"
-                                                                           HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center" />
-                                                            </Border>
-                                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                                       FontSize="14"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis" />
-                                                        </Grid>
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                    </Panel>
+                <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl ItemsSource="{Binding Departments}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:DepartmentDisplayItem">
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="56">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Department Name with Icon - Custom content required -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.DepartmentColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowDepartmentColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                                                    <Border Grid.Column="0" Width="40" Height="40"
+                                                            CornerRadius="8"
+                                                            Background="{Binding IconColor, Converter={StaticResource DepartmentColorToBrushConverter}}"
+                                                            Margin="0,0,12,0">
+                                                        <TextBlock Text="{Binding Icon}"
+                                                                   FontSize="16"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                                    <!-- Description -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
-                                                           IsVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowDescriptionColumn}">
-                                                        <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
-                                                                   FontSize="14"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   Margin="8,0" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                    </Panel>
+                                        <!-- Description - Simple text cell -->
+                                        <table:ArgoTableCell Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowDescriptionColumn}" />
 
-                                                    <!-- Employees Badge -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.EmployeesColumnWidth}"
-                                                           IsVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowEmployeesColumn}">
-                                                        <Border VerticalAlignment="Center"
-                                                                HorizontalAlignment="Left"
-                                                                Padding="8,4"
-                                                                CornerRadius="4"
-                                                                Margin="8,0"
-                                                                Background="{DynamicResource PrimaryLightBrush}">
-                                                            <TextBlock Text="{Binding EmployeeCountDisplay}"
-                                                                       FontSize="12"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource PrimaryBrush}" />
-                                                        </Border>
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                    </Panel>
+                                        <!-- Employees Badge - Custom content required -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.EmployeesColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowEmployeesColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Border VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Padding="8,4"
+                                                        CornerRadius="4"
+                                                        Background="{DynamicResource PrimaryLightBrush}">
+                                                    <TextBlock Text="{Binding EmployeeCountDisplay}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource PrimaryBrush}" />
+                                                </Border>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                                    <!-- Actions -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                        <StackPanel Orientation="Horizontal"
-                                                                    HorizontalAlignment="Right"
-                                                                    Spacing="4"
-                                                                    Margin="8,0">
-                                                            <Button Classes="icon-button"
-                                                                    ToolTip.Tip="{loc:Loc 'Edit'}"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenEditModalCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                          Width="16" Height="16" />
-                                                            </Button>
-                                                            <Button Classes="icon-button danger"
-                                                                    ToolTip.Tip="{loc:Loc 'Delete'}"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                          Width="16" Height="16" />
-                                                            </Button>
-                                                        </StackPanel>
-                                                    </Panel>
+                                        <!-- Actions - Custom content required -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                 ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="4">
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc Edit}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenEditModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button danger"
+                                                            ToolTip.Tip="{loc:Loc Delete}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
                                                 </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <!-- Empty State -->
-                                <Border Padding="40"
-                                        IsVisible="{Binding Departments.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="16">
-                                        <Border Width="64" Height="64"
-                                                CornerRadius="32"
-                                                Background="{DynamicResource SurfaceAltBrush}"
-                                                HorizontalAlignment="Center">
-                                            <PathIcon Data="{x:Static icons:Icons.Departments}"
-                                                      Width="28" Height="28"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                        <TextBlock Text="{loc:Loc 'No departments found'}"
-                                                   FontSize="16"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   HorizontalAlignment="Center" />
-                                        <TextBlock Text="{loc:Loc 'Add your first department to organize your company structure.'}"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   TextWrapping="Wrap"
-                                                   MaxWidth="300" />
-                                        <Button Classes="primary-button"
-                                                HorizontalAlignment="Center"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding OpenAddModalCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                          Width="16" Height="16"
-                                                          Foreground="White" />
-                                                <TextBlock Text="{loc:Loc 'Add Department'}" />
-                                            </StackPanel>
-                                        </Button>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
                                     </StackPanel>
                                 </Border>
-                            </Panel>
-                        </ScrollViewer>
-                    </Grid>
-                </ScrollViewer>
-
-                <!-- Pagination Footer (Row 2 - fixed at bottom) -->
-                <Border Grid.Row="2"
-                        Background="{DynamicResource SurfaceAltBrush}"
-                        Padding="24,12"
-                        CornerRadius="0,0,11,11"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <!-- Rows per page selector -->
-                        <StackPanel Grid.Column="0"
-                                    Orientation="Horizontal"
-                                    Spacing="8"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="{Binding PaginationText}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <TextBlock Text="|"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       VerticalAlignment="Center"
-                                       Margin="8,0" />
-                            <TextBlock Text="{loc:Loc 'Rows per page:'}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <ComboBox ItemsSource="{Binding PageSizeOptions}"
-                                      SelectedItem="{Binding PageSize}"
-                                      Classes="page-size-combobox"
-                                      Width="70" />
-                        </StackPanel>
-
-                        <!-- Page Numbers -->
-                        <StackPanel Grid.Column="2"
-                                    Orientation="Horizontal"
-                                    Spacing="4"
-                                    IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                            <!-- Previous Button -->
-                            <Button Classes="pagination-button"
-                                    Command="{Binding GoToPreviousPageCommand}"
-                                    IsEnabled="{Binding CanGoToPreviousPage}">
-                                <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
-                                          Width="16" Height="16" />
-                            </Button>
-
-                            <!-- Page Number Buttons -->
-                            <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" Spacing="4" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Classes="pagination-button"
-                                                Content="{Binding}"
-                                                Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).GoToPageCommand}"
-                                                CommandParameter="{Binding}">
-                                            <controls:PaginationHelper.IsActivePage>
-                                                <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                    <Binding />
-                                                    <Binding Path="$parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).CurrentPage" />
-                                                </MultiBinding>
-                                            </controls:PaginationHelper.IsActivePage>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- Next Button -->
-                            <Button Classes="pagination-button"
-                                    Command="{Binding GoToNextPageCommand}"
-                                    IsEnabled="{Binding CanGoToNextPage}">
-                                <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
-                                          Width="16" Height="16" />
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
-        </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
+        </Grid>
     </Grid>
 
     <!-- Column Visibility Menu -->
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                    MenuX="{Binding ColumnMenuX}"
-                                    MenuY="{Binding ColumnMenuY}"
+                                    MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                    MenuY="{Binding ColumnWidths.ColumnMenuY}"
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowDepartmentColumn}" Content="{loc:Loc 'Department'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc 'Description'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowEmployeesColumn}" Content="{loc:Loc 'Employees'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDepartmentColumn}" Content="{loc:Loc Department}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowEmployeesColumn}" Content="{loc:Loc Employees}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>
     </Panel>
 
-    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

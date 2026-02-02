@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="44"
+             x:Class="ArgoBooks.Controls.ArgoTable.ArgoTableHeader"
+             x:DataType="table:ArgoTableHeader"
+             x:Name="Root"
+             Width="{Binding #Root.ColumnWidth}"
+             IsVisible="{Binding #Root.IsColumnVisible}">
+
+    <UserControl.Resources>
+        <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
+    </UserControl.Resources>
+
+    <Panel>
+        <!-- Sortable Header Button -->
+        <Button Classes="column-header"
+                Margin="8,12"
+                Command="{Binding #Root.SortCommand}"
+                CommandParameter="{Binding #Root.SortProperty}"
+                IsVisible="{Binding #Root.IsSortable}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="{Binding #Root.Header}"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <Panel Width="12" Height="12">
+                    <!-- Ascending Indicator -->
+                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
+                              Foreground="{DynamicResource TextTertiaryBrush}">
+                        <PathIcon.IsVisible>
+                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}">
+                                <Binding Path="#Root.SortColumn" />
+                                <Binding Path="#Root.SortDirection" />
+                                <Binding Path="#Root.SortProperty" />
+                                <Binding>
+                                    <Binding.Source>
+                                        <x:String>Ascending</x:String>
+                                    </Binding.Source>
+                                </Binding>
+                            </MultiBinding>
+                        </PathIcon.IsVisible>
+                    </PathIcon>
+                    <!-- Descending Indicator -->
+                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
+                              Foreground="{DynamicResource TextTertiaryBrush}">
+                        <PathIcon.IsVisible>
+                            <MultiBinding Converter="{StaticResource SortIndicatorConverter}">
+                                <Binding Path="#Root.SortColumn" />
+                                <Binding Path="#Root.SortDirection" />
+                                <Binding Path="#Root.SortProperty" />
+                                <Binding>
+                                    <Binding.Source>
+                                        <x:String>Descending</x:String>
+                                    </Binding.Source>
+                                </Binding>
+                            </MultiBinding>
+                        </PathIcon.IsVisible>
+                    </PathIcon>
+                </Panel>
+            </StackPanel>
+        </Button>
+
+        <!-- Non-sortable Header Text -->
+        <TextBlock Text="{Binding #Root.Header}"
+                   FontSize="12"
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Margin="8,12"
+                   IsVisible="{Binding !#Root.IsSortable}" />
+
+        <!-- Border Separator (visible for resizable columns) -->
+        <Border Width="1"
+                Background="{DynamicResource TextTertiaryBrush}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
+                IsVisible="{Binding #Root.ShowSeparator}" />
+
+        <!-- Column Resize Gripper -->
+        <controls:ColumnResizeGripper ColumnName="{Binding #Root.ColumnName}"
+                                       ColumnWidths="{Binding #Root.ColumnWidths}"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Stretch"
+                                       IsVisible="{Binding #Root.IsResizable}" />
+    </Panel>
+</UserControl>

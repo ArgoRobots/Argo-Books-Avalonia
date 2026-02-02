@@ -3,413 +3,214 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
-             xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.LostDamagedPage"
              x:DataType="vm:LostDamagedPageViewModel">
 
-    <UserControl.Resources>
-        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
-    </UserControl.Resources>
-
     <Design.DataContext>
         <vm:LostDamagedPageViewModel />
     </Design.DataContext>
 
     <Panel>
+    <Grid RowDefinitions="*">
         <!-- Main Content -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,*" Margin="24">
-                <!-- Statistics Cards Row -->
-                <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                    <controls:StatCard Label="{loc:Loc 'Total Lost/Damaged'}"
-                                       Value="{Binding TotalLostDamaged}"
-                                       Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                       IconColor="Danger" />
-                    <controls:StatCard Label="{loc:Loc 'Lost Items'}"
-                                       Value="{Binding LostItems}"
-                                       Icon="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                                       IconColor="Warning" />
-                    <controls:StatCard Label="{loc:Loc 'Damaged Items'}"
-                                       Value="{Binding DamagedItems}"
-                                       Icon="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39L6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
-                                       IconColor="Info" />
-                    <controls:StatCard Label="{loc:Loc 'Total Loss Value'}"
-                                       Value="{Binding TotalLossValue}"
-                                       Icon="{x:Static icons:Icons.Dollar}"
-                                       IconColor="Primary" />
-                </controls:StatCardsRow>
+        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+            <!-- Statistics Cards Row -->
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                <controls:StatCard Label="{loc:Loc 'Total Lost/Damaged'}"
+                                   Value="{Binding TotalLostDamaged}"
+                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                   IconColor="Danger" />
+                <controls:StatCard Label="{loc:Loc 'Lost Items'}"
+                                   Value="{Binding LostItems}"
+                                   Icon="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                   IconColor="Warning" />
+                <controls:StatCard Label="{loc:Loc 'Damaged Items'}"
+                                   Value="{Binding DamagedItems}"
+                                   Icon="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39L6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
+                                   IconColor="Info" />
+                <controls:StatCard Label="{loc:Loc 'Total Loss Value'}"
+                                   Value="{Binding TotalLossValue}"
+                                   Icon="{x:Static icons:Icons.Dollar}"
+                                   IconColor="Primary" />
+            </controls:StatCardsRow>
 
-                <!-- Main Content Card (Row 1) -->
-                <Border Grid.Row="1"
-                        Background="{DynamicResource SurfaceBrush}"
-                        CornerRadius="12"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        SizeChanged="OnHeaderSizeChanged">
+            <!-- Main Content Card using ArgoTable -->
+            <table:ArgoTable Grid.Row="1"
+                                Title="{loc:Loc 'Lost &amp; Damaged Inventory'}"
+                                ItemsSource="{Binding Items}"
+                                SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                SearchPlaceholder="{loc:Loc 'Search products...'}"
+                                SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                FilterCommand="{Binding OpenFilterModalCommand}"
+                                ColumnWidthsManager="{Binding ColumnWidths}"
+                                CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                TotalPages="{Binding TotalPages}"
+                                PageSize="{Binding PageSize, Mode=TwoWay}"
+                                PaginationText="{Binding PaginationText}"
+                                GoToPageCommand="{Binding GoToPageCommand}"
+                                GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                                EmptyIcon="{x:Static icons:Icons.LostDamaged}"
+                                EmptyTitle="{loc:Loc 'No lost or damaged items found'}"
+                                EmptyMessage="{loc:Loc 'Items marked as lost or damaged from the Expenses or Revenue pages will appear here.'}"
+                                BorderSizeChanged="OnHeaderSizeChanged"
+                                TableGridSizeChanged="OnTableSizeChanged">
 
-                    <Grid RowDefinitions="Auto,*,Auto">
-                        <!-- Header with Title, Search and Buttons -->
-                        <Border Grid.Row="0"
-                                Padding="{Binding ResponsiveHeader.HeaderPadding}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <!-- Title -->
-                                <TextBlock Grid.Column="0"
-                                           Text="{loc:Loc 'Lost &amp; Damaged Inventory'}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           VerticalAlignment="Center" />
+                <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="{loc:Loc 'ID'}" ColumnName="Id"
+                                                   ColumnWidth="{Binding ColumnWidths.IdColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowIdColumn}"
+                                                   IsSortable="False"
+                                                   ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Action Buttons (Right aligned) -->
-                                <StackPanel Grid.Column="2"
-                                            Orientation="Horizontal"
-                                            Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                                    <!-- Search Box -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="6"
-                                            Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                            MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
-                                            behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
-                                        <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                            <PathIcon Grid.Column="0"
-                                                      Data="{x:Static icons:Icons.Search}"
-                                                      Width="16" Height="16"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
-                                            <TextBox Grid.Column="1"
-                                                     Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                     Watermark="{loc:Loc 'Search products...'}"
-                                                     Classes="search-input"
-                                                     VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Product}" ColumnName="Product"
+                                                   ColumnWidth="{Binding ColumnWidths.ProductColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowProductColumn}"
+                                                   IsSortable="False"
+                                                   ColumnWidths="{Binding ColumnWidths}" />
 
-                                    <!-- Filter Button -->
-                                    <Button Classes="secondary-button"
-                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                            Command="{Binding OpenFilterModalCommand}"
-                                            ToolTip.Tip="{loc:Loc 'Filter'}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                                      Width="16" Height="16" />
-                                            <TextBlock Text="{loc:Loc 'Filter'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date"
+                                                   ColumnWidth="{Binding ColumnWidths.DateColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDateColumn}"
+                                                   IsSortable="False"
+                                                   ColumnWidths="{Binding ColumnWidths}" />
 
-                        <!-- Items Table Content -->
-                        <ScrollViewer Grid.Row="1"
-                                      x:Name="HorizontalTableScroll"
-                                      HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
-                                      VerticalScrollBarVisibility="Disabled">
-                            <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
-                                  MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
-                                <!-- Table Header -->
-                                <Border Grid.Row="0"
-                                        Background="{DynamicResource SurfaceAltBrush}"
-                                        Padding="24,0"
-                                        MinHeight="40"
+                        <table:ArgoTableHeader Header="{loc:Loc Reason}" ColumnName="Reason"
+                                                   ColumnWidth="{Binding ColumnWidths.ReasonColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowReasonColumn}"
+                                                   IsSortable="False"
+                                                   ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Loss}" ColumnName="Loss"
+                                                   ColumnWidth="{Binding ColumnWidths.LossColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowLossColumn}"
+                                                   IsSortable="False"
+                                                   ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                                   ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                   IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
+
+                <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:LostDamagedDisplayItem">
+                                <Border Padding="24,0"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1"
-                                        PointerPressed="OnTableHeaderPointerPressed">
+                                        MinHeight="52">
                                     <StackPanel Orientation="Horizontal">
-                                        <!-- ID Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
-                                            <TextBlock Text="{loc:Loc 'ID'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
+                                        <!-- ID -->
+                                        <table:ArgoTableCell Text="{Binding Id}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowIdColumn}" />
 
-                                        <!-- Product Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
-                                            <TextBlock Text="{loc:Loc 'Product'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
+                                        <!-- Product - Custom content for stacked text -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowProductColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ProductName}"
+                                                               FontSize="14"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding QuantityFormatted}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                        <!-- Date Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
-                                            <TextBlock Text="{loc:Loc 'Date'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
+                                        <!-- Date -->
+                                        <table:ArgoTableCell Text="{Binding DateFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowDateColumn}" />
 
-                                        <!-- Reason Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}" IsVisible="{Binding ShowReasonColumn}">
-                                            <TextBlock Text="{loc:Loc 'Reason'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Reason" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
+                                        <!-- Reason -->
+                                        <table:ArgoTableCell Text="{Binding Reason}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowReasonColumn}" />
 
-                                        <!-- Loss Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.LossColumnWidth}" IsVisible="{Binding ShowLossColumn}">
-                                            <TextBlock Text="{loc:Loc 'Loss'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
-                                            <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                            <controls:ColumnResizeGripper ColumnName="Loss" ColumnWidths="{Binding ColumnWidths}"
-                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        </Panel>
+                                        <!-- Loss Value - Custom content for styled text -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.LossColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowLossColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <TextBlock Text="{Binding ValueLostFormatted}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource ErrorBrush}"
+                                                           VerticalAlignment="Center" />
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                        <!-- Actions Column Header -->
-                                        <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                            <TextBlock Text="{loc:Loc 'Actions'}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" HorizontalAlignment="Left" />
-                                        </Panel>
+                                        <!-- Actions - Custom content for buttons -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                 ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal"
+                                                            Spacing="2"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center">
+                                                    <Button Classes="icon-button-small"
+                                                            ToolTip.Tip="{loc:Loc 'View Details'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ViewItemDetailsCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                                                  Width="14" Height="14" />
+                                                    </Button>
+                                                    <Button Classes="icon-button-small danger"
+                                                            ToolTip.Tip="{loc:Loc 'Undo'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).UndoItemCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Returns}"
+                                                                  Width="14" Height="14" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
                                     </StackPanel>
                                 </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
+        </Grid>
+    </Grid>
 
-                                <!-- Table Content (scrollable vertically only) -->
-                                <ScrollViewer Grid.Row="1"
-                                              VerticalScrollBarVisibility="Auto"
-                                              HorizontalScrollBarVisibility="Disabled">
-                                    <Panel>
-                                        <!-- Table Rows -->
-                                        <ItemsControl ItemsSource="{Binding Items}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="vm:LostDamagedDisplayItem">
-                                                    <Border Padding="24,0"
-                                                            BorderBrush="{DynamicResource BorderBrush}"
-                                                            BorderThickness="0,0,0,1"
-                                                            Background="{DynamicResource SurfaceBrush}"
-                                                            MinHeight="52">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <!-- ID -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowIdColumn}">
-                                                                <TextBlock Text="{Binding Id}"
-                                                                           FontSize="14"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis"
-                                                                           VerticalAlignment="Center"
-                                                                           Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Product -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowProductColumn}">
-                                                                <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                    <TextBlock Text="{Binding ProductName}"
-                                                                               FontSize="14"
-                                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                               TextTrimming="CharacterEllipsis" />
-                                                                    <TextBlock Text="{Binding QuantityFormatted}"
-                                                                               FontSize="12"
-                                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                                </StackPanel>
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Date -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowDateColumn}">
-                                                                <TextBlock Text="{Binding DateFormatted}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           VerticalAlignment="Center"
-                                                                           Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Reason -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowReasonColumn}">
-                                                                <TextBlock Text="{Binding Reason}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis"
-                                                                           VerticalAlignment="Center"
-                                                                           Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Loss Value -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.LossColumnWidth}"
-                                                                   IsVisible="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ShowLossColumn}">
-                                                                <TextBlock Text="{Binding ValueLostFormatted}"
-                                                                           FontSize="14"
-                                                                           FontWeight="SemiBold"
-                                                                           Foreground="{DynamicResource ErrorBrush}"
-                                                                           VerticalAlignment="Center"
-                                                                           Margin="8,0" />
-                                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                            </Panel>
-
-                                                            <!-- Actions -->
-                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                                <StackPanel Orientation="Horizontal"
-                                                                            Spacing="2"
-                                                                            HorizontalAlignment="Center"
-                                                                            VerticalAlignment="Center">
-                                                                    <Button Classes="icon-button-small"
-                                                                            ToolTip.Tip="{loc:Loc 'View Details'}"
-                                                                            Command="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).ViewItemDetailsCommand}"
-                                                                            CommandParameter="{Binding}">
-                                                                        <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                                                                                  Width="14" Height="14" />
-                                                                    </Button>
-                                                                    <Button Classes="icon-button-small danger"
-                                                                            ToolTip.Tip="{loc:Loc 'Undo'}"
-                                                                            Command="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).UndoItemCommand}"
-                                                                            CommandParameter="{Binding}">
-                                                                        <PathIcon Data="{x:Static icons:Icons.Returns}"
-                                                                                  Width="14" Height="14" />
-                                                                    </Button>
-                                                                </StackPanel>
-                                                            </Panel>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-
-                                        <!-- Empty State -->
-                                        <Border Padding="40"
-                                                IsVisible="{Binding Items.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                            <StackPanel HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        Spacing="16">
-                                                <Border Width="64" Height="64"
-                                                        CornerRadius="32"
-                                                        Background="{DynamicResource SurfaceAltBrush}"
-                                                        HorizontalAlignment="Center">
-                                                    <PathIcon Data="{x:Static icons:Icons.LostDamaged}"
-                                                              Width="28" Height="28"
-                                                              Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                </Border>
-                                                <TextBlock Text="{loc:Loc 'No lost or damaged items found'}"
-                                                           FontSize="16"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                           HorizontalAlignment="Center" />
-                                                <TextBlock Text="{loc:Loc 'Items marked as lost or damaged from the Expenses or Revenue pages will appear here.'}"
-                                                           FontSize="14"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           HorizontalAlignment="Center"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           MaxWidth="350" />
-                                            </StackPanel>
-                                        </Border>
-                                    </Panel>
-                                </ScrollViewer>
-                            </Grid>
-                        </ScrollViewer>
-
-                        <!-- Pagination Footer -->
-                        <Border Grid.Row="2"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,12"
-                                CornerRadius="0,0,11,11"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,1,0,0">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <!-- Rows per page selector -->
-                                <StackPanel Grid.Column="0"
-                                            Orientation="Horizontal"
-                                            Spacing="8"
-                                            VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding PaginationText}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               VerticalAlignment="Center" />
-                                    <TextBlock Text="|"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               VerticalAlignment="Center"
-                                               Margin="8,0" />
-                                    <TextBlock Text="{loc:Loc 'Per page:'}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               VerticalAlignment="Center" />
-                                    <ComboBox ItemsSource="{Binding PageSizeOptions}"
-                                              SelectedItem="{Binding PageSize}"
-                                              Classes="page-size-combobox"
-                                              Width="70" />
-                                </StackPanel>
-
-                                <!-- Page Numbers -->
-                                <StackPanel Grid.Column="2"
-                                            Orientation="Horizontal"
-                                            Spacing="4"
-                                            IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                                    <!-- Previous Button -->
-                                    <Button Classes="pagination-button"
-                                            Command="{Binding GoToPreviousPageCommand}"
-                                            IsEnabled="{Binding CanGoToPreviousPage}">
-                                        <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
-                                                  Width="16" Height="16" />
-                                    </Button>
-
-                                    <!-- Page Number Buttons -->
-                                    <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" Spacing="4" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Button Classes="pagination-button"
-                                                        Content="{Binding}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).GoToPageCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <controls:PaginationHelper.IsActivePage>
-                                                        <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                            <Binding />
-                                                            <Binding Path="$parent[ItemsControl].((vm:LostDamagedPageViewModel)DataContext).CurrentPage" />
-                                                        </MultiBinding>
-                                                    </controls:PaginationHelper.IsActivePage>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-
-                                    <!-- Next Button -->
-                                    <Button Classes="pagination-button"
-                                            Command="{Binding GoToNextPageCommand}"
-                                            IsEnabled="{Binding CanGoToNextPage}">
-                                        <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
-                                                  Width="16" Height="16" />
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Border>
-            </Grid>
-        </ScrollViewer>
-
-        <!-- Column Visibility Menu -->
-        <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                        MenuX="{Binding ColumnMenuX}"
-                                        MenuY="{Binding ColumnMenuY}"
-                                        CloseCommand="{Binding CloseColumnMenuCommand}">
-            <controls:ColumnVisibilityMenu.ColumnsContent>
-                <StackPanel Spacing="4">
-                    <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'ID'}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
-                    <CheckBox IsChecked="{Binding ShowLossColumn}" Content="{loc:Loc Loss}" Classes="column-toggle" />
-                </StackPanel>
-            </controls:ColumnVisibilityMenu.ColumnsContent>
-        </controls:ColumnVisibilityMenu>
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                    MenuY="{Binding ColumnWidths.ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'ID'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowLossColumn}" Content="{loc:Loc Loss}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
     </Panel>
 
-    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

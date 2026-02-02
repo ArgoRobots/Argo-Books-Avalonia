@@ -5,16 +5,12 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.RentalRecordsPage"
              x:DataType="vm:RentalRecordsPageViewModel">
-
-    <UserControl.Resources>
-        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
-    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:RentalRecordsPageViewModel />
@@ -44,510 +40,246 @@
                                    IconColor="Info" />
             </controls:StatCardsRow>
 
-            <!-- Main Content Card (Row 1) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    SizeChanged="OnHeaderSizeChanged">
+            <!-- Main Content Card using ArgoTable -->
+            <table:ArgoTable Grid.Row="1"
+                                Title="{loc:Loc 'Rental Records'}"
+                                ItemsSource="{Binding Records}"
+                                SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                SearchPlaceholder="{loc:Loc 'Search rentals...'}"
+                                SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                FilterCommand="{Binding OpenFilterModalCommand}"
+                                AddCommand="{Binding OpenAddModalCommand}"
+                                AddButtonText="{loc:Loc 'New Rental'}"
+                                AddButtonTooltip="{loc:Loc 'New Rental'}"
+                                ColumnWidthsManager="{Binding ColumnWidths}"
+                                CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                TotalPages="{Binding TotalPages}"
+                                PageSize="{Binding PageSize, Mode=TwoWay}"
+                                PaginationText="{Binding PaginationText}"
+                                GoToPageCommand="{Binding GoToPageCommand}"
+                                GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                                EmptyIcon="{x:Static icons:Icons.RentalRecords}"
+                                EmptyTitle="{loc:Loc 'No rental records found'}"
+                                EmptyMessage="{loc:Loc 'Create your first rental record to start tracking rentals.'}"
+                                BorderSizeChanged="OnHeaderSizeChanged"
+                                TableGridSizeChanged="OnTableSizeChanged">
 
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Header with Title, Search and Buttons -->
-                    <Border Grid.Row="0"
-                            Padding="{Binding ResponsiveHeader.HeaderPadding}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Title -->
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Rental Records'}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       VerticalAlignment="Center" />
+                <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
+                        <table:ArgoTableHeader Header="{loc:Loc 'ID'}" ColumnName="Id" SortProperty="Id"
+                                                   ColumnWidth="{Binding ColumnWidths.IdColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowIdColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                            <!-- Search + Filter + Add Button (Right aligned) -->
-                            <StackPanel Grid.Column="2"
-                                        Orientation="Horizontal"
-                                        Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                                <!-- Search Box -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="6"
-                                        Width="{Binding ResponsiveHeader.SearchBoxWidth}"
-                                        MinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
-                                        behaviors:FocusOnClickBehavior.FocusTextBoxOnClick="True">
-                                    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                        <PathIcon Grid.Column="0"
-                                                  Data="{x:Static icons:Icons.Search}"
-                                                  Width="16" Height="16"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                  Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
-                                        <TextBox Grid.Column="1"
-                                                 Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="{loc:Loc 'Search rentals...'}"
-                                                 Classes="search-input"
-                                                 VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Item'}" ColumnName="Item" SortProperty="Item"
+                                                   ColumnWidth="{Binding ColumnWidths.ItemColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowItemColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Filter Button -->
-                                <Button Classes="secondary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenFilterModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'Filter'}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                                  Width="16" Height="16" />
-                                        <TextBlock Text="{loc:Loc 'Filter'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Customer'}" ColumnName="Customer" SortProperty="Customer"
+                                                   ColumnWidth="{Binding ColumnWidths.CustomerColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowCustomerColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                <!-- Add Rental Button -->
-                                <Button Classes="primary-button"
-                                        Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                        Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                        Command="{Binding OpenAddModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'New Rental'}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                  Width="16" Height="16"
-                                                  Foreground="White" />
-                                        <TextBlock Text="{loc:Loc 'New Rental'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Qty'}" ColumnName="Quantity" SortProperty="Quantity"
+                                                   ColumnWidth="{Binding ColumnWidths.QuantityColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowQuantityColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                    <!-- Table Content -->
-                    <ScrollViewer Grid.Row="1"
-                                  x:Name="HorizontalTableScroll"
-                                  HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
-                                  VerticalScrollBarVisibility="Disabled">
-                        <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
-                              MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
-                            <!-- Table Header -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,0"
-                                    MinHeight="40"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
-                                    <!-- ID -->
-                                    <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'ID'}" ColumnName="Id"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Item -->
-                                    <Panel Width="{Binding ColumnWidths.ItemColumnWidth}" IsVisible="{Binding ShowItemColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Item'}" ColumnName="Item"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Item" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Customer -->
-                                    <Panel Width="{Binding ColumnWidths.CustomerColumnWidth}" IsVisible="{Binding ShowCustomerColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Customer'}" ColumnName="Customer"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Customer" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Qty -->
-                                    <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Qty'}" ColumnName="Quantity"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Quantity" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Start Date -->
-                                    <Panel Width="{Binding ColumnWidths.StartDateColumnWidth}" IsVisible="{Binding ShowStartDateColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Start'}" ColumnName="StartDate"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="StartDate" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Due Date -->
-                                    <Panel Width="{Binding ColumnWidths.DueDateColumnWidth}" IsVisible="{Binding ShowDueDateColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Due'}" ColumnName="DueDate"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="DueDate" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Status -->
-                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Status'}" ColumnName="Status"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Total -->
-                                    <Panel Width="{Binding ColumnWidths.TotalColumnWidth}" IsVisible="{Binding ShowTotalColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Total'}" ColumnName="Total"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Total" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Deposit -->
-                                    <Panel Width="{Binding ColumnWidths.DepositColumnWidth}" IsVisible="{Binding ShowDepositColumn}">
-                                        <controls:SortableColumnHeader Text="{loc:Loc 'Deposit'}" ColumnName="Deposit"
-                                                                        Command="{Binding SortByCommand}"
-                                                                        SortColumn="{Binding SortColumn}"
-                                                                        SortDirection="{Binding SortDirection}" />
-                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                        <controls:ColumnResizeGripper ColumnName="Deposit" ColumnWidths="{Binding ColumnWidths}"
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    </Panel>
-                                    <!-- Actions (Fixed) -->
-                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="{loc:Loc 'Actions'}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   HorizontalAlignment="Left"
-                                                   Margin="8,12,8,12" />
-                                    </Panel>
-                                </StackPanel>
-                        </Border>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Start'}" ColumnName="StartDate" SortProperty="StartDate"
+                                                   ColumnWidth="{Binding ColumnWidths.StartDateColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowStartDateColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                            <!-- Table Content (scrollable vertically only) -->
-                            <ScrollViewer Grid.Row="1"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <Panel>
-                                    <!-- Records List -->
-                                    <ItemsControl ItemsSource="{Binding Records}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="vm:RentalRecordDisplayItem">
-                                                <Border Padding="24,0"
-                                                        BorderBrush="{DynamicResource BorderBrush}"
-                                                        BorderThickness="0,0,0,1"
-                                                        MinHeight="56">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <!-- ID -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowIdColumn}">
-                                                            <TextBlock Text="{Binding Id}"
-                                                                       FontSize="14"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Due'}" ColumnName="DueDate" SortProperty="DueDate"
+                                                   ColumnWidth="{Binding ColumnWidths.DueDateColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDueDateColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                                        <!-- Item -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.ItemColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowItemColumn}">
-                                                            <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                <TextBlock Text="{Binding ItemName}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock Text="{Binding RateFormatted}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Status'}" ColumnName="Status" SortProperty="Status"
+                                                   ColumnWidth="{Binding ColumnWidths.StatusColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowStatusColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                                        <!-- Customer -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowCustomerColumn}">
-                                                            <TextBlock Text="{Binding CustomerName}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Total'}" ColumnName="Total" SortProperty="Total"
+                                                   ColumnWidth="{Binding ColumnWidths.TotalColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowTotalColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                                        <!-- Quantity -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowQuantityColumn}">
-                                                            <TextBlock Text="{Binding Quantity}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Deposit'}" ColumnName="Deposit" SortProperty="Deposit"
+                                                   ColumnWidth="{Binding ColumnWidths.DepositColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowDepositColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                                                        <!-- Start Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.StartDateColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowStartDateColumn}">
-                                                            <TextBlock Text="{Binding StartDateFormatted}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                        <table:ArgoTableHeader Header="{loc:Loc 'Actions'}" ColumnName="Actions"
+                                                   ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                                   IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
 
-                                                        <!-- Due Date -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.DueDateColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowDueDateColumn}">
-                                                            <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                                                <TextBlock Text="{Binding DueDateFormatted}"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                                <TextBlock Text="{Binding DaysOverdueText}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource ErrorBrush}"
-                                                                           IsVisible="{Binding DaysOverdue, Converter={x:Static local:IntConverters.IsPositive}}" />
-                                                            </StackPanel>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl ItemsSource="{Binding Records}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:RentalRecordDisplayItem">
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="56">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- ID -->
+                                        <table:ArgoTableCell Text="{Binding Id}" FontWeight="Medium"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowIdColumn}" />
 
-                                                        <!-- Status Badge -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowStatusColumn}">
-                                                            <Border VerticalAlignment="Center"
-                                                                    HorizontalAlignment="Left"
-                                                                    Padding="8,4"
-                                                                    CornerRadius="4"
-                                                                    Margin="8,0"
-                                                                    Background="{Binding Status, Converter={x:Static local:StringConverters.ToRentalStatusBackground}}">
-                                                                <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
-                                                                           FontSize="12"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{Binding Status, Converter={x:Static local:StringConverters.ToRentalStatusForeground}}" />
-                                                            </Border>
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                        <!-- Item - Custom content with ItemName and Rate -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.ItemColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowItemColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ItemName}"
+                                                               FontSize="14"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding RateFormatted}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
-                                                        <!-- Total Cost -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowTotalColumn}">
-                                                            <TextBlock Text="{Binding TotalCostFormatted}"
-                                                                       FontSize="14"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                        <!-- Customer -->
+                                        <table:ArgoTableCell Text="{Binding CustomerName}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowCustomerColumn}" />
 
-                                                        <!-- Deposit -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.DepositColumnWidth}"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowDepositColumn}">
-                                                            <TextBlock Text="{Binding DepositFormatted}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="8,0" />
-                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                        </Panel>
+                                        <!-- Quantity -->
+                                        <table:ArgoTableCell Text="{Binding Quantity}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowQuantityColumn}" />
 
-                                                        <!-- Actions -->
-                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
-                                                            <StackPanel Orientation="Horizontal"
-                                                                        HorizontalAlignment="Left"
-                                                                        VerticalAlignment="Center"
-                                                                        Spacing="4"
-                                                                        Margin="8,0">
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc 'Return'}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenReturnModalCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        IsVisible="{Binding IsActive}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Check}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc 'View Details'}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenViewModalCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button"
-                                                                        ToolTip.Tip="{loc:Loc 'Edit'}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenEditModalCommand}"
-                                                                        CommandParameter="{Binding}"
-                                                                        IsVisible="{Binding IsActive}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                                <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="{loc:Loc 'Delete'}"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                              Width="16" Height="16" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Panel>
-                                                    </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                        <!-- Start Date -->
+                                        <table:ArgoTableCell Text="{Binding StartDateFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.StartDateColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowStartDateColumn}" />
 
-                                <!-- Empty State -->
-                                <Border Padding="40"
-                                        IsVisible="{Binding Records.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="16">
-                                        <Border Width="64" Height="64"
-                                                CornerRadius="32"
-                                                Background="{DynamicResource SurfaceAltBrush}"
-                                                HorizontalAlignment="Center">
-                                            <PathIcon Data="{x:Static icons:Icons.RentalRecords}"
-                                                      Width="28" Height="28"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                        <TextBlock Text="{loc:Loc 'No rental records found'}"
-                                                   FontSize="16"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   HorizontalAlignment="Center" />
-                                        <TextBlock Text="{loc:Loc 'Create your first rental record to start tracking rentals.'}"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   TextWrapping="Wrap"
-                                                   MaxWidth="300" />
-                                        <Button Classes="primary-button"
-                                                HorizontalAlignment="Center"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding OpenAddModalCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                          Width="16" Height="16"
-                                                          Foreground="White" />
-                                                <TextBlock Text="{loc:Loc 'New Rental'}" />
-                                            </StackPanel>
-                                        </Button>
+                                        <!-- Due Date - Custom content with overdue text -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.DueDateColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowDueDateColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DueDateFormatted}"
+                                                               FontSize="14"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding DaysOverdueText}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               IsVisible="{Binding DaysOverdue, Converter={x:Static local:IntConverters.IsPositive}}" />
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+
+                                        <!-- Status Badge - Custom content -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowStatusColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Border VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Padding="8,4"
+                                                        CornerRadius="4"
+                                                        Background="{Binding Status, Converter={x:Static local:StringConverters.ToRentalStatusBackground}}">
+                                                    <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{Binding Status, Converter={x:Static local:StringConverters.ToRentalStatusForeground}}" />
+                                                </Border>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+
+                                        <!-- Total Cost -->
+                                        <table:ArgoTableCell Text="{Binding TotalCostFormatted}" FontWeight="Medium"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowTotalColumn}" />
+
+                                        <!-- Deposit -->
+                                        <table:ArgoTableCell Text="{Binding DepositFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.DepositColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowDepositColumn}" />
+
+                                        <!-- Actions - Custom content -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                                 ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="4">
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Return'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenReturnModalCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            IsVisible="{Binding IsActive}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'View Details'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenViewModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Edit'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenEditModalCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            IsVisible="{Binding IsActive}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button danger"
+                                                            ToolTip.Tip="{loc:Loc 'Delete'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
                                     </StackPanel>
                                 </Border>
-                                </Panel>
-                            </ScrollViewer>
-                        </Grid>
-                    </ScrollViewer>
-
-                    <!-- Pagination Footer -->
-                    <Border Grid.Row="2"
-                            Background="{DynamicResource SurfaceAltBrush}"
-                            Padding="24,12"
-                            CornerRadius="0,0,11,11"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Rows per page selector -->
-                            <StackPanel Grid.Column="0"
-                                        Orientation="Horizontal"
-                                        Spacing="8"
-                                        VerticalAlignment="Center">
-                                <TextBlock Text="{Binding PaginationText}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <TextBlock Text="|"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           VerticalAlignment="Center"
-                                           Margin="8,0" />
-                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <ComboBox ItemsSource="{Binding PageSizeOptions}"
-                                          SelectedItem="{Binding PageSize}"
-                                          Classes="page-size-combobox"
-                                          Width="70" />
-                            </StackPanel>
-
-                            <!-- Page Numbers -->
-                            <StackPanel Grid.Column="2"
-                                        Orientation="Horizontal"
-                                        Spacing="4"
-                                        IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                                <!-- Previous Button -->
-                                <Button Classes="pagination-button"
-                                        Command="{Binding GoToPreviousPageCommand}"
-                                        IsEnabled="{Binding CanGoToPreviousPage}">
-                                    <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
-                                              Width="16" Height="16" />
-                                </Button>
-
-                                <!-- Page Number Buttons -->
-                                <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="4" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Classes="pagination-button"
-                                                    Content="{Binding}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).GoToPageCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <controls:PaginationHelper.IsActivePage>
-                                                    <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                        <Binding />
-                                                        <Binding Path="$parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).CurrentPage" />
-                                                    </MultiBinding>
-                                                </controls:PaginationHelper.IsActivePage>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <!-- Next Button -->
-                                <Button Classes="pagination-button"
-                                        Command="{Binding GoToNextPageCommand}"
-                                        IsEnabled="{Binding CanGoToNextPage}">
-                                    <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}"
-                                              Width="16" Height="16" />
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
         </Grid>
     </Grid>
 
     <!-- Column Visibility Menu -->
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                    MenuX="{Binding ColumnMenuX}"
-                                    MenuY="{Binding ColumnMenuY}"
+                                    MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                    MenuY="{Binding ColumnWidths.ColumnMenuY}"
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
@@ -565,5 +297,4 @@
     </controls:ColumnVisibilityMenu>
     </Panel>
 
-    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

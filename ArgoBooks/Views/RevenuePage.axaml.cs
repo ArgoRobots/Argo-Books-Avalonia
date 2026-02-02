@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using ArgoBooks.ViewModels;
 
@@ -31,20 +30,6 @@ public partial class RevenuePage : UserControl
     public RevenuePage()
     {
         InitializeComponent();
-    }
-
-    private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
-        {
-            if (DataContext is RevenuePageViewModel viewModel)
-            {
-                var position = e.GetPosition(this);
-                viewModel.ColumnMenuX = position.X;
-                viewModel.ColumnMenuY = position.Y;
-                viewModel.IsColumnMenuOpen = true;
-            }
-        }
     }
 
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)

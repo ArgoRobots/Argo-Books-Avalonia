@@ -36,6 +36,43 @@ public partial class ReceiptsPage : UserControl
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
         AddHandler(DragDrop.DropEvent, OnDrop);
+
+        // Subscribe to data context changes to wire up ViewModel events
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is ReceiptsPageViewModel viewModel)
+        {
+            viewModel.ScanFileRequested += OnScanFileRequested;
+        }
+    }
+
+    private async void OnScanFileRequested(object? sender, EventArgs e)
+    {
+        var viewModel = DataContext as ReceiptsPageViewModel;
+        if (viewModel == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select Receipt to Scan",
+            AllowMultiple = false,
+            FileTypeFilter = [AllSupportedTypes, ImageFileType, PdfFileType]
+        });
+
+        if (files.Count > 0)
+        {
+            var file = files[0];
+            var path = file.TryGetLocalPath();
+            if (!string.IsNullOrEmpty(path))
+            {
+                await viewModel.HandleFileSelectedAsync(path);
+            }
+        }
     }
 
     private void OnReceiptCardPressed(object? sender, PointerPressedEventArgs e)
@@ -78,20 +115,6 @@ public partial class ReceiptsPage : UserControl
         }
     }
 
-    private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
-        {
-            if (DataContext is ReceiptsPageViewModel viewModel)
-            {
-                var position = e.GetPosition(this);
-                viewModel.ColumnMenuX = position.X;
-                viewModel.ColumnMenuY = position.Y;
-                viewModel.IsColumnMenuOpen = true;
-            }
-        }
-    }
-
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (DataContext is ReceiptsPageViewModel viewModel && e.WidthChanged)
@@ -105,32 +128,6 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is ReceiptsPageViewModel viewModel && e.WidthChanged)
         {
             viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
-        }
-    }
-
-    private async void OnAiScanButtonClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        var viewModel = DataContext as ReceiptsPageViewModel;
-        if (viewModel == null) return;
-
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = "Select Receipt to Scan",
-            AllowMultiple = false,
-            FileTypeFilter = [AllSupportedTypes, ImageFileType, PdfFileType]
-        });
-
-        if (files.Count > 0)
-        {
-            var file = files[0];
-            var path = file.TryGetLocalPath();
-            if (!string.IsNullOrEmpty(path))
-            {
-                await viewModel.HandleFileSelectedAsync(path);
-            }
         }
     }
 

@@ -6,7 +6,9 @@ namespace ArgoBooks.Converters;
 
 /// <summary>
 /// Multi-value converter for sort indicator visibility.
-/// Expects: [0] SortColumn, [1] SortDirection, Parameter: "ColumnName:Ascending" or "ColumnName:Descending"
+/// Supports two modes:
+/// 1. Parameter mode: [0] SortColumn, [1] SortDirection, Parameter: "ColumnName:Ascending" or "ColumnName:Descending"
+/// 2. Values mode: [0] SortColumn, [1] SortDirection, [2] ColumnName, [3] Direction ("Ascending"/"Descending")
 /// </summary>
 public class SortIndicatorConverter : IMultiValueConverter
 {
@@ -14,23 +16,45 @@ public class SortIndicatorConverter : IMultiValueConverter
 
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (values.Count < 2 || parameter is not string param)
+        if (values.Count < 2)
             return false;
 
         var sortColumn = values[0] as string;
         var sortDirection = values[1] is SortDirection dir ? dir : SortDirection.None;
 
-        var parts = param.Split(':');
-        if (parts.Length != 2)
-            return false;
+        string expectedColumn;
+        SortDirection expectedDirection;
 
-        var expectedColumn = parts[0];
-        var expectedDirection = parts[1] switch
+        // Mode 2: 4 values (SortColumn, SortDirection, ColumnName, DirectionString)
+        if (values.Count >= 4 && values[2] is string colName && values[3] is string dirStr)
         {
-            "Ascending" => SortDirection.Ascending,
-            "Descending" => SortDirection.Descending,
-            _ => SortDirection.None
-        };
+            expectedColumn = colName;
+            expectedDirection = dirStr switch
+            {
+                "Ascending" => SortDirection.Ascending,
+                "Descending" => SortDirection.Descending,
+                _ => SortDirection.None
+            };
+        }
+        // Mode 1: Parameter string "ColumnName:Direction"
+        else if (parameter is string param)
+        {
+            var parts = param.Split(':');
+            if (parts.Length != 2)
+                return false;
+
+            expectedColumn = parts[0];
+            expectedDirection = parts[1] switch
+            {
+                "Ascending" => SortDirection.Ascending,
+                "Descending" => SortDirection.Descending,
+                _ => SortDirection.None
+            };
+        }
+        else
+        {
+            return false;
+        }
 
         return sortColumn == expectedColumn && sortDirection == expectedDirection;
     }
