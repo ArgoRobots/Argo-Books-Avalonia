@@ -168,7 +168,7 @@
                                               Foreground="{DynamicResource SuccessBrush}" />
                                     <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
                                                FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding PredictionConfidence}"
                                                FontSize="13"
@@ -179,7 +179,7 @@
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding DataMonthsNote}"
                                            FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
                             </Grid>
 
@@ -188,14 +188,14 @@
                                         IsVisible="{Binding RevenueRange, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                 <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                           Width="14" Height="14"
-                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                          Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="Revenue Forecast:"
                                            FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding RevenueRange}"
                                            FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
 
@@ -208,7 +208,7 @@
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="Historical Accuracy:"
                                                FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding HistoricalAccuracy}"
                                                FontSize="12"
@@ -237,7 +237,7 @@
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding ValidatedForecastsNote}"
                                            FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
                             </Grid>
 
@@ -250,13 +250,13 @@
                                               Foreground="{DynamicResource VioletBrush}" />
                                     <TextBlock Text="Seasonal Pattern:"
                                                FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SeasonalPatternDescription}"
                                            FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                            Margin="8,0,0,0"
                                            TextWrapping="Wrap"
                                            VerticalAlignment="Center" />
@@ -267,7 +267,7 @@
                                        Text="{Binding AccuracyDescription}"
                                        FontSize="11"
                                        FontStyle="Italic"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                        TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>

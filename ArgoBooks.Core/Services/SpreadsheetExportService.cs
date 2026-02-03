@@ -325,7 +325,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetExpensesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Supplier ID", "Product", "Amount", "Tax", "Total", "Reference", "Payment Method" };
+        var headers = new[] { "ID", "Date", "Supplier ID", "Product", "Unit Price", "Tax", "Total", "Reference", "Payment Method" };
         var filtered = data.Expenses.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
@@ -430,7 +430,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetRevenueData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Customer ID", "Product", "Amount", "Tax", "Total", "Reference", "Payment Status" };
+        var headers = new[] { "ID", "Date", "Customer ID", "Product", "Unit Price", "Tax", "Total", "Reference", "Payment Status" };
         var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {

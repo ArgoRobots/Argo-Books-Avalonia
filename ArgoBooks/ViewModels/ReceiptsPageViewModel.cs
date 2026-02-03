@@ -163,9 +163,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     private int _totalPages = 1;
 
     [ObservableProperty]
-    private int _pageSize = 12; // Grid view typically shows more items
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [8, 12, 16, 24, 48];
+    private int _pageSize = 25; // Default to match ArgoTable's PageSizeOptions
 
     partial void OnPageSizeChanged(int value)
     {
