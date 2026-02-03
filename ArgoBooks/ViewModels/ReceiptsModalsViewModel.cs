@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Common;
@@ -287,6 +288,27 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _notes = string.Empty;
 
+    /// <summary>
+    /// Whether this is a revenue transaction (true) or expense transaction (false).
+    /// Determined by comparing extracted merchant name against the user's company name.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isRevenue;
+
+    /// <summary>
+    /// The detected transaction type label for UI display.
+    /// </summary>
+    public string TransactionTypeLabel => IsRevenue ? "Revenue".Translate() : "Expense".Translate();
+
+    partial void OnIsRevenueChanged(bool value)
+    {
+        OnPropertyChanged(nameof(TransactionTypeLabel));
+        // Reload categories for the new transaction type
+        LoadCategoryOptions();
+        // Clear current category selection since category type changed
+        SelectedCategory = null;
+    }
+
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
@@ -565,6 +587,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ExtractedTax = result.TaxAmount?.ToString("F2") ?? "0.00";
         ExtractedTotal = result.TotalAmount?.ToString("F2") ?? "0.00";
 
+        // Detect if this is a revenue or expense based on merchant name matching company name
+        DetectTransactionType(result.SupplierName);
+
         // Confidence
         ConfidenceScore = result.Confidence;
         ConfidenceText = $"{result.Confidence:P0}";
@@ -675,7 +700,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CreateExpense()
+    private void CreateTransaction()
     {
         // Validate
         HasTotalError = false;
@@ -698,7 +723,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             hasErrors = true;
         }
 
-        if (SelectedSupplier == null)
+        // Supplier is required for expenses, optional for revenue
+        if (!IsRevenue && SelectedSupplier == null)
         {
             HasSupplierError = true;
             SupplierErrorMessage = "Please select a supplier.".Translate();
@@ -737,10 +763,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var taxAmount);
 
-        // Create expense
-        companyData.IdCounters.Expense++;
-        var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
-
         // Create line items
         var lineItems = LineItems.Select(li =>
         {
@@ -754,6 +776,38 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 UnitPrice = unitPrice
             };
         }).Where(li => !string.IsNullOrWhiteSpace(li.Description) || li.ProductId != null).ToList();
+
+        // Create receipt first (common for both transaction types)
+        companyData.IdCounters.Receipt++;
+        var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
+
+        string? fileData = null;
+        if (_currentImageData != null)
+        {
+            fileData = Convert.ToBase64String(_currentImageData);
+        }
+
+        if (IsRevenue)
+        {
+            // Create revenue transaction
+            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, lineItems);
+        }
+        else
+        {
+            // Create expense transaction
+            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, lineItems);
+        }
+
+        App.CompanyManager?.MarkAsChanged();
+        ReceiptScanned?.Invoke(this, EventArgs.Empty);
+        CloseScanReviewModal();
+    }
+
+    private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
+        decimal total, decimal subtotal, decimal taxAmount, List<LineItem> lineItems)
+    {
+        companyData.IdCounters.Expense++;
+        var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
 
         var expense = new Expense
         {
@@ -770,19 +824,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = Notes,
+            ReceiptId = receiptId,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
-
-        // Create receipt
-        companyData.IdCounters.Receipt++;
-        var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
-
-        string? fileData = null;
-        if (_currentImageData != null)
-        {
-            fileData = Convert.ToBase64String(_currentImageData);
-        }
 
         var receipt = new Receipt
         {
@@ -801,13 +846,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now
         };
 
-        expense.ReceiptId = receiptId;
-
         // Record undo action
         var capturedReceipt = receipt;
         var capturedExpense = expense;
         var action = new DelegateAction(
-            $"AI scan receipt {receiptId}",
+            $"AI scan expense {expenseId}",
             () =>
             {
                 companyData.Expenses.Remove(capturedExpense);
@@ -828,10 +871,78 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         companyData.Expenses.Add(expense);
         companyData.Receipts.Add(receipt);
         App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
+    }
 
-        ReceiptScanned?.Invoke(this, EventArgs.Empty);
-        CloseScanReviewModal();
+    private void CreateRevenueTransaction(CompanyData companyData, string receiptId, string? fileData,
+        decimal total, decimal subtotal, decimal taxAmount, List<LineItem> lineItems)
+    {
+        companyData.IdCounters.Revenue++;
+        var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
+
+        var revenue = new Revenue
+        {
+            Id = revenueId,
+            Date = ExtractedDate?.DateTime ?? DateTime.Now,
+            CustomerId = null, // Could be linked to customer if we add customer selection later
+            Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedSupplier,
+            LineItems = lineItems,
+            Quantity = lineItems.Sum(li => li.Quantity),
+            UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
+            Amount = subtotal > 0 ? subtotal : total,
+            Subtotal = subtotal > 0 ? subtotal : total,
+            TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
+            TaxAmount = taxAmount,
+            Total = total,
+            PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
+            PaymentStatus = "Paid",
+            Notes = Notes,
+            ReceiptId = receiptId,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
+        var receipt = new Receipt
+        {
+            Id = receiptId,
+            TransactionId = revenueId,
+            TransactionType = "Revenue",
+            FileName = _currentFileName ?? "receipt.jpg",
+            FileType = GetMimeType(_currentFileName ?? "receipt.jpg"),
+            FileSize = _currentImageData?.Length ?? 0,
+            FileData = fileData,
+            Amount = total,
+            Date = ExtractedDate?.DateTime ?? DateTime.Now,
+            Supplier = ExtractedSupplier, // Still store the merchant name for reference
+            Source = "AI Scanned",
+            OcrData = CreateOcrData(),
+            CreatedAt = DateTime.Now
+        };
+
+        // Record undo action
+        var capturedReceipt = receipt;
+        var capturedRevenue = revenue;
+        var action = new DelegateAction(
+            $"AI scan revenue {revenueId}",
+            () =>
+            {
+                companyData.Revenues.Remove(capturedRevenue);
+                companyData.Receipts.Remove(capturedReceipt);
+                companyData.IdCounters.Revenue--;
+                companyData.IdCounters.Receipt--;
+                ReceiptScanned?.Invoke(this, EventArgs.Empty);
+            },
+            () =>
+            {
+                companyData.Revenues.Add(capturedRevenue);
+                companyData.Receipts.Add(capturedReceipt);
+                companyData.IdCounters.Revenue++;
+                companyData.IdCounters.Receipt++;
+                ReceiptScanned?.Invoke(this, EventArgs.Empty);
+            });
+
+        companyData.Revenues.Add(revenue);
+        companyData.Receipts.Add(receipt);
+        App.UndoRedoManager.RecordAction(action);
     }
 
     [RelayCommand]
@@ -1053,6 +1164,97 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Detects whether the transaction should be revenue or expense based on
+    /// comparing the extracted merchant name against the user's company name.
+    /// If the merchant matches (or closely matches) the company name → Revenue.
+    /// If it doesn't match → Expense.
+    /// </summary>
+    private void DetectTransactionType(string? merchantName)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        var companyName = companyData?.Settings?.Company?.Name;
+
+        if (string.IsNullOrWhiteSpace(merchantName) || string.IsNullOrWhiteSpace(companyName))
+        {
+            // Default to expense if we can't compare
+            IsRevenue = false;
+            return;
+        }
+
+        // Normalize both strings for comparison
+        var normalizedMerchant = NormalizeForComparison(merchantName);
+        var normalizedCompany = NormalizeForComparison(companyName);
+
+        // Check for exact match
+        if (normalizedMerchant.Equals(normalizedCompany, StringComparison.OrdinalIgnoreCase))
+        {
+            IsRevenue = true;
+            return;
+        }
+
+        // Check if one contains the other (handles cases like "ACME Inc" vs "ACME")
+        if (normalizedMerchant.Contains(normalizedCompany, StringComparison.OrdinalIgnoreCase) ||
+            normalizedCompany.Contains(normalizedMerchant, StringComparison.OrdinalIgnoreCase))
+        {
+            IsRevenue = true;
+            return;
+        }
+
+        // Check word-level similarity (handles word order differences)
+        var merchantWords = normalizedMerchant.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var companyWords = normalizedCompany.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        // If most significant words match, consider it a match
+        var matchingWords = merchantWords.Count(mw =>
+            companyWords.Any(cw => mw.Equals(cw, StringComparison.OrdinalIgnoreCase) ||
+                                   (mw.Length > 3 && cw.Length > 3 &&
+                                    (mw.Contains(cw, StringComparison.OrdinalIgnoreCase) ||
+                                     cw.Contains(mw, StringComparison.OrdinalIgnoreCase)))));
+
+        var totalWords = Math.Max(merchantWords.Length, companyWords.Length);
+        if (totalWords > 0 && (double)matchingWords / totalWords >= 0.5)
+        {
+            IsRevenue = true;
+            return;
+        }
+
+        // Default to expense if no match found
+        IsRevenue = false;
+    }
+
+    /// <summary>
+    /// Normalizes a string for comparison by removing common business suffixes,
+    /// punctuation, and extra whitespace.
+    /// </summary>
+    private static string NormalizeForComparison(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return string.Empty;
+
+        // Convert to lowercase
+        var normalized = text.ToLowerInvariant();
+
+        // Remove common business suffixes
+        string[] suffixes = ["inc", "inc.", "llc", "llc.", "ltd", "ltd.", "corp", "corp.",
+                            "corporation", "company", "co", "co.", "limited", "gmbh",
+                            "plc", "pty", "pvt", "s.a.", "sa", "ag"];
+
+        foreach (var suffix in suffixes)
+        {
+            if (normalized.EndsWith(" " + suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized[..^(suffix.Length + 1)];
+            }
+        }
+
+        // Remove punctuation and extra whitespace
+        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"[^\w\s]", " ");
+        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"\s+", " ");
+
+        return normalized.Trim();
+    }
+
+    /// <summary>
     /// Falls back to basic string matching for supplier.
     /// </summary>
     private void TryBasicSupplierMatch(string? supplierName)
@@ -1239,6 +1441,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedCategory = null;
         SelectedPaymentMethod = "Cash";
         Notes = string.Empty;
+        IsRevenue = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasCategoryError = false;
@@ -1278,8 +1481,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Categories == null) return;
 
+        // Load categories based on transaction type (Revenue or Expense)
+        var targetType = IsRevenue ? CategoryType.Revenue : CategoryType.Expense;
         foreach (var category in companyData.Categories
-            .Where(c => c.Type == CategoryType.Expense)
+            .Where(c => c.Type == targetType)
             .OrderBy(c => c.Name))
         {
             CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });

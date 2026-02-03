@@ -620,9 +620,58 @@
                                             </StackPanel>
                                         </Border>
 
+                                        <!-- Transaction Type Toggle (Expense/Revenue) -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                Padding="16,12"
+                                                Margin="0,0,0,12">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="{loc:Loc 'Transaction Type'}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBlock Text="{loc:Loc 'Based on merchant matching your company name'}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                    <TextBlock Text="{loc:Loc 'Expense'}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Foreground>
+                                                            <MultiBinding Converter="{x:Static local:BoolConverters.ToConditionalBrush}">
+                                                                <Binding Path="IsRevenue" />
+                                                                <Binding Source="{DynamicResource TextTertiaryBrush}" />
+                                                                <Binding Source="{DynamicResource TextPrimaryBrush}" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Foreground>
+                                                    </TextBlock>
+                                                    <ToggleSwitch IsChecked="{Binding IsRevenue}"
+                                                                  IsEnabled="{Binding !IsLoadingAiSuggestions}"
+                                                                  OffContent=""
+                                                                  OnContent="" />
+                                                    <TextBlock Text="{loc:Loc 'Revenue'}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Foreground>
+                                                            <MultiBinding Converter="{x:Static local:BoolConverters.ToConditionalBrush}">
+                                                                <Binding Path="IsRevenue" />
+                                                                <Binding Source="{DynamicResource TextPrimaryBrush}" />
+                                                                <Binding Source="{DynamicResource TextTertiaryBrush}" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Foreground>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">
-                                            <StackPanel Grid.Column="0" Spacing="6">
+                                            <StackPanel Grid.Column="0" Spacing="6"
+                                                        IsVisible="{Binding !IsRevenue}">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
@@ -636,7 +685,8 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
                                                     HasError="{Binding HasSupplierError}"
-                                                    ErrorMessage="{Binding SupplierErrorMessage}" />
+                                                    ErrorMessage="{Binding SupplierErrorMessage}"
+                                                    IsEnabled="{Binding !IsLoadingAiSuggestions}" />
                                                 <!-- AI Create Supplier Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
                                                         Background="{DynamicResource WarningLightBrush}"
@@ -687,7 +737,8 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
                                                     HasError="{Binding HasCategoryError}"
-                                                    ErrorMessage="{Binding CategoryErrorMessage}" />
+                                                    ErrorMessage="{Binding CategoryErrorMessage}"
+                                                    IsEnabled="{Binding !IsLoadingAiSuggestions}" />
                                                 <!-- AI Create Category Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
                                                         Background="{DynamicResource WarningLightBrush}"
@@ -775,7 +826,7 @@
                                 <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
                                           Width="16" Height="16"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Review the extracted data before creating the expense.'}"
+                                <TextBlock Text="{loc:Loc 'Review the extracted data before creating the transaction.'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center" />
@@ -787,11 +838,13 @@
                                     Command="{Binding RequestCloseScanReviewModalCommand}" />
                             <Button Grid.Column="2"
                                     Classes="primary-button"
-                                    Command="{Binding CreateExpenseCommand}">
+                                    Command="{Binding CreateTransactionCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{x:Static icons:Icons.Check}"
                                               Width="16" Height="16" />
-                                    <TextBlock Text="{loc:Loc 'Create Expense'}" />
+                                    <!-- Show "Create Revenue" when IsRevenue, otherwise "Create Expense" -->
+                                    <TextBlock IsVisible="{Binding IsRevenue}" Text="{loc:Loc 'Create Revenue'}" />
+                                    <TextBlock IsVisible="{Binding !IsRevenue}" Text="{loc:Loc 'Create Expense'}" />
                                 </StackPanel>
                             </Button>
                         </Grid>
