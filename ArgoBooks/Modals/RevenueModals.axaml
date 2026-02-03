@@ -229,7 +229,8 @@
                                     <TextBox Text="{Binding ModalTaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="20" />
                                 </StackPanel>
 
                                 <!-- Shipping -->
@@ -239,7 +240,8 @@
                                     <TextBox Text="{Binding ModalShipping, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="20" />
                                 </StackPanel>
 
                                 <!-- Discount -->
@@ -249,7 +251,8 @@
                                     <TextBox Text="{Binding ModalDiscount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="20" />
                                 </StackPanel>
                             </Grid>
 
@@ -291,7 +294,8 @@
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          Height="80"
-                                         Watermark="{loc:Loc 'Additional notes...'}" />
+                                         Watermark="{loc:Loc 'Additional notes...'}"
+                                         MaxLength="500" />
                             </StackPanel>
 
                             <!-- Totals Summary -->
@@ -479,7 +483,8 @@
                                                  Classes="form-input"
                                                  Watermark="$0.00"
                                                  HorizontalAlignment="Stretch"
-                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                 MaxLength="20" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -487,7 +492,8 @@
                                                  Classes="form-input"
                                                  Watermark="$0.00"
                                                  HorizontalAlignment="Stretch"
-                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                 MaxLength="20" />
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
@@ -600,7 +606,8 @@
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
                                      Height="80"
-                                     Watermark="{loc:Loc 'Additional notes about this status change...'}" />
+                                     Watermark="{loc:Loc 'Additional notes about this status change...'}"
+                                     MaxLength="500" />
                         </StackPanel>
                     </StackPanel>
 

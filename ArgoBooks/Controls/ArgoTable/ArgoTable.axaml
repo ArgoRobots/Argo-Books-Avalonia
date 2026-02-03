@@ -61,7 +61,8 @@
                                          Text="{Binding #Root.SearchQuery, Mode=TwoWay}"
                                          Watermark="{Binding #Root.SearchPlaceholder}"
                                          Classes="search-input"
-                                         VerticalAlignment="Center" />
+                                         VerticalAlignment="Center"
+                                         MaxLength="100" />
                                 <Button Grid.Column="2"
                                         Classes="icon-button"
                                         Width="24" Height="24"

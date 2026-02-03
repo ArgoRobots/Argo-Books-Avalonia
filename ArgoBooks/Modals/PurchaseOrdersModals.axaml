@@ -151,13 +151,15 @@
                                                              Classes="form-input-compact"
                                                              HorizontalContentAlignment="Center"
                                                              VerticalAlignment="Top"
-                                                             Margin="0,0,8,0" />
+                                                             Margin="0,0,8,0"
+                                                             MaxLength="10" />
                                                     <TextBox Grid.Column="2"
                                                              Text="{Binding UnitCost, Mode=TwoWay}"
                                                              Classes="form-input-compact"
                                                              HorizontalContentAlignment="Center"
                                                              VerticalAlignment="Top"
-                                                             Margin="0,0,8,0" />
+                                                             Margin="0,0,8,0"
+                                                             MaxLength="20" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding TotalDisplay}"
                                                                FontSize="14"
@@ -207,7 +209,8 @@
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding ShippingCost, Mode=TwoWay}"
                                                  Classes="form-input-compact"
-                                                 HorizontalAlignment="Right" />
+                                                 HorizontalAlignment="Right"
+                                                 MaxLength="20" />
                                     </Grid>
                                     <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
                                     <Grid ColumnDefinitions="*,Auto">
@@ -226,7 +229,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="60"
                                          MaxHeight="100"
-                                         Watermark="{loc:Loc 'Additional notes for this order...'}" />
+                                         Watermark="{loc:Loc 'Additional notes for this order...'}"
+                                         MaxLength="500" />
                             </StackPanel>
 
                             <!-- Error Message -->
@@ -440,7 +444,8 @@
                                                                  Text="{Binding ReceivingQuantity, Mode=TwoWay}"
                                                                  Classes="form-input-compact"
                                                                  HorizontalAlignment="Stretch"
-                                                                 HorizontalContentAlignment="Center" />
+                                                                 HorizontalContentAlignment="Center"
+                                                                 MaxLength="10" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

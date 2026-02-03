@@ -50,7 +50,8 @@
                              Classes="header-search"
                              GotFocus="SearchInput_GotFocus"
                              KeyDown="SearchInput_KeyDown"
-                             VerticalAlignment="Center" />
+                             VerticalAlignment="Center"
+                             MaxLength="100" />
 
                     <!-- Keyboard Shortcut Hint -->
                     <Border Grid.Column="2"

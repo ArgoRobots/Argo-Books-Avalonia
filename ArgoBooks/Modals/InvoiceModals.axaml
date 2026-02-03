@@ -336,7 +336,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Additional notes for this invoice...'}" />
+                                         Watermark="{loc:Loc 'Additional notes for this invoice...'}"
+                                         MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -557,7 +558,8 @@
                                              Text="{Binding FilterAmountMin, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc Min}"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="20" />
                                     <TextBlock Grid.Column="1" Text="{loc:Loc to}" FontSize="13"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" Margin="12,0" />
@@ -565,7 +567,8 @@
                                              Text="{Binding FilterAmountMax, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc Max}"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="20" />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>

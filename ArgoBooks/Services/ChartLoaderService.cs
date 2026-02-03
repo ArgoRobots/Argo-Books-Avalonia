@@ -25,7 +25,7 @@ public class ChartLoaderService
     private const float AxisTextSize = 14f;
 
     // Chart colors
-    private static readonly SKColor RevenueColor = SKColor.Parse("#6495ED"); // Cornflower Blue (matches WinForms)
+    private static readonly SKColor RevenueColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
     private static readonly SKColor ExpenseColor = SKColor.Parse("#EF4444"); // Red
     private static readonly SKColor ProfitColor = SKColor.Parse("#22C55E"); // Green
 
@@ -2027,7 +2027,7 @@ public class ChartLoaderService
     {
         string[] colors =
         [
-            "#6495ED", // Cornflower Blue
+            "#3B82F6", // Blue
             "#EF4444", // Red
             "#22C55E", // Green
             "#F59E0B", // Amber

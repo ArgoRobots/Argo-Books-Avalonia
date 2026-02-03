@@ -138,7 +138,8 @@
                                  Watermark="{loc:Loc 'Template name...'}"
                                  Padding="12,10"
                                  x:Name="RenameTemplateTextBox"
-                                 KeyDown="OnRenameTemplateKeyDown" />
+                                 KeyDown="OnRenameTemplateKeyDown"
+                                 MaxLength="100" />
                     </StackPanel>
 
                     <!-- Footer -->

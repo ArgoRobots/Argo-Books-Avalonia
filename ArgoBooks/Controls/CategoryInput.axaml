@@ -57,7 +57,8 @@
                          BorderThickness="0"
                          Padding="12,10"
                          FontSize="14"
-                         VerticalAlignment="Center" />
+                         VerticalAlignment="Center"
+                         MaxLength="100" />
 
                 <!-- Dropdown Arrow -->
                 <Button Grid.Column="1"

@@ -101,7 +101,8 @@
                                             <TextBox Text="{Binding TemplateName, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      BorderBrush="{Binding HasValidationMessage, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
-                                                     Watermark="{loc:Loc 'Enter template name...'}" />
+                                                     Watermark="{loc:Loc 'Enter template name...'}"
+                                                     MaxLength="100" />
                                             <TextBlock Text="{Binding ValidationMessage}"
                                                        FontSize="13"
                                                        Foreground="{DynamicResource ErrorBrush}"
@@ -232,7 +233,8 @@
                                                         <TextBox Grid.Column="1"
                                                                  Text="{Binding LogoWidthText, Mode=TwoWay}"
                                                                  Classes="form-input"
-                                                                 HorizontalContentAlignment="Center" />
+                                                                 HorizontalContentAlignment="Center"
+                                                                 MaxLength="5" />
                                                     </Grid>
                                                     <TextBlock Text="{loc:Loc 'Range: 20-300 px'}"
                                                                FontSize="11"
@@ -252,12 +254,12 @@
                                             <StackPanel Spacing="10" IsVisible="{Binding PropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}">
                                                 <StackPanel Spacing="4">
                                                     <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBox Text="{Binding HeaderText, Mode=TwoWay}" Classes="form-input" />
+                                                    <TextBox Text="{Binding HeaderText, Mode=TwoWay}" Classes="form-input" MaxLength="200" />
                                                 </StackPanel>
 
                                                 <StackPanel Spacing="4">
                                                     <TextBlock Text="{loc:Loc 'Footer Text'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBox Text="{Binding FooterText, Mode=TwoWay}" Classes="form-input" />
+                                                    <TextBox Text="{Binding FooterText, Mode=TwoWay}" Classes="form-input" MaxLength="500" />
                                                 </StackPanel>
 
                                                 <StackPanel Spacing="4">
@@ -267,7 +269,8 @@
                                                              AcceptsReturn="True"
                                                              TextWrapping="Wrap"
                                                              MinHeight="60"
-                                                             Watermark="{loc:Loc 'Bank details, payment methods, etc.'}" />
+                                                             Watermark="{loc:Loc 'Bank details, payment methods, etc.'}"
+                                                             MaxLength="1000" />
                                                 </StackPanel>
 
                                                 <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,6" />

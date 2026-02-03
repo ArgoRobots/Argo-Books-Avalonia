@@ -113,7 +113,8 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding CompanyName, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'Enter company name'}" />
+                                         Watermark="{loc:Loc 'Enter company name'}"
+                                         MaxLength="100" />
                             </StackPanel>
 
                             <!-- Two column layout for other fields -->
@@ -171,7 +172,8 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Classes="form-input"
                                              Text="{Binding City, Mode=TwoWay}"
-                                             Watermark="{loc:Loc 'Enter city'}" />
+                                             Watermark="{loc:Loc 'Enter city'}"
+                                             MaxLength="100" />
                                 </StackPanel>
 
                                 <!-- Address -->
@@ -185,7 +187,8 @@
                                              Watermark="{loc:Loc 'Enter address'}"
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
-                                             MinHeight="60" />
+                                             MinHeight="60"
+                                             MaxLength="200" />
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
@@ -269,7 +272,8 @@
                                             <TextBox Text="{Binding Password, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      PasswordChar="*"
-                                                     Watermark="{loc:Loc 'Enter password'}" />
+                                                     Watermark="{loc:Loc 'Enter password'}"
+                                                     MaxLength="128" />
                                         </StackPanel>
 
                                         <StackPanel Spacing="6">
@@ -280,7 +284,8 @@
                                             <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      PasswordChar="*"
-                                                     Watermark="{loc:Loc 'Confirm password'}" />
+                                                     Watermark="{loc:Loc 'Confirm password'}"
+                                                     MaxLength="128" />
                                             <TextBlock Text="{loc:Loc 'Passwords do not match'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource DangerBrush}"

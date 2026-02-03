@@ -30,7 +30,8 @@
                      Padding="8,4"
                      VerticalAlignment="Center"
                      VerticalContentAlignment="Center"
-                     behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                     behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                     MaxLength="20" />
 
             <!-- Vertically Stacked Up/Down Buttons -->
             <Grid Grid.Column="1" RowDefinitions="*,*" Width="20">

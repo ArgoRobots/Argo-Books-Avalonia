@@ -53,7 +53,8 @@
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox Text="{Binding SaveTemplateName}"
                              Watermark="{loc:Loc 'Enter template name...'}"
-                             Padding="12,10" />
+                             Padding="12,10"
+                             MaxLength="100" />
                 </StackPanel>
 
                 <!-- Error Message (only shown for validation errors) -->

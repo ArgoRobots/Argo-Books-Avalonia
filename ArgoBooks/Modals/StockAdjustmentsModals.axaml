@@ -99,7 +99,8 @@
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter quantity'}"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                             MaxLength="10" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -125,7 +126,8 @@
                                 <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'e.g., PO-12345 or RMA-67890'}" />
+                                         Watermark="{loc:Loc 'e.g., PO-12345 or RMA-67890'}"
+                                         MaxLength="50" />
                             </StackPanel>
 
                             <!-- Reason/Notes -->
@@ -137,7 +139,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Enter reason for adjustment...'}" />
+                                         Watermark="{loc:Loc 'Enter reason for adjustment...'}"
+                                         MaxLength="500" />
                             </StackPanel>
 
                             <!-- Error Message -->

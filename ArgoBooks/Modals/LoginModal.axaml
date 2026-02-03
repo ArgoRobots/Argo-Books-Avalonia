@@ -74,7 +74,8 @@
                                      PasswordChar="•"
                                      Watermark="{loc:Loc 'Enter your password'}"
                                      Classes="password-input"
-                                     x:Name="PasswordBox" />
+                                     x:Name="PasswordBox"
+                                     MaxLength="128" />
                             <Button Grid.Column="1"
                                     Classes="icon-button-small"
                                     Command="{Binding TogglePasswordVisibilityCommand}">

@@ -316,7 +316,8 @@
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
-                                         MaxHeight="120" />
+                                         MaxHeight="120"
+                                         MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
 

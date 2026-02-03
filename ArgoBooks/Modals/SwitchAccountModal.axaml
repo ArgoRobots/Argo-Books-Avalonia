@@ -73,7 +73,8 @@
                                      Text="{Binding SearchQuery, Mode=TwoWay}"
                                      Watermark="{loc:Loc 'Search accounts...'}"
                                      Classes="search-input"
-                                     VerticalAlignment="Center" />
+                                     VerticalAlignment="Center"
+                                     MaxLength="100" />
                         </Grid>
                     </Border>
                 </Border>
