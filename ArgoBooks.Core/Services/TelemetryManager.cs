@@ -40,7 +40,7 @@ public class TelemetryManager : ITelemetryManager
         _settingsService = settingsService;
         _errorLogger = errorLogger;
 
-        _appVersion = appVersion ?? GetAppVersion();
+        _appVersion = appVersion ?? AppInfo.VersionNumber;
         _platform = GetPlatform();
         _userAgent = GetUserAgent();
 
@@ -282,20 +282,6 @@ public class TelemetryManager : ITelemetryManager
         }
 
         return telemetryEvent;
-    }
-
-    private static string GetAppVersion()
-    {
-        try
-        {
-            var assembly = System.Reflection.Assembly.GetEntryAssembly();
-            var version = assembly?.GetName().Version;
-            return version?.ToString(3) ?? "1.0.0";
-        }
-        catch
-        {
-            return "1.0.0";
-        }
     }
 
     private static string GetPlatform()

@@ -875,6 +875,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private bool _hasReturnReasonsData;
 
     [ObservableProperty]
+    private ObservableCollection<ISeries> _returnsByCategorySeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _returnsByCategoryLegend = [];
+
+    [ObservableProperty]
+    private bool _hasReturnsByCategoryData;
+
+    [ObservableProperty]
     private ObservableCollection<ISeries> _returnFinancialImpactSeries = [];
 
     [ObservableProperty]
@@ -1491,6 +1500,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // Returns charts
         LoadReturnsOverTimeChart(data);
         LoadReturnReasonsChart(data);
+        LoadReturnsByCategoryChart(data);
         LoadReturnFinancialImpactChart(data);
         LoadReturnsByProductChart(data);
         LoadExpenseVsRevenueReturnsChart(data);
@@ -1684,6 +1694,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         ReturnReasonsSeries = series;
         ReturnReasonsLegend = legend;
         HasReturnReasonsData = series.Count > 0;
+    }
+
+    private void LoadReturnsByCategoryChart(CompanyData data)
+    {
+        var (series, legend) = _chartLoaderService.LoadReturnsByCategoryChart(data, StartDate, EndDate);
+        ReturnsByCategorySeries = series;
+        ReturnsByCategoryLegend = legend;
+        HasReturnsByCategoryData = series.Count > 0;
     }
 
     private void LoadReturnFinancialImpactChart(CompanyData data)

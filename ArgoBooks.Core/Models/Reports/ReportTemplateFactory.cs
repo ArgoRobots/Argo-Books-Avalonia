@@ -507,55 +507,43 @@ public static class ReportTemplateFactory
     {
         var context = new LayoutContext(config);
 
-        // Mixed layout: full-width chart at top, then 2x2 grid below the date range
-        var topStack = CreateVerticalStack(context, 0.33, 0.67);
-
-        config.AddElement(new ChartReportElement
-        {
-            ChartType = ChartDataType.ReturnsOverTime,
-            X = topStack[0].X,
-            Y = topStack[0].Y,
-            Width = topStack[0].Width,
-            Height = topStack[0].Height
-        });
-
-        // Create a 2x2 grid in the bottom portion
-        var bottomGrid = SplitIntoGrid(topStack[1], 2, 2, context.ElementSpacing);
+        // 2x2 grid layout for 4 charts
+        var grid = CreateGrid(context, 2, 2);
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnReasons,
-            X = bottomGrid[0, 0].X,
-            Y = bottomGrid[0, 0].Y,
-            Width = bottomGrid[0, 0].Width,
-            Height = bottomGrid[0, 0].Height
+            X = grid[0, 0].X,
+            Y = grid[0, 0].Y,
+            Width = grid[0, 0].Width,
+            Height = grid[0, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnFinancialImpact,
-            X = bottomGrid[0, 1].X,
-            Y = bottomGrid[0, 1].Y,
-            Width = bottomGrid[0, 1].Width,
-            Height = bottomGrid[0, 1].Height
+            X = grid[0, 1].X,
+            Y = grid[0, 1].Y,
+            Width = grid[0, 1].Width,
+            Height = grid[0, 1].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnsByCategory,
-            X = bottomGrid[1, 0].X,
-            Y = bottomGrid[1, 0].Y,
-            Width = bottomGrid[1, 0].Width,
-            Height = bottomGrid[1, 0].Height
+            X = grid[1, 0].X,
+            Y = grid[1, 0].Y,
+            Width = grid[1, 0].Width,
+            Height = grid[1, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnsByProduct,
-            X = bottomGrid[1, 1].X,
-            Y = bottomGrid[1, 1].Y,
-            Width = bottomGrid[1, 1].Width,
-            Height = bottomGrid[1, 1].Height
+            X = grid[1, 1].X,
+            Y = grid[1, 1].Y,
+            Width = grid[1, 1].Width,
+            Height = grid[1, 1].Height
         });
 
         // Date range element - added last so it renders on top (highest ZOrder)
@@ -572,55 +560,43 @@ public static class ReportTemplateFactory
     {
         var context = new LayoutContext(config);
 
-        // Mixed layout: full-width chart at top, then 2x2 grid below the date range
-        var topStack = CreateVerticalStack(context, 0.33, 0.67);
-
-        config.AddElement(new ChartReportElement
-        {
-            ChartType = ChartDataType.LossesOverTime,
-            X = topStack[0].X,
-            Y = topStack[0].Y,
-            Width = topStack[0].Width,
-            Height = topStack[0].Height
-        });
-
-        // Create a 2x2 grid in the bottom portion
-        var bottomGrid = SplitIntoGrid(topStack[1], 2, 2, context.ElementSpacing);
+        // 2x2 grid layout for 4 charts
+        var grid = CreateGrid(context, 2, 2);
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossReasons,
-            X = bottomGrid[0, 0].X,
-            Y = bottomGrid[0, 0].Y,
-            Width = bottomGrid[0, 0].Width,
-            Height = bottomGrid[0, 0].Height
+            X = grid[0, 0].X,
+            Y = grid[0, 0].Y,
+            Width = grid[0, 0].Width,
+            Height = grid[0, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossFinancialImpact,
-            X = bottomGrid[0, 1].X,
-            Y = bottomGrid[0, 1].Y,
-            Width = bottomGrid[0, 1].Width,
-            Height = bottomGrid[0, 1].Height
+            X = grid[0, 1].X,
+            Y = grid[0, 1].Y,
+            Width = grid[0, 1].Width,
+            Height = grid[0, 1].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossesByCategory,
-            X = bottomGrid[1, 0].X,
-            Y = bottomGrid[1, 0].Y,
-            Width = bottomGrid[1, 0].Width,
-            Height = bottomGrid[1, 0].Height
+            X = grid[1, 0].X,
+            Y = grid[1, 0].Y,
+            Width = grid[1, 0].Width,
+            Height = grid[1, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossesByProduct,
-            X = bottomGrid[1, 1].X,
-            Y = bottomGrid[1, 1].Y,
-            Width = bottomGrid[1, 1].Width,
-            Height = bottomGrid[1, 1].Height
+            X = grid[1, 1].X,
+            Y = grid[1, 1].Y,
+            Width = grid[1, 1].Width,
+            Height = grid[1, 1].Height
         });
 
         // Date range element - added last so it renders on top (highest ZOrder)
