@@ -36,13 +36,44 @@ public enum PageOrientation
 }
 
 /// <summary>
+/// Element alignment options for the report designer.
+/// </summary>
+public enum ElementAlignment
+{
+    Left,
+    Right,
+    Top,
+    Bottom,
+    CenterH,
+    CenterV
+}
+
+/// <summary>
+/// Distribution direction for spacing elements evenly.
+/// </summary>
+public enum DistributeDirection
+{
+    Horizontal,
+    Vertical
+}
+
+/// <summary>
+/// Size matching mode for making elements the same size.
+/// </summary>
+public enum MatchSizeMode
+{
+    Width,
+    Height,
+    Both
+}
+
+/// <summary>
 /// Transaction type filter options.
 /// </summary>
 public enum TransactionType
 {
     Revenue,
-    Expenses,
-    Both
+    Expenses
 }
 
 /// <summary>

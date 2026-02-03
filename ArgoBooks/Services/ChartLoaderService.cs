@@ -28,6 +28,7 @@ public class ChartLoaderService
     private static readonly SKColor RevenueColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
     private static readonly SKColor ExpenseColor = SKColor.Parse("#EF4444"); // Red
     private static readonly SKColor ProfitColor = SKColor.Parse("#22C55E"); // Green
+    private static readonly SKColor CustomerColor = SKColor.Parse("#8B5CF6"); // Purple
 
     // Theme colors (will be updated based on current theme)
     private SKColor _textColor = SKColor.Parse("#F9FAFB"); // Light text for dark theme
@@ -862,11 +863,11 @@ public class ChartLoaderService
     /// Loads growth rates chart data with dynamic granularity based on date range.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    /// <param name="companyData">The company data containing sales information.</param>
+    /// <param name="companyData">The company data containing customer information.</param>
     /// <param name="startDate">Optional start date for filtering.</param>
     /// <param name="endDate">Optional end date for filtering.</param>
-    /// <param name="datePresetName">Optional date preset name (e.g., "This Month", "Last Quarter") to determine granularity.</param>
-    public (ObservableCollection<ISeries> Series, string[] Labels) LoadGrowthRatesChart(
+    /// <param name="datePresetName">Optional date preset name (e.g., "This Month", "Last Quarter").</param>
+    public (ObservableCollection<ISeries> Series, string[] Labels) LoadCustomerGrowthChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null,
@@ -879,7 +880,7 @@ public class ChartLoaderService
         filters.DatePresetName = datePresetName;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetGrowthRates();
+        var dataPoints = dataService.GetCustomerGrowth();
 
         if (dataPoints.Count == 0)
             return (series, labels);
@@ -887,20 +888,21 @@ public class ChartLoaderService
         labels = dataPoints.Select(p => p.Label).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        // Only add series if there's actual data (any non-zero growth rates)
+        // Only add series if there's actual data
         if (values.Any(v => v != 0))
         {
-            series.Add(CreateTimeSeries(values, "Growth Rate %", RevenueColor));
+            series.Add(CreateTimeSeries(values, "New Customers", CustomerColor));
         }
 
         // Store export data
-        _chartExportDataByTitle["Growth Rates"] = new ChartExportData
+        _chartExportDataByTitle["Customer Growth"] = new ChartExportData
         {
-            ChartTitle = "Growth Rates",
+            ChartTitle = "Customer Growth",
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = values,
-            SeriesName = "Growth Rate %"        };
+            SeriesName = "New Customers"
+        };
 
         return (series, labels);
     }
@@ -919,7 +921,6 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
-        filters.TransactionType = TransactionType.Both;
         var dataService = new ReportChartDataService(companyData, filters);
 
         var seriesData = dataService.GetAverageTransactionValueDailyBySeries();
@@ -981,7 +982,6 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
 
         var filters = CreateFilters(startDate, endDate);
-        filters.TransactionType = TransactionType.Both;
         var dataService = new ReportChartDataService(companyData, filters);
 
         var seriesData = dataService.GetTransactionCountDailyBySeries();

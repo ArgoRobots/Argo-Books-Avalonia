@@ -179,11 +179,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             MaxRows = 0
         };
 
-        var sales = filters.TransactionType is TransactionType.Revenue or TransactionType.Both
+        var sales = filters.TransactionType is TransactionType.Revenue
             ? GetRevenueTableData(noMaxConfig)
             : [];
 
-        var purchases = filters.TransactionType is TransactionType.Expenses or TransactionType.Both
+        var purchases = filters.TransactionType is TransactionType.Expenses
             ? GetExpensesTableData(noMaxConfig)
             : [];
 
@@ -342,7 +342,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         // Calculate revenue statistics
         if (companyData?.Revenues != null &&
-            filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+            filters.TransactionType is TransactionType.Revenue)
         {
             var sales = companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate).ToList();
             stats.TotalRevenue = sales.Sum(s => s.Total);
@@ -354,7 +354,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         // Calculate expense statistics
         if (companyData?.Expenses != null &&
-            filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+            filters.TransactionType is TransactionType.Expenses)
         {
             var purchases = companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
             stats.TotalExpenses = purchases.Sum(p => p.Total);

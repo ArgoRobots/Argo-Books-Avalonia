@@ -509,8 +509,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReportName}"
                                          Watermark="{loc:Loc 'Enter report name...'}"
-                                         Padding="12,10"
-                                         MaxLength="100" />
+                                         Padding="12,10" />
                             </StackPanel>
 
                             <!-- Date Range -->
@@ -618,7 +617,7 @@
                                     Spacing="8"
                                     Margin="8,8,8,12"
                                     IsVisible="{Binding IsElementPanelExpanded}">
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="{loc:Loc 'Add Chart'}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Chart}" ToolTip.Tip="{loc:Loc 'Add Chart'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
                                               Width="18" Height="18"
@@ -626,7 +625,7 @@
                                     <TextBlock Text="{loc:Loc 'Chart'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="{loc:Loc 'Add Label'}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Label}" ToolTip.Tip="{loc:Loc 'Add Label'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
                                               Width="18" Height="18"
@@ -634,7 +633,7 @@
                                     <TextBlock Text="{loc:Loc 'Label'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="{loc:Loc 'Add Date Range'}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.DateRange}" ToolTip.Tip="{loc:Loc 'Add Date Range'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
                                               Width="18" Height="18"
@@ -642,7 +641,7 @@
                                     <TextBlock Text="{loc:Loc 'Date Range'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="{loc:Loc 'Add Summary'}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Summary}" ToolTip.Tip="{loc:Loc 'Add Summary'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                               Width="18" Height="18"
@@ -650,7 +649,7 @@
                                     <TextBlock Text="{loc:Loc 'Summary'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="{loc:Loc 'Add Table'}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Table}" ToolTip.Tip="{loc:Loc 'Add Table'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
                                               Width="18" Height="18"
@@ -658,7 +657,7 @@
                                     <TextBlock Text="{loc:Loc 'Table'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="{loc:Loc 'Add Image'}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Image}" ToolTip.Tip="{loc:Loc 'Add Image'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
                                               Width="18" Height="18"
@@ -675,32 +674,32 @@
                                     Margin="0,10,0,0"
                                     HorizontalAlignment="Left"
                                     IsVisible="{Binding !IsElementPanelExpanded}">
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="{loc:Loc 'Add Chart'}">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Chart}" ToolTip.Tip="{loc:Loc 'Add Chart'}">
                                 <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="{loc:Loc 'Add Label'}">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Label}" ToolTip.Tip="{loc:Loc 'Add Label'}">
                                 <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="{loc:Loc 'Add Date Range'}">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.DateRange}" ToolTip.Tip="{loc:Loc 'Add Date Range'}">
                                 <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="{loc:Loc 'Add Summary'}">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Summary}" ToolTip.Tip="{loc:Loc 'Add Summary'}">
                                 <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="{loc:Loc 'Add Table'}">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Table}" ToolTip.Tip="{loc:Loc 'Add Table'}">
                                 <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="{loc:Loc 'Add Image'}">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Image}" ToolTip.Tip="{loc:Loc 'Add Image'}">
                                 <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
@@ -739,15 +738,15 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Horizontal Alignment -->
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Left" ToolTip.Tip="{loc:Loc 'Align Left'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="{x:Static enums:ElementAlignment.Left}" ToolTip.Tip="{loc:Loc 'Align Left'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M13 8v3h10v2H13v3l-4-4 4-4zM3 4h2v16H3V4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterH" ToolTip.Tip="{loc:Loc 'Align Center Horizontally'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="{x:Static enums:ElementAlignment.CenterH}" ToolTip.Tip="{loc:Loc 'Align Center Horizontally'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M5 8v3H1v2h4v3l4-4-4-4zm14 0v3h4v2h-4v3l-4-4 4-4zM11 4h2v16h-2V4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Right" ToolTip.Tip="{loc:Loc 'Align Right'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="{x:Static enums:ElementAlignment.Right}" ToolTip.Tip="{loc:Loc 'Align Right'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M11 8v3H1v2h10v3l4-4-4-4zM19 4h2v16h-2V4z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -755,15 +754,15 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Vertical Alignment -->
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Top" ToolTip.Tip="{loc:Loc 'Align Top'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="{x:Static enums:ElementAlignment.Top}" ToolTip.Tip="{loc:Loc 'Align Top'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M8 11h3v10h2V11h3l-4-4-4 4zM4 3v2h16V3H4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterV" ToolTip.Tip="{loc:Loc 'Align Center Vertically'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="{x:Static enums:ElementAlignment.CenterV}" ToolTip.Tip="{loc:Loc 'Align Center Vertically'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M8 19h3v4h2v-4h3l-4-4-4 4zm8-14h-3V1h-2v4H8l4 4 4-4zM4 11v2h16v-2H4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Bottom" ToolTip.Tip="{loc:Loc 'Align Bottom'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="{x:Static enums:ElementAlignment.Bottom}" ToolTip.Tip="{loc:Loc 'Align Bottom'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -771,11 +770,11 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Distribution -->
-                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Horizontal" ToolTip.Tip="{loc:Loc 'Distribute Horizontally'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="{x:Static enums:DistributeDirection.Horizontal}" ToolTip.Tip="{loc:Loc 'Distribute Horizontally'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M4 5v14h2V5H4zm14 0v14h2V5h-2zM9 5h2v14H9V5zm4 0h2v14h-2V5z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Vertical" ToolTip.Tip="{loc:Loc 'Distribute Vertically'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="{x:Static enums:DistributeDirection.Vertical}" ToolTip.Tip="{loc:Loc 'Distribute Vertically'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M5 18h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5V6zm0-4h14v2H5V2z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -783,15 +782,15 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Same Size -->
-                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Width" ToolTip.Tip="{loc:Loc 'Same Width'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="{x:Static enums:MatchSizeMode.Width}" ToolTip.Tip="{loc:Loc 'Same Width'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M4 4v16h2V4H4zm14 0v16h2V4h-2zM7 12l2-2v1.5h6V10l2 2-2 2v-1.5H9V14l-2-2z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Height" ToolTip.Tip="{loc:Loc 'Same Height'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="{x:Static enums:MatchSizeMode.Height}" ToolTip.Tip="{loc:Loc 'Same Height'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M4 4h16v2H4V4zm0 14h16v2H4v-2zm8-11l-2 2h1.5v6H10l2 2 2-2h-1.5V9H14l-2-2z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Both" ToolTip.Tip="{loc:Loc 'Same Size'}" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="{x:Static enums:MatchSizeMode.Both}" ToolTip.Tip="{loc:Loc 'Same Size'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -1002,7 +1001,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedLabelElement.Text}" MaxLength="500" />
+                                    <TextBox Text="{Binding SelectedLabelElement.Text}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1437,7 +1436,6 @@
                                     <CheckBox Content="{loc:Loc 'Company'}" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
                                     <CheckBox Content="{loc:Loc 'Product'}" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
                                     <CheckBox Content="{loc:Loc 'Quantity'}" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Unit Price'}" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
                                     <CheckBox Content="{loc:Loc 'Total'}" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
                                     <CheckBox Content="{loc:Loc 'Status'}" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
                                 </StackPanel>
@@ -1588,8 +1586,7 @@
                                 <TextBox Grid.Column="0"
                                          Text="{Binding ExportFilePath}"
                                          Watermark="{loc:Loc 'Select file path...'}"
-                                         Padding="12,10"
-                                         MaxLength="500" />
+                                         Padding="12,10" />
                                 <Button Grid.Column="1"
                                         Content="{loc:Loc 'Browse'}"
                                         Margin="8,0,0,0"

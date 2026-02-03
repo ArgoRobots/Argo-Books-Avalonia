@@ -282,7 +282,7 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = TransactionType.Both;
+    } = TransactionType.Revenue;
 
     [JsonPropertyName("includeReturns")]
     public bool IncludeReturns
@@ -345,7 +345,7 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    }
+    } = true;
 
     [JsonPropertyName("autoSizeColumns")]
     public bool AutoSizeColumns
@@ -523,13 +523,6 @@ public class TableReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = true;
 
-    [JsonPropertyName("showUnitPriceColumn")]
-    public bool ShowUnitPriceColumn
-    {
-        get;
-        set => SetField(ref field, value);
-    }
-
     [JsonPropertyName("showTotalColumn")]
     public bool ShowTotalColumn
     {
@@ -600,7 +593,6 @@ public class TableReportElement : ReportElementBase
             ShowCompanyColumn = ShowCompanyColumn,
             ShowProductColumn = ShowProductColumn,
             ShowQuantityColumn = ShowQuantityColumn,
-            ShowUnitPriceColumn = ShowUnitPriceColumn,
             ShowTotalColumn = ShowTotalColumn,
             ShowStatusColumn = ShowStatusColumn,
             ShowAccountantColumn = ShowAccountantColumn,
@@ -888,7 +880,7 @@ public class SummaryReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = TransactionType.Both;
+    } = TransactionType.Revenue;
 
     [JsonPropertyName("includeReturns")]
     public bool IncludeReturns
