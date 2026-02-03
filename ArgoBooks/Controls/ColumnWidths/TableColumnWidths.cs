@@ -26,9 +26,6 @@ public partial class TableColumnWidths : TableColumnWidthsBase
     private double _quantityColumnWidth = 50;
 
     [ObservableProperty]
-    private double _unitPriceColumnWidth = 80;
-
-    [ObservableProperty]
     private double _amountColumnWidth = 80;
 
     [ObservableProperty]
@@ -57,7 +54,7 @@ public partial class TableColumnWidths : TableColumnWidthsBase
         ColumnOrder =
         [
             "Id", "Accountant", "Product", "Supplier", "Date", "Quantity",
-            "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"
+            "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"
         ];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 1.2, MinWidth = 60, PreferredWidth = 100 }, w => IdColumnWidth = w);
@@ -66,7 +63,6 @@ public partial class TableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Supplier", new ColumnDef { StarValue = 1.2, MinWidth = 80, PreferredWidth = 150 }, w => SupplierColumnWidth = w);
         RegisterColumn("Date", new ColumnDef { StarValue = 1.0, MinWidth = 80, PreferredWidth = 110 }, w => DateColumnWidth = w);
         RegisterColumn("Quantity", new ColumnDef { StarValue = 0.5, MinWidth = 40, PreferredWidth = 70 }, w => QuantityColumnWidth = w);
-        RegisterColumn("UnitPrice", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 }, w => UnitPriceColumnWidth = w);
         RegisterColumn("Amount", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 }, w => AmountColumnWidth = w);
         RegisterColumn("Tax", new ColumnDef { StarValue = 0.6, MinWidth = 50, PreferredWidth = 80 }, w => TaxColumnWidth = w);
         RegisterColumn("Shipping", new ColumnDef { StarValue = 0.7, MinWidth = 60, PreferredWidth = 90 }, w => ShippingColumnWidth = w);

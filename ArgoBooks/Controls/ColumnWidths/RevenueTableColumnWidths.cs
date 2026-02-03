@@ -4,7 +4,7 @@ namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Manages column widths for the Revenue table.
-/// Columns: ID | Customer | Product | Date | Quantity | UnitPrice | Amount | Tax | Shipping | Discount | Total | Receipt | Status | Actions
+/// Columns: ID | Customer | Product | Date | Quantity | Amount | Tax | Shipping | Discount | Total | Receipt | Status | Actions
 /// </summary>
 public partial class RevenueTableColumnWidths : TableColumnWidthsBase
 {
@@ -22,9 +22,6 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
 
     [ObservableProperty]
     private double _quantityColumnWidth = 60;
-
-    [ObservableProperty]
-    private double _unitPriceColumnWidth = 90;
 
     [ObservableProperty]
     private double _amountColumnWidth = 90;
@@ -52,14 +49,13 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
 
     public RevenueTableColumnWidths()
     {
-        ColumnOrder = ["Id", "Customer", "Product", "Date", "Quantity", "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"];
+        ColumnOrder = ["Id", "Customer", "Product", "Date", "Quantity", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 80 }, w => IdColumnWidth = w);
         RegisterColumn("Customer", new ColumnDef { StarValue = 1.2, MinWidth = 100, PreferredWidth = 150 }, w => CustomerColumnWidth = w);
         RegisterColumn("Product", new ColumnDef { StarValue = 1.5, MinWidth = 120, PreferredWidth = 180 }, w => ProductColumnWidth = w);
         RegisterColumn("Date", new ColumnDef { StarValue = 0.9, MinWidth = 80, PreferredWidth = 100 }, w => DateColumnWidth = w);
         RegisterColumn("Quantity", new ColumnDef { StarValue = 0.5, MinWidth = 40, PreferredWidth = 60 }, w => QuantityColumnWidth = w);
-        RegisterColumn("UnitPrice", new ColumnDef { StarValue = 0.8, MinWidth = 70, PreferredWidth = 90 }, w => UnitPriceColumnWidth = w);
         RegisterColumn("Amount", new ColumnDef { StarValue = 0.8, MinWidth = 70, PreferredWidth = 90 }, w => AmountColumnWidth = w);
         RegisterColumn("Tax", new ColumnDef { StarValue = 0.7, MinWidth = 50, PreferredWidth = 70 }, w => TaxColumnWidth = w);
         RegisterColumn("Shipping", new ColumnDef { StarValue = 0.7, MinWidth = 60, PreferredWidth = 80 }, w => ShippingColumnWidth = w);

@@ -1343,7 +1343,7 @@ public class SpreadsheetImportService
             purchase.Date = GetDateTime(row, headers, "Date");
             purchase.SupplierId = GetNullableString(row, headers, "Supplier ID");
             purchase.Description = description;
-            purchase.Amount = GetDecimal(row, headers, "Amount");
+            purchase.Amount = GetDecimal(row, headers, "Unit Price");
             purchase.TaxAmount = GetDecimal(row, headers, "Tax");
             purchase.Total = GetDecimal(row, headers, "Total");
             purchase.ReferenceNumber = GetString(row, headers, "Reference");
@@ -1563,7 +1563,7 @@ public class SpreadsheetImportService
             revenue.Date = GetDateTime(row, headers, "Date");
             revenue.CustomerId = GetNullableString(row, headers, "Customer ID");
             revenue.Description = description;
-            revenue.Amount = GetDecimal(row, headers, "Amount");
+            revenue.Amount = GetDecimal(row, headers, "Unit Price");
             revenue.TaxAmount = GetDecimal(row, headers, "Tax");
             revenue.Total = GetDecimal(row, headers, "Total");
             revenue.ReferenceNumber = GetString(row, headers, "Reference");

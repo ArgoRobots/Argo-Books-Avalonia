@@ -92,7 +92,8 @@
                         </Button>
 
                         <!-- Extra Buttons Content (slot for additional buttons) -->
-                        <ContentPresenter Content="{Binding #Root.ExtraButtonsContent}" />
+                        <ContentPresenter Content="{Binding #Root.ExtraButtonsContent}"
+                                          IsVisible="{Binding #Root.ExtraButtonsContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
                         <!-- Add Button -->
                         <Button Classes="primary-button"

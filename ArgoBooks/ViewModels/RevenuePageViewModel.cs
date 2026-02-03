@@ -102,9 +102,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private bool _showQuantityColumn;
 
     [ObservableProperty]
-    private bool _showUnitPriceColumn;
-
-    [ObservableProperty]
     private bool _showAmountColumn;
 
     [ObservableProperty]
@@ -131,7 +128,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
     partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
-    partial void OnShowUnitPriceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("UnitPrice", value);
     partial void OnShowAmountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Amount", value);
     partial void OnShowTaxColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Tax", value);
     partial void OnShowShippingColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Shipping", value);
@@ -215,7 +211,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         ColumnWidths.SetColumnVisibility("Product", ShowProductColumn);
         ColumnWidths.SetColumnVisibility("Date", ShowDateColumn);
         ColumnWidths.SetColumnVisibility("Quantity", ShowQuantityColumn);
-        ColumnWidths.SetColumnVisibility("UnitPrice", ShowUnitPriceColumn);
         ColumnWidths.SetColumnVisibility("Amount", ShowAmountColumn);
         ColumnWidths.SetColumnVisibility("Tax", ShowTaxColumn);
         ColumnWidths.SetColumnVisibility("Shipping", ShowShippingColumn);

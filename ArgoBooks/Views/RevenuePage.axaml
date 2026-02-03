@@ -123,13 +123,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Unit Price'}" ColumnName="UnitPrice" SortProperty="UnitPrice"
-                                                   ColumnWidth="{Binding ColumnWidths.UnitPriceColumnWidth}"
-                                                   IsColumnVisible="{Binding ShowUnitPriceColumn}"
-                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
-                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
-
-                        <table:ArgoTableHeader Header="{loc:Loc 'Amount'}" ColumnName="Amount" SortProperty="Amount"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Unit Price'}" ColumnName="Amount" SortProperty="Amount"
                                                    ColumnWidth="{Binding ColumnWidths.AmountColumnWidth}"
                                                    IsColumnVisible="{Binding ShowAmountColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -232,12 +226,7 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowQuantityColumn}" />
 
-                                        <!-- Unit Price -->
-                                        <table:ArgoTableCell Text="{Binding UnitPriceFormatted}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.UnitPriceColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowUnitPriceColumn}" />
-
-                                        <!-- Amount -->
+                                        <!-- Unit Price (was Amount) -->
                                         <table:ArgoTableCell Text="{Binding AmountFormatted}"
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowAmountColumn}" />
@@ -401,8 +390,7 @@
                 <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc 'Product'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc 'Date'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc 'Quantity'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowUnitPriceColumn}" Content="{loc:Loc 'Unit Price'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="{loc:Loc 'Amount'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="{loc:Loc 'Unit Price'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTaxColumn}" Content="{loc:Loc 'Tax'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowShippingColumn}" Content="{loc:Loc 'Shipping'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="{loc:Loc 'Discount'}" Classes="column-toggle" />
