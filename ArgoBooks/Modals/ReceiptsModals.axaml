@@ -174,7 +174,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= AI SCAN REVIEW MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsScanReviewModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsScanReviewModalOpen}"
+                               ClosingCommand="{Binding RequestCloseScanReviewModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -235,7 +236,7 @@
                             </Border>
                             <Button Grid.Column="2"
                                     Classes="icon-button"
-                                    Command="{Binding CloseScanReviewModalCommand}">
+                                    Command="{Binding RequestCloseScanReviewModalCommand}">
                                 <PathIcon Data="{x:Static icons:Icons.Close}"
                                           Width="20" Height="20" />
                             </Button>
@@ -783,7 +784,7 @@
                                     Content="{loc:Loc Cancel}"
                                     Classes="secondary-button"
                                     Margin="0,0,12,0"
-                                    Command="{Binding CloseScanReviewModalCommand}" />
+                                    Command="{Binding RequestCloseScanReviewModalCommand}" />
                             <Button Grid.Column="2"
                                     Classes="primary-button"
                                     Command="{Binding CreateExpenseCommand}">

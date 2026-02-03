@@ -602,6 +602,34 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ResetScanModal();
     }
 
+    /// <summary>
+    /// Requests to close the scan review modal, showing confirmation if a receipt has been scanned.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseScanReviewModalAsync()
+    {
+        if (HasScanResult)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Scanned Receipt?".Translate(),
+                    Message = "You have a scanned receipt that hasn't been saved. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
+        CloseScanReviewModal();
+    }
+
     [RelayCommand]
     private async Task RetryScan()
     {
