@@ -325,17 +325,89 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         switch (ItemStatusAction)
         {
             case "LostDamaged":
-                CreateLostDamagedRecord(companyData, purchase);
+            {
+                var record = CreateLostDamagedRecord(companyData, purchase);
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Mark expense '{purchase.Id}' as lost/damaged",
+                    () =>
+                    {
+                        companyData.LostDamaged.Remove(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    },
+                    () =>
+                    {
+                        companyData.LostDamaged.Add(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    }));
                 break;
+            }
             case "Returned":
-                CreateReturnRecord(companyData, purchase);
+            {
+                var record = CreateReturnRecord(companyData, purchase);
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Mark expense '{purchase.Id}' as returned",
+                    () =>
+                    {
+                        companyData.Returns.Remove(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    },
+                    () =>
+                    {
+                        companyData.Returns.Add(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    }));
                 break;
+            }
             case "UndoLostDamaged":
-                RemoveLostDamagedRecord(companyData, purchase);
+            {
+                var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
+                if (record != null)
+                {
+                    companyData.LostDamaged.Remove(record);
+                    App.UndoRedoManager.RecordAction(new DelegateAction(
+                        $"Undo lost/damaged status for expense '{purchase.Id}'",
+                        () =>
+                        {
+                            companyData.LostDamaged.Add(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        },
+                        () =>
+                        {
+                            companyData.LostDamaged.Remove(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        }));
+                }
                 break;
+            }
             case "UndoReturned":
-                RemoveReturnRecord(companyData, purchase);
+            {
+                var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
+                if (record != null)
+                {
+                    companyData.Returns.Remove(record);
+                    App.UndoRedoManager.RecordAction(new DelegateAction(
+                        $"Undo returned status for expense '{purchase.Id}'",
+                        () =>
+                        {
+                            companyData.Returns.Add(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        },
+                        () =>
+                        {
+                            companyData.Returns.Remove(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        }));
+                }
                 break;
+            }
         }
 
         App.CompanyManager?.MarkAsChanged();
@@ -343,7 +415,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private void CreateLostDamagedRecord(CompanyData companyData, Expense purchase)
+    private LostDamaged CreateLostDamagedRecord(CompanyData companyData, Expense purchase)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -364,9 +436,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
 
         companyData.LostDamaged.Add(lostDamaged);
+        return lostDamaged;
     }
 
-    private void CreateReturnRecord(CompanyData companyData, Expense purchase)
+    private Return CreateReturnRecord(CompanyData companyData, Expense purchase)
     {
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -396,20 +469,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
 
         companyData.Returns.Add(returnRecord);
-    }
-
-    private static void RemoveLostDamagedRecord(CompanyData companyData, Expense purchase)
-    {
-        var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
-        if (record != null)
-            companyData.LostDamaged.Remove(record);
-    }
-
-    private static void RemoveReturnRecord(CompanyData companyData, Expense purchase)
-    {
-        var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
-        if (record != null)
-            companyData.Returns.Remove(record);
+        return returnRecord;
     }
 
     #endregion
