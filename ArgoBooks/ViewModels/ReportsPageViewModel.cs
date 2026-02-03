@@ -1346,6 +1346,17 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 ExportMessage = "Export completed successfully!";
 
+                // Auto-dismiss success message after 5 seconds
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        if (ExportMessage == "Export completed successfully!")
+                            ExportMessage = string.Empty;
+                    });
+                });
+
                 // Save export settings for next time
                 await SaveExportSettingsAsync();
 

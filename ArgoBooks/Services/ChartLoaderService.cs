@@ -28,7 +28,7 @@ public class ChartLoaderService
     private static readonly SKColor RevenueColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
     private static readonly SKColor ExpenseColor = SKColor.Parse("#EF4444"); // Red
     private static readonly SKColor ProfitColor = SKColor.Parse("#22C55E"); // Green
-    private static readonly SKColor CustomerColor = SKColor.Parse("#8B5CF6"); // Purple
+    private static readonly SKColor CustomerColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
 
     // Theme colors (will be updated based on current theme)
     private SKColor _textColor = SKColor.Parse("#F9FAFB"); // Light text for dark theme
@@ -1428,7 +1428,39 @@ public class ChartLoaderService
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count"        };
         _chartExportDataByTitle["Return Reasons"] = exportData;
-        _chartExportDataByTitle["Returns by Category"] = exportData;
+
+        return (series, legend);
+    }
+
+    /// <summary>
+    /// Loads returns by category as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadReturnsByCategoryChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeReturns = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetReturnsByCategory().ToList();
+
+        if (dataPoints.Count == 0)
+            return ([], []);
+
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+
+        // Store export data
+        _chartExportDataByTitle["Returns by Category"] = new ChartExportData
+        {
+            ChartTitle = "Returns by Category",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Count"
+        };
 
         return (series, legend);
     }

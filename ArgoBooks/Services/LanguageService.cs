@@ -306,7 +306,7 @@ public partial class LanguageService
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, true, "Downloading translations..."));
 
             // Get app version for download URL
-            var version = GetAppVersion();
+            var version = ArgoBooks.Core.Services.AppInfo.VersionNumber;
             var downloadUrl = string.Format(DownloadUrlTemplate, version, isoCode);
 
             System.Diagnostics.Debug.WriteLine($"LanguageService: Downloading from {downloadUrl}");
@@ -558,27 +558,6 @@ public partial class LanguageService
         }
 
         return $"str_{cleanText}";
-    }
-
-    /// <summary>
-    /// Gets the current app version for download URL.
-    /// </summary>
-    private static string GetAppVersion()
-    {
-        try
-        {
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            if (version != null)
-            {
-                return $"{version.Major}.{version.Minor}.{version.Build}";
-            }
-        }
-        catch
-        {
-            // Ignore errors getting version
-        }
-
-        return "1.0.0";
     }
 
     /// <summary>

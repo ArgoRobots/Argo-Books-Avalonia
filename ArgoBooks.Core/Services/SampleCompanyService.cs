@@ -189,7 +189,7 @@ public class SampleCompanyService
             Phone = "555-100-0000"
         };
 
-        companyData.Settings.AppVersion = "2.2.3";
+        companyData.Settings.AppVersion = AppInfo.VersionNumber;
 
         // Set localization defaults
         companyData.Settings.Localization = new LocalizationSettings
@@ -255,22 +255,10 @@ public class SampleCompanyService
     {
         var dates = new List<DateTime>();
 
+        // Only consider Revenue and Expense dates for time-shifting
+        // This ensures the dashboard "This Month" view shows meaningful data
         dates.AddRange(data.Revenues.Select(s => s.Date));
         dates.AddRange(data.Expenses.Select(p => p.Date));
-        dates.AddRange(data.Invoices.Select(i => i.IssueDate));
-        dates.AddRange(data.Payments.Select(p => p.Date));
-        dates.AddRange(data.Rentals.Select(r => r.StartDate));
-        dates.AddRange(data.Rentals.Where(r => r.ReturnDate.HasValue).Select(r => r.ReturnDate!.Value));
-        dates.AddRange(data.Returns.Select(r => r.ReturnDate));
-        dates.AddRange(data.Receipts.Select(r => r.Date));
-        dates.AddRange(data.LostDamaged.Select(ld => ld.DateDiscovered));
-        dates.AddRange(data.StockAdjustments.Select(sa => sa.Timestamp));
-        dates.AddRange(data.StockTransfers.Select(st => st.TransferDate));
-        dates.AddRange(data.StockTransfers.Where(st => st.CompletedAt.HasValue).Select(st => st.CompletedAt!.Value));
-        dates.AddRange(data.PurchaseOrders.Select(po => po.OrderDate));
-        dates.AddRange(data.RecurringInvoices.Select(ri => ri.StartDate));
-        dates.AddRange(data.RecurringInvoices.Where(ri => ri.LastGeneratedAt.HasValue).Select(ri => ri.LastGeneratedAt!.Value));
-        dates.AddRange(data.Customers.Where(c => c.LastTransactionDate.HasValue).Select(c => c.LastTransactionDate!.Value));
 
         return dates.Count > 0 ? dates.Max() : DateTime.MinValue;
     }

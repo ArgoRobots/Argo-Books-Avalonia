@@ -609,7 +609,7 @@ public class App : Application
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             var geoLocationService = new GeoLocationService(httpClient, errorLogger);
             var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
-            var appVersion = AppInfo.VersionNumber;
+            var appVersion = Services.AppInfo.VersionNumber;
             var telemetryUploadService = new TelemetryUploadService(telemetryStorageService, httpClient, errorLogger, appVersion);
             TelemetryManager = new TelemetryManager(
                 telemetryStorageService,
@@ -1554,7 +1554,11 @@ public class App : Application
                 if (CompanyManager.CompanyData != null)
                 {
                     if (SampleCompanyService.TimeShiftSampleData(CompanyManager.CompanyData))
+                    {
                         CompanyManager.NotifyDataChanged();
+                        // Save the shifted data so it persists for next open
+                        await CompanyManager.SaveCompanyAsync();
+                    }
                     CompanyManager.CompanyData.MarkAsSaved();
 
                     // Reset unsaved changes since time-shift is automatic and shouldn't count as a user change
@@ -1595,7 +1599,7 @@ public class App : Application
         if (!Version.TryParse(sampleVersion, out var sampleVer))
             return false;
 
-        var appVersion = AppInfo.AssemblyVersion;
+        var appVersion = Services.AppInfo.AssemblyVersion;
         if (appVersion == null)
             return false;
 
@@ -2304,7 +2308,7 @@ public class App : Application
                 }
                 successMessage += "\n\n" + "Please save to persist changes.".Translate();
 
-                _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
+                _appShellViewModel?.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
             }
             catch (Exception ex)
             {
