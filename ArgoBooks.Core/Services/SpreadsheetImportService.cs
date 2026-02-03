@@ -175,6 +175,20 @@ public class SpreadsheetImportService
                 if (!string.IsNullOrEmpty(id))
                     ids[entityType].Add(id);
             }
+
+            // Also collect product names for name-based lookups
+            if (sheetName == "Products" && headers.Contains("Name"))
+            {
+                if (!ids.ContainsKey("ProductNames"))
+                    ids["ProductNames"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var row in rows)
+                {
+                    var name = GetString(row, headers, "Name");
+                    if (!string.IsNullOrEmpty(name))
+                        ids["ProductNames"].Add(name);
+                }
+            }
         }
 
         return ids;
@@ -194,6 +208,8 @@ public class SpreadsheetImportService
             "Inventory" => "Inventory",
             "Rental Inventory" => "RentalInventory",
             "Purchase Orders" => "PurchaseOrders",
+            "Expenses" or "Purchases" => "Expenses",
+            "Revenue" or "Sales" => "Revenue",
             _ => string.Empty
         };
     }
@@ -239,45 +255,52 @@ public class SpreadsheetImportService
         switch (sheetName)
         {
             case "Products":
-                ValidateProductReferences(rows, headers, data, importedIds, result);
+                ValidateProductReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Invoices":
-                ValidateInvoiceReferences(rows, headers, data, importedIds, result);
+                ValidateInvoiceReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Expenses":
             case "Purchases":
-                ValidateExpenseReferences(rows, headers, data, importedIds, result);
+                ValidateExpenseReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Inventory":
-                ValidateInventoryReferences(rows, headers, data, importedIds, result);
+                ValidateInventoryReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Payments":
-                ValidatePaymentReferences(rows, headers, data, importedIds, result);
+                ValidatePaymentReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Revenue":
             case "Sales":
-                ValidateRevenueReferences(rows, headers, data, importedIds, result);
+                ValidateRevenueReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Rental Records":
-                ValidateRentalRecordReferences(rows, headers, data, importedIds, result);
+                ValidateRentalRecordReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Categories":
-                ValidateCategoryReferences(rows, headers, data, importedIds, result);
+                ValidateCategoryReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Employees":
-                ValidateEmployeeReferences(rows, headers, data, importedIds, result);
+                ValidateEmployeeReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Recurring Invoices":
-                ValidateRecurringInvoiceReferences(rows, headers, data, importedIds, result);
+                ValidateRecurringInvoiceReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Stock Adjustments":
-                ValidateStockAdjustmentReferences(rows, headers, data, importedIds, result);
+                ValidateStockAdjustmentReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Purchase Orders":
-                ValidateExpenseOrderReferences(rows, headers, data, importedIds, result);
+                ValidateExpenseOrderReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Purchase Order Line Items":
-                ValidatePurchaseOrderLineItemReferences(rows, headers, data, importedIds, result);
+                ValidatePurchaseOrderLineItemReferences(sheetName, rows, headers, data, importedIds, result);
+                break;
+            case "Returns":
+                ValidateReturnsReferences(sheetName, rows, headers, data, importedIds, result);
+                break;
+            case "Lost Damaged":
+            case "Lost/Damaged":
+                ValidateLostDamagedReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
         }
     }
@@ -308,6 +331,7 @@ public class SpreadsheetImportService
     }
 
     private void ValidateProductReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -317,8 +341,11 @@ public class SpreadsheetImportService
         var importedCategories = importedIds.GetValueOrDefault("Categories") ?? [];
         var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var categoryId = GetNullableString(row, headers, "Category ID");
             var supplierId = GetNullableString(row, headers, "Supplier ID");
 
@@ -326,19 +353,22 @@ public class SpreadsheetImportService
                 !existingCategories.Contains(categoryId) &&
                 !importedCategories.Contains(categoryId))
             {
-                result.AddMissingReference("Categories", categoryId);
+                result.AddIssue(sheetName, rowNumber, "Category ID", categoryId, "Categories",
+                    $"Category '{categoryId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(supplierId) &&
                 !existingSuppliers.Contains(supplierId) &&
                 !importedSuppliers.Contains(supplierId))
             {
-                result.AddMissingReference("Suppliers", supplierId);
+                result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
+                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidateInvoiceReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -346,30 +376,39 @@ public class SpreadsheetImportService
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
         var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "Invoice #");
             var customerId = GetNullableString(row, headers, "Customer ID");
 
             if (!string.IsNullOrEmpty(customerId) &&
                 !existingCustomers.Contains(customerId) &&
                 !importedCustomers.Contains(customerId))
             {
-                result.AddMissingReference("Customers", customerId);
+                result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
+                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidateExpenseReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
     {
         var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
-        var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
+        var existingProducts = data.Products.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
+        var importedProductNames = importedIds.GetValueOrDefault("ProductNames") ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var supplierId = GetNullableString(row, headers, "Supplier ID");
             var productName = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(productName))
@@ -379,19 +418,23 @@ public class SpreadsheetImportService
                 !existingSuppliers.Contains(supplierId) &&
                 !importedSuppliers.Contains(supplierId))
             {
-                result.AddMissingReference("Suppliers", supplierId);
+                result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
+                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
 
             // Validate product exists (by name, since Sales/Purchases use product name)
             if (!string.IsNullOrEmpty(productName) &&
-                !existingProducts.Contains(productName))
+                !existingProducts.Contains(productName) &&
+                !importedProductNames.Contains(productName))
             {
-                result.AddMissingReference("Products (by name)", productName);
+                result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
+                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
         }
     }
 
     private void ValidateInventoryReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -401,8 +444,11 @@ public class SpreadsheetImportService
         var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
         var importedLocations = importedIds.GetValueOrDefault("Locations") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var productId = GetNullableString(row, headers, "Product ID");
             var locationId = GetNullableString(row, headers, "Location ID");
 
@@ -410,19 +456,22 @@ public class SpreadsheetImportService
                 !existingProducts.Contains(productId) &&
                 !importedProducts.Contains(productId))
             {
-                result.AddMissingReference("Products", productId);
+                result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
+                    $"Product '{productId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(locationId) &&
                 !existingLocations.Contains(locationId) &&
                 !importedLocations.Contains(locationId))
             {
-                result.AddMissingReference("Locations", locationId);
+                result.AddIssue(sheetName, rowNumber, "Location ID", locationId, "Locations",
+                    $"Location '{locationId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidatePaymentReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -432,8 +481,11 @@ public class SpreadsheetImportService
         var importedInvoices = importedIds.GetValueOrDefault("Invoices") ?? [];
         var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var invoiceId = GetNullableString(row, headers, "Invoice ID");
             var customerId = GetNullableString(row, headers, "Customer ID");
 
@@ -441,29 +493,36 @@ public class SpreadsheetImportService
                 !existingInvoices.Contains(invoiceId) &&
                 !importedInvoices.Contains(invoiceId))
             {
-                result.AddMissingReference("Invoices", invoiceId);
+                result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
+                    $"Invoice '{invoiceId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(customerId) &&
                 !existingCustomers.Contains(customerId) &&
                 !importedCustomers.Contains(customerId))
             {
-                result.AddMissingReference("Customers", customerId);
+                result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
+                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidateRevenueReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
     {
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
-        var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
+        var existingProducts = data.Products.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
+        var importedProductNames = importedIds.GetValueOrDefault("ProductNames") ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var customerId = GetNullableString(row, headers, "Customer ID");
             var productName = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(productName))
@@ -473,19 +532,23 @@ public class SpreadsheetImportService
                 !existingCustomers.Contains(customerId) &&
                 !importedCustomers.Contains(customerId))
             {
-                result.AddMissingReference("Customers", customerId);
+                result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
+                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
 
             // Validate product exists (by name)
             if (!string.IsNullOrEmpty(productName) &&
-                !existingProducts.Contains(productName))
+                !existingProducts.Contains(productName) &&
+                !importedProductNames.Contains(productName))
             {
-                result.AddMissingReference("Products (by name)", productName);
+                result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
+                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
         }
     }
 
     private void ValidateRentalRecordReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -495,8 +558,11 @@ public class SpreadsheetImportService
         var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
         var importedRentalItems = importedIds.GetValueOrDefault("RentalInventory") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var customerId = GetNullableString(row, headers, "Customer ID");
             var rentalItemId = GetNullableString(row, headers, "Rental Item ID");
 
@@ -504,19 +570,22 @@ public class SpreadsheetImportService
                 !existingCustomers.Contains(customerId) &&
                 !importedCustomers.Contains(customerId))
             {
-                result.AddMissingReference("Customers", customerId);
+                result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
+                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(rentalItemId) &&
                 !existingRentalItems.Contains(rentalItemId) &&
                 !importedRentalItems.Contains(rentalItemId))
             {
-                result.AddMissingReference("Rental Items", rentalItemId);
+                result.AddIssue(sheetName, rowNumber, "Rental Item ID", rentalItemId, "Rental Items",
+                    $"Rental item '{rentalItemId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
         }
     }
 
     private void ValidateCategoryReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -533,8 +602,11 @@ public class SpreadsheetImportService
                 sheetIds.Add(id);
         }
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var parentId = GetNullableString(row, headers, "Parent ID");
 
             if (!string.IsNullOrEmpty(parentId) &&
@@ -542,12 +614,14 @@ public class SpreadsheetImportService
                 !importedCategories.Contains(parentId) &&
                 !sheetIds.Contains(parentId))
             {
-                result.AddMissingReference("Categories (parent)", parentId);
+                result.AddIssue(sheetName, rowNumber, "Parent ID", parentId, "Categories (parent)",
+                    $"Parent category '{parentId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
         }
     }
 
     private void ValidateEmployeeReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -555,20 +629,25 @@ public class SpreadsheetImportService
         var existingDepartments = data.Departments.Select(d => d.Id).ToHashSet();
         var importedDepartments = importedIds.GetValueOrDefault("Departments") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var departmentId = GetNullableString(row, headers, "Department ID");
 
             if (!string.IsNullOrEmpty(departmentId) &&
                 !existingDepartments.Contains(departmentId) &&
                 !importedDepartments.Contains(departmentId))
             {
-                result.AddMissingReference("Departments", departmentId);
+                result.AddIssue(sheetName, rowNumber, "Department ID", departmentId, "Departments",
+                    $"Department '{departmentId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidateRecurringInvoiceReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -576,20 +655,25 @@ public class SpreadsheetImportService
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
         var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var customerId = GetNullableString(row, headers, "Customer ID");
 
             if (!string.IsNullOrEmpty(customerId) &&
                 !existingCustomers.Contains(customerId) &&
                 !importedCustomers.Contains(customerId))
             {
-                result.AddMissingReference("Customers", customerId);
+                result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
+                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidateStockAdjustmentReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -597,20 +681,25 @@ public class SpreadsheetImportService
         var existingInventory = data.Inventory.Select(i => i.Id).ToHashSet();
         var importedInventory = importedIds.GetValueOrDefault("Inventory") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var inventoryItemId = GetNullableString(row, headers, "Inventory Item ID");
 
             if (!string.IsNullOrEmpty(inventoryItemId) &&
                 !existingInventory.Contains(inventoryItemId) &&
                 !importedInventory.Contains(inventoryItemId))
             {
-                result.AddMissingReference("Inventory Items", inventoryItemId);
+                result.AddIssue(sheetName, rowNumber, "Inventory Item ID", inventoryItemId, "Inventory Items",
+                    $"Inventory item '{inventoryItemId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
         }
     }
 
     private void ValidateExpenseOrderReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -618,20 +707,25 @@ public class SpreadsheetImportService
         var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
         var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var supplierId = GetNullableString(row, headers, "Supplier ID");
 
             if (!string.IsNullOrEmpty(supplierId) &&
                 !existingSuppliers.Contains(supplierId) &&
                 !importedSuppliers.Contains(supplierId))
             {
-                result.AddMissingReference("Suppliers", supplierId);
+                result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
+                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
 
     private void ValidatePurchaseOrderLineItemReferences(
+        string sheetName,
         List<List<object?>> rows, List<string> headers,
         CompanyData data, Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
@@ -641,8 +735,11 @@ public class SpreadsheetImportService
         var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
         var importedPurchaseOrders = importedIds.GetValueOrDefault("PurchaseOrders") ?? [];
 
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var id = GetString(row, headers, "ID");
             var productId = GetNullableString(row, headers, "Product ID");
             var poId = GetNullableString(row, headers, "PO ID");
 
@@ -650,14 +747,157 @@ public class SpreadsheetImportService
                 !existingProducts.Contains(productId) &&
                 !importedProducts.Contains(productId))
             {
-                result.AddMissingReference("Products", productId);
+                result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
+                    $"Product '{productId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(poId) &&
                 !existingPurchaseOrders.Contains(poId) &&
                 !importedPurchaseOrders.Contains(poId))
             {
-                result.AddMissingReference("Purchase Orders", poId);
+                result.AddIssue(sheetName, rowNumber, "PO ID", poId, "Purchase Orders",
+                    $"Purchase order '{poId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+            }
+        }
+    }
+
+    private void ValidateReturnsReferences(
+        string sheetName,
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
+        var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
+        var existingProducts = data.Products.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingExpenses = data.Expenses.Select(e => e.Id).ToHashSet();
+        var existingRevenues = data.Revenues.Select(r => r.Id).ToHashSet();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
+        var importedExpenses = importedIds.GetValueOrDefault("Expenses") ?? [];
+        var importedRevenues = importedIds.GetValueOrDefault("Revenue") ?? [];
+        var importedProductNames = importedIds.GetValueOrDefault("ProductNames") ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var rowNumber = i + 2; // Excel row number (1-based, after header)
+            var id = GetString(row, headers, "ID");
+            var customerId = GetNullableString(row, headers, "Customer ID");
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+            var productName = GetNullableString(row, headers, "Product");
+            var originalTransactionId = GetNullableString(row, headers, "Original Transaction ID");
+
+            if (!string.IsNullOrEmpty(customerId) &&
+                !existingCustomers.Contains(customerId) &&
+                !importedCustomers.Contains(customerId))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Customer ID", customerId, "Customers",
+                    $"Customer '{customerId}' not found",
+                    ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+            }
+
+            if (!string.IsNullOrEmpty(supplierId) &&
+                !existingSuppliers.Contains(supplierId) &&
+                !importedSuppliers.Contains(supplierId))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
+                    $"Supplier '{supplierId}' not found",
+                    ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+            }
+
+            if (!string.IsNullOrEmpty(productName) &&
+                !existingProducts.Contains(productName) &&
+                !importedProductNames.Contains(productName))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Product", productName, "Products (by name)",
+                    $"Product '{productName}' not found",
+                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+            }
+
+            if (!string.IsNullOrEmpty(originalTransactionId) &&
+                !existingExpenses.Contains(originalTransactionId) &&
+                !existingRevenues.Contains(originalTransactionId) &&
+                !importedExpenses.Contains(originalTransactionId) &&
+                !importedRevenues.Contains(originalTransactionId))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Original Transaction ID", originalTransactionId, "Transactions",
+                    $"Transaction '{originalTransactionId}' not found in Expenses or Revenue",
+                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+            }
+        }
+    }
+
+    private void ValidateLostDamagedReferences(
+        string sheetName,
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
+        var existingProductNames = data.Products.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingExpenses = data.Expenses.Select(e => e.Id).ToHashSet();
+        var existingRevenues = data.Revenues.Select(r => r.Id).ToHashSet();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
+        var importedExpenses = importedIds.GetValueOrDefault("Expenses") ?? [];
+        var importedRevenues = importedIds.GetValueOrDefault("Revenue") ?? [];
+        var importedProductNames = importedIds.GetValueOrDefault("ProductNames") ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var rowNumber = i + 2; // Excel row number (1-based, after header)
+            var id = GetString(row, headers, "ID");
+            var productId = GetNullableString(row, headers, "Product ID");
+            var productName = GetNullableString(row, headers, "Product");
+            var inventoryItemId = GetNullableString(row, headers, "Inventory Item ID");
+
+            // Check product by ID first
+            if (!string.IsNullOrEmpty(productId) &&
+                !existingProducts.Contains(productId) &&
+                !importedProducts.Contains(productId))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Product ID", productId, "Products",
+                    $"Product '{productId}' not found",
+                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+            }
+            // If no product ID, check by name
+            else if (string.IsNullOrEmpty(productId) && !string.IsNullOrEmpty(productName))
+            {
+                if (!existingProductNames.Contains(productName) &&
+                    !importedProductNames.Contains(productName))
+                {
+                    result.AddIssue(
+                        sheetName, rowNumber, "Product", productName, "Products (by name)",
+                        $"Product '{productName}' not found",
+                        ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                }
+            }
+            // Warn if neither product ID nor product name is provided
+            else if (string.IsNullOrEmpty(productId) && string.IsNullOrEmpty(productName))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Product", "", "Products",
+                    "No Product ID or Product name specified",
+                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+            }
+
+            // InventoryItemId references the original expense/revenue transaction
+            if (!string.IsNullOrEmpty(inventoryItemId) &&
+                !existingExpenses.Contains(inventoryItemId) &&
+                !existingRevenues.Contains(inventoryItemId) &&
+                !importedExpenses.Contains(inventoryItemId) &&
+                !importedRevenues.Contains(inventoryItemId))
+            {
+                result.AddIssue(
+                    sheetName, rowNumber, "Inventory Item ID", inventoryItemId, "Transactions",
+                    $"Transaction '{inventoryItemId}' not found in Expenses or Revenue",
+                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
             }
         }
     }

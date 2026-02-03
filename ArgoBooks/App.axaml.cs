@@ -1521,7 +1521,30 @@ public class App : Application
 
                 var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
                 var sampleService = new SampleCompanyService(_fileService, importService);
-                sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
+
+                // Validate first (same as regular imports)
+                var validationContext = await sampleService.ValidateSampleCompanyAsync(stream);
+                var validationResult = validationContext.ValidationResult;
+
+                _mainWindowViewModel.HideLoading();
+
+                // Check for issues and show validation dialog
+                if (validationResult.HasIssues)
+                {
+                    var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
+                    var dialogResult = await validationDialog.ShowAsync(validationResult);
+
+                    if (dialogResult == ImportValidationDialogResult.Cancel)
+                    {
+                        SampleCompanyService.CleanupValidationContext(validationContext);
+                        return;
+                    }
+                }
+
+                _mainWindowViewModel.ShowLoading("Creating sample company...".Translate());
+
+                // Finish import
+                sampleFilePath = await sampleService.FinishSampleCompanyCreationAsync(validationContext);
             }
 
             var success = await CompanyManager.OpenCompanyAsync(sampleFilePath);
@@ -2219,48 +2242,29 @@ public class App : Application
 
                 _mainWindowViewModel?.HideLoading();
 
-                // Check for critical errors - show in modal
-                if (validationResult.Errors.Count > 0)
-                {
-                    var errorDialog = ConfirmationDialog;
-                    if (errorDialog != null)
-                    {
-                        await errorDialog.ShowAsync(new ConfirmationDialogOptions
-                        {
-                            Title = "Import Failed".Translate(),
-                            Message = "Import validation failed:\n\n{0}".TranslateFormat(string.Join("\n", validationResult.Errors)),
-                            PrimaryButtonText = "OK".Translate(),
-                            CancelButtonText = ""
-                        });
-                    }
-                    return;
-                }
-
-                // Check for missing references and ask user
+                // Check for any issues (errors, warnings, or missing refs) and show validation dialog
                 var importOptions = new ImportOptions();
 
-                if (validationResult.HasMissingReferences)
+                if (validationResult.HasIssues && _appShellViewModel != null)
                 {
-                    var missingCount = validationResult.TotalMissingReferences;
-                    var missingSummary = validationResult.GetMissingReferencesSummary();
+                    var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
+                    var dialogResult = await validationDialog.ShowAsync(validationResult);
 
-                    var dialog = ConfirmationDialog;
-                    if (dialog != null)
+                    if (dialogResult == ImportValidationDialogResult.Cancel)
                     {
-                        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                        {
-                            Title = "Missing References Found".Translate(),
-                            Message = "The import file references {0} item(s) that don't exist:\n\n{1}\n\nWould you like to create placeholder entries for these missing items?".TranslateFormat(missingCount, missingSummary),
-                            PrimaryButtonText = "Create & Import".Translate(),
-                            CancelButtonText = "Cancel".Translate()
-                        });
+                        return;
+                    }
 
-                        if (result != ConfirmationResult.Primary)
-                        {
-                            return;
-                        }
-
+                    // If user chose to create missing references
+                    if (dialogResult == ImportValidationDialogResult.CreateMissingAndImport)
+                    {
                         importOptions.AutoCreateMissingReferences = true;
+                    }
+
+                    // If there are critical errors, don't allow import
+                    if (validationResult.Errors.Count > 0)
+                    {
+                        return;
                     }
                 }
 
