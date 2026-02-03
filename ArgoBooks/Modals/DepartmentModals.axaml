@@ -29,12 +29,12 @@
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                 <Run Text="{loc:Loc 'Department Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                             </TextBlock>
-                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" />
+                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" MaxLength="100" />
                             <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                         </StackPanel>
                     </StackPanel>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -70,12 +70,12 @@
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                 <Run Text="{loc:Loc 'Department Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                             </TextBlock>
-                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" />
+                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" MaxLength="100" />
                             <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                         </StackPanel>
                     </StackPanel>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">

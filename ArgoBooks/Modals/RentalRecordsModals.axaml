@@ -80,14 +80,14 @@
                                         <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalQuantity}" Watermark="1" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="10" />
                                     <TextBlock Text="{Binding ModalQuantityError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
                                 </StackPanel>
                             </Grid>
 
@@ -112,7 +112,7 @@
                                         <Run Text="{loc:Loc 'Rate Amount'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
                                     <TextBlock Text="{Binding ModalRateError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -138,7 +138,7 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes}" Watermark="{loc:Loc 'Optional notes'}" TextWrapping="Wrap" Classes="form-input"
-                                         AcceptsReturn="True" MinHeight="80" />
+                                         AcceptsReturn="True" MinHeight="80" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -222,14 +222,14 @@
                                         <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalQuantity}" Watermark="1" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="10" />
                                     <TextBlock Text="{Binding ModalQuantityError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
                                 </StackPanel>
                             </Grid>
 
@@ -254,7 +254,7 @@
                                         <Run Text="{loc:Loc 'Rate Amount'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
                                     <TextBlock Text="{Binding ModalRateError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -280,7 +280,7 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes}" Watermark="{loc:Loc 'Optional notes'}" TextWrapping="Wrap" Classes="form-input"
-                                         AcceptsReturn="True" MinHeight="80" />
+                                         AcceptsReturn="True" MinHeight="80" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -340,13 +340,13 @@
                             <!-- Customer -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Customer}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding FilterCustomer}" Watermark="{loc:Loc 'Search by customer name'}" Classes="form-input" />
+                                <TextBox Text="{Binding FilterCustomer}" Watermark="{loc:Loc 'Search by customer name'}" Classes="form-input" MaxLength="100" />
                             </StackPanel>
 
                             <!-- Item -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Rental Item'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding FilterItem}" Watermark="{loc:Loc 'Search by item name'}" Classes="form-input" />
+                                <TextBox Text="{Binding FilterItem}" Watermark="{loc:Loc 'Search by item name'}" Classes="form-input" MaxLength="100" />
                             </StackPanel>
 
                             <!-- Start Date Range -->
@@ -475,7 +475,7 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Return Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReturnNotes}" Watermark="{loc:Loc 'Optional notes about the return'}" TextWrapping="Wrap" Classes="form-input"
-                                         AcceptsReturn="True" MinHeight="60" />
+                                         AcceptsReturn="True" MinHeight="60" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

@@ -81,7 +81,8 @@
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter quantity'}"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                             MaxLength="10" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -111,7 +112,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Enter reason for adjustment...'}" />
+                                         Watermark="{loc:Loc 'Enter reason for adjustment...'}"
+                                         MaxLength="500" />
                             </StackPanel>
 
                             <!-- Error Message -->
@@ -181,7 +183,8 @@
                                     <TextBlock Text="{loc:Loc SKU}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding AddItemSku, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter SKU (optional)'}" />
+                                             Watermark="{loc:Loc 'Enter SKU (optional)'}"
+                                             MaxLength="50" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -210,7 +213,8 @@
                                     <TextBox Text="{Binding AddItemQuantity, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="0"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                             MaxLength="10" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -222,7 +226,8 @@
                                     <TextBox Text="{Binding AddItemReorderPoint, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="10"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                             MaxLength="10" />
                                 </StackPanel>
                             </Grid>
 
@@ -232,7 +237,8 @@
                                 <TextBox Text="{Binding AddItemOverstockThreshold, Mode=TwoWay}"
                                          Classes="form-input"
                                          Watermark="100"
-                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" />
+                                         behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                         MaxLength="10" />
                             </StackPanel>
 
                             <!-- Error Message -->

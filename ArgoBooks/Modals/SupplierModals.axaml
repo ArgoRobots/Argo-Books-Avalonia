@@ -29,20 +29,20 @@
                            <Grid ColumnDefinitions="Auto,16,*">
                                <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'SUP-xxx'}" />
+                                   <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'SUP-xxx'}" MaxLength="20" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                        <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                    </TextBlock>
-                                   <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
+                                   <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" MaxLength="100" />
                                    <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                            </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'supplier@email.com'}" />
+                                   <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'supplier@email.com'}" MaxLength="254" />
                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
@@ -53,27 +53,27 @@
                            </Grid>
                            <StackPanel Spacing="6">
                                <TextBlock Text="{loc:Loc 'Website'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                               <TextBox Text="{Binding ModalWebsite, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'https://www.example.com'}" />
+                               <TextBox Text="{Binding ModalWebsite, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'https://www.example.com'}" MaxLength="500" />
                            </StackPanel>
                            <TextBlock Text="{loc:Loc 'Address'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
                            <StackPanel Spacing="6">
                                <TextBlock Text="{loc:Loc 'Street Address'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                               <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Street address'}" />
+                               <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Street address'}" MaxLength="200" />
                            </StackPanel>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'City'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'City'}" />
+                                   <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'City'}" MaxLength="100" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'State/Province'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'State'}" />
+                                   <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'State'}" MaxLength="100" />
                                </StackPanel>
                            </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Postal Code'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Postal code'}" />
+                                   <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Postal code'}" MaxLength="20" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Country'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -82,7 +82,7 @@
                            </Grid>
                            <StackPanel Spacing="6">
                                <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                               <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                               <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxLength="500" />
                            </StackPanel>
                        </StackPanel>
                    </ScrollViewer>
@@ -127,20 +127,20 @@
                            <Grid ColumnDefinitions="Auto,16,*">
                                <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" />
+                                   <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" MaxLength="20" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                        <Run Text="{loc:Loc 'Supplier Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                    </TextBlock>
-                                   <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" />
+                                   <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter supplier name'}" MaxLength="100" />
                                    <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                            </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'supplier@email.com'}" />
+                                   <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'supplier@email.com'}" MaxLength="254" />
                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
@@ -151,27 +151,27 @@
                            </Grid>
                            <StackPanel Spacing="6">
                                <TextBlock Text="{loc:Loc 'Website'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                               <TextBox Text="{Binding ModalWebsite, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'https://www.example.com'}" />
+                               <TextBox Text="{Binding ModalWebsite, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'https://www.example.com'}" MaxLength="500" />
                            </StackPanel>
                            <TextBlock Text="{loc:Loc 'Address'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
                            <StackPanel Spacing="6">
                                <TextBlock Text="{loc:Loc 'Street Address'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                               <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Street address'}" />
+                               <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Street address'}" MaxLength="200" />
                            </StackPanel>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'City'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'City'}" />
+                                   <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'City'}" MaxLength="100" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'State/Province'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'State'}" />
+                                   <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'State'}" MaxLength="100" />
                                </StackPanel>
                            </Grid>
                            <Grid ColumnDefinitions="*,16,*">
                                <StackPanel Grid.Column="0" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Postal Code'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                   <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Postal code'}" />
+                                   <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Postal code'}" MaxLength="20" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock Text="{loc:Loc 'Country'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -180,7 +180,7 @@
                            </Grid>
                            <StackPanel Spacing="6">
                                <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                               <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                               <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxLength="500" />
                            </StackPanel>
                        </StackPanel>
                    </ScrollViewer>

@@ -53,7 +53,8 @@
                  Text="{Binding #Root.ColorValue, Mode=TwoWay}"
                  Watermark="#000000"
                  VerticalAlignment="Center"
-                 Padding="8,6" />
+                 Padding="8,6"
+                 MaxLength="9" />
 
         <!-- Color Picker Popup -->
         <Popup Grid.Column="0"
@@ -88,7 +89,8 @@
                                  Margin="8,0,0,0"
                                  FontFamily="Consolas,Menlo,monospace"
                                  FontSize="13"
-                                 Padding="6,4" />
+                                 Padding="6,4"
+                                 MaxLength="9" />
                     </Grid>
 
                     <!-- Action Buttons Row -->

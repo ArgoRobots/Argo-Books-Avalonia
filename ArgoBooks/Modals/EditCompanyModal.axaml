@@ -61,7 +61,8 @@
                             </TextBlock>
                             <TextBox Classes="form-input"
                                      Text="{Binding CompanyName, Mode=TwoWay}"
-                                     Watermark="{loc:Loc 'Enter company name'}" />
+                                     Watermark="{loc:Loc 'Enter company name'}"
+                                     MaxLength="100" />
                         </StackPanel>
 
                         <!-- Two column layout for fields -->
@@ -119,7 +120,8 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Classes="form-input"
                                          Text="{Binding City, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter city'}" />
+                                         Watermark="{loc:Loc 'Enter city'}"
+                                         MaxLength="100" />
                             </StackPanel>
 
                             <!-- Address -->
@@ -130,7 +132,8 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Classes="form-input"
                                          Text="{Binding Address, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter address'}" />
+                                         Watermark="{loc:Loc 'Enter address'}"
+                                         MaxLength="200" />
                             </StackPanel>
                         </Grid>
 

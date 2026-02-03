@@ -33,7 +33,7 @@ public class PieLegendItem
     /// <summary>
     /// The hex color string.
     /// </summary>
-    public string ColorHex { get; set; } = "#6495ED";
+    public string ColorHex { get; set; } = "#3B82F6";
 
     /// <summary>
     /// Formatted value display string.

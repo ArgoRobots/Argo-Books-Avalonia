@@ -44,7 +44,8 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalName, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter location name'}" />
+                                             Watermark="{loc:Loc 'Enter location name'}"
+                                             MaxLength="100" />
                                     <TextBlock Text="{Binding ModalNameError}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -54,7 +55,8 @@
                                     <TextBlock Text="{loc:Loc Code}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalCode, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Auto-generated if empty'}" />
+                                             Watermark="{loc:Loc 'Auto-generated if empty'}"
+                                             MaxLength="20" />
                                 </StackPanel>
                             </Grid>
 
@@ -88,13 +90,15 @@
                                     <TextBlock Text="{loc:Loc 'State/Province'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter state/province'}" />
+                                             Watermark="{loc:Loc 'Enter state/province'}"
+                                             MaxLength="100" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc City}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalCity, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter city'}" />
+                                             Watermark="{loc:Loc 'Enter city'}"
+                                             MaxLength="100" />
                                 </StackPanel>
                             </Grid>
 
@@ -104,13 +108,15 @@
                                     <TextBlock Text="{loc:Loc 'Postal Code'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalPostalCode, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter postal code'}" />
+                                             Watermark="{loc:Loc 'Enter postal code'}"
+                                             MaxLength="20" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Street Address'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter street address'}" />
+                                             Watermark="{loc:Loc 'Enter street address'}"
+                                             MaxLength="200" />
                                 </StackPanel>
                             </Grid>
 
@@ -123,7 +129,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Enter notes...'}" />
+                                         Watermark="{loc:Loc 'Enter notes...'}"
+                                         MaxLength="500" />
                             </StackPanel>
 
                             <!-- Error Message -->
@@ -179,7 +186,8 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalName, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter location name'}" />
+                                             Watermark="{loc:Loc 'Enter location name'}"
+                                             MaxLength="100" />
                                     <TextBlock Text="{Binding ModalNameError}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -190,7 +198,8 @@
                                     <TextBox Text="{Binding ModalCode}"
                                              Classes="form-input"
                                              IsReadOnly="True"
-                                             Background="{DynamicResource SurfaceAltBrush}" />
+                                             Background="{DynamicResource SurfaceAltBrush}"
+                                             MaxLength="20" />
                                 </StackPanel>
                             </Grid>
 
@@ -224,13 +233,15 @@
                                     <TextBlock Text="{loc:Loc 'State/Province'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter state/province'}" />
+                                             Watermark="{loc:Loc 'Enter state/province'}"
+                                             MaxLength="100" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc City}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalCity, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter city'}" />
+                                             Watermark="{loc:Loc 'Enter city'}"
+                                             MaxLength="100" />
                                 </StackPanel>
                             </Grid>
 
@@ -240,13 +251,15 @@
                                     <TextBlock Text="{loc:Loc 'Postal Code'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalPostalCode, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter postal code'}" />
+                                             Watermark="{loc:Loc 'Enter postal code'}"
+                                             MaxLength="20" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Street Address'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter street address'}" />
+                                             Watermark="{loc:Loc 'Enter street address'}"
+                                             MaxLength="200" />
                                 </StackPanel>
                             </Grid>
 
@@ -259,7 +272,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Enter notes...'}" />
+                                         Watermark="{loc:Loc 'Enter notes...'}"
+                                         MaxLength="500" />
                             </StackPanel>
 
                             <!-- Error Message -->

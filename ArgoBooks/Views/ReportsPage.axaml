@@ -509,7 +509,8 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReportName}"
                                          Watermark="{loc:Loc 'Enter report name...'}"
-                                         Padding="12,10" />
+                                         Padding="12,10"
+                                         MaxLength="100" />
                             </StackPanel>
 
                             <!-- Date Range -->
@@ -1001,7 +1002,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedLabelElement.Text}" />
+                                    <TextBox Text="{Binding SelectedLabelElement.Text}" MaxLength="500" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1587,7 +1588,8 @@
                                 <TextBox Grid.Column="0"
                                          Text="{Binding ExportFilePath}"
                                          Watermark="{loc:Loc 'Select file path...'}"
-                                         Padding="12,10" />
+                                         Padding="12,10"
+                                         MaxLength="500" />
                                 <Button Grid.Column="1"
                                         Content="{loc:Loc 'Browse'}"
                                         Margin="8,0,0,0"

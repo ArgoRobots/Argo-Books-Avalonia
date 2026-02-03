@@ -466,7 +466,7 @@
                                                 Command="{Binding SelectAccentColorCommand}"
                                                 CommandParameter="Blue">
                                             <Grid>
-                                                <Border Width="48" Height="48" CornerRadius="24" Background="{DynamicResource PrimaryBrush}">
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#3B82F6">
                                                     <PathIcon Data="{x:Static icons:Icons.Check}"
                                                               Width="20" Height="20" Foreground="White">
                                                         <PathIcon.IsVisible>
@@ -779,7 +779,8 @@
                                     <TextBox Grid.Column="0"
                                              Text="{Binding NewPassword}"
                                              RevealPassword="{Binding IsNewPasswordVisible}"
-                                             Classes="password-field" />
+                                             Classes="password-field"
+                                             MaxLength="128" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleNewPasswordVisibilityCommand}">
@@ -798,7 +799,8 @@
                                     <TextBox Grid.Column="0"
                                              Text="{Binding ConfirmPassword}"
                                              RevealPassword="{Binding IsConfirmPasswordVisible}"
-                                             Classes="password-field" />
+                                             Classes="password-field"
+                                             MaxLength="128" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
@@ -848,7 +850,8 @@
                                              x:Name="ChangeCurrentPasswordTextBox"
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
-                                             Classes="password-field" />
+                                             Classes="password-field"
+                                             MaxLength="128" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleCurrentPasswordVisibilityCommand}">
@@ -867,7 +870,8 @@
                                     <TextBox Grid.Column="0"
                                              Text="{Binding NewPassword}"
                                              RevealPassword="{Binding IsNewPasswordVisible}"
-                                             Classes="password-field" />
+                                             Classes="password-field"
+                                             MaxLength="128" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleNewPasswordVisibilityCommand}">
@@ -886,7 +890,8 @@
                                     <TextBox Grid.Column="0"
                                              Text="{Binding ConfirmPassword}"
                                              RevealPassword="{Binding IsConfirmPasswordVisible}"
-                                             Classes="password-field" />
+                                             Classes="password-field"
+                                             MaxLength="128" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
@@ -938,7 +943,8 @@
                                              x:Name="RemoveCurrentPasswordTextBox"
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
-                                             Classes="password-field" />
+                                             Classes="password-field"
+                                             MaxLength="128" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleCurrentPasswordVisibilityCommand}">

@@ -84,7 +84,8 @@
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="8,6"
-                         VerticalAlignment="Center" />
+                         VerticalAlignment="Center"
+                         MaxLength="100" />
 
                 <!-- Dropdown Arrow -->
                 <Button Grid.Column="1"

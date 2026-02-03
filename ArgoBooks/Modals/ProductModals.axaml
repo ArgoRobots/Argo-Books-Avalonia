@@ -48,13 +48,13 @@
                             <Grid ColumnDefinitions="Auto,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                     <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'PRD-xxx'}" />
+                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'PRD-xxx'}" MaxLength="20" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Product Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" />
+                                    <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" MaxLength="100" />
                                     <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -63,7 +63,7 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*">
@@ -107,14 +107,14 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
@@ -166,13 +166,13 @@
                             <Grid ColumnDefinitions="Auto,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                     <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" />
+                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" MaxLength="20" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Product Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" />
+                                    <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" MaxLength="100" />
                                     <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -181,7 +181,7 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*">
@@ -225,14 +225,14 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
