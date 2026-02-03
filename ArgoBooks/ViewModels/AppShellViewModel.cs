@@ -114,6 +114,11 @@ public partial class AppShellViewModel : ViewModelBase
     public ImportModalViewModel ImportModalViewModel { get; }
 
     /// <summary>
+    /// Gets the import validation dialog view model.
+    /// </summary>
+    public ImportValidationDialogViewModel ImportValidationDialogViewModel { get; }
+
+    /// <summary>
     /// Gets the export as modal view model.
     /// </summary>
     public ExportAsModalViewModel ExportAsModalViewModel { get; }
@@ -329,6 +334,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create import modal
         ImportModalViewModel = new ImportModalViewModel();
+
+        // Create import validation dialog
+        ImportValidationDialogViewModel = new ImportValidationDialogViewModel();
 
         // Create export as modal
         ExportAsModalViewModel = new ExportAsModalViewModel();

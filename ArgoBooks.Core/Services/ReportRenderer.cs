@@ -36,6 +36,36 @@ public class ReportRenderer : IDisposable
     private static readonly SKColor ChartAxisColor = SKColor.Parse("#374151"); // Gray
     private static readonly SKColor ChartGridColor = SKColor.Parse("#E5E7EB"); // Light gray
 
+    /// <summary>
+    /// Determines if a chart type should display currency formatting on the Y-axis.
+    /// </summary>
+    private static bool ShouldShowCurrency(ChartDataType chartType)
+    {
+        return chartType switch
+        {
+            // Count-based charts (no currency)
+            ChartDataType.TotalTransactions => false,
+            ChartDataType.CustomerGrowth => false,
+            ChartDataType.ActiveVsInactiveCustomers => false,
+            ChartDataType.RentalsPerCustomer => false,
+            ChartDataType.AccountantsTransactions => false,
+            ChartDataType.CountriesOfOrigin => false,
+            ChartDataType.CountriesOfDestination => false,
+            ChartDataType.CompaniesOfOrigin => false,
+            ChartDataType.CompaniesOfDestination => false,
+            // All other charts show currency
+            _ => true
+        };
+    }
+
+    /// <summary>
+    /// Formats a Y-axis value based on whether the chart shows currency.
+    /// </summary>
+    private static string FormatYAxisValue(double value, ChartDataType chartType)
+    {
+        return ShouldShowCurrency(chartType) ? $"${value:N0}" : $"{value:N0}";
+    }
+
     public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f, ITranslationProvider? translationProvider = null)
     {
         _config = config;
@@ -496,21 +526,30 @@ public class ReportRenderer : IDisposable
     {
         if (dataPoints.Count == 0) return;
 
+        // Get typeface for chart labels
+        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+
         // Calculate value range
-        var maxValue = dataPoints.Max(p => Math.Abs(p.Value));
+        var maxValue = dataPoints.Max(p => p.Value);
         var minValue = dataPoints.Min(p => p.Value);
 
         // Ensure we have a sensible range
-        if (maxValue == 0) maxValue = 1;
-
-        // Add 20% padding at top so bars don't reach the very top
-        // This makes single datapoint charts look better (like LiveChartsCore)
-        var paddedMaxValue = maxValue * 1.2;
+        if (maxValue == 0 && minValue == 0) maxValue = 1;
 
         // Determine if we have negative values
         var hasNegatives = minValue < 0;
+
+        // Add 20% padding to both ends for better visual appearance
+        var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
+        var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
+
+        // Calculate the total range the chart needs to display
+        var totalRange = paddedMaxValue - paddedMinValue;
+        if (totalRange == 0) totalRange = 1;
+
+        // Calculate baseline position (where value = 0)
         var baselineY = hasNegatives
-            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / (paddedMaxValue - minValue))
+            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / totalRange)
             : chartArea.Bottom;
 
         // Draw grid lines
@@ -526,13 +565,14 @@ public class ReportRenderer : IDisposable
             var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
             canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
 
-            // Draw Y-axis value labels using padded max for proper scaling
-            var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
-            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            // Draw Y-axis value labels using the full padded range
+            var value = paddedMaxValue - totalRange * i / gridLineCount;
+            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
-            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+
+            canvas.DrawText(FormatYAxisValue(value, chart.ChartType), chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw Y-axis
@@ -577,9 +617,8 @@ public class ReportRenderer : IDisposable
             var point = dataPoints[i];
             var x = startX + (i * (barWidth + barSpacing));
 
-            // Calculate bar height based on value (using padded max for proper scaling)
-            var valueRatio = (float)(point.Value / paddedMaxValue);
-            var barHeight = chartArea.Height * Math.Abs(valueRatio);
+            // Calculate bar height based on value relative to total range
+            var barHeight = chartArea.Height * (float)(Math.Abs(point.Value) / totalRange);
 
             // Handle positive vs negative values
             var barRect = point.Value >= 0
@@ -590,7 +629,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels - dynamically based on date range and available width
-        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -623,19 +662,30 @@ public class ReportRenderer : IDisposable
     {
         if (dataPoints.Count == 0) return;
 
+        // Get typeface for chart labels
+        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+
         // Calculate value range
-        var maxValue = dataPoints.Max(p => Math.Abs(p.Value));
+        var maxValue = dataPoints.Max(p => p.Value);
         var minValue = dataPoints.Min(p => p.Value);
 
         // Ensure we have a sensible range
-        if (maxValue == 0) maxValue = 1;
+        if (maxValue == 0 && minValue == 0) maxValue = 1;
 
-        // Add 20% padding at top
-        var paddedMaxValue = maxValue * 1.2;
-
+        // Determine if we have negative values
         var hasNegatives = minValue < 0;
+
+        // Add 20% padding to both ends for better visual appearance
+        var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
+        var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
+
+        // Calculate the total range the chart needs to display
+        var totalRange = paddedMaxValue - paddedMinValue;
+        if (totalRange == 0) totalRange = 1;
+
+        // Calculate baseline position (where value = 0)
         var baselineY = hasNegatives
-            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / (paddedMaxValue - minValue))
+            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / totalRange)
             : chartArea.Bottom;
 
         // Draw grid lines
@@ -651,12 +701,14 @@ public class ReportRenderer : IDisposable
             var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
             canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
 
-            var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
-            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            // Draw Y-axis value labels using the full padded range
+            var value = paddedMaxValue - totalRange * i / gridLineCount;
+            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
-            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+
+            canvas.DrawText(FormatYAxisValue(value, chart.ChartType), chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw axes
@@ -686,8 +738,8 @@ public class ReportRenderer : IDisposable
         {
             var x = chartArea.Left + (i * xSpacing);
             if (pointCount == 1) x = chartArea.MidX; // Center single point
-            var valueRatio = (float)(dataPoints[i].Value / paddedMaxValue);
-            var y = baselineY - (chartArea.Height * valueRatio);
+            // Map value to Y position: paddedMaxValue at top, paddedMinValue at bottom
+            var y = chartArea.Top + chartArea.Height * (float)((paddedMaxValue - dataPoints[i].Value) / totalRange);
             points[i] = new SKPoint(x, y);
         }
 
@@ -791,7 +843,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels - dynamically based on date range and available width
-        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -820,6 +872,9 @@ public class ReportRenderer : IDisposable
     private void RenderPieChart(SKCanvas canvas, SKRect chartArea, List<ChartDataPoint> dataPoints, ChartReportElement chart)
     {
         if (dataPoints.Count == 0) return;
+
+        // Get typeface for chart labels
+        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
 
         // Calculate total value for percentages
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
@@ -854,7 +909,7 @@ public class ReportRenderer : IDisposable
         var legendX = centerX + radius + 20 * _renderScale;
         var legendY = chartArea.Top + 10 * _renderScale;
 
-        using var labelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+        using var labelFont = new SKFont(chartTypeface, 9 * _renderScale);
         using var labelPaint = new SKPaint();
         labelPaint.Color = SKColors.Black;
         labelPaint.IsAntialias = true;
@@ -932,20 +987,31 @@ public class ReportRenderer : IDisposable
     {
         if (seriesData.Count == 0) return;
 
+        // Get typeface for chart labels
+        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+
         // Get all data points and find max value
         var allDataPoints = seriesData.SelectMany(s => s.DataPoints).ToList();
         if (allDataPoints.Count == 0) return;
 
-        var maxValue = allDataPoints.Max(p => Math.Abs(p.Value));
+        var maxValue = allDataPoints.Max(p => p.Value);
         var minValue = allDataPoints.Min(p => p.Value);
-        if (maxValue == 0) maxValue = 1;
+        if (maxValue == 0 && minValue == 0) maxValue = 1;
 
-        // Add 20% padding at top so bars don't reach the very top
-        var paddedMaxValue = maxValue * 1.2;
-
+        // Determine if we have negative values
         var hasNegatives = minValue < 0;
+
+        // Add 20% padding to both ends for better visual appearance
+        var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
+        var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
+
+        // Calculate the total range the chart needs to display
+        var totalRange = paddedMaxValue - paddedMinValue;
+        if (totalRange == 0) totalRange = 1;
+
+        // Calculate baseline position (where value = 0)
         var baselineY = hasNegatives
-            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / (paddedMaxValue - minValue))
+            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / totalRange)
             : chartArea.Bottom;
 
         // Draw grid lines
@@ -961,12 +1027,14 @@ public class ReportRenderer : IDisposable
             var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
             canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
 
-            var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
-            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            // Draw Y-axis value labels using the full padded range
+            var value = paddedMaxValue - totalRange * i / gridLineCount;
+            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
-            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+
+            canvas.DrawText(FormatYAxisValue(value, chart.ChartType), chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw axes
@@ -1009,8 +1077,8 @@ public class ReportRenderer : IDisposable
                 var point = series.DataPoints[categoryIndex];
                 var x = barStartX + (seriesIndex * (barWidth + barSpacing));
 
-                var valueRatio = (float)(point.Value / paddedMaxValue);
-                var barHeight = chartArea.Height * Math.Abs(valueRatio);
+                // Calculate bar height based on value relative to total range
+                var barHeight = chartArea.Height * (float)(Math.Abs(point.Value) / totalRange);
 
                 var barColor = SKColor.Parse(series.Color);
                 using var barPaint = new SKPaint();
@@ -1028,7 +1096,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels - dynamically based on date range and available width
-        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -1058,20 +1126,31 @@ public class ReportRenderer : IDisposable
     {
         if (seriesData.Count == 0) return;
 
+        // Get typeface for chart labels
+        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+
         // Get all data points and find max/min values
         var allDataPoints = seriesData.SelectMany(s => s.DataPoints).ToList();
         if (allDataPoints.Count == 0) return;
 
-        var maxValue = allDataPoints.Max(p => Math.Abs(p.Value));
+        var maxValue = allDataPoints.Max(p => p.Value);
         var minValue = allDataPoints.Min(p => p.Value);
-        if (maxValue == 0) maxValue = 1;
+        if (maxValue == 0 && minValue == 0) maxValue = 1;
 
-        // Add 20% padding at top
-        var paddedMaxValue = maxValue * 1.2;
-
+        // Determine if we have negative values
         var hasNegatives = minValue < 0;
+
+        // Add 20% padding to both ends for better visual appearance
+        var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
+        var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
+
+        // Calculate the total range the chart needs to display
+        var totalRange = paddedMaxValue - paddedMinValue;
+        if (totalRange == 0) totalRange = 1;
+
+        // Calculate baseline position (where value = 0)
         var baselineY = hasNegatives
-            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / (paddedMaxValue - minValue))
+            ? chartArea.Top + chartArea.Height * (float)(paddedMaxValue / totalRange)
             : chartArea.Bottom;
 
         // Draw grid lines
@@ -1087,12 +1166,14 @@ public class ReportRenderer : IDisposable
             var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
             canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
 
-            var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
-            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            // Draw Y-axis value labels using the full padded range
+            var value = paddedMaxValue - totalRange * i / gridLineCount;
+            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
-            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+
+            canvas.DrawText(FormatYAxisValue(value, chart.ChartType), chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw axes
@@ -1124,8 +1205,8 @@ public class ReportRenderer : IDisposable
             {
                 var x = chartArea.Left + (i * xSpacing);
                 if (pointCount == 1) x = chartArea.MidX;
-                var valueRatio = (float)(series.DataPoints[i].Value / paddedMaxValue);
-                var y = baselineY - (chartArea.Height * valueRatio);
+                // Map value to Y position: paddedMaxValue at top, paddedMinValue at bottom
+                var y = chartArea.Top + chartArea.Height * (float)((paddedMaxValue - series.DataPoints[i].Value) / totalRange);
                 points[i] = new SKPoint(x, y);
             }
 
@@ -1228,7 +1309,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels
-        using var xLabelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -1256,6 +1337,9 @@ public class ReportRenderer : IDisposable
     /// </summary>
     private void RenderGeoMap(SKCanvas canvas, SKRect chartArea, ChartReportElement chart)
     {
+        // Get typeface for chart labels
+        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+
         var mapData = GetWorldMapData();
 
         if (mapData == null || mapData.Count == 0)
@@ -1274,8 +1358,8 @@ public class ReportRenderer : IDisposable
         var maxBarWidth = chartArea.Width * 0.6f;
         var labelWidth = chartArea.Width * 0.25f;
 
-        using var labelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
-        using var valueFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+        using var labelFont = new SKFont(chartTypeface, 10 * _renderScale);
+        using var valueFont = new SKFont(chartTypeface, 9 * _renderScale);
         using var labelPaint = new SKPaint();
         labelPaint.Color = SKColors.Black;
         labelPaint.IsAntialias = true;
@@ -1735,7 +1819,7 @@ public class ReportRenderer : IDisposable
         var transactions = new List<(DateTime Date, string Id, string Company, string Product, decimal Qty, decimal UnitPrice, decimal Total, string Status, string Accountant, decimal Shipping)>();
 
         // Get revenue transactions
-        if (transactionType == TransactionType.Revenue || transactionType == TransactionType.Both)
+        if (transactionType == TransactionType.Revenue)
         {
             foreach (var revenue in _companyData.Revenues)
             {
@@ -1747,7 +1831,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Get expense transactions
-        if (transactionType == TransactionType.Expenses || transactionType == TransactionType.Both)
+        if (transactionType == TransactionType.Expenses)
         {
             foreach (var expense in _companyData.Expenses)
             {
@@ -1945,7 +2029,15 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(dateRange);
 
-        var style = dateRange.IsItalic ? SKFontStyle.Italic : SKFontStyle.Normal;
+        // Handle bold and italic font styles
+        var style = SKFontStyle.Normal;
+        if (dateRange.IsBold && dateRange.IsItalic)
+            style = SKFontStyle.BoldItalic;
+        else if (dateRange.IsBold)
+            style = SKFontStyle.Bold;
+        else if (dateRange.IsItalic)
+            style = SKFontStyle.Italic;
+
         var typeface = SKTypeface.FromFamilyName(dateRange.FontFamily, style) ?? _defaultTypeface;
         using var font = new SKFont(typeface, (float)dateRange.FontSize * _renderScale);
         using var paint = new SKPaint();
@@ -1979,6 +2071,31 @@ public class ReportRenderer : IDisposable
         };
 
         canvas.DrawText(text, x, y, textAlign, font, paint);
+
+        // Draw underline if specified
+        if (dateRange.IsUnderline)
+        {
+            font.GetFontMetrics(out var metrics);
+            var underlinePaint = new SKPaint
+            {
+                Color = paint.Color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1 * _renderScale,
+                IsAntialias = true
+            };
+
+            var textWidth = font.MeasureText(text);
+            var underlineY = y + (metrics.UnderlinePosition ?? 3 * _renderScale);
+            var startX = dateRange.HorizontalAlignment switch
+            {
+                HorizontalTextAlignment.Left => x,
+                HorizontalTextAlignment.Center => x - textWidth / 2,
+                HorizontalTextAlignment.Right => x - textWidth,
+                _ => x - textWidth / 2
+            };
+
+            canvas.DrawLine(startX, underlineY, startX + textWidth, underlineY, underlinePaint);
+        }
     }
 
     private void RenderSummary(SKCanvas canvas, SummaryReportElement summary)
@@ -2003,7 +2120,8 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw summary statistics
-        using var font = new SKFont(_defaultTypeface, (float)summary.FontSize * _renderScale);
+        var summaryTypeface = SKTypeface.FromFamilyName(summary.FontFamily) ?? _defaultTypeface;
+        using var font = new SKFont(summaryTypeface, (float)summary.FontSize * _renderScale);
         using var textPaint = new SKPaint();
         textPaint.Color = SKColors.Black;
         textPaint.IsAntialias = true;
@@ -2229,7 +2347,6 @@ public class ReportRenderer : IDisposable
         if (table.ShowCompanyColumn) columns.Add("Company");
         if (table.ShowProductColumn) columns.Add("Product");
         if (table.ShowQuantityColumn) columns.Add("Qty");
-        if (table.ShowUnitPriceColumn) columns.Add("Unit Price");
         if (table.ShowTotalColumn) columns.Add("Total");
         if (table.ShowStatusColumn) columns.Add("Status");
         if (table.ShowAccountantColumn) columns.Add("Accountant");
@@ -2374,7 +2491,7 @@ public class ReportRenderer : IDisposable
 
         var totals = new List<decimal>();
 
-        if (summary.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        if (summary.TransactionType is TransactionType.Revenue)
         {
             var sales = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
@@ -2382,7 +2499,7 @@ public class ReportRenderer : IDisposable
             totals.AddRange(sales);
         }
 
-        if (summary.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        if (summary.TransactionType is TransactionType.Expenses)
         {
             var purchases = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)

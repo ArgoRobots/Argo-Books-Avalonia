@@ -838,16 +838,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     #region Performance Charts
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _growthRatesSeries = [];
+    private ObservableCollection<ISeries> _customerGrowthSeries = [];
 
     [ObservableProperty]
-    private Axis[] _growthRatesXAxes = [];
+    private Axis[] _customerGrowthXAxes = [];
 
     [ObservableProperty]
-    private Axis[] _growthRatesYAxes = [];
+    private Axis[] _customerGrowthYAxes = [];
 
     [ObservableProperty]
-    private bool _hasGrowthRatesData;
+    private bool _hasCustomerGrowthData;
 
     #endregion
 
@@ -1023,7 +1023,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AverageTransactionValue.GetDisplayName());
     public LabelVisual TotalTransactionsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalTransactions.GetDisplayName());
     public LabelVisual AverageShippingCostsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.AverageShippingCosts.GetDisplayName());
-    public LabelVisual GrowthRatesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.GrowthRates.GetDisplayName());
 
     // Customers Tab Chart Titles
     public LabelVisual TopCustomersByRevenueTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TopCustomersByRevenue.GetDisplayName());
@@ -1059,7 +1058,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         nameof(CountriesOfOriginTitle), nameof(CompaniesOfOriginTitle), nameof(CountriesOfDestinationTitle),
         nameof(CompaniesOfDestinationTitle), nameof(WorldMapOverviewTitle), nameof(TransactionsByAccountantTitle),
         nameof(WorkloadDistributionTitle), nameof(AverageTransactionValueTitle),
-        nameof(TotalTransactionsTitle), nameof(AverageShippingCostsTitle), nameof(GrowthRatesTitle),
+        nameof(TotalTransactionsTitle), nameof(AverageShippingCostsTitle),
         nameof(TopCustomersByRevenueTitle), nameof(CustomerPaymentStatusTitle), nameof(CustomerGrowthTitle),
         nameof(CustomerLifetimeValueTitle), nameof(ActiveVsInactiveCustomersTitle), nameof(RentalsPerCustomerTitle),
         nameof(ReturnsOverTimeTitle), nameof(ReturnReasonsTitle), nameof(FinancialImpactOfReturnsTitle),
@@ -1364,7 +1363,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 ChartLoaderService.ResetZoom(AvgShippingCostsXAxes, AvgShippingCostsYAxes);
                 break;
             case "Customer Growth":
-                ChartLoaderService.ResetZoom(GrowthRatesXAxes, GrowthRatesYAxes);
+                ChartLoaderService.ResetZoom(CustomerGrowthXAxes, CustomerGrowthYAxes);
                 break;
             case "Customer Lifetime Value":
                 // Uses AvgTransactionValue axes
@@ -1483,7 +1482,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadAccountantsTransactionsChart(data);
 
         // Performance charts
-        LoadGrowthRatesChart(data);
+        LoadCustomerGrowthChart(data);
 
         // Customer charts
         LoadCustomerPaymentStatusChart(data);
@@ -1661,13 +1660,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         HasAccountantsTransactionsData = series.Count > 0;
     }
 
-    private void LoadGrowthRatesChart(CompanyData data)
+    private void LoadCustomerGrowthChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadGrowthRatesChart(data, StartDate, EndDate, SelectedDateRange);
-        GrowthRatesSeries = series;
-        GrowthRatesXAxes = _chartLoaderService.CreateXAxes(labels);
-        GrowthRatesYAxes = _chartLoaderService.CreateNumberYAxes();
-        HasGrowthRatesData = series.Count > 0;
+        var (series, labels) = _chartLoaderService.LoadCustomerGrowthChart(data, StartDate, EndDate, SelectedDateRange);
+        CustomerGrowthSeries = series;
+        CustomerGrowthXAxes = _chartLoaderService.CreateXAxes(labels);
+        CustomerGrowthYAxes = _chartLoaderService.CreateNumberYAxes();
+        HasCustomerGrowthData = series.Count > 0;
     }
 
     private void LoadReturnsOverTimeChart(CompanyData data)

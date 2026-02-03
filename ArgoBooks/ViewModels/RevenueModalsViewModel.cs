@@ -309,17 +309,89 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         switch (ItemStatusAction)
         {
             case "LostDamaged":
-                CreateLostDamagedRecord(companyData, revenue);
+            {
+                var record = CreateLostDamagedRecord(companyData, revenue);
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Mark revenue '{revenue.Id}' as lost/damaged",
+                    () =>
+                    {
+                        companyData.LostDamaged.Remove(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    },
+                    () =>
+                    {
+                        companyData.LostDamaged.Add(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    }));
                 break;
+            }
             case "Returned":
-                CreateReturnRecord(companyData, revenue);
+            {
+                var record = CreateReturnRecord(companyData, revenue);
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Mark revenue '{revenue.Id}' as returned",
+                    () =>
+                    {
+                        companyData.Returns.Remove(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    },
+                    () =>
+                    {
+                        companyData.Returns.Add(record);
+                        companyData.MarkAsModified();
+                        RaiseTransactionSaved();
+                    }));
                 break;
+            }
             case "UndoLostDamaged":
-                RemoveLostDamagedRecord(companyData, revenue);
+            {
+                var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == revenue.Id);
+                if (record != null)
+                {
+                    companyData.LostDamaged.Remove(record);
+                    App.UndoRedoManager.RecordAction(new DelegateAction(
+                        $"Undo lost/damaged status for revenue '{revenue.Id}'",
+                        () =>
+                        {
+                            companyData.LostDamaged.Add(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        },
+                        () =>
+                        {
+                            companyData.LostDamaged.Remove(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        }));
+                }
                 break;
+            }
             case "UndoReturned":
-                RemoveReturnRecord(companyData, revenue);
+            {
+                var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == revenue.Id);
+                if (record != null)
+                {
+                    companyData.Returns.Remove(record);
+                    App.UndoRedoManager.RecordAction(new DelegateAction(
+                        $"Undo returned status for revenue '{revenue.Id}'",
+                        () =>
+                        {
+                            companyData.Returns.Add(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        },
+                        () =>
+                        {
+                            companyData.Returns.Remove(record);
+                            companyData.MarkAsModified();
+                            RaiseTransactionSaved();
+                        }));
+                }
                 break;
+            }
         }
 
         App.CompanyManager?.MarkAsChanged();
@@ -327,7 +399,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionSaved();
     }
 
-    private void CreateLostDamagedRecord(CompanyData companyData, Revenue revenue)
+    private LostDamaged CreateLostDamagedRecord(CompanyData companyData, Revenue revenue)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = revenue.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -348,9 +420,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         companyData.LostDamaged.Add(lostDamaged);
+        return lostDamaged;
     }
 
-    private void CreateReturnRecord(CompanyData companyData, Revenue revenue)
+    private Return CreateReturnRecord(CompanyData companyData, Revenue revenue)
     {
         var productId = revenue.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -380,20 +453,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         companyData.Returns.Add(returnRecord);
-    }
-
-    private static void RemoveLostDamagedRecord(CompanyData companyData, Revenue revenue)
-    {
-        var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == revenue.Id);
-        if (record != null)
-            companyData.LostDamaged.Remove(record);
-    }
-
-    private static void RemoveReturnRecord(CompanyData companyData, Revenue revenue)
-    {
-        var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == revenue.Id);
-        if (record != null)
-            companyData.Returns.Remove(record);
+        return returnRecord;
     }
 
     #endregion

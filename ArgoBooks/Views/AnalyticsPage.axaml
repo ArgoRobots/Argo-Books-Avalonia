@@ -1009,19 +1009,19 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <!-- Chart - using Growth Rates -->
+                                <!-- Chart - using Customer Growth -->
                                 <lvc:CartesianChart Title="{Binding CustomerGrowthTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
-                                                    Series="{Binding GrowthRatesSeries}"
-                                                    XAxes="{Binding GrowthRatesXAxes}"
-                                                    YAxes="{Binding GrowthRatesYAxes}"
+                                                    Series="{Binding CustomerGrowthSeries}"
+                                                    XAxes="{Binding CustomerGrowthXAxes}"
+                                                    YAxes="{Binding CustomerGrowthYAxes}"
                                                     ZoomMode="Both"
-                                                    IsVisible="{Binding HasGrowthRatesData}" />
+                                                    IsVisible="{Binding HasCustomerGrowthData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        IsVisible="{Binding !HasGrowthRatesData}">
+                                        IsVisible="{Binding !HasCustomerGrowthData}">
                                     <TextBlock Text="{loc:Loc 'No growth data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"

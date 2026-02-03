@@ -756,16 +756,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddElement(string elementType)
+    private void AddElement(ReportElementType elementType)
     {
         ReportElementBase element = elementType switch
         {
-            "Chart" => new ChartReportElement { X = 100, Y = 150, Width = 300, Height = 200 },
-            "Table" => new TableReportElement { X = 100, Y = 150, Width = 400, Height = 200 },
-            "Label" => new LabelReportElement { X = 100, Y = 150, Width = 200, Height = 40 },
-            "Image" => new ImageReportElement { X = 100, Y = 150, Width = 150, Height = 150 },
-            "DateRange" => new DateRangeReportElement { X = 100, Y = 150, Width = 200, Height = 30 },
-            "Summary" => new SummaryReportElement { X = 100, Y = 150, Width = 200, Height = 120 },
+            ReportElementType.Chart => new ChartReportElement { X = 100, Y = 150, Width = 300, Height = 200 },
+            ReportElementType.Table => new TableReportElement { X = 100, Y = 150, Width = 400, Height = 200 },
+            ReportElementType.Label => new LabelReportElement { X = 100, Y = 150, Width = 200, Height = 40 },
+            ReportElementType.Image => new ImageReportElement { X = 100, Y = 150, Width = 150, Height = 150 },
+            ReportElementType.DateRange => new DateRangeReportElement { X = 100, Y = 150, Width = 200, Height = 30 },
+            ReportElementType.Summary => new SummaryReportElement { X = 100, Y = 150, Width = 200, Height = 120 },
             _ => new LabelReportElement()
         };
 
@@ -881,35 +881,65 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AlignElements(string alignment)
+    private void AlignElements(ElementAlignment alignment)
     {
-        if (SelectedElements.Count < 2) return;
+        if (SelectedElements.Count == 0) return;
 
         var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
 
-        var reference = SelectedElements[0];
-        foreach (var element in SelectedElements.Skip(1))
+        if (SelectedElements.Count == 1)
         {
+            // Single element: align to canvas
+            var element = SelectedElements[0];
             switch (alignment)
             {
-                case "Left":
-                    element.X = reference.X;
+                case ElementAlignment.Left:
+                    element.X = 0;
                     break;
-                case "Right":
-                    element.X = reference.X + reference.Width - element.Width;
+                case ElementAlignment.Right:
+                    element.X = CanvasWidth - element.Width;
                     break;
-                case "Top":
-                    element.Y = reference.Y;
+                case ElementAlignment.Top:
+                    element.Y = 0;
                     break;
-                case "Bottom":
-                    element.Y = reference.Y + reference.Height - element.Height;
+                case ElementAlignment.Bottom:
+                    element.Y = CanvasHeight - element.Height;
                     break;
-                case "CenterH":
-                    element.X = reference.X + (reference.Width - element.Width) / 2;
+                case ElementAlignment.CenterH:
+                    element.X = (CanvasWidth - element.Width) / 2;
                     break;
-                case "CenterV":
-                    element.Y = reference.Y + (reference.Height - element.Height) / 2;
+                case ElementAlignment.CenterV:
+                    element.Y = (CanvasHeight - element.Height) / 2;
                     break;
+            }
+        }
+        else
+        {
+            // Multiple elements: align to first selected element
+            var reference = SelectedElements[0];
+            foreach (var element in SelectedElements.Skip(1))
+            {
+                switch (alignment)
+                {
+                    case ElementAlignment.Left:
+                        element.X = reference.X;
+                        break;
+                    case ElementAlignment.Right:
+                        element.X = reference.X + reference.Width - element.Width;
+                        break;
+                    case ElementAlignment.Top:
+                        element.Y = reference.Y;
+                        break;
+                    case ElementAlignment.Bottom:
+                        element.Y = reference.Y + reference.Height - element.Height;
+                        break;
+                    case ElementAlignment.CenterH:
+                        element.X = reference.X + (reference.Width - element.Width) / 2;
+                        break;
+                    case ElementAlignment.CenterV:
+                        element.Y = reference.Y + (reference.Height - element.Height) / 2;
+                        break;
+                }
             }
         }
 
@@ -919,17 +949,17 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void DistributeElements(string direction)
+    private void DistributeElements(DistributeDirection direction)
     {
         if (SelectedElements.Count < 3) return;
 
         var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
 
-        var sorted = direction == "Horizontal"
+        var sorted = direction == DistributeDirection.Horizontal
             ? SelectedElements.OrderBy(e => e.X).ToList()
             : SelectedElements.OrderBy(e => e.Y).ToList();
 
-        if (direction == "Horizontal")
+        if (direction == DistributeDirection.Horizontal)
         {
             var totalWidth = sorted.Sum(e => e.Width);
             var minX = sorted.First().X;
@@ -959,12 +989,12 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
-        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Distribute {0}".TranslateFormat(direction)));
+        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Distribute {0}".TranslateFormat(direction.ToString())));
         OnPropertyChanged(nameof(Configuration));
     }
 
     [RelayCommand]
-    private void MatchSize(string dimension)
+    private void MatchSize(MatchSizeMode mode)
     {
         if (SelectedElements.Count < 2) return;
 
@@ -973,15 +1003,15 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         foreach (var element in SelectedElements.Skip(1))
         {
-            switch (dimension)
+            switch (mode)
             {
-                case "Width":
+                case MatchSizeMode.Width:
                     element.Width = reference.Width;
                     break;
-                case "Height":
+                case MatchSizeMode.Height:
                     element.Height = reference.Height;
                     break;
-                case "Both":
+                case MatchSizeMode.Both:
                     element.Width = reference.Width;
                     element.Height = reference.Height;
                     break;
@@ -989,7 +1019,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
-        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Match {0}".TranslateFormat(dimension)));
+        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Match {0}".TranslateFormat(mode.ToString())));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -1998,8 +2028,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         var financialCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.TotalProfits, "Total Profits", "Profit over time", "Financial", trendUpIcon, financialColor, financialLight),
-            new(ChartDataType.RevenueVsExpenses, "Expenses vs Revenue", "Compare revenue and costs", "Financial", compareIcon, financialColor, financialLight),
-            new(ChartDataType.GrowthRates, "Growth Rates", "Period-over-period growth", "Financial", growthIcon, financialColor, financialLight)
+            new(ChartDataType.RevenueVsExpenses, "Expenses vs Revenue", "Compare revenue and costs", "Financial", compareIcon, financialColor, financialLight)
         };
 
         // Transaction charts

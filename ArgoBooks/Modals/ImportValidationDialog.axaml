@@ -1,0 +1,353 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="ArgoBooks.Modals.ImportValidationDialog"
+             x:DataType="vm:ImportValidationDialogViewModel">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay.ModalContent>
+            <!-- Modal Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                MaxWidth="1000"
+                MaxHeight="700"
+                MinWidth="700"
+                Margin="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Modal Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Icon -->
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="20"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <SolidColorBrush Color="{DynamicResource WarningColor}" Opacity="0.15" />
+                            </Border.Background>
+                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource WarningBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Title}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding Summary}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Width="32" Height="32"
+                                VerticalAlignment="Top"
+                                Command="{Binding CancelCommand}">
+                            <PathIcon Data="{x:Static local:Icons.Close}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Modal Content -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="16" Margin="24">
+                        <!-- Summary Stats -->
+                        <Grid ColumnDefinitions="*,*,*" IsVisible="{Binding HasIssues}">
+                            <!-- Auto-fixable Issues -->
+                            <Border Grid.Column="0"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="0,0,8,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="Can Auto-fix"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding AutoFixableCount}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="#22C55E"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Manual Fix Required -->
+                            <Border Grid.Column="1"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="4,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="Needs Manual Fix"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding NonAutoFixableCount}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="#EF4444"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Sheets Affected -->
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="8,0,0,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="Sheets Affected"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding SheetGroups.Count}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Explanation about Auto-fix -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="16"
+                                IsVisible="{Binding HasIssues}">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                              Width="16" Height="16"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="How Auto-fix Works"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                                <TextBlock FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
+                                           Text="Items marked 'Auto-fix' (Suppliers, Customers, Categories, etc.) will create placeholder entries named '[Imported] ID' that you can edit later. For example, a missing supplier 'SUP-001' becomes a new supplier with name '[Imported] SUP-001'. Items marked 'Manual fix' (invalid product names, transaction IDs) require you to correct your spreadsheet." />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- General Errors -->
+                        <Border Background="#1AEF4444"
+                                CornerRadius="8"
+                                Padding="16"
+                                IsVisible="{Binding HasErrors}">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                              Width="16" Height="16"
+                                              Foreground="{DynamicResource DangerBrush}" />
+                                    <TextBlock Text="Critical Errors"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource DangerBrush}" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding GeneralErrors}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="24,4,0,0" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Issues by Sheet -->
+                        <ItemsControl ItemsSource="{Binding SheetGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:SheetIssueGroup">
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            Margin="0,0,0,12">
+                                        <StackPanel>
+                                            <!-- Sheet Header -->
+                                            <Border Padding="16,12"
+                                                    Background="{DynamicResource SurfaceAltBrush}"
+                                                    CornerRadius="8,8,0,0">
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"
+                                                              Width="16" Height="16"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                                              Margin="0,0,12,0"
+                                                              VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding SheetName}"
+                                                               FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center" />
+                                                    <Border Grid.Column="2"
+                                                            Background="{DynamicResource WarningBrush}"
+                                                            CornerRadius="10"
+                                                            Padding="8,2"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding IssueCount}"
+                                                                   FontSize="11"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="White" />
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Table Header -->
+                                            <Border Padding="16,8"
+                                                    Background="{DynamicResource BackgroundBrush}">
+                                                <Grid ColumnDefinitions="45,150,180,*">
+                                                    <TextBlock Grid.Column="0" Text="Row" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <TextBlock Grid.Column="1" Text="Column" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <TextBlock Grid.Column="2" Text="Value" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <TextBlock Grid.Column="3" Text="Issue" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Issue Rows -->
+                                            <ItemsControl ItemsSource="{Binding Issues}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="vm:ValidationIssueViewModel">
+                                                        <Border Padding="16,10"
+                                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                                BorderThickness="0,1,0,0">
+                                                            <Grid ColumnDefinitions="45,150,180,*">
+                                                                <!-- Row Number -->
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding RowNumber}"
+                                                                           FontSize="12"
+                                                                           FontWeight="Medium"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           VerticalAlignment="Top" />
+
+                                                                <!-- Column Name -->
+                                                                <TextBlock Grid.Column="1"
+                                                                           Text="{Binding ColumnName}"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           VerticalAlignment="Top"
+                                                                           TextWrapping="Wrap" />
+
+                                                                <!-- Invalid Value -->
+                                                                <Border Grid.Column="2"
+                                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                                        CornerRadius="4"
+                                                                        Padding="6,2"
+                                                                        Margin="0,0,8,0"
+                                                                        HorizontalAlignment="Left"
+                                                                        VerticalAlignment="Top">
+                                                                    <TextBlock Text="{Binding DisplayValue}"
+                                                                               FontSize="11"
+                                                                               FontFamily="JetBrains Mono, Consolas, monospace"
+                                                                               Foreground="{DynamicResource WarningBrush}"
+                                                                               MaxWidth="160"
+                                                                               TextTrimming="CharacterEllipsis"
+                                                                               ToolTip.Tip="{Binding InvalidValue}" />
+                                                                </Border>
+
+                                                                <!-- Description with auto-fix indicator -->
+                                                                <StackPanel Grid.Column="3" Orientation="Vertical" Spacing="4" VerticalAlignment="Top">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                        <!-- Auto-fix indicator -->
+                                                                        <Border CornerRadius="3" Padding="4,1" VerticalAlignment="Center"
+                                                                                IsVisible="{Binding IsAutoFixable}"
+                                                                                Background="#1A22C55E">
+                                                                            <TextBlock Text="Auto-fix" FontSize="9" FontWeight="SemiBold"
+                                                                                       Foreground="#22C55E" />
+                                                                        </Border>
+                                                                        <Border CornerRadius="3" Padding="4,1" VerticalAlignment="Center"
+                                                                                IsVisible="{Binding !IsAutoFixable}"
+                                                                                Background="#1AEF4444">
+                                                                            <TextBlock Text="Manual fix" FontSize="9" FontWeight="SemiBold"
+                                                                                       Foreground="#EF4444" />
+                                                                        </Border>
+                                                                        <TextBlock Text="{Binding Description}"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   TextWrapping="Wrap" />
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Modal Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Message based on state -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Review the issues above before proceeding."
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       IsVisible="{Binding CanImport}" />
+                            <TextBlock Text="Critical errors must be fixed before importing."
+                                       FontSize="12"
+                                       Foreground="{DynamicResource DangerBrush}"
+                                       IsVisible="{Binding HasErrors}" />
+                            <TextBlock Text="Please fix the issues marked 'Manual fix' in your spreadsheet and try again."
+                                       FontSize="12"
+                                       Foreground="{DynamicResource WarningBrush}"
+                                       IsVisible="{Binding HasNonAutoFixableIssues}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CancelCommand}" />
+                            <Button Classes="primary-button"
+                                    Content="Create Missing &amp; Import"
+                                    Command="{Binding CreateMissingAndImportCommand}"
+                                    IsVisible="{Binding CanImport}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

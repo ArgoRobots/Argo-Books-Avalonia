@@ -77,18 +77,19 @@
     </StackPanel>
 
     <UserControl.Styles>
-        <!-- Section Toggle Button Style -->
+        <!-- Section Toggle Button Style (matches sidebar-toggle in Sidebar.axaml) -->
         <Style Selector="Button.section-toggle">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.section-toggle /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Button.section-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

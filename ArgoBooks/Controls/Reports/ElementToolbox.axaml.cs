@@ -165,7 +165,7 @@ public partial class ElementToolbox : UserControl
     {
         var element = new ChartReportElement
         {
-            ChartType = ChartDataType.GrowthRates,
+            ChartType = ChartDataType.CustomerGrowth,
             Width = 400,
             Height = 280,
             ShowLegend = true,

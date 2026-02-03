@@ -24,38 +24,66 @@ public class SampleCompanyService
     }
 
     /// <summary>
-    /// Creates a sample company from the provided Excel data stream.
+    /// Result of validating sample company data before import.
     /// </summary>
-    /// <param name="excelDataStream">Stream containing the sample company Excel data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The file path to the created sample company .argo file.</returns>
-    public async Task<string> CreateSampleCompanyAsync(
+    public class SampleCompanyValidationContext
+    {
+        public ImportValidationResult ValidationResult { get; set; } = new();
+        public string TempExcelPath { get; set; } = string.Empty;
+        public string TempRoot { get; set; } = string.Empty;
+        public CompanyData CompanyData { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Validates sample company data from the provided Excel stream.
+    /// Call FinishSampleCompanyCreationAsync to complete import, or CleanupValidationContext to cancel.
+    /// </summary>
+    public async Task<SampleCompanyValidationContext> ValidateSampleCompanyAsync(
         Stream excelDataStream,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(excelDataStream);
 
+        var context = new SampleCompanyValidationContext();
+
         // Create temporary directories
-        var tempRoot = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Sample", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempRoot);
+        context.TempRoot = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Sample", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(context.TempRoot);
 
-        var companyDir = Path.Combine(tempRoot, SampleCompanyName);
+        context.TempExcelPath = Path.Combine(context.TempRoot, "SampleData.xlsx");
+
+        // Write the stream to a temp file
+        await using (var fileStream = new FileStream(context.TempExcelPath, FileMode.Create, FileAccess.Write))
+        {
+            await excelDataStream.CopyToAsync(fileStream, cancellationToken);
+        }
+
+        // Create company data with sample company settings
+        context.CompanyData = CreateSampleCompanyData();
+
+        // Validate the import (same as regular imports)
+        context.ValidationResult = await _importService.ValidateImportAsync(
+            context.TempExcelPath,
+            context.CompanyData,
+            cancellationToken);
+
+        return context;
+    }
+
+    /// <summary>
+    /// Completes sample company creation after validation.
+    /// </summary>
+    public async Task<string> FinishSampleCompanyCreationAsync(
+        SampleCompanyValidationContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var companyDir = Path.Combine(context.TempRoot, SampleCompanyName);
         Directory.CreateDirectory(companyDir);
-
-        // Create temporary Excel file for import
-        var tempExcelPath = Path.Combine(tempRoot, "SampleData.xlsx");
 
         try
         {
-            // Write the stream to a temp file (SpreadsheetImportService requires a file path)
-            await using (var fileStream = new FileStream(tempExcelPath, FileMode.Create, FileAccess.Write))
-            {
-                await excelDataStream.CopyToAsync(fileStream, cancellationToken);
-            }
-
-            // Create company data with sample company settings
-            var companyData = CreateSampleCompanyData();
-
             // Import data from Excel with auto-create missing references
             var importOptions = new ImportOptions
             {
@@ -63,13 +91,13 @@ public class SampleCompanyService
             };
 
             await _importService.ImportFromExcelAsync(
-                tempExcelPath,
-                companyData,
+                context.TempExcelPath,
+                context.CompanyData,
                 importOptions,
                 cancellationToken);
 
             // Save company data to temp directory
-            await _fileService.SaveCompanyDataAsync(companyDir, companyData, cancellationToken);
+            await _fileService.SaveCompanyDataAsync(companyDir, context.CompanyData, cancellationToken);
 
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
@@ -85,27 +113,63 @@ public class SampleCompanyService
             }
 
             // Save as unencrypted .argo file
-            await _fileService.SaveCompanyAsync(sampleFilePath, tempRoot, password: null, cancellationToken);
+            await _fileService.SaveCompanyAsync(sampleFilePath, context.TempRoot, password: null, cancellationToken);
 
             return sampleFilePath;
         }
         finally
         {
-            // Clean up temp Excel file
-            if (File.Exists(tempExcelPath))
-            {
-                try { File.Delete(tempExcelPath); }
-                catch { /* Best effort */ }
-            }
-
-            // Clean up temp directory structure (the extracted data)
-            // Note: The companyDir is packaged into the .argo file, so we can delete it
-            if (Directory.Exists(tempRoot))
-            {
-                try { Directory.Delete(tempRoot, recursive: true); }
-                catch { /* Best effort */ }
-            }
+            CleanupValidationContext(context);
         }
+    }
+
+    /// <summary>
+    /// Cleans up temporary files from validation (call if user cancels).
+    /// </summary>
+    public static void CleanupValidationContext(SampleCompanyValidationContext context)
+    {
+        if (context == null) return;
+
+        if (File.Exists(context.TempExcelPath))
+        {
+            try { File.Delete(context.TempExcelPath); }
+            catch { /* Best effort */ }
+        }
+
+        if (Directory.Exists(context.TempRoot))
+        {
+            try { Directory.Delete(context.TempRoot, recursive: true); }
+            catch { /* Best effort */ }
+        }
+    }
+
+    /// <summary>
+    /// Creates a sample company from the provided Excel data stream.
+    /// </summary>
+    /// <param name="excelDataStream">Stream containing the sample company Excel data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The result containing file path and any validation warnings.</returns>
+    [Obsolete("Use ValidateSampleCompanyAsync + FinishSampleCompanyCreationAsync for proper validation flow")]
+    public async Task<SampleCompanyResult> CreateSampleCompanyAsync(
+        Stream excelDataStream,
+        CancellationToken cancellationToken = default)
+    {
+        var context = await ValidateSampleCompanyAsync(excelDataStream, cancellationToken);
+        var filePath = await FinishSampleCompanyCreationAsync(context, cancellationToken);
+        return new SampleCompanyResult
+        {
+            FilePath = filePath,
+            ValidationResult = context.ValidationResult
+        };
+    }
+
+    /// <summary>
+    /// Result of creating a sample company (for legacy API).
+    /// </summary>
+    public class SampleCompanyResult
+    {
+        public string FilePath { get; set; } = string.Empty;
+        public ImportValidationResult? ValidationResult { get; set; }
     }
 
     /// <summary>

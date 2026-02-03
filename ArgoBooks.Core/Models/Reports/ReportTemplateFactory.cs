@@ -105,7 +105,7 @@ public static class ReportTemplateFactory
         [
             ChartDataType.TotalRevenue,
             ChartDataType.RevenueDistribution,
-            ChartDataType.GrowthRates,
+            ChartDataType.CustomerGrowth,
             ChartDataType.AverageTransactionValue
         ]);
 
@@ -128,7 +128,7 @@ public static class ReportTemplateFactory
             ShowPageNumbers = true,
             Filters =
             {
-                TransactionType = TransactionType.Both,
+                TransactionType = TransactionType.Revenue,
                 DatePresetName = DatePresetNames.ThisQuarter
             }
         };
@@ -167,7 +167,7 @@ public static class ReportTemplateFactory
 
         config.Filters.SelectedChartTypes.AddRange(
         [
-            ChartDataType.GrowthRates,
+            ChartDataType.CustomerGrowth,
             ChartDataType.AverageTransactionValue,
             ChartDataType.TotalTransactions,
             ChartDataType.ReturnsOverTime
@@ -372,7 +372,7 @@ public static class ReportTemplateFactory
 
         config.AddElement(new ChartReportElement
         {
-            ChartType = ChartDataType.GrowthRates,
+            ChartType = ChartDataType.CustomerGrowth,
             X = grid[1, 0].X,
             Y = grid[1, 0].Y,
             Width = grid[1, 0].Width,
@@ -468,7 +468,7 @@ public static class ReportTemplateFactory
 
         config.AddElement(new ChartReportElement
         {
-            ChartType = ChartDataType.GrowthRates,
+            ChartType = ChartDataType.CustomerGrowth,
             X = stack[1].X,
             Y = stack[1].Y,
             Width = stack[1].Width,
