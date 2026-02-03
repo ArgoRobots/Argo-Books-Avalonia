@@ -620,53 +620,116 @@
                                             </StackPanel>
                                         </Border>
 
-                                        <!-- Transaction Type Toggle (Expense/Revenue) -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                Padding="16,12"
-                                                Margin="0,0,0,12">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="{loc:Loc 'Transaction Type'}"
-                                                               FontSize="13"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBlock Text="{loc:Loc 'Based on merchant matching your company name'}"
-                                                               FontSize="11"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                                    <TextBlock Text="{loc:Loc 'Expense'}"
-                                                               FontSize="13"
-                                                               FontWeight="Medium"
-                                                               VerticalAlignment="Center">
-                                                        <TextBlock.Foreground>
-                                                            <MultiBinding Converter="{x:Static local:BoolConverters.ToConditionalBrush}">
-                                                                <Binding Path="IsRevenue" />
-                                                                <Binding Source="{DynamicResource TextTertiaryBrush}" />
-                                                                <Binding Source="{DynamicResource TextPrimaryBrush}" />
-                                                            </MultiBinding>
-                                                        </TextBlock.Foreground>
-                                                    </TextBlock>
-                                                    <ToggleSwitch IsChecked="{Binding IsRevenue}"
-                                                                  IsEnabled="{Binding !IsLoadingAiSuggestions}"
-                                                                  OffContent=""
-                                                                  OnContent="" />
-                                                    <TextBlock Text="{loc:Loc 'Revenue'}"
-                                                               FontSize="13"
-                                                               FontWeight="Medium"
-                                                               VerticalAlignment="Center">
-                                                        <TextBlock.Foreground>
-                                                            <MultiBinding Converter="{x:Static local:BoolConverters.ToConditionalBrush}">
-                                                                <Binding Path="IsRevenue" />
-                                                                <Binding Source="{DynamicResource TextPrimaryBrush}" />
-                                                                <Binding Source="{DynamicResource TextTertiaryBrush}" />
-                                                            </MultiBinding>
-                                                        </TextBlock.Foreground>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
+                                        <!-- Transaction Type Tabs (Expense/Revenue) -->
+                                        <StackPanel Spacing="8" Margin="0,0,0,12">
+                                            <TextBlock Text="{loc:Loc 'Transaction Type'}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                    CornerRadius="8"
+                                                    Padding="4"
+                                                    IsEnabled="{Binding !IsLoadingAiSuggestions}">
+                                                <Grid ColumnDefinitions="*,*">
+                                                    <!-- Expense Tab -->
+                                                    <Button Grid.Column="0"
+                                                            Command="{Binding SetTransactionTypeCommand}"
+                                                            CommandParameter="Expense"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Center"
+                                                            Padding="12,10"
+                                                            CornerRadius="6"
+                                                            Cursor="Hand">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button">
+                                                                <Setter Property="Background" Value="Transparent" />
+                                                                <Setter Property="BorderThickness" Value="0" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                            </Style>
+                                                        </Button.Styles>
+                                                        <Panel>
+                                                            <!-- Selected state background -->
+                                                            <Border IsVisible="{Binding !IsRevenue}"
+                                                                    Background="{DynamicResource SurfaceBrush}"
+                                                                    CornerRadius="6"
+                                                                    BoxShadow="0 1 2 0 #0000000D" />
+                                                            <StackPanel Orientation="Horizontal"
+                                                                        Spacing="8"
+                                                                        HorizontalAlignment="Center"
+                                                                        Margin="0,1">
+                                                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                                                          Width="16" Height="16"
+                                                                          IsVisible="{Binding !IsRevenue}"
+                                                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                                                <TextBlock Text="{loc:Loc 'Expense'}"
+                                                                           FontSize="13"
+                                                                           FontWeight="Medium"
+                                                                           VerticalAlignment="Center">
+                                                                    <TextBlock.Foreground>
+                                                                        <MultiBinding Converter="{x:Static local:BoolConverters.ToConditionalBrush}">
+                                                                            <Binding Path="IsRevenue" />
+                                                                            <Binding Source="{DynamicResource TextSecondaryBrush}" />
+                                                                            <Binding Source="{DynamicResource TextPrimaryBrush}" />
+                                                                        </MultiBinding>
+                                                                    </TextBlock.Foreground>
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                        </Panel>
+                                                    </Button>
+                                                    <!-- Revenue Tab -->
+                                                    <Button Grid.Column="1"
+                                                            Command="{Binding SetTransactionTypeCommand}"
+                                                            CommandParameter="Revenue"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Center"
+                                                            Padding="12,10"
+                                                            CornerRadius="6"
+                                                            Cursor="Hand">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button">
+                                                                <Setter Property="Background" Value="Transparent" />
+                                                                <Setter Property="BorderThickness" Value="0" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                            </Style>
+                                                        </Button.Styles>
+                                                        <Panel>
+                                                            <!-- Selected state background -->
+                                                            <Border IsVisible="{Binding IsRevenue}"
+                                                                    Background="{DynamicResource SurfaceBrush}"
+                                                                    CornerRadius="6"
+                                                                    BoxShadow="0 1 2 0 #0000000D" />
+                                                            <StackPanel Orientation="Horizontal"
+                                                                        Spacing="8"
+                                                                        HorizontalAlignment="Center"
+                                                                        Margin="0,1">
+                                                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                                                          Width="16" Height="16"
+                                                                          IsVisible="{Binding IsRevenue}"
+                                                                          Foreground="{DynamicResource SuccessBrush}" />
+                                                                <TextBlock Text="{loc:Loc 'Revenue'}"
+                                                                           FontSize="13"
+                                                                           FontWeight="Medium"
+                                                                           VerticalAlignment="Center">
+                                                                    <TextBlock.Foreground>
+                                                                        <MultiBinding Converter="{x:Static local:BoolConverters.ToConditionalBrush}">
+                                                                            <Binding Path="IsRevenue" />
+                                                                            <Binding Source="{DynamicResource TextPrimaryBrush}" />
+                                                                            <Binding Source="{DynamicResource TextSecondaryBrush}" />
+                                                                        </MultiBinding>
+                                                                    </TextBlock.Foreground>
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                        </Panel>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
 
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">

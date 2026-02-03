@@ -309,6 +309,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedCategory = null;
     }
 
+    /// <summary>
+    /// Sets the transaction type (expense or revenue).
+    /// </summary>
+    [RelayCommand]
+    private void SetTransactionType(string type)
+    {
+        IsRevenue = type == "Revenue";
+    }
+
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
