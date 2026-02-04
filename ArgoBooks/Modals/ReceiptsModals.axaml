@@ -620,9 +620,67 @@
                                             </StackPanel>
                                         </Border>
 
+                                        <!-- Transaction Type Tabs (Expense/Revenue) -->
+                                        <StackPanel Spacing="8" Margin="0,0,0,12">
+                                            <TextBlock Text="{loc:Loc 'Transaction Type'}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <Grid ColumnDefinitions="*,*">
+                                                <Grid.Styles>
+                                                    <Style Selector="Button.transaction-type-tab">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                                                        <Setter Property="BorderThickness" Value="1" />
+                                                        <Setter Property="Padding" Value="16,12" />
+                                                        <Setter Property="Cursor" Value="Hand" />
+                                                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                        <Setter Property="FontSize" Value="13" />
+                                                        <Setter Property="FontWeight" Value="Medium" />
+                                                        <Setter Property="CornerRadius" Value="8,0,0,8" />
+                                                    </Style>
+                                                    <Style Selector="Button.transaction-type-tab /template/ ContentPresenter#PART_ContentPresenter">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Button.transaction-type-tab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Button.transaction-type-tab.selected">
+                                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Style>
+                                                    <Style Selector="Button.transaction-type-tab.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Button.transaction-type-tab.right">
+                                                        <Setter Property="CornerRadius" Value="0,8,8,0" />
+                                                    </Style>
+                                                </Grid.Styles>
+                                                <!-- Expense Tab -->
+                                                <Button Grid.Column="0"
+                                                        Content="{loc:Loc 'Expense'}"
+                                                        Classes="transaction-type-tab"
+                                                        Classes.selected="{Binding !IsRevenue}"
+                                                        Command="{Binding SetTransactionTypeCommand}"
+                                                        CommandParameter="Expense"
+                                                        IsEnabled="{Binding !IsLoadingAiSuggestions}" />
+                                                <!-- Revenue Tab -->
+                                                <Button Grid.Column="1"
+                                                        Content="{loc:Loc 'Revenue'}"
+                                                        Classes="transaction-type-tab right"
+                                                        Classes.selected="{Binding IsRevenue}"
+                                                        Command="{Binding SetTransactionTypeCommand}"
+                                                        CommandParameter="Revenue"
+                                                        IsEnabled="{Binding !IsLoadingAiSuggestions}" />
+                                            </Grid>
+                                        </StackPanel>
+
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">
-                                            <StackPanel Grid.Column="0" Spacing="6">
+                                            <StackPanel Grid.Column="0" Spacing="6"
+                                                        IsVisible="{Binding !IsRevenue}">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
@@ -636,7 +694,8 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
                                                     HasError="{Binding HasSupplierError}"
-                                                    ErrorMessage="{Binding SupplierErrorMessage}" />
+                                                    ErrorMessage="{Binding SupplierErrorMessage}"
+                                                    IsEnabled="{Binding !IsLoadingAiSuggestions}" />
                                                 <!-- AI Create Supplier Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
                                                         Background="{DynamicResource WarningLightBrush}"
@@ -687,7 +746,8 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
                                                     HasError="{Binding HasCategoryError}"
-                                                    ErrorMessage="{Binding CategoryErrorMessage}" />
+                                                    ErrorMessage="{Binding CategoryErrorMessage}"
+                                                    IsEnabled="{Binding !IsLoadingAiSuggestions}" />
                                                 <!-- AI Create Category Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
                                                         Background="{DynamicResource WarningLightBrush}"
@@ -775,7 +835,7 @@
                                 <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
                                           Width="16" Height="16"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Review the extracted data before creating the expense.'}"
+                                <TextBlock Text="{loc:Loc 'Review the extracted data before creating the transaction.'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center" />
@@ -787,11 +847,13 @@
                                     Command="{Binding RequestCloseScanReviewModalCommand}" />
                             <Button Grid.Column="2"
                                     Classes="primary-button"
-                                    Command="{Binding CreateExpenseCommand}">
+                                    Command="{Binding CreateTransactionCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{x:Static icons:Icons.Check}"
                                               Width="16" Height="16" />
-                                    <TextBlock Text="{loc:Loc 'Create Expense'}" />
+                                    <!-- Show "Create Revenue" when IsRevenue, otherwise "Create Expense" -->
+                                    <TextBlock IsVisible="{Binding IsRevenue}" Text="{loc:Loc 'Create Revenue'}" />
+                                    <TextBlock IsVisible="{Binding !IsRevenue}" Text="{loc:Loc 'Create Expense'}" />
                                 </StackPanel>
                             </Button>
                         </Grid>

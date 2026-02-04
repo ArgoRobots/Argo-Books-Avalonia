@@ -228,6 +228,12 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToCircleBorderThickness =
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0) : new Thickness(2));
+
+    /// <summary>
+    /// Multi-value converter that returns one of two brushes based on a boolean condition.
+    /// Values[0] = bool condition, Values[1] = brush when true, Values[2] = brush when false.
+    /// </summary>
+    public static readonly IMultiValueConverter ToConditionalBrush = new ConditionalBrushMultiConverter();
 }
 
 /// <summary>
@@ -552,4 +558,23 @@ public class FullscreenMinMaxConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Multi-value converter that returns one of two brushes based on a boolean condition.
+/// Values[0] = bool condition, Values[1] = brush when true, Values[2] = brush when false.
+/// </summary>
+public class ConditionalBrushMultiConverter : IMultiValueConverter
+{
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 3)
+            return Brushes.Transparent;
+
+        var condition = values[0] is bool b && b;
+        var trueBrush = values[1] as IBrush ?? Brushes.Transparent;
+        var falseBrush = values[2] as IBrush ?? Brushes.Transparent;
+
+        return condition ? trueBrush : falseBrush;
+    }
 }
