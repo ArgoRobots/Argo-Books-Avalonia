@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -86,17 +87,17 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     public DepartmentsTableColumnWidths ColumnWidths => App.DepartmentsColumnWidths;
 
     [ObservableProperty]
-    private bool _showDepartmentColumn = true;
+    private bool _showDepartmentColumn = ColumnVisibilityHelper.Load("Departments", "Department", true);
 
     [ObservableProperty]
-    private bool _showDescriptionColumn = true;
+    private bool _showDescriptionColumn = ColumnVisibilityHelper.Load("Departments", "Description", true);
 
     [ObservableProperty]
-    private bool _showEmployeesColumn = true;
+    private bool _showEmployeesColumn = ColumnVisibilityHelper.Load("Departments", "Employees", true);
 
-    partial void OnShowDepartmentColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Department", value);
-    partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
-    partial void OnShowEmployeesColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Employees", value);
+    partial void OnShowDepartmentColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Department", value); ColumnVisibilityHelper.Save("Departments", "Department", value); }
+    partial void OnShowDescriptionColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Description", value); ColumnVisibilityHelper.Save("Departments", "Description", value); }
+    partial void OnShowEmployeesColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Employees", value); ColumnVisibilityHelper.Save("Departments", "Employees", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

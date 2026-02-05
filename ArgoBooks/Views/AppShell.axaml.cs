@@ -32,6 +32,12 @@ public partial class AppShell : UserControl
     public AppShell()
     {
         InitializeComponent();
+
+        // Use tunnel strategy to catch all pointer presses on sidebar/header,
+        // even when child controls handle the event. This ensures page-level
+        // context menus (column visibility, chart) close on any sidebar/header click.
+        AppSidebar.AddHandler(PointerPressedEvent, OnSidebarPointerPressed, RoutingStrategies.Tunnel);
+        AppHeader.AddHandler(PointerPressedEvent, OnHeaderPointerPressed, RoutingStrategies.Tunnel);
     }
 
     /// <inheritdoc />
@@ -47,6 +53,22 @@ public partial class AppShell : UserControl
         {
             vm.OpenFileScanRequested += OnOpenFileScanRequested;
         }
+    }
+
+    /// <summary>
+    /// Closes page-level context menus when the sidebar is clicked.
+    /// </summary>
+    private void OnSidebarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        (DataContext as AppShellViewModel)?.ClosePageContextMenus();
+    }
+
+    /// <summary>
+    /// Closes page-level context menus when the header is clicked.
+    /// </summary>
+    private void OnHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        (DataContext as AppShellViewModel)?.ClosePageContextMenus();
     }
 
     /// <summary>

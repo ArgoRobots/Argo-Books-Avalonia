@@ -180,7 +180,7 @@
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="{Binding ModalWidth}"
-                    MaxHeight="750"
+                    MaxHeight="850"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
@@ -306,7 +306,7 @@
 
                             <!-- Results State -->
                             <Grid IsVisible="{Binding HasScanResult}"
-                                  ColumnDefinitions="320,*"
+                                  ColumnDefinitions="2*,3*"
                                   Margin="24">
                                 <!-- Left: Receipt Preview -->
                                 <Border Grid.Column="0"
@@ -326,8 +326,7 @@
                                                 Margin="8,0,8,8"
                                                 CornerRadius="4">
                                             <Image Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                   Stretch="Uniform"
-                                                   MaxHeight="400" />
+                                                   Stretch="Uniform" />
                                         </Border>
                                     </Grid>
                                 </Border>
@@ -478,7 +477,7 @@
                                             <Grid ColumnDefinitions="*,70,80,80,32">
                                                 <TextBlock Grid.Column="0" Text="{loc:Loc 'Product'}" FontSize="12" FontWeight="Medium"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Quantity'}" FontSize="12" FontWeight="Medium"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            HorizontalAlignment="Center" />
                                                 <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Price'}" FontSize="12" FontWeight="Medium"
@@ -677,9 +676,9 @@
                                             </Grid>
                                         </StackPanel>
 
-                                        <!-- Supplier and Category Row -->
-                                        <Grid ColumnDefinitions="*,16,*">
-                                            <StackPanel Grid.Column="0" Spacing="6"
+                                        <!-- Supplier Row -->
+                                        <Grid>
+                                            <StackPanel Spacing="6"
                                                         IsVisible="{Binding !IsRevenue}">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
@@ -720,58 +719,6 @@
                                                                 FontSize="11" />
                                                         <Button Grid.Column="2"
                                                                 Command="{Binding DismissSupplierSuggestionCommand}"
-                                                                Background="Transparent"
-                                                                BorderThickness="0"
-                                                                Padding="8,4"
-                                                                Margin="4,0,0,0"
-                                                                Cursor="Hand">
-                                                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                                                                      Width="14" Height="14"
-                                                                      Foreground="#92400E" />
-                                                        </Button>
-                                                    </Grid>
-                                                </Border>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2" Spacing="6">
-                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                                </TextBlock>
-                                                <controls:SearchableDropdown
-                                                    ItemsSource="{Binding CategoryOptions}"
-                                                    SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                                                    DisplayMemberPath="Name"
-                                                    Placeholder="{loc:Loc 'Search for a category...'}"
-                                                    ShowAddNew="False"
-                                                    EmptyMessage="{loc:Loc 'No categories found.'}"
-                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                    EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
-                                                    HasError="{Binding HasCategoryError}"
-                                                    ErrorMessage="{Binding CategoryErrorMessage}"
-                                                    IsEnabled="{Binding !IsLoadingAiSuggestions}" />
-                                                <!-- AI Create Category Suggestion -->
-                                                <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
-                                                        Background="{DynamicResource WarningLightBrush}"
-                                                        CornerRadius="6"
-                                                        Padding="10">
-                                                    <Grid ColumnDefinitions="*,Auto,Auto">
-                                                        <StackPanel Grid.Column="0" Spacing="2">
-                                                            <TextBlock Text="{loc:Loc 'Suggested category:'}"
-                                                                       FontSize="11"
-                                                                       Foreground="#92400E" />
-                                                            <TextBlock Text="{Binding SuggestedCategoryName}"
-                                                                       FontSize="12"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="#78350F" />
-                                                        </StackPanel>
-                                                        <Button Grid.Column="1"
-                                                                Content="{loc:Loc 'Create'}"
-                                                                Command="{Binding CreateSuggestedCategoryCommand}"
-                                                                Classes="primary-button"
-                                                                Padding="10,4"
-                                                                Margin="8,0,0,0"
-                                                                FontSize="11" />
-                                                        <Button Grid.Column="2"
-                                                                Command="{Binding DismissCategorySuggestionCommand}"
                                                                 Background="Transparent"
                                                                 BorderThickness="0"
                                                                 Padding="8,4"

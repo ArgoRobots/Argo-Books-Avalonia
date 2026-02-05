@@ -7,6 +7,7 @@ using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ArgoBooks.Helpers;
 
 namespace ArgoBooks.ViewModels;
 
@@ -45,33 +46,33 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showNameColumn = true;
+    private bool _showNameColumn = ColumnVisibilityHelper.Load("Products", "Name", true);
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
+    private bool _showTypeColumn = ColumnVisibilityHelper.Load("Products", "Type", true);
 
     [ObservableProperty]
-    private bool _showDescriptionColumn = true;
+    private bool _showDescriptionColumn = ColumnVisibilityHelper.Load("Products", "Description", true);
 
     [ObservableProperty]
-    private bool _showCategoryColumn = true;
+    private bool _showCategoryColumn = ColumnVisibilityHelper.Load("Products", "Category", true);
 
     [ObservableProperty]
-    private bool _showSupplierColumn = true;
+    private bool _showSupplierColumn = ColumnVisibilityHelper.Load("Products", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showReorderColumn = true;
+    private bool _showReorderColumn = ColumnVisibilityHelper.Load("Products", "Reorder", true);
 
     [ObservableProperty]
-    private bool _showOverstockColumn = true;
+    private bool _showOverstockColumn = ColumnVisibilityHelper.Load("Products", "Overstock", true);
 
-    partial void OnShowNameColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Name", value);
-    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
-    partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
-    partial void OnShowCategoryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Category", value);
-    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowReorderColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reorder", value);
-    partial void OnShowOverstockColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Overstock", value);
+    partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Products", "Name", value); }
+    partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Products", "Type", value); }
+    partial void OnShowDescriptionColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Description", value); ColumnVisibilityHelper.Save("Products", "Description", value); }
+    partial void OnShowCategoryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Category", value); ColumnVisibilityHelper.Save("Products", "Category", value); }
+    partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("Products", "Supplier", value); }
+    partial void OnShowReorderColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reorder", value); ColumnVisibilityHelper.Save("Products", "Reorder", value); }
+    partial void OnShowOverstockColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Overstock", value); ColumnVisibilityHelper.Save("Products", "Overstock", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

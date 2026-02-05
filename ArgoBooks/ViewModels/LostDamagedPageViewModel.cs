@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -44,25 +45,25 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showIdColumn = true;
+    private bool _showIdColumn = ColumnVisibilityHelper.Load("LostDamaged", "Id", true);
 
     [ObservableProperty]
-    private bool _showProductColumn = true;
+    private bool _showProductColumn = ColumnVisibilityHelper.Load("LostDamaged", "Product", true);
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("LostDamaged", "Date", true);
 
     [ObservableProperty]
-    private bool _showReasonColumn = true;
+    private bool _showReasonColumn = ColumnVisibilityHelper.Load("LostDamaged", "Reason", true);
 
     [ObservableProperty]
-    private bool _showLossColumn = true;
+    private bool _showLossColumn = ColumnVisibilityHelper.Load("LostDamaged", "Loss", true);
 
-    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
-    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
-    partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
-    partial void OnShowLossColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Loss", value);
+    partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("LostDamaged", "Id", value); }
+    partial void OnShowProductColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Product", value); ColumnVisibilityHelper.Save("LostDamaged", "Product", value); }
+    partial void OnShowDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Date", value); ColumnVisibilityHelper.Save("LostDamaged", "Date", value); }
+    partial void OnShowReasonColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reason", value); ColumnVisibilityHelper.Save("LostDamaged", "Reason", value); }
+    partial void OnShowLossColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Loss", value); ColumnVisibilityHelper.Save("LostDamaged", "Loss", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

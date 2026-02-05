@@ -7,6 +7,7 @@ using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ArgoBooks.Helpers;
 
 namespace ArgoBooks.ViewModels;
 
@@ -128,33 +129,33 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     public PaymentsTableColumnWidths ColumnWidths => App.PaymentsColumnWidths;
 
     [ObservableProperty]
-    private bool _showIdColumn = true;
+    private bool _showIdColumn = ColumnVisibilityHelper.Load("Payments", "Id", true);
 
     [ObservableProperty]
-    private bool _showInvoiceColumn = true;
+    private bool _showInvoiceColumn = ColumnVisibilityHelper.Load("Payments", "Invoice", true);
 
     [ObservableProperty]
-    private bool _showCustomerColumn = true;
+    private bool _showCustomerColumn = ColumnVisibilityHelper.Load("Payments", "Customer", true);
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("Payments", "Date", true);
 
     [ObservableProperty]
-    private bool _showMethodColumn = true;
+    private bool _showMethodColumn = ColumnVisibilityHelper.Load("Payments", "Method", true);
 
     [ObservableProperty]
-    private bool _showAmountColumn = true;
+    private bool _showAmountColumn = ColumnVisibilityHelper.Load("Payments", "Amount", true);
 
     [ObservableProperty]
-    private bool _showStatusColumn = true;
+    private bool _showStatusColumn = ColumnVisibilityHelper.Load("Payments", "Status", true);
 
-    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowInvoiceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Invoice", value);
-    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
-    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
-    partial void OnShowMethodColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Method", value);
-    partial void OnShowAmountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Amount", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+    partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("Payments", "Id", value); }
+    partial void OnShowInvoiceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Invoice", value); ColumnVisibilityHelper.Save("Payments", "Invoice", value); }
+    partial void OnShowCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Customer", value); ColumnVisibilityHelper.Save("Payments", "Customer", value); }
+    partial void OnShowDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Date", value); ColumnVisibilityHelper.Save("Payments", "Date", value); }
+    partial void OnShowMethodColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Method", value); ColumnVisibilityHelper.Save("Payments", "Method", value); }
+    partial void OnShowAmountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Amount", value); ColumnVisibilityHelper.Save("Payments", "Amount", value); }
+    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Payments", "Status", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

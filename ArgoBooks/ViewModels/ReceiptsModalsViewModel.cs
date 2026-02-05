@@ -234,7 +234,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// Gets the modal width based on current state.
     /// Narrower for loading/error states, wider for results.
     /// </summary>
-    public double ModalWidth => HasScanResult ? 950 : 480;
+    public double ModalWidth => HasScanResult ? 1100 : 480;
 
     partial void OnHasScanResultChanged(bool value)
     {
@@ -303,10 +303,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnIsRevenueChanged(bool value)
     {
         OnPropertyChanged(nameof(TransactionTypeLabel));
-        // Reload categories for the new transaction type
-        LoadCategoryOptions();
-        // Clear current category selection since category type changed
-        SelectedCategory = null;
     }
 
     /// <summary>
@@ -460,7 +456,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _currentFileName = fileName;
 
         LoadSupplierOptions();
-        LoadCategoryOptions();
         LoadProductOptions();
 
         // Set the image path for preview
@@ -606,14 +601,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsMediumConfidence = result.Confidence >= 0.6 && result.Confidence < 0.85;
         IsLowConfidence = result.Confidence < 0.6;
 
-        // Line items
+        // Line items (filter out discounts and non-product lines)
         LineItems.Clear();
         foreach (var item in result.LineItems)
         {
+            // Skip discount lines and negative-amount adjustments
+            if (IsDiscountLine(item))
+                continue;
+
             var lineItem = new ScannedLineItemViewModel
             {
-                Description = item.Description,
-                Quantity = item.Quantity.ToString("F2"),
+                Description = CleanOcrText(item.Description),
+                Quantity = ((int)item.Quantity).ToString(),
                 UnitPrice = item.UnitPrice.ToString("F2"),
                 TotalPrice = item.TotalPrice.ToString("F2"),
                 Confidence = item.Confidence
@@ -714,7 +713,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Validate
         HasTotalError = false;
         HasSupplierError = false;
-        HasCategoryError = false;
 
         // Clear product errors on all line items
         foreach (var lineItem in LineItems)
@@ -737,13 +735,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             HasSupplierError = true;
             SupplierErrorMessage = "Please select a supplier.".Translate();
-            hasErrors = true;
-        }
-
-        if (SelectedCategory == null)
-        {
-            HasCategoryError = true;
-            CategoryErrorMessage = "Please select a category.".Translate();
             hasErrors = true;
         }
 
@@ -1063,7 +1054,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsLoadingAiSuggestions = true;
         HasAiSuggestions = false;
         ShowCreateSupplierSuggestion = false;
-        ShowCreateCategorySuggestion = false;
 
         try
         {
@@ -1143,33 +1133,53 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             SupplierMatchConfidence = 0;
         }
 
-        // Apply category suggestion
-        if (!string.IsNullOrEmpty(suggestion.MatchedCategoryId))
-        {
-            var category = CategoryOptions.FirstOrDefault(c => c.Id == suggestion.MatchedCategoryId);
-            if (category != null)
-            {
-                SelectedCategory = category;
-                CategoryMatchConfidence = suggestion.CategoryConfidence;
-            }
-        }
-        else if (suggestion.ShouldCreateNewCategory && suggestion.NewCategory != null)
-        {
-            ShowCreateCategorySuggestion = true;
-            SuggestedCategoryName = ToTitleCase(suggestion.NewCategory.Name);
-            CategoryMatchConfidence = 0;
-        }
     }
 
     /// <summary>
-    /// Converts a string to title case (e.g., "HARBOR LANE CAFE" -> "Harbor Lane Cafe").
+    /// Determines if a line item is a discount rather than a product.
+    /// Only filters based on description keywords to avoid incorrectly
+    /// removing legitimate line items with negative amounts.
     /// </summary>
-    private static string ToTitleCase(string text)
+    private static bool IsDiscountLine(ScannedLineItem item)
+    {
+        var desc = item.Description?.ToLowerInvariant() ?? string.Empty;
+        return desc.Contains("discount") || desc.Contains("% off") || desc.Contains("coupon")
+            || desc.Contains("promo");
+    }
+
+    /// <summary>
+    /// Cleans OCR artifacts from a description string.
+    /// Removes *, normalizes newlines to spaces, and collapses multiple spaces.
+    /// </summary>
+    private static string CleanOcrText(string text)
     {
         if (string.IsNullOrEmpty(text))
             return text;
 
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
+        var cleaned = text
+            .Replace("*", "")
+            .Replace("\r\n", " ")
+            .Replace("\n", " ")
+            .Replace("\r", " ");
+
+        // Collapse multiple spaces into one
+        while (cleaned.Contains("  "))
+            cleaned = cleaned.Replace("  ", " ");
+
+        return cleaned.Trim();
+    }
+
+    /// <summary>
+    /// Converts a string to title case and cleans up OCR artifacts
+    /// (e.g., "LARGE DRINK*" -> "Large Drink", "MD HOOK\nwheat" -> "Md Hook Wheat").
+    /// </summary>
+    private static string ToTitleCase(string text)
+    {
+        var cleaned = CleanOcrText(text);
+        if (string.IsNullOrEmpty(cleaned))
+            return text?.Trim() ?? string.Empty;
+
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cleaned.ToLower());
     }
 
     /// <summary>
@@ -1294,16 +1304,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
         }
 
+        // Clean OCR artifacts before matching
+        var cleanedDescription = CleanOcrText(description);
+
         // Try to find exact or close match
         var matchedProduct = ProductOptions.FirstOrDefault(p =>
-            p.Name.Equals(description, StringComparison.OrdinalIgnoreCase));
+            p.Name.Equals(cleanedDescription, StringComparison.OrdinalIgnoreCase));
 
         if (matchedProduct == null)
         {
             // Try partial match
             matchedProduct = ProductOptions.FirstOrDefault(p =>
-                p.Name.Contains(description, StringComparison.OrdinalIgnoreCase) ||
-                description.Contains(p.Name, StringComparison.OrdinalIgnoreCase));
+                p.Name.Contains(cleanedDescription, StringComparison.OrdinalIgnoreCase) ||
+                cleanedDescription.Contains(p.Name, StringComparison.OrdinalIgnoreCase));
         }
 
         if (matchedProduct != null)
@@ -1447,13 +1460,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsLowConfidence = false;
         LineItems.Clear();
         SelectedSupplier = null;
-        SelectedCategory = null;
         SelectedPaymentMethod = "Cash";
         Notes = string.Empty;
         IsRevenue = false;
         HasTotalError = false;
         HasSupplierError = false;
-        HasCategoryError = false;
         _currentImageData = null;
         _currentFileName = null;
 
@@ -1462,11 +1473,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasAiSuggestions = false;
         AiSuggestion = null;
         SupplierMatchConfidence = 0;
-        CategoryMatchConfidence = 0;
         ShowCreateSupplierSuggestion = false;
-        ShowCreateCategorySuggestion = false;
         SuggestedSupplierName = string.Empty;
-        SuggestedCategoryName = string.Empty;
 
         // Reset usage state (keep cached values for display)
         IsNearLimit = false;

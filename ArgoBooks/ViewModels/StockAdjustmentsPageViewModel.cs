@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Services;
@@ -62,37 +63,37 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Date", true);
 
     [ObservableProperty]
-    private bool _showReferenceColumn = true;
+    private bool _showReferenceColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Reference", true);
 
     [ObservableProperty]
-    private bool _showProductColumn = true;
+    private bool _showProductColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Product", true);
 
     [ObservableProperty]
-    private bool _showLocationColumn = true;
+    private bool _showLocationColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Location", true);
 
     [ObservableProperty]
-    private bool _showQuantityColumn = true;
+    private bool _showQuantityColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Quantity", true);
 
     [ObservableProperty]
-    private bool _showPreviousColumn = true;
+    private bool _showPreviousColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Previous", true);
 
     [ObservableProperty]
-    private bool _showNewColumn = true;
+    private bool _showNewColumn = ColumnVisibilityHelper.Load("StockAdjustments", "New", true);
 
     [ObservableProperty]
-    private bool _showReasonColumn = true;
+    private bool _showReasonColumn = ColumnVisibilityHelper.Load("StockAdjustments", "Reason", true);
 
-    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
-    partial void OnShowReferenceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reference", value);
-    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
-    partial void OnShowLocationColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Location", value);
-    partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
-    partial void OnShowPreviousColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Previous", value);
-    partial void OnShowNewColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("New", value);
-    partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
+    partial void OnShowDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Date", value); ColumnVisibilityHelper.Save("StockAdjustments", "Date", value); }
+    partial void OnShowReferenceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reference", value); ColumnVisibilityHelper.Save("StockAdjustments", "Reference", value); }
+    partial void OnShowProductColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Product", value); ColumnVisibilityHelper.Save("StockAdjustments", "Product", value); }
+    partial void OnShowLocationColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Location", value); ColumnVisibilityHelper.Save("StockAdjustments", "Location", value); }
+    partial void OnShowQuantityColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Quantity", value); ColumnVisibilityHelper.Save("StockAdjustments", "Quantity", value); }
+    partial void OnShowPreviousColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Previous", value); ColumnVisibilityHelper.Save("StockAdjustments", "Previous", value); }
+    partial void OnShowNewColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("New", value); ColumnVisibilityHelper.Save("StockAdjustments", "New", value); }
+    partial void OnShowReasonColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reason", value); ColumnVisibilityHelper.Save("StockAdjustments", "Reason", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

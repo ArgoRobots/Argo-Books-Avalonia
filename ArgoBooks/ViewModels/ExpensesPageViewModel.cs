@@ -5,6 +5,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using ArgoBooks.Helpers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -85,57 +86,57 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     public TableColumnWidths ColumnWidths => App.ExpensesColumnWidths;
 
     [ObservableProperty]
-    private bool _showIdColumn = true;
+    private bool _showIdColumn = ColumnVisibilityHelper.Load("Expenses", "Id", true);
 
     [ObservableProperty]
-    private bool _showAccountantColumn; // No Accountant column in Expenses UI
+    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Expenses", "Accountant", false); // No Accountant column in Expenses UI
 
     [ObservableProperty]
-    private bool _showProductColumn = true;
+    private bool _showProductColumn = ColumnVisibilityHelper.Load("Expenses", "Product", true);
 
     [ObservableProperty]
-    private bool _showSupplierColumn = true;
+    private bool _showSupplierColumn = ColumnVisibilityHelper.Load("Expenses", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("Expenses", "Date", true);
 
     [ObservableProperty]
-    private bool _showQuantityColumn;
+    private bool _showQuantityColumn = ColumnVisibilityHelper.Load("Expenses", "Quantity", false);
 
     [ObservableProperty]
-    private bool _showAmountColumn;
+    private bool _showAmountColumn = ColumnVisibilityHelper.Load("Expenses", "Amount", false);
 
     [ObservableProperty]
-    private bool _showTaxColumn;
+    private bool _showTaxColumn = ColumnVisibilityHelper.Load("Expenses", "Tax", false);
 
     [ObservableProperty]
-    private bool _showShippingColumn;
+    private bool _showShippingColumn = ColumnVisibilityHelper.Load("Expenses", "Shipping", false);
 
     [ObservableProperty]
-    private bool _showDiscountColumn;
+    private bool _showDiscountColumn = ColumnVisibilityHelper.Load("Expenses", "Discount", false);
 
     [ObservableProperty]
-    private bool _showTotalColumn = true;
+    private bool _showTotalColumn = ColumnVisibilityHelper.Load("Expenses", "Total", true);
 
     [ObservableProperty]
-    private bool _showReceiptColumn = true;
+    private bool _showReceiptColumn = ColumnVisibilityHelper.Load("Expenses", "Receipt", true);
 
     [ObservableProperty]
-    private bool _showStatusColumn = true;
+    private bool _showStatusColumn = ColumnVisibilityHelper.Load("Expenses", "Status", true);
 
-    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
-    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
-    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
-    partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
-    partial void OnShowAmountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Amount", value);
-    partial void OnShowTaxColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Tax", value);
-    partial void OnShowShippingColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Shipping", value);
-    partial void OnShowDiscountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Discount", value);
-    partial void OnShowTotalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Total", value);
-    partial void OnShowReceiptColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Receipt", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+    partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("Expenses", "Id", value); }
+    partial void OnShowAccountantColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Accountant", value); ColumnVisibilityHelper.Save("Expenses", "Accountant", value); }
+    partial void OnShowProductColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Product", value); ColumnVisibilityHelper.Save("Expenses", "Product", value); }
+    partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("Expenses", "Supplier", value); }
+    partial void OnShowDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Date", value); ColumnVisibilityHelper.Save("Expenses", "Date", value); }
+    partial void OnShowQuantityColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Quantity", value); ColumnVisibilityHelper.Save("Expenses", "Quantity", value); }
+    partial void OnShowAmountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Amount", value); ColumnVisibilityHelper.Save("Expenses", "Amount", value); }
+    partial void OnShowTaxColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Tax", value); ColumnVisibilityHelper.Save("Expenses", "Tax", value); }
+    partial void OnShowShippingColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Shipping", value); ColumnVisibilityHelper.Save("Expenses", "Shipping", value); }
+    partial void OnShowDiscountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Discount", value); ColumnVisibilityHelper.Save("Expenses", "Discount", value); }
+    partial void OnShowTotalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Total", value); ColumnVisibilityHelper.Save("Expenses", "Total", value); }
+    partial void OnShowReceiptColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Receipt", value); ColumnVisibilityHelper.Save("Expenses", "Receipt", value); }
+    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Expenses", "Status", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

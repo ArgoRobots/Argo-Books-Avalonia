@@ -241,13 +241,13 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.ShippingColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowShippingColumn}" />
 
-                                        <!-- Discount - Custom content for SuccessBrush color -->
+                                        <!-- Discount - Custom content for ErrorBrush color -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.DiscountColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowDiscountColumn}">
                                             <table:ArgoTableCell.CellContent>
                                                 <TextBlock Text="{Binding DiscountFormatted}"
                                                            FontSize="14"
-                                                           Foreground="{DynamicResource SuccessBrush}"
+                                                           Foreground="{DynamicResource ErrorBrush}"
                                                            VerticalAlignment="Center" />
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>

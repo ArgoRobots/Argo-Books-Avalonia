@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -34,29 +35,29 @@ public partial class ReturnsPageViewModel : ViewModelBase
     private bool _isColumnMenuOpen;
 
     [ObservableProperty]
-    private bool _showIdColumn = true;
+    private bool _showIdColumn = ColumnVisibilityHelper.Load("Returns", "Id", true);
 
     [ObservableProperty]
-    private bool _showProductColumn = true;
+    private bool _showProductColumn = ColumnVisibilityHelper.Load("Returns", "Product", true);
 
     [ObservableProperty]
-    private bool _showSupplierCustomerColumn = true;
+    private bool _showSupplierCustomerColumn = ColumnVisibilityHelper.Load("Returns", "SupplierCustomer", true);
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("Returns", "Date", true);
 
     [ObservableProperty]
-    private bool _showReasonColumn = true;
+    private bool _showReasonColumn = ColumnVisibilityHelper.Load("Returns", "Reason", true);
 
     [ObservableProperty]
-    private bool _showRefundColumn = true;
+    private bool _showRefundColumn = ColumnVisibilityHelper.Load("Returns", "Refund", true);
 
-    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
-    partial void OnShowSupplierCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("SupplierCustomer", value);
-    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
-    partial void OnShowReasonColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Reason", value);
-    partial void OnShowRefundColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Refund", value);
+    partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("Returns", "Id", value); }
+    partial void OnShowProductColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Product", value); ColumnVisibilityHelper.Save("Returns", "Product", value); }
+    partial void OnShowSupplierCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("SupplierCustomer", value); ColumnVisibilityHelper.Save("Returns", "SupplierCustomer", value); }
+    partial void OnShowDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Date", value); ColumnVisibilityHelper.Save("Returns", "Date", value); }
+    partial void OnShowReasonColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reason", value); ColumnVisibilityHelper.Save("Returns", "Reason", value); }
+    partial void OnShowRefundColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Refund", value); ColumnVisibilityHelper.Save("Returns", "Refund", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -89,41 +90,41 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     public RentalRecordsTableColumnWidths ColumnWidths => App.RentalRecordsColumnWidths;
 
     [ObservableProperty]
-    private bool _showIdColumn = true;
+    private bool _showIdColumn = ColumnVisibilityHelper.Load("RentalRecords", "Id", true);
 
     [ObservableProperty]
-    private bool _showItemColumn = true;
+    private bool _showItemColumn = ColumnVisibilityHelper.Load("RentalRecords", "Item", true);
 
     [ObservableProperty]
-    private bool _showCustomerColumn = true;
+    private bool _showCustomerColumn = ColumnVisibilityHelper.Load("RentalRecords", "Customer", true);
 
     [ObservableProperty]
-    private bool _showQuantityColumn = true;
+    private bool _showQuantityColumn = ColumnVisibilityHelper.Load("RentalRecords", "Quantity", true);
 
     [ObservableProperty]
-    private bool _showStartDateColumn = true;
+    private bool _showStartDateColumn = ColumnVisibilityHelper.Load("RentalRecords", "StartDate", true);
 
     [ObservableProperty]
-    private bool _showDueDateColumn = true;
+    private bool _showDueDateColumn = ColumnVisibilityHelper.Load("RentalRecords", "DueDate", true);
 
     [ObservableProperty]
-    private bool _showStatusColumn = true;
+    private bool _showStatusColumn = ColumnVisibilityHelper.Load("RentalRecords", "Status", true);
 
     [ObservableProperty]
-    private bool _showTotalColumn = true;
+    private bool _showTotalColumn = ColumnVisibilityHelper.Load("RentalRecords", "Total", true);
 
     [ObservableProperty]
-    private bool _showDepositColumn = true;
+    private bool _showDepositColumn = ColumnVisibilityHelper.Load("RentalRecords", "Deposit", true);
 
-    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
-    partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
-    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
-    partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
-    partial void OnShowStartDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("StartDate", value);
-    partial void OnShowDueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("DueDate", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
-    partial void OnShowTotalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Total", value);
-    partial void OnShowDepositColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Deposit", value);
+    partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("RentalRecords", "Id", value); }
+    partial void OnShowItemColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Item", value); ColumnVisibilityHelper.Save("RentalRecords", "Item", value); }
+    partial void OnShowCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Customer", value); ColumnVisibilityHelper.Save("RentalRecords", "Customer", value); }
+    partial void OnShowQuantityColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Quantity", value); ColumnVisibilityHelper.Save("RentalRecords", "Quantity", value); }
+    partial void OnShowStartDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("StartDate", value); ColumnVisibilityHelper.Save("RentalRecords", "StartDate", value); }
+    partial void OnShowDueDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("DueDate", value); ColumnVisibilityHelper.Save("RentalRecords", "DueDate", value); }
+    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("RentalRecords", "Status", value); }
+    partial void OnShowTotalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Total", value); ColumnVisibilityHelper.Save("RentalRecords", "Total", value); }
+    partial void OnShowDepositColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Deposit", value); ColumnVisibilityHelper.Save("RentalRecords", "Deposit", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

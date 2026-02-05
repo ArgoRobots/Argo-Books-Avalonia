@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
@@ -38,33 +39,33 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showSupplierColumn = true;
+    private bool _showSupplierColumn = ColumnVisibilityHelper.Load("Suppliers", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showEmailColumn = true;
+    private bool _showEmailColumn = ColumnVisibilityHelper.Load("Suppliers", "Email", true);
 
     [ObservableProperty]
-    private bool _showPhoneColumn = true;
+    private bool _showPhoneColumn = ColumnVisibilityHelper.Load("Suppliers", "Phone", true);
 
     [ObservableProperty]
-    private bool _showAddressColumn = true;
+    private bool _showAddressColumn = ColumnVisibilityHelper.Load("Suppliers", "Address", true);
 
     [ObservableProperty]
-    private bool _showCountryColumn = true;
+    private bool _showCountryColumn = ColumnVisibilityHelper.Load("Suppliers", "Country", true);
 
     [ObservableProperty]
-    private bool _showProductsColumn = true;
+    private bool _showProductsColumn = ColumnVisibilityHelper.Load("Suppliers", "Products", true);
 
     [ObservableProperty]
-    private bool _showStatusColumn = true;
+    private bool _showStatusColumn = ColumnVisibilityHelper.Load("Suppliers", "Status", true);
 
-    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowEmailColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Email", value);
-    partial void OnShowPhoneColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Phone", value);
-    partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
-    partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
-    partial void OnShowProductsColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Products", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+    partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("Suppliers", "Supplier", value); }
+    partial void OnShowEmailColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Email", value); ColumnVisibilityHelper.Save("Suppliers", "Email", value); }
+    partial void OnShowPhoneColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Phone", value); ColumnVisibilityHelper.Save("Suppliers", "Phone", value); }
+    partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Suppliers", "Address", value); }
+    partial void OnShowCountryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Country", value); ColumnVisibilityHelper.Save("Suppliers", "Country", value); }
+    partial void OnShowProductsColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Products", value); ColumnVisibilityHelper.Save("Suppliers", "Products", value); }
+    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Suppliers", "Status", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
