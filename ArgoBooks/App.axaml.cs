@@ -552,6 +552,9 @@ public class App : Application
     // File watchers for recent companies - watches directories containing recent company files
     private static readonly Dictionary<string, FileSystemWatcher> _recentCompanyWatchers = new();
 
+    // When true, the CompanySaved event handler skips showing the "Saved" indicator
+    private static bool _suppressSavedFeedback;
+
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
@@ -1048,9 +1051,12 @@ public class App : Application
         CompanyManager.CompanySaved += (_, _) =>
         {
             _mainWindowViewModel.HideLoading();
-            // Call ShowSavedFeedback FIRST - it checks HasUnsavedChanges before clearing it
-            _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
-            // Then clear the main window's flag (ShowSavedFeedback handles the header's flag)
+
+            if (_suppressSavedFeedback)
+                _suppressSavedFeedback = false;
+            else
+                _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+
             _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
@@ -1561,18 +1567,13 @@ public class App : Application
                     {
                         CompanyManager.NotifyDataChanged();
 
-                        // Reset unsaved flags after NotifyDataChanged (which sets them true)
-                        // but before SaveCompanyAsync so CompanySaved event doesn't
-                        // trigger the "Saved" indicator in the header
-                        _mainWindowViewModel.HasUnsavedChanges = false;
-                        _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
-
-                        // Save the shifted data so it persists for next open
+                        // Suppress the "Saved" indicator for this internal save
+                        _suppressSavedFeedback = true;
                         await CompanyManager.SaveCompanyAsync();
                     }
                     CompanyManager.CompanyData.MarkAsSaved();
 
-                    // Ensure unsaved changes are cleared
+                    // Reset unsaved changes since time-shift is automatic
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
