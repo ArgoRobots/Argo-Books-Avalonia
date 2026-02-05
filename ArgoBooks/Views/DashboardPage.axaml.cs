@@ -103,17 +103,18 @@ public partial class DashboardPage : UserControl
         Control? chart = null;
         string chartName = "Chart";
 
-        switch (e.ChartId)
+        // Match by chart name or title text (GetChartTitle returns LabelVisual text, not x:Name)
+        if (e.ChartId == "ProfitsChart" ||
+            e.ChartId.StartsWith("Total profit", StringComparison.OrdinalIgnoreCase))
         {
-            case "ProfitsChart":
-                chart = this.FindControl<CartesianChart>("ProfitsChart");
-                chartName = "Profits_Overview";
-                break;
-
-            case "ExpensesVsRevenueChart":
-                chart = this.FindControl<PieChart>("ExpensesVsRevenueChart");
-                chartName = "Expenses_vs_Revenue";
-                break;
+            chart = this.FindControl<CartesianChart>("ProfitsChart");
+            chartName = "Profits_Overview";
+        }
+        else if (e.ChartId == "ExpensesVsRevenueChart" ||
+                 e.ChartId.Contains("Revenue", StringComparison.OrdinalIgnoreCase))
+        {
+            chart = this.FindControl<CartesianChart>("ExpensesVsRevenueChart");
+            chartName = "Expenses_vs_Revenue";
         }
 
         if (chart == null) return;

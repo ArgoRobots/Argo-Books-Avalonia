@@ -6,6 +6,16 @@ using Avalonia.VisualTree;
 namespace ArgoBooks.Helpers;
 
 /// <summary>
+/// Represents a single step in a tutorial sequence.
+/// </summary>
+public class TutorialStep
+{
+    public required string Title { get; init; }
+    public required string Description { get; init; }
+    public required string HighlightArea { get; init; }
+}
+
+/// <summary>
 /// Shared helper for tutorial overlay highlighting. Handles element lookup,
 /// highlight bounds calculation with edge clamping, and backdrop geometry
 /// with a transparent cutout over the highlighted area.
