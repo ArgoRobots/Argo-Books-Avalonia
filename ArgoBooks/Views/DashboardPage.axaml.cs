@@ -19,6 +19,9 @@ namespace ArgoBooks.Views;
 /// </summary>
 public partial class DashboardPage : UserControl
 {
+    private Control? _clickedChart;
+    private string _clickedChartName = "Chart";
+
     public DashboardPage()
     {
         InitializeComponent();
@@ -68,13 +71,10 @@ public partial class DashboardPage : UserControl
                 var isPieChart = pieChart != null;
                 var targetChart = (Control?)chart ?? pieChart;
 
-                var chartId = GetChartTitle(targetChart) ?? (targetChart switch
-                {
-                    CartesianChart cc => cc.Name ?? "ExpensesChart",
-                    PieChart pc => pc.Name ?? "ExpenseDistributionChart",
-                    _ => string.Empty
-                });
+                _clickedChart = targetChart;
+                _clickedChartName = GetChartTitle(targetChart) ?? "Chart";
 
+                var chartId = _clickedChartName;
                 viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
             }
@@ -96,33 +96,15 @@ public partial class DashboardPage : UserControl
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, SaveChartImageEventArgs e)
     {
+        if (_clickedChart == null) return;
+
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
 
-        // Find the chart and determine the file name
-        Control? chart = null;
-        string chartName = "Chart";
-
-        // Match by chart name or title text (GetChartTitle returns LabelVisual text, not x:Name)
-        if (e.ChartId == "ProfitsChart" ||
-            e.ChartId.StartsWith("Total profit", StringComparison.OrdinalIgnoreCase))
-        {
-            chart = this.FindControl<CartesianChart>("ProfitsChart");
-            chartName = "Profits_Overview";
-        }
-        else if (e.ChartId == "ExpensesVsRevenueChart" ||
-                 e.ChartId.Contains("Revenue", StringComparison.OrdinalIgnoreCase))
-        {
-            chart = this.FindControl<CartesianChart>("ExpensesVsRevenueChart");
-            chartName = "Expenses_vs_Revenue";
-        }
-
-        if (chart == null) return;
-
         await ChartImageExportService.SaveChartAsImageAsync(
             topLevel,
-            chart,
-            ChartImageExportService.CreateSafeFileName(chartName));
+            _clickedChart,
+            ChartImageExportService.CreateSafeFileName(_clickedChartName));
     }
 
     /// <summary>
@@ -241,15 +223,10 @@ public partial class DashboardPage : UserControl
                 var position = e.GetPosition(this);
                 var isPieChart = sender is PieChart;
 
-                // Get the chart title from LabelVisual, fall back to chart Name for data lookup
-                var chartId = GetChartTitle(sender as Control) ?? (sender switch
-                {
-                    CartesianChart cc => cc.Name ?? "ExpensesChart",
-                    PieChart pc => pc.Name ?? "ExpenseDistributionChart",
-                    _ => string.Empty
-                });
+                _clickedChart = sender as Control;
+                _clickedChartName = GetChartTitle(_clickedChart) ?? "Chart";
 
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart,
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
                 e.Handled = true;
             }
