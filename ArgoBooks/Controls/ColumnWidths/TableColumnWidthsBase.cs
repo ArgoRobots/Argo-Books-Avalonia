@@ -25,11 +25,10 @@ public class ColumnDef
 /// </summary>
 public abstract partial class TableColumnWidthsBase : ObservableObject, ITableColumnWidths
 {
-    // Default to a reasonable desktop width to ensure proportional layout on first render
-    // before OnTableSizeChanged provides the actual width
     private double _availableWidth = 1200;
     private bool _isUpdating;
     private bool _hasManualOverflow;
+    private bool _hasReceivedInitialWidth;
 
     /// <summary>
     /// Column definitions dictionary.
@@ -81,6 +80,15 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     }
 
     /// <summary>
+    /// Called after all columns are registered to calculate initial proportional widths.
+    /// Subclasses should call this at the end of their constructor.
+    /// </summary>
+    protected void InitializeColumnWidths()
+    {
+        RecalculateWidths();
+    }
+
+    /// <summary>
     /// Updates column visibility and recalculates widths.
     /// </summary>
     public void SetColumnVisibility(string columnName, bool isVisible)
@@ -97,7 +105,8 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     /// </summary>
     public void SetAvailableWidth(double width)
     {
-        if (Math.Abs(_availableWidth - width) < 1) return;
+        if (_hasReceivedInitialWidth && Math.Abs(_availableWidth - width) < 1) return;
+        _hasReceivedInitialWidth = true;
 
         var totalCurrentWidth = Columns.Values
             .Where(c => c.IsVisible)

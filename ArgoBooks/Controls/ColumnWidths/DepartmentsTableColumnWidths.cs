@@ -27,5 +27,7 @@ public partial class DepartmentsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Description", new ColumnDef { StarValue = 1.6, MinWidth = 160, PreferredWidth = 280 }, w => DescriptionColumnWidth = w);
         RegisterColumn("Employees", new ColumnDef { StarValue = 0.8, MinWidth = 90, PreferredWidth = 120 }, w => EmployeesColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
+
+        InitializeColumnWidths();
     }
 }

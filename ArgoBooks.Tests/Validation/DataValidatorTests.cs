@@ -506,8 +506,7 @@ public class DataValidatorTests
         {
             Id = "CAT-001",
             Name = "Electronics",
-            Type = CategoryType.Revenue,
-            DefaultTaxRate = 0.08m
+            Type = CategoryType.Revenue
         };
 
         var result = _validator.ValidateCategory(category);
@@ -524,25 +523,6 @@ public class DataValidatorTests
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Name");
-    }
-
-    [Theory]
-    [InlineData(-0.01)]
-    [InlineData(1.01)]
-    public void ValidateCategory_InvalidTaxRate_ReturnsError(decimal taxRate)
-    {
-        var category = new Category
-        {
-            Id = "CAT-001",
-            Name = "Electronics",
-            Type = CategoryType.Revenue,
-            DefaultTaxRate = taxRate
-        };
-
-        var result = _validator.ValidateCategory(category);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "DefaultTaxRate");
     }
 
     [Fact]

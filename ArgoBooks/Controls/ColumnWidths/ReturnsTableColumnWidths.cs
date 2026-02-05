@@ -40,5 +40,7 @@ public partial class ReturnsTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Reason", new ColumnDef { StarValue = 1.0, MinWidth = 80, PreferredWidth = 120 }, w => ReasonColumnWidth = w);
         RegisterColumn("Refund", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 80 }, w => RefundColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
+
+        InitializeColumnWidths();
     }
 }
