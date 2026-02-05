@@ -188,6 +188,11 @@ public class App : Application
     public static CategoriesTutorialViewModel? CategoriesTutorialViewModel => _mainWindowViewModel?.CategoriesTutorialViewModel;
 
     /// <summary>
+    /// Gets the products tutorial view model for first-visit tutorial.
+    /// </summary>
+    public static ProductsTutorialViewModel? ProductsTutorialViewModel => _mainWindowViewModel?.ProductsTutorialViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -740,6 +745,7 @@ public class App : Application
             _mainWindowViewModel.TutorialWelcomeViewModel = new TutorialWelcomeViewModel();
             _mainWindowViewModel.AppTourViewModel = new AppTourViewModel();
             _mainWindowViewModel.CategoriesTutorialViewModel = new CategoriesTutorialViewModel();
+            _mainWindowViewModel.ProductsTutorialViewModel = new ProductsTutorialViewModel();
 
             // Wire up tutorial flow: Welcome -> App Tour
             _mainWindowViewModel.TutorialWelcomeViewModel.StartTourRequested += (_, _) =>

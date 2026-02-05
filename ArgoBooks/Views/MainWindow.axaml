@@ -126,6 +126,12 @@
                                           VerticalAlignment="Stretch"
                                           ZIndex="220" />
 
+        <!-- Products Page Tutorial Overlay -->
+        <modals:ProductsTutorialOverlay DataContext="{Binding ProductsTutorialViewModel}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        ZIndex="220" />
+
         <!-- Loading Overlay (shows during long operations like import) -->
         <Border IsVisible="{Binding IsLoading}"
                 Background="{DynamicResource OverlayBrush}"

@@ -7,28 +7,28 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for the Categories page first-visit tutorial.
+/// ViewModel for the Products page first-visit tutorial.
 /// </summary>
-public partial class CategoriesTutorialViewModel : ViewModelBase
+public partial class ProductsTutorialViewModel : ViewModelBase
 {
-    private readonly List<CategoriesTutorialStep> _steps =
+    private readonly List<ProductsTutorialStep> _steps =
     [
-        new CategoriesTutorialStep
+        new ProductsTutorialStep
         {
-            Title = "Expense & Revenue Categories",
-            Description = "Use the tabs above to switch between Expense categories (costs like supplies, utilities, rent) and Revenue categories (income sources like sales, services, consulting).",
+            Title = "Expense & Revenue Products",
+            Description = "Use the tabs above to switch between Expense products (items you purchase like supplies, materials) and Revenue products (items you sell like goods, services).",
             HighlightArea = "tabs"
         },
-        new CategoriesTutorialStep
+        new ProductsTutorialStep
         {
-            Title = "Organize Your Products",
-            Description = "Categories help you group similar products and services. This makes it easier to track spending patterns and generate reports.",
+            Title = "Track Your Inventory",
+            Description = "Add products to keep track of what you buy and sell. Each product can have a category, supplier, and inventory thresholds.",
             HighlightArea = "content"
         },
-        new CategoriesTutorialStep
+        new ProductsTutorialStep
         {
-            Title = "Example Categories",
-            Description = "A bakery might use expense categories like 'Ingredients', 'Packaging', and 'Equipment'. For revenue: 'Cakes', 'Bread', 'Catering'.\n\nYou can nest categories too - like 'Ingredients > Flour' or 'Cakes > Wedding Cakes'.",
+            Title = "Products & Services",
+            Description = "Products can be physical items or services. Physical products support inventory tracking with reorder points and overstock thresholds.\n\nServices are tracked by usage without inventory management.",
             HighlightArea = "none"
         }
     ];
@@ -101,7 +101,7 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
         ShowHighlight = false;
     }
 
-    public CategoriesTutorialViewModel()
+    public ProductsTutorialViewModel()
     {
         TotalSteps = _steps.Count;
 
@@ -114,7 +114,7 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
     public void ShowIfFirstVisit()
     {
         if (!TutorialService.Instance.ShowFirstVisitHints ||
-            TutorialService.Instance.HasVisitedPage(TutorialService.Pages.Categories))
+            TutorialService.Instance.HasVisitedPage(TutorialService.Pages.Products))
         {
             return;
         }
@@ -156,13 +156,13 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
     [RelayCommand]
     private void Skip()
     {
-        TutorialService.Instance.MarkPageVisited(TutorialService.Pages.Categories);
+        TutorialService.Instance.MarkPageVisited(TutorialService.Pages.Products);
         IsOpen = false;
     }
 
     private void CompleteTutorial()
     {
-        TutorialService.Instance.MarkPageVisited(TutorialService.Pages.Categories);
+        TutorialService.Instance.MarkPageVisited(TutorialService.Pages.Products);
         IsOpen = false;
         TutorialCompleted?.Invoke(this, EventArgs.Empty);
     }
@@ -189,7 +189,7 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
     }
 }
 
-public class CategoriesTutorialStep
+public class ProductsTutorialStep
 {
     public required string Title { get; init; }
     public required string Description { get; init; }

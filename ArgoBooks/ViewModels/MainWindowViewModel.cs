@@ -107,6 +107,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private CategoriesTutorialViewModel? _categoriesTutorialViewModel;
 
     /// <summary>
+    /// Gets or sets the ProductsTutorialViewModel for the Products page tutorial.
+    /// </summary>
+    [ObservableProperty]
+    private ProductsTutorialViewModel? _productsTutorialViewModel;
+
+    /// <summary>
     /// Whether to show the welcome screen (when no company is open).
     /// </summary>
     [ObservableProperty]

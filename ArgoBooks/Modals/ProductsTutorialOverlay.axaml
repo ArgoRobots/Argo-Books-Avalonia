@@ -6,12 +6,12 @@
              xmlns:local="using:ArgoBooks"
              xmlns:conv="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
-             x:Class="ArgoBooks.Modals.CategoriesTutorialOverlay"
-             x:DataType="vm:CategoriesTutorialViewModel"
+             x:Class="ArgoBooks.Modals.ProductsTutorialOverlay"
+             x:DataType="vm:ProductsTutorialViewModel"
              IsVisible="{Binding IsOpen}">
 
     <Design.DataContext>
-        <vm:CategoriesTutorialViewModel />
+        <vm:ProductsTutorialViewModel />
     </Design.DataContext>
 
     <Panel>
@@ -51,7 +51,7 @@
                                 CornerRadius="28"
                                 Background="{DynamicResource PrimaryLightBrush}"
                                 HorizontalAlignment="Center">
-                            <PathIcon Data="{x:Static local:Icons.Categories}"
+                            <PathIcon Data="{x:Static local:Icons.Products}"
                                       Width="28" Height="28"
                                       Foreground="{DynamicResource PrimaryBrush}" />
                         </Border>
