@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -9,10 +11,13 @@ namespace ArgoBooks.Modals;
 public partial class ProductsTutorialOverlay : UserControl
 {
     private ProductsTutorialViewModel? _viewModel;
+    private Path? _backdropPath;
 
     public ProductsTutorialOverlay()
     {
         InitializeComponent();
+
+        _backdropPath = this.FindControl<Path>("BackdropPath");
 
         DataContextChanged += OnDataContextChanged;
         PropertyChanged += OnPropertyChanged;
@@ -65,83 +70,54 @@ public partial class ProductsTutorialOverlay : UserControl
         if (highlightArea == "none")
         {
             _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
             return;
         }
 
-        var element = FindTargetElement(highlightArea);
+        var window = this.GetVisualRoot() as Window;
+        if (window == null)
+        {
+            _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
+            return;
+        }
+
+        var (element, cornerRadius) = FindTargetElement(window, highlightArea);
         if (element == null)
         {
             _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
             return;
         }
 
-        var bounds = GetElementBoundsRelativeToOverlay(element);
+        var bounds = TutorialHighlightHelper.GetHighlightBounds(this, element, highlightArea);
         if (bounds == null)
         {
             _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
             return;
         }
 
-        var cornerRadius = highlightArea == "tabs" ? new CornerRadius(0) : new CornerRadius(8);
         _viewModel.SetHighlightBounds(bounds.Value, cornerRadius);
+        UpdateBackdropGeometry(bounds.Value, cornerRadius);
     }
 
-    private Control? FindTargetElement(string highlightArea)
+    private static (Control? element, CornerRadius cornerRadius) FindTargetElement(Window window, string highlightArea)
     {
-        var window = this.GetVisualRoot() as Window;
-        if (window == null)
-            return null;
-
         return highlightArea switch
         {
-            "tabs" => FindElementByName<Control>(window, "ProductsTabBar"),
-            "content" => FindElementByName<Control>(window, "AppContent"),
-            _ => null
+            "tabs" => (TutorialHighlightHelper.FindTabItemsPresenter(window, "ProductsPageTabs"), new CornerRadius(0)),
+            "content" => (TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent"), new CornerRadius(8)),
+            _ => (null, new CornerRadius(0))
         };
     }
 
-    private static T? FindElementByName<T>(Visual root, string name) where T : Control
+    private void UpdateBackdropGeometry(Rect? highlightBounds, CornerRadius cornerRadius)
     {
-        if (root is Control control && control.Name == name)
-            return control as T;
+        if (_backdropPath == null)
+            return;
 
-        foreach (var child in root.GetVisualDescendants())
-        {
-            if (child is T typedChild && typedChild.Name == name)
-                return typedChild;
-        }
-
-        return null;
-    }
-
-    private Rect? GetElementBoundsRelativeToOverlay(Control element)
-    {
-        const double borderThickness = 3;
-
-        try
-        {
-            var transform = element.TransformToVisual(this);
-            if (transform == null)
-                return null;
-
-            var elementBounds = new Rect(0, 0, element.Bounds.Width, element.Bounds.Height);
-            var topLeft = transform.Value.Transform(elementBounds.TopLeft);
-            var bottomRight = transform.Value.Transform(elementBounds.BottomRight);
-
-            // Draw border outside the element
-            var left = topLeft.X - borderThickness;
-            var top = topLeft.Y - borderThickness;
-            var width = (bottomRight.X - topLeft.X) + (borderThickness * 2);
-            var height = (bottomRight.Y - topLeft.Y) + (borderThickness * 2);
-
-            if (width <= 0 || height <= 0)
-                return null;
-
-            return new Rect(left, top, width, height);
-        }
-        catch
-        {
-            return null;
-        }
+        _backdropPath.Data = TutorialHighlightHelper.CreateBackdropGeometry(
+            Bounds.Size, highlightBounds, cornerRadius);
     }
 }

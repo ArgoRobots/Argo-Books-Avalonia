@@ -24,7 +24,8 @@
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
-            <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+            <TabControl x:Name="ProductsPageTabs"
+                        SelectedIndex="{Binding SelectedTabIndex}"
                         Margin="0"
                         Classes="page-tabs">
                 <TabItem Header="{loc:Loc Expenses}" />
