@@ -2600,7 +2600,17 @@ public class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            _appShellViewModel.AddNotification("File Not Found".Translate(), "The company file no longer exists.".Translate(), NotificationType.Error);
+            if (ConfirmationDialog != null)
+            {
+                await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "File Not Found".Translate(),
+                    Message = "The company file no longer exists.".Translate(),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
         }
