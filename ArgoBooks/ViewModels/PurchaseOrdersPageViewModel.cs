@@ -98,6 +98,19 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("PurchaseOrders");
+        ShowPONumberColumn = true;
+        ShowDateColumn = true;
+        ShowSupplierColumn = true;
+        ShowItemsColumn = true;
+        ShowTotalColumn = true;
+        ShowStatusColumn = true;
+        ShowExpectedColumn = true;
+    }
+
     #endregion
 
     #region Tabs

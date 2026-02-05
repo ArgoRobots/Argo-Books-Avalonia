@@ -198,7 +198,8 @@
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
                                     MenuX="{Binding ColumnWidths.ColumnMenuX}"
                                     MenuY="{Binding ColumnWidths.ColumnMenuY}"
-                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+                                    CloseCommand="{Binding CloseColumnMenuCommand}"
+                                    ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowDepartmentColumn}" Content="{loc:Loc Department}" Classes="column-toggle" />

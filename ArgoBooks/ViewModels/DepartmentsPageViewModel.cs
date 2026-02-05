@@ -111,6 +111,15 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Departments");
+        ShowDepartmentColumn = true;
+        ShowDescriptionColumn = true;
+        ShowEmployeesColumn = true;
+    }
+
     #endregion
 
     #region Departments Collections

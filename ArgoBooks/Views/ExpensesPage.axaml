@@ -117,7 +117,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Qty'}" ColumnName="Quantity" SortProperty="Quantity"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Quantity'}" ColumnName="Quantity" SortProperty="Quantity"
                                                    ColumnWidth="{Binding ColumnWidths.QuantityColumnWidth}"
                                                    IsColumnVisible="{Binding ShowQuantityColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -366,7 +366,8 @@
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
                                     MenuX="{Binding ColumnWidths.ColumnMenuX}"
                                     MenuY="{Binding ColumnWidths.ColumnMenuY}"
-                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+                                    CloseCommand="{Binding CloseColumnMenuCommand}"
+                                    ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'ID'}" Classes="column-toggle" />

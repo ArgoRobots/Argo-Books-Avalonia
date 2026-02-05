@@ -296,6 +296,17 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Receipts");
+        ShowIdColumn = true;
+        ShowSupplierColumn = true;
+        ShowDateColumn = true;
+        ShowTypeColumn = true;
+        ShowAmountColumn = true;
+    }
+
     #endregion
 
     #region AI Scan State

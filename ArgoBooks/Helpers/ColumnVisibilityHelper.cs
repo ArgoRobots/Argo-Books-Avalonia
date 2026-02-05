@@ -45,4 +45,19 @@ public static class ColumnVisibilityHelper
         pageColumns[columnName] = isVisible;
         _ = App.SettingsService!.SaveGlobalSettingsAsync();
     }
+
+    /// <summary>
+    /// Clears all saved column visibility overrides for a page, so columns revert to defaults.
+    /// </summary>
+    public static void ResetPage(string pageName)
+    {
+        var settings = App.SettingsService?.GlobalSettings?.Ui;
+        if (settings == null)
+            return;
+
+        if (settings.ColumnVisibility.Remove(pageName))
+        {
+            _ = App.SettingsService!.SaveGlobalSettingsAsync();
+        }
+    }
 }

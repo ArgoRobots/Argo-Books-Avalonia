@@ -77,6 +77,17 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("LostDamaged");
+        ShowIdColumn = true;
+        ShowProductColumn = true;
+        ShowDateColumn = true;
+        ShowReasonColumn = true;
+        ShowLossColumn = true;
+    }
+
     #endregion
 
     #region Statistics

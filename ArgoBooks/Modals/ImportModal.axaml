@@ -101,13 +101,13 @@
 
                         <!-- QuickBooks -->
                         <Button Classes="import-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="QuickBooks">
+                                IsEnabled="False">
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <Border Grid.Column="0"
                                         Width="40" Height="40"
                                         CornerRadius="8"
                                         Background="{DynamicResource PrimaryIconBgBrush}"
+                                        Opacity="0.5"
                                         Margin="0,0,16,0">
                                     <PathIcon Data="{x:Static local:Icons.CircleCheck}"
                                               Width="20" Height="20"
@@ -117,16 +117,11 @@
                                     <TextBlock Text="{loc:Loc 'QuickBooks (IIF)'}"
                                                FontSize="14"
                                                FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Import lists and transactions from QuickBooks'}"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Coming Soon'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="{x:Static local:Icons.ChevronRightNav}"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
                             </Grid>
                         </Button>
                     </StackPanel>
@@ -166,6 +161,12 @@
         </Style>
         <Style Selector="Button.import-option:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.import-option:disabled">
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        <Style Selector="Button.import-option:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

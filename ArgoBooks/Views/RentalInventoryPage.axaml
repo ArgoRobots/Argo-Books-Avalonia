@@ -260,12 +260,13 @@
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
                                     MenuX="{Binding ColumnWidths.ColumnMenuX}"
                                     MenuY="{Binding ColumnWidths.ColumnMenuY}"
-                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+                                    CloseCommand="{Binding CloseColumnMenuCommand}"
+                                    ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowItemColumn}" Content="{loc:Loc 'Item'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="{loc:Loc 'Total Qty'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="{loc:Loc 'Total Quantity'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="{loc:Loc 'Available'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowRentedColumn}" Content="{loc:Loc 'Rented'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDailyRateColumn}" Content="{loc:Loc 'Daily Rate'}" Classes="column-toggle" />

@@ -94,6 +94,21 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("StockLevels");
+        ShowProductColumn = true;
+        ShowSkuColumn = true;
+        ShowCategoryColumn = true;
+        ShowLocationColumn = true;
+        ShowInStockColumn = true;
+        ShowReservedColumn = true;
+        ShowAvailableColumn = true;
+        ShowReorderPointColumn = true;
+        ShowStatusColumn = true;
+    }
+
     #endregion
 
     #region Tab Selection

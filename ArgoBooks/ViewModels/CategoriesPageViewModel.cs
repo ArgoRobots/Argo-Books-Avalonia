@@ -172,6 +172,16 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Categories");
+        ShowNameColumn = true;
+        ShowDescriptionColumn = true;
+        ShowTypeColumn = true;
+        ShowProductCountColumn = true;
+    }
+
     #endregion
 
     #region Modal Form Fields

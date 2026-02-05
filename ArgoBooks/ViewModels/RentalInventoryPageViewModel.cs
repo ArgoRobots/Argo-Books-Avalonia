@@ -98,6 +98,20 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("RentalInventory");
+        ShowItemColumn = true;
+        ShowStatusColumn = true;
+        ShowTotalQtyColumn = true;
+        ShowAvailableColumn = true;
+        ShowRentedColumn = true;
+        ShowDailyRateColumn = true;
+        ShowWeeklyRateColumn = true;
+        ShowDepositColumn = true;
+    }
+
     #endregion
 
     #region Search and Filter

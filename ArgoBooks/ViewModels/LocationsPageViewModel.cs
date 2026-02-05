@@ -86,6 +86,16 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Locations");
+        ShowLocationColumn = true;
+        ShowTypeColumn = true;
+        ShowAddressColumn = true;
+        ShowManagerColumn = true;
+    }
+
     #endregion
 
     #region Search and Filter

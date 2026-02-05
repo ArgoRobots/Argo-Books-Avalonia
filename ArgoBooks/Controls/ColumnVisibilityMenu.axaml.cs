@@ -2,6 +2,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -28,6 +29,9 @@ public partial class ColumnVisibilityMenu : UserControl
 
     public static readonly StyledProperty<object?> ColumnsContentProperty =
         AvaloniaProperty.Register<ColumnVisibilityMenu, object?>(nameof(ColumnsContent));
+
+    public static readonly StyledProperty<ICommand?> ResetCommandProperty =
+        AvaloniaProperty.Register<ColumnVisibilityMenu, ICommand?>(nameof(ResetCommand));
 
     #endregion
 
@@ -78,6 +82,15 @@ public partial class ColumnVisibilityMenu : UserControl
         set => SetValue(ColumnsContentProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the command to reset column visibility to defaults.
+    /// </summary>
+    public ICommand? ResetCommand
+    {
+        get => GetValue(ResetCommandProperty);
+        set => SetValue(ResetCommandProperty, value);
+    }
+
     #endregion
 
     public ColumnVisibilityMenu()
@@ -109,4 +122,5 @@ public partial class ColumnVisibilityMenu : UserControl
         MenuY = y;
         IsOpen = true;
     }
+
 }
