@@ -19,6 +19,7 @@ public class CompanyManager : IDisposable
     private string? _currentTempDirectory;
     private string? _currentPassword;
     private CompanyData? _companyData;
+    private FileStream? _fileLock;
     private bool _isDisposed;
 
     /// <summary>
@@ -210,6 +211,9 @@ public class CompanyManager : IDisposable
             _currentFilePath = filePath;
             _currentPassword = password;
 
+            // Hold a read lock on the file to prevent deletion while the company is open
+            AcquireFileLock(filePath);
+
             // Add to recent companies
             _settingsService.AddRecentCompany(filePath);
             await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
@@ -295,6 +299,9 @@ public class CompanyManager : IDisposable
             _currentFilePath = filePath;
             _currentPassword = password;
 
+            // Hold a read lock on the file to prevent deletion while the company is open
+            AcquireFileLock(filePath);
+
             // Add to recent companies
             _settingsService.AddRecentCompany(filePath);
             await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
@@ -315,6 +322,7 @@ public class CompanyManager : IDisposable
         catch (Exception ex)
         {
             // Clean up on failure
+            ReleaseFileLock();
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
             {
@@ -341,8 +349,10 @@ public class CompanyManager : IDisposable
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
         await _fileService.SaveCompanyDataAsync(companyDir, _companyData!, cancellationToken);
 
-        // Save to file
+        // Release file lock before saving (save uses exclusive access), then re-acquire
+        ReleaseFileLock();
         await _fileService.SaveCompanyAsync(_currentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+        AcquireFileLock(_currentFilePath);
 
         // Mark as saved
         _companyData!.MarkAsSaved();
@@ -380,12 +390,14 @@ public class CompanyManager : IDisposable
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
         await _fileService.SaveCompanyDataAsync(companyDir, _companyData!, cancellationToken);
 
-        // Save to new file
+        // Release file lock before saving, then re-acquire on new path
+        ReleaseFileLock();
         await _fileService.SaveCompanyAsync(newFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
 
         // Update current file path and password
         _currentFilePath = newFilePath;
         _currentPassword = passwordToUse;
+        AcquireFileLock(newFilePath);
 
         // Mark as saved
         _companyData!.MarkAsSaved();
@@ -404,6 +416,8 @@ public class CompanyManager : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task CloseCompanyAsync(CancellationToken cancellationToken = default)
     {
+        ReleaseFileLock();
+
         if (_currentTempDirectory != null)
         {
             await _fileService.CloseCompanyAsync(_currentTempDirectory);
@@ -621,6 +635,8 @@ public class CompanyManager : IDisposable
     {
         if (_isDisposed) return;
 
+        ReleaseFileLock();
+
         // Clean up temp directory
         if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
         {
@@ -635,6 +651,34 @@ public class CompanyManager : IDisposable
         }
 
         _isDisposed = true;
+    }
+
+    /// <summary>
+    /// Acquires a read lock on the company file to prevent deletion while open.
+    /// </summary>
+    private void AcquireFileLock(string filePath)
+    {
+        ReleaseFileLock();
+        try
+        {
+            _fileLock = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogWarning($"Could not acquire file lock on {filePath}: {ex.Message}", "FileLock");
+        }
+    }
+
+    /// <summary>
+    /// Releases the file lock on the company file.
+    /// </summary>
+    private void ReleaseFileLock()
+    {
+        if (_fileLock != null)
+        {
+            _fileLock.Dispose();
+            _fileLock = null;
+        }
     }
 }
 

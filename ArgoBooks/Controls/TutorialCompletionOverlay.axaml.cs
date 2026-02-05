@@ -1,6 +1,7 @@
 using ArgoBooks.Services;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
 
@@ -32,14 +33,26 @@ public partial class TutorialCompletionOverlay : UserControl
 
     private void UpdateOverlay(bool show)
     {
-        if (_overlay != null)
-        {
-            _overlay.IsOpen = show;
-        }
+        var type = TutorialService.Instance.CurrentGuidanceType;
 
         if (show)
         {
-            _viewModel.UpdateForGuidanceType(TutorialService.Instance.CurrentGuidanceType);
+            _viewModel.UpdateForGuidanceType(type);
+        }
+
+        if (type == CompletionGuidanceType.Analytics)
+        {
+            // Analytics mode: show on-page card without backdrop
+            if (_overlay != null)
+                _overlay.IsOpen = false;
+            _viewModel.IsAnalyticsMode = show;
+        }
+        else
+        {
+            // Standard mode: show modal with backdrop
+            _viewModel.IsAnalyticsMode = false;
+            if (_overlay != null)
+                _overlay.IsOpen = show;
         }
     }
 
@@ -58,13 +71,16 @@ public partial class TutorialCompletionOverlayViewModel : ObservableObject
     [ObservableProperty]
     private string _message = "Use the navigation bar to go back to the Dashboard for the next step.";
 
+    [ObservableProperty]
+    private bool _isAnalyticsMode;
+
     public void UpdateForGuidanceType(CompletionGuidanceType type)
     {
         switch (type)
         {
             case CompletionGuidanceType.Analytics:
                 Title = LanguageService.Instance.Translate("You're all set!");
-                Message = LanguageService.Instance.Translate("As you add expenses, revenue, and other data, these charts will automatically update to show your business insights. Head back to the Dashboard to complete the tutorial.");
+                Message = LanguageService.Instance.Translate("As you add expenses, revenue, and other data, these charts will automatically update to reflect your business performance. Head back to the Dashboard to complete the tutorial.");
                 break;
             case CompletionGuidanceType.Standard:
             default:
@@ -72,5 +88,12 @@ public partial class TutorialCompletionOverlayViewModel : ObservableObject
                 Message = LanguageService.Instance.Translate("Use the navigation bar to go back to the Dashboard for the next step.");
                 break;
         }
+    }
+
+    [RelayCommand]
+    private void Dismiss()
+    {
+        TutorialService.Instance.DismissCompletionGuidance();
+        IsAnalyticsMode = false;
     }
 }

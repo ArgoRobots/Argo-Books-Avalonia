@@ -8,48 +8,108 @@
              x:Class="ArgoBooks.Controls.TutorialCompletionOverlay"
              x:DataType="controls:TutorialCompletionOverlayViewModel">
 
-    <controls:ModalOverlay x:Name="Overlay"
-                           CloseOnBackdropClick="False"
-                           CloseOnEscape="False">
-        <controls:ModalOverlay.ModalContent>
-            <!-- Modal Container -->
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource PrimaryBrush}"
-                    BorderThickness="2"
-                    CornerRadius="16"
-                    Padding="32,24"
-                    MaxWidth="450"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 4 20 0 #26000000">
-                <StackPanel Spacing="16" HorizontalAlignment="Center">
-                    <!-- Success Icon -->
-                    <Border Width="56" Height="56"
-                            CornerRadius="28"
-                            Background="{DynamicResource SuccessLightBrush}"
-                            HorizontalAlignment="Center">
-                        <PathIcon Data="{x:Static local:Icons.Check}"
-                                  Width="28" Height="28"
-                                  Foreground="{DynamicResource SuccessBrush}" />
-                    </Border>
+    <Panel>
+        <!-- Standard completion guidance (modal with backdrop) -->
+        <controls:ModalOverlay x:Name="Overlay"
+                               CloseOnBackdropClick="False"
+                               CloseOnEscape="False">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource PrimaryBrush}"
+                        BorderThickness="2"
+                        CornerRadius="16"
+                        Padding="32,24"
+                        MaxWidth="450"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BoxShadow="0 4 20 0 #26000000">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                        <!-- Success Icon -->
+                        <Border Width="56" Height="56"
+                                CornerRadius="28"
+                                Background="{DynamicResource SuccessLightBrush}"
+                                HorizontalAlignment="Center">
+                            <PathIcon Data="{x:Static local:Icons.Check}"
+                                      Width="28" Height="28"
+                                      Foreground="{DynamicResource SuccessBrush}" />
+                        </Border>
 
-                    <!-- Message -->
-                    <StackPanel Spacing="8" HorizontalAlignment="Center">
-                        <TextBlock Text="{Binding Title}"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding Message}"
-                                   FontSize="14"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   HorizontalAlignment="Center"
-                                   TextAlignment="Center"
-                                   TextWrapping="Wrap"
-                                   MaxWidth="380" />
+                        <!-- Message -->
+                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding Title}"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding Message}"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="380" />
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
-        </controls:ModalOverlay.ModalContent>
-    </controls:ModalOverlay>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- Analytics completion guidance (on-page card, no backdrop so charts are visible) -->
+        <Border x:Name="AnalyticsCard"
+                IsVisible="{Binding IsAnalyticsMode}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,24,24"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource PrimaryBrush}"
+                BorderThickness="2"
+                CornerRadius="12"
+                Padding="20,16"
+                MaxWidth="380"
+                BoxShadow="0 8 32 0 #40000000"
+                IsHitTestVisible="True">
+            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                <!-- Success Icon -->
+                <Border Grid.Row="0" Grid.Column="0"
+                        Grid.RowSpan="2"
+                        Width="40" Height="40"
+                        CornerRadius="20"
+                        Background="{DynamicResource SuccessLightBrush}"
+                        VerticalAlignment="Top"
+                        Margin="0,0,12,0">
+                    <PathIcon Data="{x:Static local:Icons.Check}"
+                              Width="20" Height="20"
+                              Foreground="{DynamicResource SuccessBrush}" />
+                </Border>
+
+                <!-- Title -->
+                <TextBlock Grid.Row="0" Grid.Column="1"
+                           Text="{Binding Title}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           Margin="0,0,0,4" />
+
+                <!-- Dismiss button -->
+                <Button Grid.Row="0" Grid.Column="2"
+                        Classes="icon-button"
+                        Command="{Binding DismissCommand}"
+                        ToolTip.Tip="Dismiss"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Top">
+                    <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                              Width="14" Height="14" />
+                </Button>
+
+                <!-- Message -->
+                <TextBlock Grid.Row="1" Grid.Column="1"
+                           Grid.ColumnSpan="2"
+                           Text="{Binding Message}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           TextWrapping="Wrap"
+                           LineHeight="20" />
+            </Grid>
+        </Border>
+    </Panel>
 </UserControl>

@@ -7,12 +7,12 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
-public partial class CategoriesTutorialOverlay : UserControl
+public partial class ProductsTutorialOverlay : UserControl
 {
-    private CategoriesTutorialViewModel? _viewModel;
+    private ProductsTutorialViewModel? _viewModel;
     private Avalonia.Controls.Shapes.Path? _backdropPath;
 
-    public CategoriesTutorialOverlay()
+    public ProductsTutorialOverlay()
     {
         InitializeComponent();
 
@@ -30,7 +30,7 @@ public partial class CategoriesTutorialOverlay : UserControl
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
 
-        _viewModel = DataContext as CategoriesTutorialViewModel;
+        _viewModel = DataContext as ProductsTutorialViewModel;
         if (_viewModel != null)
         {
             _viewModel.HighlightAreaChanged += OnHighlightAreaChanged;
@@ -40,7 +40,7 @@ public partial class CategoriesTutorialOverlay : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(CategoriesTutorialViewModel.IsOpen) && _viewModel?.IsOpen == true)
+        if (e.PropertyName == nameof(ProductsTutorialViewModel.IsOpen) && _viewModel?.IsOpen == true)
         {
             Dispatcher.UIThread.Post(UpdateHighlightBounds, DispatcherPriority.Loaded);
         }
@@ -86,8 +86,7 @@ public partial class CategoriesTutorialOverlay : UserControl
 
         if (highlightArea == "tabs")
         {
-            // Compute tight bounding box around actual TabItem elements
-            bounds = TutorialHighlightHelper.GetTabItemsBounds(this, window, "CategoriesPageTabs");
+            bounds = TutorialHighlightHelper.GetTabItemsBounds(this, window, "ProductsPageTabs");
             cornerRadius = new CornerRadius(8);
         }
         else

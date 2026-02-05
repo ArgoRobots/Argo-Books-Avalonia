@@ -1103,14 +1103,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             return;
         }
 
-        // Match by chart name or title
-        if (SelectedChartId == "ProfitsChart" ||
-            SelectedChartId.StartsWith("Total profit", StringComparison.OrdinalIgnoreCase))
+        // Match by chart title text
+        if (SelectedChartId.StartsWith("Total profit", StringComparison.OrdinalIgnoreCase))
         {
             ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
         }
-        else if (SelectedChartId == "ExpensesVsRevenueChart" ||
-                 SelectedChartId.Contains("Revenue", StringComparison.OrdinalIgnoreCase))
+        else if (SelectedChartId.Contains("Revenue", StringComparison.OrdinalIgnoreCase))
         {
             ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
         }

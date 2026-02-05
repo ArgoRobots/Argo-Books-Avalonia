@@ -188,6 +188,11 @@ public class App : Application
     public static CategoriesTutorialViewModel? CategoriesTutorialViewModel => _mainWindowViewModel?.CategoriesTutorialViewModel;
 
     /// <summary>
+    /// Gets the products tutorial view model for first-visit tutorial.
+    /// </summary>
+    public static ProductsTutorialViewModel? ProductsTutorialViewModel => _mainWindowViewModel?.ProductsTutorialViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -547,6 +552,9 @@ public class App : Application
     // File watchers for recent companies - watches directories containing recent company files
     private static readonly Dictionary<string, FileSystemWatcher> _recentCompanyWatchers = new();
 
+    // When true, the CompanySaved event handler skips showing the "Saved" indicator
+    private static bool _suppressSavedFeedback;
+
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
@@ -740,6 +748,7 @@ public class App : Application
             _mainWindowViewModel.TutorialWelcomeViewModel = new TutorialWelcomeViewModel();
             _mainWindowViewModel.AppTourViewModel = new AppTourViewModel();
             _mainWindowViewModel.CategoriesTutorialViewModel = new CategoriesTutorialViewModel();
+            _mainWindowViewModel.ProductsTutorialViewModel = new ProductsTutorialViewModel();
 
             // Wire up tutorial flow: Welcome -> App Tour
             _mainWindowViewModel.TutorialWelcomeViewModel.StartTourRequested += (_, _) =>
@@ -1042,9 +1051,12 @@ public class App : Application
         CompanyManager.CompanySaved += (_, _) =>
         {
             _mainWindowViewModel.HideLoading();
-            // Call ShowSavedFeedback FIRST - it checks HasUnsavedChanges before clearing it
-            _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
-            // Then clear the main window's flag (ShowSavedFeedback handles the header's flag)
+
+            if (_suppressSavedFeedback)
+                _suppressSavedFeedback = false;
+            else
+                _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+
             _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
@@ -1499,9 +1511,7 @@ public class App : Application
                     SampleCompanyService.CleanupSampleCompanyFiles();
             }
 
-            _mainWindowViewModel.ShowLoading(needsCreation
-                ? "Creating sample company...".Translate()
-                : "Opening sample company...".Translate());
+            _mainWindowViewModel.ShowLoading("Opening sample company...".Translate());
 
             if (needsCreation)
             {
@@ -1541,7 +1551,7 @@ public class App : Application
                     }
                 }
 
-                _mainWindowViewModel.ShowLoading("Creating sample company...".Translate());
+                _mainWindowViewModel.ShowLoading("Opening sample company...".Translate());
 
                 // Finish import
                 sampleFilePath = await sampleService.FinishSampleCompanyCreationAsync(validationContext);
@@ -1556,12 +1566,14 @@ public class App : Application
                     if (SampleCompanyService.TimeShiftSampleData(CompanyManager.CompanyData))
                     {
                         CompanyManager.NotifyDataChanged();
-                        // Save the shifted data so it persists for next open
+
+                        // Suppress the "Saved" indicator for this internal save
+                        _suppressSavedFeedback = true;
                         await CompanyManager.SaveCompanyAsync();
                     }
                     CompanyManager.CompanyData.MarkAsSaved();
 
-                    // Reset unsaved changes since time-shift is automatic and shouldn't count as a user change
+                    // Reset unsaved changes since time-shift is automatic
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
@@ -2594,7 +2606,17 @@ public class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            _appShellViewModel.AddNotification("File Not Found".Translate(), "The company file no longer exists.".Translate(), NotificationType.Error);
+            if (ConfirmationDialog != null)
+            {
+                await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "File Not Found".Translate(),
+                    Message = "The company file no longer exists.".Translate(),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
         }

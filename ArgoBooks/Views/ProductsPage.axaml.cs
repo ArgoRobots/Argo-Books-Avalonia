@@ -11,6 +11,13 @@ public partial class ProductsPage : UserControl
     public ProductsPage()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        // Show tutorial on first visit
+        App.ProductsTutorialViewModel?.ShowIfFirstVisit();
     }
 
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)

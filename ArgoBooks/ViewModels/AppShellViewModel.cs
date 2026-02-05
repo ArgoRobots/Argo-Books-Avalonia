@@ -461,7 +461,7 @@ public partial class AppShellViewModel : ViewModelBase
         UserPanelViewModel.OpenMyPlanRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
         // Wire up notification panel's settings to open settings modal at notifications tab
-        NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(2);
+        NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(1);
 
         // Wire up settings modal's upgrade request to open upgrade modal
         SettingsModalViewModel.UpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
