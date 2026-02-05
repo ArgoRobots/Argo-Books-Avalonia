@@ -1505,9 +1505,7 @@ public class App : Application
                     SampleCompanyService.CleanupSampleCompanyFiles();
             }
 
-            _mainWindowViewModel.ShowLoading(needsCreation
-                ? "Creating sample company...".Translate()
-                : "Opening sample company...".Translate());
+            _mainWindowViewModel.ShowLoading("Opening sample company...".Translate());
 
             if (needsCreation)
             {
@@ -1547,7 +1545,7 @@ public class App : Application
                     }
                 }
 
-                _mainWindowViewModel.ShowLoading("Creating sample company...".Translate());
+                _mainWindowViewModel.ShowLoading("Opening sample company...".Translate());
 
                 // Finish import
                 sampleFilePath = await sampleService.FinishSampleCompanyCreationAsync(validationContext);
@@ -1562,12 +1560,19 @@ public class App : Application
                     if (SampleCompanyService.TimeShiftSampleData(CompanyManager.CompanyData))
                     {
                         CompanyManager.NotifyDataChanged();
+
+                        // Reset unsaved flags after NotifyDataChanged (which sets them true)
+                        // but before SaveCompanyAsync so CompanySaved event doesn't
+                        // trigger the "Saved" indicator in the header
+                        _mainWindowViewModel.HasUnsavedChanges = false;
+                        _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+
                         // Save the shifted data so it persists for next open
                         await CompanyManager.SaveCompanyAsync();
                     }
                     CompanyManager.CompanyData.MarkAsSaved();
 
-                    // Reset unsaved changes since time-shift is automatic and shouldn't count as a user change
+                    // Ensure unsaved changes are cleared
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
