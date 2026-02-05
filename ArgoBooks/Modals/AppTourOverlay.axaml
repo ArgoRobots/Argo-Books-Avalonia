@@ -13,9 +13,11 @@
         <vm:AppTourViewModel />
     </Design.DataContext>
 
-    <Panel>
-        <!-- Semi-transparent backdrop -->
-        <Border Background="{DynamicResource OverlayBrush}" />
+    <Panel Background="Transparent">
+        <!-- Semi-transparent backdrop with cutout for highlighted area -->
+        <Path x:Name="BackdropPath"
+              Fill="{DynamicResource OverlayBrush}"
+              IsHitTestVisible="False" />
 
         <!-- Dynamic highlight border - positioned by code-behind -->
         <Border x:Name="DynamicHighlight"
@@ -28,6 +30,7 @@
                 BorderBrush="{DynamicResource PrimaryBrush}"
                 BorderThickness="3"
                 CornerRadius="{Binding HighlightCornerRadius}"
+                IsHitTestVisible="False"
                 IsVisible="{Binding ShowHighlight}" />
 
         <!-- Tour step card - use nested borders to prevent corner clipping -->

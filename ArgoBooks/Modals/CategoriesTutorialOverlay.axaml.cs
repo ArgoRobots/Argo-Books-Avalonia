@@ -81,15 +81,24 @@ public partial class CategoriesTutorialOverlay : UserControl
             return;
         }
 
-        var (element, cornerRadius) = FindTargetElement(window, highlightArea);
-        if (element == null)
+        Rect? bounds;
+        CornerRadius cornerRadius;
+
+        if (highlightArea == "tabs")
         {
-            _viewModel.HideHighlight();
-            UpdateBackdropGeometry(null, new CornerRadius(0));
-            return;
+            // Compute tight bounding box around actual TabItem elements
+            bounds = TutorialHighlightHelper.GetTabItemsBounds(this, window, "CategoriesPageTabs");
+            cornerRadius = new CornerRadius(8);
+        }
+        else
+        {
+            var element = TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent");
+            bounds = element != null
+                ? TutorialHighlightHelper.GetHighlightBounds(this, element, highlightArea)
+                : null;
+            cornerRadius = new CornerRadius(8);
         }
 
-        var bounds = TutorialHighlightHelper.GetHighlightBounds(this, element, highlightArea);
         if (bounds == null)
         {
             _viewModel.HideHighlight();
@@ -99,16 +108,6 @@ public partial class CategoriesTutorialOverlay : UserControl
 
         _viewModel.SetHighlightBounds(bounds.Value, cornerRadius);
         UpdateBackdropGeometry(bounds.Value, cornerRadius);
-    }
-
-    private static (Control? element, CornerRadius cornerRadius) FindTargetElement(Window window, string highlightArea)
-    {
-        return highlightArea switch
-        {
-            "tabs" => (TutorialHighlightHelper.FindTabItemsPresenter(window, "CategoriesPageTabs"), new CornerRadius(0)),
-            "content" => (TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent"), new CornerRadius(8)),
-            _ => (null, new CornerRadius(0))
-        };
     }
 
     private void UpdateBackdropGeometry(Rect? highlightBounds, CornerRadius cornerRadius)

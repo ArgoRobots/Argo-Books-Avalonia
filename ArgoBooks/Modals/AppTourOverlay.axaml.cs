@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -9,10 +10,13 @@ namespace ArgoBooks.Modals;
 public partial class AppTourOverlay : UserControl
 {
     private AppTourViewModel? _viewModel;
+    private Avalonia.Controls.Shapes.Path? _backdropPath;
 
     public AppTourOverlay()
     {
         InitializeComponent();
+
+        _backdropPath = this.FindControl<Avalonia.Controls.Shapes.Path>("BackdropPath");
 
         DataContextChanged += OnDataContextChanged;
         PropertyChanged += OnPropertyChanged;
@@ -71,14 +75,24 @@ public partial class AppTourOverlay : UserControl
         if (targetArea == "center")
         {
             _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
             return;
         }
 
         // Find the target element
-        var (element, cornerRadius) = FindTargetElement(targetArea);
+        var window = this.GetVisualRoot() as Window;
+        if (window == null)
+        {
+            _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
+            return;
+        }
+
+        var (element, cornerRadius) = FindTargetElement(window, targetArea);
         if (element == null)
         {
             _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
             return;
         }
 
@@ -87,43 +101,24 @@ public partial class AppTourOverlay : UserControl
         if (bounds == null)
         {
             _viewModel.HideHighlight();
+            UpdateBackdropGeometry(null, new CornerRadius(0));
             return;
         }
 
         _viewModel.SetHighlightBounds(bounds.Value, cornerRadius);
+        UpdateBackdropGeometry(bounds.Value, cornerRadius);
     }
 
-    private (Control? element, CornerRadius cornerRadius) FindTargetElement(string targetArea)
+    private static (Control? element, CornerRadius cornerRadius) FindTargetElement(Window window, string targetArea)
     {
-        // Get the main window
-        var window = this.GetVisualRoot() as Window;
-        if (window == null)
-            return (null, new CornerRadius(8));
-
         return targetArea switch
         {
-            "sidebar" => (FindElementByName<Control>(window, "AppSidebar"), new CornerRadius(8)),
-            "searchbar" => (FindElementByName<Control>(window, "SearchBox"), new CornerRadius(6)),
-            "content" => (FindElementByName<Control>(window, "AppContent"), new CornerRadius(8)),
-            "header" => (FindElementByName<Control>(window, "AppHeader"), new CornerRadius(0, 0, 8, 8)),
+            "sidebar" => (TutorialHighlightHelper.FindElementByName<Control>(window, "AppSidebar"), new CornerRadius(8)),
+            "searchbar" => (TutorialHighlightHelper.FindElementByName<Control>(window, "SearchBox"), new CornerRadius(6)),
+            "content" => (TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent"), new CornerRadius(8)),
+            "header" => (TutorialHighlightHelper.FindElementByName<Control>(window, "AppHeader"), new CornerRadius(0, 0, 8, 8)),
             _ => (null, new CornerRadius(8))
         };
-    }
-
-    private static T? FindElementByName<T>(Visual root, string name) where T : Control
-    {
-        // First try direct name lookup on the root if it's a named control
-        if (root is Control control && control.Name == name)
-            return control as T;
-
-        // Search through the visual tree
-        foreach (var child in root.GetVisualDescendants())
-        {
-            if (child is T typedChild && typedChild.Name == name)
-                return typedChild;
-        }
-
-        return null;
     }
 
     private Rect? GetElementBoundsRelativeToOverlay(Control element, string targetArea)
@@ -197,5 +192,14 @@ public partial class AppTourOverlay : UserControl
         {
             return null;
         }
+    }
+
+    private void UpdateBackdropGeometry(Rect? highlightBounds, CornerRadius cornerRadius)
+    {
+        if (_backdropPath == null)
+            return;
+
+        _backdropPath.Data = TutorialHighlightHelper.CreateBackdropGeometry(
+            Bounds.Size, highlightBounds, cornerRadius);
     }
 }
