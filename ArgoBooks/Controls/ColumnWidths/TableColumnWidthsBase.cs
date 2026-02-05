@@ -105,8 +105,23 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     /// </summary>
     public void SetAvailableWidth(double width)
     {
+        // Ignore zero or negative widths (can occur during layout transitions)
+        if (width < 1) return;
+
         if (_hasReceivedInitialWidth && Math.Abs(_availableWidth - width) < 1) return;
+
+        var isFirstRealWidth = !_hasReceivedInitialWidth;
         _hasReceivedInitialWidth = true;
+
+        // On the first real width from the UI, always recalculate to match
+        // actual available space (constructor uses a default estimate)
+        if (isFirstRealWidth)
+        {
+            _availableWidth = width;
+            _hasManualOverflow = false;
+            RecalculateWidths();
+            return;
+        }
 
         var totalCurrentWidth = Columns.Values
             .Where(c => c.IsVisible)

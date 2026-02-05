@@ -205,6 +205,19 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Invoices");
+        ShowIdColumn = true;
+        ShowAccountantColumn = true;
+        ShowCustomerColumn = true;
+        ShowIssueDateColumn = true;
+        ShowDueDateColumn = true;
+        ShowAmountColumn = true;
+        ShowStatusColumn = true;
+    }
+
     #endregion
 
     #region Invoices Collection

@@ -97,6 +97,18 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Customers");
+        ShowCustomerColumn = true;
+        ShowEmailColumn = true;
+        ShowPhoneColumn = true;
+        ShowAddressColumn = true;
+        ShowCountryColumn = true;
+        ShowLastRentalColumn = true;
+    }
+
     #endregion
 
     #region Search and Filter

@@ -149,6 +149,25 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Revenue");
+        ShowIdColumn = true;
+        ShowAccountantColumn = false;
+        ShowCustomerColumn = true;
+        ShowProductColumn = true;
+        ShowDateColumn = true;
+        ShowQuantityColumn = false;
+        ShowAmountColumn = false;
+        ShowTaxColumn = false;
+        ShowShippingColumn = false;
+        ShowDiscountColumn = false;
+        ShowTotalColumn = true;
+        ShowReceiptColumn = true;
+        ShowStatusColumn = true;
+    }
+
     #endregion
 
     #region Revenue Collection

@@ -10,7 +10,8 @@
              x:DataType="table:ArgoTableHeader"
              x:Name="Root"
              Width="{Binding #Root.ColumnWidth}"
-             IsVisible="{Binding #Root.IsColumnVisible}">
+             IsVisible="{Binding #Root.IsColumnVisible}"
+             ClipToBounds="True">
 
     <UserControl.Resources>
         <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
@@ -23,12 +24,14 @@
                 Command="{Binding #Root.SortCommand}"
                 CommandParameter="{Binding #Root.SortProperty}"
                 IsVisible="{Binding #Root.IsSortable}">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <TextBlock Text="{Binding #Root.Header}"
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding #Root.Header}"
                            FontSize="12"
                            FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis"
                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                <Panel Width="12" Height="12">
+                <Panel Grid.Column="1" Width="12" Height="12" Margin="4,0,0,0">
                     <!-- Ascending Indicator -->
                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -62,13 +65,14 @@
                         </PathIcon.IsVisible>
                     </PathIcon>
                 </Panel>
-            </StackPanel>
+            </Grid>
         </Button>
 
         <!-- Non-sortable Header Text -->
         <TextBlock Text="{Binding #Root.Header}"
                    FontSize="12"
                    FontWeight="SemiBold"
+                   TextTrimming="CharacterEllipsis"
                    Foreground="{DynamicResource TextPrimaryBrush}"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"

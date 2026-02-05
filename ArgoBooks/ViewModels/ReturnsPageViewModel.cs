@@ -71,6 +71,18 @@ public partial class ReturnsPageViewModel : ViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Returns");
+        ShowIdColumn = true;
+        ShowProductColumn = true;
+        ShowSupplierCustomerColumn = true;
+        ShowDateColumn = true;
+        ShowReasonColumn = true;
+        ShowRefundColumn = true;
+    }
+
     #endregion
 
     #region Statistics

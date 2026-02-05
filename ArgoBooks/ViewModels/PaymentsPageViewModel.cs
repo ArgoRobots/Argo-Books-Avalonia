@@ -169,6 +169,19 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Payments");
+        ShowIdColumn = true;
+        ShowInvoiceColumn = true;
+        ShowCustomerColumn = true;
+        ShowDateColumn = true;
+        ShowMethodColumn = true;
+        ShowAmountColumn = true;
+        ShowStatusColumn = true;
+    }
+
     #endregion
 
     #region Payments Collection

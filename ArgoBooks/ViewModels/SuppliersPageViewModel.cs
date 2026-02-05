@@ -79,6 +79,19 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Suppliers");
+        ShowSupplierColumn = true;
+        ShowEmailColumn = true;
+        ShowPhoneColumn = true;
+        ShowAddressColumn = true;
+        ShowCountryColumn = true;
+        ShowProductsColumn = true;
+        ShowStatusColumn = true;
+    }
+
     #endregion
 
     #region Responsive Header

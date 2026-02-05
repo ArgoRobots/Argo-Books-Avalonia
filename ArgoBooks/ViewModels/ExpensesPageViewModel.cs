@@ -150,6 +150,25 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Expenses");
+        ShowIdColumn = true;
+        ShowAccountantColumn = false;
+        ShowProductColumn = true;
+        ShowSupplierColumn = true;
+        ShowDateColumn = true;
+        ShowQuantityColumn = false;
+        ShowAmountColumn = false;
+        ShowTaxColumn = false;
+        ShowShippingColumn = false;
+        ShowDiscountColumn = false;
+        ShowTotalColumn = true;
+        ShowReceiptColumn = true;
+        ShowStatusColumn = true;
+    }
+
     #endregion
 
     #region Responsive Layout

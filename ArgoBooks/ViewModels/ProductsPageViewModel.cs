@@ -86,6 +86,19 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("Products");
+        ShowNameColumn = true;
+        ShowTypeColumn = true;
+        ShowDescriptionColumn = true;
+        ShowCategoryColumn = true;
+        ShowSupplierColumn = true;
+        ShowReorderColumn = true;
+        ShowOverstockColumn = true;
+    }
+
     #endregion
 
     #region Tab Selection

@@ -107,6 +107,20 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("StockAdjustments");
+        ShowDateColumn = true;
+        ShowReferenceColumn = true;
+        ShowProductColumn = true;
+        ShowLocationColumn = true;
+        ShowQuantityColumn = true;
+        ShowPreviousColumn = true;
+        ShowNewColumn = true;
+        ShowReasonColumn = true;
+    }
+
     #endregion
 
     #region Tabs

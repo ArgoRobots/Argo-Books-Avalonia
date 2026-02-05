@@ -138,6 +138,21 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         IsColumnMenuOpen = false;
     }
 
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnVisibilityHelper.ResetPage("RentalRecords");
+        ShowIdColumn = true;
+        ShowItemColumn = true;
+        ShowCustomerColumn = true;
+        ShowQuantityColumn = true;
+        ShowStartDateColumn = true;
+        ShowDueDateColumn = true;
+        ShowStatusColumn = true;
+        ShowTotalColumn = true;
+        ShowDepositColumn = true;
+    }
+
     #endregion
 
     #region Records Collection

@@ -94,7 +94,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Qty'}" ColumnName="Quantity" SortProperty="Quantity"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Quantity'}" ColumnName="Quantity" SortProperty="Quantity"
                                                    ColumnWidth="{Binding ColumnWidths.QuantityColumnWidth}"
                                                    IsColumnVisible="{Binding ShowQuantityColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -280,13 +280,14 @@
     <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
                                     MenuX="{Binding ColumnWidths.ColumnMenuX}"
                                     MenuY="{Binding ColumnWidths.ColumnMenuY}"
-                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+                                    CloseCommand="{Binding CloseColumnMenuCommand}"
+                                    ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'ID'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowItemColumn}" Content="{loc:Loc 'Item'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="{loc:Loc 'Customer'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc 'Qty'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc 'Quantity'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStartDateColumn}" Content="{loc:Loc 'Start Date'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="{loc:Loc 'Due Date'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />

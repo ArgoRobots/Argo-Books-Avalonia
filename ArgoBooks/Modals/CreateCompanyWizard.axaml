@@ -177,7 +177,7 @@
                                 </StackPanel>
 
                                 <!-- Address -->
-                                <StackPanel Grid.Row="4" Grid.Column="2" Grid.RowSpan="3" Spacing="6">
+                                <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc Address}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -185,9 +185,6 @@
                                     <TextBox Classes="form-input"
                                              Text="{Binding Address, Mode=TwoWay}"
                                              Watermark="{loc:Loc 'Enter address'}"
-                                             AcceptsReturn="True"
-                                             TextWrapping="Wrap"
-                                             MinHeight="60"
                                              MaxLength="200" />
                                 </StackPanel>
                             </Grid>
