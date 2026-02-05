@@ -11,21 +11,21 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ProductsTutorialViewModel : ViewModelBase
 {
-    private readonly List<ProductsTutorialStep> _steps =
+    private readonly List<TutorialStep> _steps =
     [
-        new ProductsTutorialStep
+        new TutorialStep
         {
             Title = "Expense & Revenue Products",
             Description = "Use the tabs above to switch between Expense products (items you purchase like supplies, materials) and Revenue products (items you sell like goods, services).",
             HighlightArea = "tabs"
         },
-        new ProductsTutorialStep
+        new TutorialStep
         {
             Title = "Track Your Inventory",
             Description = "Add products to keep track of what you buy and sell. Each product can have a category, supplier, and inventory thresholds.",
             HighlightArea = "content"
         },
-        new ProductsTutorialStep
+        new TutorialStep
         {
             Title = "Products & Services",
             Description = "Products can be physical items or services. Physical products support inventory tracking with reorder points and overstock thresholds.\n\nServices are tracked by usage without inventory management.",
@@ -187,11 +187,4 @@ public partial class ProductsTutorialViewModel : ViewModelBase
             HighlightAreaChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-}
-
-public class ProductsTutorialStep
-{
-    public required string Title { get; init; }
-    public required string Description { get; init; }
-    public required string HighlightArea { get; init; }
 }

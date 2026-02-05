@@ -94,7 +94,7 @@ public partial class CategoriesTutorialOverlay : UserControl
         {
             var element = TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent");
             bounds = element != null
-                ? TutorialHighlightHelper.GetHighlightBounds(this, element, highlightArea)
+                ? TutorialHighlightHelper.GetHighlightBounds(this, element)
                 : null;
             cornerRadius = new CornerRadius(8);
         }

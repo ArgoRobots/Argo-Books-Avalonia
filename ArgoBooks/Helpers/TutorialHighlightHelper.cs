@@ -86,7 +86,7 @@ public static class TutorialHighlightHelper
     /// Calculates highlight bounds relative to the overlay, with proper edge
     /// clamping to prevent overflow.
     /// </summary>
-    public static Rect? GetHighlightBounds(Control overlay, Control element, string targetArea)
+    public static Rect? GetHighlightBounds(Control overlay, Control element)
     {
         try
         {

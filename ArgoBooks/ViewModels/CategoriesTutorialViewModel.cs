@@ -11,21 +11,21 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class CategoriesTutorialViewModel : ViewModelBase
 {
-    private readonly List<CategoriesTutorialStep> _steps =
+    private readonly List<TutorialStep> _steps =
     [
-        new CategoriesTutorialStep
+        new TutorialStep
         {
             Title = "Expense & Revenue Categories",
             Description = "Use the tabs above to switch between Expense categories (costs like supplies, utilities, rent) and Revenue categories (income sources like sales, services, consulting).",
             HighlightArea = "tabs"
         },
-        new CategoriesTutorialStep
+        new TutorialStep
         {
             Title = "Organize Your Products",
             Description = "Categories help you group similar products and services. This makes it easier to track spending patterns and generate reports.",
             HighlightArea = "content"
         },
-        new CategoriesTutorialStep
+        new TutorialStep
         {
             Title = "Example Categories",
             Description = "A bakery might use expense categories like 'Ingredients', 'Packaging', and 'Equipment'. For revenue: 'Cakes', 'Bread', 'Catering'.\n\nYou can nest categories too - like 'Ingredients > Flour' or 'Cakes > Wedding Cakes'.",
@@ -189,7 +189,7 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
     }
 }
 
-public class CategoriesTutorialStep
+public class TutorialStep
 {
     public required string Title { get; init; }
     public required string Description { get; init; }
