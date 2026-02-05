@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
@@ -239,43 +240,48 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     public ReceiptsTableColumnWidths ColumnWidths => App.ReceiptsColumnWidths;
 
     [ObservableProperty]
-    private bool _showIdColumn = true;
+    private bool _showIdColumn = ColumnVisibilityHelper.Load("Receipts", "Id", true);
 
     [ObservableProperty]
-    private bool _showSupplierColumn = true;
+    private bool _showSupplierColumn = ColumnVisibilityHelper.Load("Receipts", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("Receipts", "Date", true);
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
+    private bool _showTypeColumn = ColumnVisibilityHelper.Load("Receipts", "Type", true);
 
     [ObservableProperty]
-    private bool _showAmountColumn = true;
+    private bool _showAmountColumn = ColumnVisibilityHelper.Load("Receipts", "Amount", true);
 
     partial void OnShowIdColumnChanged(bool value)
     {
         ColumnWidths.SetColumnVisibility("Id", value);
+        ColumnVisibilityHelper.Save("Receipts", "Id", value);
     }
 
     partial void OnShowSupplierColumnChanged(bool value)
     {
         ColumnWidths.SetColumnVisibility("Supplier", value);
+        ColumnVisibilityHelper.Save("Receipts", "Supplier", value);
     }
 
     partial void OnShowDateColumnChanged(bool value)
     {
         ColumnWidths.SetColumnVisibility("Date", value);
+        ColumnVisibilityHelper.Save("Receipts", "Date", value);
     }
 
     partial void OnShowTypeColumnChanged(bool value)
     {
         ColumnWidths.SetColumnVisibility("Type", value);
+        ColumnVisibilityHelper.Save("Receipts", "Type", value);
     }
 
     partial void OnShowAmountColumnChanged(bool value)
     {
         ColumnWidths.SetColumnVisibility("Amount", value);
+        ColumnVisibilityHelper.Save("Receipts", "Amount", value);
     }
 
     [RelayCommand]

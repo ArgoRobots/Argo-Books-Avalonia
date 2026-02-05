@@ -148,6 +148,7 @@
                                 EmptyIcon="{x:Static icons:Icons.Products}"
                                 EmptyTitle="{loc:Loc 'No products found'}"
                                 EmptyMessage="{loc:Loc 'Add your first product to start tracking your inventory.'}"
+                                ShowExtraButtons="{Binding ShowRemainingProducts}"
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 

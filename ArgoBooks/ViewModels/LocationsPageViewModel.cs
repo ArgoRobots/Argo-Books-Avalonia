@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -57,21 +58,21 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showLocationColumn = true;
+    private bool _showLocationColumn = ColumnVisibilityHelper.Load("Locations", "Location", true);
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
+    private bool _showTypeColumn = ColumnVisibilityHelper.Load("Locations", "Type", true);
 
     [ObservableProperty]
-    private bool _showAddressColumn = true;
+    private bool _showAddressColumn = ColumnVisibilityHelper.Load("Locations", "Address", true);
 
     [ObservableProperty]
-    private bool _showManagerColumn = true;
+    private bool _showManagerColumn = ColumnVisibilityHelper.Load("Locations", "Manager", true);
 
-    partial void OnShowLocationColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Location", value);
-    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
-    partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
-    partial void OnShowManagerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Manager", value);
+    partial void OnShowLocationColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Location", value); ColumnVisibilityHelper.Save("Locations", "Location", value); }
+    partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Locations", "Type", value); }
+    partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Locations", "Address", value); }
+    partial void OnShowManagerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Manager", value); ColumnVisibilityHelper.Save("Locations", "Manager", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

@@ -83,6 +83,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<object?> ExtraButtonsContentProperty =
         AvaloniaProperty.Register<ArgoTable, object?>(nameof(ExtraButtonsContent));
 
+    public static readonly StyledProperty<bool> ShowExtraButtonsProperty =
+        AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowExtraButtons), true);
+
     // Add Button
     public static readonly StyledProperty<bool> ShowAddButtonProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowAddButton), true);
@@ -267,6 +270,12 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(ExtraButtonsContentProperty);
         set => SetValue(ExtraButtonsContentProperty, value);
+    }
+
+    public bool ShowExtraButtons
+    {
+        get => GetValue(ShowExtraButtonsProperty);
+        set => SetValue(ShowExtraButtonsProperty, value);
     }
 
     public bool ShowAddButton

@@ -92,8 +92,14 @@
                         </Button>
 
                         <!-- Extra Buttons Content (slot for additional buttons) -->
-                        <ContentPresenter Content="{Binding #Root.ExtraButtonsContent}"
-                                          IsVisible="{Binding #Root.ExtraButtonsContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        <ContentPresenter Content="{Binding #Root.ExtraButtonsContent}">
+                            <ContentPresenter.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="#Root.ExtraButtonsContent" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                                    <Binding Path="#Root.ShowExtraButtons" />
+                                </MultiBinding>
+                            </ContentPresenter.IsVisible>
+                        </ContentPresenter>
 
                         <!-- Add Button -->
                         <Button Classes="primary-button"

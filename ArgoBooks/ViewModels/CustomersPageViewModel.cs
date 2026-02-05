@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
@@ -60,29 +61,29 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showCustomerColumn = true;
+    private bool _showCustomerColumn = ColumnVisibilityHelper.Load("Customers", "Customer", true);
 
     [ObservableProperty]
-    private bool _showEmailColumn = true;
+    private bool _showEmailColumn = ColumnVisibilityHelper.Load("Customers", "Email", true);
 
     [ObservableProperty]
-    private bool _showPhoneColumn = true;
+    private bool _showPhoneColumn = ColumnVisibilityHelper.Load("Customers", "Phone", true);
 
     [ObservableProperty]
-    private bool _showAddressColumn = true;
+    private bool _showAddressColumn = ColumnVisibilityHelper.Load("Customers", "Address", true);
 
     [ObservableProperty]
-    private bool _showCountryColumn = true;
+    private bool _showCountryColumn = ColumnVisibilityHelper.Load("Customers", "Country", true);
 
     [ObservableProperty]
-    private bool _showLastRentalColumn = true;
+    private bool _showLastRentalColumn = ColumnVisibilityHelper.Load("Customers", "LastRental", true);
 
-    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
-    partial void OnShowEmailColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Email", value);
-    partial void OnShowPhoneColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Phone", value);
-    partial void OnShowAddressColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Address", value);
-    partial void OnShowCountryColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Country", value);
-    partial void OnShowLastRentalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("LastRental", value);
+    partial void OnShowCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Customer", value); ColumnVisibilityHelper.Save("Customers", "Customer", value); }
+    partial void OnShowEmailColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Email", value); ColumnVisibilityHelper.Save("Customers", "Email", value); }
+    partial void OnShowPhoneColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Phone", value); ColumnVisibilityHelper.Save("Customers", "Phone", value); }
+    partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Customers", "Address", value); }
+    partial void OnShowCountryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Country", value); ColumnVisibilityHelper.Save("Customers", "Country", value); }
+    partial void OnShowLastRentalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("LastRental", value); ColumnVisibilityHelper.Save("Customers", "LastRental", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

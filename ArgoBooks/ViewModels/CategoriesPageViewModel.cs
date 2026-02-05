@@ -3,6 +3,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Localization;
@@ -143,21 +144,21 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     public CategoriesTableColumnWidths ColumnWidths => App.CategoriesColumnWidths;
 
     [ObservableProperty]
-    private bool _showNameColumn = true;
+    private bool _showNameColumn = ColumnVisibilityHelper.Load("Categories", "Name", true);
 
     [ObservableProperty]
-    private bool _showDescriptionColumn = true;
+    private bool _showDescriptionColumn = ColumnVisibilityHelper.Load("Categories", "Description", true);
 
     [ObservableProperty]
-    private bool _showTypeColumn = true;
+    private bool _showTypeColumn = ColumnVisibilityHelper.Load("Categories", "Type", true);
 
     [ObservableProperty]
-    private bool _showProductCountColumn = true;
+    private bool _showProductCountColumn = ColumnVisibilityHelper.Load("Categories", "ProductCount", true);
 
-    partial void OnShowNameColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Name", value);
-    partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
-    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
-    partial void OnShowProductCountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("ProductCount", value);
+    partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Categories", "Name", value); }
+    partial void OnShowDescriptionColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Description", value); ColumnVisibilityHelper.Save("Categories", "Description", value); }
+    partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Categories", "Type", value); }
+    partial void OnShowProductCountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("ProductCount", value); ColumnVisibilityHelper.Save("Categories", "ProductCount", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()

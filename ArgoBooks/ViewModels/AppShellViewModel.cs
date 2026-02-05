@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Reflection;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -844,6 +846,30 @@ public partial class AppShellViewModel : ViewModelBase
         HelpPanelViewModel.CloseCommand.Execute(null);
         QuickActionsViewModel.CloseCommand.Execute(null);
         CompanySwitcherPanelViewModel.CloseCommand.Execute(null);
+        ClosePageContextMenus();
+    }
+
+    /// <summary>
+    /// Closes any open context menus on the current page (column visibility, chart context, reports context).
+    /// </summary>
+    public void ClosePageContextMenus()
+    {
+        if (CurrentPage is not Control { DataContext: { } vm })
+            return;
+
+        var type = vm.GetType();
+
+        // Close column visibility menu
+        type.GetProperty("IsColumnMenuOpen", BindingFlags.Public | BindingFlags.Instance)?
+            .SetValue(vm, false);
+
+        // Close chart context menu
+        type.GetProperty("IsChartContextMenuOpen", BindingFlags.Public | BindingFlags.Instance)?
+            .SetValue(vm, false);
+
+        // Close reports context menu
+        type.GetProperty("IsContextMenuOpen", BindingFlags.Public | BindingFlags.Instance)?
+            .SetValue(vm, false);
     }
 
     /// <summary>

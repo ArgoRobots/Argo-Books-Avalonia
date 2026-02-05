@@ -49,6 +49,12 @@ public class UiSettings
     public ChartSettings Chart { get; set; } = new();
     public QuickActionsSettings QuickActions { get; set; } = new();
     public EmojiPickerSettings EmojiPicker { get; set; } = new();
+
+    /// <summary>
+    /// Persisted column visibility settings per page.
+    /// Key is the page name (e.g., "Expenses"), value is a dictionary of column name to visibility.
+    /// </summary>
+    public Dictionary<string, Dictionary<string, bool>> ColumnVisibility { get; set; } = new();
 }
 
 public class EmojiPickerSettings

@@ -53,6 +53,7 @@
                                 IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
                                 IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
                                 ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                                ShowAddButton="False"
                                 FilterCommand="{Binding OpenFilterModalCommand}"
                                 ColumnWidthsManager="{Binding ColumnWidths}"
                                 CurrentPage="{Binding CurrentPage, Mode=TwoWay}"

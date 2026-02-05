@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Utilities;
@@ -57,33 +58,33 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     private double _columnMenuY;
 
     [ObservableProperty]
-    private bool _showPONumberColumn = true;
+    private bool _showPONumberColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "PONumber", true);
 
     [ObservableProperty]
-    private bool _showDateColumn = true;
+    private bool _showDateColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "Date", true);
 
     [ObservableProperty]
-    private bool _showSupplierColumn = true;
+    private bool _showSupplierColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showItemsColumn = true;
+    private bool _showItemsColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "Items", true);
 
     [ObservableProperty]
-    private bool _showTotalColumn = true;
+    private bool _showTotalColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "Total", true);
 
     [ObservableProperty]
-    private bool _showStatusColumn = true;
+    private bool _showStatusColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "Status", true);
 
     [ObservableProperty]
-    private bool _showExpectedColumn = true;
+    private bool _showExpectedColumn = ColumnVisibilityHelper.Load("PurchaseOrders", "Expected", true);
 
-    partial void OnShowPONumberColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("PONumber", value);
-    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
-    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
-    partial void OnShowItemsColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Items", value);
-    partial void OnShowTotalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Total", value);
-    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
-    partial void OnShowExpectedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Expected", value);
+    partial void OnShowPONumberColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("PONumber", value); ColumnVisibilityHelper.Save("PurchaseOrders", "PONumber", value); }
+    partial void OnShowDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Date", value); ColumnVisibilityHelper.Save("PurchaseOrders", "Date", value); }
+    partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("PurchaseOrders", "Supplier", value); }
+    partial void OnShowItemsColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Items", value); ColumnVisibilityHelper.Save("PurchaseOrders", "Items", value); }
+    partial void OnShowTotalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Total", value); ColumnVisibilityHelper.Save("PurchaseOrders", "Total", value); }
+    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("PurchaseOrders", "Status", value); }
+    partial void OnShowExpectedColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Expected", value); ColumnVisibilityHelper.Save("PurchaseOrders", "Expected", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
