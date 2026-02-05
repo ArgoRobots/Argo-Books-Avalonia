@@ -105,14 +105,14 @@ public partial class DashboardPage : UserControl
 
         switch (e.ChartId)
         {
-            case "ExpensesChart":
-                chart = this.FindControl<CartesianChart>("ExpensesChart");
-                chartName = "Total_Expenses";
+            case "ProfitsChart":
+                chart = this.FindControl<CartesianChart>("ProfitsChart");
+                chartName = "Profits_Overview";
                 break;
 
-            case "ExpenseDistributionChart":
-                chart = this.FindControl<PieChart>("ExpenseDistributionChart");
-                chartName = "Distribution_of_Expenses";
+            case "ExpensesVsRevenueChart":
+                chart = this.FindControl<PieChart>("ExpensesVsRevenueChart");
+                chartName = "Expenses_vs_Revenue";
                 break;
         }
 
