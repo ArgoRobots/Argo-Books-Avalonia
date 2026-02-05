@@ -74,6 +74,9 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     /// </summary>
     public FileMenuPanelViewModel()
     {
+        // Refresh filtered properties whenever the collection changes
+        RecentCompanies.CollectionChanged += (_, _) => RefreshFilteredRecent();
+
         // Design-time defaults
         RecentCompanies.Add(new RecentCompanyItem { Name = "My Company Inc.", Icon = "Building" });
         RecentCompanies.Add(new RecentCompanyItem { Name = "Side Business LLC", Icon = "Store" });
