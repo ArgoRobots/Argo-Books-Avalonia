@@ -31,5 +31,7 @@ public partial class CategoriesTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Type", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => TypeColumnWidth = w);
         RegisterColumn("ProductCount", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 120 }, w => ProductCountColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
+
+        InitializeColumnWidths();
     }
 }

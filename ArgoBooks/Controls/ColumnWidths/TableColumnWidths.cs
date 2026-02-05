@@ -71,5 +71,7 @@ public partial class TableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Receipt", new ColumnDef { StarValue = 0.5, MinWidth = 50, PreferredWidth = 80 }, w => ReceiptColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.9, MinWidth = 80, PreferredWidth = 110 }, w => StatusColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
+
+        InitializeColumnWidths();
     }
 }

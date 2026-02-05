@@ -36,12 +36,6 @@
     <Style Selector="Button.primary:pointerover PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
-    <Style Selector="Button.primary TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="Button.primary:pointerover TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
 
     <!-- Secondary Button (outlined) -->
     <Style Selector="Button.secondary">
@@ -90,12 +84,6 @@
     <Style Selector="Button.primary-button:pointerover PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
-    <Style Selector="Button.primary-button TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="Button.primary-button:pointerover TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
 
     <!-- Secondary Button (page header variant) -->
     <Style Selector="Button.secondary-button">
@@ -142,12 +130,6 @@
     <Style Selector="Button.danger-button:pointerover PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
-    <Style Selector="Button.danger-button TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="Button.danger-button:pointerover TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
 
     <!-- Success Button (for positive actions) -->
     <Style Selector="Button.success-button">
@@ -177,12 +159,6 @@
     <Style Selector="Button.success-button:pointerover PathIcon">
         <Setter Property="Foreground" Value="White" />
     </Style>
-    <Style Selector="Button.success-button TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="Button.success-button:pointerover TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
 
     <!-- Warning Button (for cautionary actions) -->
     <Style Selector="Button.warning-button">
@@ -210,12 +186,6 @@
         <Setter Property="Foreground" Value="White" />
     </Style>
     <Style Selector="Button.warning-button:pointerover PathIcon">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="Button.warning-button TextBlock">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="Button.warning-button:pointerover TextBlock">
         <Setter Property="Foreground" Value="White" />
     </Style>
 

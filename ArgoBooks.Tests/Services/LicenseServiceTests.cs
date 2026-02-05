@@ -43,7 +43,7 @@ public class LicenseServiceTests
     public void Constructor_NullPlatformService_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new LicenseService(_encryptionService, _settingsService, null!));
+            new LicenseService(_encryptionService, _settingsService, (IPlatformService)null!));
     }
 
     #endregion

@@ -125,8 +125,8 @@ public class IdGeneratorTests
     #region Category ID Generation Tests
 
     [Theory]
-    [InlineData(CategoryType.Revenue, "CAT-SAL-001")]
-    [InlineData(CategoryType.Expense, "CAT-PUR-001")]
+    [InlineData(CategoryType.Revenue, "CAT-REV-001")]
+    [InlineData(CategoryType.Expense, "CAT-EXP-001")]
     [InlineData(CategoryType.Rental, "CAT-RNT-001")]
     public void NextCategoryId_GeneratesCorrectPrefixForType(CategoryType type, string expectedId)
     {
@@ -148,8 +148,8 @@ public class IdGeneratorTests
         var purchaseId = generator.NextCategoryId(CategoryType.Expense);
         var rentalId = generator.NextCategoryId(CategoryType.Rental);
 
-        Assert.Equal("CAT-SAL-001", salesId);
-        Assert.Equal("CAT-PUR-002", purchaseId);
+        Assert.Equal("CAT-REV-001", salesId);
+        Assert.Equal("CAT-EXP-002", purchaseId);
         Assert.Equal("CAT-RNT-003", rentalId);
     }
 
@@ -166,7 +166,7 @@ public class IdGeneratorTests
         var id = generator.NextRevenueId();
 
         Assert.Contains(DateTime.UtcNow.Year.ToString(), id);
-        Assert.Matches(@"^SAL-\d{4}-\d{5}$", id);
+        Assert.Matches(@"^REV-\d{4}-\d{5}$", id);
     }
 
     [Fact]
@@ -178,7 +178,7 @@ public class IdGeneratorTests
         var id = generator.NextExpenseId();
 
         Assert.Contains(DateTime.UtcNow.Year.ToString(), id);
-        Assert.Matches(@"^PUR-\d{4}-\d{5}$", id);
+        Assert.Matches(@"^EXP-\d{4}-\d{5}$", id);
     }
 
     [Fact]

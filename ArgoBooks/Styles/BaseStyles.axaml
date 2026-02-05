@@ -60,6 +60,7 @@
         <Color x:Key="HighlightAnimationColor">#3060A5FA</Color>
     </Styles.Resources>
 
+
     <!-- Scrollbar Styling -->
     <Style Selector="ScrollViewer">
         <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />

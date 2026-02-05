@@ -43,5 +43,7 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Products", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 }, w => ProductsColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.6, MinWidth = 70, PreferredWidth = 90 }, w => StatusColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
+
+        InitializeColumnWidths();
     }
 }
