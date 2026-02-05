@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
@@ -133,14 +134,14 @@ public static class TutorialHighlightHelper
             StartPoint = new Point(0, 0),
             IsClosed = true,
             IsFilled = true,
-            Segments =
+            Segments = new PathSegments
             {
                 new LineSegment { Point = new Point(overlaySize.Width, 0) },
                 new LineSegment { Point = new Point(overlaySize.Width, overlaySize.Height) },
                 new LineSegment { Point = new Point(0, overlaySize.Height) },
             }
         };
-        geometry.Figures.Add(outerFigure);
+        geometry.Figures!.Add(outerFigure);
 
         // Inner rectangle (cutout) - with optional corner radius
         PathFigure cutoutFigure;
@@ -153,7 +154,7 @@ public static class TutorialHighlightHelper
                 StartPoint = new Point(cutout.X + r, cutout.Y),
                 IsClosed = true,
                 IsFilled = true,
-                Segments =
+                Segments = new PathSegments
                 {
                     new LineSegment { Point = new Point(cutout.Right - r, cutout.Y) },
                     new ArcSegment { Point = new Point(cutout.Right, cutout.Y + r), Size = arcSize, SweepDirection = SweepDirection.Clockwise },
@@ -173,7 +174,7 @@ public static class TutorialHighlightHelper
                 StartPoint = new Point(cutout.X, cutout.Y),
                 IsClosed = true,
                 IsFilled = true,
-                Segments =
+                Segments = new PathSegments
                 {
                     new LineSegment { Point = new Point(cutout.Right, cutout.Y) },
                     new LineSegment { Point = new Point(cutout.Right, cutout.Bottom) },
@@ -182,7 +183,7 @@ public static class TutorialHighlightHelper
             };
         }
 
-        geometry.Figures.Add(cutoutFigure);
+        geometry.Figures!.Add(cutoutFigure);
 
         return geometry;
     }
