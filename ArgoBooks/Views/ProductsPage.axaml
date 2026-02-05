@@ -19,8 +19,7 @@
     <Panel>
     <Grid RowDefinitions="Auto,*">
         <!-- Tab Bar -->
-        <Border x:Name="ProductsTabBar"
-                Grid.Row="0"
+        <Border Grid.Row="0"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">

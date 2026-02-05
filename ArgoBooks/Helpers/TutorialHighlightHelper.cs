@@ -84,9 +84,7 @@ public static class TutorialHighlightHelper
 
     /// <summary>
     /// Calculates highlight bounds relative to the overlay, with proper edge
-    /// clamping to prevent overflow. The highlight border is drawn INSIDE the
-    /// element bounds, inset by the border thickness, with extra inset at
-    /// window edges.
+    /// clamping to prevent overflow.
     /// </summary>
     public static Rect? GetHighlightBounds(Control overlay, Control element, string targetArea)
     {
@@ -103,29 +101,16 @@ public static class TutorialHighlightHelper
             var overlayWidth = overlay.Bounds.Width;
             var overlayHeight = overlay.Bounds.Height;
 
-            double left, top, width, height;
+            // Inset with edge clamping (same as AppTourOverlay)
+            var leftOffset = topLeft.X <= EdgeOffset ? EdgeOffset - 3 : 0;
+            var topOffset = topLeft.Y <= EdgeOffset ? EdgeOffset - 1 : BorderThickness - 1;
+            var rightOffset = bottomRight.X >= overlayWidth - EdgeOffset ? EdgeOffset : BorderThickness;
+            var bottomOffset = bottomRight.Y >= overlayHeight - EdgeOffset ? EdgeOffset : BorderThickness;
 
-            if (targetArea == "tabs")
-            {
-                // Tabs: draw border outside the actual tab items
-                left = topLeft.X - BorderThickness;
-                top = topLeft.Y - BorderThickness;
-                width = (bottomRight.X - topLeft.X) + (BorderThickness * 2);
-                height = (bottomRight.Y - topLeft.Y) + (BorderThickness * 2);
-            }
-            else
-            {
-                // Content and other areas: inset with edge clamping (same as AppTourOverlay)
-                var leftOffset = topLeft.X <= EdgeOffset ? EdgeOffset - 3 : 0;
-                var topOffset = topLeft.Y <= EdgeOffset ? EdgeOffset - 1 : BorderThickness - 1;
-                var rightOffset = bottomRight.X >= overlayWidth - EdgeOffset ? EdgeOffset : BorderThickness;
-                var bottomOffset = bottomRight.Y >= overlayHeight - EdgeOffset ? EdgeOffset : BorderThickness;
-
-                left = topLeft.X + leftOffset;
-                top = topLeft.Y + topOffset;
-                width = (bottomRight.X - topLeft.X) - leftOffset - rightOffset;
-                height = (bottomRight.Y - topLeft.Y) - topOffset - bottomOffset;
-            }
+            var left = topLeft.X + leftOffset;
+            var top = topLeft.Y + topOffset;
+            var width = (bottomRight.X - topLeft.X) - leftOffset - rightOffset;
+            var height = (bottomRight.Y - topLeft.Y) - topOffset - bottomOffset;
 
             if (width <= 0 || height <= 0)
                 return null;
