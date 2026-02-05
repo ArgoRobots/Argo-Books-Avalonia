@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArgoBooks.Helpers;
@@ -11,13 +10,13 @@ namespace ArgoBooks.Modals;
 public partial class CategoriesTutorialOverlay : UserControl
 {
     private CategoriesTutorialViewModel? _viewModel;
-    private Path? _backdropPath;
+    private Avalonia.Controls.Shapes.Path? _backdropPath;
 
     public CategoriesTutorialOverlay()
     {
         InitializeComponent();
 
-        _backdropPath = this.FindControl<Path>("BackdropPath");
+        _backdropPath = this.FindControl<Avalonia.Controls.Shapes.Path>("BackdropPath");
 
         DataContextChanged += OnDataContextChanged;
         PropertyChanged += OnPropertyChanged;
