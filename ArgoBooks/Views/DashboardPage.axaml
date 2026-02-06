@@ -173,16 +173,9 @@
                         </Button>
                     </Grid>
 
-                    <!-- Responsive WrapPanel for Quick Actions -->
-                    <ItemsControl>
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.Items>
-                            <!-- New Invoice -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                    <!-- Responsive WrapPanel for Quick Actions (centered per row) -->
+                    <controls:CenteringWrapPanel Margin="0,8,0,0">
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewInvoiceCommand}"
                                 IsVisible="{Binding ShowNewInvoice}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -190,13 +183,13 @@
                                     <PathIcon Data="{x:Static local:Icons.Invoices}"
                                               Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Invoice'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Invoice'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Expense -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding AddExpenseCommand}"
                                 IsVisible="{Binding ShowNewExpense}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -204,13 +197,13 @@
                                     <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
                                               Width="16" Height="16" Foreground="{DynamicResource DangerBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Expense'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Expense'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Revenue -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding RecordSaleCommand}"
                                 IsVisible="{Binding ShowNewRevenue}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -218,13 +211,13 @@
                                     <PathIcon Data="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
                                               Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Revenue'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Revenue'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- Scan Receipt -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding ScanReceiptCommand}"
                                 IsVisible="{Binding ShowScanReceipt}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -232,13 +225,13 @@
                                     <PathIcon Data="{x:Static local:Icons.ScanReceipt}"
                                               Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'Scan Receipt'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'Scan Receipt'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Customer -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewCustomerCommand}"
                                 IsVisible="{Binding ShowNewCustomer}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -246,13 +239,13 @@
                                     <PathIcon Data="{x:Static local:Icons.NewCustomer}"
                                               Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Customer'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Customer'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Supplier -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewSupplierCommand}"
                                 IsVisible="{Binding ShowNewSupplier}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -260,13 +253,13 @@
                                     <PathIcon Data="{x:Static local:Icons.Suppliers}"
                                               Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Supplier'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Supplier'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Product -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewProductCommand}"
                                 IsVisible="{Binding ShowNewProduct}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -274,13 +267,13 @@
                                     <PathIcon Data="{x:Static local:Icons.NewProduct}"
                                               Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Product'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Product'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- Record Payment -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding RecordPaymentCommand}"
                                 IsVisible="{Binding ShowRecordPayment}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -288,13 +281,13 @@
                                     <PathIcon Data="{x:Static local:Icons.Payments}"
                                               Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'Record Payment'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'Record Payment'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Rental Item -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewRentalItemCommand}"
                                 IsVisible="{Binding ShowNewRentalItem}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -302,13 +295,13 @@
                                     <PathIcon Data="{x:Static local:Icons.NewRentalItem}"
                                               Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Rental Item'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Rental Item'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Rental Record -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewRentalCommand}"
                                 IsVisible="{Binding ShowNewRentalRecord}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -316,13 +309,13 @@
                                     <PathIcon Data="{x:Static local:Icons.RentalRecords}"
                                               Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Rental'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Rental'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Category -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewCategoryCommand}"
                                 IsVisible="{Binding ShowNewCategory}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -330,13 +323,13 @@
                                     <PathIcon Data="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z"
                                               Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Category'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Category'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Department -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewDepartmentCommand}"
                                 IsVisible="{Binding ShowNewDepartment}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -344,13 +337,13 @@
                                     <PathIcon Data="{x:Static local:Icons.Departments}"
                                               Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Department'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Department'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Location -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewLocationCommand}"
                                 IsVisible="{Binding ShowNewLocation}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -358,13 +351,13 @@
                                     <PathIcon Data="{x:Static local:Icons.Locations}"
                                               Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'New Location'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'New Location'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Purchase Order -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewPurchaseOrderCommand}"
                                 IsVisible="{Binding ShowNewPurchaseOrder}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -372,13 +365,13 @@
                                     <PathIcon Data="{x:Static local:Icons.NewPurchaseOrder}"
                                               Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'Purchase Order'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'Purchase Order'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <!-- New Stock Adjustment -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="160"
+                        <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewStockAdjustmentCommand}"
                                 IsVisible="{Binding ShowNewStockAdjustment}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -386,12 +379,11 @@
                                     <PathIcon Data="{x:Static local:Icons.NewStockAdjustment}"
                                               Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'Stock Adjustment'}" FontSize="13" FontWeight="Medium"
+                                <TextBlock Text="{loc:Loc 'Stock Adjustment'}" FontSize="12" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        </ItemsControl.Items>
-                    </ItemsControl>
+                    </controls:CenteringWrapPanel>
                 </StackPanel>
             </Border>
 
