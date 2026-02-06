@@ -1497,8 +1497,8 @@
                 <Border Grid.Column="1"
                         Background="{DynamicResource SurfaceBrush}"
                         Margin="0,24,24,24"
-                        CornerRadius="12"
-                        Padding="0,24,24,24">
+                        CornerRadius="0"
+                        Padding="24">
                     <StackPanel Spacing="20">
                         <TextBlock Text="{loc:Loc 'Export Settings'}"
                                    FontSize="18"

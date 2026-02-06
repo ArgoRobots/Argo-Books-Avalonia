@@ -16,7 +16,7 @@
 
     <Panel>
         <!-- Upgrade Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsOpen}" CloseOnBackdropClick="False">
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}" ClosingCommand="{Binding CloseCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -315,7 +315,7 @@
         </controls:ModalOverlay>
 
         <!-- Enter Key Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsEnterKeyModalOpen}" CloseOnBackdropClick="False">
+        <controls:ModalOverlay IsOpen="{Binding IsEnterKeyModalOpen}" ClosingCommand="{Binding RequestCloseEnterKeyCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"

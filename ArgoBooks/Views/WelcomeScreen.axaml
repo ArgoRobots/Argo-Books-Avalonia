@@ -222,15 +222,22 @@
                                             Command="{Binding $parent[ItemsControl].((vm:WelcomeScreenViewModel)DataContext).OpenRecentCompanyCommand}"
                                             CommandParameter="{Binding}">
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                            <!-- Icon -->
+                                            <!-- Icon / Logo -->
                                             <Border Grid.Column="0"
                                                     Width="44" Height="44"
                                                     CornerRadius="8"
+                                                    ClipToBounds="True"
                                                     Background="{DynamicResource SurfaceAltBrush}"
                                                     Margin="0,0,16,0">
-                                                <PathIcon Data="{x:Static local:Icons.Departments}"
-                                                          Width="22" Height="22"
-                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <Panel>
+                                                    <Image Source="{Binding Logo}"
+                                                           Stretch="UniformToFill"
+                                                           IsVisible="{Binding HasLogo}" />
+                                                    <PathIcon Data="{x:Static local:Icons.Departments}"
+                                                              Width="22" Height="22"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}"
+                                                              IsVisible="{Binding !HasLogo}" />
+                                                </Panel>
                                             </Border>
 
                                             <!-- Company Info -->
