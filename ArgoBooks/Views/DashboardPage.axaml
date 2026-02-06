@@ -417,15 +417,10 @@
                             PointerReleased="OnChartPointerReleased" />
 
                         <!-- Empty state placeholder -->
-                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="8"
-                                IsVisible="{Binding !HasProfitsChartData}">
-                            <TextBlock Text="{loc:Loc 'No profit data'}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontSize="14"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                        </Border>
+                        <controls:ChartEmptyState
+                            IsVisible="{Binding !HasProfitsChartData}"
+                            DefaultMessage="{loc:Loc 'No profit data'}"
+                            ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                     </Grid>
                 </Border>
 
@@ -446,15 +441,10 @@
                             IsVisible="{Binding HasRevenueVsExpensesData}"
                             PointerPressed="OnChartPointerPressed"
                             PointerReleased="OnChartPointerReleased" />
-                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="8"
-                                IsVisible="{Binding !HasRevenueVsExpensesData}">
-                            <TextBlock Text="{loc:Loc 'No expense/revenue data available'}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontSize="14"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                        </Border>
+                        <controls:ChartEmptyState
+                            IsVisible="{Binding !HasRevenueVsExpensesData}"
+                            DefaultMessage="{loc:Loc 'No expense/revenue data available'}"
+                            ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                     </Grid>
                 </Border>
             </Grid>

@@ -1007,6 +1007,46 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Empty State Date Range Detection
+
+    /// <summary>
+    /// True when revenue data exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showRevenueDateRangeMessage;
+
+    /// <summary>
+    /// True when expense data exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showExpenseDateRangeMessage;
+
+    /// <summary>
+    /// True when financial data (revenue or expenses) exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showFinancialDateRangeMessage;
+
+    /// <summary>
+    /// True when return data exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showReturnDateRangeMessage;
+
+    /// <summary>
+    /// True when loss data exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showLossDateRangeMessage;
+
+    /// <summary>
+    /// True when rental data exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showRentalDateRangeMessage;
+
+    #endregion
+
     #region Chart Titles
 
     // Dashboard Tab Chart Titles
@@ -1465,6 +1505,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             "Scatter" => ChartStyle.Scatter,
             _ => ChartStyle.Line
         };
+
+        // Determine if a date range filter is active and data exists beyond it
+        var isFiltered = SelectedDateRange != "All Time";
+        ShowRevenueDateRangeMessage = isFiltered && data.Revenues.Count > 0;
+        ShowExpenseDateRangeMessage = isFiltered && data.Expenses.Count > 0;
+        ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
+        ShowReturnDateRangeMessage = isFiltered && data.Returns.Count > 0;
+        ShowLossDateRangeMessage = isFiltered && data.LostDamaged.Count > 0;
+        ShowRentalDateRangeMessage = isFiltered && data.Rentals.Count > 0;
 
         // Load statistics for stat cards
         LoadAllStatistics(data);
