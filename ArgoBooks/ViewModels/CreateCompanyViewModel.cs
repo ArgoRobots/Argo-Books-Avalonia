@@ -1,4 +1,5 @@
 using ArgoBooks.Controls;
+using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -64,6 +65,19 @@ public partial class CreateCompanyViewModel : ViewModelBase
         "Other"
     ];
 
+    [ObservableProperty]
+    private string _selectedCurrency = "USD - US Dollar ($)";
+
+    /// <summary>
+    /// All available currencies.
+    /// </summary>
+    public IReadOnlyList<string> Currencies => Data.Currencies.All;
+
+    /// <summary>
+    /// Priority/common currencies shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
+
     #endregion
 
     #region Step 1: Contact Information
@@ -79,6 +93,9 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _city;
+
+    [ObservableProperty]
+    private string? _provinceState;
 
     [ObservableProperty]
     private string? _address;
@@ -207,8 +224,10 @@ public partial class CreateCompanyViewModel : ViewModelBase
             Industry = Industry,
             Address = Address,
             City = City,
+            ProvinceState = ProvinceState,
             Country = Country,
             PhoneNumber = fullPhone,
+            DefaultCurrency = CurrencyService.ParseCurrencyCode(SelectedCurrency),
             Password = EnablePassword ? Password : null,
             LogoPath = LogoPath
         };
@@ -240,10 +259,12 @@ public partial class CreateCompanyViewModel : ViewModelBase
         CompanyName = null;
         BusinessType = null;
         Industry = null;
+        SelectedCurrency = "USD - US Dollar ($)";
         PhoneNumber = "";
         SelectedPhoneCountry = null;
         Country = null;
         City = null;
+        ProvinceState = null;
         Address = null;
         EnablePassword = false;
         Password = null;
@@ -303,7 +324,9 @@ public class CompanyCreatedEventArgs : EventArgs
     public string? PhoneNumber { get; init; }
     public string? Country { get; init; }
     public string? City { get; init; }
+    public string? ProvinceState { get; init; }
     public string? Address { get; init; }
+    public string? DefaultCurrency { get; init; }
     public string? Password { get; init; }
     public string? LogoPath { get; init; }
 }

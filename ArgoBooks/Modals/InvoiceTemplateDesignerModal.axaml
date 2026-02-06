@@ -292,6 +292,8 @@
                                                           Content="{loc:Loc 'Show company phone'}" />
                                                 <CheckBox IsChecked="{Binding ShowCompanyCity}"
                                                           Content="{loc:Loc 'Show company city'}" />
+                                                <CheckBox IsChecked="{Binding ShowCompanyProvinceState}"
+                                                          Content="{loc:Loc 'Show company province / state'}" />
                                                 <CheckBox IsChecked="{Binding ShowCompanyCountry}"
                                                           Content="{loc:Loc 'Show company country'}" />
                                                 <CheckBox IsChecked="{Binding ShowTaxBreakdown}"

@@ -1384,6 +1384,7 @@ public class App : Application
                     Phone = args.PhoneNumber,
                     Country = args.Country,
                     City = args.City,
+                    ProvinceState = args.ProvinceState,
                     Address = args.Address
                 };
 
@@ -1392,6 +1393,13 @@ public class App : Application
                     args.CompanyName,
                     args.Password,
                     companyInfo);
+
+                // Apply default currency if specified
+                if (!string.IsNullOrEmpty(args.DefaultCurrency))
+                {
+                    CompanyManager.CompanyData!.Settings.Localization.Currency = args.DefaultCurrency;
+                    await CompanyManager.SaveCompanyAsync();
+                }
 
                 await LoadRecentCompaniesAsync();
             }

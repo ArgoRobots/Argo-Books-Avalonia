@@ -193,6 +193,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private bool _showCompanyCity = true;
 
     [ObservableProperty]
+    private bool _showCompanyProvinceState = true;
+
+    [ObservableProperty]
     private bool _showCompanyCountry = true;
 
     [ObservableProperty]
@@ -447,6 +450,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnShowCompanyAddressChanged(bool value) => UpdatePreview();
     partial void OnShowCompanyPhoneChanged(bool value) => UpdatePreview();
     partial void OnShowCompanyCityChanged(bool value) => UpdatePreview();
+    partial void OnShowCompanyProvinceStateChanged(bool value) => UpdatePreview();
     partial void OnShowCompanyCountryChanged(bool value) => UpdatePreview();
     partial void OnShowTaxBreakdownChanged(bool value) => UpdatePreview();
     partial void OnShowItemDescriptionsChanged(bool value) => UpdatePreview();
@@ -500,6 +504,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             ShowCompanyAddress = ShowCompanyAddress,
             ShowCompanyPhone = ShowCompanyPhone,
             ShowCompanyCity = ShowCompanyCity,
+            ShowCompanyProvinceState = ShowCompanyProvinceState,
             ShowCompanyCountry = ShowCompanyCountry,
             ShowTaxBreakdown = ShowTaxBreakdown,
             ShowItemDescriptions = ShowItemDescriptions,
@@ -529,6 +534,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         template.ShowCompanyAddress = ShowCompanyAddress;
         template.ShowCompanyPhone = ShowCompanyPhone;
         template.ShowCompanyCity = ShowCompanyCity;
+        template.ShowCompanyProvinceState = ShowCompanyProvinceState;
         template.ShowCompanyCountry = ShowCompanyCountry;
         template.ShowTaxBreakdown = ShowTaxBreakdown;
         template.ShowItemDescriptions = ShowItemDescriptions;
@@ -560,6 +566,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ShowCompanyAddress = template.ShowCompanyAddress;
         ShowCompanyPhone = template.ShowCompanyPhone;
         ShowCompanyCity = template.ShowCompanyCity;
+        ShowCompanyProvinceState = template.ShowCompanyProvinceState;
         ShowCompanyCountry = template.ShowCompanyCountry;
         ShowTaxBreakdown = template.ShowTaxBreakdown;
         ShowItemDescriptions = template.ShowItemDescriptions;
@@ -595,6 +602,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ShowCompanyAddress = true;
         ShowCompanyPhone = true;
         ShowCompanyCity = true;
+        ShowCompanyProvinceState = true;
         ShowCompanyCountry = true;
         ShowTaxBreakdown = true;
         ShowItemDescriptions = true;

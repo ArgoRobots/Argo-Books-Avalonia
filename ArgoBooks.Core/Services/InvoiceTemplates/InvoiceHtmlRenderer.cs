@@ -94,6 +94,7 @@ public partial class InvoiceHtmlRenderer
                 Email = companySettings.Company.Email ?? "your@email.com",
                 Phone = companySettings.Company.Phone ?? "Your Phone",
                 City = companySettings.Company.City ?? "Your City",
+                ProvinceState = companySettings.Company.ProvinceState ?? "Your Province",
                 Country = companySettings.Company.Country ?? "Your Country"
             }
         };
@@ -225,6 +226,7 @@ public partial class InvoiceHtmlRenderer
             ["ShowCompanyAddress"] = template.ShowCompanyAddress,
             ["ShowCompanyPhone"] = template.ShowCompanyPhone,
             ["ShowCompanyCity"] = template.ShowCompanyCity,
+            ["ShowCompanyProvinceState"] = template.ShowCompanyProvinceState,
             ["ShowCompanyCountry"] = template.ShowCompanyCountry,
             ["ShowTaxBreakdown"] = template.ShowTaxBreakdown && invoice.TaxAmount > 0,
             ["ShowItemDescriptions"] = template.ShowItemDescriptions,
@@ -245,6 +247,7 @@ public partial class InvoiceHtmlRenderer
             ["CompanyEmail"] = companySettings.Company.Email,
             ["CompanyPhone"] = companySettings.Company.Phone,
             ["CompanyCity"] = companySettings.Company.City,
+            ["CompanyProvinceState"] = companySettings.Company.ProvinceState,
             ["CompanyCountry"] = companySettings.Company.Country,
 
             // Customer info

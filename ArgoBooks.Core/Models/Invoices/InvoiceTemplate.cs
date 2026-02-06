@@ -126,6 +126,12 @@ public class InvoiceTemplate
     public bool ShowCompanyCity { get; set; } = true;
 
     /// <summary>
+    /// Whether to show the company province/state.
+    /// </summary>
+    [JsonPropertyName("showCompanyProvinceState")]
+    public bool ShowCompanyProvinceState { get; set; } = true;
+
+    /// <summary>
     /// Whether to show the company country.
     /// </summary>
     [JsonPropertyName("showCompanyCountry")]
@@ -200,6 +206,7 @@ public class InvoiceTemplate
             ShowCompanyAddress = ShowCompanyAddress,
             ShowCompanyPhone = ShowCompanyPhone,
             ShowCompanyCity = ShowCompanyCity,
+            ShowCompanyProvinceState = ShowCompanyProvinceState,
             ShowCompanyCountry = ShowCompanyCountry,
             ShowTaxBreakdown = ShowTaxBreakdown,
             ShowItemDescriptions = ShowItemDescriptions,
