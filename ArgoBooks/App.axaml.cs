@@ -1398,8 +1398,21 @@ public class App : Application
                 if (!string.IsNullOrEmpty(args.DefaultCurrency))
                 {
                     CompanyManager.CompanyData!.Settings.Localization.Currency = args.DefaultCurrency;
-                    await CompanyManager.SaveCompanyAsync();
                 }
+
+                // Apply logo if one was selected
+                if (!string.IsNullOrEmpty(args.LogoPath))
+                {
+                    await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
+
+                    // Refresh sidebar/UI with the newly set logo
+                    var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
+                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+                    _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
+                        args.CompanyName, filePath, logo);
+                }
+
+                await CompanyManager.SaveCompanyAsync();
 
                 await LoadRecentCompaniesAsync();
             }
@@ -2798,14 +2811,32 @@ public class App : Application
             if (_welcomeScreenViewModel != null)
             {
                 _welcomeScreenViewModel.RecentCompanies.Clear();
-                foreach (var company in recentCompanies.Take(10))
+
+                // Extract logos in parallel for all recent companies
+                var companiesForWelcome = recentCompanies.Take(10).ToList();
+                var logoTasks = companiesForWelcome.Select(c =>
+                    CompanyManager.ExtractLogoFromFileAsync(c.FilePath)).ToArray();
+
+                byte[]?[] logos;
+                try
                 {
+                    logos = await Task.WhenAll(logoTasks);
+                }
+                catch
+                {
+                    logos = new byte[]?[companiesForWelcome.Count];
+                }
+
+                for (var i = 0; i < companiesForWelcome.Count; i++)
+                {
+                    var company = companiesForWelcome[i];
                     _welcomeScreenViewModel.RecentCompanies.Add(new RecentCompanyItem
                     {
                         Name = company.CompanyName,
                         FilePath = company.FilePath,
                         LastOpened = company.ModifiedAt,
-                        Icon = company.IsEncrypted ? "Lock" : "Building"
+                        Icon = company.IsEncrypted ? "Lock" : "Building",
+                        Logo = LoadBitmapFromBytes(logos[i])
                     });
                 }
                 _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
@@ -3141,6 +3172,23 @@ public class App : Application
         catch (Exception ex)
         {
             ErrorLogger?.LogWarning($"Failed to load bitmap from path: {ex.Message}", "BitmapLoader");
+            return null;
+        }
+    }
+
+    private static Bitmap? LoadBitmapFromBytes(byte[]? data)
+    {
+        if (data == null || data.Length == 0)
+            return null;
+
+        try
+        {
+            using var ms = new MemoryStream(data);
+            return new Bitmap(ms);
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Failed to load bitmap from bytes: {ex.Message}", "BitmapLoader");
             return null;
         }
     }

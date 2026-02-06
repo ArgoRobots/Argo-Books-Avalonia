@@ -1,3 +1,4 @@
+using System.Formats.Tar;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 
@@ -379,6 +380,43 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
 
         data.MarkAsSaved();
+    }
+
+    /// <inheritdoc />
+    public async Task<byte[]?> ExtractLogoFromFileAsync(
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        var footer = await footerService.ReadFooterAsync(filePath, cancellationToken);
+        if (footer == null || footer.IsEncrypted)
+            return null;
+
+        try
+        {
+            await using var contentStream = await footerService.ReadContentAsync(filePath, cancellationToken);
+            await using var decompressedStream = await compressionService.DecompressGZipAsync(contentStream, cancellationToken);
+
+            using var tarReader = new TarReader(decompressedStream, leaveOpen: true);
+            while (await tarReader.GetNextEntryAsync(true, cancellationToken) is { } entry)
+            {
+                if (entry.EntryType != TarEntryType.RegularFile || entry.DataStream == null)
+                    continue;
+
+                var name = Path.GetFileName(entry.Name);
+                if (name.StartsWith("logo.", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var ms = new MemoryStream();
+                    await entry.DataStream.CopyToAsync(ms, cancellationToken);
+                    return ms.ToArray();
+                }
+            }
+        }
+        catch
+        {
+            // File may be corrupted or inaccessible
+        }
+
+        return null;
     }
 
     #region Helper Methods

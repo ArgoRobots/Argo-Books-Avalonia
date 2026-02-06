@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -194,6 +195,36 @@ public partial class UpgradeModalViewModel : ViewModelBase
         {
             // Ignore errors opening URL
         }
+    }
+
+    [RelayCommand]
+    private async Task RequestCloseEnterKey()
+    {
+        // If no data was entered, just close
+        if (string.IsNullOrWhiteSpace(LicenseKey))
+        {
+            CloseEnterKey();
+            return;
+        }
+
+        // Data was entered - ask for confirmation
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Discard Changes?".Translate(),
+                Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+                PrimaryButtonText = "Discard".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary)
+                return;
+        }
+
+        CloseEnterKey();
     }
 
     [RelayCommand]

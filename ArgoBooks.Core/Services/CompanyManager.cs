@@ -501,6 +501,15 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Extracts the company logo from a .argo file without fully opening it.
+    /// Returns null for encrypted files or files without a logo.
+    /// </summary>
+    public Task<byte[]?> ExtractLogoFromFileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        return _fileService.ExtractLogoFromFileAsync(filePath, cancellationToken);
+    }
+
+    /// <summary>
     /// Gets the list of recent companies with their metadata.
     /// </summary>
     /// <returns>List of recent company info.</returns>

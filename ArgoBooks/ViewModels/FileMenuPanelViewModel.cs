@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -283,5 +284,7 @@ public class RecentCompanyItem
     public string? Name { get; set; }
     public string? FilePath { get; set; }
     public string? Icon { get; set; }
+    public Bitmap? Logo { get; set; }
+    public bool HasLogo => Logo != null;
     public DateTime LastOpened { get; set; } = DateTime.Now;
 }
