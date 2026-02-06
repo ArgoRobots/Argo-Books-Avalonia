@@ -199,6 +199,18 @@
                                                                   PriorityItems="{Binding PriorityCurrencies}"
                                                                   Placeholder="{loc:Loc 'Search currencies...'}" />
                                 </StackPanel>
+
+                                <!-- Province / State -->
+                                <StackPanel Grid.Row="6" Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Province / State'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Classes="form-input"
+                                             Text="{Binding ProvinceState, Mode=TwoWay}"
+                                             Watermark="{loc:Loc 'Enter province or state'}"
+                                             MaxLength="100" />
+                                </StackPanel>
                             </Grid>
                         </StackPanel>
 

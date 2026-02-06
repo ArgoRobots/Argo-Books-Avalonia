@@ -1384,6 +1384,7 @@ public class App : Application
                     Phone = args.PhoneNumber,
                     Country = args.Country,
                     City = args.City,
+                    ProvinceState = args.ProvinceState,
                     Address = args.Address
                 };
 

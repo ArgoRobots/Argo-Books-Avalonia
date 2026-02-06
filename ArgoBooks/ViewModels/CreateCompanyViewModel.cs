@@ -95,6 +95,9 @@ public partial class CreateCompanyViewModel : ViewModelBase
     private string? _city;
 
     [ObservableProperty]
+    private string? _provinceState;
+
+    [ObservableProperty]
     private string? _address;
 
     #endregion
@@ -221,6 +224,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
             Industry = Industry,
             Address = Address,
             City = City,
+            ProvinceState = ProvinceState,
             Country = Country,
             PhoneNumber = fullPhone,
             DefaultCurrency = CurrencyService.ParseCurrencyCode(SelectedCurrency),
@@ -260,6 +264,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         SelectedPhoneCountry = null;
         Country = null;
         City = null;
+        ProvinceState = null;
         Address = null;
         EnablePassword = false;
         Password = null;
@@ -319,6 +324,7 @@ public class CompanyCreatedEventArgs : EventArgs
     public string? PhoneNumber { get; init; }
     public string? Country { get; init; }
     public string? City { get; init; }
+    public string? ProvinceState { get; init; }
     public string? Address { get; init; }
     public string? DefaultCurrency { get; init; }
     public string? Password { get; init; }
