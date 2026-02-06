@@ -187,6 +187,18 @@
                                              Watermark="{loc:Loc 'Enter address'}"
                                              MaxLength="200" />
                                 </StackPanel>
+
+                                <!-- Default Currency -->
+                                <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Default Currency'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
+                                                                  SelectedItem="{Binding SelectedCurrency}"
+                                                                  PriorityItems="{Binding PriorityCurrencies}"
+                                                                  Placeholder="{loc:Loc 'Search currencies...'}" />
+                                </StackPanel>
                             </Grid>
                         </StackPanel>
 

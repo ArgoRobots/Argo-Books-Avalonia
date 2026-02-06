@@ -1,4 +1,5 @@
 using ArgoBooks.Controls;
+using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -63,6 +64,19 @@ public partial class CreateCompanyViewModel : ViewModelBase
         "Real Estate",
         "Other"
     ];
+
+    [ObservableProperty]
+    private string _selectedCurrency = "USD - US Dollar ($)";
+
+    /// <summary>
+    /// All available currencies.
+    /// </summary>
+    public IReadOnlyList<string> Currencies => Data.Currencies.All;
+
+    /// <summary>
+    /// Priority/common currencies shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
 
     #endregion
 
@@ -209,6 +223,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
             City = City,
             Country = Country,
             PhoneNumber = fullPhone,
+            DefaultCurrency = CurrencyService.ParseCurrencyCode(SelectedCurrency),
             Password = EnablePassword ? Password : null,
             LogoPath = LogoPath
         };
@@ -240,6 +255,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         CompanyName = null;
         BusinessType = null;
         Industry = null;
+        SelectedCurrency = "USD - US Dollar ($)";
         PhoneNumber = "";
         SelectedPhoneCountry = null;
         Country = null;
@@ -304,6 +320,7 @@ public class CompanyCreatedEventArgs : EventArgs
     public string? Country { get; init; }
     public string? City { get; init; }
     public string? Address { get; init; }
+    public string? DefaultCurrency { get; init; }
     public string? Password { get; init; }
     public string? LogoPath { get; init; }
 }

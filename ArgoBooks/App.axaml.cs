@@ -1393,6 +1393,13 @@ public class App : Application
                     args.Password,
                     companyInfo);
 
+                // Apply default currency if specified
+                if (!string.IsNullOrEmpty(args.DefaultCurrency))
+                {
+                    CompanyManager.CompanyData!.Settings.Localization.Currency = args.DefaultCurrency;
+                    await CompanyManager.SaveCompanyAsync();
+                }
+
                 await LoadRecentCompaniesAsync();
             }
             catch (Exception ex)
