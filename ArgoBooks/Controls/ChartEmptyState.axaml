@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d"
+             x:Class="ArgoBooks.Controls.ChartEmptyState"
+             x:DataType="controls:ChartEmptyState">
+
+    <Border Background="{DynamicResource SurfaceAltBrush}"
+            CornerRadius="8">
+        <Panel>
+            <TextBlock Text="{Binding DefaultMessage, RelativeSource={RelativeSource AncestorType=controls:ChartEmptyState}}"
+                       IsVisible="{Binding !ShowDateRangeMessage, RelativeSource={RelativeSource AncestorType=controls:ChartEmptyState}}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       Foreground="{DynamicResource TextTertiaryBrush}" />
+            <TextBlock Text="{loc:Loc 'No data available in the selected date range'}"
+                       IsVisible="{Binding ShowDateRangeMessage, RelativeSource={RelativeSource AncestorType=controls:ChartEmptyState}}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       Foreground="{DynamicResource TextTertiaryBrush}" />
+        </Panel>
+    </Border>
+</UserControl>

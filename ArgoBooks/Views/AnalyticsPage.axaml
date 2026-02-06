@@ -128,15 +128,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasProfitTrendsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasProfitTrendsData}">
-                                    <TextBlock Text="{loc:Loc 'No profit data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasProfitTrendsData}"
+                                    DefaultMessage="{loc:Loc 'No profit data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -159,15 +154,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasRevenueVsExpensesData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasRevenueVsExpensesData}">
-                                    <TextBlock Text="{loc:Loc 'No comparison data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasRevenueVsExpensesData}"
+                                    DefaultMessage="{loc:Loc 'No comparison data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -193,15 +183,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasRevenueTrendsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasRevenueTrendsData}">
-                                    <TextBlock Text="{loc:Loc 'No revenue data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasRevenueTrendsData}"
+                                    DefaultMessage="{loc:Loc 'No revenue data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -240,15 +225,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasRevenueDistributionData}">
-                                    <TextBlock Text="{loc:Loc 'No distribution data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasRevenueDistributionData}"
+                                    DefaultMessage="{loc:Loc 'No distribution data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -274,15 +254,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasExpensesTrendsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasExpensesTrendsData}">
-                                    <TextBlock Text="{loc:Loc 'No expense data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasExpensesTrendsData}"
+                                    DefaultMessage="{loc:Loc 'No expense data available'}"
+                                    ShowDateRangeMessage="{Binding ShowExpenseDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -321,15 +296,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasExpensesDistributionData}">
-                                    <TextBlock Text="{loc:Loc 'No distribution data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasExpensesDistributionData}"
+                                    DefaultMessage="{loc:Loc 'No distribution data available'}"
+                                    ShowDateRangeMessage="{Binding ShowExpenseDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -375,15 +345,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCountriesOfOriginData}">
-                                    <TextBlock Text="{loc:Loc 'No country data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCountriesOfOriginData}"
+                                    DefaultMessage="{loc:Loc 'No country data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -422,15 +387,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCompaniesOfOriginData}">
-                                    <TextBlock Text="{loc:Loc 'No company data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCompaniesOfOriginData}"
+                                    DefaultMessage="{loc:Loc 'No company data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -472,15 +432,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCountriesOfDestinationData}">
-                                    <TextBlock Text="{loc:Loc 'No destination data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCountriesOfDestinationData}"
+                                    DefaultMessage="{loc:Loc 'No destination data available'}"
+                                    ShowDateRangeMessage="{Binding ShowExpenseDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -519,15 +474,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCompaniesOfDestinationData}">
-                                    <TextBlock Text="{loc:Loc 'No company data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCompaniesOfDestinationData}"
+                                    DefaultMessage="{loc:Loc 'No company data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -583,35 +533,27 @@
                                                 PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased" />
                                     <!-- No data message for Origin (only show when in origin mode AND no data) -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <Border.IsVisible>
+                                    <controls:ChartEmptyState
+                                        DefaultMessage="{loc:Loc 'No origin data available'}"
+                                        ShowDateRangeMessage="{Binding ShowExpenseDateRangeMessage}">
+                                        <controls:ChartEmptyState.IsVisible>
                                             <MultiBinding Converter="{x:Static BoolConverters.And}">
                                                 <Binding Path="IsMapModeOrigin" />
                                                 <Binding Path="!HasOriginMapData" />
                                             </MultiBinding>
-                                        </Border.IsVisible>
-                                        <TextBlock Text="{loc:Loc 'No origin data available'}"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </Border>
+                                        </controls:ChartEmptyState.IsVisible>
+                                    </controls:ChartEmptyState>
                                     <!-- No data message for Destination (only show when in destination mode AND no data) -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <Border.IsVisible>
+                                    <controls:ChartEmptyState
+                                        DefaultMessage="{loc:Loc 'No destination data available'}"
+                                        ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}">
+                                        <controls:ChartEmptyState.IsVisible>
                                             <MultiBinding Converter="{x:Static BoolConverters.And}">
                                                 <Binding Path="IsMapModeDestination" />
                                                 <Binding Path="!HasDestinationMapData" />
                                             </MultiBinding>
-                                        </Border.IsVisible>
-                                        <TextBlock Text="{loc:Loc 'No destination data available'}"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </Border>
+                                        </controls:ChartEmptyState.IsVisible>
+                                    </controls:ChartEmptyState>
                                 </Panel>
                             </Border>
                         </Grid>
@@ -687,15 +629,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasAccountantsTransactionsData}">
-                                    <TextBlock Text="{loc:Loc 'No accountant data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasAccountantsTransactionsData}"
+                                    DefaultMessage="{loc:Loc 'No accountant data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -718,15 +655,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="{loc:Loc 'No transaction data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasTotalTransactionsData}"
+                                    DefaultMessage="{loc:Loc 'No transaction data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -788,15 +720,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasAvgTransactionValueData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasAvgTransactionValueData}">
-                                    <TextBlock Text="{loc:Loc 'No transaction data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasAvgTransactionValueData}"
+                                    DefaultMessage="{loc:Loc 'No transaction data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -819,15 +746,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="{loc:Loc 'No transaction data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasTotalTransactionsData}"
+                                    DefaultMessage="{loc:Loc 'No transaction data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -852,15 +774,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasAvgShippingCostsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasAvgShippingCostsData}">
-                                    <TextBlock Text="{loc:Loc 'No shipping data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasAvgShippingCostsData}"
+                                    DefaultMessage="{loc:Loc 'No shipping data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -938,15 +855,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCompaniesOfOriginData}">
-                                    <TextBlock Text="{loc:Loc 'No customer data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCompaniesOfOriginData}"
+                                    DefaultMessage="{loc:Loc 'No customer data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -985,15 +897,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCustomerPaymentStatusData}">
-                                    <TextBlock Text="{loc:Loc 'No payment data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCustomerPaymentStatusData}"
+                                    DefaultMessage="{loc:Loc 'No payment data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1019,15 +926,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasCustomerGrowthData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasCustomerGrowthData}">
-                                    <TextBlock Text="{loc:Loc 'No growth data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasCustomerGrowthData}"
+                                    DefaultMessage="{loc:Loc 'No growth data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1050,15 +952,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasAvgTransactionValueData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasAvgTransactionValueData}">
-                                    <TextBlock Text="{loc:Loc 'No value data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasAvgTransactionValueData}"
+                                    DefaultMessage="{loc:Loc 'No value data available'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1100,15 +997,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasActiveInactiveCustomersData}">
-                                    <TextBlock Text="{loc:Loc 'No customer activity data'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasActiveInactiveCustomersData}"
+                                    DefaultMessage="{loc:Loc 'No customer activity data'}"
+                                    ShowDateRangeMessage="{Binding ShowRevenueDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1131,15 +1023,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="{loc:Loc 'No rental data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasTotalTransactionsData}"
+                                    DefaultMessage="{loc:Loc 'No rental data available'}"
+                                    ShowDateRangeMessage="{Binding ShowRentalDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1201,15 +1088,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasReturnsOverTimeData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasReturnsOverTimeData}">
-                                    <TextBlock Text="{loc:Loc 'No returns data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasReturnsOverTimeData}"
+                                    DefaultMessage="{loc:Loc 'No returns data available'}"
+                                    ShowDateRangeMessage="{Binding ShowReturnDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1248,15 +1130,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasReturnReasonsData}">
-                                    <TextBlock Text="{loc:Loc 'No return reasons data'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasReturnReasonsData}"
+                                    DefaultMessage="{loc:Loc 'No return reasons data'}"
+                                    ShowDateRangeMessage="{Binding ShowReturnDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1282,15 +1159,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasReturnFinancialImpactData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasReturnFinancialImpactData}">
-                                    <TextBlock Text="{loc:Loc 'No financial impact data'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasReturnFinancialImpactData}"
+                                    DefaultMessage="{loc:Loc 'No financial impact data'}"
+                                    ShowDateRangeMessage="{Binding ShowReturnDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1329,15 +1201,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasReturnsByCategoryData}">
-                                    <TextBlock Text="{loc:Loc 'No category data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasReturnsByCategoryData}"
+                                    DefaultMessage="{loc:Loc 'No category data available'}"
+                                    ShowDateRangeMessage="{Binding ShowReturnDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1379,15 +1246,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasReturnsByProductData}">
-                                    <TextBlock Text="{loc:Loc 'No product data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasReturnsByProductData}"
+                                    DefaultMessage="{loc:Loc 'No product data available'}"
+                                    ShowDateRangeMessage="{Binding ShowReturnDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1410,15 +1272,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasExpenseVsRevenueReturnsData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasExpenseVsRevenueReturnsData}">
-                                    <TextBlock Text="{loc:Loc 'No comparison data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasExpenseVsRevenueReturnsData}"
+                                    DefaultMessage="{loc:Loc 'No comparison data available'}"
+                                    ShowDateRangeMessage="{Binding ShowReturnDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1480,15 +1337,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasLossesOverTimeData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasLossesOverTimeData}">
-                                    <TextBlock Text="{loc:Loc 'No losses data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasLossesOverTimeData}"
+                                    DefaultMessage="{loc:Loc 'No losses data available'}"
+                                    ShowDateRangeMessage="{Binding ShowLossDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1527,15 +1379,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasLossReasonsData}">
-                                    <TextBlock Text="{loc:Loc 'No loss reasons data'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasLossReasonsData}"
+                                    DefaultMessage="{loc:Loc 'No loss reasons data'}"
+                                    ShowDateRangeMessage="{Binding ShowLossDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1561,15 +1408,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasLossFinancialImpactData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasLossFinancialImpactData}">
-                                    <TextBlock Text="{loc:Loc 'No financial impact data'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasLossFinancialImpactData}"
+                                    DefaultMessage="{loc:Loc 'No financial impact data'}"
+                                    ShowDateRangeMessage="{Binding ShowLossDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1608,15 +1450,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasLossesByCategoryData}">
-                                    <TextBlock Text="{loc:Loc 'No category data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasLossesByCategoryData}"
+                                    DefaultMessage="{loc:Loc 'No category data available'}"
+                                    ShowDateRangeMessage="{Binding ShowLossDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>
@@ -1658,15 +1495,10 @@
                                     </Grid>
                                 </Grid>
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasLossesByProductData}">
-                                    <TextBlock Text="{loc:Loc 'No product data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasLossesByProductData}"
+                                    DefaultMessage="{loc:Loc 'No product data available'}"
+                                    ShowDateRangeMessage="{Binding ShowLossDateRangeMessage}" />
                             </Panel>
                         </Border>
 
@@ -1689,15 +1521,10 @@
                                                     ZoomMode="Both"
                                                     IsVisible="{Binding HasExpenseVsRevenueLossesData}" />
                                 <!-- No data placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasExpenseVsRevenueLossesData}">
-                                    <TextBlock Text="{loc:Loc 'No comparison data available'}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasExpenseVsRevenueLossesData}"
+                                    DefaultMessage="{loc:Loc 'No comparison data available'}"
+                                    ShowDateRangeMessage="{Binding ShowLossDateRangeMessage}" />
                             </Panel>
                         </Border>
                     </Grid>

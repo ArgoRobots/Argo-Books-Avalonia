@@ -500,6 +500,17 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Empty State Date Range Detection
+
+    /// <summary>
+    /// True when financial data (revenues or expenses) exists in all time but the current
+    /// date range filter is excluding it. Used to show "no data in selected date range" messages.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showFinancialDateRangeMessage;
+
+    #endregion
+
     #region Company Data Reference
 
     private CompanyManager? _companyManager;
@@ -707,6 +718,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Correct rental statuses before displaying
         CorrectRentalStatuses(data);
+
+        // Determine if a date range filter is active and data exists beyond it
+        var isFiltered = SelectedDateRange != "All Time";
+        ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
 
         LoadStatistics(data);
         LoadRecentTransactions(data);
