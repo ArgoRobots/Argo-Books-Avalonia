@@ -102,11 +102,23 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
-    /// Updates the current file path after a file rename.
+    /// Renames the current company file, releasing and re-acquiring the file lock around the move.
     /// </summary>
-    public void UpdateFilePath(string newPath)
+    public void RenameFile(string newPath)
     {
-        _currentFilePath = newPath;
+        if (_currentFilePath == null || _currentFilePath == newPath)
+            return;
+
+        ReleaseFileLock();
+        try
+        {
+            File.Move(_currentFilePath, newPath);
+            _currentFilePath = newPath;
+        }
+        finally
+        {
+            AcquireFileLock(_currentFilePath);
+        }
     }
 
     /// <summary>
@@ -530,7 +542,8 @@ public class CompanyManager : IDisposable
                         FilePath = path,
                         CompanyName = footer.CompanyName,
                         IsEncrypted = footer.IsEncrypted,
-                        ModifiedAt = footer.ModifiedAt
+                        ModifiedAt = footer.ModifiedAt,
+                        LogoThumbnail = footer.LogoThumbnail
                     });
                 }
             }
@@ -720,4 +733,5 @@ public class RecentCompanyInfo
     public string CompanyName { get; set; } = string.Empty;
     public bool IsEncrypted { get; set; }
     public DateTime ModifiedAt { get; set; }
+    public string? LogoThumbnail { get; set; }
 }

@@ -204,6 +204,19 @@ public class App : Application
     }
 
     /// <summary>
+    /// Shows a modal error message box.
+    /// </summary>
+    private static async Task ShowErrorMessageBoxAsync(string title, string message)
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowErrorAsync(title, message);
+        }
+    }
+
+    /// <summary>
     /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
     /// and sends notifications if enabled. Only sends once per day to avoid duplicates.
     /// </summary>
@@ -721,7 +734,7 @@ public class App : Application
                     catch (Exception ex)
                     {
                         ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company on close");
-                        _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                        await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
                     }
                 }
             };
@@ -1287,7 +1300,7 @@ public class App : Application
                 catch (Exception ex)
                 {
                     ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company");
-                    _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                    await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
                 }
             }
         };
@@ -1412,6 +1425,7 @@ public class App : Application
                         args.CompanyName, filePath, logo);
                 }
 
+                _suppressSavedFeedback = true;
                 await CompanyManager.SaveCompanyAsync();
 
                 await LoadRecentCompaniesAsync();
@@ -1420,7 +1434,7 @@ public class App : Application
             {
                 _mainWindowViewModel?.HideLoading();
                 ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
-                _appShellViewModel.AddNotification("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message));
             }
         };
 
@@ -1543,10 +1557,7 @@ public class App : Application
                 if (stream == null)
                 {
                     _mainWindowViewModel.HideLoading();
-                    _appShellViewModel.AddNotification(
-                        "Error".Translate(),
-                        "Sample company data not found.".Translate(),
-                        NotificationType.Error);
+                    await ShowErrorMessageBoxAsync("Error".Translate(), "Sample company data not found.".Translate());
                     return;
                 }
 
@@ -1607,20 +1618,14 @@ public class App : Application
             else
             {
                 _mainWindowViewModel.HideLoading();
-                _appShellViewModel.AddNotification(
-                    "Error".Translate(),
-                    "Failed to open sample company.".Translate(),
-                    NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open sample company.".Translate());
             }
         }
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open sample company");
-            _appShellViewModel.AddNotification(
-                "Error".Translate(),
-                "Failed to open sample company: {0}".TranslateFormat(ex.Message),
-                NotificationType.Error);
+            await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open sample company: {0}".TranslateFormat(ex.Message));
         }
     }
 
@@ -1779,11 +1784,9 @@ public class App : Application
 
                         if (currentPath != newPath && !File.Exists(newPath))
                         {
-                            File.Move(currentPath, newPath);
-                            CompanyManager.UpdateFilePath(newPath);
+                            CompanyManager.RenameFile(newPath);
                         }
 
-                        _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
                     }
 
                     // Update UI
@@ -1795,13 +1798,11 @@ public class App : Application
                         CompanyManager.CurrentFilePath,
                         logo);
                 }
-
-                _appShellViewModel.AddNotification("Updated".Translate(), "Company information updated.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
             {
                 ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to update company");
-                _appShellViewModel.AddNotification("Error".Translate(), "Failed to update company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to update company: {0}".TranslateFormat(ex.Message));
             }
         };
 
@@ -1875,7 +1876,7 @@ public class App : Application
             {
                 settings.HasPassword = false;
                 ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to set password");
-                _appShellViewModel.AddNotification("Error".Translate(), "Failed to set password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to set password: {0}".TranslateFormat(ex.Message));
             }
         };
 
@@ -1901,7 +1902,7 @@ public class App : Application
             {
                 settings.OnPasswordVerificationFailed();
                 ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to change password");
-                _appShellViewModel.AddNotification("Error".Translate(), "Failed to change password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to change password: {0}".TranslateFormat(ex.Message));
             }
         };
 
@@ -1927,7 +1928,7 @@ public class App : Application
             {
                 settings.OnPasswordVerificationFailed();
                 ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Failed to remove password");
-                _appShellViewModel.AddNotification("Error".Translate(), "Failed to remove password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to remove password: {0}".TranslateFormat(ex.Message));
             }
         };
 
@@ -2106,7 +2107,7 @@ public class App : Application
 
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel.AddNotification("Error".Translate(), "No company is currently open.".Translate(), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "No company is currently open.".Translate());
                 return;
             }
 
@@ -2218,7 +2219,7 @@ public class App : Application
                 stopwatch.Stop();
                 _mainWindowViewModel?.HideLoading();
                 ErrorLogger?.LogError(ex, ErrorCategory.Export, $"Failed to export {args.Format}");
-                _appShellViewModel.AddNotification("Export Failed".Translate(), "Failed to export data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Export Failed".Translate(), "Failed to export data: {0}".TranslateFormat(ex.Message));
             }
         };
     }
@@ -2238,7 +2239,7 @@ public class App : Application
         {
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel.AddNotification("Error".Translate(), "No company is currently open.".Translate(), NotificationType.Error);
+                await ShowErrorMessageBoxAsync("Error".Translate(), "No company is currently open.".Translate());
                 return;
             }
 
@@ -2646,7 +2647,7 @@ public class App : Application
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
-            _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message));
         }
     }
 
@@ -2702,7 +2703,7 @@ public class App : Application
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file with password");
-            _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message));
             return false;
         }
     }
@@ -2736,7 +2737,7 @@ public class App : Application
         catch (Exception ex)
         {
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
-            _appShellViewModel?.AddNotification("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
             return false;
         }
     }
@@ -2812,31 +2813,25 @@ public class App : Application
             {
                 _welcomeScreenViewModel.RecentCompanies.Clear();
 
-                // Extract logos in parallel for all recent companies
                 var companiesForWelcome = recentCompanies.Take(10).ToList();
-                var logoTasks = companiesForWelcome.Select(c =>
-                    CompanyManager.ExtractLogoFromFileAsync(c.FilePath)).ToArray();
 
-                byte[]?[] logos;
-                try
+                foreach (var company in companiesForWelcome)
                 {
-                    logos = await Task.WhenAll(logoTasks);
-                }
-                catch
-                {
-                    logos = new byte[]?[companiesForWelcome.Count];
-                }
+                    // Use logo thumbnail from footer (instant, no decompression needed)
+                    byte[]? logoBytes = null;
+                    if (company.LogoThumbnail != null)
+                    {
+                        try { logoBytes = Convert.FromBase64String(company.LogoThumbnail); }
+                        catch { /* corrupted thumbnail, skip */ }
+                    }
 
-                for (var i = 0; i < companiesForWelcome.Count; i++)
-                {
-                    var company = companiesForWelcome[i];
                     _welcomeScreenViewModel.RecentCompanies.Add(new RecentCompanyItem
                     {
                         Name = company.CompanyName,
                         FilePath = company.FilePath,
                         LastOpened = company.ModifiedAt,
                         Icon = company.IsEncrypted ? "Lock" : "Building",
-                        Logo = LoadBitmapFromBytes(logos[i])
+                        Logo = LoadBitmapFromBytes(logoBytes)
                     });
                 }
                 _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
@@ -2996,7 +2991,7 @@ public class App : Application
             {
                 _dashboardPageViewModel = new DashboardPageViewModel();
                 // Wire up Google Sheets export notifications (only once)
-                _dashboardPageViewModel.GoogleSheetsExportStatusChanged += (_, args) =>
+                _dashboardPageViewModel.GoogleSheetsExportStatusChanged += async (_, args) =>
                 {
                     if (args.IsExporting)
                     {
@@ -3010,7 +3005,7 @@ public class App : Application
                     else if (!string.IsNullOrEmpty(args.ErrorMessage))
                     {
                         _mainWindowViewModel?.HideLoading();
-                        appShellViewModel.AddNotification("Export Failed".Translate(), args.ErrorMessage, NotificationType.Error);
+                        await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
                     }
                 };
             }

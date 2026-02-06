@@ -69,6 +69,14 @@ public class FileFooter
     /// </summary>
     [JsonPropertyName("biometricEnabled")]
     public bool BiometricEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Small Base64-encoded PNG thumbnail of the company logo (64x64 max).
+    /// Stored in footer for instant access without decompressing the archive.
+    /// Null if the company has no logo.
+    /// </summary>
+    [JsonPropertyName("logoThumbnail")]
+    public string? LogoThumbnail { get; set; }
 }
 
 /// <summary>

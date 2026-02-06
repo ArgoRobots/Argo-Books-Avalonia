@@ -1,6 +1,6 @@
-using System.Formats.Tar;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
 
@@ -165,7 +165,8 @@ public class FileService(
             CompanyName = GetCompanyNameFromDirectory(tempDirectory),
             Accountants = await GetAccountantNamesAsync(tempDirectory, cancellationToken),
             ModifiedAt = DateTime.UtcNow,
-            BiometricEnabled = GetBiometricEnabledFromDirectory(tempDirectory)
+            BiometricEnabled = GetBiometricEnabledFromDirectory(tempDirectory),
+            LogoThumbnail = GenerateLogoThumbnail(tempDirectory)
         };
 
         // Check if file exists to preserve created date
@@ -388,35 +389,17 @@ public class FileService(
         CancellationToken cancellationToken = default)
     {
         var footer = await footerService.ReadFooterAsync(filePath, cancellationToken);
-        if (footer == null || footer.IsEncrypted)
+        if (footer?.LogoThumbnail == null)
             return null;
 
         try
         {
-            await using var contentStream = await footerService.ReadContentAsync(filePath, cancellationToken);
-            await using var decompressedStream = await compressionService.DecompressGZipAsync(contentStream, cancellationToken);
-
-            using var tarReader = new TarReader(decompressedStream, leaveOpen: true);
-            while (await tarReader.GetNextEntryAsync(true, cancellationToken) is { } entry)
-            {
-                if (entry.EntryType != TarEntryType.RegularFile || entry.DataStream == null)
-                    continue;
-
-                var name = Path.GetFileName(entry.Name);
-                if (name.StartsWith("logo.", StringComparison.OrdinalIgnoreCase))
-                {
-                    using var ms = new MemoryStream();
-                    await entry.DataStream.CopyToAsync(ms, cancellationToken);
-                    return ms.ToArray();
-                }
-            }
+            return Convert.FromBase64String(footer.LogoThumbnail);
         }
         catch
         {
-            // File may be corrupted or inaccessible
+            return null;
         }
-
-        return null;
     }
 
     #region Helper Methods
@@ -514,6 +497,85 @@ public class FileService(
             var result = FindFileInDirectory(subDir, fileName, maxDepth - 1);
             if (result != null)
                 return result;
+        }
+
+        return null;
+    }
+
+    private const int ThumbnailMaxSize = 64;
+
+    private static string? GenerateLogoThumbnail(string tempDirectory)
+    {
+        // Find logo file in the temp directory
+        var logoPath = FindLogoFileInDirectory(tempDirectory);
+        if (logoPath == null)
+            return null;
+
+        try
+        {
+            using var bitmap = SKBitmap.Decode(logoPath);
+            if (bitmap == null)
+                return null;
+
+            // Calculate scaled dimensions preserving aspect ratio
+            var scale = Math.Min(
+                (float)ThumbnailMaxSize / bitmap.Width,
+                (float)ThumbnailMaxSize / bitmap.Height);
+
+            SKBitmap target;
+            if (scale >= 1f)
+            {
+                // Image is already small enough, use as-is
+                target = bitmap;
+            }
+            else
+            {
+                var newWidth = Math.Max(1, (int)(bitmap.Width * scale));
+                var newHeight = Math.Max(1, (int)(bitmap.Height * scale));
+
+                target = new SKBitmap(newWidth, newHeight);
+                using var canvas = new SKCanvas(target);
+                canvas.DrawBitmap(bitmap, new SKRect(0, 0, newWidth, newHeight));
+            }
+
+            using var image = SKImage.FromBitmap(target);
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+            if (!ReferenceEquals(target, bitmap))
+                target.Dispose();
+
+            return Convert.ToBase64String(data.ToArray());
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? FindLogoFileInDirectory(string directory, int maxDepth = 3)
+    {
+        try
+        {
+            foreach (var file in Directory.GetFiles(directory))
+            {
+                var name = Path.GetFileName(file);
+                if (name.StartsWith("logo.", StringComparison.OrdinalIgnoreCase))
+                    return file;
+            }
+
+            if (maxDepth <= 0)
+                return null;
+
+            foreach (var subDir in Directory.GetDirectories(directory))
+            {
+                var result = FindLogoFileInDirectory(subDir, maxDepth - 1);
+                if (result != null)
+                    return result;
+            }
+        }
+        catch
+        {
+            // Directory may be inaccessible
         }
 
         return null;
