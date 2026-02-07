@@ -71,10 +71,38 @@ public partial class TranslationGenerator
     private const int BatchSize = 50;
     private const int MaxCharsPerBatch = 9000;
 
+    // Azure Translator pricing: $10 per 1M characters (S1 pay-as-you-go)
+    private const decimal PricePerMillionChars = 10m;
+
+    // Usage tracking
+    private int _apiCallCount;
+    private long _totalCharactersTranslated;
+    private int _languagesTranslated;
+
     /// <summary>
     /// Event raised to report progress.
     /// </summary>
     public event EventHandler<TranslationGeneratorProgressEventArgs>? Progress;
+
+    /// <summary>
+    /// Gets the number of Azure API calls made during translation.
+    /// </summary>
+    public int ApiCallCount => _apiCallCount;
+
+    /// <summary>
+    /// Gets the total number of source characters sent for translation.
+    /// </summary>
+    public long TotalCharactersTranslated => _totalCharactersTranslated;
+
+    /// <summary>
+    /// Gets the number of languages translated.
+    /// </summary>
+    public int LanguagesTranslated => _languagesTranslated;
+
+    /// <summary>
+    /// Gets the estimated cost based on Azure Translator S1 pricing ($10 per 1M characters).
+    /// </summary>
+    public decimal EstimatedCost => _totalCharactersTranslated / 1_000_000m * PricePerMillionChars;
 
     /// <summary>
     /// Creates a new TranslationGenerator.
@@ -380,6 +408,7 @@ public partial class TranslationGenerator
 
             var translations = await TranslateToLanguageAsync(englishStrings, isoCode, cancellationToken);
             results[isoCode] = translations;
+            _languagesTranslated++;
         }
 
         return results;
@@ -472,6 +501,9 @@ public partial class TranslationGenerator
         request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
         request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
         request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
+
+        _apiCallCount++;
+        _totalCharactersTranslated += texts.Sum(t => (long)t.Length);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
@@ -631,12 +663,12 @@ public partial class TranslationGenerator
     // Response models for Azure API
     private class TranslationResponse
     {
-        public List<Translation>? translations { get; }
+        public List<Translation>? translations { get; set; }
     }
 
     private class Translation
     {
-        public string? text { get; }
+        public string? text { get; set; }
     }
 }
 
