@@ -1,4 +1,3 @@
-using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Models;
@@ -108,22 +107,8 @@ public class LicenseService
 
             var encryptedData = Convert.FromBase64String(settings.License.LicenseData);
 
-            // Try to decrypt with the new stable machine key first
             var machineKey = GetMachineKey();
             var licenseData = TryDecryptLicense(encryptedData, machineKey, settings.License.Salt, settings.License.Iv);
-
-            // If that fails, try the legacy MAC-based key for backward compatibility
-            if (licenseData == null)
-            {
-                var legacyKey = GetLegacyMachineKey();
-                licenseData = TryDecryptLicense(encryptedData, legacyKey, settings.License.Salt, settings.License.Iv);
-
-                // If legacy key worked, re-encrypt with the new stable key for future loads
-                if (licenseData != null)
-                {
-                    _ = MigrateLicenseToNewKeyAsync(licenseData);
-                }
-            }
 
             if (licenseData == null)
                 return (false, false);
@@ -155,21 +140,6 @@ public class LicenseService
     }
 
     /// <summary>
-    /// Migrates a license from the legacy key format to the new stable key format.
-    /// </summary>
-    private async Task MigrateLicenseToNewKeyAsync(LicenseData licenseData)
-    {
-        try
-        {
-            await SaveLicenseAsync(licenseData.HasStandard, licenseData.HasPremium, licenseData.LicenseKey);
-        }
-        catch
-        {
-            // Migration failed, but license still works with legacy key
-        }
-    }
-
-    /// <summary>
     /// Gets the stored license key (if available).
     /// </summary>
     /// <returns>The license key, or null if not available.</returns>
@@ -187,16 +157,8 @@ public class LicenseService
 
             var encryptedData = Convert.FromBase64String(settings.License.LicenseData);
 
-            // Try to decrypt with the new stable machine key first
             var machineKey = GetMachineKey();
             var licenseData = TryDecryptLicense(encryptedData, machineKey, settings.License.Salt, settings.License.Iv);
-
-            // If that fails, try the legacy MAC-based key for backward compatibility
-            if (licenseData == null)
-            {
-                var legacyKey = GetLegacyMachineKey();
-                licenseData = TryDecryptLicense(encryptedData, legacyKey, settings.License.Salt, settings.License.Iv);
-            }
 
             return licenseData?.LicenseKey;
         }
@@ -239,44 +201,4 @@ public class LicenseService
         return Convert.ToBase64String(hashBytes);
     }
 
-    /// <summary>
-    /// Gets the legacy machine key based on MAC addresses.
-    /// Used for backward compatibility with licenses encrypted before the fix.
-    /// </summary>
-    private static string GetLegacyMachineKey()
-    {
-        var machineInfo = new StringBuilder();
-
-        // Add machine name
-        machineInfo.Append(Environment.MachineName);
-
-        // Add MAC addresses from all physical network adapters (sorted for consistency)
-        try
-        {
-            var macAddresses = NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
-                           n.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
-                .Select(n => n.GetPhysicalAddress().ToString())
-                .Where(mac => !string.IsNullOrEmpty(mac) && mac != "000000000000")
-                .OrderBy(mac => mac)
-                .ToList();
-
-            foreach (var mac in macAddresses)
-            {
-                machineInfo.Append(mac);
-            }
-        }
-        catch
-        {
-            // Ignore network errors
-        }
-
-        // Add static application key (v1 - legacy)
-        machineInfo.Append("ArgoBooks_License_v1");
-
-        // Hash the combined data to create a fixed-length key
-        using var sha256 = SHA256.Create();
-        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(machineInfo.ToString()));
-        return Convert.ToBase64String(hashBytes);
-    }
 }

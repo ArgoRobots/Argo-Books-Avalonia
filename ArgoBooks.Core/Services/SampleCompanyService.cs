@@ -255,10 +255,12 @@ public class SampleCompanyService
     {
         var dates = new List<DateTime>();
 
-        // Only consider Revenue and Expense dates for time-shifting
-        // This ensures the dashboard "This Month" view shows meaningful data
+        // Consider all date-bearing records so the time-shift offset ensures
+        // no records end up with future dates (which would be excluded by filters)
         dates.AddRange(data.Revenues.Select(s => s.Date));
         dates.AddRange(data.Expenses.Select(p => p.Date));
+        dates.AddRange(data.Returns.Select(r => r.ReturnDate));
+        dates.AddRange(data.LostDamaged.Select(ld => ld.DateDiscovered));
 
         return dates.Count > 0 ? dates.Max() : DateTime.MinValue;
     }

@@ -22,7 +22,7 @@ public class ChartExcelExportService
     static ChartExcelExportService()
     {
         // Set EPPlus license for non-commercial use
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        ExcelPackage.License.SetNonCommercialPersonal("ArgoBooks");
     }
 
     /// <summary>
