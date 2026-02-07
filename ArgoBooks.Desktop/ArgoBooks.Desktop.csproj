@@ -6,6 +6,7 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <ApplicationManifest>app.manifest</ApplicationManifest>
+        <SelfContained>true</SelfContained>
     </PropertyGroup>
 
     <!-- Windows-specific settings for WinRT APIs -->
