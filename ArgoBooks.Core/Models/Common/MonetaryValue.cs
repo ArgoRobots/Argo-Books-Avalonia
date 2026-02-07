@@ -69,17 +69,6 @@ public class MonetaryValue
     }
 
     /// <summary>
-    /// Creates a MonetaryValue from a legacy decimal value, assuming it's in USD.
-    /// Used for data migration from older file formats.
-    /// </summary>
-    /// <param name="legacyAmount">The legacy decimal amount.</param>
-    /// <returns>A new MonetaryValue with the amount set as USD.</returns>
-    public static MonetaryValue FromLegacy(decimal legacyAmount)
-    {
-        return new MonetaryValue(legacyAmount);
-    }
-
-    /// <summary>
     /// Implicit conversion from decimal to MonetaryValue (assumes USD).
     /// </summary>
     public static implicit operator MonetaryValue(decimal amount) => new(amount);

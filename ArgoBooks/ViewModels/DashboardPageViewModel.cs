@@ -548,7 +548,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ThemeService.Instance.ThemeChanged += (_, _) =>
         {
             LoadDashboardData();
-            // Notify chart titles that have static text (no backing field changes during load)
+            // Notify chart titles to recreate LabelVisuals with the new theme's text color.
+            // Without this, titles whose backing string hasn't changed won't re-evaluate
+            // the computed LabelVisual and will keep the previous theme's paint color.
+            OnPropertyChanged(nameof(ProfitsChartTitleVisual));
             OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
         };
 

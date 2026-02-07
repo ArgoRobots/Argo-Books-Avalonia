@@ -1949,10 +1949,6 @@ public class ChartLoaderService
             "Losses by Category" => "Loss Reasons",
             "Expense vs Revenue Losses" => "Expenses vs Revenue",
 
-            // Legacy Dashboard page chart identifiers
-            "ExpenseDistributionChart" => "Expense Distribution",
-            "ExpensesChart" => "Expenses Overview",
-
             // Dashboard dynamic titles
             "Total profits" => "Profits Overview",
 

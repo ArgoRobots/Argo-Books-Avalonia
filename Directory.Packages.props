@@ -1,63 +1,50 @@
 <Project>
-    <!-- https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management -->
-    <PropertyGroup>
-        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    </PropertyGroup>
-    <ItemGroup>
-        <!-- Avalonia packages -->
-        <PackageVersion Include="Avalonia" Version="11.3.9" />
-        <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.9" />
-        <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.9" />
-        <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.9" />
-        <PackageVersion Include="Avalonia.Desktop" Version="11.3.9" />
-        <PackageVersion Include="Avalonia.Browser" Version="11.3.9" />
-
-        <!-- MVVM -->
-        <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-
-        <!-- Dependency Injection -->
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-
-        <!-- Windows-specific (DPAPI for secure credential storage) -->
-        <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
-
-        <!-- Charts -->
-        <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5.4" />
-
-        <!-- Color Picker -->
-        <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.7" />
-
-        <!-- HTML Rendering (WebView2 for Windows) -->
-        <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
-
-        <!-- Graphics (for report rendering) -->
-        <PackageVersion Include="SkiaSharp" Version="3.116.1" />
-
-        <!-- PDF -->
-        <PackageVersion Include="QuestPDF" Version="2024.10.3" />
-
-        <!-- Excel -->
-        <PackageVersion Include="ClosedXML" Version="0.104.2" />
-        <PackageVersion Include="EPPlus" Version="7.7.2" />
-
-        <!-- Auto-Update (Desktop only) -->
-        <PackageVersion Include="NetSparkleUpdater.UI.Avalonia" Version="2.3.0" />
-
-        <!-- Google APIs -->
-        <PackageVersion Include="Google.Apis.Sheets.v4" Version="1.68.0.3525" />
-        <PackageVersion Include="Google.Apis.Drive.v3" Version="1.68.0.3533" />
-
-        <!-- Machine Learning (for local forecasting) -->
-        <PackageVersion Include="Microsoft.ML" Version="4.0.2" />
-        <PackageVersion Include="Microsoft.ML.TimeSeries" Version="4.0.2" />
-
-        <!-- Azure Document Intelligence (AI Receipt Scanning) -->
-        <PackageVersion Include="Azure.AI.FormRecognizer" Version="4.1.0" />
-
-        <!-- Testing -->
-        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-        <PackageVersion Include="xunit" Version="2.9.2" />
-        <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
-        <PackageVersion Include="coverlet.collector" Version="6.0.2" />
-    </ItemGroup>
+  <!-- https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Avalonia packages -->
+    <PackageVersion Include="Avalonia" Version="11.3.11" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.11" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.11" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.11" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.11" />
+    <PackageVersion Include="Avalonia.Browser" Version="11.3.11" />
+    <!-- MVVM -->
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <!-- Dependency Injection -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <!-- Windows-specific (DPAPI for secure credential storage) -->
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+    <!-- Charts -->
+    <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5.4" />
+    <!-- Color Picker -->
+    <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.10" />
+    <!-- HTML Rendering (WebView2 for Windows) -->
+    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <!-- Graphics (for report rendering) -->
+    <PackageVersion Include="SkiaSharp" Version="3.116.1" />
+    <!-- PDF -->
+    <PackageVersion Include="QuestPDF" Version="2025.12.4" />
+    <!-- Excel -->
+    <PackageVersion Include="ClosedXML" Version="0.105.0" />
+    <PackageVersion Include="EPPlus" Version="8.4.2" />
+    <!-- Auto-Update (Desktop only) -->
+    <PackageVersion Include="NetSparkleUpdater.UI.Avalonia" Version="2.3.0" />
+    <!-- Google APIs -->
+    <PackageVersion Include="Google.Apis.Sheets.v4" Version="1.72.0.3966" />
+    <PackageVersion Include="Google.Apis.Drive.v3" Version="1.73.0.4045" />
+    <!-- Machine Learning (for local forecasting) -->
+    <PackageVersion Include="Microsoft.ML" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.ML.TimeSeries" Version="5.0.0" />
+    <!-- Azure Document Intelligence (AI Receipt Scanning) -->
+    <PackageVersion Include="Azure.AI.FormRecognizer" Version="4.1.0" />
+    <!-- Testing -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.2" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
 </Project>
