@@ -23,6 +23,12 @@ namespace ArgoBooks;
 public class App : Application
 {
     /// <summary>
+    /// Gets or sets the update service. Set by the platform-specific host (e.g., Desktop)
+    /// before the application starts. Null on platforms that don't support auto-update.
+    /// </summary>
+    public static IUpdateService? UpdateService { get; set; }
+
+    /// <summary>
     /// Gets the navigation service instance.
     /// </summary>
     public static NavigationService? NavigationService { get; private set; }
@@ -650,8 +656,8 @@ public class App : Application
             ChangeTrackingService = new ChangeTrackingService();
             _idleDetectionService = new IdleDetectionService();
 
-            // Create app shell with navigation service
-            _appShellViewModel = new AppShellViewModel(NavigationService);
+            // Create app shell with navigation service and optional update service
+            _appShellViewModel = new AppShellViewModel(NavigationService, UpdateService);
 
             // Ensure no unsaved changes indicator on startup
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -821,6 +827,9 @@ public class App : Application
             // Register file type associations on Windows
             RegisterFileTypeAssociationsAsync();
 
+            // Post-update recovery: auto-reopen the last company after an update restart
+            await TryAutoOpenRecentCompanyAfterUpdateAsync();
+
             // Settings and recent companies are loaded synchronously before window is shown
             // to prevent flicker. Just initialize services that depend on settings here.
             if (SettingsService != null)
@@ -867,11 +876,99 @@ public class App : Application
                     _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
                 }
             }
+
+            // Check for updates in the background (desktop only)
+            await CheckForUpdatesInBackgroundAsync();
         }
         catch (Exception ex)
         {
             // Log error but don't crash the app
             ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Error during async initialization");
+        }
+    }
+
+    /// <summary>
+    /// Performs a silent background check for updates.
+    /// If an update is found, notifies the CheckForUpdateModal ViewModel so the user
+    /// can be informed the next time they open the modal. Does not show UI automatically.
+    /// </summary>
+    private static async Task CheckForUpdatesInBackgroundAsync()
+    {
+        if (UpdateService == null || _appShellViewModel == null)
+            return;
+
+        // Wire the ApplyingUpdate event to save user data before the app exits
+        UpdateService.ApplyingUpdate += (_, _) =>
+        {
+            try
+            {
+                if (CompanyManager?.IsCompanyOpen == true)
+                {
+                    // Use synchronous wait since we must complete before the process exits
+                    Task.Run(async () => await CompanyManager.SaveCompanyAsync())
+                        .GetAwaiter().GetResult();
+                }
+
+                if (SettingsService != null)
+                {
+                    // Flag that we're updating so we can auto-reopen the company after restart
+                    SettingsService.GlobalSettings.Updates.AutoOpenRecentAfterUpdate = true;
+                    Task.Run(async () => await SettingsService.SaveGlobalSettingsAsync())
+                        .GetAwaiter().GetResult();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Failed to save data before update: {ex.Message}", "AutoUpdate");
+            }
+        };
+
+        try
+        {
+            var update = await UpdateService.CheckForUpdateAsync();
+            if (update != null)
+            {
+                _appShellViewModel.CheckForUpdateModalViewModel.NotifyUpdateAvailable(update);
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Background update check failed: {ex.Message}", "AutoUpdate");
+        }
+    }
+
+    /// <summary>
+    /// After an update, automatically reopens the company that was open before the restart.
+    /// Checks the AutoOpenRecentAfterUpdate flag, clears it, and opens the most recent company.
+    /// </summary>
+    private static async Task TryAutoOpenRecentCompanyAfterUpdateAsync()
+    {
+        if (SettingsService == null)
+            return;
+
+        var updateSettings = SettingsService.GlobalSettings.Updates;
+        if (!updateSettings.AutoOpenRecentAfterUpdate)
+            return;
+
+        // Clear the flag immediately so it doesn't fire again on next startup
+        updateSettings.AutoOpenRecentAfterUpdate = false;
+        await SettingsService.SaveGlobalSettingsAsync();
+
+        try
+        {
+            var recentCompanies = SettingsService.GetValidRecentCompanies();
+            if (recentCompanies.Count > 0)
+            {
+                var mostRecent = recentCompanies[0];
+                if (File.Exists(mostRecent))
+                {
+                    await OpenCompanyWithRetryAsync(mostRecent);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Failed to auto-open company after update: {ex.Message}", "AutoUpdate");
         }
     }
 
