@@ -283,7 +283,8 @@ public partial class AppShellViewModel : ViewModelBase
     /// Constructor with dependency injection.
     /// </summary>
     /// <param name="navigationService">Navigation service.</param>
-    public AppShellViewModel(INavigationService? navigationService)
+    /// <param name="updateService">Optional update service (desktop only).</param>
+    public AppShellViewModel(INavigationService? navigationService, IUpdateService? updateService = null)
     {
         _navigationService = navigationService;
 
@@ -325,8 +326,10 @@ public partial class AppShellViewModel : ViewModelBase
         // Create settings modal
         SettingsModalViewModel = new SettingsModalViewModel();
 
-        // Create check for update modal
-        CheckForUpdateModalViewModel = new CheckForUpdateModalViewModel();
+        // Create check for update modal (with real update service on desktop, stub otherwise)
+        CheckForUpdateModalViewModel = updateService != null
+            ? new CheckForUpdateModalViewModel(updateService)
+            : new CheckForUpdateModalViewModel();
 
         // Create prediction info modal
         PredictionInfoModalViewModel = new PredictionInfoModalViewModel();

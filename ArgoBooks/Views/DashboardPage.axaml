@@ -446,6 +446,7 @@
                 <!-- Recent Transactions Table -->
                 <Border Grid.Column="0"
                         Classes="card"
+                        ClipToBounds="True"
                         Margin="0,0,12,0">
                     <Grid RowDefinitions="Auto,*">
                         <!-- Header -->

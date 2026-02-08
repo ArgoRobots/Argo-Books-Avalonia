@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:converters="using:ArgoBooks.Converters"
              xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="350"
              x:Class="ArgoBooks.Modals.CheckForUpdateModal"
@@ -81,8 +82,9 @@
                     <!-- Status -->
                     <Border Background="{DynamicResource SurfaceAltBrush}"
                             CornerRadius="8"
-                            Padding="16">
-                        <Panel>
+                            Padding="16"
+                            MinHeight="120">
+                        <Panel VerticalAlignment="Center">
                             <!-- Checking State -->
                             <StackPanel IsVisible="{Binding IsChecking}"
                                         Orientation="Horizontal"
@@ -144,7 +146,7 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding NewVersion, StringFormat=' is now available'}"
+                                    <TextBlock Text="{Binding NewVersion, StringFormat='{}{0} is now available'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center" />
@@ -154,6 +156,63 @@
                                         Command="{Binding DownloadUpdateCommand}"
                                         HorizontalAlignment="Center"
                                         Margin="0,4,0,0" />
+                            </StackPanel>
+
+                            <!-- Downloading State -->
+                            <StackPanel IsVisible="{Binding IsDownloading}"
+                                        HorizontalAlignment="Center"
+                                        Spacing="12">
+                                <Border Width="40" Height="40"
+                                        CornerRadius="20"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        HorizontalAlignment="Center">
+                                    <PathIcon Data="{x:Static local:Icons.Download}"
+                                              Width="20" Height="20"
+                                              Foreground="White" />
+                                </Border>
+                                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Downloading update...'}"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding DownloadProgress, StringFormat='{}{0}%'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                                <ProgressBar Minimum="0" Maximum="100"
+                                             Value="{Binding DownloadProgress}"
+                                             Height="6"
+                                             CornerRadius="3"
+                                             Width="280"
+                                             Foreground="{DynamicResource PrimaryBrush}" />
+                            </StackPanel>
+
+                            <!-- Ready to Install State -->
+                            <StackPanel IsVisible="{Binding IsReadyToInstall}"
+                                        HorizontalAlignment="Center"
+                                        Spacing="12">
+                                <Border Width="40" Height="40"
+                                        CornerRadius="20"
+                                        Background="#10B981"
+                                        HorizontalAlignment="Center">
+                                    <PathIcon Data="{x:Static local:Icons.Check}"
+                                              Width="20" Height="20"
+                                              Foreground="White" />
+                                </Border>
+                                <TextBlock Text="{loc:Loc 'Update downloaded successfully!'}"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <Button Classes="primary-button"
+                                        Content="{loc:Loc 'Restart to Apply Update'}"
+                                        Command="{Binding ApplyUpdateCommand}"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,4,0,0"
+                                        Background="#10B981"
+                                        Foreground="White" />
                             </StackPanel>
 
                             <!-- Error State -->
@@ -168,15 +227,22 @@
                                               Width="20" Height="20"
                                               Foreground="White" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'Unable to check for updates'}"
+                                <TextBlock Text="{loc:Loc 'Something went wrong'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'Please check your internet connection'}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center" />
+                                <SelectableTextBlock Text="{Binding ErrorMessage}"
+                                                    FontSize="12"
+                                                    Foreground="{DynamicResource TextTertiaryBrush}"
+                                                    HorizontalAlignment="Center"
+                                                    TextWrapping="Wrap"
+                                                    MaxWidth="340" />
+                                <Button Classes="secondary-button"
+                                        Content="{loc:Loc 'Try Again'}"
+                                        Command="{Binding CheckForUpdatesCommand}"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,4,0,0" />
                             </StackPanel>
                         </Panel>
                     </Border>
@@ -196,7 +262,9 @@
                                 Classes="secondary-button"
                                 Content="{loc:Loc 'Check Again'}"
                                 Command="{Binding CheckForUpdatesCommand}"
-                                IsEnabled="{Binding !IsChecking}" />
+                                IsEnabled="{Binding ShowCheckAgainButton}"
+                                IsHitTestVisible="{Binding ShowCheckAgainButton}"
+                                Opacity="{Binding ShowCheckAgainButton, Converter={x:Static converters:BoolConverters.ToWidth}, ConverterParameter='1,0'}" />
                     </Grid>
                 </Border>
             </StackPanel>
