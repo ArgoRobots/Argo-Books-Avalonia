@@ -929,6 +929,7 @@ public class App : Application
             if (update != null)
             {
                 _appShellViewModel.CheckForUpdateModalViewModel.NotifyUpdateAvailable(update);
+                _appShellViewModel.ShowUpdateBanner($"V.{update.Version}");
             }
         }
         catch (Exception ex)
