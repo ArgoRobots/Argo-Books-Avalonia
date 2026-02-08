@@ -5,7 +5,6 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:converters="using:ArgoBooks.Converters"
              xmlns:local="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="350"
              x:Class="ArgoBooks.Modals.CheckForUpdateModal"
@@ -151,11 +150,6 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center" />
                                 </StackPanel>
-                                <Button Classes="primary-button"
-                                        Content="{loc:Loc 'Download Update'}"
-                                        Command="{Binding DownloadUpdateCommand}"
-                                        HorizontalAlignment="Center"
-                                        Margin="0,4,0,0" />
                             </StackPanel>
 
                             <!-- Downloading State -->
@@ -252,20 +246,10 @@
                 <Border Padding="24,16"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Button Grid.Column="0"
-                                Classes="link-button"
-                                Content="{loc:Loc 'View Release Notes'}"
-                                Command="{Binding ViewReleaseNotesCommand}"
-                                HorizontalAlignment="Left" />
-                        <Button Grid.Column="1"
-                                Classes="secondary-button"
-                                Content="{loc:Loc 'Check Again'}"
-                                Command="{Binding CheckForUpdatesCommand}"
-                                IsEnabled="{Binding ShowCheckAgainButton}"
-                                IsHitTestVisible="{Binding ShowCheckAgainButton}"
-                                Opacity="{Binding ShowCheckAgainButton, Converter={x:Static converters:BoolConverters.ToWidth}, ConverterParameter='1,0'}" />
-                    </Grid>
+                    <Button Classes="link-button"
+                            Content="{loc:Loc 'View Release Notes'}"
+                            Command="{Binding ViewReleaseNotesCommand}"
+                            HorizontalAlignment="Center" />
                 </Border>
             </StackPanel>
             </Border>

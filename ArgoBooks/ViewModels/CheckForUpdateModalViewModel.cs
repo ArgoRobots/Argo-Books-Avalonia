@@ -31,7 +31,6 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
     private string _lastChecked = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowCheckAgainButton))]
     private bool _isChecking;
 
     [ObservableProperty]
@@ -47,23 +46,15 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
     private string _errorMessage = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowCheckAgainButton))]
     private bool _isDownloading;
 
     [ObservableProperty]
     private int _downloadProgress;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowCheckAgainButton))]
     private bool _isReadyToInstall;
 
     #endregion
-
-    /// <summary>
-    /// Whether the "Check Again" button should be visible.
-    /// Hidden during checking, downloading, and when ready to install.
-    /// </summary>
-    public bool ShowCheckAgainButton => !IsChecking && !IsDownloading && !IsReadyToInstall;
 
     /// <summary>
     /// Design-time / fallback constructor (no update service).
@@ -90,16 +81,49 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
 
     /// <summary>
     /// Opens the modal and starts checking for updates.
+    /// If an update is already known (from background check), skips the check
+    /// and starts downloading immediately.
+    /// If an operation is already in progress (e.g. download running), just shows the modal.
     /// </summary>
     [RelayCommand]
     private async Task Open()
     {
         IsOpen = true;
-        await CheckForUpdates();
+
+        // If something is already in progress, just show the current state
+        if (IsDownloading || IsChecking || IsReadyToInstall)
+            return;
+
+        if (HasUpdate)
+        {
+            // Update already known from background check — start downloading
+            await DownloadUpdate();
+        }
+        else
+        {
+            await CheckForUpdates();
+        }
     }
 
     /// <summary>
-    /// Closes the modal.
+    /// Opens the modal and immediately starts downloading the known update.
+    /// Used when the user clicks "Download now" from the update banner.
+    /// If a download is already in progress, just shows the modal.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenAndDownload()
+    {
+        IsOpen = true;
+
+        // If already downloading or done, just show the current state
+        if (IsDownloading || IsReadyToInstall)
+            return;
+
+        await DownloadUpdate();
+    }
+
+    /// <summary>
+    /// Closes the modal. Any in-progress download continues in the background.
     /// </summary>
     [RelayCommand]
     private void Close()

@@ -272,6 +272,44 @@ public partial class AppShellViewModel : ViewModelBase
 
     #endregion
 
+    #region Update Available Banner
+
+    [ObservableProperty]
+    private bool _showUpdateAvailableBanner;
+
+    [ObservableProperty]
+    private string _updateBannerMessage = "";
+
+    /// <summary>
+    /// Shows the update available banner with the given version.
+    /// </summary>
+    public void ShowUpdateBanner(string version)
+    {
+        UpdateBannerMessage = $"{"A new version".Translate()} {version} {"is available.".Translate()}";
+        ShowUpdateAvailableBanner = true;
+    }
+
+    /// <summary>
+    /// Dismisses the update available banner.
+    /// </summary>
+    [RelayCommand]
+    private void DismissUpdateBanner()
+    {
+        ShowUpdateAvailableBanner = false;
+    }
+
+    /// <summary>
+    /// Opens the Check for Update modal from the banner and starts downloading.
+    /// </summary>
+    [RelayCommand]
+    private void OpenUpdateModalFromBanner()
+    {
+        ShowUpdateAvailableBanner = false;
+        CheckForUpdateModalViewModel.OpenAndDownloadCommand.Execute(null);
+    }
+
+    #endregion
+
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
