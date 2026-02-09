@@ -132,6 +132,12 @@ public class CompanyManager : IDisposable
     public event EventHandler? CompanyClosed;
 
     /// <summary>
+    /// Event raised just before a company is saved, allowing listeners to sync
+    /// in-memory state (like the event log) to CompanyData before persistence.
+    /// </summary>
+    public event EventHandler? CompanySaving;
+
+    /// <summary>
     /// Event raised when a company is saved.
     /// </summary>
     public event EventHandler? CompanySaved;
@@ -357,6 +363,9 @@ public class CompanyManager : IDisposable
             throw new InvalidOperationException("No company is currently open.");
         }
 
+        // Notify listeners to sync in-memory state before saving
+        CompanySaving?.Invoke(this, EventArgs.Empty);
+
         // Save data to temp directory
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
         await _fileService.SaveCompanyDataAsync(companyDir, _companyData!, cancellationToken);
@@ -390,6 +399,9 @@ public class CompanyManager : IDisposable
         }
 
         ArgumentException.ThrowIfNullOrEmpty(newFilePath);
+
+        // Notify listeners to sync in-memory state before saving
+        CompanySaving?.Invoke(this, EventArgs.Empty);
 
         // Determine password to use
         var passwordToUse = newPassword ?? _currentPassword;
@@ -583,6 +595,89 @@ public class CompanyManager : IDisposable
         // - Call SaveCompanyDataAsync (preserves unsaved changes in memory)
         // - Call _companyData.MarkAsSaved() (keeps HasUnsavedChanges state)
         // - Raise CompanySaved event (no data was saved, only password changed)
+    }
+
+    /// <summary>
+    /// Exports a backup of the current company to a .argobk file.
+    /// This saves the current in-memory state to a separate file without affecting
+    /// the working file, file lock, or unsaved changes state.
+    /// </summary>
+    /// <param name="backupPath">The path for the .argobk backup file.</param>
+    /// <param name="includeAttachments">Whether to include receipt file attachments in the backup.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task ExportBackupAsync(
+        string backupPath,
+        bool includeAttachments = true,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsCompanyOpen || _currentTempDirectory == null || _companyData == null)
+        {
+            throw new InvalidOperationException("No company is currently open.");
+        }
+
+        ArgumentException.ThrowIfNullOrEmpty(backupPath);
+
+        // Sync in-memory state before exporting (e.g., event log)
+        CompanySaving?.Invoke(this, EventArgs.Empty);
+
+        // Save current data to temp directory
+        var companyDir = GetCompanyDirectory(_currentTempDirectory);
+        await _fileService.SaveCompanyDataAsync(companyDir, _companyData, cancellationToken);
+
+        if (includeAttachments)
+        {
+            // Export the entire temp directory as-is (includes receipts/)
+            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
+        }
+        else
+        {
+            // Create a temporary copy without the receipts files
+            var backupTempDir = CreateTempDirectory();
+            try
+            {
+                var companyDirName = Path.GetFileName(companyDir);
+                var backupCompanyDir = Path.Combine(backupTempDir, companyDirName);
+                CopyDirectoryExcluding(companyDir, backupCompanyDir, "receipts");
+
+                await _fileService.SaveCompanyAsync(backupPath, backupTempDir, null, cancellationToken);
+            }
+            finally
+            {
+                if (Directory.Exists(backupTempDir))
+                    Directory.Delete(backupTempDir, recursive: true);
+            }
+        }
+
+        // Note: We intentionally do NOT:
+        // - Change _currentFilePath (backup is a separate file)
+        // - Release/acquire file lock (working file stays locked)
+        // - Mark as saved (unsaved changes state is unchanged)
+        // - Add to recent companies (backups are not working files)
+    }
+
+    /// <summary>
+    /// Copies a directory excluding a specific subdirectory.
+    /// </summary>
+    private static void CopyDirectoryExcluding(string sourceDir, string destDir, string excludeSubDir)
+    {
+        Directory.CreateDirectory(destDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)));
+        }
+
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(dir);
+            if (string.Equals(dirName, excludeSubDir, StringComparison.OrdinalIgnoreCase))
+            {
+                // Create an empty receipts directory in the backup
+                Directory.CreateDirectory(Path.Combine(destDir, dirName));
+                continue;
+            }
+            CopyDirectoryExcluding(dir, Path.Combine(destDir, dirName), excludeSubDir);
+        }
     }
 
     /// <summary>

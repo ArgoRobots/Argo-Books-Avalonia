@@ -114,8 +114,7 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
 
     public void ShowIfFirstVisit()
     {
-        if (!TutorialService.Instance.HasCompletedAppTour ||
-            !TutorialService.Instance.ShowFirstVisitHints ||
+        if (!TutorialService.Instance.ShowFirstVisitHints ||
             TutorialService.Instance.HasVisitedPage(TutorialService.Pages.Categories))
         {
             return;

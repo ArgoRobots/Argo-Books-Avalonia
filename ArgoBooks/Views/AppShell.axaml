@@ -230,6 +230,9 @@
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />
 
+        <!-- Version History Modal -->
+        <modals:VersionHistoryModal DataContext="{Binding VersionHistoryModalViewModel}" />
+
         <!-- Quick Actions Settings Modal -->
         <modals:QuickActionsSettingsModal DataContext="{Binding QuickActionsSettingsModalViewModel}" />
     </Panel>

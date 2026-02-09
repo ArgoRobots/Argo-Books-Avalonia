@@ -53,20 +53,6 @@ public partial class DashboardPage : UserControl
             handledEventsToo: true);
     }
 
-    protected override void OnUnloaded(RoutedEventArgs e)
-    {
-        base.OnUnloaded(e);
-
-        RemoveHandler(PointerWheelChangedEvent, OnChartPointerWheelChanged);
-        RemoveHandler(PointerPressedEvent, OnChartPointerPressedTunnel);
-
-        if (DataContext is DashboardPageViewModel viewModel)
-        {
-            viewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
-            viewModel.ExcelExportRequested -= OnExcelExportRequested;
-        }
-    }
-
     /// <summary>
     /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
     /// </summary>
@@ -96,22 +82,12 @@ public partial class DashboardPage : UserControl
         }
     }
 
-    private DashboardPageViewModel? _subscribedViewModel;
-
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        if (_subscribedViewModel != null)
-        {
-            _subscribedViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
-            _subscribedViewModel.ExcelExportRequested -= OnExcelExportRequested;
-            _subscribedViewModel = null;
-        }
-
         if (DataContext is DashboardPageViewModel viewModel)
         {
             viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
             viewModel.ExcelExportRequested += OnExcelExportRequested;
-            _subscribedViewModel = viewModel;
         }
     }
 

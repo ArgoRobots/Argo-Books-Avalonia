@@ -432,9 +432,32 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (sender is ReportElementBase element)
         {
-            // Skip position/size properties - these are tracked separately via drag/resize
-            if (e.PropertyName is "X" or "Y" or "Width" or "Height" or "ZOrder" or "Bounds")
+            // Skip ZOrder and Bounds - these are tracked through other mechanisms
+            if (e.PropertyName is "ZOrder" or "Bounds")
                 return;
+
+            // For position/size changes, create a coalescing move/resize action.
+            // Rapid changes (e.g., scrolling spinner controls) will be merged into
+            // a single undo entry by the undo manager's coalescing logic.
+            // During canvas drag/resize, SuppressRecording is set so these are skipped.
+            if (e.PropertyName is "X" or "Y" or "Width" or "Height")
+            {
+                // PropertyChanging fires before the change, so element still has old values
+                var oldBounds = (element.X, element.Y, element.Width, element.Height);
+                var newBounds = oldBounds;
+                switch (e.PropertyName)
+                {
+                    case "X": newBounds.Item1 = (double)e.NewValue!; break;
+                    case "Y": newBounds.Item2 = (double)e.NewValue!; break;
+                    case "Width": newBounds.Item3 = (double)e.NewValue!; break;
+                    case "Height": newBounds.Item4 = (double)e.NewValue!; break;
+                }
+
+                var isResize = e.PropertyName is "Width" or "Height";
+                UndoRedoManager.RecordAction(new MoveResizeElementAction(
+                    Configuration, element.Id, oldBounds, newBounds, isResize));
+                return;
+            }
 
             // Record property change for undo/redo
             UndoRedoManager.RecordAction(new ElementPropertyChangeAction(
@@ -1895,21 +1918,6 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Refresh the preview and canvas to show translated content
         GeneratePreview();
         CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// Discards unsaved layout changes and resets the wizard back to Step 1.
-    /// Called when the user navigates away from Reports and chooses "Don't Save".
-    /// </summary>
-    public void DiscardChangesAndReset()
-    {
-        _chartTypesToPreserve = Configuration.Filters.SelectedChartTypes.ToList();
-        UndoRedoManager.Clear();
-        LoadTemplate(SelectedTemplateName);
-        Step1Completed = false;
-        Step2Completed = false;
-        CurrentStep = 1;
-        NotifyStepChanged();
     }
 
     /// <summary>

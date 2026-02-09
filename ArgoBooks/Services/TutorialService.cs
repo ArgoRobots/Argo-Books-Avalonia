@@ -133,10 +133,8 @@ public class TutorialService
         }, Avalonia.Threading.DispatcherPriority.Background);
     }
 
-    private static readonly TutorialSettings _fallbackSettings = new();
-
     private TutorialSettings Settings =>
-        _globalSettingsService?.GetSettings()?.Tutorial ?? _fallbackSettings;
+        _globalSettingsService?.GetSettings()?.Tutorial ?? new TutorialSettings();
 
     /// <summary>
     /// Gets whether this is the user's first time using the app (no tutorial completed).
@@ -497,7 +495,6 @@ public class TutorialService
         {
             settings.Tutorial.HasCompletedAppTour = false;
             settings.Tutorial.TutorialStartedOnCompanyPath = null;
-            settings.Tutorial.VisitedPages.Clear();
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }

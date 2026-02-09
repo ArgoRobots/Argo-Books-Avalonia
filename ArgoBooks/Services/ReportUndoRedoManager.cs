@@ -15,6 +15,26 @@ public interface IReportUndoableAction
 }
 
 /// <summary>
+/// Interface for actions that can be coalesced with subsequent actions of the same kind.
+/// When rapid sequential changes occur (e.g., scrolling a numeric spinner), the undo manager
+/// merges them into a single undo entry instead of creating separate entries.
+/// </summary>
+public interface ICoalescingAction : IReportUndoableAction
+{
+    /// <summary>
+    /// Key identifying actions that can be coalesced together.
+    /// Actions with the same key within the time window will be merged.
+    /// </summary>
+    string CoalescingKey { get; }
+
+    /// <summary>
+    /// Updates this action's "new state" to match the newer action's state.
+    /// The original "old state" is preserved so undo returns to the initial state.
+    /// </summary>
+    void UpdateToNewState(ICoalescingAction newerAction);
+}
+
+/// <summary>
 /// Manages undo/redo operations for the report layout designer.
 /// </summary>
 public class ReportUndoRedoManager(int maxStackSize = 100) : INotifyPropertyChanged, IUndoRedoManager
@@ -23,6 +43,14 @@ public class ReportUndoRedoManager(int maxStackSize = 100) : INotifyPropertyChan
     private readonly Stack<IReportUndoableAction> _redoStack = new();
     private bool _isUndoingOrRedoing;
     private int _savePointDepth ; // Tracks the undo stack depth at save time
+    private DateTime _lastRecordTime;
+    private const int CoalesceThresholdMs = 500;
+
+    /// <summary>
+    /// When true, RecordAction calls are suppressed. Used by the canvas during drag/resize
+    /// to prevent property change notifications from creating duplicate undo entries.
+    /// </summary>
+    public bool SuppressRecording { get; set; }
 
     /// <summary>
     /// Fired when a property changes.
@@ -80,10 +108,32 @@ public class ReportUndoRedoManager(int maxStackSize = 100) : INotifyPropertyChan
     /// </summary>
     public void RecordAction(IReportUndoableAction action)
     {
-        if (_isUndoingOrRedoing)
+        if (_isUndoingOrRedoing || SuppressRecording)
             return;
 
+        var now = DateTime.UtcNow;
+
+        // Coalesce with the most recent action if it's the same kind of operation
+        // on the same element within a short time window. This prevents flooding
+        // the undo stack when using spinner controls or rapid arrow key presses.
+        if (action is ICoalescingAction newCoalescing &&
+            _undoStack.Count > 0 &&
+            _undoStack.Peek() is ICoalescingAction topCoalescing &&
+            newCoalescing.CoalescingKey == topCoalescing.CoalescingKey &&
+            (now - _lastRecordTime).TotalMilliseconds < CoalesceThresholdMs)
+        {
+            topCoalescing.UpdateToNewState(newCoalescing);
+            _lastRecordTime = now;
+            _redoStack.Clear();
+            // If coalescing modified the action at the save point, mark as dirty
+            if (_savePointDepth == _undoStack.Count)
+                _savePointDepth = -1;
+            NotifyStateChanged();
+            return;
+        }
+
         _undoStack.Push(action);
+        _lastRecordTime = now;
         _redoStack.Clear();
 
         // Enforce max stack size
@@ -220,28 +270,54 @@ public class RemoveElementAction(ReportConfiguration config, ReportElementBase e
 }
 
 /// <summary>
-/// Action for moving/resizing an element.
+/// Action for moving/resizing an element. Supports coalescing so that rapid
+/// sequential changes (e.g., from spinner controls) merge into a single undo entry.
 /// </summary>
-public class MoveResizeElementAction(
-    ReportConfiguration config,
-    string elementId,
-    (double X, double Y, double Width, double Height) oldBounds,
-    (double X, double Y, double Width, double Height) newBounds,
-    bool isResize = false)
-    : IReportUndoableAction
+public class MoveResizeElementAction : ICoalescingAction
 {
-    public string Description => isResize ? "Resize element".Translate() : "Move element".Translate();
+    private readonly ReportConfiguration _config;
+    private readonly string _elementId;
+    private readonly (double X, double Y, double Width, double Height) _oldBounds;
+    private (double X, double Y, double Width, double Height) _newBounds;
+    private bool _isResize;
+
+    public MoveResizeElementAction(
+        ReportConfiguration config,
+        string elementId,
+        (double X, double Y, double Width, double Height) oldBounds,
+        (double X, double Y, double Width, double Height) newBounds,
+        bool isResize = false)
+    {
+        _config = config;
+        _elementId = elementId;
+        _oldBounds = oldBounds;
+        _newBounds = newBounds;
+        _isResize = isResize;
+    }
+
+    public string Description => _isResize ? "Resize element".Translate() : "Move element".Translate();
+
+    public string CoalescingKey => $"move-resize:{_elementId}";
 
     public void Undo()
     {
-        var element = config.GetElementById(elementId);
-        element?.Bounds = oldBounds;
+        var element = _config.GetElementById(_elementId);
+        element?.Bounds = _oldBounds;
     }
 
     public void Redo()
     {
-        var element = config.GetElementById(elementId);
-        element?.Bounds = newBounds;
+        var element = _config.GetElementById(_elementId);
+        element?.Bounds = _newBounds;
+    }
+
+    public void UpdateToNewState(ICoalescingAction newerAction)
+    {
+        if (newerAction is MoveResizeElementAction newer)
+        {
+            _newBounds = newer._newBounds;
+            _isResize = _isResize || newer._isResize;
+        }
     }
 }
 
