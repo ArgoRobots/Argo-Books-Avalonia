@@ -67,7 +67,7 @@
                                 Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{Binding ModalTitle}"
                                                FontSize="18"
@@ -77,9 +77,13 @@
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
-                                <Button Grid.Column="1"
+                                <controls:UndoRedoButtonGroup Grid.Column="1"
+                                                              DataContext="{Binding UndoRedoViewModel}"
+                                                              Margin="0,0,12,0"
+                                                              VerticalAlignment="Center" />
+                                <Button Grid.Column="2"
                                         Classes="icon-button"
-                                        Command="{Binding CloseCommand}">
+                                        Command="{Binding RequestCloseCommand}">
                                     <PathIcon Data="{x:Static icons:Icons.Close}"
                                               Width="20" Height="20" />
                                 </Button>
@@ -392,7 +396,7 @@
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
                                             Content="{loc:Loc Cancel}"
-                                            Command="{Binding CloseCommand}" />
+                                            Command="{Binding RequestCloseCommand}" />
                                     <Button Classes="primary-button"
                                             Content="{loc:Loc 'Save Template'}"
                                             Command="{Binding SaveCommand}" />
