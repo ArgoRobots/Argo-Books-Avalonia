@@ -1029,6 +1029,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         _interactionMode = InteractionMode.Dragging;
         _interactionStartPoint = point;
 
+        // Suppress property change undo recording during drag - EndDrag records the final action
+        if (UndoRedoManager != null)
+            UndoRedoManager.SuppressRecording = true;
+
         // Store start bounds for all selected elements
         _multiDragStartBounds.Clear();
         foreach (var element in _selectedElements)
@@ -1073,6 +1077,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void EndDrag()
     {
+        // Re-enable undo recording after drag
+        if (UndoRedoManager != null)
+            UndoRedoManager.SuppressRecording = false;
+
         // Record undo action for moved elements (as a single batch action)
         if (UndoRedoManager != null && Configuration != null && _selectedElements.Count > 0)
         {
@@ -1119,6 +1127,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         _interactionStartPoint = point;
         _elementStartPosition = new Point(element.X, element.Y);
         _elementStartSize = new Size(element.Width, element.Height);
+
+        // Suppress property change undo recording during resize - EndResize records the final action
+        if (UndoRedoManager != null)
+            UndoRedoManager.SuppressRecording = true;
 
         // Ensure only this element is selected during resize
         _selectedElements.Clear();
@@ -1221,6 +1233,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void EndResize()
     {
+        // Re-enable undo recording after resize
+        if (UndoRedoManager != null)
+            UndoRedoManager.SuppressRecording = false;
+
         // Record undo action for resized element
         if (UndoRedoManager != null && Configuration != null && _selectedElements.Count == 1)
         {
