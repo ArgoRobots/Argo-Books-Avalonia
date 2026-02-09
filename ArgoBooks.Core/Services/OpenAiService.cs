@@ -53,7 +53,9 @@ public class OpenAiService : IOpenAiService
         }
 
         var stopwatch = Stopwatch.StartNew();
-        var model = DotEnv.Get(ModelEnvVar) ?? DefaultModel;
+        var model = DotEnv.Get(ModelEnvVar);
+        if (string.IsNullOrEmpty(model))
+            model = DefaultModel;
         var success = false;
 
         try

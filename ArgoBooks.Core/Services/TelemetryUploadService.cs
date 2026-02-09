@@ -179,15 +179,45 @@ public class TelemetryUploadService : ITelemetryUploadService
     {
         var result = new TelemetryUploadResult();
 
+        // Extract shared metadata from the first event for compact format
+        var firstEvent = batch[0];
         var uploadData = new TelemetryUploadData
         {
             UploadTime = DateTime.UtcNow,
             AppVersion = _appVersion,
+            Platform = firstEvent.Platform,
+            UserAgent = firstEvent.UserAgent,
+            GeoLocation = firstEvent.GeoLocation,
             EventCount = batch.Count,
             Events = batch
         };
 
-        var json = JsonSerializer.Serialize(uploadData, _jsonOptions);
+        // Temporarily null metadata on events so WhenWritingNull excludes them
+        var savedMetadata = batch.Select(e => (e.AppVersion, e.Platform, e.UserAgent, e.GeoLocation)).ToList();
+        foreach (var e in batch)
+        {
+            e.AppVersion = null;
+            e.Platform = null;
+            e.UserAgent = null;
+            e.GeoLocation = null;
+        }
+
+        string json;
+        try
+        {
+            json = JsonSerializer.Serialize(uploadData, _jsonOptions);
+        }
+        finally
+        {
+            // Restore metadata on events for retry scenarios and local storage consistency
+            for (int i = 0; i < batch.Count; i++)
+            {
+                batch[i].AppVersion = savedMetadata[i].AppVersion;
+                batch[i].Platform = savedMetadata[i].Platform;
+                batch[i].UserAgent = savedMetadata[i].UserAgent;
+                batch[i].GeoLocation = savedMetadata[i].GeoLocation;
+            }
+        }
         var jsonBytes = Encoding.UTF8.GetBytes(json);
 
         using var content = new MultipartFormDataContent();
@@ -232,6 +262,9 @@ public class TelemetryUploadService : ITelemetryUploadService
     {
         public DateTime UploadTime { get; set; }
         public string? AppVersion { get; set; }
+        public string? Platform { get; set; }
+        public string? UserAgent { get; set; }
+        public GeoLocationData? GeoLocation { get; set; }
         public int EventCount { get; set; }
         public List<TelemetryEvent> Events { get; set; } = [];
     }
