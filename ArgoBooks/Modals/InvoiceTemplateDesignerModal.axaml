@@ -273,6 +273,17 @@
                                                              MaxLength="1000" />
                                                 </StackPanel>
 
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{loc:Loc 'Default Notes'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBox Text="{Binding DefaultNotes, Mode=TwoWay}"
+                                                             Classes="form-input"
+                                                             AcceptsReturn="True"
+                                                             TextWrapping="Wrap"
+                                                             MinHeight="60"
+                                                             Watermark="{loc:Loc 'Default notes for invoices using this template...'}"
+                                                             MaxLength="500" />
+                                                </StackPanel>
+
                                                 <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,6" />
 
                                                 <StackPanel Spacing="6">

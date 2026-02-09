@@ -102,6 +102,12 @@ public class InvoiceTemplate
     public string PaymentInstructions { get; set; } = string.Empty;
 
     /// <summary>
+    /// Default notes text pre-filled when creating invoices with this template.
+    /// </summary>
+    [JsonPropertyName("defaultNotes")]
+    public string DefaultNotes { get; set; } = string.Empty;
+
+    /// <summary>
     /// Whether to show the company logo.
     /// </summary>
     [JsonPropertyName("showLogo")]
@@ -202,6 +208,7 @@ public class InvoiceTemplate
             FooterText = FooterText,
             PaymentTermsText = PaymentTermsText,
             PaymentInstructions = PaymentInstructions,
+            DefaultNotes = DefaultNotes,
             ShowLogo = ShowLogo,
             ShowCompanyAddress = ShowCompanyAddress,
             ShowCompanyPhone = ShowCompanyPhone,

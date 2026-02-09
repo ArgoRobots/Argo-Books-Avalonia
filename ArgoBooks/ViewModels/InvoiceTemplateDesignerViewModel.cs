@@ -182,6 +182,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private string _paymentInstructions = string.Empty;
 
+    [ObservableProperty]
+    private string _defaultNotes = string.Empty;
+
     // Display options
     [ObservableProperty]
     private bool _showCompanyAddress = true;
@@ -234,6 +237,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [
         "Arial, Helvetica, sans-serif",
         "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        "'Open Sans', 'Segoe UI', Arial, sans-serif",
         "Georgia, 'Times New Roman', Times, serif",
         "system-ui, -apple-system, sans-serif",
         "'Courier New', Courier, monospace"
@@ -448,6 +452,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnHeaderTextChanged(string value) => UpdatePreview();
     partial void OnFooterTextChanged(string value) => UpdatePreview();
     partial void OnPaymentInstructionsChanged(string value) => UpdatePreview();
+    partial void OnDefaultNotesChanged(string value) => UpdatePreview();
     partial void OnShowLogoChanged(bool value) => UpdatePreview();
     partial void OnShowCompanyAddressChanged(bool value) => UpdatePreview();
     partial void OnShowCompanyPhoneChanged(bool value) => UpdatePreview();
@@ -502,6 +507,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             HeaderText = HeaderText,
             FooterText = FooterText,
             PaymentInstructions = PaymentInstructions,
+            DefaultNotes = DefaultNotes,
             ShowLogo = ShowLogo,
             ShowCompanyAddress = ShowCompanyAddress,
             ShowCompanyPhone = ShowCompanyPhone,
@@ -532,6 +538,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         template.HeaderText = HeaderText;
         template.FooterText = FooterText;
         template.PaymentInstructions = PaymentInstructions;
+        template.DefaultNotes = DefaultNotes;
         template.ShowLogo = ShowLogo;
         template.ShowCompanyAddress = ShowCompanyAddress;
         template.ShowCompanyPhone = ShowCompanyPhone;
@@ -564,6 +571,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         HeaderText = template.HeaderText;
         FooterText = template.FooterText;
         PaymentInstructions = template.PaymentInstructions;
+        DefaultNotes = template.DefaultNotes;
         ShowLogo = template.ShowLogo;
         ShowCompanyAddress = template.ShowCompanyAddress;
         ShowCompanyPhone = template.ShowCompanyPhone;
@@ -600,6 +608,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         HeaderText = defaults.HeaderText;
         FooterText = defaults.FooterText;
         PaymentInstructions = string.Empty;
+        DefaultNotes = string.Empty;
         ShowLogo = true;
         ShowCompanyAddress = true;
         ShowCompanyPhone = true;

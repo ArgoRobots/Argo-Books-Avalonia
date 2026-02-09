@@ -764,25 +764,25 @@ public static class InvoiceHtmlTemplates
             <svg viewBox="0 0 280 1100" preserveAspectRatio="none" style="position: absolute; left: 0; top: 0; width: 280px; height: 100%;">
                 <defs>
                     <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:{{AccentColor}}"/>
-                        <stop offset="25%" style="stop-color:{{AccentColor}}"/>
-                        <stop offset="50%" style="stop-color:{{AccentColor}}"/>
-                        <stop offset="75%" style="stop-color:{{AccentColor}}"/>
-                        <stop offset="100%" style="stop-color:{{AccentColor}}"/>
+                        <stop offset="0%" style="stop-color:#7cb342"/>
+                        <stop offset="25%" style="stop-color:#8bc34a"/>
+                        <stop offset="50%" style="stop-color:#aed581"/>
+                        <stop offset="75%" style="stop-color:#8bc34a"/>
+                        <stop offset="100%" style="stop-color:#558b2f"/>
                     </linearGradient>
                     <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:{{PrimaryColor}}"/>
-                        <stop offset="25%" style="stop-color:{{PrimaryColor}}"/>
-                        <stop offset="50%" style="stop-color:{{PrimaryColor}}"/>
-                        <stop offset="75%" style="stop-color:{{PrimaryColor}}"/>
-                        <stop offset="100%" style="stop-color:{{PrimaryColor}}"/>
+                        <stop offset="0%" style="stop-color:#29b6f6"/>
+                        <stop offset="25%" style="stop-color:#4fc3f7"/>
+                        <stop offset="50%" style="stop-color:#81d4fa"/>
+                        <stop offset="75%" style="stop-color:#4fc3f7"/>
+                        <stop offset="100%" style="stop-color:#0288d1"/>
                     </linearGradient>
                     <linearGradient id="yellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:{{SecondaryColor}}"/>
-                        <stop offset="25%" style="stop-color:{{SecondaryColor}}"/>
-                        <stop offset="50%" style="stop-color:{{SecondaryColor}}"/>
-                        <stop offset="75%" style="stop-color:{{SecondaryColor}}"/>
-                        <stop offset="100%" style="stop-color:{{SecondaryColor}}"/>
+                        <stop offset="0%" style="stop-color:#ffee58"/>
+                        <stop offset="25%" style="stop-color:#fff176"/>
+                        <stop offset="50%" style="stop-color:#fff59d"/>
+                        <stop offset="75%" style="stop-color:#fff176"/>
+                        <stop offset="100%" style="stop-color:#fdd835"/>
                     </linearGradient>
                     <path id="waveRibbon" d="
                         M140,0

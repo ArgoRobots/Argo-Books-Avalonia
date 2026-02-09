@@ -60,7 +60,9 @@ public partial class InvoiceHtmlRenderer
             Total = 1375.00m,
             AmountPaid = 0m,
             Balance = 1375.00m,
-            Notes = "Example notes section. This area can contain additional information for your customer.",
+            Notes = !string.IsNullOrWhiteSpace(template.DefaultNotes)
+                ? template.DefaultNotes
+                : "Example notes section. This area can contain additional information for your customer.",
             LineItems =
             [
                 new() { Description = "Example Product 1", Quantity = 1, UnitPrice = 800.00m },
