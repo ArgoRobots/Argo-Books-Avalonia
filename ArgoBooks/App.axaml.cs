@@ -1146,8 +1146,8 @@ public class App : Application
             {
                 EventLogService.Initialize(CompanyManager.CompanyData.EventLog);
 
-                // TODO: Remove this line when done testing the version history UI
-                EventLogService.GenerateTestEvents(80);
+                // Remove this line when done testing the version history UI
+                // EventLogService.GenerateTestEvents(80);
 
                 _appShellViewModel.VersionHistoryModalViewModel.SetEventLogService(EventLogService);
             }
