@@ -49,7 +49,8 @@
     </UserControl.Styles>
 
     <Panel>
-        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                               ClosingCommand="{Binding RequestCloseCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter='1000,1100'}"
                         Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter=750}"
@@ -67,7 +68,7 @@
                                 Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{Binding ModalTitle}"
                                                FontSize="18"
@@ -77,9 +78,13 @@
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
-                                <Button Grid.Column="1"
+                                <controls:UndoRedoButtonGroup Grid.Column="1"
+                                                              DataContext="{Binding UndoRedoViewModel}"
+                                                              Margin="0,0,12,0"
+                                                              VerticalAlignment="Center" />
+                                <Button Grid.Column="2"
                                         Classes="icon-button"
-                                        Command="{Binding CloseCommand}">
+                                        Command="{Binding RequestCloseCommand}">
                                     <PathIcon Data="{x:Static icons:Icons.Close}"
                                               Width="20" Height="20" />
                                 </Button>
@@ -161,22 +166,40 @@
                                         <StackPanel Margin="20,0,20,20">
                                             <!-- Colors Tab (Index 0) -->
                                             <StackPanel Spacing="10" IsVisible="{Binding PropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
+                                                <!-- Header Color -->
+                                                <Grid ColumnDefinitions="*,150">
+                                                    <TextBlock Grid.Column="0" Text="{Binding HeaderColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding HeaderColor, Mode=TwoWay}" />
+                                                </Grid>
+
                                                 <!-- Primary Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Primary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{Binding PrimaryColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding PrimaryColor, Mode=TwoWay}" />
                                                 </Grid>
 
                                                 <!-- Secondary Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Secondary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{Binding SecondaryColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding SecondaryColor, Mode=TwoWay}" />
+                                                </Grid>
+
+                                                <!-- Accent Color -->
+                                                <Grid ColumnDefinitions="*,150">
+                                                    <TextBlock Grid.Column="0" Text="{Binding AccentColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding AccentColor, Mode=TwoWay}" />
                                                 </Grid>
 
                                                 <!-- Text Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Text Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="Text Color" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding TextColor, Mode=TwoWay}" />
+                                                </Grid>
+
+                                                <!-- Background Color -->
+                                                <Grid ColumnDefinitions="*,150">
+                                                    <TextBlock Grid.Column="0" Text="Background" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding BackgroundColor, Mode=TwoWay}" />
                                                 </Grid>
                                             </StackPanel>
 
@@ -273,6 +296,17 @@
                                                              MaxLength="1000" />
                                                 </StackPanel>
 
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{loc:Loc 'Default Notes'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBox Text="{Binding DefaultNotes, Mode=TwoWay}"
+                                                             Classes="form-input"
+                                                             AcceptsReturn="True"
+                                                             TextWrapping="Wrap"
+                                                             MinHeight="60"
+                                                             Watermark="{loc:Loc 'Default notes for invoices using this template...'}"
+                                                             MaxLength="500" />
+                                                </StackPanel>
+
                                                 <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,6" />
 
                                                 <StackPanel Spacing="6">
@@ -330,12 +364,13 @@
                                 </Border>
 
                                 <!-- Preview container using InvoicePreviewControl -->
-                                <!-- IsVisible bound to IsOpen so WebView is destroyed when modal closes -->
+                                <!-- IsVisible bound to IsPreviewVisible so WebView is destroyed when modal
+                                     closes or when confirmation dialog appears (native WebView airspace issue) -->
                                 <controls:InvoicePreviewControl Grid.Row="1"
                                                                 Grid.RowSpan="2"
                                                                 Html="{Binding PreviewHtml}"
                                                                 OpenInBrowserCommand="{Binding PreviewInBrowserCommand}"
-                                                                IsVisible="{Binding IsOpen}" />
+                                                                IsVisible="{Binding IsPreviewVisible}" />
                             </Grid>
                         </Grid>
 
@@ -363,7 +398,7 @@
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
                                             Content="{loc:Loc Cancel}"
-                                            Command="{Binding CloseCommand}" />
+                                            Command="{Binding RequestCloseCommand}" />
                                     <Button Classes="primary-button"
                                             Content="{loc:Loc 'Save Template'}"
                                             Command="{Binding SaveCommand}" />

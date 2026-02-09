@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Receipt - TechFlow Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Open+Sans:wght@400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            font-weight: 600;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .receipt-container {
+            width: 800px;
+            min-height: 1100px;
+            background: #ffffff;
+            position: relative;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .side-decoration {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100%;
+        }
+
+        .side-decoration svg {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100%;
+        }
+
+        .receipt-content {
+            padding: 50px 50px 50px 140px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .receipt-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 52px;
+            font-weight: bold;
+            color: #1a5276;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+
+        .company-info {
+            margin-bottom: 30px;
+        }
+
+        .company-name {
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 15px;
+        }
+
+        .company-address {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 35px;
+            gap: 20px;
+        }
+
+        .info-column {
+            flex: 1;
+        }
+
+        .info-column:last-child {
+            flex: 1.2;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .receipt-details {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px 20px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            text-align: right;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .items-table thead {
+            border-top: 2px solid #1a5276;
+            border-bottom: 2px solid #1a5276;
+        }
+
+        .items-table th {
+            color: #1a5276;
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 15px;
+            text-align: left;
+            background: transparent;
+        }
+
+        .items-table th:nth-child(3),
+        .items-table th:nth-child(4) {
+            text-align: right;
+        }
+
+        .items-table td {
+            padding: 16px 15px;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .items-table td:first-child {
+            text-align: center;
+            font-weight: 600;
+            color: #1a5276;
+        }
+
+        .items-table td:nth-child(3),
+        .items-table td:nth-child(4) {
+            text-align: right;
+        }
+
+        .items-table tbody tr:hover {
+            background: #f9fbfd;
+        }
+
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 50px;
+        }
+
+        .totals-table {
+            width: 280px;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .totals-row.subtotal {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+        }
+
+        .totals-row.total {
+            border-top: 2px solid #1a5276;
+            margin-top: 10px;
+            padding-top: 15px;
+        }
+
+        .totals-row.total .label {
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .totals-row.total .value {
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 22px;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 80px;
+        }
+
+        .signature {
+            font-family: 'Dancing Script', cursive;
+            font-size: 42px;
+            color: #1a3a52;
+            transform: rotate(-3deg);
+        }
+
+        .terms-section {
+            border-top: 3px solid #1a5276;
+            padding-top: 20px;
+        }
+
+        .terms-title {
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .terms-text {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .receipt-container {
+                box-shadow: none;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="side-decoration">
+            <svg viewBox="0 0 280 1100" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#7cb342"/>
+                        <stop offset="25%" style="stop-color:#8bc34a"/>
+                        <stop offset="50%" style="stop-color:#aed581"/>
+                        <stop offset="75%" style="stop-color:#8bc34a"/>
+                        <stop offset="100%" style="stop-color:#558b2f"/>
+                    </linearGradient>
+                    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#29b6f6"/>
+                        <stop offset="25%" style="stop-color:#4fc3f7"/>
+                        <stop offset="50%" style="stop-color:#81d4fa"/>
+                        <stop offset="75%" style="stop-color:#4fc3f7"/>
+                        <stop offset="100%" style="stop-color:#0288d1"/>
+                    </linearGradient>
+                    <linearGradient id="yellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffee58"/>
+                        <stop offset="25%" style="stop-color:#fff176"/>
+                        <stop offset="50%" style="stop-color:#fff59d"/>
+                        <stop offset="75%" style="stop-color:#fff176"/>
+                        <stop offset="100%" style="stop-color:#fdd835"/>
+                    </linearGradient>
+                    <!-- Wave ribbon 140px wide with more frequent curves -->
+                    <path id="waveRibbon" d="
+                        M140,0
+                        C170,80 190,160 190,250
+                        C190,340 150,420 150,510
+                        C150,600 190,680 190,770
+                        C190,860 150,940 150,1030
+                        C150,1120 190,1200 190,1290
+                        C190,1380 150,1460 150,1550
+                        C150,1640 190,1720 190,1810
+                        C190,1900 150,1980 150,2070
+                        L10,2070
+                        C10,1980 50,1900 50,1810
+                        C50,1720 10,1640 10,1550
+                        C10,1460 50,1380 50,1290
+                        C50,1200 10,1120 10,1030
+                        C10,940 50,860 50,770
+                        C50,680 10,600 10,510
+                        C10,420 50,340 50,250
+                        C50,160 30,80 0,0
+                        Z
+                    "/>
+                </defs>
+                <!-- Green ribbon - left -50, phase offset 0 -->
+                <use href="#waveRibbon" fill="url(#greenGrad)" opacity="0.225" transform="translate(-50, 0)"/>
+                <!-- Blue ribbon - left -10, phase offset half cycle -->
+                <use href="#waveRibbon" fill="url(#blueGrad)" opacity="0.225" transform="translate(-10, -130)"/>
+                <!-- Yellow ribbon - left +30, phase offset full cycle -->
+                <use href="#waveRibbon" fill="url(#yellowGrad)" opacity="0.225" transform="translate(30, -260)"/>
+            </svg>
+        </div>
+
+        <div class="receipt-content">
+            <h1 class="receipt-title">Sales Receipt</h1>
+
+            <div class="company-info">
+                <div class="company-name">TechFlow Solutions</div>
+                <div class="company-address">
+                    742 Innovation Drive<br>
+                    Saskatoon, SK S7K 3M2
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-column">
+                    <div class="info-label">Sold To</div>
+                    <div class="info-value">
+                        <strong>John Smith</strong><br>
+                        2 Court Square<br>
+                        New York, NY 12210
+                    </div>
+                </div>
+                <div class="info-column">
+                    <div class="info-label">Ship To</div>
+                    <div class="info-value">
+                        <strong>John Smith</strong><br>
+                        3787 Pineview Drive<br>
+                        Cambridge, MA 12210
+                    </div>
+                </div>
+                <div class="info-column">
+                    <div class="receipt-details">
+                        <span class="detail-label">Receipt #</span>
+                        <span class="detail-value">US-001</span>
+                        <span class="detail-label">Receipt Date</span>
+                        <span class="detail-value">2026/02/01</span>
+                        <span class="detail-label">P.O.#</span>
+                        <span class="detail-value">2026/02/01</span>
+                        <span class="detail-label">Due Date</span>
+                        <span class="detail-value">2026/02/01</span>
+                    </div>
+                </div>
+            </div>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">QTY</th>
+                        <th>Description</th>
+                        <th style="width: 120px;">Unit Price</th>
+                        <th style="width: 100px;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>ClearView 27" 4K Monitor</td>
+                        <td>549.00</td>
+                        <td>549.00</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>ProBook 7400 Laptop</td>
+                        <td>1899.00</td>
+                        <td>1899.00</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>NetSwitch 1000-24T</td>
+                        <td>219.00</td>
+                        <td>219.00</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="totals-section">
+                <div class="totals-table">
+                    <div class="totals-row subtotal">
+                        <span class="label">Subtotal</span>
+                        <span class="value">5004.00</span>
+                    </div>
+                    <div class="totals-row">
+                        <span class="label">Sales Tax 6%</span>
+                        <span class="value">300.24</span>
+                    </div>
+                    <div class="totals-row total">
+                        <span class="label">Total</span>
+                        <span class="value">$5304.24</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signature-section">
+                <div class="signature">John Smith</div>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">Terms & Conditions</div>
+                <div class="terms-text">
+                    Payment is due within 15 days<br><br>
+                    Please make checks payable to: TechFlow Solutions
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

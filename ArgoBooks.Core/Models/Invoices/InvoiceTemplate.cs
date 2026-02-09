@@ -48,6 +48,12 @@ public class InvoiceTemplate
     public string AccentColor { get; set; } = "#059669";
 
     /// <summary>
+    /// Header/title color. Falls back to PrimaryColor if empty.
+    /// </summary>
+    [JsonPropertyName("headerColor")]
+    public string HeaderColor { get; set; } = string.Empty;
+
+    /// <summary>
     /// Text color for primary content.
     /// </summary>
     [JsonPropertyName("textColor")]
@@ -100,6 +106,12 @@ public class InvoiceTemplate
     /// </summary>
     [JsonPropertyName("paymentInstructions")]
     public string PaymentInstructions { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Default notes text pre-filled when creating invoices with this template.
+    /// </summary>
+    [JsonPropertyName("defaultNotes")]
+    public string DefaultNotes { get; set; } = string.Empty;
 
     /// <summary>
     /// Whether to show the company logo.
@@ -193,6 +205,7 @@ public class InvoiceTemplate
             PrimaryColor = PrimaryColor,
             SecondaryColor = SecondaryColor,
             AccentColor = AccentColor,
+            HeaderColor = HeaderColor,
             TextColor = TextColor,
             BackgroundColor = BackgroundColor,
             FontFamily = FontFamily,
@@ -202,6 +215,7 @@ public class InvoiceTemplate
             FooterText = FooterText,
             PaymentTermsText = PaymentTermsText,
             PaymentInstructions = PaymentInstructions,
+            DefaultNotes = DefaultNotes,
             ShowLogo = ShowLogo,
             ShowCompanyAddress = ShowCompanyAddress,
             ShowCompanyPhone = ShowCompanyPhone,
@@ -242,5 +256,10 @@ public enum InvoiceTemplateType
     /// <summary>
     /// Elegant: Sophisticated design with accent borders and refined typography.
     /// </summary>
-    Elegant
+    Elegant,
+
+    /// <summary>
+    /// Ribbon: Flowing design with decorative side wave ribbons and open layout.
+    /// </summary>
+    Ribbon
 }

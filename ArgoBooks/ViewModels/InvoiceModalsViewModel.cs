@@ -237,6 +237,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
     public string TotalFormatted => $"${Total:N2}";
 
+    partial void OnSelectedTemplateChanged(InvoiceTemplate? value)
+    {
+        // Pre-fill notes from template's default notes when creating (not editing)
+        if (!IsEditMode && value != null && !string.IsNullOrWhiteSpace(value.DefaultNotes) && string.IsNullOrWhiteSpace(ModalNotes))
+        {
+            ModalNotes = value.DefaultNotes;
+        }
+    }
+
     partial void OnTaxRateChanged(decimal value)
     {
         UpdateTotals();
