@@ -101,7 +101,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     public string AccentColorLabel => SelectedBaseTemplate switch
     {
         InvoiceTemplateType.Ribbon => "Ribbon 3 (Green)",
-        InvoiceTemplateType.Modern => "Link Color",
+        InvoiceTemplateType.Modern => "Payment Accent",
         InvoiceTemplateType.Elegant => "Highlight Color",
         _ => "Accent Color"
     };
@@ -109,6 +109,10 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     public string HeaderColorLabel => SelectedBaseTemplate switch
     {
         InvoiceTemplateType.Ribbon => "Title & Heading",
+        InvoiceTemplateType.Professional => "Heading & Totals",
+        InvoiceTemplateType.Modern => "Title & Labels",
+        InvoiceTemplateType.Classic => "Title & Labels",
+        InvoiceTemplateType.Elegant => "Title & Totals",
         _ => "Header Color"
     };
 
