@@ -91,6 +91,12 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
     public event EventHandler? StateChanged;
 
     /// <summary>
+    /// Event raised when a new action is recorded.
+    /// The EventLogService subscribes to this to create audit events automatically.
+    /// </summary>
+    public event EventHandler<ActionRecordedEventArgs>? ActionRecorded;
+
+    /// <summary>
     /// Initializes a new instance of the UndoRedoManager.
     /// </summary>
     /// <param name="maxHistorySize">Maximum number of actions to keep in history.</param>
@@ -169,6 +175,8 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
 
     /// <summary>
     /// Records an action for undo/redo.
+    /// Also emits the <see cref="ActionRecorded"/> event so the EventLogService
+    /// can create an audit trail entry automatically.
     /// </summary>
     /// <param name="action">The action to record.</param>
     public void RecordAction(IUndoableAction action)
@@ -194,7 +202,34 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
             }
         }
 
+        // Notify the EventLogService to create an audit event
+        ActionRecorded?.Invoke(this, new ActionRecordedEventArgs(action));
+
         OnStateChanged();
+    }
+
+    /// <summary>
+    /// Removes a specific action from the undo stack without executing it.
+    /// Used by EventLogService for selective undo (the service calls action.Undo() itself).
+    /// </summary>
+    /// <param name="action">The action to remove.</param>
+    /// <returns>True if the action was found and removed.</returns>
+    public bool RemoveFromUndoStack(IUndoableAction action)
+    {
+        if (!_undoStack.Contains(action))
+            return false;
+
+        var tempList = _undoStack.ToList();
+        tempList.Remove(action);
+
+        _undoStack.Clear();
+        for (int i = tempList.Count - 1; i >= 0; i--)
+        {
+            _undoStack.Push(tempList[i]);
+        }
+
+        OnStateChanged();
+        return true;
     }
 
     /// <summary>
@@ -426,4 +461,15 @@ public class DelegateAction : IUndoableAction
     /// Redoes the action.
     /// </summary>
     public void Redo() => _redoAction();
+}
+
+/// <summary>
+/// Event args for when an action is recorded in the UndoRedoManager.
+/// </summary>
+public class ActionRecordedEventArgs(IUndoableAction action) : EventArgs
+{
+    /// <summary>
+    /// The action that was recorded.
+    /// </summary>
+    public IUndoableAction Action { get; } = action;
 }

@@ -400,6 +400,15 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the version history modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenHistory()
+    {
+        OpenHistoryRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Opens the upgrade dialog.
     /// </summary>
     [RelayCommand]
@@ -457,6 +466,11 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when save is requested.
     /// </summary>
     public event EventHandler? SaveRequested;
+
+    /// <summary>
+    /// Event raised when version history modal should be opened.
+    /// </summary>
+    public event EventHandler? OpenHistoryRequested;
 
     /// <summary>
     /// Event raised when a search key is pressed (for Quick Actions navigation).

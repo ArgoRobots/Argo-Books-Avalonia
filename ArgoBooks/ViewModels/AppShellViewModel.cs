@@ -246,6 +246,11 @@ public partial class AppShellViewModel : ViewModelBase
     public ReportModalsViewModel ReportModalsViewModel { get; }
 
     /// <summary>
+    /// Gets the version history modal view model.
+    /// </summary>
+    public VersionHistoryModalViewModel VersionHistoryModalViewModel { get; }
+
+    /// <summary>
     /// Gets the unsaved changes dialog view model.
     /// </summary>
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
@@ -456,6 +461,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create report modals
         ReportModalsViewModel = new ReportModalsViewModel();
 
+        // Create version history modal
+        VersionHistoryModalViewModel = new VersionHistoryModalViewModel();
+
         // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
 
@@ -518,6 +526,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up header's settings button to open settings modal
         HeaderViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up header's history button to open version history modal
+        HeaderViewModel.OpenHistoryRequested += (_, _) => VersionHistoryModalViewModel.OpenCommand.Execute(null);
 
         // Wire up header's my plan button to open upgrade modal
         HeaderViewModel.OpenMyPlanRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
@@ -753,7 +764,6 @@ public partial class AppShellViewModel : ViewModelBase
                 return saved;
 
             case UnsavedChangesResult.DontSave:
-                _reportsPageViewModel.DiscardChangesAndReset();
                 return true; // Discard changes and navigate
 
             case UnsavedChangesResult.Cancel:
