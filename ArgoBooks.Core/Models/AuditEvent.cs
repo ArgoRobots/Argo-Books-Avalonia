@@ -68,6 +68,17 @@ public class AuditEvent
     public bool IsUndone { get; set; }
 
     /// <summary>
+    /// JSON-serialized snapshot of the affected entity at the time of the event.
+    /// Used to reconstruct undo/redo actions when loading events from a saved file.
+    /// For Added events: the entity as it was when added.
+    /// For Deleted events: the entity as it was before deletion.
+    /// For Modified events: the entity as it was before modification.
+    /// </summary>
+    [JsonPropertyName("entitySnapshot")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? EntitySnapshot { get; set; }
+
+    /// <summary>
     /// If this event is itself an undo/redo of another event, the ID of that original event.
     /// </summary>
     [JsonPropertyName("relatedEventId")]

@@ -1144,7 +1144,7 @@ public class App : Application
             }
             if (CompanyManager.CompanyData != null)
             {
-                EventLogService.Initialize(CompanyManager.CompanyData.EventLog);
+                EventLogService.Initialize(CompanyManager.CompanyData.EventLog, CompanyManager.CompanyData);
 
                 // Remove this line when done testing the version history UI
                 // EventLogService.GenerateTestEvents(80);
