@@ -364,12 +364,13 @@
                                 </Border>
 
                                 <!-- Preview container using InvoicePreviewControl -->
-                                <!-- IsVisible bound to IsOpen so WebView is destroyed when modal closes -->
+                                <!-- IsVisible bound to IsPreviewVisible so WebView is destroyed when modal
+                                     closes or when confirmation dialog appears (native WebView airspace issue) -->
                                 <controls:InvoicePreviewControl Grid.Row="1"
                                                                 Grid.RowSpan="2"
                                                                 Html="{Binding PreviewHtml}"
                                                                 OpenInBrowserCommand="{Binding PreviewInBrowserCommand}"
-                                                                IsVisible="{Binding IsOpen}" />
+                                                                IsVisible="{Binding IsPreviewVisible}" />
                             </Grid>
                         </Grid>
 

@@ -278,6 +278,10 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private string _previewHtml = string.Empty;
 
+    // Controls WebView visibility - hidden when confirmation dialog is shown (airspace issue)
+    [ObservableProperty]
+    private bool _isPreviewVisible;
+
     #endregion
 
     #region Collections
@@ -315,6 +319,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ModalTitle = "Create Invoice Template".Translate();
         UpdatePreview();
         IsOpen = true;
+        IsPreviewVisible = true;
     }
 
     public void OpenEditModal(InvoiceTemplate template)
@@ -327,6 +332,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ModalTitle = $"Edit Template: {template.Name}".Translate();
         UpdatePreview();
         IsOpen = true;
+        IsPreviewVisible = true;
     }
 
     public void OpenEditModal(string templateId)
@@ -350,6 +356,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {
+                // Hide the WebView so the confirmation dialog renders above it (airspace issue)
+                IsPreviewVisible = false;
+
                 var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Discard Changes?".Translate(),
@@ -360,7 +369,10 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 });
 
                 if (result != ConfirmationResult.Primary)
+                {
+                    IsPreviewVisible = true;
                     return;
+                }
             }
         }
 
@@ -369,6 +381,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     private void Close()
     {
+        IsPreviewVisible = false;
         IsOpen = false;
         IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
@@ -772,10 +785,11 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     #region Helper Methods
 
-    private void RecordChange<T>(string description, Action<T> setter, T oldValue, T newValue)
+    private void RecordChange<T>(string description, Action<T> setter, T oldValue, T newValue, [System.Runtime.CompilerServices.CallerMemberName] string? callerName = null)
     {
         if (!_suppressUndoRecording)
-            _undoRedoManager.RecordAction(new PropertyChangeAction<T>(description, setter, oldValue, newValue));
+            _undoRedoManager.RecordAction(new CoalescingPropertyChangeAction<T>(
+                description, $"template:{callerName}", setter, oldValue, newValue));
     }
 
     private void UpdatePreview()

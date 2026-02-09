@@ -75,6 +75,26 @@ public interface IUndoableAction
 }
 
 /// <summary>
+/// Interface for actions that can be coalesced with subsequent actions of the same kind.
+/// When rapid sequential changes occur (e.g., color picker dragging), the undo manager
+/// merges them into a single undo entry instead of creating separate entries.
+/// </summary>
+public interface ICoalescingUndoableAction : IUndoableAction
+{
+    /// <summary>
+    /// Key identifying actions that can be coalesced together.
+    /// Actions with the same key within the time window will be merged.
+    /// </summary>
+    string CoalescingKey { get; }
+
+    /// <summary>
+    /// Updates this action's "new state" to match the newer action's state.
+    /// The original "old state" is preserved so undo returns to the initial state.
+    /// </summary>
+    void UpdateToNewState(ICoalescingUndoableAction newerAction);
+}
+
+/// <summary>
 /// Manages undo and redo operations with history tracking.
 /// </summary>
 public class UndoRedoManager : ObservableObject, IUndoRedoManager
@@ -84,6 +104,8 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
     private readonly int _maxHistorySize;
     private IUndoableAction? _savedState;
     private bool _isExecutingUndoRedo;
+    private DateTime _lastRecordTime;
+    private const int CoalesceThresholdMs = 500;
 
     /// <summary>
     /// Event raised when the undo/redo state changes.
@@ -184,7 +206,26 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
         if (_isExecutingUndoRedo)
             return;
 
+        var now = DateTime.UtcNow;
+
+        // Coalesce with the most recent action if it's the same kind of operation
+        // within a short time window. This prevents flooding the undo stack when
+        // using color pickers or other rapid-change controls.
+        if (action is ICoalescingUndoableAction newCoalescing &&
+            _undoStack.Count > 0 &&
+            _undoStack.Peek() is ICoalescingUndoableAction topCoalescing &&
+            newCoalescing.CoalescingKey == topCoalescing.CoalescingKey &&
+            (now - _lastRecordTime).TotalMilliseconds < CoalesceThresholdMs)
+        {
+            topCoalescing.UpdateToNewState(newCoalescing);
+            _lastRecordTime = now;
+            _redoStack.Clear();
+            OnStateChanged();
+            return;
+        }
+
         _undoStack.Push(action);
+        _lastRecordTime = now;
         _redoStack.Clear();
 
         // Trim history if it exceeds max size
@@ -413,6 +454,53 @@ public class PropertyChangeAction<T> : IUndoableAction
         _setter = setter;
         _oldValue = oldValue;
         _newValue = newValue;
+    }
+
+    /// <summary>
+    /// Undoes the property change.
+    /// </summary>
+    public void Undo() => _setter(_oldValue);
+
+    /// <summary>
+    /// Redoes the property change.
+    /// </summary>
+    public void Redo() => _setter(_newValue);
+}
+
+/// <summary>
+/// A generic property change action that supports coalescing rapid changes.
+/// </summary>
+/// <typeparam name="T">Type of the property value.</typeparam>
+public class CoalescingPropertyChangeAction<T> : ICoalescingUndoableAction
+{
+    private readonly Action<T> _setter;
+    private readonly T _oldValue;
+    private T _newValue;
+
+    /// <summary>
+    /// Gets the description of the property change.
+    /// </summary>
+    public string Description { get; }
+
+    /// <summary>
+    /// Gets the coalescing key for this action.
+    /// </summary>
+    public string CoalescingKey { get; }
+
+    public CoalescingPropertyChangeAction(string description, string coalescingKey, Action<T> setter, T oldValue, T newValue)
+    {
+        Description = description;
+        CoalescingKey = coalescingKey;
+        _setter = setter;
+        _oldValue = oldValue;
+        _newValue = newValue;
+    }
+
+    /// <inheritdoc />
+    public void UpdateToNewState(ICoalescingUndoableAction newerAction)
+    {
+        if (newerAction is CoalescingPropertyChangeAction<T> newer)
+            _newValue = newer._newValue;
     }
 
     /// <summary>
