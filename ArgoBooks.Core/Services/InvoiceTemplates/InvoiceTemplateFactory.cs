@@ -17,7 +17,8 @@ public static class InvoiceTemplateFactory
             CreateProfessionalTemplate(),
             CreateModernTemplate(),
             CreateClassicTemplate(),
-            CreateElegantTemplate()
+            CreateElegantTemplate(),
+            CreateSalesReceiptTemplate()
         ];
     }
 
@@ -138,6 +139,35 @@ public static class InvoiceTemplateFactory
     }
 
     /// <summary>
+    /// Creates the Sales Receipt template with default settings.
+    /// </summary>
+    public static InvoiceTemplate CreateSalesReceiptTemplate()
+    {
+        return new InvoiceTemplate
+        {
+            Id = "default-sales-receipt",
+            Name = "Sales Receipt",
+            BaseTemplate = InvoiceTemplateType.SalesReceipt,
+            IsDefault = false,
+            PrimaryColor = "#1a5276",
+            SecondaryColor = "#e8e8e8",
+            AccentColor = "#7cb342",
+            TextColor = "#333333",
+            BackgroundColor = "#ffffff",
+            FontFamily = "'Open Sans', 'Segoe UI', Arial, sans-serif",
+            HeaderText = "SALES RECEIPT",
+            FooterText = "Thank you for your business!",
+            ShowLogo = true,
+            ShowCompanyAddress = true,
+            ShowTaxBreakdown = true,
+            ShowItemDescriptions = true,
+            ShowNotes = true,
+            ShowPaymentInstructions = true,
+            ShowDueDateProminent = false
+        };
+    }
+
+    /// <summary>
     /// Creates a custom template with the specified base type.
     /// </summary>
     public static InvoiceTemplate CreateCustomTemplate(string id, string name, InvoiceTemplateType baseType)
@@ -148,6 +178,7 @@ public static class InvoiceTemplateFactory
             InvoiceTemplateType.Modern => CreateModernTemplate(),
             InvoiceTemplateType.Classic => CreateClassicTemplate(),
             InvoiceTemplateType.Elegant => CreateElegantTemplate(),
+            InvoiceTemplateType.SalesReceipt => CreateSalesReceiptTemplate(),
             _ => CreateProfessionalTemplate()
         };
 

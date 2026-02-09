@@ -242,5 +242,10 @@ public enum InvoiceTemplateType
     /// <summary>
     /// Elegant: Sophisticated design with accent borders and refined typography.
     /// </summary>
-    Elegant
+    Elegant,
+
+    /// <summary>
+    /// SalesReceipt: Receipt-style layout with decorative side ribbons and signature area.
+    /// </summary>
+    SalesReceipt
 }

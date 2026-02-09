@@ -85,21 +85,11 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TemplateOptions}"
-                                              SelectedItem="{Binding SelectedTemplate}"
-                                              Classes="form-combobox"
-                                              HorizontalAlignment="Stretch">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <Border Width="16" Height="16"
-                                                            CornerRadius="3"
-                                                            Background="{Binding PrimaryColor}" />
-                                                    <TextBlock Text="{Binding Name}" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <controls:SearchableDropdown ItemsSource="{Binding TemplateOptions}"
+                                                                SelectedItem="{Binding SelectedTemplate}"
+                                                                DisplayMemberPath="Name"
+                                                                Placeholder="{loc:Loc 'Search templates...'}"
+                                                                ShowAddNew="False" />
                                 </StackPanel>
 
                                 <!-- Customer Selection (right) -->
