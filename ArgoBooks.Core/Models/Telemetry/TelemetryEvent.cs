@@ -3,6 +3,11 @@ namespace ArgoBooks.Core.Models.Telemetry;
 /// <summary>
 /// Base class for all telemetry events.
 /// </summary>
+[JsonDerivedType(typeof(SessionEvent))]
+[JsonDerivedType(typeof(ExportEvent))]
+[JsonDerivedType(typeof(ApiUsageEvent))]
+[JsonDerivedType(typeof(ErrorEvent))]
+[JsonDerivedType(typeof(FeatureUsageEvent))]
 public abstract class TelemetryEvent
 {
     /// <summary>
@@ -44,6 +49,6 @@ public abstract class TelemetryEvent
     /// <summary>
     /// Whether this event has been uploaded to the server.
     /// </summary>
-    [JsonIgnore]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool IsUploaded { get; set; }
 }
