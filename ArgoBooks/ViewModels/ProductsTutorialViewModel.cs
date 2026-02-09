@@ -114,7 +114,8 @@ public partial class ProductsTutorialViewModel : ViewModelBase
 
     public void ShowIfFirstVisit()
     {
-        if (!TutorialService.Instance.ShowFirstVisitHints ||
+        if (!TutorialService.Instance.HasCompletedAppTour ||
+            !TutorialService.Instance.ShowFirstVisitHints ||
             TutorialService.Instance.HasVisitedPage(TutorialService.Pages.Products))
         {
             return;
