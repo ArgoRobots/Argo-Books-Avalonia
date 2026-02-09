@@ -54,12 +54,50 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="24,20" Spacing="12">
+                        <!-- Backup -->
+                        <TextBlock Text="{loc:Loc 'Backup'}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   Margin="0,0,0,4" />
+
+                        <!-- Backup File -->
+                        <Button Classes="import-option"
+                                Command="{Binding SelectFormatCommand}"
+                                CommandParameter="Backup">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Border Grid.Column="0"
+                                        Width="40" Height="40"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource PrimaryIconBgBrush}"
+                                        Margin="0,0,16,0">
+                                    <PathIcon Data="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
+                                              Width="20" Height="20"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="{loc:Loc 'Backup File (.argobk)'}"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Open a previously exported backup as a new company'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                                <PathIcon Grid.Column="2"
+                                          Data="{x:Static local:Icons.ChevronRightNav}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
                         <!-- Spreadsheets -->
                         <TextBlock Text="{loc:Loc Spreadsheets}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Margin="0,0,0,4" />
+                                   Margin="0,12,0,4" />
 
                         <!-- Excel -->
                         <Button Classes="import-option"

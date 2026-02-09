@@ -1898,21 +1898,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Discards unsaved layout changes and resets the wizard back to Step 1.
-    /// Called when the user navigates away from Reports and chooses "Don't Save".
-    /// </summary>
-    public void DiscardChangesAndReset()
-    {
-        _chartTypesToPreserve = Configuration.Filters.SelectedChartTypes.ToList();
-        UndoRedoManager.Clear();
-        LoadTemplate(SelectedTemplateName);
-        Step1Completed = false;
-        Step2Completed = false;
-        CurrentStep = 1;
-        NotifyStepChanged();
-    }
-
-    /// <summary>
     /// Cleans up event subscriptions when the view model is no longer needed.
     /// </summary>
     public void Cleanup()

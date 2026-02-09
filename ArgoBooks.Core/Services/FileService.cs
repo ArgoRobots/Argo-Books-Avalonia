@@ -67,6 +67,7 @@ public class FileService(
             await WriteJsonAsync(companyDir, "receipts.json", companyData.Receipts, cancellationToken);
             await WriteJsonAsync(companyDir, "reportTemplates.json", companyData.ReportTemplates, cancellationToken);
             await WriteJsonAsync(companyDir, "idCounters.json", companyData.IdCounters, cancellationToken);
+            await WriteJsonAsync(companyDir, "eventLog.json", companyData.EventLog, cancellationToken);
 
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
@@ -276,7 +277,8 @@ public class FileService(
             Returns = await ReadJsonAsync<List<Models.Tracking.Return>>(tempDirectory, "returns.json", cancellationToken) ?? [],
             LostDamaged = await ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken) ?? [],
             Receipts = await ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken) ?? [],
-            ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? []
+            ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? [],
+            EventLog = await ReadJsonAsync<List<Models.AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? []
         };
 
         return data;
@@ -319,6 +321,7 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "lostDamaged.json", data.LostDamaged, cancellationToken);
         await WriteJsonAsync(companyDirectory, "receipts.json", data.Receipts, cancellationToken);
         await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
 
         data.MarkAsSaved();
     }

@@ -189,6 +189,16 @@ public class App : Application
     public static HeaderViewModel? HeaderViewModel => _appShellViewModel?.HeaderViewModel;
 
     /// <summary>
+    /// Gets the version history modal view model for shared access.
+    /// </summary>
+    public static VersionHistoryModalViewModel? VersionHistoryModalViewModel => _appShellViewModel?.VersionHistoryModalViewModel;
+
+    /// <summary>
+    /// Gets the event log service for version history tracking.
+    /// </summary>
+    public static Services.EventLogService? EventLogService { get; private set; }
+
+    /// <summary>
     /// Gets the categories tutorial view model for first-visit tutorial.
     /// </summary>
     public static CategoriesTutorialViewModel? CategoriesTutorialViewModel => _mainWindowViewModel?.CategoriesTutorialViewModel;
@@ -1087,12 +1097,26 @@ public class App : Application
     }
 
     /// <summary>
+    /// Syncs the event log to CompanyData before saving. Call this before any SaveCompanyAsync().
+    /// </summary>
+    private static void SyncEventLogBeforeSave()
+    {
+        if (EventLogService != null && CompanyManager?.CompanyData != null)
+        {
+            EventLogService.SyncToCompanyData(CompanyManager.CompanyData);
+        }
+    }
+
+    /// <summary>
     /// Wires up CompanyManager events to update UI.
     /// </summary>
     private static void WireCompanyManagerEvents()
     {
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null)
             return;
+
+        // Sync event log to CompanyData before every save (centralized handler)
+        CompanyManager.CompanySaving += (_, _) => SyncEventLogBeforeSave();
 
         CompanyManager.CompanyOpened += async (_, args) =>
         {
@@ -1105,6 +1129,28 @@ public class App : Application
 
             // Clear undo/redo history for fresh start with new company
             UndoRedoManager.Clear();
+
+            // Initialize the event log service with persisted events from the company file
+            if (EventLogService == null)
+            {
+                EventLogService = new Services.EventLogService();
+
+                // Wire UndoRedoManager to automatically record audit events
+                // when any CRUD operation records an undoable action
+                UndoRedoManager.ActionRecorded += (_, e) =>
+                {
+                    EventLogService.RecordFromAction(e.Action);
+                };
+            }
+            if (CompanyManager.CompanyData != null)
+            {
+                EventLogService.Initialize(CompanyManager.CompanyData.EventLog);
+
+                // TODO: Remove this line when done testing the version history UI
+                EventLogService.GenerateTestEvents(80);
+
+                _appShellViewModel.VersionHistoryModalViewModel.SetEventLogService(EventLogService);
+            }
 
             // Reset unsaved changes state - opening a company starts with no unsaved changes
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -1146,6 +1192,7 @@ public class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             UndoRedoManager.Clear();
+            EventLogService?.Clear();
             ChangeTrackingService?.ClearAllChanges();
             _appShellViewModel.HeaderViewModel.ClearNotifications();
 
@@ -2191,8 +2238,76 @@ public class App : Application
         {
             if (args.Format == "backup")
             {
-                // Backup export - not implemented yet
-                _appShellViewModel.AddNotification("Info".Translate(), "Backup export will be available in a future update.".Translate());
+                if (CompanyManager?.IsCompanyOpen != true)
+                {
+                    await ShowErrorMessageBoxAsync("Error".Translate(), "No company is currently open.".Translate());
+                    return;
+                }
+
+                // Show save file dialog for backup
+                var backupFile = await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Export Backup".Translate(),
+                    SuggestedFileName = $"{CompanyManager.CurrentCompanyName ?? "Backup"}-{DateTime.Now:yyyy-MM-dd}.argobk",
+                    DefaultExtension = "argobk",
+                    FileTypeChoices =
+                    [
+                        new FilePickerFileType("Argo Books Backup")
+                        {
+                            Patterns = ["*.argobk"]
+                        }
+                    ]
+                });
+
+                if (backupFile == null) return;
+
+                var backupPath = backupFile.Path.LocalPath;
+                _mainWindowViewModel?.ShowLoading("Exporting backup...".Translate());
+
+                var backupStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                    await CompanyManager.ExportBackupAsync(backupPath, args.IncludeAttachments);
+
+                    backupStopwatch.Stop();
+                    _mainWindowViewModel?.HideLoading();
+
+                    // Track telemetry
+                    var fileSize = new FileInfo(backupPath).Length;
+                    _ = TelemetryManager?.TrackExportAsync(ExportType.Backup, backupStopwatch.ElapsedMilliseconds, fileSize);
+
+                    // Open the containing folder
+                    try
+                    {
+                        var directory = Path.GetDirectoryName(backupPath);
+                        if (!string.IsNullOrEmpty(directory))
+                        {
+                            if (OperatingSystem.IsWindows())
+                                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{backupPath}\"");
+                            else if (OperatingSystem.IsMacOS())
+                                System.Diagnostics.Process.Start("open", $"-R \"{backupPath}\"");
+                            else if (OperatingSystem.IsLinux())
+                                System.Diagnostics.Process.Start("xdg-open", directory);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger?.LogWarning($"Failed to open folder after backup export: {ex.Message}", "BackupExportFolder");
+                    }
+
+                    _appShellViewModel.AddNotification(
+                        "Backup Complete".Translate(),
+                        "Company backup exported successfully.".Translate(),
+                        NotificationType.Success);
+                }
+                catch (Exception ex)
+                {
+                    backupStopwatch.Stop();
+                    _mainWindowViewModel?.HideLoading();
+                    ErrorLogger?.LogError(ex, ErrorCategory.Export, "Failed to export backup");
+                    await ShowErrorMessageBoxAsync("Export Failed".Translate(), "Failed to export backup: {0}".TranslateFormat(ex.Message));
+                }
+
                 return;
             }
 
@@ -2341,6 +2456,12 @@ public class App : Application
                 return;
             }
 
+            if (format.ToUpperInvariant() == "BACKUP")
+            {
+                await RestoreFromBackupAsync(desktop);
+                return;
+            }
+
             // Only Excel import is supported for now
             if (format.ToUpperInvariant() != "EXCEL")
             {
@@ -2462,6 +2583,71 @@ public class App : Application
     }
 
     /// <summary>
+    /// Handles restoring from a .argobk backup file.
+    /// Copies the backup to a new .argo file chosen by the user, then opens it as a new company.
+    /// The original company file is left untouched.
+    /// </summary>
+    private static async Task RestoreFromBackupAsync(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (CompanyManager == null || _appShellViewModel == null) return;
+
+        // Show open file dialog for backup files
+        var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Restore from Backup".Translate(),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Argo Books Backup")
+                {
+                    Patterns = ["*.argobk"]
+                }
+            ]
+        });
+
+        if (files.Count == 0) return;
+
+        var backupPath = files[0].Path.LocalPath;
+
+        // Suggest a name based on the backup filename (strip .argobk, add .argo)
+        var suggestedName = Path.GetFileNameWithoutExtension(backupPath);
+
+        // Show save dialog to choose where to restore the company file
+        var saveFile = await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Restored Company As".Translate(),
+            SuggestedFileName = $"{suggestedName}.argo",
+            DefaultExtension = "argo",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("Argo Books Files")
+                {
+                    Patterns = ["*.argo"]
+                }
+            ]
+        });
+
+        if (saveFile == null) return;
+
+        var destPath = saveFile.Path.LocalPath;
+
+        try
+        {
+            // Copy the backup file to the new .argo path
+            File.Copy(backupPath, destPath, overwrite: true);
+
+            // Open it as a new company (this closes the current one)
+            await OpenCompanyWithRetryAsync(destPath);
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel?.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to restore from backup");
+            await ShowErrorMessageBoxAsync("Restore Failed".Translate(), "Failed to restore from backup: {0}".TranslateFormat(ex.Message));
+        }
+    }
+
+    /// <summary>
     /// Creates a JSON snapshot of the company data collections for undo/redo.
     /// </summary>
     private static string CreateCompanyDataSnapshot(Core.Data.CompanyData data)
@@ -2483,9 +2669,15 @@ public class App : Application
             data.RecurringInvoices,
             data.Inventory,
             data.StockAdjustments,
+            data.StockTransfers,
             data.PurchaseOrders,
             data.RentalInventory,
-            data.Rentals
+            data.Rentals,
+            data.Returns,
+            data.LostDamaged,
+            data.Receipts,
+            data.ReportTemplates,
+            data.EventLog
         };
         return System.Text.Json.JsonSerializer.Serialize(snapshot);
     }
@@ -2549,16 +2741,22 @@ public class App : Application
         RestoreList(data.Departments, "Departments");
         RestoreList(data.Categories, "Categories");
         RestoreList(data.Locations, "Locations");
-        RestoreList(data.Revenues, "Sales");
-        RestoreList(data.Expenses, "Purchases");
+        RestoreList(data.Revenues, "Revenues");
+        RestoreList(data.Expenses, "Expenses");
         RestoreList(data.Invoices, "Invoices");
         RestoreList(data.Payments, "Payments");
         RestoreList(data.RecurringInvoices, "RecurringInvoices");
         RestoreList(data.Inventory, "Inventory");
         RestoreList(data.StockAdjustments, "StockAdjustments");
+        RestoreList(data.StockTransfers, "StockTransfers");
         RestoreList(data.PurchaseOrders, "PurchaseOrders");
         RestoreList(data.RentalInventory, "RentalInventory");
         RestoreList(data.Rentals, "Rentals");
+        RestoreList(data.Returns, "Returns");
+        RestoreList(data.LostDamaged, "LostDamaged");
+        RestoreList(data.Receipts, "Receipts");
+        RestoreList(data.ReportTemplates, "ReportTemplates");
+        RestoreList(data.EventLog, "EventLog");
     }
 
     /// <summary>

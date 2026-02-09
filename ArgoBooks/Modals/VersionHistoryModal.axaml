@@ -1,0 +1,469 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="700"
+             x:Class="ArgoBooks.Modals.VersionHistoryModal"
+             x:DataType="vm:VersionHistoryModalViewModel"
+             IsVisible="{Binding IsOpen}">
+
+    <Design.DataContext>
+        <vm:VersionHistoryModalViewModel />
+    </Design.DataContext>
+
+    <UserControl.Resources>
+        <converters:ChangeTypeToVisibilityConverter x:Key="IsAddedConverter" TargetType="Added" />
+        <converters:ChangeTypeToVisibilityConverter x:Key="IsModifiedConverter" TargetType="Modified" />
+        <converters:ChangeTypeToVisibilityConverter x:Key="IsDeletedConverter" TargetType="Deleted" />
+    </UserControl.Resources>
+
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                               ClosingCommand="{Binding CloseCommand}"
+                               CloseOnBackdropClick="True">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Width="650"
+                        Height="700"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BoxShadow="0 8 32 0 #40000000">
+
+                    <Grid RowDefinitions="Auto,Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="24,20"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- Clock Icon -->
+                                <Border Grid.Column="0"
+                                        Width="40" Height="40"
+                                        CornerRadius="20"
+                                        Background="{DynamicResource PrimaryIconBgBrush}"
+                                        Margin="0,0,16,0">
+                                    <PathIcon Data="{x:Static local:Icons.Clock}"
+                                              Width="20" Height="20"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{loc:Loc 'Version History'}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock FontSize="13"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,2,0,0">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} changes">
+                                                <Binding Path="TotalEventCount" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                                <!-- Close Button -->
+                                <Button Grid.Column="2"
+                                        Classes="header-icon"
+                                        Command="{Binding CloseCommand}"
+                                        VerticalAlignment="Top">
+                                    <PathIcon Data="{x:Static local:Icons.Close}"
+                                              Width="16" Height="16" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Search and Filters -->
+                        <Border Grid.Row="1" Padding="24,16,24,12">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                <!-- Search Box -->
+                                <Border Grid.Column="0"
+                                        Background="{DynamicResource BackgroundSecondaryBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Height="32"
+                                        Margin="0,0,8,0">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <PathIcon Grid.Column="0"
+                                                  Data="{x:Static local:Icons.Search}"
+                                                  Width="14" Height="14"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  Margin="12,0,8,0"
+                                                  VerticalAlignment="Center" />
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                                                 Watermark="{loc:Loc 'Search changes...'}"
+                                                 Classes="filter-search"
+                                                 VerticalAlignment="Center"
+                                                 MaxLength="100" />
+                                        <!-- Clear search button -->
+                                        <Button Grid.Column="2"
+                                                Classes="header-icon"
+                                                Width="30" Height="30"
+                                                Command="{Binding ClearFiltersCommand}"
+                                                IsVisible="{Binding IsFiltered}"
+                                                Margin="0,0,4,0">
+                                            <PathIcon Data="{x:Static local:Icons.Close}"
+                                                      Width="12" Height="12" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Action Filter -->
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding ActionFilters}"
+                                          SelectedItem="{Binding SelectedActionFilter}"
+                                          PlaceholderText="{loc:Loc 'All Actions'}"
+                                          Classes="filter-combo"
+                                          MinWidth="110"
+                                          Margin="0,0,8,0"
+                                          MaxDropDownHeight="200" />
+
+                                <!-- Entity Type Filter -->
+                                <ComboBox Grid.Column="2"
+                                          ItemsSource="{Binding EntityTypeFilters}"
+                                          SelectedItem="{Binding SelectedEntityTypeFilter}"
+                                          PlaceholderText="{loc:Loc 'All Types'}"
+                                          Classes="filter-combo"
+                                          MinWidth="110"
+                                          MaxDropDownHeight="200" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Timeline Content -->
+                        <Border Grid.Row="2"
+                                Margin="0,0,0,0"
+                                ClipToBounds="True">
+                            <Panel>
+                                <!-- Empty State -->
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="12"
+                                            IsVisible="{Binding !HasEvents}">
+                                    <Border Width="56" Height="56"
+                                            CornerRadius="28"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            HorizontalAlignment="Center">
+                                        <PathIcon Data="{x:Static local:Icons.Clock}"
+                                                  Width="24" Height="24"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </Border>
+                                    <TextBlock Text="{loc:Loc 'No changes yet'}"
+                                               FontSize="15"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Changes you make will appear here'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+
+                                <!-- No Results State (when filtered) -->
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="8"
+                                            IsVisible="{Binding ShowNoResults}">
+                                    <PathIcon Data="{x:Static local:Icons.Search}"
+                                              Width="20" Height="20"
+                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                              HorizontalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'No matching changes'}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <Button Classes="ghost-button"
+                                            Content="{loc:Loc 'Clear filters'}"
+                                            Command="{Binding ClearFiltersCommand}"
+                                            HorizontalAlignment="Center"
+                                            FontSize="13" />
+                                </StackPanel>
+
+                                <!-- Timeline List -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              IsVisible="{Binding HasEvents}">
+                                    <ItemsControl ItemsSource="{Binding Groups}"
+                                                  Margin="0,0,0,8">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:VersionHistoryGroup">
+                                                <StackPanel>
+                                                    <!-- Date Header -->
+                                                    <Border Padding="24,14,24,6">
+                                                        <Grid ColumnDefinitions="Auto,*">
+                                                            <!-- Timeline dot -->
+                                                            <Ellipse Grid.Column="0"
+                                                                     Width="8" Height="8"
+                                                                     Fill="{DynamicResource TextTertiaryBrush}"
+                                                                     VerticalAlignment="Center"
+                                                                     Margin="0,0,12,0" />
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding DateLabel}"
+                                                                       FontSize="13"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <!-- Events for this date -->
+                                                    <ItemsControl ItemsSource="{Binding Items}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate DataType="vm:VersionHistoryItem">
+                                                                <Border Padding="24,8,16,8"
+                                                                        Background="Transparent"
+                                                                        Opacity="{Binding IsUndone, Converter={x:Static local:VersionHistoryConverters.UndoneOpacity}}">
+                                                                    <Border.Styles>
+                                                                        <Style Selector="Border:pointerover">
+                                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                                        </Style>
+                                                                    </Border.Styles>
+                                                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                                        <!-- Timeline connector line + indicator dot -->
+                                                                        <Panel Grid.Column="0"
+                                                                               Width="20"
+                                                                               Margin="0,0,12,0"
+                                                                               VerticalAlignment="Center">
+                                                                            <!-- Colored action indicator -->
+                                                                            <!-- Added = green -->
+                                                                            <Border Width="20" Height="20"
+                                                                                    CornerRadius="10"
+                                                                                    Background="{DynamicResource SuccessIconBgBrush}"
+                                                                                    IsVisible="{Binding ChangeType, Converter={StaticResource IsAddedConverter}}">
+                                                                                <PathIcon Data="M12 4.5v15m7.5-7.5h-15"
+                                                                                          Width="10" Height="10"
+                                                                                          Foreground="{DynamicResource SuccessBrush}" />
+                                                                            </Border>
+                                                                            <!-- Modified = yellow -->
+                                                                            <Border Width="20" Height="20"
+                                                                                    CornerRadius="10"
+                                                                                    Background="{DynamicResource WarningIconBgBrush}"
+                                                                                    IsVisible="{Binding ChangeType, Converter={StaticResource IsModifiedConverter}}">
+                                                                                <PathIcon Data="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
+                                                                                          Width="10" Height="10"
+                                                                                          Foreground="{DynamicResource WarningBrush}" />
+                                                                            </Border>
+                                                                            <!-- Deleted = red -->
+                                                                            <Border Width="20" Height="20"
+                                                                                    CornerRadius="10"
+                                                                                    Background="{DynamicResource DangerIconBgBrush}"
+                                                                                    IsVisible="{Binding ChangeType, Converter={StaticResource IsDeletedConverter}}">
+                                                                                <PathIcon Data="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                                                                                          Width="10" Height="10"
+                                                                                          Foreground="{DynamicResource DangerBrush}" />
+                                                                            </Border>
+                                                                        </Panel>
+
+                                                                        <!-- Time -->
+                                                                        <TextBlock Grid.Column="1"
+                                                                                   Text="{Binding TimeText}"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Width="70"
+                                                                                   Margin="0,0,8,0" />
+
+                                                                        <!-- Description -->
+                                                                        <StackPanel Grid.Column="2"
+                                                                                    VerticalAlignment="Center"
+                                                                                    Spacing="2">
+                                                                            <TextBlock Text="{Binding Description}"
+                                                                                       FontSize="13"
+                                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                                       TextTrimming="CharacterEllipsis"
+                                                                                       TextDecorations="{Binding IsUndone, Converter={x:Static local:VersionHistoryConverters.UndoneStrikethrough}}" />
+                                                                            <TextBlock Text="{Binding EntityTypeText}"
+                                                                                       FontSize="11"
+                                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                       IsVisible="{Binding EntityTypeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                                        </StackPanel>
+
+                                                                        <!-- Undo/Redo Button -->
+                                                                        <Panel Grid.Column="3"
+                                                                               Margin="8,0,0,0"
+                                                                               IsVisible="{Binding ShowUndoRedoButton}">
+                                                                            <!-- Undo Button -->
+                                                                            <Button Classes="undo-redo-btn"
+                                                                                    Command="{Binding Parent.UndoItemCommand}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    ToolTip.Tip="{loc:Loc 'Undo this change'}"
+                                                                                    IsVisible="{Binding CanUndo}">
+                                                                                <PathIcon Data="{x:Static local:Icons.Undo}"
+                                                                                          Width="14" Height="14" />
+                                                                            </Button>
+                                                                            <!-- Redo Button -->
+                                                                            <Button Classes="undo-redo-btn"
+                                                                                    Command="{Binding Parent.RedoItemCommand}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    ToolTip.Tip="{loc:Loc 'Redo this change'}"
+                                                                                    IsVisible="{Binding CanRedo}">
+                                                                                <PathIcon Data="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"
+                                                                                          Width="14" Height="14" />
+                                                                            </Button>
+                                                                        </Panel>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Panel>
+                        </Border>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="3"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <!-- Event count -->
+                                <TextBlock Grid.Column="0"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="Showing {0} of {1} changes">
+                                            <Binding Path="FilteredEventCount" />
+                                            <Binding Path="TotalEventCount" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <!-- Close Button -->
+                                <Button Grid.Column="1"
+                                        Classes="secondary-button"
+                                        Content="{loc:Loc Close}"
+                                        Command="{Binding CloseCommand}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Header Icon Button (for close button) -->
+        <Style Selector="Button.header-icon">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.header-icon /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.header-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Filter Search TextBox -->
+        <Style Selector="TextBox.filter-search">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0,4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox.filter-search /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBox.filter-search:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <!-- Filter ComboBox -->
+        <Style Selector="ComboBox.filter-combo">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+
+        <!-- Undo/Redo Button -->
+        <Style Selector="Button.undo-redo-btn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.undo-redo-btn /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.undo-redo-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-btn:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-btn:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Ghost Button -->
+        <Style Selector="Button.ghost-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.ghost-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.ghost-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.ghost-button:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

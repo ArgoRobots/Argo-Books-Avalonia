@@ -84,6 +84,14 @@
                 <controls:UndoRedoButtonGroup x:Name="UndoRedoButtons"
                                               DataContext="{Binding UndoRedoViewModel}" />
 
+                <!-- Version History Button -->
+                <Button Classes="header-icon"
+                        Command="{Binding OpenHistoryCommand}"
+                        ToolTip.Tip="{loc:Loc 'Version History'}">
+                    <PathIcon Data="{x:Static local:Icons.Clock}"
+                              Width="18" Height="18" />
+                </Button>
+
                 <!-- Save Button with Asterisk and Status Indicator -->
                 <StackPanel x:Name="SaveButtonContainer" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Save Button -->
