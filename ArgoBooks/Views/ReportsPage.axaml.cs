@@ -263,7 +263,7 @@ public partial class ReportsPage : UserControl
         // Unsubscribe from events
         if (_designCanvas != null)
         {
-            _designCanvas.PointerWheelChanged -= OnCanvasPointerWheelChanged;
+            _designCanvas.RemoveHandler(PointerWheelChangedEvent, OnCanvasPointerWheelChanged);
             _designCanvas.PointerPressed -= OnCanvasPointerPressed;
             _designCanvas.PointerMoved -= OnCanvasPointerMoved;
             _designCanvas.PointerReleased -= OnCanvasPointerReleased;

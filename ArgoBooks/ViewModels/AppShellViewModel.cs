@@ -753,6 +753,7 @@ public partial class AppShellViewModel : ViewModelBase
                 return saved;
 
             case UnsavedChangesResult.DontSave:
+                _reportsPageViewModel.DiscardChangesAndReset();
                 return true; // Discard changes and navigate
 
             case UnsavedChangesResult.Cancel:
