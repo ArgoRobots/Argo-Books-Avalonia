@@ -161,22 +161,40 @@
                                         <StackPanel Margin="20,0,20,20">
                                             <!-- Colors Tab (Index 0) -->
                                             <StackPanel Spacing="10" IsVisible="{Binding PropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
+                                                <!-- Header Color -->
+                                                <Grid ColumnDefinitions="*,150">
+                                                    <TextBlock Grid.Column="0" Text="{Binding HeaderColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding HeaderColor, Mode=TwoWay}" />
+                                                </Grid>
+
                                                 <!-- Primary Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Primary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{Binding PrimaryColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding PrimaryColor, Mode=TwoWay}" />
                                                 </Grid>
 
                                                 <!-- Secondary Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Secondary Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{Binding SecondaryColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding SecondaryColor, Mode=TwoWay}" />
+                                                </Grid>
+
+                                                <!-- Accent Color -->
+                                                <Grid ColumnDefinitions="*,150">
+                                                    <TextBlock Grid.Column="0" Text="{Binding AccentColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding AccentColor, Mode=TwoWay}" />
                                                 </Grid>
 
                                                 <!-- Text Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Text Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="Text Color" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding TextColor, Mode=TwoWay}" />
+                                                </Grid>
+
+                                                <!-- Background Color -->
+                                                <Grid ColumnDefinitions="*,150">
+                                                    <TextBlock Grid.Column="0" Text="Background" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding BackgroundColor, Mode=TwoWay}" />
                                                 </Grid>
                                             </StackPanel>
 

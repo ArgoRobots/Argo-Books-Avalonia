@@ -763,26 +763,26 @@ public static class InvoiceHtmlTemplates
         <div style="position: absolute; left: 0; top: 0; width: 280px; height: 100%;">
             <svg viewBox="0 0 280 1100" preserveAspectRatio="none" style="position: absolute; left: 0; top: 0; width: 280px; height: 100%;">
                 <defs>
-                    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#7cb342"/>
-                        <stop offset="25%" style="stop-color:#8bc34a"/>
-                        <stop offset="50%" style="stop-color:#aed581"/>
-                        <stop offset="75%" style="stop-color:#8bc34a"/>
-                        <stop offset="100%" style="stop-color:#558b2f"/>
+                    <linearGradient id="ribbon1Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="{{AccentColor}}" stop-opacity="0.85"/>
+                        <stop offset="25%" stop-color="{{AccentColor}}" stop-opacity="1"/>
+                        <stop offset="50%" stop-color="{{AccentColor}}" stop-opacity="0.55"/>
+                        <stop offset="75%" stop-color="{{AccentColor}}" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="{{AccentColor}}" stop-opacity="0.7"/>
                     </linearGradient>
-                    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#29b6f6"/>
-                        <stop offset="25%" style="stop-color:#4fc3f7"/>
-                        <stop offset="50%" style="stop-color:#81d4fa"/>
-                        <stop offset="75%" style="stop-color:#4fc3f7"/>
-                        <stop offset="100%" style="stop-color:#0288d1"/>
+                    <linearGradient id="ribbon2Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="{{PrimaryColor}}" stop-opacity="0.7"/>
+                        <stop offset="25%" stop-color="{{PrimaryColor}}" stop-opacity="0.9"/>
+                        <stop offset="50%" stop-color="{{PrimaryColor}}" stop-opacity="0.5"/>
+                        <stop offset="75%" stop-color="{{PrimaryColor}}" stop-opacity="0.9"/>
+                        <stop offset="100%" stop-color="{{PrimaryColor}}" stop-opacity="0.85"/>
                     </linearGradient>
-                    <linearGradient id="yellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ffee58"/>
-                        <stop offset="25%" style="stop-color:#fff176"/>
-                        <stop offset="50%" style="stop-color:#fff59d"/>
-                        <stop offset="75%" style="stop-color:#fff176"/>
-                        <stop offset="100%" style="stop-color:#fdd835"/>
+                    <linearGradient id="ribbon3Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="{{SecondaryColor}}" stop-opacity="0.85"/>
+                        <stop offset="25%" stop-color="{{SecondaryColor}}" stop-opacity="1"/>
+                        <stop offset="50%" stop-color="{{SecondaryColor}}" stop-opacity="0.6"/>
+                        <stop offset="75%" stop-color="{{SecondaryColor}}" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="{{SecondaryColor}}" stop-opacity="0.75"/>
                     </linearGradient>
                     <path id="waveRibbon" d="
                         M140,0
@@ -806,23 +806,23 @@ public static class InvoiceHtmlTemplates
                         Z
                     "/>
                 </defs>
-                <use href="#waveRibbon" fill="url(#greenGrad)" opacity="0.225" transform="translate(-50, 0)"/>
-                <use href="#waveRibbon" fill="url(#blueGrad)" opacity="0.225" transform="translate(-10, -130)"/>
-                <use href="#waveRibbon" fill="url(#yellowGrad)" opacity="0.225" transform="translate(30, -260)"/>
+                <use href="#waveRibbon" fill="url(#ribbon1Grad)" opacity="0.225" transform="translate(-50, 0)"/>
+                <use href="#waveRibbon" fill="url(#ribbon2Grad)" opacity="0.225" transform="translate(-10, -130)"/>
+                <use href="#waveRibbon" fill="url(#ribbon3Grad)" opacity="0.225" transform="translate(30, -260)"/>
             </svg>
         </div>
 
         <!-- Main Content -->
         <div style="padding: 50px 50px 50px 140px; position: relative; z-index: 1;">
             <!-- Header Title -->
-            <h1 style="font-family: 'Oswald', {{FontFamily}}; font-size: 52px; font-weight: bold; color: {{PrimaryColor}}; letter-spacing: 2px; margin: 0 0 25px 0; text-transform: uppercase;">{{HeaderText}}</h1>
+            <h1 style="font-family: 'Oswald', {{FontFamily}}; font-size: 52px; font-weight: bold; color: {{HeaderColor}}; letter-spacing: 2px; margin: 0 0 25px 0; text-transform: uppercase;">{{HeaderText}}</h1>
 
             <!-- Company Info -->
             <div style="margin-bottom: 30px;">
                 {{#ShowLogo}}
                 <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
                 {{/ShowLogo}}
-                <div style="font-weight: bold; color: {{PrimaryColor}}; font-size: 15px;">{{CompanyName}}</div>
+                <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 15px;">{{CompanyName}}</div>
                 {{#ShowCompanyAddress}}{{#CompanyAddress}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyAddress}}</div>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                 {{#ShowCompanyCity}}{{#CompanyCity}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</div>{{/CompanyCity}}{{/ShowCompanyCity}}
                 {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</div>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
@@ -833,7 +833,7 @@ public static class InvoiceHtmlTemplates
             <!-- Info Section: Sold To + Receipt Details -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 35px; gap: 20px;">
                 <div style="flex: 1;">
-                    <div style="font-weight: bold; color: {{PrimaryColor}}; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Sold To</div>
+                    <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Sold To</div>
                     <div style="color: {{TextColor}}; font-size: 14px; line-height: 1.6;">
                         <strong>{{CustomerName}}</strong><br>
                         {{#CustomerAddress}}{{CustomerAddress}}<br>{{/CustomerAddress}}
@@ -843,11 +843,11 @@ public static class InvoiceHtmlTemplates
                 <div style="flex: 1;"></div>
                 <div style="flex: 1.2;">
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 5px 20px;">
-                        <span style="font-weight: bold; color: {{PrimaryColor}}; font-size: 16px; text-transform: uppercase;">Receipt #</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt #</span>
                         <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{InvoiceNumber}}</span>
-                        <span style="font-weight: bold; color: {{PrimaryColor}}; font-size: 16px; text-transform: uppercase;">Receipt Date</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt Date</span>
                         <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{IssueDate}}</span>
-                        <span style="font-weight: bold; color: {{PrimaryColor}}; font-size: 16px; text-transform: uppercase;">Due Date</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Due Date</span>
                         <span style="text-align: right; font-size: 14px; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</span>
                     </div>
                     {{#ShowDueDateProminent}}
@@ -862,18 +862,18 @@ public static class InvoiceHtmlTemplates
 
             <!-- Items Table -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-family: {{FontFamily}}; font-weight: 600;">
-                <thead style="border-top: 2px solid {{PrimaryColor}}; border-bottom: 2px solid {{PrimaryColor}};">
+                <thead style="border-top: 2px solid {{HeaderColor}}; border-bottom: 2px solid {{HeaderColor}};">
                     <tr>
-                        <th style="color: {{PrimaryColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: left; width: 60px; background: transparent;">QTY</th>
-                        <th style="color: {{PrimaryColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: left; background: transparent;">Description</th>
-                        <th style="color: {{PrimaryColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: right; background: transparent;">Unit Price</th>
-                        <th style="color: {{PrimaryColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: right; background: transparent;">Amount</th>
+                        <th style="color: {{HeaderColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: left; width: 60px; background: transparent;">QTY</th>
+                        <th style="color: {{HeaderColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: left; background: transparent;">Description</th>
+                        <th style="color: {{HeaderColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: right; background: transparent;">Unit Price</th>
+                        <th style="color: {{HeaderColor}}; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 15px; text-align: right; background: transparent;">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{#LineItems}}
                     <tr>
-                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; text-align: center; font-weight: 600; color: {{PrimaryColor}};">{{Quantity}}</td>
+                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; text-align: center; font-weight: 600; color: {{HeaderColor}};">{{Quantity}}</td>
                         <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; color: #444;">
                             {{Description}}
                             {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 12px; color: #888;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
@@ -898,9 +898,9 @@ public static class InvoiceHtmlTemplates
                         <span>{{TaxAmount}}</span>
                     </div>
                     {{/ShowTaxBreakdown}}
-                    <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{PrimaryColor}}; margin-top: 10px;">
-                        <span style="font-weight: bold; color: {{PrimaryColor}}; font-size: 16px; text-transform: uppercase;">Total</span>
-                        <span style="font-weight: bold; color: {{PrimaryColor}}; font-size: 22px;">{{Total}}</span>
+                    <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{HeaderColor}}; margin-top: 10px;">
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Total</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;">{{Total}}</span>
                     </div>
                     {{#AmountPaid}}
                     <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: {{AccentColor}};">
@@ -909,7 +909,7 @@ public static class InvoiceHtmlTemplates
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">
                         <span>Balance Due</span>
-                        <span style="color: {{PrimaryColor}};">{{Balance}}</span>
+                        <span style="color: {{HeaderColor}};">{{Balance}}</span>
                     </div>
                     {{/AmountPaid}}
                 </div>
@@ -928,8 +928,8 @@ public static class InvoiceHtmlTemplates
             {{#ShowPaymentInstructions}}
             {{#PaymentInstructions}}
             <!-- Terms & Conditions -->
-            <div style="border-top: 3px solid {{PrimaryColor}}; padding-top: 20px;">
-                <div style="font-weight: bold; color: {{PrimaryColor}}; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Terms &amp; Conditions</div>
+            <div style="border-top: 3px solid {{HeaderColor}}; padding-top: 20px;">
+                <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Terms &amp; Conditions</div>
                 <div style="color: #555; font-size: 13px; line-height: 1.8; white-space: pre-line;">{{PaymentInstructions}}</div>
             </div>
             {{/PaymentInstructions}}

@@ -217,6 +217,7 @@ public partial class InvoiceHtmlRenderer
             ["PrimaryColor"] = template.PrimaryColor,
             ["SecondaryColor"] = template.SecondaryColor,
             ["AccentColor"] = template.AccentColor,
+            ["HeaderColor"] = !string.IsNullOrEmpty(template.HeaderColor) ? template.HeaderColor : template.PrimaryColor,
             ["TextColor"] = template.TextColor,
             ["BackgroundColor"] = template.BackgroundColor,
 

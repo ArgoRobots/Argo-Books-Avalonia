@@ -48,6 +48,12 @@ public class InvoiceTemplate
     public string AccentColor { get; set; } = "#059669";
 
     /// <summary>
+    /// Header/title color. Falls back to PrimaryColor if empty.
+    /// </summary>
+    [JsonPropertyName("headerColor")]
+    public string HeaderColor { get; set; } = string.Empty;
+
+    /// <summary>
     /// Text color for primary content.
     /// </summary>
     [JsonPropertyName("textColor")]
@@ -199,6 +205,7 @@ public class InvoiceTemplate
             PrimaryColor = PrimaryColor,
             SecondaryColor = SecondaryColor,
             AccentColor = AccentColor,
+            HeaderColor = HeaderColor,
             TextColor = TextColor,
             BackgroundColor = BackgroundColor,
             FontFamily = FontFamily,

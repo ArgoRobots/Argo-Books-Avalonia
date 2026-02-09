@@ -70,10 +70,47 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private string _accentColor = "#059669";
 
     [ObservableProperty]
+    private string _headerColor = "#2563eb";
+
+    [ObservableProperty]
     private string _textColor = "#1f2937";
 
     [ObservableProperty]
     private string _backgroundColor = "#ffffff";
+
+    // Dynamic color labels per template type
+    public string PrimaryColorLabel => SelectedBaseTemplate switch
+    {
+        InvoiceTemplateType.Ribbon => "Ribbon 1 (Blue)",
+        InvoiceTemplateType.Professional => "Banner Color",
+        InvoiceTemplateType.Modern => "Sidebar Color",
+        InvoiceTemplateType.Classic => "Header & Border",
+        InvoiceTemplateType.Elegant => "Accent Border",
+        _ => "Primary Color"
+    };
+
+    public string SecondaryColorLabel => SelectedBaseTemplate switch
+    {
+        InvoiceTemplateType.Ribbon => "Ribbon 2 (Yellow)",
+        InvoiceTemplateType.Modern => "Background Tint",
+        InvoiceTemplateType.Classic => "Border Color",
+        InvoiceTemplateType.Elegant => "Subtle Background",
+        _ => "Secondary Color"
+    };
+
+    public string AccentColorLabel => SelectedBaseTemplate switch
+    {
+        InvoiceTemplateType.Ribbon => "Ribbon 3 (Green)",
+        InvoiceTemplateType.Modern => "Link Color",
+        InvoiceTemplateType.Elegant => "Highlight Color",
+        _ => "Accent Color"
+    };
+
+    public string HeaderColorLabel => SelectedBaseTemplate switch
+    {
+        InvoiceTemplateType.Ribbon => "Title & Heading",
+        _ => "Header Color"
+    };
 
     // Font
     [ObservableProperty]
@@ -426,9 +463,17 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             PrimaryColor = defaults.PrimaryColor;
             SecondaryColor = defaults.SecondaryColor;
             AccentColor = defaults.AccentColor;
+            HeaderColor = !string.IsNullOrEmpty(defaults.HeaderColor) ? defaults.HeaderColor : defaults.PrimaryColor;
             TextColor = defaults.TextColor;
+            BackgroundColor = defaults.BackgroundColor;
             SelectedFontFamily = defaults.FontFamily;
         }
+
+        // Notify label changes
+        OnPropertyChanged(nameof(PrimaryColorLabel));
+        OnPropertyChanged(nameof(SecondaryColorLabel));
+        OnPropertyChanged(nameof(AccentColorLabel));
+        OnPropertyChanged(nameof(HeaderColorLabel));
 
         UpdatePreview();
     }
@@ -446,6 +491,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnPrimaryColorChanged(string value) => UpdatePreview();
     partial void OnSecondaryColorChanged(string value) => UpdatePreview();
     partial void OnAccentColorChanged(string value) => UpdatePreview();
+    partial void OnHeaderColorChanged(string value) => UpdatePreview();
     partial void OnTextColorChanged(string value) => UpdatePreview();
     partial void OnBackgroundColorChanged(string value) => UpdatePreview();
     partial void OnSelectedFontFamilyChanged(string value) => UpdatePreview();
@@ -499,6 +545,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             PrimaryColor = PrimaryColor,
             SecondaryColor = SecondaryColor,
             AccentColor = AccentColor,
+            HeaderColor = HeaderColor,
             TextColor = TextColor,
             BackgroundColor = BackgroundColor,
             FontFamily = SelectedFontFamily,
@@ -530,6 +577,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         template.PrimaryColor = PrimaryColor;
         template.SecondaryColor = SecondaryColor;
         template.AccentColor = AccentColor;
+        template.HeaderColor = HeaderColor;
         template.TextColor = TextColor;
         template.BackgroundColor = BackgroundColor;
         template.FontFamily = SelectedFontFamily;
@@ -562,6 +610,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         PrimaryColor = template.PrimaryColor;
         SecondaryColor = template.SecondaryColor;
         AccentColor = template.AccentColor;
+        HeaderColor = !string.IsNullOrEmpty(template.HeaderColor) ? template.HeaderColor : template.PrimaryColor;
         TextColor = template.TextColor;
         BackgroundColor = template.BackgroundColor;
         SelectedFontFamily = template.FontFamily;
@@ -598,6 +647,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         PrimaryColor = defaults.PrimaryColor;
         SecondaryColor = defaults.SecondaryColor;
         AccentColor = defaults.AccentColor;
+        HeaderColor = !string.IsNullOrEmpty(defaults.HeaderColor) ? defaults.HeaderColor : defaults.PrimaryColor;
         TextColor = defaults.TextColor;
         BackgroundColor = defaults.BackgroundColor;
         SelectedFontFamily = defaults.FontFamily;
