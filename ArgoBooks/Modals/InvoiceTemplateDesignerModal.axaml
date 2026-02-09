@@ -49,7 +49,8 @@
     </UserControl.Styles>
 
     <Panel>
-        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                               ClosingCommand="{Binding RequestCloseCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter='1000,1100'}"
                         Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter=750}"

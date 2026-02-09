@@ -14,7 +14,8 @@
     </Design.DataContext>
 
     <Panel>
-        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                               ClosingCommand="{Binding CancelActionCommand}">
             <controls:ModalOverlay.ModalContent>
                 <!-- Modal Content -->
                 <Border Background="{DynamicResource SurfaceBrush}"
