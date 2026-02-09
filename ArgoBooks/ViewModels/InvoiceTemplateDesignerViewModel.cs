@@ -227,7 +227,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         InvoiceTemplateType.Modern,
         InvoiceTemplateType.Classic,
         InvoiceTemplateType.Elegant,
-        InvoiceTemplateType.SalesReceipt
+        InvoiceTemplateType.Ribbon
     ];
 
     public ObservableCollection<string> FontFamilyOptions { get; } =
@@ -412,7 +412,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             InvoiceTemplateType.Modern => InvoiceTemplateFactory.CreateModernTemplate(),
             InvoiceTemplateType.Classic => InvoiceTemplateFactory.CreateClassicTemplate(),
             InvoiceTemplateType.Elegant => InvoiceTemplateFactory.CreateElegantTemplate(),
-            InvoiceTemplateType.SalesReceipt => InvoiceTemplateFactory.CreateSalesReceiptTemplate(),
+            InvoiceTemplateType.Ribbon => InvoiceTemplateFactory.CreateRibbonTemplate(),
             _ => InvoiceTemplateFactory.CreateProfessionalTemplate()
         };
 

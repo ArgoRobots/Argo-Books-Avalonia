@@ -18,7 +18,7 @@ public static class InvoiceTemplateFactory
             CreateModernTemplate(),
             CreateClassicTemplate(),
             CreateElegantTemplate(),
-            CreateSalesReceiptTemplate()
+            CreateRibbonTemplate()
         ];
     }
 
@@ -139,18 +139,18 @@ public static class InvoiceTemplateFactory
     }
 
     /// <summary>
-    /// Creates the Sales Receipt template with default settings.
+    /// Creates the Ribbon template with default settings.
     /// </summary>
-    public static InvoiceTemplate CreateSalesReceiptTemplate()
+    public static InvoiceTemplate CreateRibbonTemplate()
     {
         return new InvoiceTemplate
         {
-            Id = "default-sales-receipt",
-            Name = "Sales Receipt",
-            BaseTemplate = InvoiceTemplateType.SalesReceipt,
+            Id = "default-ribbon",
+            Name = "Ribbon",
+            BaseTemplate = InvoiceTemplateType.Ribbon,
             IsDefault = false,
             PrimaryColor = "#1a5276",
-            SecondaryColor = "#e8e8e8",
+            SecondaryColor = "#ffee58",
             AccentColor = "#7cb342",
             TextColor = "#333333",
             BackgroundColor = "#ffffff",
@@ -178,7 +178,7 @@ public static class InvoiceTemplateFactory
             InvoiceTemplateType.Modern => CreateModernTemplate(),
             InvoiceTemplateType.Classic => CreateClassicTemplate(),
             InvoiceTemplateType.Elegant => CreateElegantTemplate(),
-            InvoiceTemplateType.SalesReceipt => CreateSalesReceiptTemplate(),
+            InvoiceTemplateType.Ribbon => CreateRibbonTemplate(),
             _ => CreateProfessionalTemplate()
         };
 
