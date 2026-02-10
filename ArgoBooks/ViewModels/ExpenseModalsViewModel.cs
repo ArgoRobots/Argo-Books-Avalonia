@@ -501,7 +501,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             Total = Total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = ModalNotes,
-            ReferenceNumber = ReceiptFilePath ?? string.Empty,
+            ReferenceNumber = string.Empty,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
             // USD conversion fields
@@ -585,7 +585,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.Total = Total;
         expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
         expense.Notes = ModalNotes;
-        expense.ReferenceNumber = ReceiptFilePath ?? string.Empty;
         expense.UpdatedAt = DateTime.Now;
         // USD conversion fields
         expense.OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD";
@@ -635,7 +634,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 expense.Total = Total;
                 expense.PaymentMethod = pm;
                 expense.Notes = ModalNotes;
-                expense.ReferenceNumber = ReceiptFilePath ?? string.Empty;
                 if (capturedNewReceipt != null)
                 {
                     expense.ReceiptId = capturedNewReceipt.Id;

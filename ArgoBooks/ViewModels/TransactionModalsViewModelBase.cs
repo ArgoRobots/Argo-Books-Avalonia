@@ -547,11 +547,26 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         }
         UpdateTotals();
 
-        // Load receipt info
-        ReceiptFilePath = transaction.ReferenceNumber;
-        ReceiptFileName = string.IsNullOrEmpty(transaction.ReferenceNumber)
-            ? "No receipt attached"
-            : Path.GetFileName(transaction.ReferenceNumber);
+        // Load receipt info from the Receipt record (not ReferenceNumber, which stores general references like PO numbers)
+        if (!string.IsNullOrEmpty(transaction.ReceiptId))
+        {
+            var receipt = App.CompanyManager?.CompanyData?.Receipts.FirstOrDefault(r => r.Id == transaction.ReceiptId);
+            if (receipt != null)
+            {
+                ReceiptFilePath = receipt.OriginalFilePath;
+                ReceiptFileName = receipt.FileName;
+            }
+            else
+            {
+                ReceiptFilePath = null;
+                ReceiptFileName = "No receipt attached";
+            }
+        }
+        else
+        {
+            ReceiptFilePath = null;
+            ReceiptFileName = "No receipt attached";
+        }
 
         ClearValidationErrors();
 

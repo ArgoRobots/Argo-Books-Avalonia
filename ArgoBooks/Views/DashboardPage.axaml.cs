@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -22,6 +23,8 @@ public partial class DashboardPage : UserControl
     private Control? _clickedChart;
     private string _clickedChartName = "Chart";
 
+    private const double CompactQuickActionsThreshold = 1050;
+
     public DashboardPage()
     {
         InitializeComponent();
@@ -32,8 +35,38 @@ public partial class DashboardPage : UserControl
         // Subscribe to ViewModel events when DataContext changes
         DataContextChanged += OnDataContextChanged;
 
+        // Responsive quick actions padding
+        QuickActionsCard.SizeChanged += OnQuickActionsSizeChanged;
+
         // Wire up chart scroll handler after control is loaded
         Loaded += OnLoaded;
+    }
+
+    private void OnQuickActionsSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        var width = e.NewSize.Width;
+        if (width < CompactQuickActionsThreshold)
+        {
+            foreach (var child in QuickActionsWrapPanel.Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Padding = new Thickness(8, 6);
+                    btn.Margin = new Thickness(3);
+                }
+            }
+        }
+        else
+        {
+            foreach (var child in QuickActionsWrapPanel.Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Padding = new Thickness(12, 10);
+                    btn.Margin = new Thickness(6);
+                }
+            }
+        }
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)

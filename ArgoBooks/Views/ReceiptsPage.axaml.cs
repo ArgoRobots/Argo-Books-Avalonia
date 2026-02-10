@@ -120,6 +120,8 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is ReceiptsPageViewModel viewModel && e.WidthChanged)
         {
             viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
+            if (viewModel.IsGridView)
+                viewModel.ColumnWidths.NeedsHorizontalScroll = false;
         }
     }
 

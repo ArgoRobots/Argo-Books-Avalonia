@@ -24,9 +24,13 @@
         <Style Selector="controls|StatCard.compact Border#OuterBorder">
             <Setter Property="Padding" Value="12" />
         </Style>
+        <Style Selector="controls|StatCard.minimal Border#OuterBorder">
+            <Setter Property="Padding" Value="10" />
+        </Style>
 
         <!-- Icon container base styles -->
         <Style Selector="controls|StatCard Border#IconContainer">
+            <Setter Property="IsVisible" Value="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static ObjectConverters.IsNotNull}}" />
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
             <Setter Property="CornerRadius" Value="12" />
@@ -37,6 +41,9 @@
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="0,0,10,0" />
             <Setter Property="CornerRadius" Value="10" />
+        </Style>
+        <Style Selector="controls|StatCard.minimal Border#IconContainer">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
 
         <!-- Icon container colors -->
@@ -92,6 +99,11 @@
         <Style Selector="controls|StatCard.compact TextBlock#ValueText">
             <Setter Property="FontSize" Value="18" />
         </Style>
+        <Style Selector="controls|StatCard.minimal TextBlock#ValueText">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
         <Style Selector="controls|StatCard.value-success TextBlock#ValueText">
             <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
         </Style>
@@ -107,6 +119,10 @@
         <Style Selector="controls|StatCard.compact TextBlock#LabelText">
             <Setter Property="FontSize" Value="11" />
         </Style>
+        <Style Selector="controls|StatCard.minimal TextBlock#LabelText">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
 
         <!-- Content stack panel -->
         <Style Selector="controls|StatCard StackPanel#ContentPanel">
@@ -114,6 +130,10 @@
         </Style>
         <Style Selector="controls|StatCard.compact StackPanel#ContentPanel">
             <Setter Property="Spacing" Value="2" />
+        </Style>
+        <Style Selector="controls|StatCard.minimal StackPanel#ContentPanel">
+            <Setter Property="Spacing" Value="1" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
 
         <!-- Trend stack panel -->
@@ -126,6 +146,18 @@
         <Style Selector="controls|StatCard.compact StackPanel#TrendPanel TextBlock">
             <Setter Property="FontSize" Value="10" />
         </Style>
+        <Style Selector="controls|StatCard.minimal StackPanel#TrendPanel">
+            <Setter Property="Spacing" Value="2" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="controls|StatCard.minimal StackPanel#TrendPanel TextBlock">
+            <Setter Property="FontSize" Value="9" />
+        </Style>
+
+        <!-- Secondary text -->
+        <Style Selector="controls|StatCard.minimal TextBlock#SecondaryTextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
     </UserControl.Styles>
 
     <Border x:Name="OuterBorder">
@@ -133,8 +165,7 @@
             <!-- Icon Container -->
             <Border Grid.Column="0"
                     x:Name="IconContainer"
-                    VerticalAlignment="Top"
-                    IsVisible="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    VerticalAlignment="Top">
                 <PathIcon x:Name="IconPath"
                           Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}}" />
             </Border>
@@ -203,7 +234,8 @@
                 </StackPanel>
 
                 <!-- Secondary Text -->
-                <TextBlock Text="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                <TextBlock x:Name="SecondaryTextBlock"
+                           Text="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                            FontSize="10"
                            Foreground="{DynamicResource TextTertiaryBrush}"
                            IsVisible="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

@@ -46,7 +46,8 @@
                             Grid.Row="1"
                             Background="{DynamicResource BackgroundSecondaryBrush}">
                         <Panel>
-                            <ContentControl Content="{Binding CurrentPage}"
+                            <ContentControl x:Name="PageContentControl"
+                                            Content="{Binding CurrentPage}"
                                             Margin="30" />
 
                             <!-- Unsaved Changes Reminder Banner (overlays on top of page content) -->

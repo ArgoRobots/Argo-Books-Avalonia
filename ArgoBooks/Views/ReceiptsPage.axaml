@@ -74,6 +74,26 @@
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
+                <!-- View Toggle Buttons -->
+                <table:ArgoTable.ExtraButtonsContent>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button Classes="view-toggle-button"
+                                Classes.selected="{Binding IsGridView}"
+                                Command="{Binding SetGridViewCommand}"
+                                ToolTip.Tip="{loc:Loc 'Grid View'}">
+                            <PathIcon Data="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"
+                                      Width="16" Height="16" />
+                        </Button>
+                        <Button Classes="view-toggle-button"
+                                Classes.selected="{Binding IsListView}"
+                                Command="{Binding SetListViewCommand}"
+                                ToolTip.Tip="{loc:Loc 'List View'}">
+                            <PathIcon Data="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </StackPanel>
+                </table:ArgoTable.ExtraButtonsContent>
+
                 <!-- Table Header Content (List View Column Headers) - Using ArgoTableHeader -->
                 <table:ArgoTable.HeaderContent>
                     <StackPanel Orientation="Horizontal" IsVisible="{Binding IsListView}">

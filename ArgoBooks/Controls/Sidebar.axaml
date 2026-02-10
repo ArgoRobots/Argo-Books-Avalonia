@@ -81,16 +81,21 @@
                                 </Panel>
                             </Border>
 
-                            <!-- Brand Name -->
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding CompanyName}"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource SidebarTextBrush}"
-                                       VerticalAlignment="Center"
-                                       Margin="12,0,0,0"
-                                       MaxWidth="110"
-                                       TextTrimming="CharacterEllipsis" />
+                            <!-- Brand Name - auto-shrinks to fit, min effective font ~11px -->
+                            <Viewbox Grid.Column="1"
+                                     StretchDirection="DownOnly"
+                                     Stretch="Uniform"
+                                     VerticalAlignment="Center"
+                                     HorizontalAlignment="Left"
+                                     Margin="8,0,0,0">
+                                <TextBlock Text="{Binding CompanyName}"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource SidebarTextBrush}"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxWidth="200" />
+                            </Viewbox>
                         </Grid>
                     </Button>
 
