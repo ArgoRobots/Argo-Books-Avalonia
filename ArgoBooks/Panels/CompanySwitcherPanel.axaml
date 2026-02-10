@@ -5,7 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
-             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="400"
+             mc:Ignorable="d" d:DesignWidth="340" d:DesignHeight="400"
              x:Class="ArgoBooks.Panels.CompanySwitcherPanel"
              x:DataType="vm:CompanySwitcherPanelViewModel">
 
@@ -24,7 +24,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="280"
+                Width="340"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Margin="15,70,0,0"

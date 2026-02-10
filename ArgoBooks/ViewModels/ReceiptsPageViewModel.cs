@@ -55,6 +55,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     partial void OnIsGridViewChanged(bool value)
     {
         if (value) IsListView = false;
+        if (value) ColumnWidths.NeedsHorizontalScroll = false;
     }
 
     partial void OnIsListViewChanged(bool value)

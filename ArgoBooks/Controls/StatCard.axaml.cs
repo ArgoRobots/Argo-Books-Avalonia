@@ -78,10 +78,18 @@ public partial class StatCard : UserControl
     public static readonly StyledProperty<bool> IsCompactProperty =
         AvaloniaProperty.Register<StatCard, bool>(nameof(IsCompact));
 
+    public static readonly StyledProperty<bool> IsMinimalProperty =
+        AvaloniaProperty.Register<StatCard, bool>(nameof(IsMinimal));
+
     /// <summary>
     /// The width threshold below which the card switches to compact mode.
     /// </summary>
-    private const double CompactThreshold = 250;
+    private const double CompactThreshold = 320;
+
+    /// <summary>
+    /// The width threshold below which the card switches to minimal mode (hides icon, smaller text).
+    /// </summary>
+    private const double MinimalThreshold = 260;
 
     #endregion
 
@@ -276,6 +284,16 @@ public partial class StatCard : UserControl
         set => SetValue(IsCompactProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether the card is in minimal mode (icon hidden, smaller text).
+    /// This is automatically set based on the card's width.
+    /// </summary>
+    public bool IsMinimal
+    {
+        get => GetValue(IsMinimalProperty);
+        set => SetValue(IsMinimalProperty, value);
+    }
+
     #endregion
 
     public StatCard()
@@ -295,6 +313,16 @@ public partial class StatCard : UserControl
         {
             IsCompact = shouldBeCompact;
             UpdateCompactClass();
+        }
+
+        // Update minimal mode based on available width
+        var wasMinimal = IsMinimal;
+        var shouldBeMinimal = finalSize.Width > 0 && finalSize.Width < MinimalThreshold;
+
+        if (wasMinimal != shouldBeMinimal)
+        {
+            IsMinimal = shouldBeMinimal;
+            UpdateMinimalClass();
         }
 
         return base.ArrangeOverride(finalSize);
@@ -331,6 +359,12 @@ public partial class StatCard : UserControl
         if (change.Property == IsCompactProperty)
         {
             UpdateCompactClass();
+        }
+
+        // Update minimal class
+        if (change.Property == IsMinimalProperty)
+        {
+            UpdateMinimalClass();
         }
 
         // Auto-show change indicator when ChangeValue or ChangeText is set
@@ -405,5 +439,13 @@ public partial class StatCard : UserControl
             Classes.Add("compact");
         else
             Classes.Remove("compact");
+    }
+
+    private void UpdateMinimalClass()
+    {
+        if (IsMinimal)
+            Classes.Add("minimal");
+        else
+            Classes.Remove("minimal");
     }
 }

@@ -244,8 +244,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                        <Panel>
+                    <Panel Grid.Row="1">
                             <!-- Loading State -->
                             <StackPanel IsVisible="{Binding IsScanning}"
                                         HorizontalAlignment="Center"
@@ -308,13 +307,13 @@
                             <Grid IsVisible="{Binding HasScanResult}"
                                   ColumnDefinitions="2*,3*"
                                   Margin="24">
-                                <!-- Left: Receipt Preview -->
+                                <!-- Left: Receipt Preview (zoomable/pannable) -->
                                 <Border Grid.Column="0"
                                         Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Margin="0,0,24,0"
                                         ClipToBounds="True">
-                                    <Grid RowDefinitions="Auto,*">
+                                    <Grid RowDefinitions="Auto,*,Auto">
                                         <TextBlock Grid.Row="0"
                                                    Text="{loc:Loc 'Receipt Preview'}"
                                                    FontSize="13"
@@ -323,16 +322,65 @@
                                                    Margin="16,12" />
                                         <Border Grid.Row="1"
                                                 Background="#1A000000"
-                                                Margin="8,0,8,8"
-                                                CornerRadius="4">
-                                            <Image Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                   Stretch="Uniform" />
+                                                Margin="8,0,8,4"
+                                                CornerRadius="4"
+                                                ClipToBounds="True">
+                                            <ScrollViewer x:Name="ScanPreviewScrollViewer"
+                                                          HorizontalScrollBarVisibility="Auto"
+                                                          VerticalScrollBarVisibility="Auto">
+                                                <LayoutTransformControl x:Name="ScanPreviewZoomTransform"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center">
+                                                    <Image x:Name="ScanPreviewImage"
+                                                           Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                           Stretch="Uniform" />
+                                                </LayoutTransformControl>
+                                            </ScrollViewer>
                                         </Border>
+                                        <!-- Zoom Controls -->
+                                        <StackPanel Grid.Row="2"
+                                                    Orientation="Horizontal"
+                                                    Spacing="2"
+                                                    HorizontalAlignment="Center"
+                                                    Margin="4,0,4,8">
+                                            <Button Classes="icon-button"
+                                                    Click="ScanPreviewZoomOut_Click"
+                                                    ToolTip.Tip="{loc:Loc 'Zoom Out'}">
+                                                <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
+                                                          Width="14" Height="14" />
+                                            </Button>
+                                            <Slider x:Name="ScanPreviewZoomSlider"
+                                                    Minimum="0.25"
+                                                    Maximum="4.0"
+                                                    Width="80"
+                                                    VerticalAlignment="Center"
+                                                    ValueChanged="ScanPreviewZoomSlider_ValueChanged" />
+                                            <Button Classes="icon-button"
+                                                    Click="ScanPreviewZoomIn_Click"
+                                                    ToolTip.Tip="{loc:Loc 'Zoom In'}">
+                                                <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
+                                                          Width="14" Height="14" />
+                                            </Button>
+                                            <TextBlock x:Name="ScanPreviewZoomText"
+                                                       Text="100%"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="11"
+                                                       Width="38"
+                                                       TextAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <Button Classes="icon-button"
+                                                    Click="ScanPreviewFitToWindow_Click"
+                                                    ToolTip.Tip="{loc:Loc 'Fit to Window'}">
+                                                <PathIcon Data="M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zM5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+                                                          Width="14" Height="14" />
+                                            </Button>
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
 
                                 <!-- Right: Extracted Data -->
-                                <StackPanel Grid.Column="1" Spacing="20">
+                                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Spacing="20">
                                     <!-- Confidence Score -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
@@ -612,7 +660,7 @@
                                                 Margin="0,0,0,8">
                                             <StackPanel Orientation="Horizontal" Spacing="10">
                                                 <controls:LoadingSpinner SizePreset="Small" />
-                                                <TextBlock Text="{loc:Loc 'AI is suggesting supplier and category...'}"
+                                                <TextBlock Text="{loc:Loc 'AI is suggesting supplier...'}"
                                                            FontSize="13"
                                                            Foreground="#1E40AF"
                                                            VerticalAlignment="Center" />
@@ -767,9 +815,9 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
+                                </ScrollViewer>
                             </Grid>
-                        </Panel>
-                    </ScrollViewer>
+                    </Panel>
 
                     <!-- Footer -->
                     <Border Grid.Row="2"

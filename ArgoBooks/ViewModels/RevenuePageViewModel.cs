@@ -420,7 +420,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var statusDisplay = GetStatusDisplay(revenue, companyData);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
-            var receiptFilePath = revenue.ReferenceNumber;
+            var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId) : null;
+            var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
 
             return new RevenueDisplayItem
             {

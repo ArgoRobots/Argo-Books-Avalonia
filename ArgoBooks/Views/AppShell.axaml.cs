@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -11,6 +12,9 @@ namespace ArgoBooks.Views;
 /// </summary>
 public partial class AppShell : UserControl
 {
+    private const double CompactPageThreshold = 1200;
+    private const double MinimalPageThreshold = 900;
+
     private static readonly FilePickerFileType ImageFileType = new("Images")
     {
         Patterns = ["*.jpg", "*.jpeg", "*.png"],
@@ -38,6 +42,20 @@ public partial class AppShell : UserControl
         // context menus (column visibility, chart) close on any sidebar/header click.
         AppSidebar.AddHandler(PointerPressedEvent, OnSidebarPointerPressed, RoutingStrategies.Tunnel);
         AppHeader.AddHandler(PointerPressedEvent, OnHeaderPointerPressed, RoutingStrategies.Tunnel);
+
+        // Responsive page content margin
+        AppContent.SizeChanged += OnContentSizeChanged;
+    }
+
+    private void OnContentSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        var width = e.NewSize.Width;
+        if (width < MinimalPageThreshold)
+            PageContentControl.Margin = new Thickness(0);
+        else if (width < CompactPageThreshold)
+            PageContentControl.Margin = new Thickness(12);
+        else
+            PageContentControl.Margin = new Thickness(30);
     }
 
     /// <inheritdoc />

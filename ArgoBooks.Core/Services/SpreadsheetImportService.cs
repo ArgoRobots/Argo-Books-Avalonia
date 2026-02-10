@@ -1357,10 +1357,10 @@ public class SpreadsheetImportService
             purchase.ShippingCostUSD = purchase.ShippingCost;
 
             // Link product by looking up by name and creating a LineItem
+            // Prefer products with Expense-type categories when there are duplicate names
             if (!string.IsNullOrEmpty(description))
             {
-                var product = data.Products.FirstOrDefault(p =>
-                    string.Equals(p.Name, description, StringComparison.OrdinalIgnoreCase));
+                var product = FindProductByName(data, description, CategoryType.Expense);
 
                 var lineItem = new LineItem
                 {
@@ -1580,10 +1580,10 @@ public class SpreadsheetImportService
                 revenue.PaymentStatus = "Paid";
 
             // Link product by looking up by name and creating a LineItem
+            // Prefer products with Revenue-type categories when there are duplicate names
             if (!string.IsNullOrEmpty(description))
             {
-                var product = data.Products.FirstOrDefault(p =>
-                    string.Equals(p.Name, description, StringComparison.OrdinalIgnoreCase));
+                var product = FindProductByName(data, description, CategoryType.Revenue);
 
                 var lineItem = new LineItem
                 {
@@ -1599,6 +1599,27 @@ public class SpreadsheetImportService
             if (existing == null)
                 data.Revenues.Add(revenue);
         }
+    }
+
+    /// <summary>
+    /// Finds a product by name, preferring products whose category matches the given type.
+    /// This handles the case where the same product name exists under both Revenue and Expense categories.
+    /// </summary>
+    private static Product? FindProductByName(CompanyData data, string name, CategoryType preferredCategoryType)
+    {
+        Product? fallback = null;
+        foreach (var p in data.Products)
+        {
+            if (!string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var category = data.Categories.FirstOrDefault(c => c.Id == p.CategoryId);
+            if (category?.Type == preferredCategoryType)
+                return p;
+
+            fallback ??= p;
+        }
+        return fallback;
     }
 
     private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows)

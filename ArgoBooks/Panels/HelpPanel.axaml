@@ -43,16 +43,6 @@
                 </Transitions>
             </Border.Transitions>
             <StackPanel>
-                <!-- Header -->
-                <Border Padding="20,16"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1">
-                    <TextBlock Text="{loc:Loc 'Help &amp; Resources'}"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                </Border>
-
                 <!-- Menu Items -->
                 <StackPanel Margin="0,8">
                     <!-- What's New -->

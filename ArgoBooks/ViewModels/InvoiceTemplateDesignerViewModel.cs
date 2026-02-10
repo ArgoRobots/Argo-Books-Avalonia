@@ -621,9 +621,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         UpdatePreview();
     }
 
-    partial void OnTemplateNameChanged(string oldValue, string newValue)
+    partial void OnTemplateNameChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change template name", v => TemplateName = v, oldValue, newValue);
+        RecordChange("Change template name", v => TemplateName = v, oldValue!, newValue);
         // Clear validation message when user starts typing
         if (HasValidationMessage)
         {
@@ -637,69 +637,69 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         RecordChange("Toggle default template", v => IsDefault = v, oldValue, newValue);
     }
 
-    partial void OnPrimaryColorChanged(string oldValue, string newValue)
+    partial void OnPrimaryColorChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change primary color", v => PrimaryColor = v, oldValue, newValue);
+        RecordChange("Change primary color", v => PrimaryColor = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnSecondaryColorChanged(string oldValue, string newValue)
+    partial void OnSecondaryColorChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change secondary color", v => SecondaryColor = v, oldValue, newValue);
+        RecordChange("Change secondary color", v => SecondaryColor = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnAccentColorChanged(string oldValue, string newValue)
+    partial void OnAccentColorChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change accent color", v => AccentColor = v, oldValue, newValue);
+        RecordChange("Change accent color", v => AccentColor = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnHeaderColorChanged(string oldValue, string newValue)
+    partial void OnHeaderColorChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change header color", v => HeaderColor = v, oldValue, newValue);
+        RecordChange("Change header color", v => HeaderColor = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnTextColorChanged(string oldValue, string newValue)
+    partial void OnTextColorChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change text color", v => TextColor = v, oldValue, newValue);
+        RecordChange("Change text color", v => TextColor = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnBackgroundColorChanged(string oldValue, string newValue)
+    partial void OnBackgroundColorChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change background color", v => BackgroundColor = v, oldValue, newValue);
+        RecordChange("Change background color", v => BackgroundColor = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnSelectedFontFamilyChanged(string oldValue, string newValue)
+    partial void OnSelectedFontFamilyChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change font family", v => SelectedFontFamily = v, oldValue, newValue);
+        RecordChange("Change font family", v => SelectedFontFamily = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnHeaderTextChanged(string oldValue, string newValue)
+    partial void OnHeaderTextChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change header text", v => HeaderText = v, oldValue, newValue);
+        RecordChange("Change header text", v => HeaderText = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnFooterTextChanged(string oldValue, string newValue)
+    partial void OnFooterTextChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change footer text", v => FooterText = v, oldValue, newValue);
+        RecordChange("Change footer text", v => FooterText = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnPaymentInstructionsChanged(string oldValue, string newValue)
+    partial void OnPaymentInstructionsChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change payment instructions", v => PaymentInstructions = v, oldValue, newValue);
+        RecordChange("Change payment instructions", v => PaymentInstructions = v, oldValue!, newValue);
         UpdatePreview();
     }
 
-    partial void OnDefaultNotesChanged(string oldValue, string newValue)
+    partial void OnDefaultNotesChanged(string? oldValue, string newValue)
     {
-        RecordChange("Change default notes", v => DefaultNotes = v, oldValue, newValue);
+        RecordChange("Change default notes", v => DefaultNotes = v, oldValue!, newValue);
         UpdatePreview();
     }
 

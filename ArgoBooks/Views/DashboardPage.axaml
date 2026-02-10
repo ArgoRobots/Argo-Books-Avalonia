@@ -103,7 +103,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
                   Background="{DynamicResource BackgroundSecondaryBrush}">
-        <StackPanel Margin="24" Spacing="24">
+        <StackPanel x:Name="ContentPanel" Margin="24" Spacing="24">
             <!-- Page Header -->
             <Grid ColumnDefinitions="*,Auto,Auto">
                 <StackPanel Grid.Column="0" Spacing="4">
@@ -155,7 +155,7 @@
             <controls:SetupChecklist DataContext="{Binding SetupChecklist}" />
 
             <!-- Quick Actions Section -->
-            <Border Classes="card" Padding="20" IsVisible="{Binding HasVisibleQuickActions}">
+            <Border x:Name="QuickActionsCard" Classes="card" Padding="20" IsVisible="{Binding HasVisibleQuickActions}">
                 <StackPanel>
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
@@ -174,7 +174,7 @@
                     </Grid>
 
                     <!-- Responsive WrapPanel for Quick Actions (centered per row) -->
-                    <controls:CenteringWrapPanel Margin="0,8,0,0">
+                    <controls:CenteringWrapPanel x:Name="QuickActionsWrapPanel" Margin="0,8,0,0">
                         <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding NewInvoiceCommand}"
                                 IsVisible="{Binding ShowNewInvoice}">

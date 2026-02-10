@@ -441,7 +441,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(purchase, companyData);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
-            var receiptFilePath = purchase.ReferenceNumber;
+            var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
+            var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
 
             return new ExpenseDisplayItem
             {
