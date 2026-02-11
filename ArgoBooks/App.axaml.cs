@@ -2267,7 +2267,7 @@ public class App : Application
                 var backupStopwatch = System.Diagnostics.Stopwatch.StartNew();
                 try
                 {
-                    await CompanyManager.ExportBackupAsync(backupPath, args.IncludeAttachments);
+                    await CompanyManager.ExportBackupAsync(backupPath);
 
                     backupStopwatch.Stop();
                     _mainWindowViewModel?.HideLoading();
@@ -3348,7 +3348,18 @@ public class App : Application
             }
             return new ExpensesPage { DataContext = _expensesPageViewModel };
         });
-        navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = _invoicesPageViewModel ??= new InvoicesPageViewModel() });
+        navigationService.RegisterPage("Invoices", param =>
+        {
+            _invoicesPageViewModel ??= new InvoicesPageViewModel();
+            if (param is RentalInvoiceNavigationParameter rentalParam)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    InvoiceModalsViewModel?.OpenCreateFromRental(rentalParam.RentalRecordId);
+                });
+            }
+            return new InvoicesPage { DataContext = _invoicesPageViewModel };
+        });
         navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = _paymentsPageViewModel ??= new PaymentsPageViewModel() });
 
         // Inventory Section

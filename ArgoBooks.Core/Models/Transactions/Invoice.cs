@@ -63,6 +63,12 @@ public class Invoice
     public decimal TaxAmount { get; set; }
 
     /// <summary>
+    /// Security deposit amount.
+    /// </summary>
+    [JsonPropertyName("securityDeposit")]
+    public decimal SecurityDeposit { get; set; }
+
+    /// <summary>
     /// Total amount due.
     /// </summary>
     [JsonPropertyName("total")]

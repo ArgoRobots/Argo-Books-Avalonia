@@ -166,6 +166,8 @@ public partial class InvoiceHtmlRenderer
         sb.AppendLine($"Subtotal: {currencySymbol}{invoice.Subtotal:N2}");
         if (invoice.TaxRate > 0)
             sb.AppendLine($"Tax ({invoice.TaxRate}%): {currencySymbol}{invoice.TaxAmount:N2}");
+        if (invoice.SecurityDeposit > 0)
+            sb.AppendLine($"Security Deposit: {currencySymbol}{invoice.SecurityDeposit:N2}");
         sb.AppendLine($"TOTAL: {currencySymbol}{invoice.Total:N2}");
 
         if (invoice.AmountPaid > 0)
@@ -268,6 +270,8 @@ public partial class InvoiceHtmlRenderer
             ["Subtotal"] = $"{currencySymbol}{invoice.Subtotal:N2}",
             ["TaxRate"] = invoice.TaxRate.ToString("0.##"),
             ["TaxAmount"] = $"{currencySymbol}{invoice.TaxAmount:N2}",
+            ["ShowSecurityDeposit"] = invoice.SecurityDeposit > 0,
+            ["SecurityDeposit"] = $"{currencySymbol}{invoice.SecurityDeposit:N2}",
             ["Total"] = $"{currencySymbol}{invoice.Total:N2}",
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",

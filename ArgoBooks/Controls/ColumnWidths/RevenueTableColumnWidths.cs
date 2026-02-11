@@ -4,7 +4,7 @@ namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Manages column widths for the Revenue table.
-/// Columns: ID | Customer | Product | Date | Quantity | Amount | Tax | Shipping | Discount | Total | Receipt | Status | Actions
+/// Columns: ID | Customer | Product | Date | Quantity | Amount | Tax | Shipping | Discount | Total | Receipt | Status | Invoice | Actions
 /// </summary>
 public partial class RevenueTableColumnWidths : TableColumnWidthsBase
 {
@@ -45,11 +45,14 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 90;
 
     [ObservableProperty]
+    private double _invoiceColumnWidth = 120;
+
+    [ObservableProperty]
     private double _actionsColumnWidth = 156;
 
     public RevenueTableColumnWidths()
     {
-        ColumnOrder = ["Id", "Customer", "Product", "Date", "Quantity", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"];
+        ColumnOrder = ["Id", "Customer", "Product", "Date", "Quantity", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Invoice", "Actions"];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 80 }, w => IdColumnWidth = w);
         RegisterColumn("Customer", new ColumnDef { StarValue = 1.2, MinWidth = 100, PreferredWidth = 150 }, w => CustomerColumnWidth = w);
@@ -63,6 +66,7 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Total", new ColumnDef { StarValue = 0.8, MinWidth = 70, PreferredWidth = 90 }, w => TotalColumnWidth = w);
         RegisterColumn("Receipt", new ColumnDef { StarValue = 0.8, MinWidth = 50, PreferredWidth = 70 }, w => ReceiptColumnWidth = w);
         RegisterColumn("Status", new ColumnDef { StarValue = 0.6, MinWidth = 70, PreferredWidth = 90 }, w => StatusColumnWidth = w);
+        RegisterColumn("Invoice", new ColumnDef { StarValue = 0.7, MinWidth = 90, PreferredWidth = 120 }, w => InvoiceColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(4), MinWidth = ActionsWidth(4) }, w => ActionsColumnWidth = w);
 
         InitializeColumnWidths();

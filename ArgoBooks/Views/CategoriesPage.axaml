@@ -140,7 +140,7 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowDescriptionColumn}" />
 
-                                        <!-- Type (Product/Service) -->
+                                        <!-- Type (Product / Service) -->
                                         <table:ArgoTableCell Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowTypeColumn}" />
