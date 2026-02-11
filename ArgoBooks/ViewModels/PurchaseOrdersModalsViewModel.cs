@@ -1092,7 +1092,8 @@ public partial class OrderLineItemViewModel : ObservableObject
             {
                 ProductId = value.Id;
                 ProductName = value.Name;
-                UnitCost = value.CostPrice.ToString("F2");
+                if (string.IsNullOrEmpty(UnitCost) || UnitCost == "0.00")
+                    UnitCost = value.CostPrice.ToString("F2");
                 HasProductError = false;
                 OnPropertyChanged();
             }
