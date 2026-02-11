@@ -468,20 +468,37 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetRentalRecordsData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Customer ID", "Rental Item ID", "Quantity", "Start Date", "Due Date", "Return Date", "Total Cost", "Status" };
+        var headers = new[] { "ID", "Customer ID", "Rental Item ID", "Quantity", "Rate Type", "Rate Amount", "Security Deposit", "Start Date", "Due Date", "Return Date", "Total Cost", "Status", "Paid" };
         var filtered = data.Rentals.Where(r => IsInDateRange(r.StartDate, startDate, endDate));
-        var rows = filtered.Select(r => new object[]
+        var rows = new List<object[]>();
+
+        foreach (var r in filtered)
         {
-            r.Id,
-            r.CustomerId,
-            r.RentalItemId,
-            r.Quantity,
-            r.StartDate,
-            r.DueDate,
-            r.ReturnDate ?? DateTime.MinValue,
-            r.TotalCost ?? 0m,
-            r.Status.ToString()
-        }).ToList();
+            if (r.LineItems.Count > 0)
+            {
+                foreach (var li in r.LineItems)
+                {
+                    rows.Add(
+                    [
+                        r.Id, r.CustomerId, li.RentalItemId, li.Quantity,
+                        li.RateType.ToString(), li.RateAmount, li.SecurityDeposit,
+                        r.StartDate, r.DueDate, r.ReturnDate ?? DateTime.MinValue,
+                        r.TotalCost ?? 0m, r.Status.ToString(), r.Paid ? "Yes" : "No"
+                    ]);
+                }
+            }
+            else
+            {
+                rows.Add(
+                [
+                    r.Id, r.CustomerId, r.RentalItemId, r.Quantity,
+                    r.RateType.ToString(), r.RateAmount, r.SecurityDeposit,
+                    r.StartDate, r.DueDate, r.ReturnDate ?? DateTime.MinValue,
+                    r.TotalCost ?? 0m, r.Status.ToString(), r.Paid ? "Yes" : "No"
+                ]);
+            }
+        }
+
         return (headers, rows);
     }
 

@@ -1,5 +1,7 @@
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Rentals;
 
 namespace ArgoBooks.Core.Services;
 
@@ -95,6 +97,13 @@ public class SampleCompanyService
                 context.CompanyData,
                 importOptions,
                 cancellationToken);
+
+            // Patch rental records with financial data from rental items
+            // (the XLSX may not include rate/deposit columns)
+            PatchRentalRecordFinancials(context.CompanyData);
+
+            // Add additional active rental records for richer sample data
+            AddSampleActiveRentals(context.CompanyData);
 
             // Save company data to temp directory
             await _fileService.SaveCompanyDataAsync(companyDir, context.CompanyData, cancellationToken);
@@ -225,6 +234,200 @@ public class SampleCompanyService
             try { File.Delete(sampleFilePath); }
             catch { /* Best effort */ }
         }
+    }
+
+    /// <summary>
+    /// Patches rental records that are missing financial data (RateAmount, SecurityDeposit)
+    /// by looking up the associated rental item's rates.
+    /// </summary>
+    private static void PatchRentalRecordFinancials(CompanyData data)
+    {
+        foreach (var record in data.Rentals)
+        {
+            // Patch line items with missing rates/deposits
+            foreach (var li in record.LineItems)
+            {
+                if (li.RateAmount == 0 || li.SecurityDeposit == 0)
+                {
+                    var liItem = data.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
+                    if (liItem == null) continue;
+
+                    if (li.RateAmount == 0)
+                    {
+                        li.RateAmount = li.RateType switch
+                        {
+                            RateType.Weekly => liItem.WeeklyRate,
+                            RateType.Monthly => liItem.MonthlyRate,
+                            _ => liItem.DailyRate
+                        };
+                    }
+                    if (li.SecurityDeposit == 0)
+                        li.SecurityDeposit = liItem.SecurityDeposit;
+                }
+            }
+
+            // Patch top-level fields
+            if (record.RateAmount == 0 || record.SecurityDeposit == 0)
+            {
+                var item = data.RentalInventory.FirstOrDefault(i => i.Id == record.RentalItemId);
+                if (item != null)
+                {
+                    if (record.RateAmount == 0)
+                    {
+                        record.RateAmount = record.RateType switch
+                        {
+                            RateType.Weekly => item.WeeklyRate,
+                            RateType.Monthly => item.MonthlyRate,
+                            _ => item.DailyRate
+                        };
+                    }
+
+                    if (record.SecurityDeposit == 0)
+                    {
+                        record.SecurityDeposit = item.SecurityDeposit;
+                    }
+                }
+            }
+
+            // Mark returned rentals as paid and set deposit refunded
+            if (record.Status == RentalStatus.Returned)
+            {
+                record.Paid = true;
+                if (record.DepositRefunded == null)
+                {
+                    record.DepositRefunded = record.SecurityDeposit;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Adds additional active rental records to the sample company for richer demo data.
+    /// </summary>
+    private static void AddSampleActiveRentals(CompanyData data)
+    {
+        var items = data.RentalInventory;
+        var customers = data.Customers;
+        if (items.Count == 0 || customers.Count == 0) return;
+
+        var today = DateTime.Today;
+        var maxId = data.Rentals
+            .Select(r => int.TryParse(r.Id.Replace("RNT-", ""), out var n) ? n : 0)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        var newRentals = new List<RentalRecord>();
+
+        // Pick items and customers for new rentals
+        var item0 = items.Count > 0 ? items[0] : items[0];
+        var item1 = items.Count > 1 ? items[1] : items[0];
+        var item2 = items.Count > 2 ? items[2] : items[0];
+
+        var cust0 = customers.Count > 0 ? customers[0] : customers[0];
+        var cust1 = customers.Count > 1 ? customers[1] : customers[0];
+        var cust2 = customers.Count > 2 ? customers[2] : customers[0];
+        var cust3 = customers.Count > 3 ? customers[3] : customers[0];
+
+        // Active rental 1 - started 5 days ago, due in 9 days, daily rate (single item)
+        newRentals.Add(new RentalRecord
+        {
+            Id = $"RNT-{++maxId:D3}",
+            RentalItemId = item0.Id,
+            CustomerId = cust0.Id!,
+            Quantity = 1,
+            RateType = RateType.Daily,
+            RateAmount = item0.DailyRate,
+            SecurityDeposit = item0.SecurityDeposit,
+            LineItems = [new RentalLineItem { RentalItemId = item0.Id, Quantity = 1, RateType = RateType.Daily, RateAmount = item0.DailyRate, SecurityDeposit = item0.SecurityDeposit }],
+            StartDate = today.AddDays(-5),
+            DueDate = today.AddDays(9),
+            Status = RentalStatus.Active,
+            Paid = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        // Active rental 2 - started 2 days ago, due in 5 days, multi-item (2 different items)
+        var multiQty = 1 + 1;
+        var multiDeposit = item0.SecurityDeposit + item1.SecurityDeposit;
+        newRentals.Add(new RentalRecord
+        {
+            Id = $"RNT-{++maxId:D3}",
+            RentalItemId = item0.Id,
+            CustomerId = cust1.Id!,
+            Quantity = multiQty,
+            RateType = RateType.Daily,
+            RateAmount = item0.DailyRate,
+            SecurityDeposit = multiDeposit,
+            LineItems =
+            [
+                new RentalLineItem { RentalItemId = item0.Id, Quantity = 1, RateType = RateType.Daily, RateAmount = item0.DailyRate, SecurityDeposit = item0.SecurityDeposit },
+                new RentalLineItem { RentalItemId = item1.Id, Quantity = 1, RateType = RateType.Daily, RateAmount = item1.DailyRate, SecurityDeposit = item1.SecurityDeposit }
+            ],
+            StartDate = today.AddDays(-2),
+            DueDate = today.AddDays(5),
+            Status = RentalStatus.Active,
+            Paid = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        // Active rental 3 - started 10 days ago, due in 4 days, weekly rate (single item)
+        newRentals.Add(new RentalRecord
+        {
+            Id = $"RNT-{++maxId:D3}",
+            RentalItemId = item2.Id,
+            CustomerId = cust2.Id!,
+            Quantity = 1,
+            RateType = RateType.Weekly,
+            RateAmount = item2.WeeklyRate,
+            SecurityDeposit = item2.SecurityDeposit,
+            LineItems = [new RentalLineItem { RentalItemId = item2.Id, Quantity = 1, RateType = RateType.Weekly, RateAmount = item2.WeeklyRate, SecurityDeposit = item2.SecurityDeposit }],
+            StartDate = today.AddDays(-10),
+            DueDate = today.AddDays(4),
+            Status = RentalStatus.Active,
+            Paid = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        // Active rental 4 - overdue, started 20 days ago, due 3 days ago (single item)
+        newRentals.Add(new RentalRecord
+        {
+            Id = $"RNT-{++maxId:D3}",
+            RentalItemId = item0.Id,
+            CustomerId = cust3.Id!,
+            Quantity = 1,
+            RateType = RateType.Weekly,
+            RateAmount = item0.WeeklyRate,
+            SecurityDeposit = item0.SecurityDeposit,
+            LineItems = [new RentalLineItem { RentalItemId = item0.Id, Quantity = 1, RateType = RateType.Weekly, RateAmount = item0.WeeklyRate, SecurityDeposit = item0.SecurityDeposit }],
+            StartDate = today.AddDays(-20),
+            DueDate = today.AddDays(-3),
+            Status = RentalStatus.Active,
+            Paid = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        foreach (var rental in newRentals)
+        {
+            data.Rentals.Add(rental);
+
+            // Update inventory counts for all line items
+            foreach (var li in rental.LineItems)
+            {
+                var rentalItem = data.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
+                if (rentalItem != null && rentalItem.AvailableQuantity >= li.Quantity)
+                {
+                    rentalItem.AvailableQuantity -= li.Quantity;
+                    rentalItem.RentedQuantity += li.Quantity;
+                }
+            }
+        }
+
+        // Update the ID counter
+        data.IdCounters.Rental = maxId;
     }
 
     /// <summary>

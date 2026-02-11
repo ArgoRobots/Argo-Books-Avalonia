@@ -92,10 +92,35 @@ public class RentalRecord
     public decimal? DepositRefunded { get; set; }
 
     /// <summary>
+    /// Whether the rental has been paid.
+    /// </summary>
+    [JsonPropertyName("paid")]
+    public bool Paid { get; set; }
+
+    /// <summary>
+    /// Line items for multi-item rentals.
+    /// When populated, these take precedence over the top-level RentalItemId/Quantity/RateType/RateAmount/SecurityDeposit fields.
+    /// </summary>
+    [JsonPropertyName("lineItems")]
+    public List<RentalLineItem> LineItems { get; set; } = [];
+
+    /// <summary>
     /// Additional notes.
     /// </summary>
     [JsonPropertyName("notes")]
     public string Notes { get; set; } = string.Empty;
+
+    /// <summary>
+    /// IDs of invoices generated for this rental.
+    /// </summary>
+    [JsonPropertyName("invoiceIds")]
+    public List<string> InvoiceIds { get; set; } = [];
+
+    /// <summary>
+    /// Whether this rental has any associated invoices.
+    /// </summary>
+    [JsonIgnore]
+    public bool HasInvoices => InvoiceIds.Count > 0;
 
     /// <summary>
     /// When the record was created.

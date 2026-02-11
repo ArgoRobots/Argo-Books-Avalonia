@@ -123,6 +123,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _showReceiptColumn = ColumnVisibilityHelper.Load("Revenue", "Receipt", true);
 
+    [ObservableProperty]
+    private bool _showInvoiceColumn = ColumnVisibilityHelper.Load("Revenue", "Invoice", true);
+
     partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("Revenue", "Id", value); }
     partial void OnShowAccountantColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Accountant", value); ColumnVisibilityHelper.Save("Revenue", "Accountant", value); }
     partial void OnShowCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Customer", value); ColumnVisibilityHelper.Save("Revenue", "Customer", value); }
@@ -136,6 +139,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     partial void OnShowTotalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Total", value); ColumnVisibilityHelper.Save("Revenue", "Total", value); }
     partial void OnShowReceiptColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Receipt", value); ColumnVisibilityHelper.Save("Revenue", "Receipt", value); }
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Revenue", "Status", value); }
+    partial void OnShowInvoiceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Invoice", value); ColumnVisibilityHelper.Save("Revenue", "Invoice", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -166,6 +170,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         ShowTotalColumn = true;
         ShowReceiptColumn = true;
         ShowStatusColumn = true;
+        ShowInvoiceColumn = true;
     }
 
     #endregion
@@ -238,6 +243,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         ColumnWidths.SetColumnVisibility("Total", ShowTotalColumn);
         ColumnWidths.SetColumnVisibility("Receipt", ShowReceiptColumn);
         ColumnWidths.SetColumnVisibility("Status", ShowStatusColumn);
+        ColumnWidths.SetColumnVisibility("Invoice", ShowInvoiceColumn);
         ColumnWidths.SetColumnVisibility("Actions", true);
 
         ColumnWidths.RecalculateWidths();
@@ -452,7 +458,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 PaymentMethod = revenue.PaymentMethod,
                 HasReceipt = hasReceipt,
                 ReceiptFilePath = receiptFilePath,
-                IsHighlighted = revenue.Id == HighlightTransactionId
+                IsHighlighted = revenue.Id == HighlightTransactionId,
+                InvoiceId = revenue.InvoiceId ?? string.Empty
             };
         }).ToList();
 
@@ -471,7 +478,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                     ["Category"] = r => r.CategoryName,
                     ["Date"] = r => r.Date,
                     ["Total"] = r => r.Total,
-                    ["Status"] = r => r.StatusDisplay
+                    ["Status"] = r => r.StatusDisplay,
+                    ["Invoice"] = r => r.InvoiceId
                 },
                 r => r.Date);
         }
@@ -583,6 +591,13 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private void UndoReturn(RevenueDisplayItem? item)
     {
         App.RevenueModalsViewModel?.OpenUndoReturnedModal(item);
+    }
+
+    [RelayCommand]
+    private void ViewInvoice(string? invoiceId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(invoiceId);
     }
 
     [RelayCommand]
@@ -760,4 +775,9 @@ public partial class RevenueDisplayItem : ObservableObject
 
     [ObservableProperty]
     private bool _isHighlighted;
+
+    [ObservableProperty]
+    private string _invoiceId = string.Empty;
+
+    public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
 }

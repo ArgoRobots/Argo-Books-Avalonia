@@ -607,6 +607,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     }
 
     [RelayCommand]
+    private void ViewInvoice(InvoiceDisplayItem? item)
+    {
+        if (item == null) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(item.Id);
+    }
+
+    [RelayCommand]
     private void ContinueDraftInvoice(InvoiceDisplayItem? item)
     {
         App.InvoiceModalsViewModel?.ContinueDraftInvoice(item);

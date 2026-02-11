@@ -116,6 +116,12 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _showDepositColumn = ColumnVisibilityHelper.Load("RentalRecords", "Deposit", true);
 
+    [ObservableProperty]
+    private bool _showPaidColumn = ColumnVisibilityHelper.Load("RentalRecords", "Paid", true);
+
+    [ObservableProperty]
+    private bool _showInvoiceColumn = ColumnVisibilityHelper.Load("RentalRecords", "Invoice", true);
+
     partial void OnShowIdColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Id", value); ColumnVisibilityHelper.Save("RentalRecords", "Id", value); }
     partial void OnShowItemColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Item", value); ColumnVisibilityHelper.Save("RentalRecords", "Item", value); }
     partial void OnShowCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Customer", value); ColumnVisibilityHelper.Save("RentalRecords", "Customer", value); }
@@ -125,6 +131,8 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("RentalRecords", "Status", value); }
     partial void OnShowTotalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Total", value); ColumnVisibilityHelper.Save("RentalRecords", "Total", value); }
     partial void OnShowDepositColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Deposit", value); ColumnVisibilityHelper.Save("RentalRecords", "Deposit", value); }
+    partial void OnShowPaidColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Paid", value); ColumnVisibilityHelper.Save("RentalRecords", "Paid", value); }
+    partial void OnShowInvoiceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Invoice", value); ColumnVisibilityHelper.Save("RentalRecords", "Invoice", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -151,6 +159,8 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         ShowStatusColumn = true;
         ShowTotalColumn = true;
         ShowDepositColumn = true;
+        ShowPaidColumn = true;
+        ShowInvoiceColumn = true;
     }
 
     #endregion
@@ -201,6 +211,11 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         {
             App.RentalInventoryModalsViewModel.RentalCreated += OnRentalCreated;
         }
+
+        if (App.InvoiceModalsViewModel != null)
+        {
+            App.InvoiceModalsViewModel.InvoiceSaved += OnInvoiceSaved;
+        }
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -224,6 +239,11 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     }
 
     private void OnRentalCreated(object? sender, EventArgs e)
+    {
+        LoadRecords();
+    }
+
+    private void OnInvoiceSaved(object? sender, EventArgs e)
     {
         LoadRecords();
     }
@@ -407,7 +427,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             {
                 Id = record.Id,
                 AccountantName = accountant?.Name ?? "System",
-                ItemName = item?.Name ?? "Unknown Item",
+                ItemName = RentalRecordsModalsViewModel.GetItemDisplayName(record, companyData),
                 ItemId = record.RentalItemId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 CustomerId = record.CustomerId,
@@ -421,7 +441,10 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 Status = record.Status.ToString(),
                 TotalCost = record.TotalCost ?? 0,
                 DaysOverdue = record.DaysOverdue,
-                IsActive = record.Status == RentalStatus.Active || record.Status == RentalStatus.Overdue
+                IsActive = record.Status == RentalStatus.Active || record.Status == RentalStatus.Overdue,
+                Paid = record.Paid,
+                HasInvoices = record.HasInvoices,
+                InvoiceId = record.InvoiceIds.FirstOrDefault() ?? string.Empty
             };
         }).ToList();
 
@@ -441,7 +464,10 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                     ["StartDate"] = r => r.StartDate,
                     ["DueDate"] = r => r.DueDate,
                     ["Status"] = r => r.Status,
-                    ["Total"] = r => r.TotalCost
+                    ["Total"] = r => r.TotalCost,
+                    ["Deposit"] = r => r.SecurityDeposit,
+                    ["Paid"] = r => r.Paid,
+                    ["Invoice"] = r => r.InvoiceId
                 },
                 r => r.StartDate);
         }
@@ -525,6 +551,20 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         App.RentalRecordsModalsViewModel?.OpenViewModal(record);
     }
 
+    [RelayCommand]
+    private void ViewInvoice(string? invoiceId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(invoiceId);
+    }
+
+    [RelayCommand]
+    private void GenerateInvoice(RentalRecordDisplayItem? record)
+    {
+        if (record == null) return;
+        App.InvoiceModalsViewModel?.OpenCreateFromRental(record.Id);
+    }
+
     #endregion
 }
 
@@ -584,6 +624,17 @@ public partial class RentalRecordDisplayItem : ObservableObject
     [ObservableProperty]
     private bool _isActive;
 
+    [ObservableProperty]
+    private bool _paid;
+
+    [ObservableProperty]
+    private bool _hasInvoices;
+
+    [ObservableProperty]
+    private string _invoiceId = string.Empty;
+
+    public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
+
     public string StartDateFormatted => StartDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
     public string ReturnDateFormatted => ReturnDate?.ToString("MMM d, yyyy") ?? "-";
@@ -591,4 +642,13 @@ public partial class RentalRecordDisplayItem : ObservableObject
     public string TotalCostFormatted => $"${TotalCost:N2}";
     public string DepositFormatted => $"${SecurityDeposit:N2}";
     public string DaysOverdueText => DaysOverdue > 0 ? $"{DaysOverdue} days" : "-";
+    public bool CanGenerateInvoice => !Paid && !HasInvoices;
+}
+
+/// <summary>
+/// Navigation parameter for navigating to the Invoices page to create an invoice from a rental.
+/// </summary>
+public class RentalInvoiceNavigationParameter(string rentalRecordId)
+{
+    public string RentalRecordId { get; } = rentalRecordId;
 }

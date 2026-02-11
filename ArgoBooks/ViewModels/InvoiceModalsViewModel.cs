@@ -6,6 +6,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
+using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using Avalonia;
@@ -52,6 +53,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _allowPreview;
+
+    /// <summary>
+    /// Whether the invoice is being created from a rental record.
+    /// When true, rental-derived fields (customer, line items) are read-only.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isFromRental;
+
+    /// <summary>
+    /// Whether the modal is in view-only mode (read-only preview of an existing invoice).
+    /// </summary>
+    [ObservableProperty]
+    private bool _isViewOnly;
 
     [ObservableProperty]
     private string _modalTitle = "Create Invoice";
@@ -132,6 +146,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private decimal _taxRate;
 
     [ObservableProperty]
+    private decimal _securityDeposit;
+
+    [ObservableProperty]
     private string _validationMessage = string.Empty;
 
     [ObservableProperty]
@@ -156,12 +173,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     /// <summary>
     /// Returns true if any data has been entered in the Create modal.
+    /// When opened from a rental, pre-filled data doesn't count — only user-editable fields do.
     /// </summary>
     public bool HasEnteredData =>
-        SelectedCustomer != null ||
-        !string.IsNullOrWhiteSpace(ModalNotes) ||
-        TaxRate > 0 ||
-        LineItems.Any(i => !string.IsNullOrWhiteSpace(i.Description) || i.SelectedProduct != null || (i.UnitPrice ?? 0) > 0);
+        IsFromRental
+            ? !string.IsNullOrWhiteSpace(ModalNotes) || TaxRate > 0
+            : SelectedCustomer != null ||
+              !string.IsNullOrWhiteSpace(ModalNotes) ||
+              TaxRate > 0 ||
+              SecurityDeposit > 0 ||
+              LineItems.Any(i => !string.IsNullOrWhiteSpace(i.Description) || i.SelectedProduct != null || (i.UnitPrice ?? 0) > 0);
 
     // Original values for change detection in edit mode
     private string? _originalCustomerId;
@@ -170,6 +191,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private string _originalStatus = "Draft";
     private string _originalNotes = string.Empty;
     private decimal _originalTaxRate;
+    private decimal _originalSecurityDeposit;
     private List<(string? ProductId, string Description, decimal? Quantity, decimal? UnitPrice)> _originalLineItems = [];
 
     /// <summary>
@@ -185,6 +207,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             if (ModalStatus != _originalStatus) return true;
             if (ModalNotes != _originalNotes) return true;
             if (TaxRate != _originalTaxRate) return true;
+            if (SecurityDeposit != _originalSecurityDeposit) return true;
 
             // Compare line items
             if (LineItems.Count != _originalLineItems.Count) return true;
@@ -214,6 +237,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         _originalStatus = ModalStatus;
         _originalNotes = ModalNotes;
         _originalTaxRate = TaxRate;
+        _originalSecurityDeposit = SecurityDeposit;
         _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.Description, li.Quantity, li.UnitPrice)).ToList();
     }
 
@@ -231,11 +255,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     // Computed totals
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
     public decimal TaxAmount => Subtotal * (TaxRate / 100m);
-    public decimal Total => Subtotal + TaxAmount;
+    public decimal Total => Subtotal + TaxAmount + SecurityDeposit;
 
     public string SubtotalFormatted => $"${Subtotal:N2}";
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
+    public string SecurityDepositFormatted => $"${SecurityDeposit:N2}";
     public string TotalFormatted => $"${Total:N2}";
+
+    public bool HasSecurityDeposit => SecurityDeposit > 0;
 
     partial void OnSelectedTemplateChanged(InvoiceTemplate? value)
     {
@@ -251,6 +278,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         UpdateTotals();
     }
 
+    partial void OnSecurityDepositChanged(decimal value)
+    {
+        UpdateTotals();
+    }
+
     private void UpdateTotals()
     {
         OnPropertyChanged(nameof(Subtotal));
@@ -258,6 +290,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(Total));
         OnPropertyChanged(nameof(SubtotalFormatted));
         OnPropertyChanged(nameof(TaxAmountFormatted));
+        OnPropertyChanged(nameof(SecurityDepositFormatted));
+        OnPropertyChanged(nameof(HasSecurityDeposit));
         OnPropertyChanged(nameof(TotalFormatted));
     }
 
@@ -485,6 +519,113 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the create invoice modal pre-populated from a rental record.
+    /// </summary>
+    public void OpenCreateFromRental(string rentalRecordId)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var rental = companyData.Rentals.FirstOrDefault(r => r.Id == rentalRecordId);
+        if (rental == null) return;
+
+        var rentalItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == rental.RentalItemId);
+        var itemName = rentalItem?.Name ?? "Unknown Item";
+
+        // Open the standard create modal (loads options, resets form)
+        OpenCreateModal();
+
+        // Mark as from rental so rental-derived fields are read-only
+        IsFromRental = true;
+
+        // Pre-select the customer
+        SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == rental.CustomerId);
+
+        // Calculate rental cost
+        var endDate = rental.ReturnDate ?? DateTime.Today;
+        var days = (int)(endDate - rental.StartDate).TotalDays;
+        if (days < 1) days = 1;
+
+        var totalCost = rental.RateType switch
+        {
+            RateType.Daily => rental.RateAmount * days * rental.Quantity,
+            RateType.Weekly => rental.RateAmount * (decimal)Math.Ceiling(days / 7.0) * rental.Quantity,
+            RateType.Monthly => rental.RateAmount * (decimal)Math.Ceiling(days / 30.0) * rental.Quantity,
+            _ => rental.RateAmount * days * rental.Quantity
+        };
+
+        // Replace the default line item with rental charge
+        LineItems.Clear();
+
+        // Try to match rental item to a product by name, or create a synthetic one
+        var matchedProduct = ProductOptions.FirstOrDefault(p =>
+            string.Equals(p.Name, itemName, StringComparison.OrdinalIgnoreCase));
+
+        if (matchedProduct == null)
+        {
+            // Create a synthetic product option from the rental item so the dropdown shows the item
+            matchedProduct = new ProductOption
+            {
+                Id = rentalItem?.Id ?? rental.RentalItemId,
+                Name = itemName,
+                Description = itemName,
+                UnitPrice = totalCost
+            };
+            ProductOptions.Add(matchedProduct);
+        }
+
+        var rentalLineItem = new LineItemDisplayModel
+        {
+            SelectedProduct = matchedProduct,
+            Description = $"Rental: {itemName} ({rental.RateType} @ ${rental.RateAmount:N2} x {rental.Quantity})",
+            Quantity = 1,
+            UnitPrice = totalCost,
+            RentalRecordId = rental.Id
+        };
+        rentalLineItem.PropertyChanged += (_, _) => UpdateTotals();
+        LineItems.Add(rentalLineItem);
+
+        // Store security deposit separately (not as a line item)
+        SecurityDeposit = rental.SecurityDeposit;
+
+        UpdateTotals();
+    }
+
+    /// <summary>
+    /// Opens a read-only preview of an existing invoice.
+    /// </summary>
+    public void OpenViewInvoice(string? invoiceId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+        if (invoice == null) return;
+
+        // Get the template
+        var template = companyData.InvoiceTemplates.FirstOrDefault(t => t.IsDefault);
+        if (template == null)
+        {
+            var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
+            template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
+        }
+
+        // Render HTML
+        var renderer = new InvoiceHtmlRenderer();
+        var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+        PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol);
+
+        // Open modal in view-only preview mode
+        ResetForm();
+        IsViewOnly = true;
+        IsShowingPreview = true;
+        ModalTitle = "View Invoice";
+        IsCreateEditModalOpen = true;
+    }
+
+    /// <summary>
     /// Opens the create modal populated with draft invoice data for continuing work.
     /// Unlike edit mode, this shows the Preview button and allows sending the invoice.
     /// </summary>
@@ -522,6 +663,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalStatus = invoice.Status.ToString();
         ModalNotes = invoice.Notes;
         TaxRate = invoice.TaxRate;
+        SecurityDeposit = invoice.SecurityDeposit;
 
         // Populate line items
         LineItems.Clear();
@@ -530,6 +672,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var displayItem = new LineItemDisplayModel
             {
                 SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == lineItem.ProductId),
+                RentalRecordId = lineItem.RentalRecordId,
                 Description = lineItem.Description,
                 Quantity = lineItem.Quantity,
                 UnitPrice = lineItem.UnitPrice
@@ -592,6 +735,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalStatus = invoice.Status.ToString();
         ModalNotes = invoice.Notes;
         TaxRate = invoice.TaxRate;
+        SecurityDeposit = invoice.SecurityDeposit;
 
         // Populate line items
         LineItems.Clear();
@@ -599,6 +743,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             var displayItem = new LineItemDisplayModel
             {
+                SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == lineItem.ProductId),
+                RentalRecordId = lineItem.RentalRecordId,
                 Description = lineItem.Description,
                 Quantity = lineItem.Quantity,
                 UnitPrice = lineItem.UnitPrice
@@ -874,7 +1020,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Calculate totals
         previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         previewInvoice.TaxAmount = previewInvoice.Subtotal * (TaxRate / 100m);
-        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount;
+        previewInvoice.SecurityDeposit = SecurityDeposit;
+        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount + SecurityDeposit;
         previewInvoice.Balance = previewInvoice.Total;
 
         // Render HTML using the same renderer as the template designer
@@ -932,10 +1079,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
         else
         {
-            // Validate that all line items have a product selected
+            // Validate that all line items have a product selected (rental line items are exempt)
             foreach (var lineItem in LineItems)
             {
-                if (lineItem.SelectedProduct == null)
+                if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId))
                 {
                     lineItem.HasProductError = true;
                     hasErrors = true;
@@ -1033,12 +1180,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
             invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
             invoice.TaxRate = TaxRate;
+            invoice.SecurityDeposit = SecurityDeposit;
             invoice.Notes = ModalNotes;
             invoice.Status = InvoiceStatus.Pending;
             invoice.UpdatedAt = DateTime.Now;
             invoice.LineItems = LineItems.Select(i => new LineItem
             {
                 ProductId = i.SelectedProduct?.Id,
+                RentalRecordId = i.RentalRecordId,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1059,6 +1208,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
                 DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
                 TaxRate = TaxRate,
+                SecurityDeposit = SecurityDeposit,
                 Notes = ModalNotes,
                 Status = InvoiceStatus.Pending,
                 CreatedAt = DateTime.Now,
@@ -1066,6 +1216,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 LineItems = LineItems.Select(i => new LineItem
                 {
                     ProductId = i.SelectedProduct?.Id,
+                    RentalRecordId = i.RentalRecordId,
                     Description = i.Description,
                     Quantity = i.Quantity ?? 0,
                     UnitPrice = i.UnitPrice ?? 0,
@@ -1136,16 +1287,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 () =>
                 {
                     companyData.Invoices.Remove(invoice);
+                    UnlinkInvoiceFromRentals(invoice, companyData);
                     InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
                     companyData.Invoices.Add(invoice);
+                    LinkInvoiceToRentals(invoice, companyData);
                     InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 });
 
-            // Add the new invoice to the collection
+            // Add the new invoice to the collection and link to rentals
             companyData.Invoices.Add(invoice);
+            LinkInvoiceToRentals(invoice, companyData);
         }
 
         // Record undo action and mark as changed
@@ -1217,6 +1371,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {
+                // Hide the WebView so the confirmation dialog renders above it (airspace issue)
+                var wasShowingPreview = IsShowingPreview;
+                if (wasShowingPreview)
+                    IsShowingPreview = false;
+
                 var message = IsEditMode
                     ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
                     : "You have entered data that will be lost. Are you sure you want to close?".Translate();
@@ -1231,7 +1390,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 });
 
                 if (result != ConfirmationResult.Primary)
+                {
+                    if (wasShowingPreview)
+                        IsShowingPreview = true;
                     return;
+                }
             }
         }
 
@@ -1274,6 +1437,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
             TaxRate = TaxRate,
+            SecurityDeposit = SecurityDeposit,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
             CreatedAt = DateTime.Now,
@@ -1281,6 +1445,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LineItems = LineItems.Select(i => new LineItem
             {
                 ProductId = i.SelectedProduct?.Id,
+                RentalRecordId = i.RentalRecordId,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1294,16 +1459,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             () =>
             {
                 companyData.Invoices.Remove(invoice);
+                UnlinkInvoiceFromRentals(invoice, companyData);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Invoices.Add(invoice);
+                LinkInvoiceToRentals(invoice, companyData);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             });
 
-        // Add the invoice
+        // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
+        LinkInvoiceToRentals(invoice, companyData);
 
         // Record undo action and mark as changed
         App.UndoRedoManager.RecordAction(action);
@@ -1341,11 +1509,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
-        // Validate that all line items have a product selected
+        // Validate that all line items have a product selected (rental line items are exempt)
         var hasProductErrors = false;
         foreach (var lineItem in LineItems)
         {
-            if (lineItem.SelectedProduct == null)
+            if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId))
             {
                 lineItem.HasProductError = true;
                 hasProductErrors = true;
@@ -1388,6 +1556,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
             TaxRate = TaxRate,
+            SecurityDeposit = SecurityDeposit,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
             CreatedAt = DateTime.Now,
@@ -1395,6 +1564,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LineItems = LineItems.Select(i => new LineItem
             {
                 ProductId = i.SelectedProduct?.Id,
+                RentalRecordId = i.RentalRecordId,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1408,17 +1578,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             () =>
             {
                 companyData.Invoices.Remove(invoice);
+                UnlinkInvoiceFromRentals(invoice, companyData);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Invoices.Add(invoice);
+                LinkInvoiceToRentals(invoice, companyData);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 App.CheckAndNotifyInvoiceOverdue(invoice);
             });
 
-        // Add the invoice
+        // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
+        LinkInvoiceToRentals(invoice, companyData);
 
         // Record undo action and mark as changed
         App.UndoRedoManager.RecordAction(action);
@@ -1440,6 +1613,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var originalStatus = invoice.Status;
         var originalNotes = invoice.Notes;
         var originalTaxRate = invoice.TaxRate;
+        var originalSecurityDeposit = invoice.SecurityDeposit;
         var originalLineItems = invoice.LineItems.ToList();
 
         // Apply changes
@@ -1449,6 +1623,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.Status = Enum.Parse<InvoiceStatus>(ModalStatus);
         invoice.Notes = ModalNotes;
         invoice.TaxRate = TaxRate;
+        invoice.SecurityDeposit = SecurityDeposit;
         invoice.UpdatedAt = DateTime.Now;
         invoice.LineItems = LineItems.Select(i => new LineItem
         {
@@ -1470,6 +1645,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 invoice.Status = originalStatus;
                 invoice.Notes = originalNotes;
                 invoice.TaxRate = originalTaxRate;
+                invoice.SecurityDeposit = originalSecurityDeposit;
                 invoice.LineItems = originalLineItems;
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -1481,6 +1657,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 invoice.Status = Enum.Parse<InvoiceStatus>(ModalStatus);
                 invoice.Notes = ModalNotes;
                 invoice.TaxRate = TaxRate;
+                invoice.SecurityDeposit = SecurityDeposit;
                 invoice.LineItems = LineItems.Select(i => new LineItem
                 {
                     ProductId = i.SelectedProduct?.Id,
@@ -1501,15 +1678,49 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CheckAndNotifyInvoiceOverdue(invoice);
     }
 
+    /// <summary>
+    /// Links an invoice to any rental records referenced by its line items.
+    /// </summary>
+    private static void LinkInvoiceToRentals(Invoice invoice, CompanyData companyData)
+    {
+        foreach (var rentalId in invoice.LineItems
+                     .Where(li => !string.IsNullOrEmpty(li.RentalRecordId))
+                     .Select(li => li.RentalRecordId!)
+                     .Distinct())
+        {
+            var rental = companyData.Rentals.FirstOrDefault(r => r.Id == rentalId);
+            if (rental != null && !rental.InvoiceIds.Contains(invoice.Id))
+                rental.InvoiceIds.Add(invoice.Id);
+        }
+    }
+
+    /// <summary>
+    /// Unlinks an invoice from any rental records referenced by its line items.
+    /// </summary>
+    private static void UnlinkInvoiceFromRentals(Invoice invoice, CompanyData companyData)
+    {
+        foreach (var rentalId in invoice.LineItems
+                     .Where(li => !string.IsNullOrEmpty(li.RentalRecordId))
+                     .Select(li => li.RentalRecordId!)
+                     .Distinct())
+        {
+            var rental = companyData.Rentals.FirstOrDefault(r => r.Id == rentalId);
+            rental?.InvoiceIds.Remove(invoice.Id);
+        }
+    }
+
     private void ResetForm()
     {
         _editingInvoiceId = string.Empty;
+        IsFromRental = false;
+        IsViewOnly = false;
         SelectedCustomer = null;
         ModalIssueDate = DateTimeOffset.Now;
         ModalDueDate = DateTimeOffset.Now.AddDays(30);
         ModalStatus = "Draft";
         ModalNotes = string.Empty;
         TaxRate = 0;
+        SecurityDeposit = 0;
         LineItems.Clear();
         AddLineItem(); // Add one default line item
         HasCustomerError = false;
@@ -1544,6 +1755,9 @@ public partial class LineItemDisplayModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasProductError;
+
+    [ObservableProperty]
+    private string? _rentalRecordId;
 
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => $"${Amount:N2}";

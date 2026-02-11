@@ -92,8 +92,8 @@
                                                                 ShowAddNew="False" />
                                 </StackPanel>
 
-                                <!-- Customer Selection (right) -->
-                                <StackPanel Grid.Column="2" Spacing="6">
+                                <!-- Customer Selection (right) - hidden when from rental -->
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromRental}">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
@@ -111,8 +111,8 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Dates Row -->
-                            <Grid ColumnDefinitions="*,16,*">
+                            <!-- Dates Row - hidden when from rental -->
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromRental}">
                                 <!-- Issue Date -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
@@ -134,8 +134,8 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Line Items Section -->
-                            <StackPanel Spacing="12">
+                            <!-- Line Items Section - hidden when from rental -->
+                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromRental}">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0"
                                                Text="{loc:Loc 'Line Items'}"
@@ -160,7 +160,7 @@
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
                                     <Grid ColumnDefinitions="2*,80,90,70,Auto">
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
-                                            <TextBlock Text="{loc:Loc Product}" FontSize="12" FontWeight="Medium"
+                                            <TextBlock Text="{loc:Loc 'Product / Service'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text=" *" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource DangerBrush}" />
@@ -247,7 +247,7 @@
                             <Border Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
                                     Padding="16">
-                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                Text="{loc:Loc Subtotal}"
                                                FontSize="14"
@@ -284,17 +284,31 @@
                                                    Margin="16,0,0,0" />
                                     </StackPanel>
 
-                                    <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                    <!-- Security Deposit (shown only when applicable) -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0"
+                                               Text="{loc:Loc 'Security Deposit'}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="0,8,0,0"
+                                               IsVisible="{Binding HasSecurityDeposit}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1"
+                                               Text="{Binding SecurityDepositFormatted}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,0"
+                                               IsVisible="{Binding HasSecurityDeposit}" />
+
+                                    <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
                                             Height="1"
                                             Background="{DynamicResource BorderBrush}"
                                             Margin="0,12" />
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0"
+                                    <TextBlock Grid.Row="4" Grid.Column="0"
                                                Text="{loc:Loc Total}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Grid.Row="3" Grid.Column="1"
+                                    <TextBlock Grid.Row="4" Grid.Column="1"
                                                Text="{Binding TotalFormatted}"
                                                FontSize="16"
                                                FontWeight="Bold"
@@ -386,9 +400,29 @@
                         </Grid>
                     </Border>
 
-                    <!-- Footer - Preview Mode -->
-                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" IsVisible="{Binding ShowPreviewContent}">
-                        <StackPanel Spacing="12">
+                    <!-- Footer - View Only Mode -->
+                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                            IsVisible="{Binding IsViewOnly}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                <Button Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <PathIcon Data="{x:Static icons:Icons.OpenInNew}" Width="14" Height="14" />
+                                        <TextBlock Text="{loc:Loc 'Open in Browser'}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <Button Grid.Column="2"
+                                    Classes="primary-button"
+                                    Content="{loc:Loc Close}"
+                                    Command="{Binding CloseCreateEditModalCommand}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Footer - Preview Send Mode -->
+                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                            IsVisible="{Binding ShowPreviewContent}">
+                        <StackPanel Spacing="12" IsVisible="{Binding !IsViewOnly}">
                             <!-- Error Banner -->
                             <Border Background="{DynamicResource ErrorLightBrush}"
                                     BorderBrush="{DynamicResource ErrorBrush}"

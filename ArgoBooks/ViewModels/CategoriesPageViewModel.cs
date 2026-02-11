@@ -269,7 +269,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     #region Dropdown Options
 
     /// <summary>
-    /// Item types (Product/Service).
+    /// Item types (Product / Service).
     /// </summary>
     public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
 

@@ -22,4 +22,10 @@ public class Revenue : Transaction
     /// </summary>
     [JsonPropertyName("paymentStatus")]
     public string PaymentStatus { get; set; } = "Paid";
+
+    /// <summary>
+    /// Associated invoice ID, if this revenue is linked to an invoice.
+    /// </summary>
+    [JsonPropertyName("invoiceId")]
+    public string? InvoiceId { get; set; }
 }

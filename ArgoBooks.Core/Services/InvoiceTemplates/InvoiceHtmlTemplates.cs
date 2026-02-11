@@ -129,6 +129,12 @@ public static class InvoiceHtmlTemplates
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
                                 </tr>
                                 {{/ShowTaxBreakdown}}
+                                {{#ShowSecurityDeposit}}
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Security Deposit</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{SecurityDeposit}}</td>
+                                </tr>
+                                {{/ShowSecurityDeposit}}
                                 <tr>
                                     <td colspan="2" style="border-top: 2px solid {{SecondaryColor}}; padding-top: 12px;"></td>
                                 </tr>
@@ -343,6 +349,12 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
                                             </tr>
                                             {{/ShowTaxBreakdown}}
+                                            {{#ShowSecurityDeposit}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Security Deposit</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{SecurityDeposit}}</td>
+                                            </tr>
+                                            {{/ShowSecurityDeposit}}
                                             <tr>
                                                 <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
                                             </tr>
@@ -518,6 +530,12 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{TaxAmount}}</td>
                                             </tr>
                                             {{/ShowTaxBreakdown}}
+                                            {{#ShowSecurityDeposit}}
+                                            <tr>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Security Deposit</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{SecurityDeposit}}</td>
+                                            </tr>
+                                            {{/ShowSecurityDeposit}}
                                             <tr style="background-color: {{PrimaryColor}};">
                                                 <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">TOTAL</td>
                                                 <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;">{{Total}}</td>
@@ -686,6 +704,12 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
                                             </tr>
                                             {{/ShowTaxBreakdown}}
+                                            {{#ShowSecurityDeposit}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Security Deposit</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{SecurityDeposit}}</td>
+                                            </tr>
+                                            {{/ShowSecurityDeposit}}
                                             <tr>
                                                 <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
                                             </tr>
@@ -898,6 +922,12 @@ public static class InvoiceHtmlTemplates
                         <span>{{TaxAmount}}</span>
                     </div>
                     {{/ShowTaxBreakdown}}
+                    {{#ShowSecurityDeposit}}
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
+                        <span>Security Deposit</span>
+                        <span>{{SecurityDeposit}}</span>
+                    </div>
+                    {{/ShowSecurityDeposit}}
                     <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{HeaderColor}}; margin-top: 10px;">
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Total</span>
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;">{{Total}}</span>

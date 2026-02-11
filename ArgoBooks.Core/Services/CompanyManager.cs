@@ -603,11 +603,9 @@ public class CompanyManager : IDisposable
     /// the working file, file lock, or unsaved changes state.
     /// </summary>
     /// <param name="backupPath">The path for the .argobk backup file.</param>
-    /// <param name="includeAttachments">Whether to include receipt file attachments in the backup.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ExportBackupAsync(
         string backupPath,
-        bool includeAttachments = true,
         CancellationToken cancellationToken = default)
     {
         if (!IsCompanyOpen || _currentTempDirectory == null || _companyData == null)
@@ -624,60 +622,14 @@ public class CompanyManager : IDisposable
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
         await _fileService.SaveCompanyDataAsync(companyDir, _companyData, cancellationToken);
 
-        if (includeAttachments)
-        {
-            // Export the entire temp directory as-is (includes receipts/)
-            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
-        }
-        else
-        {
-            // Create a temporary copy without the receipts files
-            var backupTempDir = CreateTempDirectory();
-            try
-            {
-                var companyDirName = Path.GetFileName(companyDir);
-                var backupCompanyDir = Path.Combine(backupTempDir, companyDirName);
-                CopyDirectoryExcluding(companyDir, backupCompanyDir, "receipts");
-
-                await _fileService.SaveCompanyAsync(backupPath, backupTempDir, null, cancellationToken);
-            }
-            finally
-            {
-                if (Directory.Exists(backupTempDir))
-                    Directory.Delete(backupTempDir, recursive: true);
-            }
-        }
+        // Export the entire temp directory as-is (includes receipts/)
+        await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
 
         // Note: We intentionally do NOT:
         // - Change _currentFilePath (backup is a separate file)
         // - Release/acquire file lock (working file stays locked)
         // - Mark as saved (unsaved changes state is unchanged)
         // - Add to recent companies (backups are not working files)
-    }
-
-    /// <summary>
-    /// Copies a directory excluding a specific subdirectory.
-    /// </summary>
-    private static void CopyDirectoryExcluding(string sourceDir, string destDir, string excludeSubDir)
-    {
-        Directory.CreateDirectory(destDir);
-
-        foreach (var file in Directory.GetFiles(sourceDir))
-        {
-            File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)));
-        }
-
-        foreach (var dir in Directory.GetDirectories(sourceDir))
-        {
-            var dirName = Path.GetFileName(dir);
-            if (string.Equals(dirName, excludeSubDir, StringComparison.OrdinalIgnoreCase))
-            {
-                // Create an empty receipts directory in the backup
-                Directory.CreateDirectory(Path.Combine(destDir, dirName));
-                continue;
-            }
-            CopyDirectoryExcluding(dir, Path.Combine(destDir, dirName), excludeSubDir);
-        }
     }
 
     /// <summary>

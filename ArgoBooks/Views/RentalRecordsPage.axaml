@@ -130,6 +130,18 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
+                        <table:ArgoTableHeader Header="{loc:Loc 'Paid'}" ColumnName="Paid" SortProperty="Paid"
+                                                   ColumnWidth="{Binding ColumnWidths.PaidColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowPaidColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc 'Invoice'}" ColumnName="Invoice" SortProperty="Invoice"
+                                                   ColumnWidth="{Binding ColumnWidths.InvoiceColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowInvoiceColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
                         <table:ArgoTableHeader Header="{loc:Loc 'Actions'}" ColumnName="Actions"
                                                    ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
                                                    IsSortable="False" IsResizable="False" ShowSeparator="False" />
@@ -225,6 +237,38 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.DepositColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowDepositColumn}" />
 
+                                        <!-- Paid Badge -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.PaidColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowPaidColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Border VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Padding="8,4"
+                                                        CornerRadius="4"
+                                                        Background="{Binding Paid, Converter={x:Static local:BoolConverters.ToPaidBackground}}">
+                                                    <TextBlock Text="{Binding Paid, Converter={x:Static local:BoolConverters.ToPaidText}}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               Foreground="{Binding Paid, Converter={x:Static local:BoolConverters.ToPaidForeground}}" />
+                                                </Border>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+
+                                        <!-- Invoice - Clickable link -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.InvoiceColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowInvoiceColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Button Classes="link-button"
+                                                        Content="{Binding InvoiceId}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ViewInvoiceCommand}"
+                                                        CommandParameter="{Binding InvoiceId}"
+                                                        IsVisible="{Binding HasInvoiceId}"
+                                                        VerticalAlignment="Center"
+                                                        Padding="0"
+                                                        Cursor="Hand" />
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+
                                         <!-- Actions - Custom content -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
                                                                  ShowSeparator="False">
@@ -254,6 +298,15 @@
                                                             CommandParameter="{Binding}"
                                                             IsVisible="{Binding IsActive}">
                                                         <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <!-- Generate Invoice Button -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Generate Invoice'}"
+                                                            IsVisible="{Binding CanGenerateInvoice}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).GenerateInvoiceCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger"
@@ -293,6 +346,8 @@
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="{loc:Loc 'Total'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="{loc:Loc 'Deposit'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPaidColumn}" Content="{loc:Loc 'Paid'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowInvoiceColumn}" Content="{loc:Loc 'Invoice'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

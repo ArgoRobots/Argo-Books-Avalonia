@@ -806,13 +806,13 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var outstandingAmountUSD = outstandingInvoices.Sum(i => i.EffectiveBalanceUSD);
         OutstandingInvoices = FormatCurrencyFromUSD(outstandingAmountUSD, DateTime.Now);
 
-        // Calculate active rentals
+        // Calculate active rentals (including overdue)
         var activeRentals = data.Rentals
-            .Where(r => r.Status == RentalStatus.Active)
+            .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue)
             .ToList();
 
         ActiveRentals = activeRentals.Count.ToString();
-        OverdueRentalCount = activeRentals.Count(r => r.IsOverdue);
+        OverdueRentalCount = activeRentals.Count(r => r.Status == RentalStatus.Overdue);
     }
 
     private void LoadRecentTransactions(CompanyData data)
@@ -875,7 +875,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void LoadActiveRentals(CompanyData data)
     {
         var activeRentals = data.Rentals
-            .Where(r => r.Status == RentalStatus.Active)
+            .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue)
             .OrderBy(r => r.DueDate)
             .Take(10)
             .Select(r => new ActiveRentalItem
@@ -889,10 +889,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 DueDateFormatted = FormatDate(r.DueDate),
                 RateAmount = FormatCurrency(r.RateAmount),
                 RateType = r.RateType.ToString(),
-                Status = r.IsOverdue ? "Overdue" : "Active",
-                StatusVariant = r.IsOverdue ? "error" : "success",
+                Status = r.Status == RentalStatus.Overdue ? "Overdue" : "Active",
+                StatusVariant = r.Status == RentalStatus.Overdue ? "error" : "success",
                 DaysRemaining = CalculateDaysRemaining(r.DueDate),
-                IsOverdue = r.IsOverdue
+                IsOverdue = r.Status == RentalStatus.Overdue
             })
             .ToList();
 

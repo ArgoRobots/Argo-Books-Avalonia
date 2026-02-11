@@ -165,6 +165,12 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
+                        <table:ArgoTableHeader Header="{loc:Loc 'Invoice'}" ColumnName="Invoice" SortProperty="Invoice"
+                                                   ColumnWidth="{Binding ColumnWidths.InvoiceColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowInvoiceColumn}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
                         <table:ArgoTableHeader Header="{loc:Loc 'Actions'}" ColumnName="Actions"
                                                    ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
                                                    IsSortable="False" IsResizable="False" ShowSeparator="False" />
@@ -298,6 +304,21 @@
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
 
+                                        <!-- Invoice - Clickable link -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.InvoiceColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowInvoiceColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Button Classes="link-button"
+                                                        Content="{Binding InvoiceId}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ViewInvoiceCommand}"
+                                                        CommandParameter="{Binding InvoiceId}"
+                                                        IsVisible="{Binding HasInvoiceId}"
+                                                        VerticalAlignment="Center"
+                                                        Padding="0"
+                                                        Cursor="Hand" />
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+
                                         <!-- Actions - Custom content required -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
                                                                  ShowSeparator="False">
@@ -398,6 +419,7 @@
                 <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="{loc:Loc 'Total'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="{loc:Loc 'Receipt'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowInvoiceColumn}" Content="{loc:Loc 'Invoice'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>
