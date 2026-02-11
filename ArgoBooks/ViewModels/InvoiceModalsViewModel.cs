@@ -1767,7 +1767,8 @@ public partial class LineItemDisplayModel : ObservableObject
         if (value != null)
         {
             Description = value.Name;
-            UnitPrice = value.UnitPrice;
+            if (UnitPrice is null or 0)
+                UnitPrice = value.UnitPrice;
             HasProductError = false;
         }
     }

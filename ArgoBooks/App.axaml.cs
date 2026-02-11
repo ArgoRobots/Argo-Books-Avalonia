@@ -1103,6 +1103,10 @@ public class App : Application
     {
         if (EventLogService != null && CompanyManager?.CompanyData != null)
         {
+            // Commit pending events: remove events for actions that were undone,
+            // and mark remaining unsaved events as saved
+            EventLogService.CommitPendingEvents(UndoRedoManager.UndoHistory);
+
             EventLogService.SyncToCompanyData(CompanyManager.CompanyData);
         }
     }
@@ -1890,9 +1894,27 @@ public class App : Application
                 var settings = CompanyManager.CurrentCompanySettings;
                 if (settings != null)
                 {
+                    // Capture old values for undo
                     var oldName = settings.Company.Name;
+                    var oldBusinessType = settings.Company.BusinessType;
+                    var oldIndustry = settings.Company.Industry;
+                    var oldPhone = settings.Company.Phone;
+                    var oldCountry = settings.Company.Country;
+                    var oldCity = settings.Company.City;
+                    var oldAddress = settings.Company.Address;
+                    var oldLogoFileName = settings.Company.LogoFileName;
+
+                    // Save old logo bytes for potential undo restore
+                    byte[]? oldLogoBytes = null;
+                    var oldLogoFilePath = CompanyManager.CurrentCompanyLogoPath;
+                    if (!string.IsNullOrEmpty(oldLogoFilePath) && File.Exists(oldLogoFilePath))
+                    {
+                        oldLogoBytes = await Task.Run(() => File.ReadAllBytes(oldLogoFilePath));
+                    }
+
                     var nameChanged = oldName != args.CompanyName;
 
+                    // Apply new values
                     settings.Company.Name = args.CompanyName;
                     settings.Company.BusinessType = args.BusinessType;
                     settings.Company.Industry = args.Industry;
@@ -1912,10 +1934,27 @@ public class App : Application
                         await CompanyManager.RemoveCompanyLogoAsync();
                     }
 
+                    // Capture new logo state after changes
+                    var newLogoFileName = settings.Company.LogoFileName;
+                    byte[]? newLogoBytes = null;
+                    var newLogoFilePath = CompanyManager.CurrentCompanyLogoPath;
+                    if (!string.IsNullOrEmpty(newLogoFilePath) && File.Exists(newLogoFilePath))
+                    {
+                        newLogoBytes = await Task.Run(() => File.ReadAllBytes(newLogoFilePath));
+                    }
+
+                    // Derive temp directory for logo file operations during undo/redo
+                    var logoTempDir = !string.IsNullOrEmpty(oldLogoFilePath)
+                        ? Path.GetDirectoryName(oldLogoFilePath)
+                        : (!string.IsNullOrEmpty(newLogoFilePath)
+                            ? Path.GetDirectoryName(newLogoFilePath)
+                            : null);
+
                     // Mark settings as changed
                     settings.ChangesMade = true;
 
                     // If company name changed, save and rename file (skip for sample company)
+                    var oldFilePath = CompanyManager.CurrentFilePath;
                     if (nameChanged && CompanyManager.CurrentFilePath != null && !CompanyManager.IsSampleCompany)
                     {
                         // Save first to persist the new name in the file
@@ -1931,8 +1970,8 @@ public class App : Application
                         {
                             CompanyManager.RenameFile(newPath);
                         }
-
                     }
+                    var newFilePath = CompanyManager.CurrentFilePath;
 
                     // Update UI
                     _mainWindowViewModel?.OpenCompany(args.CompanyName);
@@ -1942,6 +1981,74 @@ public class App : Application
                         args.CompanyName,
                         CompanyManager.CurrentFilePath,
                         logo);
+
+                    // Record undo/redo action
+                    var newName = args.CompanyName;
+                    var newBusinessType = args.BusinessType;
+                    var newIndustry = args.Industry;
+                    var newPhone = args.Phone;
+                    var newCountry = args.Country;
+                    var newCity = args.City;
+                    var newAddress = args.Address;
+
+                    UndoRedoManager.RecordAction(new DelegateAction(
+                        $"Edit company '{newName}'",
+                        () =>
+                        {
+                            // Restore old values
+                            settings.Company.Name = oldName;
+                            settings.Company.BusinessType = oldBusinessType;
+                            settings.Company.Industry = oldIndustry;
+                            settings.Company.Phone = oldPhone;
+                            settings.Company.Country = oldCountry;
+                            settings.Company.City = oldCity;
+                            settings.Company.Address = oldAddress;
+
+                            // Restore old logo
+                            RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
+
+                            // Rename file back if it was renamed
+                            if (oldFilePath != newFilePath && oldFilePath != null)
+                            {
+                                try
+                                {
+                                    if (!File.Exists(oldFilePath))
+                                        CompanyManager!.RenameFile(oldFilePath);
+                                }
+                                catch { /* Continue if rename fails - settings are already correct */ }
+                            }
+
+                            settings.ChangesMade = true;
+                            RefreshCompanyUI(oldName);
+                        },
+                        () =>
+                        {
+                            // Re-apply new values
+                            settings.Company.Name = newName;
+                            settings.Company.BusinessType = newBusinessType;
+                            settings.Company.Industry = newIndustry;
+                            settings.Company.Phone = newPhone;
+                            settings.Company.Country = newCountry;
+                            settings.Company.City = newCity;
+                            settings.Company.Address = newAddress;
+
+                            // Restore new logo
+                            RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);
+
+                            // Rename file to new name if it was renamed
+                            if (oldFilePath != newFilePath && newFilePath != null)
+                            {
+                                try
+                                {
+                                    if (!File.Exists(newFilePath))
+                                        CompanyManager!.RenameFile(newFilePath);
+                                }
+                                catch { /* Continue if rename fails - settings are already correct */ }
+                            }
+
+                            settings.ChangesMade = true;
+                            RefreshCompanyUI(newName);
+                        }));
                 }
             }
             catch (Exception ex)
@@ -1981,6 +2088,36 @@ public class App : Application
                 }
             }
         };
+    }
+
+    /// <summary>
+    /// Restores a company logo file and updates the LogoFileName setting.
+    /// Used by undo/redo to restore logo state.
+    /// </summary>
+    private static void RestoreCompanyLogo(CompanySettings settings, string? logoFileName, byte[]? logoBytes, string? tempDir)
+    {
+        settings.Company.LogoFileName = logoFileName;
+        if (tempDir != null && logoFileName != null && logoBytes != null)
+        {
+            var path = Path.Combine(tempDir, logoFileName);
+            File.WriteAllBytes(path, logoBytes);
+        }
+    }
+
+    /// <summary>
+    /// Refreshes company-related UI elements (sidebar, company switcher, main window title).
+    /// Used by undo/redo to update the UI after restoring company data.
+    /// </summary>
+    private static void RefreshCompanyUI(string companyName)
+    {
+        if (_appShellViewModel == null) return;
+        _mainWindowViewModel?.OpenCompany(companyName);
+        var logo = LoadBitmapFromPath(CompanyManager?.CurrentCompanyLogoPath);
+        _appShellViewModel.SetCompanyInfo(companyName, logo);
+        _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
+            companyName,
+            CompanyManager?.CurrentFilePath,
+            logo);
     }
 
     /// <summary>
