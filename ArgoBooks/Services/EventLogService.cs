@@ -59,6 +59,12 @@ public class EventLogService
             _events.AddRange(persistedEvents);
         }
 
+        // Mark all loaded events as saved (they came from disk)
+        foreach (var evt in _events)
+        {
+            evt.IsSaved = true;
+        }
+
         // Reconstruct undoable actions for persisted events
         if (companyData != null)
         {
@@ -316,7 +322,7 @@ public class EventLogService
     public IEnumerable<string> GetEntityTypes()
     {
         return _events
-            .Where(e => !string.IsNullOrEmpty(e.EntityType))
+            .Where(e => e.IsSaved && !string.IsNullOrEmpty(e.EntityType))
             .Select(e => e.EntityType)
             .Distinct()
             .OrderBy(t => t);
@@ -326,6 +332,70 @@ public class EventLogService
     /// Gets the total number of events.
     /// </summary>
     public int EventCount => _events.Count;
+
+    /// <summary>
+    /// Gets the number of saved (persisted) events.
+    /// </summary>
+    public int SavedEventCount => _events.Count(e => e.IsSaved);
+
+    /// <summary>
+    /// Commits pending (unsaved) events by checking which ones correspond to actions
+    /// still in the undo stack. Pending events whose actions have been undone (no longer
+    /// in the undo stack) are removed. Remaining pending events are marked as saved.
+    /// Call this before SyncToCompanyData during save.
+    /// </summary>
+    /// <param name="activeUndoActions">The current undo stack actions from UndoRedoManager.</param>
+    public void CommitPendingEvents(IReadOnlyList<IUndoableAction> activeUndoActions)
+    {
+        var activeSet = new HashSet<IUndoableAction>(activeUndoActions);
+
+        // Find unsaved events whose actions are no longer active (undone via Ctrl+Z)
+        var eventsToRemove = new List<AuditEvent>();
+        foreach (var evt in _events)
+        {
+            if (evt.IsSaved)
+                continue;
+
+            // Meta-events (Undone/Redone from selective undo) follow their parent
+            if (evt.Action is AuditAction.Undone or AuditAction.Redone)
+            {
+                // Keep if the related original event is still present
+                if (!string.IsNullOrEmpty(evt.RelatedEventId) &&
+                    _events.Any(e => e.Id == evt.RelatedEventId && !eventsToRemove.Contains(e)))
+                    continue;
+
+                eventsToRemove.Add(evt);
+                continue;
+            }
+
+            // Check if this event's action is still in the undo stack
+            if (_undoableActions.TryGetValue(evt.Id, out var action) && activeSet.Contains(action))
+                continue;
+
+            // Action was undone (not in undo stack) — if the event doesn't have a mapped action,
+            // it might have been created without one, so keep it
+            if (!_undoableActions.ContainsKey(evt.Id))
+                continue;
+
+            eventsToRemove.Add(evt);
+        }
+
+        // Remove stale events
+        foreach (var evt in eventsToRemove)
+        {
+            _events.Remove(evt);
+            _undoableActions.Remove(evt.Id);
+        }
+
+        // Mark all remaining unsaved events as saved
+        foreach (var evt in _events)
+        {
+            evt.IsSaved = true;
+        }
+
+        if (eventsToRemove.Count > 0)
+            EventsChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     /// <summary>
     /// Syncs the in-memory event list back to the CompanyData for persistence.

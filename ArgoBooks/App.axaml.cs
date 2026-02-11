@@ -1103,6 +1103,10 @@ public class App : Application
     {
         if (EventLogService != null && CompanyManager?.CompanyData != null)
         {
+            // Commit pending events: remove events for actions that were undone,
+            // and mark remaining unsaved events as saved
+            EventLogService.CommitPendingEvents(UndoRedoManager.UndoHistory);
+
             EventLogService.SyncToCompanyData(CompanyManager.CompanyData);
         }
     }

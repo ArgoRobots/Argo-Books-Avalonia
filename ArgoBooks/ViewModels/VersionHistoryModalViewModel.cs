@@ -286,10 +286,12 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
             : SelectedEntityTypeFilter;
 
         // Get events filtered by action/entity type (no text search — we handle that with Levenshtein)
+        // Only show saved events — unsaved events are still pending in the undo stack
         var events = _eventLogService.GetFilteredEvents(
             searchQuery: null,
             actionFilter: actionFilter,
             entityTypeFilter: entityTypeFilter)
+            .Where(e => e.IsSaved)
             .ToList();
 
         // Apply fuzzy search using Levenshtein scoring
@@ -319,7 +321,7 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
                 .ToList();
         }
 
-        TotalEventCount = _eventLogService.EventCount;
+        TotalEventCount = _eventLogService.SavedEventCount;
         FilteredEventCount = filteredEvents.Count;
         HasEvents = TotalEventCount > 0;
         IsFiltered = actionFilter.HasValue

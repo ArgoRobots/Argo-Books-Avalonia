@@ -85,6 +85,14 @@ public class AuditEvent
     public string? RelatedEventId { get; set; }
 
     /// <summary>
+    /// Runtime-only flag indicating whether this event has been persisted to disk.
+    /// Events loaded from file are marked as saved; new in-session events start unsaved.
+    /// Not serialized to JSON.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsSaved { get; set; }
+
+    /// <summary>
     /// The ID of the accountant who performed this action.
     /// Currently unused — reserved for future multi-accountant support.
     /// </summary>
