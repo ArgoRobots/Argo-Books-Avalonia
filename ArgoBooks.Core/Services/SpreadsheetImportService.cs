@@ -1648,24 +1648,59 @@ public class SpreadsheetImportService
 
     private void ImportRentalRecords(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
+        // Group rows by ID to support multi-line-item rentals (same ID = multiple line items)
+        var groupedRows = new Dictionary<string, List<List<object?>>>();
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
-            var existing = data.Rentals.FirstOrDefault(r => r.Id == id);
+            if (string.IsNullOrWhiteSpace(id)) continue;
+            if (!groupedRows.ContainsKey(id))
+                groupedRows[id] = [];
+            groupedRows[id].Add(row);
+        }
 
+        foreach (var (id, idRows) in groupedRows)
+        {
+            var existing = data.Rentals.FirstOrDefault(r => r.Id == id);
             var record = existing ?? new RentalRecord();
             record.Id = id;
-            record.CustomerId = GetString(row, headers, "Customer ID");
-            record.RentalItemId = GetString(row, headers, "Rental Item ID");
-            record.Quantity = GetInt(row, headers, "Quantity");
-            record.StartDate = GetDateTime(row, headers, "Start Date");
-            record.DueDate = GetDateTime(row, headers, "Due Date");
-            record.ReturnDate = GetNullableDateTime(row, headers, "Return Date");
-            record.TotalCost = GetDecimal(row, headers, "Total Cost");
-            record.Status = ParseEnum(GetString(row, headers, "Status"), RentalStatus.Active);
+
+            // Use first row for shared record fields
+            var firstRow = idRows[0];
+            record.CustomerId = GetString(firstRow, headers, "Customer ID");
+            record.StartDate = GetDateTime(firstRow, headers, "Start Date");
+            record.DueDate = GetDateTime(firstRow, headers, "Due Date");
+            record.ReturnDate = GetNullableDateTime(firstRow, headers, "Return Date");
+            record.TotalCost = GetDecimal(firstRow, headers, "Total Cost");
+            record.Status = ParseEnum(GetString(firstRow, headers, "Status"), RentalStatus.Active);
+            var paidStr = GetString(firstRow, headers, "Paid");
+            record.Paid = paidStr.Equals("Yes", StringComparison.OrdinalIgnoreCase) || paidStr.Equals("True", StringComparison.OrdinalIgnoreCase);
 
             if (record.TotalCost == 0)
                 record.TotalCost = null;
+
+            // Build line items from all rows with this ID
+            record.LineItems.Clear();
+            foreach (var row in idRows)
+            {
+                var lineItem = new RentalLineItem
+                {
+                    RentalItemId = GetString(row, headers, "Rental Item ID"),
+                    Quantity = GetInt(row, headers, "Quantity"),
+                    RateType = ParseEnum(GetString(row, headers, "Rate Type"), RateType.Daily),
+                    RateAmount = GetDecimal(row, headers, "Rate Amount"),
+                    SecurityDeposit = GetDecimal(row, headers, "Security Deposit")
+                };
+                record.LineItems.Add(lineItem);
+            }
+
+            // Set top-level backward-compat fields from first line item
+            var firstLi = record.LineItems[0];
+            record.RentalItemId = firstLi.RentalItemId;
+            record.Quantity = record.LineItems.Sum(li => li.Quantity);
+            record.RateType = firstLi.RateType;
+            record.RateAmount = firstLi.RateAmount;
+            record.SecurityDeposit = record.LineItems.Sum(li => li.SecurityDeposit * li.Quantity);
 
             if (existing == null)
                 data.Rentals.Add(record);

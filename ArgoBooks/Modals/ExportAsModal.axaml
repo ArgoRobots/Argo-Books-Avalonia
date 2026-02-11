@@ -82,12 +82,6 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                             </StackPanel>
                                         </Grid>
-                                        <CheckBox IsChecked="{Binding IncludeAttachments}"
-                                                  Margin="0,4,0,0">
-                                            <TextBlock Text="{loc:Loc 'Include file attachments'}"
-                                                       FontSize="13"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        </CheckBox>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

@@ -100,6 +100,29 @@ public static class BoolConverters
             new SolidColorBrush(Color.Parse(value ? "#166534" : "#4B5563")));
 
     /// <summary>
+    /// Converts bool (isPaid) to paid badge background.
+    /// Paid = green (#DCFCE7), Unpaid = red (#FEF2F2).
+    /// </summary>
+    public static readonly IValueConverter ToPaidBackground =
+        new FuncValueConverter<bool, IBrush>(value =>
+            new SolidColorBrush(Color.Parse(value ? "#DCFCE7" : "#FEF2F2")));
+
+    /// <summary>
+    /// Converts bool (isPaid) to paid badge foreground.
+    /// Paid = green (#166534), Unpaid = red (#991B1B).
+    /// </summary>
+    public static readonly IValueConverter ToPaidForeground =
+        new FuncValueConverter<bool, IBrush>(value =>
+            new SolidColorBrush(Color.Parse(value ? "#166534" : "#991B1B")));
+
+    /// <summary>
+    /// Converts bool (isPaid) to paid badge text.
+    /// </summary>
+    public static readonly IValueConverter ToPaidText =
+        new FuncValueConverter<bool, string>(value =>
+            LanguageService.Instance.Translate(value ? "Yes" : "No"));
+
+    /// <summary>
     /// Converts bool (isFullscreen) to modal horizontal alignment.
     /// Both fullscreen and normal modes use Center alignment.
     /// </summary>

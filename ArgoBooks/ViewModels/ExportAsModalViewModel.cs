@@ -71,9 +71,6 @@ public partial class ExportAsModalViewModel : ViewModelBase
     private DateTimeOffset? _endDate = DateTimeOffset.Now;
 
     [ObservableProperty]
-    private bool _includeAttachments = true;
-
-    [ObservableProperty]
     private bool _selectAllData;
 
     /// <summary>
@@ -254,7 +251,7 @@ public partial class ExportAsModalViewModel : ViewModelBase
     {
         if (IsBackupSelected)
         {
-            ExportRequested?.Invoke(this, new ExportEventArgs("backup", IncludeAttachments));
+            ExportRequested?.Invoke(this, new ExportEventArgs("backup"));
         }
         else
         {
@@ -279,13 +276,11 @@ public class ExportEventArgs(string format, List<string> selectedDataItems, Date
     : EventArgs
 {
     public string Format { get; } = format;
-    public bool IncludeAttachments { get; }
     public List<string> SelectedDataItems { get; } = selectedDataItems;
     public DateTime? StartDate { get; } = startDate;
     public DateTime? EndDate { get; } = endDate;
 
-    public ExportEventArgs(string format, bool includeAttachments) : this(format, [], null, null)
+    public ExportEventArgs(string format) : this(format, [], null, null)
     {
-        IncludeAttachments = includeAttachments;
     }
 }
