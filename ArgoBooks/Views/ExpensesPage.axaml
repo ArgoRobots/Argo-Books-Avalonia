@@ -99,7 +99,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Product'}" ColumnName="Product" SortProperty="Product"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Product / Service'}" ColumnName="Product" SortProperty="Product"
                                                    ColumnWidth="{Binding ColumnWidths.ProductColumnWidth}"
                                                    IsColumnVisible="{Binding ShowProductColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -146,6 +146,11 @@
                                                    IsColumnVisible="{Binding ShowDiscountColumn}"
                                                    IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
 
+                        <table:ArgoTableHeader Header="{loc:Loc 'Fee'}" ColumnName="Fee"
+                                                   ColumnWidth="{Binding ColumnWidths.FeeColumnWidth}"
+                                                   IsColumnVisible="{Binding ShowFeeColumn}"
+                                                   IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
+
                         <table:ArgoTableHeader Header="{loc:Loc 'Total'}" ColumnName="Total" SortProperty="Total"
                                                    ColumnWidth="{Binding ColumnWidths.TotalColumnWidth}"
                                                    IsColumnVisible="{Binding ShowTotalColumn}"
@@ -185,9 +190,15 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}" />
 
-                                        <table:ArgoTableCell Text="{Binding ProductDescription}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowProductColumn}" />
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowProductColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding ProductDescription}" /><Run Text="{Binding ProductMoreText}" FontStyle="Italic"
+                                                         Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </TextBlock>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
                                         <table:ArgoTableCell Text="{Binding SupplierName}"
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
@@ -226,6 +237,11 @@
                                                            TextTrimming="CharacterEllipsis" />
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
+
+                                        <!-- Fee -->
+                                        <table:ArgoTableCell Text="{Binding FeeFormatted}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.FeeColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowFeeColumn}" />
 
                                         <!-- Total - Custom styling with ErrorBrush and FontWeight -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
@@ -379,6 +395,7 @@
                 <CheckBox IsChecked="{Binding ShowTaxColumn}" Content="{loc:Loc 'Tax'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowShippingColumn}" Content="{loc:Loc 'Shipping'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="{loc:Loc 'Discount'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowFeeColumn}" Content="{loc:Loc 'Fee'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="{loc:Loc 'Total'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="{loc:Loc 'Receipt'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />

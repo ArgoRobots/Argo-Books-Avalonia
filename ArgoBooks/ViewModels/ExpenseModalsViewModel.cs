@@ -498,6 +498,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             TaxAmount = TaxAmount,
             ShippingCost = ModalShipping,
             Discount = ModalDiscount,
+            Fee = ModalFee,
             Total = Total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = ModalNotes,
@@ -510,6 +511,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             TaxAmountUSD = ConvertedTaxAmount?.AmountUSD ?? TaxAmount,
             ShippingCostUSD = ConvertedShippingCost?.AmountUSD ?? ModalShipping,
             DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount,
+            FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
                 ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
                 : averageUnitPrice
@@ -582,6 +584,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.TaxAmount = TaxAmount;
         expense.ShippingCost = ModalShipping;
         expense.Discount = ModalDiscount;
+        expense.Fee = ModalFee;
         expense.Total = Total;
         expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
         expense.Notes = ModalNotes;
@@ -592,6 +595,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.TaxAmountUSD = ConvertedTaxAmount?.AmountUSD ?? TaxAmount;
         expense.ShippingCostUSD = ConvertedShippingCost?.AmountUSD ?? ModalShipping;
         expense.DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount;
+        expense.FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee;
         expense.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
             ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
             : averageUnitPrice;
@@ -631,6 +635,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 expense.TaxAmount = TaxAmount;
                 expense.ShippingCost = ModalShipping;
                 expense.Discount = ModalDiscount;
+                expense.Fee = ModalFee;
                 expense.Total = Total;
                 expense.PaymentMethod = pm;
                 expense.Notes = ModalNotes;
@@ -704,6 +709,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             TaxAmount = expense.TaxAmount,
             ShippingCost = expense.ShippingCost,
             Discount = expense.Discount,
+            Fee = expense.Fee,
             Total = expense.Total,
             PaymentMethod = expense.PaymentMethod,
             Notes = expense.Notes,
@@ -725,6 +731,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.TaxAmount = state.TaxAmount;
         expense.ShippingCost = state.ShippingCost;
         expense.Discount = state.Discount;
+        expense.Fee = state.Fee;
         expense.Total = state.Total;
         expense.PaymentMethod = state.PaymentMethod;
         expense.Notes = state.Notes;
@@ -766,8 +773,10 @@ internal class TransactionState
     public decimal TaxAmount { get; set; }
     public decimal ShippingCost { get; set; }
     public decimal Discount { get; set; }
+    public decimal Fee { get; set; }
     public decimal Total { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
+    public string PaymentStatus { get; set; } = "Paid";
     public string Notes { get; set; } = string.Empty;
     public string ReferenceNumber { get; set; } = string.Empty;
     public string? ReceiptId { get; set; }
