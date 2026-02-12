@@ -68,6 +68,10 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     /// <inheritdoc />
     public async Task<Core.Services.UpdateInfo?> CheckForUpdateAsync()
     {
+        // Clean up installer files from any previous update session.
+        // By this point, any prior update has already been applied (or abandoned).
+        CleanupPreviousUpdateFiles();
+
         SetState(UpdateState.Checking);
         AvailableUpdate = null;
         LastError = null;
@@ -133,7 +137,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             using var client = new HttpClient { Timeout = DownloadTimeout };
 
             var downloadUrl = AvailableUpdate.DownloadUrl;
-            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks-Update");
+            var tempDir = Path.Combine(Path.GetTempPath(), UpdateTempDirName);
             Directory.CreateDirectory(tempDir);
 
             var fileName = GetInstallerFileName(AvailableUpdate.Version);
@@ -231,6 +235,33 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     }
 
     #region Private Helpers
+
+    /// <summary>
+    /// Temp directory name used for downloaded update installers.
+    /// </summary>
+    private const string UpdateTempDirName = "ArgoBooks-Update";
+
+    /// <summary>
+    /// Deletes leftover update installer files from previous sessions.
+    /// Safe to call at any time — silently ignores errors since cleanup is non-critical.
+    /// </summary>
+    private void CleanupPreviousUpdateFiles()
+    {
+        try
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), UpdateTempDirName);
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+                _errorLogger?.LogInfo("Cleaned up previous update files.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Non-critical — files may be locked or already deleted
+            _errorLogger?.LogWarning($"Could not clean up previous update files: {ex.Message}", "AutoUpdate");
+        }
+    }
 
     /// <summary>
     /// Sets the state and raises the StateChanged event.
@@ -374,6 +405,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
             // Use a shell script to replace the app and relaunch after a short delay
             // (we need the current process to exit first)
+            var updateDir = Path.Combine(Path.GetTempPath(), UpdateTempDirName);
             var script = $"""
                           #!/bin/bash
                           sleep 2
@@ -381,6 +413,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                           mv "{newAppPath}" "{appBundlePath}"
                           open -n "{appBundlePath}"
                           rm -rf "{stagingDir}"
+                          rm -rf "{updateDir}"
                           """;
 
             var scriptPath = Path.Combine(Path.GetTempPath(), "argo-update.sh");
@@ -415,13 +448,14 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             installerPath.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase))
         {
             // Use a shell script to replace the AppImage and relaunch after a short delay
+            var updateDir = Path.Combine(Path.GetTempPath(), UpdateTempDirName);
             var script = $"""
                           #!/bin/bash
                           sleep 2
                           cp "{installerPath}" "{currentExePath}"
                           chmod +x "{currentExePath}"
                           "{currentExePath}" &
-                          rm -f "{installerPath}"
+                          rm -rf "{updateDir}"
                           """;
 
             var scriptPath = Path.Combine(Path.GetTempPath(), "argo-update.sh");

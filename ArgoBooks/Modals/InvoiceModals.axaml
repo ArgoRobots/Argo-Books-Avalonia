@@ -80,7 +80,7 @@
                             <!-- Template and Customer Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <!-- Template Selection (left) -->
-                                <StackPanel Grid.Column="0" Spacing="6">
+                                <StackPanel Grid.Column="0" Spacing="6" IsEnabled="{Binding !IsLimitedEdit}">
                                     <TextBlock Text="{loc:Loc 'Email Template'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -92,8 +92,8 @@
                                                                 ShowAddNew="False" />
                                 </StackPanel>
 
-                                <!-- Customer Selection (right) - hidden when from rental -->
-                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromRental}">
+                                <!-- Customer Selection (right) - hidden when from rental, disabled when limited edit -->
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromExternalSource}" IsEnabled="{Binding !IsLimitedEdit}">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
@@ -112,9 +112,9 @@
                             </Grid>
 
                             <!-- Dates Row - hidden when from rental -->
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromRental}">
-                                <!-- Issue Date -->
-                                <StackPanel Grid.Column="0" Spacing="6">
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
+                                <!-- Issue Date - disabled when limited edit -->
+                                <StackPanel Grid.Column="0" Spacing="6" IsEnabled="{Binding !IsLimitedEdit}">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
@@ -134,8 +134,8 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Line Items Section - hidden when from rental -->
-                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromRental}">
+                            <!-- Line Items Section - hidden when from rental, disabled when limited edit -->
+                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromExternalSource}" IsEnabled="{Binding !IsLimitedEdit}">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0"
                                                Text="{loc:Loc 'Line Items'}"
@@ -273,7 +273,8 @@
                                                        FormatString="0.##"
                                                        Width="70"
                                                        ShowButtonSpinner="False"
-                                                       Classes="line-item-input" />
+                                                       Classes="line-item-input"
+                                                       IsEnabled="{Binding !IsLimitedEdit}" />
                                         <TextBlock Text="%"
                                                    VerticalAlignment="Center"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />

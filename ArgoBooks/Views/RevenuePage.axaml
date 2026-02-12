@@ -105,7 +105,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Product'}" ColumnName="Product" SortProperty="Product"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Product / Service'}" ColumnName="Product" SortProperty="Product"
                                                    ColumnWidth="{Binding ColumnWidths.ProductColumnWidth}"
                                                    IsColumnVisible="{Binding ShowProductColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -218,9 +218,15 @@
                                         </table:ArgoTableCell>
 
                                         <!-- Product -->
-                                        <table:ArgoTableCell Text="{Binding ProductDescription}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowProductColumn}" />
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowProductColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding ProductDescription}" /><Run Text="{Binding ProductMoreText}" FontStyle="Italic"
+                                                         Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </TextBlock>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
                                         <!-- Date -->
                                         <table:ArgoTableCell Text="{Binding DateFormatted}"
@@ -258,15 +264,24 @@
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
 
-                                        <!-- Total - Custom content for SuccessBrush and Medium font -->
+                                        <!-- Total - Green when paid, default text color when not -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowTotalColumn}">
                                             <table:ArgoTableCell.CellContent>
-                                                <TextBlock Text="{Binding TotalFormatted}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource SuccessBrush}"
-                                                           VerticalAlignment="Center" />
+                                                <Panel>
+                                                    <TextBlock Text="{Binding TotalFormatted}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource SuccessBrush}"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding Paid}" />
+                                                    <TextBlock Text="{Binding TotalFormatted}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding !Paid}" />
+                                                </Panel>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
 
@@ -377,6 +392,15 @@
                                                             CommandParameter="{Binding}"
                                                             IsVisible="{Binding IsReturned}">
                                                         <PathIcon Data="{x:Static icons:Icons.Returns}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <!-- Generate Invoice Button -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Generate Invoice'}"
+                                                            IsVisible="{Binding CanGenerateInvoice}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).GenerateInvoiceCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger"

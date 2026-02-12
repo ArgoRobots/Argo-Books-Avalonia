@@ -204,8 +204,8 @@
                                 </Border>
                             </StackPanel>
 
-                            <!-- Tax, Shipping, Discount Row -->
-                            <Grid ColumnDefinitions="*,16,*,16,*">
+                            <!-- Tax, Shipping, Discount, Fee Row -->
+                            <Grid ColumnDefinitions="*,16,*,16,*,16,*">
                                 <!-- Tax -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
@@ -233,6 +233,17 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Discount'}" />
                                     <TextBox Text="{Binding ModalDiscount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                             Classes="form-input"
+                                             HorizontalAlignment="Stretch"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="20" />
+                                </StackPanel>
+
+                                <!-- Fee -->
+                                <StackPanel Grid.Column="6" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="{loc:Loc 'Fee'}" />
+                                    <TextBox Text="{Binding ModalFee, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True"
@@ -302,6 +313,10 @@
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Grid.Column="0" Text="{loc:Loc 'Discount'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
                                         <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc 'Fee'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding FeeAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </Grid>
                                     <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
                                     <Grid ColumnDefinitions="*,Auto">

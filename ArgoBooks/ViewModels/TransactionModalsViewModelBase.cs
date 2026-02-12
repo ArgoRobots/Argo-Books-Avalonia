@@ -181,6 +181,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private decimal _modalDiscount;
 
     [ObservableProperty]
+    private decimal _modalFee;
+
+    [ObservableProperty]
     private string _selectedPaymentMethod = "Cash";
 
     [ObservableProperty]
@@ -219,6 +222,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected MonetaryValue? ConvertedTaxAmount;
     protected MonetaryValue? ConvertedShippingCost;
     protected MonetaryValue? ConvertedDiscount;
+    protected MonetaryValue? ConvertedFee;
 
     public ObservableCollection<CounterpartyOption> CounterpartyOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
@@ -233,6 +237,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private decimal _originalTaxRate;
     private decimal _originalShipping;
     private decimal _originalDiscount;
+    private decimal _originalFee;
     private string _originalPaymentMethod = "Cash";
     private string _originalNotes = string.Empty;
     private List<(string? ProductId, string Description, decimal? Quantity, decimal? UnitPrice)> _originalLineItems = [];
@@ -247,6 +252,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalTaxRate > 0 ||
         ModalShipping > 0 ||
         ModalDiscount > 0 ||
+        ModalFee > 0 ||
         LineItems.Any(li => li.SelectedProduct != null || !string.IsNullOrWhiteSpace(li.Description) || (li.UnitPrice ?? 0) > 0);
 
     /// <summary>
@@ -262,6 +268,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             if (ModalTaxRate != _originalTaxRate) return true;
             if (ModalShipping != _originalShipping) return true;
             if (ModalDiscount != _originalDiscount) return true;
+            if (ModalFee != _originalFee) return true;
             if (SelectedPaymentMethod != _originalPaymentMethod) return true;
             if (ModalNotes != _originalNotes) return true;
 
@@ -293,6 +300,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         _originalTaxRate = ModalTaxRate;
         _originalShipping = ModalShipping;
         _originalDiscount = ModalDiscount;
+        _originalFee = ModalFee;
         _originalPaymentMethod = SelectedPaymentMethod;
         _originalNotes = ModalNotes;
         _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.Description, li.Quantity, li.UnitPrice)).ToList();
@@ -305,12 +313,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public decimal TaxAmount => ModalTaxRate;
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
-    public decimal Total => Subtotal + TaxAmount + ShippingAmount - DiscountAmount;
+    public decimal FeeAmount => ModalFee;
+    public decimal Total => Subtotal + TaxAmount + ShippingAmount + FeeAmount - DiscountAmount;
 
     public string SubtotalFormatted => $"${Subtotal:N2}";
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
     public string DiscountAmountFormatted => $"-${DiscountAmount:N2}";
     public string ShippingAmountFormatted => $"${ShippingAmount:N2}";
+    public string FeeAmountFormatted => $"${FeeAmount:N2}";
     public string TotalFormatted => $"${Total:N2}";
 
     partial void OnModalQuantityChanged(decimal value) => UpdateTotals();
@@ -318,6 +328,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     partial void OnModalTaxRateChanged(decimal value) => UpdateTotals();
     partial void OnModalShippingChanged(decimal value) => UpdateTotals();
     partial void OnModalDiscountChanged(decimal value) => UpdateTotals();
+    partial void OnModalFeeChanged(decimal value) => UpdateTotals();
 
     protected void UpdateTotals()
     {
@@ -325,11 +336,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         OnPropertyChanged(nameof(TaxAmount));
         OnPropertyChanged(nameof(DiscountAmount));
         OnPropertyChanged(nameof(ShippingAmount));
+        OnPropertyChanged(nameof(FeeAmount));
         OnPropertyChanged(nameof(Total));
         OnPropertyChanged(nameof(SubtotalFormatted));
         OnPropertyChanged(nameof(TaxAmountFormatted));
         OnPropertyChanged(nameof(DiscountAmountFormatted));
         OnPropertyChanged(nameof(ShippingAmountFormatted));
+        OnPropertyChanged(nameof(FeeAmountFormatted));
         OnPropertyChanged(nameof(TotalFormatted));
     }
 
@@ -513,6 +526,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalTaxRate = transaction.TaxAmount;
         ModalShipping = transaction.ShippingCost;
         ModalDiscount = transaction.Discount;
+        ModalFee = transaction.Fee;
         SelectedPaymentMethod = transaction.PaymentMethod.ToString();
         ModalNotes = transaction.Notes;
 
@@ -866,6 +880,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
                 ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
                 ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
+                ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, transactionDate);
             }
             catch (Exception)
             {
@@ -886,6 +901,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             ConvertedTaxAmount = new MonetaryValue(TaxAmount, "USD", TaxAmount, transactionDate);
             ConvertedShippingCost = new MonetaryValue(ShippingAmount, "USD", ShippingAmount, transactionDate);
             ConvertedDiscount = new MonetaryValue(DiscountAmount, "USD", DiscountAmount, transactionDate);
+            ConvertedFee = new MonetaryValue(FeeAmount, "USD", FeeAmount, transactionDate);
         }
 
         if (IsEditMode)
@@ -944,6 +960,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalTaxRate = 0;
         ModalShipping = 0;
         ModalDiscount = 0;
+        ModalFee = 0;
         SelectedPaymentMethod = "Cash";
         ModalNotes = string.Empty;
         LineItems.Clear();
@@ -954,6 +971,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ConvertedTaxAmount = null;
         ConvertedShippingCost = null;
         ConvertedDiscount = null;
+        ConvertedFee = null;
         ClearValidationErrors();
     }
 

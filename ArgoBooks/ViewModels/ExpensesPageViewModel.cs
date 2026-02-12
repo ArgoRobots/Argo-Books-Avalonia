@@ -116,6 +116,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _showDiscountColumn = ColumnVisibilityHelper.Load("Expenses", "Discount", false);
 
     [ObservableProperty]
+    private bool _showFeeColumn = ColumnVisibilityHelper.Load("Expenses", "Fee", false);
+
+    [ObservableProperty]
     private bool _showTotalColumn = ColumnVisibilityHelper.Load("Expenses", "Total", true);
 
     [ObservableProperty]
@@ -134,6 +137,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     partial void OnShowTaxColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Tax", value); ColumnVisibilityHelper.Save("Expenses", "Tax", value); }
     partial void OnShowShippingColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Shipping", value); ColumnVisibilityHelper.Save("Expenses", "Shipping", value); }
     partial void OnShowDiscountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Discount", value); ColumnVisibilityHelper.Save("Expenses", "Discount", value); }
+    partial void OnShowFeeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Fee", value); ColumnVisibilityHelper.Save("Expenses", "Fee", value); }
     partial void OnShowTotalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Total", value); ColumnVisibilityHelper.Save("Expenses", "Total", value); }
     partial void OnShowReceiptColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Receipt", value); ColumnVisibilityHelper.Save("Expenses", "Receipt", value); }
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Expenses", "Status", value); }
@@ -164,6 +168,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         ShowTaxColumn = false;
         ShowShippingColumn = false;
         ShowDiscountColumn = false;
+        ShowFeeColumn = false;
         ShowTotalColumn = true;
         ShowReceiptColumn = true;
         ShowStatusColumn = true;
@@ -247,6 +252,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         ColumnWidths.SetColumnVisibility("Tax", ShowTaxColumn);
         ColumnWidths.SetColumnVisibility("Shipping", ShowShippingColumn);
         ColumnWidths.SetColumnVisibility("Discount", ShowDiscountColumn);
+        ColumnWidths.SetColumnVisibility("Fee", ShowFeeColumn);
         ColumnWidths.SetColumnVisibility("Total", ShowTotalColumn);
         ColumnWidths.SetColumnVisibility("Receipt", ShowReceiptColumn);
         ColumnWidths.SetColumnVisibility("Status", ShowStatusColumn);
@@ -440,6 +446,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(purchase, companyData);
+            var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
@@ -448,7 +455,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             {
                 Id = purchase.Id,
                 AccountantName = accountant?.Name ?? "System",
-                ProductDescription = purchase.Description,
+                ProductDescription = productName,
+                ProductMoreText = productMoreText,
                 CategoryName = category?.Name ?? "-",
                 SupplierName = supplier?.Name ?? "-",
                 Date = purchase.Date,
@@ -458,6 +466,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 TaxAmountUSD = purchase.TaxAmountUSD > 0 ? purchase.TaxAmountUSD : purchase.TaxAmount,
                 ShippingCostUSD = purchase.EffectiveShippingCostUSD,
                 DiscountUSD = purchase.DiscountUSD > 0 ? purchase.DiscountUSD : purchase.Discount,
+                FeeUSD = purchase.FeeUSD > 0 ? purchase.FeeUSD : purchase.Fee,
                 UnitPriceUSD = purchase.EffectiveUnitPriceUSD,
                 HasReceipt = hasReceipt,
                 ReceiptFilePath = receiptFilePath,
@@ -470,6 +479,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 TaxRate = purchase.TaxRate,
                 ShippingCost = purchase.ShippingCost,
                 Discount = purchase.Discount,
+                Fee = purchase.Fee,
                 Quantity = (int)purchase.Quantity,
                 UnitPrice = purchase.UnitPrice,
                 PaymentMethod = purchase.PaymentMethod,
@@ -518,6 +528,19 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         {
             Expenses.Add(item);
         }
+    }
+
+    private static (string name, string moreText) FormatProductDescription(Expense purchase)
+    {
+        if (purchase.LineItems.Count <= 1)
+            return (purchase.Description, string.Empty);
+
+        var firstName = purchase.LineItems[0].Description;
+        if (string.IsNullOrEmpty(firstName))
+            firstName = purchase.Description.Split(',')[0].Trim();
+
+        var remaining = purchase.LineItems.Count - 1;
+        return (firstName, $" +{remaining} more");
     }
 
     private static string GetStatusDisplay(Expense purchase, Core.Data.CompanyData? companyData)
@@ -672,6 +695,9 @@ public partial class ExpenseDisplayItem : ObservableObject
     private string _productDescription = string.Empty;
 
     [ObservableProperty]
+    private string _productMoreText = string.Empty;
+
+    [ObservableProperty]
     private string _categoryName = string.Empty;
 
     [ObservableProperty]
@@ -697,6 +723,9 @@ public partial class ExpenseDisplayItem : ObservableObject
 
     [ObservableProperty]
     private decimal _discountUSD;
+
+    [ObservableProperty]
+    private decimal _feeUSD;
 
     [ObservableProperty]
     private decimal _unitPriceUSD;
@@ -735,6 +764,9 @@ public partial class ExpenseDisplayItem : ObservableObject
     private decimal _discount;
 
     [ObservableProperty]
+    private decimal _fee;
+
+    [ObservableProperty]
     private int _quantity;
 
     [ObservableProperty]
@@ -750,6 +782,7 @@ public partial class ExpenseDisplayItem : ObservableObject
     public string TaxRateFormatted => $"{TaxRate:N1}%";
     public string ShippingCostFormatted => CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
     public string DiscountFormatted => $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
+    public string FeeFormatted => CurrencyService.FormatFromUSD(FeeUSD, Date);
     public string UnitPriceFormatted => CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
     public string ReceiptIcon => HasReceipt ? "✓" : "✗";
 

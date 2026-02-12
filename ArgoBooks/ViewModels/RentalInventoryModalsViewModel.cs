@@ -910,7 +910,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         AvailableProducts.Clear();
         foreach (var product in companyData.Products
-            .Where(p => p.Type == Core.Enums.CategoryType.Revenue && p.Status == EntityStatus.Active)
+            .Where(p => p.Type == Core.Enums.CategoryType.Rental && p.Status == EntityStatus.Active)
             .OrderBy(p => p.Name))
         {
             AvailableProducts.Add(new ProductOption { Id = product.Id, Name = product.Name, SupplierId = product.SupplierId });

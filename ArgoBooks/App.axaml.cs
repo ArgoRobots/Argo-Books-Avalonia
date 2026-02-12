@@ -3570,7 +3570,17 @@ public class App : Application
 
         // Rentals Section
         navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = _rentalInventoryPageViewModel ??= new RentalInventoryPageViewModel() });
-        navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = _rentalRecordsPageViewModel ??= new RentalRecordsPageViewModel() });
+        navigationService.RegisterPage("RentalRecords", param =>
+        {
+            _rentalRecordsPageViewModel ??= new RentalRecordsPageViewModel();
+            _rentalRecordsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _rentalRecordsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _rentalRecordsPageViewModel.ApplyHighlight();
+            }
+            return new RentalRecordsPage { DataContext = _rentalRecordsPageViewModel };
+        });
 
         // Tracking Section
         navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = _returnsPageViewModel ??= new ReturnsPageViewModel() });

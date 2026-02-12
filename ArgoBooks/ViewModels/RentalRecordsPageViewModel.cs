@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -444,7 +445,8 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 IsActive = record.Status == RentalStatus.Active || record.Status == RentalStatus.Overdue,
                 Paid = record.Paid,
                 HasInvoices = record.HasInvoices,
-                InvoiceId = record.InvoiceIds.FirstOrDefault() ?? string.Empty
+                InvoiceId = record.InvoiceIds.FirstOrDefault() ?? string.Empty,
+                IsHighlighted = record.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -471,6 +473,9 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 },
                 r => r.StartDate);
         }
+
+        // Navigate to highlighted item if set (from dashboard click)
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -565,6 +570,37 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         App.InvoiceModalsViewModel?.OpenCreateFromRental(record.Id);
     }
 
+    [RelayCommand]
+    private void MarkAsPaid(RentalRecordDisplayItem? record)
+    {
+        if (record == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var rental = companyData?.Rentals.FirstOrDefault(r => r.Id == record.Id);
+        if (rental == null) return;
+
+        rental.Paid = true;
+        rental.UpdatedAt = DateTime.UtcNow;
+        companyData!.MarkAsModified();
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Mark rental '{rental.Id}' as paid",
+            () =>
+            {
+                rental.Paid = false;
+                companyData.MarkAsModified();
+                LoadRecords();
+            },
+            () =>
+            {
+                rental.Paid = true;
+                companyData.MarkAsModified();
+                LoadRecords();
+            }));
+
+        LoadRecords();
+    }
+
     #endregion
 }
 
@@ -633,6 +669,9 @@ public partial class RentalRecordDisplayItem : ObservableObject
     [ObservableProperty]
     private string _invoiceId = string.Empty;
 
+    [ObservableProperty]
+    private bool _isHighlighted;
+
     public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
 
     public string StartDateFormatted => StartDate.ToString("MMM d, yyyy");
@@ -643,6 +682,7 @@ public partial class RentalRecordDisplayItem : ObservableObject
     public string DepositFormatted => $"${SecurityDeposit:N2}";
     public string DaysOverdueText => DaysOverdue > 0 ? $"{DaysOverdue} days" : "-";
     public bool CanGenerateInvoice => !Paid && !HasInvoices;
+    public bool CanMarkAsPaid => !Paid && !IsActive;
 }
 
 /// <summary>

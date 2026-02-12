@@ -81,6 +81,12 @@ public abstract class Transaction
     public decimal Discount { get; set; }
 
     /// <summary>
+    /// Fee amount (e.g., service fee, processing fee).
+    /// </summary>
+    [JsonPropertyName("fee")]
+    public decimal Fee { get; set; }
+
+    /// <summary>
     /// Total amount including tax.
     /// </summary>
     [JsonPropertyName("total")]
@@ -162,6 +168,12 @@ public abstract class Transaction
     /// </summary>
     [JsonPropertyName("discountUSD")]
     public decimal DiscountUSD { get; set; }
+
+    /// <summary>
+    /// The fee amount converted to USD at the time of entry.
+    /// </summary>
+    [JsonPropertyName("feeUSD")]
+    public decimal FeeUSD { get; set; }
 
     /// <summary>
     /// Gets the effective total in USD, falling back to Total for legacy data.

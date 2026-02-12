@@ -1407,6 +1407,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         App.NavigationService?.NavigateTo("RentalRecords");
     }
 
+    [RelayCommand]
+    private void NavigateToRental(ActiveRentalItem? rental)
+    {
+        if (rental == null) return;
+
+        App.NavigationService?.NavigateTo("RentalRecords", new TransactionNavigationParameter(rental.Id));
+    }
+
     #endregion
 
     #region Helper Methods

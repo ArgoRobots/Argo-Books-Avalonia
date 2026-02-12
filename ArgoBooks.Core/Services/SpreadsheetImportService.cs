@@ -1639,6 +1639,8 @@ public class SpreadsheetImportService
             item.WeeklyRate = GetDecimal(row, headers, "Weekly Rate");
             item.MonthlyRate = GetDecimal(row, headers, "Monthly Rate");
             item.SecurityDeposit = GetDecimal(row, headers, "Deposit");
+            var productId = GetString(row, headers, "Product ID");
+            item.ProductId = string.IsNullOrEmpty(productId) ? null : productId;
             item.Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active);
 
             if (existing == null)

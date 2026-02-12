@@ -285,6 +285,12 @@
                                 </Grid>
                             </StackPanel>
 
+                            <!-- Paid Checkbox -->
+                            <CheckBox IsChecked="{Binding ModalPaid}"
+                                      Content="{loc:Loc 'Mark as Paid'}"
+                                      FontSize="13"
+                                      Margin="0,4,0,0" />
+
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
