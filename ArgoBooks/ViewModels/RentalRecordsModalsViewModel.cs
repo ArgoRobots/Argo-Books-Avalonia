@@ -202,6 +202,9 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     [ObservableProperty]
     private string _returnNotes = string.Empty;
 
+    [ObservableProperty]
+    private bool _returnMarkAsPaid;
+
     private RentalRecord? _returningRecord;
 
     public string ReturnRateFormatted => $"${ReturnRateAmount:N2}/{ReturnRateType}";
@@ -938,6 +941,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         ReturnDate = DateTimeOffset.Now;
         ReturnDeposit = rentalRecord.SecurityDeposit;
         ReturnRefundDeposit = true;
+        ReturnMarkAsPaid = false;
         ReturnNotes = string.Empty;
 
         // Calculate total cost from all line items
@@ -980,6 +984,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         var oldReturnDate = _returningRecord.ReturnDate;
         var oldTotalCost = _returningRecord.TotalCost;
         var oldDepositRefunded = _returningRecord.DepositRefunded;
+        var oldPaid = _returningRecord.Paid;
         var oldNotes = _returningRecord.Notes;
 
         // Update rental record
@@ -987,6 +992,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         _returningRecord.ReturnDate = ReturnDate?.DateTime;
         _returningRecord.TotalCost = ReturnTotalCost;
         _returningRecord.DepositRefunded = ReturnRefundDeposit ? _returningRecord.SecurityDeposit : 0;
+        _returningRecord.Paid = ReturnMarkAsPaid;
         if (!string.IsNullOrWhiteSpace(ReturnNotes))
         {
             _returningRecord.Notes = string.IsNullOrWhiteSpace(_returningRecord.Notes)
@@ -1024,6 +1030,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
                 recordToReturn.ReturnDate = oldReturnDate;
                 recordToReturn.TotalCost = oldTotalCost;
                 recordToReturn.DepositRefunded = oldDepositRefunded;
+                recordToReturn.Paid = oldPaid;
                 recordToReturn.Notes = oldNotes;
                 foreach (var (id, (avail, rented)) in savedSnapshot)
                 {
@@ -1043,6 +1050,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
                 recordToReturn.ReturnDate = ReturnDate?.DateTime;
                 recordToReturn.TotalCost = ReturnTotalCost;
                 recordToReturn.DepositRefunded = ReturnRefundDeposit ? recordToReturn.SecurityDeposit : 0;
+                recordToReturn.Paid = ReturnMarkAsPaid;
                 recordToReturn.Notes = newNotes;
                 var returnItems = GetEffectiveLineItems(recordToReturn);
                 foreach (var li in returnItems)

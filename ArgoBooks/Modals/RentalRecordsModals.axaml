@@ -57,6 +57,22 @@
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
+                            <!-- Start Date and Due Date Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
                             <!-- Line Items Section -->
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -182,22 +198,6 @@
                                     </Grid>
                                 </Border>
                             </StackPanel>
-
-                            <!-- Start Date and Due Date Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
@@ -264,6 +264,22 @@
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
+                            <!-- Start Date and Due Date Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
                             <!-- Line Items Section -->
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -389,22 +405,6 @@
                                     </Grid>
                                 </Border>
                             </StackPanel>
-
-                            <!-- Start Date and Due Date Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
@@ -604,6 +604,12 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
+
+                            <!-- Mark as Paid -->
+                            <CheckBox IsChecked="{Binding ReturnMarkAsPaid}"
+                                      Content="{loc:Loc 'Mark as Paid'}"
+                                      FontSize="13"
+                                      Margin="0,4,0,0" />
 
                             <!-- Return Notes -->
                             <StackPanel Spacing="6">

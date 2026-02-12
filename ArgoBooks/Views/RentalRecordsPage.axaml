@@ -156,7 +156,8 @@
                                 <Border Padding="24,0"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1"
-                                        MinHeight="56">
+                                        MinHeight="56"
+                                        Classes.highlighted-row="{Binding IsHighlighted}">
                                     <StackPanel Orientation="Horizontal">
                                         <!-- ID -->
                                         <table:ArgoTableCell Text="{Binding Id}" FontWeight="Medium"
@@ -307,6 +308,15 @@
                                                             Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).GenerateInvoiceCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <!-- Mark as Paid Button -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Mark as Paid'}"
+                                                            IsVisible="{Binding CanMarkAsPaid}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).MarkAsPaidCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger"
