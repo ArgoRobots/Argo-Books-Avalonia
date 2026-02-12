@@ -719,9 +719,10 @@ public partial class InvoiceDisplayItem : ObservableObject
     public bool IsDraft => Status == InvoiceStatus.Draft;
 
     /// <summary>
-    /// Whether this invoice can be edited (only Pending invoices - drafts use Continue instead).
+    /// Whether this invoice can be edited (non-draft, non-cancelled invoices).
+    /// Drafts use "Continue" instead; cancelled invoices cannot be modified.
     /// </summary>
-    public bool CanEdit => Status == InvoiceStatus.Pending;
+    public bool CanEdit => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
 
     /// <summary>
     /// Whether this invoice can be sent via email (not drafts or cancelled).

@@ -244,6 +244,14 @@
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc Edit}"
+                                                            IsVisible="{Binding CanEdit}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'View History'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
                                                             CommandParameter="{Binding}">

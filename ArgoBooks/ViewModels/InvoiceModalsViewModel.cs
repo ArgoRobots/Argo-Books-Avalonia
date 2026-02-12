@@ -62,10 +62,40 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isFromRental;
 
     /// <summary>
+    /// Whether the invoice is being created from a revenue record.
+    /// When true, revenue-derived fields (customer, line items) are read-only.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isFromRevenue;
+
+    /// <summary>
+    /// Whether the invoice was created from an external source (rental or revenue).
+    /// When true, customer, dates, and line item fields are read-only in the modal.
+    /// </summary>
+    public bool IsFromExternalSource => IsFromRental || IsFromRevenue;
+
+    partial void OnIsFromRentalChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsFromExternalSource));
+    }
+
+    partial void OnIsFromRevenueChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsFromExternalSource));
+    }
+
+    /// <summary>
     /// Whether the modal is in view-only mode (read-only preview of an existing invoice).
     /// </summary>
     [ObservableProperty]
     private bool _isViewOnly;
+
+    /// <summary>
+    /// Whether the edit modal is in limited-edit mode (for invoices that have been sent).
+    /// When true, only Status, Due Date, and Notes can be modified.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isLimitedEdit;
 
     [ObservableProperty]
     private string _modalTitle = "Create Invoice";
@@ -176,7 +206,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// When opened from a rental, pre-filled data doesn't count — only user-editable fields do.
     /// </summary>
     public bool HasEnteredData =>
-        IsFromRental
+        IsFromExternalSource
             ? !string.IsNullOrWhiteSpace(ModalNotes) || TaxRate > 0
             : SelectedCustomer != null ||
               !string.IsNullOrWhiteSpace(ModalNotes) ||
@@ -462,8 +492,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData?.Products == null)
             return;
 
-        // Load products for sales/invoices (use UnitPrice for selling price)
-        foreach (var product in companyData.Products.OrderBy(p => p.Name))
+        // Load only revenue products for invoices (exclude expense/rental products)
+        foreach (var product in companyData.Products
+                     .Where(p => p.Type == CategoryType.Revenue)
+                     .OrderBy(p => p.Name))
         {
             ProductOptions.Add(new ProductOption
             {
@@ -592,6 +624,49 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the create invoice modal pre-populated from a revenue record.
+    /// </summary>
+    public void OpenCreateFromRevenue(string revenueId)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
+        if (revenue == null) return;
+
+        // Open the standard create modal (loads options, resets form)
+        OpenCreateModal();
+
+        // Mark as from revenue so revenue-derived fields are read-only
+        IsFromRevenue = true;
+
+        // Pre-select the customer
+        SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == revenue.CustomerId);
+
+        // Replace the default line item with revenue line items
+        LineItems.Clear();
+        foreach (var li in revenue.LineItems)
+        {
+            var matchedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId);
+            var lineItem = new LineItemDisplayModel
+            {
+                SelectedProduct = matchedProduct,
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitPrice = li.UnitPrice,
+                RevenueRecordId = revenue.Id
+            };
+            lineItem.PropertyChanged += (_, _) => UpdateTotals();
+            LineItems.Add(lineItem);
+        }
+
+        // Set tax rate from revenue
+        TaxRate = revenue.TaxRate;
+
+        UpdateTotals();
+    }
+
+    /// <summary>
     /// Opens a read-only preview of an existing invoice.
     /// </summary>
     public void OpenViewInvoice(string? invoiceId)
@@ -673,6 +748,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == lineItem.ProductId),
                 RentalRecordId = lineItem.RentalRecordId,
+                RevenueRecordId = lineItem.RevenueRecordId,
                 Description = lineItem.Description,
                 Quantity = lineItem.Quantity,
                 UnitPrice = lineItem.UnitPrice
@@ -712,20 +788,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var invoice = App.CompanyManager?.CompanyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
-        // Prevent editing invoices that have been sent
-        if (invoice.Status != InvoiceStatus.Draft && invoice.Status != InvoiceStatus.Pending)
-        {
-            App.AddNotification(
-                "Cannot Edit Invoice",
-                "Invoices that have been sent cannot be modified. Only Draft and Pending invoices can be edited.",
-                NotificationType.Warning);
-            return;
-        }
+        // Invoices beyond Draft/Pending can only be edited in limited mode (status, due date, notes)
+        IsLimitedEdit = invoice.Status != InvoiceStatus.Draft && invoice.Status != InvoiceStatus.Pending;
 
         _editingInvoiceId = invoice.Id;
         IsEditMode = true;
         AllowPreview = false; // Edit mode doesn't show preview
-        ModalTitle = $"Edit Invoice {invoice.Id}";
+        ModalTitle = IsLimitedEdit
+            ? $"Update Invoice {invoice.Id}"
+            : $"Edit Invoice {invoice.Id}";
         SaveButtonText = "Save Changes";
 
         // Populate form
@@ -745,6 +816,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == lineItem.ProductId),
                 RentalRecordId = lineItem.RentalRecordId,
+                RevenueRecordId = lineItem.RevenueRecordId,
                 Description = lineItem.Description,
                 Quantity = lineItem.Quantity,
                 UnitPrice = lineItem.UnitPrice
@@ -1063,35 +1135,39 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var hasErrors = false;
         var errorMessages = new List<string>();
 
-        // Check customer
-        if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
+        // Skip customer/line-item checks when created from external source (fields are pre-populated and hidden)
+        if (!IsFromExternalSource)
         {
-            HasCustomerError = true;
-            errorMessages.Add("Please select a customer".Translate());
-            hasErrors = true;
-        }
-
-        // Check line items
-        if (LineItems.Count == 0)
-        {
-            errorMessages.Add("Please add at least one line item".Translate());
-            hasErrors = true;
-        }
-        else
-        {
-            // Validate that all line items have a product selected (rental line items are exempt)
-            foreach (var lineItem in LineItems)
+            // Check customer
+            if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
             {
-                if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId))
-                {
-                    lineItem.HasProductError = true;
-                    hasErrors = true;
-                }
+                HasCustomerError = true;
+                errorMessages.Add("Please select a customer".Translate());
+                hasErrors = true;
             }
 
-            if (LineItems.Any(li => li.HasProductError))
+            // Check line items
+            if (LineItems.Count == 0)
             {
-                errorMessages.Add("Please select a product for all line items".Translate());
+                errorMessages.Add("Please add at least one line item".Translate());
+                hasErrors = true;
+            }
+            else
+            {
+                // Validate that all line items have a product selected (rental line items are exempt)
+                foreach (var lineItem in LineItems)
+                {
+                    if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId) && string.IsNullOrEmpty(lineItem.RevenueRecordId))
+                    {
+                        lineItem.HasProductError = true;
+                        hasErrors = true;
+                    }
+                }
+
+                if (LineItems.Any(li => li.HasProductError))
+                {
+                    errorMessages.Add("Please select a product for all line items".Translate());
+                }
             }
         }
 
@@ -1188,6 +1264,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 ProductId = i.SelectedProduct?.Id,
                 RentalRecordId = i.RentalRecordId,
+                RevenueRecordId = i.RevenueRecordId,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1288,18 +1365,21 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 {
                     companyData.Invoices.Remove(invoice);
                     UnlinkInvoiceFromRentals(invoice, companyData);
+                    UnlinkInvoiceFromRevenue(invoice, companyData);
                     InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
                     companyData.Invoices.Add(invoice);
                     LinkInvoiceToRentals(invoice, companyData);
+            LinkInvoiceToRevenue(invoice, companyData);
                     InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 });
 
             // Add the new invoice to the collection and link to rentals
             companyData.Invoices.Add(invoice);
             LinkInvoiceToRentals(invoice, companyData);
+            LinkInvoiceToRevenue(invoice, companyData);
         }
 
         // Record undo action and mark as changed
@@ -1356,8 +1436,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private async Task RequestCloseCreateEditModalAsync()
     {
-        // Don't show confirmation if showing success screen
-        if (IsShowingSuccess)
+        // Don't show confirmation if showing success screen or in view-only mode
+        if (IsShowingSuccess || IsViewOnly)
         {
             CloseCreateEditModal();
             return;
@@ -1446,6 +1526,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 ProductId = i.SelectedProduct?.Id,
                 RentalRecordId = i.RentalRecordId,
+                RevenueRecordId = i.RevenueRecordId,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1466,6 +1547,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 companyData.Invoices.Add(invoice);
                 LinkInvoiceToRentals(invoice, companyData);
+            LinkInvoiceToRevenue(invoice, companyData);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             });
 
@@ -1493,38 +1575,41 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             lineItem.HasProductError = false;
         }
 
-        // Validation
-        if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
+        // Validation (skip customer/line-item checks in limited-edit mode since those fields are locked)
+        if (!IsLimitedEdit)
         {
-            HasCustomerError = true;
-            ValidationMessage = "Please select a customer".Translate();
-            HasValidationMessage = true;
-            return;
-        }
-
-        if (LineItems.Count == 0)
-        {
-            ValidationMessage = "Please add at least one line item".Translate();
-            HasValidationMessage = true;
-            return;
-        }
-
-        // Validate that all line items have a product selected (rental line items are exempt)
-        var hasProductErrors = false;
-        foreach (var lineItem in LineItems)
-        {
-            if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId))
+            if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
             {
-                lineItem.HasProductError = true;
-                hasProductErrors = true;
+                HasCustomerError = true;
+                ValidationMessage = "Please select a customer".Translate();
+                HasValidationMessage = true;
+                return;
             }
-        }
 
-        if (hasProductErrors)
-        {
-            ValidationMessage = "Please select a product for all line items".Translate();
-            HasValidationMessage = true;
-            return;
+            if (LineItems.Count == 0)
+            {
+                ValidationMessage = "Please add at least one line item".Translate();
+                HasValidationMessage = true;
+                return;
+            }
+
+            // Validate that all line items have a product selected (rental line items are exempt)
+            var hasProductErrors = false;
+            foreach (var lineItem in LineItems)
+            {
+                if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId) && string.IsNullOrEmpty(lineItem.RevenueRecordId))
+                {
+                    lineItem.HasProductError = true;
+                    hasProductErrors = true;
+                }
+            }
+
+            if (hasProductErrors)
+            {
+                ValidationMessage = "Please select a product for all line items".Translate();
+                HasValidationMessage = true;
+                return;
+            }
         }
 
         var companyData = App.CompanyManager?.CompanyData;
@@ -1565,6 +1650,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 ProductId = i.SelectedProduct?.Id,
                 RentalRecordId = i.RentalRecordId,
+                RevenueRecordId = i.RevenueRecordId,
                 Description = i.Description,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
@@ -1585,6 +1671,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 companyData.Invoices.Add(invoice);
                 LinkInvoiceToRentals(invoice, companyData);
+            LinkInvoiceToRevenue(invoice, companyData);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 App.CheckAndNotifyInvoiceOverdue(invoice);
             });
@@ -1606,6 +1693,104 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == _editingInvoiceId);
         if (invoice == null) return;
 
+        if (IsLimitedEdit)
+        {
+            SaveLimitedEditInvoice(invoice);
+        }
+        else
+        {
+            SaveFullEditInvoice(invoice);
+        }
+
+        // Record undo action and mark as changed
+        App.CompanyManager?.MarkAsChanged();
+        InvoiceSaved?.Invoke(this, EventArgs.Empty);
+        App.CheckAndNotifyInvoiceOverdue(invoice);
+    }
+
+    /// <summary>
+    /// Saves only the limited fields (status, due date, notes) for sent invoices.
+    /// </summary>
+    private void SaveLimitedEditInvoice(Invoice invoice)
+    {
+        var originalDueDate = invoice.DueDate;
+        var originalStatus = invoice.Status;
+        var originalNotes = invoice.Notes;
+
+        var newDueDate = ModalDueDate?.DateTime ?? invoice.DueDate;
+        var newStatus = Enum.Parse<InvoiceStatus>(ModalStatus);
+        var newNotes = ModalNotes;
+
+        // Track history entries for each change
+        var historyEntries = new List<InvoiceHistoryEntry>();
+
+        if (newStatus != originalStatus)
+        {
+            historyEntries.Add(new InvoiceHistoryEntry
+            {
+                Action = newStatus.ToString(),
+                Details = $"Status changed from {originalStatus} to {newStatus}",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        if (newDueDate.Date != originalDueDate.Date)
+        {
+            historyEntries.Add(new InvoiceHistoryEntry
+            {
+                Action = "Updated",
+                Details = $"Due date changed from {originalDueDate:d} to {newDueDate:d}",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        if (newNotes != originalNotes)
+        {
+            historyEntries.Add(new InvoiceHistoryEntry
+            {
+                Action = "Updated",
+                Details = "Notes updated",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        invoice.DueDate = newDueDate;
+        invoice.Status = newStatus;
+        invoice.Notes = newNotes;
+        invoice.UpdatedAt = DateTime.Now;
+        foreach (var entry in historyEntries)
+            invoice.History.Add(entry);
+
+        var action = new DelegateAction(
+            $"Update invoice {_editingInvoiceId}",
+            () =>
+            {
+                invoice.DueDate = originalDueDate;
+                invoice.Status = originalStatus;
+                invoice.Notes = originalNotes;
+                foreach (var entry in historyEntries)
+                    invoice.History.Remove(entry);
+                InvoiceSaved?.Invoke(this, EventArgs.Empty);
+            },
+            () =>
+            {
+                invoice.DueDate = newDueDate;
+                invoice.Status = newStatus;
+                invoice.Notes = newNotes;
+                foreach (var entry in historyEntries)
+                    invoice.History.Add(entry);
+                InvoiceSaved?.Invoke(this, EventArgs.Empty);
+                App.CheckAndNotifyInvoiceOverdue(invoice);
+            });
+
+        App.UndoRedoManager.RecordAction(action);
+    }
+
+    /// <summary>
+    /// Saves all fields for draft/pending invoices (full edit).
+    /// </summary>
+    private void SaveFullEditInvoice(Invoice invoice)
+    {
         // Store original values for undo
         var originalCustomerId = invoice.CustomerId;
         var originalIssueDate = invoice.IssueDate;
@@ -1616,15 +1801,39 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var originalSecurityDeposit = invoice.SecurityDeposit;
         var originalLineItems = invoice.LineItems.ToList();
 
+        var newStatus = Enum.Parse<InvoiceStatus>(ModalStatus);
+
+        // Track history for status changes and general edits
+        var historyEntries = new List<InvoiceHistoryEntry>();
+
+        if (newStatus != originalStatus)
+        {
+            historyEntries.Add(new InvoiceHistoryEntry
+            {
+                Action = newStatus.ToString(),
+                Details = $"Status changed from {originalStatus} to {newStatus}",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        historyEntries.Add(new InvoiceHistoryEntry
+        {
+            Action = "Edited",
+            Details = "Invoice details updated",
+            Timestamp = DateTime.UtcNow
+        });
+
         // Apply changes
         invoice.CustomerId = SelectedCustomer!.Id!;
         invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
         invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
-        invoice.Status = Enum.Parse<InvoiceStatus>(ModalStatus);
+        invoice.Status = newStatus;
         invoice.Notes = ModalNotes;
         invoice.TaxRate = TaxRate;
         invoice.SecurityDeposit = SecurityDeposit;
         invoice.UpdatedAt = DateTime.Now;
+        foreach (var entry in historyEntries)
+            invoice.History.Add(entry);
         invoice.LineItems = LineItems.Select(i => new LineItem
         {
             ProductId = i.SelectedProduct?.Id,
@@ -1633,6 +1842,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             UnitPrice = i.UnitPrice ?? 0,
             TaxRate = 0
         }).ToList();
+
+        // Capture new line items for undo/redo
+        var newLineItems = invoice.LineItems;
 
         // Create undo action
         var action = new DelegateAction(
@@ -1647,6 +1859,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 invoice.TaxRate = originalTaxRate;
                 invoice.SecurityDeposit = originalSecurityDeposit;
                 invoice.LineItems = originalLineItems;
+                foreach (var entry in historyEntries)
+                    invoice.History.Remove(entry);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
@@ -1654,28 +1868,18 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 invoice.CustomerId = SelectedCustomer!.Id!;
                 invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
                 invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
-                invoice.Status = Enum.Parse<InvoiceStatus>(ModalStatus);
+                invoice.Status = newStatus;
                 invoice.Notes = ModalNotes;
                 invoice.TaxRate = TaxRate;
                 invoice.SecurityDeposit = SecurityDeposit;
-                invoice.LineItems = LineItems.Select(i => new LineItem
-                {
-                    ProductId = i.SelectedProduct?.Id,
-                    Description = i.Description,
-                    Quantity = i.Quantity ?? 0,
-                    UnitPrice = i.UnitPrice ?? 0,
-                    TaxRate = 0
-                }).ToList();
+                invoice.LineItems = newLineItems;
+                foreach (var entry in historyEntries)
+                    invoice.History.Add(entry);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
                 App.CheckAndNotifyInvoiceOverdue(invoice);
             });
 
-        // Record undo action and mark as changed
         App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
-
-        InvoiceSaved?.Invoke(this, EventArgs.Empty);
-        App.CheckAndNotifyInvoiceOverdue(invoice);
     }
 
     /// <summary>
@@ -1709,11 +1913,45 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Links an invoice to any revenue records referenced by its line items.
+    /// </summary>
+    private static void LinkInvoiceToRevenue(Invoice invoice, CompanyData companyData)
+    {
+        foreach (var revenueId in invoice.LineItems
+                     .Where(li => !string.IsNullOrEmpty(li.RevenueRecordId))
+                     .Select(li => li.RevenueRecordId!)
+                     .Distinct())
+        {
+            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
+            if (revenue != null)
+                revenue.InvoiceId = invoice.Id;
+        }
+    }
+
+    /// <summary>
+    /// Unlinks an invoice from any revenue records referenced by its line items.
+    /// </summary>
+    private static void UnlinkInvoiceFromRevenue(Invoice invoice, CompanyData companyData)
+    {
+        foreach (var revenueId in invoice.LineItems
+                     .Where(li => !string.IsNullOrEmpty(li.RevenueRecordId))
+                     .Select(li => li.RevenueRecordId!)
+                     .Distinct())
+        {
+            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
+            if (revenue != null && revenue.InvoiceId == invoice.Id)
+                revenue.InvoiceId = null;
+        }
+    }
+
     private void ResetForm()
     {
         _editingInvoiceId = string.Empty;
         IsFromRental = false;
+        IsFromRevenue = false;
         IsViewOnly = false;
+        IsLimitedEdit = false;
         SelectedCustomer = null;
         ModalIssueDate = DateTimeOffset.Now;
         ModalDueDate = DateTimeOffset.Now.AddDays(30);
@@ -1758,6 +1996,9 @@ public partial class LineItemDisplayModel : ObservableObject
 
     [ObservableProperty]
     private string? _rentalRecordId;
+
+    [ObservableProperty]
+    private string? _revenueRecordId;
 
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => $"${Amount:N2}";

@@ -19,6 +19,12 @@ public class LineItem
     public string? RentalRecordId { get; set; }
 
     /// <summary>
+    /// Revenue record ID if this line item is for a revenue transaction.
+    /// </summary>
+    [JsonPropertyName("revenueRecordId")]
+    public string? RevenueRecordId { get; set; }
+
+    /// <summary>
     /// Description of the item or service.
     /// </summary>
     [JsonPropertyName("description")]

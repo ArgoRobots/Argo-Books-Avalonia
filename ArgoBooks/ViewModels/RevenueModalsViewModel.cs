@@ -6,6 +6,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
@@ -15,6 +16,16 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<RevenueDisplayItem, RevenueLineItem>
 {
+    public RevenueModalsViewModel()
+    {
+        // Reset ModalPaid to true when opening the add modal
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IsAddEditModalOpen) && IsAddEditModalOpen && !IsEditMode)
+                ModalPaid = true;
+        };
+    }
+
     #region Abstract Property Implementations
 
     protected override string TransactionTypeName => "Revenue";
@@ -94,6 +105,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         get => DeleteTransactionAmount;
         set => DeleteTransactionAmount = value;
     }
+
+    // Payment status
+    [ObservableProperty]
+    private bool _modalPaid = true;
 
     // Command aliases for AXAML bindings
     public IAsyncRelayCommand SaveRevenueCommand => SaveTransactionCommand;
@@ -176,6 +191,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         SaveButtonText = "Save Changes";
 
         SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == revenue.CustomerId);
+        ModalPaid = revenue.PaymentStatus == "Paid";
         PopulateFormFromTransaction(revenue);
 
         IsAddEditModalOpen = true;
@@ -482,8 +498,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             TaxAmount = TaxAmount,
             ShippingCost = ModalShipping,
             Discount = ModalDiscount,
+            Fee = ModalFee,
             Total = Total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
+            PaymentStatus = ModalPaid ? "Paid" : "Unpaid",
             Notes = ModalNotes,
             ReferenceNumber = string.Empty,
             CreatedAt = DateTime.Now,
@@ -494,6 +512,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             TaxAmountUSD = ConvertedTaxAmount?.AmountUSD ?? TaxAmount,
             ShippingCostUSD = ConvertedShippingCost?.AmountUSD ?? ModalShipping,
             DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount,
+            FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
                 ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
                 : averageUnitPrice
@@ -566,8 +585,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.TaxAmount = TaxAmount;
         revenue.ShippingCost = ModalShipping;
         revenue.Discount = ModalDiscount;
+        revenue.Fee = ModalFee;
         revenue.Total = Total;
         revenue.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
+        revenue.PaymentStatus = ModalPaid ? "Paid" : "Unpaid";
         revenue.Notes = ModalNotes;
         revenue.UpdatedAt = DateTime.Now;
         // USD conversion fields
@@ -576,6 +597,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.TaxAmountUSD = ConvertedTaxAmount?.AmountUSD ?? TaxAmount;
         revenue.ShippingCostUSD = ConvertedShippingCost?.AmountUSD ?? ModalShipping;
         revenue.DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount;
+        revenue.FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee;
         revenue.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
             ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
             : averageUnitPrice;
@@ -615,8 +637,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 revenue.TaxAmount = TaxAmount;
                 revenue.ShippingCost = ModalShipping;
                 revenue.Discount = ModalDiscount;
+                revenue.Fee = ModalFee;
                 revenue.Total = Total;
                 revenue.PaymentMethod = pm;
+                revenue.PaymentStatus = ModalPaid ? "Paid" : "Unpaid";
                 revenue.Notes = ModalNotes;
                 if (capturedNewReceipt != null)
                 {
@@ -688,8 +712,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             TaxAmount = revenue.TaxAmount,
             ShippingCost = revenue.ShippingCost,
             Discount = revenue.Discount,
+            Fee = revenue.Fee,
             Total = revenue.Total,
             PaymentMethod = revenue.PaymentMethod,
+            PaymentStatus = revenue.PaymentStatus,
             Notes = revenue.Notes,
             ReferenceNumber = revenue.ReferenceNumber,
             ReceiptId = revenue.ReceiptId
@@ -709,8 +735,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.TaxAmount = state.TaxAmount;
         revenue.ShippingCost = state.ShippingCost;
         revenue.Discount = state.Discount;
+        revenue.Fee = state.Fee;
         revenue.Total = state.Total;
         revenue.PaymentMethod = state.PaymentMethod;
+        revenue.PaymentStatus = state.PaymentStatus;
         revenue.Notes = state.Notes;
         revenue.ReferenceNumber = state.ReferenceNumber;
         revenue.ReceiptId = state.ReceiptId;

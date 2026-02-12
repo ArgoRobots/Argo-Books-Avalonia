@@ -93,8 +93,10 @@ public static class StatusConverters
         {
             ["Completed"] = GreenBg,
             ["Pending"] = YellowBg,
+            ["Unpaid"] = OrangeBg,
             ["Returned"] = BlueBg,
             ["Partial Return"] = PurpleBg,
+            ["Lost/Damaged"] = RedBg,
             ["Cancelled"] = GrayBg
         });
 
@@ -103,8 +105,10 @@ public static class StatusConverters
         {
             ["Completed"] = GreenFg,
             ["Pending"] = YellowFg,
+            ["Unpaid"] = OrangeFg,
             ["Returned"] = BlueFg,
             ["Partial Return"] = PurpleFg,
+            ["Lost/Damaged"] = RedFg,
             ["Cancelled"] = GrayFg
         }, GrayFg);
 

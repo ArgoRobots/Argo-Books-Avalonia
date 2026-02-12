@@ -424,6 +424,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(revenue, companyData);
+            var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId) : null;
@@ -434,7 +435,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 Id = revenue.Id,
                 AccountantName = accountant?.Name ?? "System",
                 CustomerName = customer?.Name ?? "-",
-                ProductDescription = revenue.Description,
+                ProductDescription = productName,
+                ProductMoreText = productMoreText,
                 CategoryName = category?.Name ?? "-",
                 Date = revenue.Date,
                 Total = revenue.Total,
@@ -445,6 +447,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 DiscountUSD = revenue.DiscountUSD > 0 ? revenue.DiscountUSD : revenue.Discount,
                 UnitPriceUSD = revenue.EffectiveUnitPriceUSD,
                 StatusDisplay = statusDisplay,
+                Paid = revenue.PaymentStatus == "Paid",
                 Notes = revenue.Notes,
                 CustomerId = revenue.CustomerId,
                 CategoryId = categoryId,
@@ -507,6 +510,19 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
     }
 
+    private static (string name, string moreText) FormatProductDescription(Revenue revenue)
+    {
+        if (revenue.LineItems.Count <= 1)
+            return (revenue.Description, string.Empty);
+
+        var firstName = revenue.LineItems[0].Description;
+        if (string.IsNullOrEmpty(firstName))
+            firstName = revenue.Description.Split(',')[0].Trim();
+
+        var remaining = revenue.LineItems.Count - 1;
+        return (firstName, $" +{remaining} more");
+    }
+
     private static string GetStatusDisplay(Revenue revenue, Core.Data.CompanyData? companyData)
     {
         // Check for lost/damaged related to this revenue
@@ -522,6 +538,12 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         if (relatedReturn is { Status: ReturnStatus.Completed })
         {
             return "Returned";
+        }
+
+        // Check if unpaid
+        if (revenue.PaymentStatus != "Paid")
+        {
+            return "Unpaid";
         }
 
         // Default status
@@ -601,6 +623,13 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     }
 
     [RelayCommand]
+    private void GenerateInvoice(RevenueDisplayItem? item)
+    {
+        if (item == null) return;
+        App.InvoiceModalsViewModel?.OpenCreateFromRevenue(item.Id);
+    }
+
+    [RelayCommand]
     private void OpenFilterModal()
     {
         App.RevenueModalsViewModel?.OpenFilterModal();
@@ -673,6 +702,9 @@ public partial class RevenueDisplayItem : ObservableObject
     private string _productDescription = string.Empty;
 
     [ObservableProperty]
+    private string _productMoreText = string.Empty;
+
+    [ObservableProperty]
     private string _categoryName = string.Empty;
 
     [ObservableProperty]
@@ -701,6 +733,9 @@ public partial class RevenueDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _statusDisplay = string.Empty;
+
+    [ObservableProperty]
+    private bool _paid;
 
     [ObservableProperty]
     private string _notes = string.Empty;
@@ -780,4 +815,5 @@ public partial class RevenueDisplayItem : ObservableObject
     private string _invoiceId = string.Empty;
 
     public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
+    public bool CanGenerateInvoice => !Paid && !HasInvoiceId;
 }
