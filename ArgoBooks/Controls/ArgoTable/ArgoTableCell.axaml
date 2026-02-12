@@ -10,7 +10,7 @@
              Width="{Binding #Root.ColumnWidth}"
              IsVisible="{Binding #Root.IsColumnVisible}">
 
-    <Panel>
+    <Panel ClipToBounds="True">
         <!-- Custom Content or Default TextBlock -->
         <ContentPresenter Content="{Binding #Root.CellContent}"
                           IsVisible="{Binding #Root.HasCustomContent}"

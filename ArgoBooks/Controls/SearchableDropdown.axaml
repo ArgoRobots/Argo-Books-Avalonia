@@ -91,7 +91,7 @@
                 <Button Grid.Column="1"
                         Classes="icon"
                         Width="32" Height="32"
-                        Margin="0,0,4,0"
+                        Margin="0"
                         Command="{Binding ToggleDropdownCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
                     <PathIcon Data="M7 10l5 5 5-5z"
                               Width="16" Height="16"
