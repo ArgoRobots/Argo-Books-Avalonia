@@ -1371,7 +1371,12 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             else if (_editingRecord == null && li.SelectedItem != null)
             {
                 var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == li.SelectedItem.Id);
-                if (item != null && qty > item.AvailableQuantity)
+                if (item == null)
+                {
+                    li.QuantityError = "Item not found in inventory.".Translate();
+                    isValid = false;
+                }
+                else if (qty > item.AvailableQuantity)
                 {
                     li.QuantityError = $"Only {item.AvailableQuantity} available.";
                     isValid = false;
