@@ -1178,6 +1178,9 @@ public class App : Application
                 }
             }
 
+            // Load company-specific chart preferences before navigating to Dashboard
+            ChartSettingsService.Instance.LoadForCompany(args.FilePath);
+
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 

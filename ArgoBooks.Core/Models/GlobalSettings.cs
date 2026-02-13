@@ -47,6 +47,12 @@ public class UiSettings
     /// </summary>
     public string TimeFormat { get; set; } = "12h";
     public ChartSettings Chart { get; set; } = new();
+
+    /// <summary>
+    /// Per-company chart settings, keyed by company file path.
+    /// </summary>
+    public Dictionary<string, ChartSettings> CompanyChartSettings { get; set; } = new();
+
     public QuickActionsSettings QuickActions { get; set; } = new();
     public EmojiPickerSettings EmojiPicker { get; set; } = new();
 

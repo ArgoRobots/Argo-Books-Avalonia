@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,7 +7,7 @@ namespace ArgoBooks.Services;
 
 /// <summary>
 /// Service for managing shared chart settings between Dashboard and Analytics pages.
-/// Settings are persisted to global settings and synchronized across pages.
+/// Settings are persisted per-company to global settings and synchronized across pages.
 /// </summary>
 public partial class ChartSettingsService : ObservableObject
 {
@@ -14,6 +15,8 @@ public partial class ChartSettingsService : ObservableObject
 
     private readonly IGlobalSettingsService? _globalSettingsService;
     private bool _isInitialized;
+    private string? _currentCompanyPath;
+    private bool _isLoading;
 
     /// <summary>
     /// Gets the singleton instance of the ChartSettingsService.
@@ -92,6 +95,8 @@ public partial class ChartSettingsService : ObservableObject
 
     /// <summary>
     /// Initializes the service by loading settings from global settings.
+    /// Called from ViewModel constructors; only runs once as a fallback
+    /// if LoadForCompany hasn't been called yet.
     /// </summary>
     public void Initialize()
     {
@@ -102,14 +107,59 @@ public partial class ChartSettingsService : ObservableObject
     }
 
     /// <summary>
+    /// Loads chart settings for a specific company. Resets to defaults first,
+    /// then loads saved per-company preferences if they exist.
+    /// Should be called when a company is opened.
+    /// </summary>
+    /// <param name="companyPath">File path of the company being opened.</param>
+    public void LoadForCompany(string? companyPath)
+    {
+        _currentCompanyPath = companyPath;
+
+        _isLoading = true;
+        try
+        {
+            // Reset to defaults before loading company-specific settings
+            SelectedChartType = "Line";
+            SelectedDateRange = "This Month";
+            HasAppliedCustomRange = false;
+            UpdateDateRangeFromSelection();
+
+            // Load company-specific settings (or keep defaults if none found)
+            LoadFromGlobalSettings();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+
+        _isInitialized = true;
+
+        // Notify all computed properties after load
+        OnPropertyChanged(nameof(AppliedDateRangeText));
+        OnPropertyChanged(nameof(ComparisonPeriodLabel));
+    }
+
+    /// <summary>
     /// Loads chart settings from global settings.
+    /// Uses per-company settings if a company path is set and has saved preferences,
+    /// otherwise uses defaults.
     /// </summary>
     private void LoadFromGlobalSettings()
     {
         var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Ui.Chart == null) return;
+        if (settings == null) return;
 
-        var chartSettings = settings.Ui.Chart;
+        // Try to load company-specific settings first
+        ChartSettings? chartSettings = null;
+        if (!string.IsNullOrEmpty(_currentCompanyPath) &&
+            settings.Ui.CompanyChartSettings.TryGetValue(_currentCompanyPath, out var companyChart))
+        {
+            chartSettings = companyChart;
+        }
+
+        // If no company-specific settings found, keep current defaults
+        if (chartSettings == null) return;
 
         // Load chart type
         if (!string.IsNullOrEmpty(chartSettings.ChartType) &&
@@ -136,35 +186,38 @@ public partial class ChartSettingsService : ObservableObject
                 UpdateDateRangeFromSelection();
             }
         }
-        else
-        {
-            UpdateDateRangeFromSelection();
-        }
 
         // Notify computed property changed
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }
 
     /// <summary>
-    /// Saves chart settings to global settings.
+    /// Saves chart settings to global settings, keyed by current company path.
     /// </summary>
     private void SaveToGlobalSettings()
     {
+        if (_isLoading) return;
+
         var settings = _globalSettingsService?.GetSettings();
         if (settings == null) return;
 
-        settings.Ui.Chart.ChartType = SelectedChartType;
-        settings.Ui.Chart.DateRange = SelectedDateRange;
+        var chartData = new ChartSettings
+        {
+            ChartType = SelectedChartType,
+            DateRange = SelectedDateRange,
+            MaxPieSlices = settings.Ui.Chart.MaxPieSlices
+        };
 
         if (HasAppliedCustomRange && SelectedDateRange == "Custom Range")
         {
-            settings.Ui.Chart.CustomStartDate = StartDate;
-            settings.Ui.Chart.CustomEndDate = EndDate;
+            chartData.CustomStartDate = StartDate;
+            chartData.CustomEndDate = EndDate;
         }
-        else
+
+        // Save to company-specific settings if we have a company path
+        if (!string.IsNullOrEmpty(_currentCompanyPath))
         {
-            settings.Ui.Chart.CustomStartDate = null;
-            settings.Ui.Chart.CustomEndDate = null;
+            settings.Ui.CompanyChartSettings[_currentCompanyPath] = chartData;
         }
 
         _globalSettingsService?.SaveSettings(settings);
