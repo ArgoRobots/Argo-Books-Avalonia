@@ -689,10 +689,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
 
-        // Render HTML
+        // Render HTML (include Pay Online URL if portal is configured)
         var renderer = new InvoiceHtmlRenderer();
         var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
-        PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol);
+        string? payOnlineUrl = null;
+        var portalSettings = companyData.Settings.PaymentPortal;
+        if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
+        {
+            payOnlineUrl = portalSettings.PortalUrl;
+        }
+        PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol, payOnlineUrl);
 
         // Open modal in view-only preview mode
         ResetForm();
@@ -1340,6 +1346,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 // Portal publish failure is non-blocking — continue with sending email
             }
+
+            // Fallback: use portal base URL if publish didn't return a specific invoice URL
+            payOnlineUrl ??= portalSettings.PortalUrl;
         }
 
         // Send the email (with Pay Online URL if portal publish succeeded)

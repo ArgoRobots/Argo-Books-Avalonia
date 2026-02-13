@@ -847,17 +847,11 @@ public static class InvoiceHtmlTemplates
 <body style="margin: 0; padding: 0; font-family: {{FontFamily}}; font-weight: 600; background-color: #f5f5f5;">
     <table cellpadding="0" cellspacing="0" border="0" width="800" align="center" style="background: {{BackgroundColor}}; font-family: {{FontFamily}}; font-weight: 600;">
         <tr>
-            <!-- Side Decoration: Colored Ribbon Stripes -->
-            <td width="42" valign="top" style="width: 42px;">
-                <table cellpadding="0" cellspacing="0" border="0" width="42" style="width: 42px; min-height: 100%;">
-                    <tr>
-                        <td width="14" style="width: 14px; background-color: {{AccentColor}};">&nbsp;</td>
-                        <td width="14" style="width: 14px; background-color: {{PrimaryColor}};">&nbsp;</td>
-                        <td width="14" style="width: 14px; background-color: {{SecondaryColor}};">&nbsp;</td>
-                    </tr>
-                </table>
-            </td>
-            <td width="48" style="width: 48px;">&nbsp;</td>
+            <!-- Side Decoration: Colored Ribbon Stripes (direct cells for full-height rendering) -->
+            <td width="14" style="width: 14px; background-color: {{AccentColor}};"></td>
+            <td width="14" style="width: 14px; background-color: {{PrimaryColor}};"></td>
+            <td width="14" style="width: 14px; background-color: {{SecondaryColor}};"></td>
+            <td width="48" style="width: 48px;"></td>
 
             <!-- Main Content -->
             <td valign="top" style="padding: 50px 50px 50px 0;">
