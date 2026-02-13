@@ -689,14 +689,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
 
-        // Render HTML (include Pay Online URL if portal is configured)
+        // Render HTML (show Pay Online button as non-clickable preview if portal is configured)
         var renderer = new InvoiceHtmlRenderer();
         var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
         string? payOnlineUrl = null;
         var portalSettings = companyData.Settings.PaymentPortal;
         if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
         {
-            payOnlineUrl = portalSettings.PortalUrl;
+            payOnlineUrl = "#";
         }
         PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol, payOnlineUrl);
 
@@ -1111,12 +1111,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
 
-            // Show Pay Online button in preview when portal is configured and auto-publish is enabled
+            // Show Pay Online button in preview when portal is configured (non-clickable)
             string? previewPayUrl = null;
             var portalSettings = companySettings.PaymentPortal;
             if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
             {
-                previewPayUrl = portalSettings.PortalUrl ?? "https://argorobots.com/portal/";
+                previewPayUrl = "#";
             }
 
             PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, previewPayUrl);
