@@ -542,9 +542,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _portalEnabled;
 
     [ObservableProperty]
-    private bool _portalAutoPublish = true;
-
-    [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
 
     [ObservableProperty]
@@ -712,7 +709,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         PortalEnabled = settings.Enabled;
-        PortalAutoPublish = settings.AutoPublishOnSend;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes;
 
@@ -730,7 +726,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         settings.Enabled = PortalEnabled;
-        settings.AutoPublishOnSend = PortalAutoPublish;
         settings.NotifyOnPayment = PortalNotifyOnPayment;
         settings.AutoSyncIntervalMinutes = PortalSyncInterval;
 

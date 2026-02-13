@@ -431,7 +431,7 @@
                                     CornerRadius="6"
                                     Padding="12,8"
                                     IsVisible="{Binding HasSendError}">
-                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
                                     <PathIcon Grid.Column="0"
                                               Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                               Foreground="{DynamicResource ErrorBrush}"
@@ -446,15 +446,6 @@
                                                VerticalAlignment="Center"
                                                TextWrapping="Wrap" />
                                     <Button Grid.Column="2"
-                                            Classes="primary-button"
-                                            Content="{loc:Loc Configure}"
-                                            Command="{Binding OpenPortalSettingsCommand}"
-                                            FontSize="12"
-                                            Padding="12,4"
-                                            Margin="8,0"
-                                            VerticalAlignment="Center"
-                                            IsVisible="{Binding ShowPortalConfigureLink}" />
-                                    <Button Grid.Column="3"
                                             Content="✕"
                                             Command="{Binding DismissSendErrorCommand}"
                                             Background="Transparent"

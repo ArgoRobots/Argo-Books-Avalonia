@@ -141,15 +141,6 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             // Enough space now (with buffer), can reset overflow state
             _hasManualOverflow = false;
         }
-        else if (totalCurrentWidth > width)
-        {
-            // Window resize caused overflow - enable scrolling
-            _availableWidth = width;
-            _hasManualOverflow = true;
-            MinimumTotalWidth = totalCurrentWidth;
-            NeedsHorizontalScroll = true;
-            return;
-        }
 
         _availableWidth = width;
         RecalculateWidths();

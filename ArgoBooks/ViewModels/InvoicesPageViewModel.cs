@@ -329,6 +329,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         _allInvoices.Clear();
         Invoices.Clear();
+        CheckPortalConfiguration();
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Invoices == null)
@@ -592,9 +593,31 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Modal Commands
+    #region Portal Configuration
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenCreateModalCommand))]
+    private bool _isPortalConfigured;
+
+    private void CheckPortalConfiguration()
+    {
+        var portalUrl = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal?.PortalUrl;
+        IsPortalConfigured = !string.IsNullOrEmpty(portalUrl);
+    }
 
     [RelayCommand]
+    private void OpenPortalSettings()
+    {
+        App.SettingsModalViewModel?.OpenWithTab(4);
+    }
+
+    #endregion
+
+    #region Modal Commands
+
+    private bool CanOpenCreateModal() => IsPortalConfigured;
+
+    [RelayCommand(CanExecute = nameof(CanOpenCreateModal))]
     private void OpenCreateModal()
     {
         App.InvoiceModalsViewModel?.OpenCreateModal();

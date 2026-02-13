@@ -193,9 +193,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _hasSendError;
 
     [ObservableProperty]
-    private bool _showPortalConfigureLink;
-
-    [ObservableProperty]
     private bool _isShowingSuccess;
 
     [ObservableProperty]
@@ -695,9 +692,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Render HTML (show non-clickable Pay button only when portal is configured)
         var renderer = new InvoiceHtmlRenderer();
         var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
-        var portalSettings = companyData.Settings.PaymentPortal;
-        string? payOnlineUrl = portalSettings.AutoPublishOnSend && !string.IsNullOrEmpty(portalSettings.PortalUrl)
-            ? "#" : null;
+        string? payOnlineUrl = !string.IsNullOrEmpty(companyData.Settings.PaymentPortal?.PortalUrl) ? "#" : null;
         PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol, payOnlineUrl);
 
         // Open modal in view-only preview mode
@@ -1112,9 +1107,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
 
             // Show non-clickable Pay Online button in preview when portal is configured
-            var portalSettings = companySettings.PaymentPortal;
-            string? previewPayUrl = portalSettings.AutoPublishOnSend && !string.IsNullOrEmpty(portalSettings.PortalUrl)
-                ? "#" : null;
+            string? previewPayUrl = !string.IsNullOrEmpty(companySettings.PaymentPortal?.PortalUrl) ? "#" : null;
 
             PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, previewPayUrl);
         }
@@ -1322,18 +1315,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit;
         invoice.Balance = invoice.Total - invoice.AmountPaid;
 
-        // Publish to payment portal first (to get the Pay Online URL for the email)
+        // Publish to payment portal (to get the Pay Online URL for the email)
         string? payOnlineUrl = null;
         var portalSettings = companyData.Settings.PaymentPortal;
-        if (portalSettings.AutoPublishOnSend)
+        if (!string.IsNullOrEmpty(portalSettings.PortalUrl))
         {
-            if (string.IsNullOrEmpty(portalSettings.PortalUrl))
-            {
-                ShowPortalConfigureLink = true;
-                await ShowSendErrorAsync("Payment portal is not configured. Please set up the payment portal in Settings before sending invoices.".Translate());
-                return;
-            }
-
             try
             {
                 var portalService = App.PaymentPortalService;
@@ -1472,13 +1458,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         HasSendError = false;
         SendErrorMessage = string.Empty;
-        ShowPortalConfigureLink = false;
-    }
-
-    [RelayCommand]
-    private void OpenPortalSettings()
-    {
-        App.SettingsModalViewModel?.OpenWithTab(4);
     }
 
     #endregion

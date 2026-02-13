@@ -291,6 +291,26 @@
                                     </Grid>
                                 </Border>
 
+                                <!-- Payment Notifications -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Payment Received'}"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Get notified when an online payment is received'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding PortalNotifyOnPayment}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
                                 <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -749,48 +769,6 @@
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding PortalEnabled}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
-                                <!-- Auto-Publish -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Auto-Publish Invoices'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Automatically publish invoices to the portal when sending via email'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding PortalAutoPublish}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
-                                <!-- Notify on Payment -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Payment Notifications'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Show a notification when an online payment is received'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding PortalNotifyOnPayment}"
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
