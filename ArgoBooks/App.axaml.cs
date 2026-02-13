@@ -49,6 +49,11 @@ public class App : Application
     private static FileService? _fileService;
 
     /// <summary>
+    /// Gets the payment portal service instance for online payment integration.
+    /// </summary>
+    public static PaymentPortalService? PaymentPortalService { get; private set; }
+
+    /// <summary>
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
@@ -655,6 +660,9 @@ public class App : Application
                 SettingsService,
                 errorLogger,
                 appVersion);
+
+            // Initialize payment portal service
+            PaymentPortalService = new PaymentPortalService();
 
             // Create navigation service
             NavigationService = new NavigationService();

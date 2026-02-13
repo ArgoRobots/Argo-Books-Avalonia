@@ -23,6 +23,9 @@ public enum PaymentMethod
     /// <summary>PayPal payment.</summary>
     PayPal,
 
+    /// <summary>Square payment.</summary>
+    Square,
+
     /// <summary>Other payment method.</summary>
     Other
 }

@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models.Invoices;
+using ArgoBooks.Core.Models.Portal;
 
 namespace ArgoBooks.Core.Models;
 
@@ -26,6 +27,7 @@ public class CompanySettings
     public NotificationSettings Notifications { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
     public InvoiceEmailSettings InvoiceEmail { get; set; } = new();
+    public PortalSettings PaymentPortal { get; set; } = new();
 }
 
 public class CompanyInfo

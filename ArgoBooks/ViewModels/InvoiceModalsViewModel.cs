@@ -8,6 +8,8 @@ using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Models.Portal;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -1302,7 +1304,36 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
-        // Try to send the email
+        // Publish to payment portal first (to get the Pay Online URL for the email)
+        string? payOnlineUrl = null;
+        var portalSettings = companyData.Settings.PaymentPortal;
+        if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
+        {
+            try
+            {
+                var portalService = App.PaymentPortalService;
+                if (portalService != null)
+                {
+                    var publishResponse = await portalService.PublishInvoiceAsync(invoice, companyData);
+                    if (publishResponse.Success)
+                    {
+                        payOnlineUrl = publishResponse.InvoiceUrl;
+                        invoice.History.Add(new InvoiceHistoryEntry
+                        {
+                            Action = "Published to Portal",
+                            Details = "Invoice published to online payment portal",
+                            Timestamp = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // Portal publish failure is non-blocking — continue with sending email
+            }
+        }
+
+        // Send the email (with Pay Online URL if portal publish succeeded)
         try
         {
             var emailService = new InvoiceEmailService();
@@ -1314,7 +1345,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 SelectedTemplate,
                 companyData,
                 emailSettings,
-                currencySymbol);
+                currencySymbol,
+                payOnlineUrl);
 
             if (!response.Success)
             {

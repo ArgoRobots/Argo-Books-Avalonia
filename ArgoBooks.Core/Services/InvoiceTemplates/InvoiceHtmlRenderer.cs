@@ -25,7 +25,8 @@ public partial class InvoiceHtmlRenderer
         Invoice invoice,
         InvoiceTemplate template,
         CompanyData companyData,
-        string currencySymbol = "$")
+        string currencySymbol = "$",
+        string? payOnlineUrl = null)
     {
         var customer = companyData.GetCustomer(invoice.CustomerId);
         var companySettings = companyData.Settings;
@@ -35,6 +36,18 @@ public partial class InvoiceHtmlRenderer
 
         // Build the data context for template rendering
         var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true);
+
+        // Add Pay Online URL if available
+        if (!string.IsNullOrEmpty(payOnlineUrl))
+        {
+            context["ShowPayOnline"] = true;
+            context["PayOnlineUrl"] = payOnlineUrl;
+        }
+        else
+        {
+            context["ShowPayOnline"] = false;
+            context["PayOnlineUrl"] = null;
+        }
 
         // Process the template
         html = ProcessTemplate(html, context);

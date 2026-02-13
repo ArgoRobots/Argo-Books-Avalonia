@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -37,29 +39,153 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     #region Payment Portal
 
     [ObservableProperty]
-    private string _lastSyncTime = "2 minutes ago";
+    private string _lastSyncTime = "Never";
 
     [ObservableProperty]
-    private bool _isPortalConnected = true;
+    private bool _isPortalConnected;
+
+    [ObservableProperty]
+    private bool _isPortalConfigured;
 
     [ObservableProperty]
     private bool _isSyncing;
 
+    [ObservableProperty]
+    private int _newOnlinePayments;
+
+    [ObservableProperty]
+    private string _onlineReceivedThisMonth = "$0.00";
+
+    [ObservableProperty]
+    private string? _portalUrl;
+
     /// <summary>
-    /// Syncs the payment portal data.
+    /// Invoices published to the portal that are awaiting payment.
+    /// </summary>
+    public ObservableCollection<AwaitingPaymentItem> AwaitingPayments { get; } = [];
+
+    [ObservableProperty]
+    private string _awaitingPaymentsTotal = "$0.00";
+
+    [ObservableProperty]
+    private bool _hasAwaitingPayments;
+
+    /// <summary>
+    /// Initializes portal state from saved settings.
+    /// </summary>
+    private void InitializePortalState()
+    {
+        var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        IsPortalConfigured = PortalSettings.IsConfigured;
+
+        if (portalSettings != null)
+        {
+            PortalUrl = portalSettings.PortalUrl;
+
+            if (portalSettings.LastSyncTime.HasValue)
+            {
+                LastSyncTime = FormatTimeSince(portalSettings.LastSyncTime.Value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks the portal connection status.
+    /// </summary>
+    private async Task CheckPortalStatusAsync()
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            IsPortalConnected = false;
+            IsPortalConfigured = false;
+            return;
+        }
+
+        IsPortalConfigured = true;
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        var status = await portalService.CheckStatusAsync();
+        IsPortalConnected = status.Connected;
+
+        if (status.Connected && status.PortalUrl != null)
+        {
+            PortalUrl = status.PortalUrl;
+        }
+
+        // Update connected providers if returned
+        var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        if (portalSettings != null && status.ConnectedProviders != null)
+        {
+            portalSettings.ConnectedAccounts = status.ConnectedProviders;
+        }
+    }
+
+    /// <summary>
+    /// Syncs the payment portal data by pulling new online payments from the server.
     /// </summary>
     [RelayCommand]
     private async Task SyncPortal()
     {
         if (IsSyncing) return;
 
+        var portalService = App.PaymentPortalService;
+        var companyData = App.CompanyManager?.CompanyData;
+        if (portalService == null || companyData == null) return;
+
+        if (!PortalSettings.IsConfigured)
+        {
+            IsPortalConnected = false;
+            return;
+        }
+
         IsSyncing = true;
         try
         {
-            // Simulate sync delay
-            await Task.Delay(1500);
+            var portalSettings = companyData.Settings.PaymentPortal;
+
+            // Pull new payments from the server
+            var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
+
+            if (!syncResponse.Success)
+            {
+                IsPortalConnected = false;
+                return;
+            }
+
+            IsPortalConnected = true;
+
+            if (syncResponse.Payments.Count > 0)
+            {
+                // Process new payments into local data
+                var newPayments = PaymentPortalService.ProcessSyncedPayments(
+                    syncResponse.Payments, companyData);
+
+                NewOnlinePayments = newPayments.Count;
+
+                if (newPayments.Count > 0)
+                {
+                    // Confirm the sync so the server marks them as synced
+                    var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
+                    await portalService.ConfirmSyncAsync(syncedIds);
+
+                    // Mark data as changed
+                    App.CompanyManager?.MarkAsChanged();
+                }
+            }
+
+            // Update sync timestamp
+            portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
             LastSyncTime = "Just now";
+
+            // Refresh the payments list
             LoadPayments();
+            LoadAwaitingPayments();
+            UpdateOnlineStatistics();
+        }
+        catch (Exception)
+        {
+            IsPortalConnected = false;
         }
         finally
         {
@@ -73,7 +199,116 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenPortal()
     {
-        // TODO: Implement payment portal URL opening
+        var url = PortalUrl;
+        if (string.IsNullOrEmpty(url))
+        {
+            url = PortalSettings.ApiBaseUrl.Replace("/api/portal", "/portal");
+        }
+
+        try
+        {
+            var processInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(processInfo);
+        }
+        catch
+        {
+            // Silently fail if browser can't be opened
+        }
+    }
+
+    /// <summary>
+    /// Copies the portal URL to the clipboard.
+    /// </summary>
+    [RelayCommand]
+    private async Task CopyPortalUrl()
+    {
+        if (string.IsNullOrEmpty(PortalUrl)) return;
+
+        try
+        {
+            var clipboard = Avalonia.Application.Current?.ApplicationLifetime is
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow?.Clipboard
+                : null;
+
+            if (clipboard != null)
+            {
+                await clipboard.SetTextAsync(PortalUrl);
+            }
+        }
+        catch
+        {
+            // Silently fail
+        }
+    }
+
+    /// <summary>
+    /// Loads invoices that are published to the portal and awaiting payment.
+    /// </summary>
+    private void LoadAwaitingPayments()
+    {
+        AwaitingPayments.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var awaitingInvoices = companyData.Invoices
+            .Where(i => i.Status is InvoiceStatus.Sent or InvoiceStatus.Viewed
+                        or InvoiceStatus.Partial or InvoiceStatus.Overdue
+                        or InvoiceStatus.Pending)
+            .Where(i => i.Balance > 0)
+            .OrderBy(i => i.DueDate)
+            .Take(10)
+            .ToList();
+
+        decimal totalOutstandingUSD = 0;
+
+        foreach (var invoice in awaitingInvoices)
+        {
+            var customer = companyData.GetCustomer(invoice.CustomerId);
+            AwaitingPayments.Add(new AwaitingPaymentItem
+            {
+                InvoiceId = invoice.Id,
+                CustomerName = customer?.Name ?? "Unknown",
+                Amount = CurrencyService.FormatFromUSD(invoice.EffectiveBalanceUSD, invoice.IssueDate),
+                Status = invoice.Status.ToString(),
+                IsOverdue = invoice.IsOverdue
+            });
+
+            totalOutstandingUSD += invoice.EffectiveBalanceUSD;
+        }
+
+        AwaitingPaymentsTotal = CurrencyService.FormatFromUSD(totalOutstandingUSD, DateTime.Now);
+        HasAwaitingPayments = AwaitingPayments.Count > 0;
+    }
+
+    /// <summary>
+    /// Updates online-specific statistics.
+    /// </summary>
+    private void UpdateOnlineStatistics()
+    {
+        var now = DateTime.Now;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+        var onlineReceivedUSD = _allPayments
+            .Where(p => p.Date >= startOfMonth && p.Source == "Online" && p.Amount > 0)
+            .Sum(p => p.EffectiveAmountUSD);
+
+        OnlineReceivedThisMonth = CurrencyService.FormatFromUSD(onlineReceivedUSD, now);
+    }
+
+    private static string FormatTimeSince(DateTime utcTime)
+    {
+        var elapsed = DateTime.UtcNow - utcTime;
+
+        if (elapsed.TotalMinutes < 1) return "Just now";
+        if (elapsed.TotalMinutes < 60) return $"{(int)elapsed.TotalMinutes} min ago";
+        if (elapsed.TotalHours < 24) return $"{(int)elapsed.TotalHours}h ago";
+        return $"{(int)elapsed.TotalDays}d ago";
     }
 
     #endregion
@@ -236,6 +471,12 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
         LoadPayments();
         LoadCustomerOptions();
+        InitializePortalState();
+        LoadAwaitingPayments();
+        UpdateOnlineStatistics();
+
+        // Check portal status asynchronously
+        _ = CheckPortalStatusAsync();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -510,13 +751,20 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 {
                     PaymentMethod.Cash => "Cash",
                     PaymentMethod.Check => "Check",
+                    PaymentMethod.CreditCard => "Credit Card",
+                    PaymentMethod.DebitCard => "Debit Card",
+                    PaymentMethod.BankTransfer => "Bank Transfer",
+                    PaymentMethod.PayPal => "PayPal",
+                    PaymentMethod.Square => "Square",
                     _ => payment.PaymentMethod.ToString()
                 },
                 Amount = payment.Amount,
                 AmountUSD = payment.EffectiveAmountUSD,
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
-                Notes = payment.Notes
+                Notes = payment.Notes,
+                Source = payment.Source,
+                OnlineProvider = payment.OnlineProvider
             };
         }).ToList();
 
@@ -665,6 +913,17 @@ public partial class PaymentDisplayItem : ObservableObject
     [ObservableProperty]
     private string _notes = string.Empty;
 
+    [ObservableProperty]
+    private string _source = "Manual";
+
+    [ObservableProperty]
+    private string? _onlineProvider;
+
+    /// <summary>
+    /// Whether this payment was received online.
+    /// </summary>
+    public bool IsOnline => Source == "Online";
+
     /// <summary>
     /// Gets the formatted date.
     /// </summary>
@@ -681,6 +940,18 @@ public partial class PaymentDisplayItem : ObservableObject
     /// Gets whether the amount is negative (refund).
     /// </summary>
     public bool IsRefund => Amount < 0;
+}
+
+/// <summary>
+/// Display model for invoices awaiting payment on the portal.
+/// </summary>
+public class AwaitingPaymentItem
+{
+    public string InvoiceId { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string Amount { get; set; } = "$0.00";
+    public string Status { get; set; } = "Sent";
+    public bool IsOverdue { get; set; }
 }
 
 /// <summary>

@@ -41,90 +41,245 @@
             </controls:StatCardsRow>
 
             <!-- Payment Portal Section (Row 1) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    Padding="20"
-                    Margin="0,0,0,24">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- Portal Icon -->
-                    <Border Grid.Column="0"
-                            Width="48" Height="48"
-                            CornerRadius="10"
-                            Background="{DynamicResource PrimaryIconBgBrush}"
-                            Margin="0,0,16,0"
-                            VerticalAlignment="Center">
-                        <PathIcon Data="{x:Static icons:Icons.Globe}"
-                                  Width="24" Height="24"
-                                  Foreground="{DynamicResource PrimaryBrush}" />
-                    </Border>
+            <StackPanel Grid.Row="1" Spacing="0" Margin="0,0,0,24">
+                <!-- Portal Status Card -->
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12,12,0,0"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1,1,1,0"
+                        Padding="20"
+                        IsVisible="{Binding IsPortalConfigured}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Portal Icon -->
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="{DynamicResource PrimaryIconBgBrush}"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                            <PathIcon Data="{x:Static icons:Icons.Globe}"
+                                      Width="24" Height="24"
+                                      Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
 
-                    <!-- Portal Info -->
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Portal Info -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Payment Portal'}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <!-- Connected badge -->
+                                <Border Background="{DynamicResource SuccessIconBgBrush}"
+                                        CornerRadius="4"
+                                        Padding="8,4"
+                                        IsVisible="{Binding IsPortalConnected}">
+                                    <TextBlock Text="{loc:Loc 'Connected'}"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SuccessBrush}" />
+                                </Border>
+                                <!-- Disconnected badge -->
+                                <Border Background="{DynamicResource WarningIconBgBrush}"
+                                        CornerRadius="4"
+                                        Padding="8,4"
+                                        IsVisible="{Binding !IsPortalConnected}">
+                                    <TextBlock Text="{loc:Loc 'Disconnected'}"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource WarningBrush}" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="{loc:Loc 'When customers receive invoices, they can pay through your online portal. Payments sync automatically.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <PathIcon Data="{x:Static icons:Icons.Clock}"
+                                              Width="14" Height="14"
+                                              VerticalAlignment="Center"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{Binding LastSyncTime, StringFormat='Last synced: {0}'}"
+                                               FontSize="12"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                                <!-- Online received this month -->
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            IsVisible="{Binding IsPortalConnected}">
+                                    <PathIcon Data="{x:Static icons:Icons.Payments}"
+                                              Width="14" Height="14"
+                                              VerticalAlignment="Center"
+                                              Foreground="{DynamicResource SuccessBrush}" />
+                                    <TextBlock Text="{Binding OnlineReceivedThisMonth, StringFormat='Online this month: {0}'}"
+                                               FontSize="12"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Portal Actions -->
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="12"
+                                    VerticalAlignment="Center">
+                            <Button Classes="secondary-button"
+                                    Command="{Binding SyncPortalCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Classes.sync-spinning="{Binding IsSyncing}"
+                                              Data="{x:Static icons:Icons.Refresh}"
+                                              Width="16" Height="16"
+                                              RenderTransformOrigin="50%,50%">
+                                        <PathIcon.RenderTransform>
+                                            <RotateTransform />
+                                        </PathIcon.RenderTransform>
+                                    </PathIcon>
+                                    <TextBlock Text="{loc:Loc 'Sync Now'}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="primary-button"
+                                    Command="{Binding OpenPortalCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
+                                              Width="16" Height="16"
+                                              Foreground="White" />
+                                    <TextBlock Text="{loc:Loc 'Open Portal'}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Not Configured Card (shown when portal API key is missing) -->
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        Padding="20"
+                        IsVisible="{Binding !IsPortalConfigured}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                            <PathIcon Data="{x:Static icons:Icons.Globe}"
+                                      Width="24" Height="24"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="{loc:Loc 'Payment Portal'}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <Border Background="{DynamicResource SuccessIconBgBrush}"
-                                    CornerRadius="4"
-                                    Padding="8,4">
-                                <TextBlock Text="{loc:Loc 'Connected'}"
-                                           FontSize="11"
-                                           FontWeight="Medium"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SuccessBrush}" />
-                            </Border>
+                            <TextBlock Text="{loc:Loc 'Enable the payment portal to let customers pay invoices online via Stripe, PayPal, or Square.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" />
                         </StackPanel>
-                        <TextBlock Text="{loc:Loc 'When customers receive invoices, they can pay through your online portal. Payments sync automatically.'}"
+                        <TextBlock Grid.Column="2"
+                                   Text="{loc:Loc 'Not Configured'}"
                                    FontSize="13"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   TextWrapping="Wrap" />
-                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                            <PathIcon Data="{x:Static icons:Icons.Clock}"
-                                      Width="14" Height="14"
-                                      VerticalAlignment="Center"
-                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <TextBlock Text="{Binding LastSyncTime, StringFormat='Last synced: {0}'}"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                        </StackPanel>
-                    </StackPanel>
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
 
-                    <!-- Portal Actions -->
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                Spacing="12"
-                                VerticalAlignment="Center">
-                        <Button Classes="secondary-button"
-                                Command="{Binding SyncPortalCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Classes.sync-spinning="{Binding IsSyncing}"
-                                          Data="{x:Static icons:Icons.Refresh}"
-                                          Width="16" Height="16"
-                                          RenderTransformOrigin="50%,50%">
-                                    <PathIcon.RenderTransform>
-                                        <RotateTransform />
-                                    </PathIcon.RenderTransform>
-                                </PathIcon>
-                                <TextBlock Text="{loc:Loc 'Sync Now'}" />
+                <!-- Awaiting Payments Section (shown below portal card when there are unpaid invoices) -->
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="0,0,12,12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1,0,1,1"
+                        Padding="20,16"
+                        IsVisible="{Binding HasAwaitingPayments}">
+                    <StackPanel Spacing="12">
+                        <!-- Section Header -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Invoices Awaiting Payment'}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <Border Background="{DynamicResource InfoIconBgBrush}"
+                                        CornerRadius="10"
+                                        Padding="8,2"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding AwaitingPayments.Count}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource InfoBrush}" />
+                                </Border>
                             </StackPanel>
-                        </Button>
-                        <Button Classes="primary-button"
-                                Command="{Binding OpenPortalCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
-                                          Width="16" Height="16"
-                                          Foreground="White" />
-                                <TextBlock Text="{loc:Loc 'Open Portal'}" />
-                            </StackPanel>
-                        </Button>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding AwaitingPaymentsTotal, StringFormat='Total Outstanding: {0}'}"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Awaiting Payment Items -->
+                        <ItemsControl ItemsSource="{Binding AwaitingPayments}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="12,8"
+                                            Margin="0,0,0,2"
+                                            CornerRadius="6"
+                                            Background="{DynamicResource SurfaceAltBrush}">
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="{Binding CustomerName}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding InvoiceId}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1"
+                                                    Padding="8,4"
+                                                    CornerRadius="4"
+                                                    VerticalAlignment="Center"
+                                                    Margin="12,0">
+                                                <Border.Background>
+                                                    <Binding Path="IsOverdue">
+                                                        <Binding.Converter>
+                                                            <local:BoolToColorConverter TrueColor="#FEF2F2" FalseColor="Transparent" />
+                                                        </Binding.Converter>
+                                                    </Binding>
+                                                </Border.Background>
+                                                <TextBlock Text="{Binding Status}"
+                                                           FontSize="11"
+                                                           FontWeight="Medium">
+                                                    <TextBlock.Foreground>
+                                                        <Binding Path="IsOverdue">
+                                                            <Binding.Converter>
+                                                                <local:BoolToColorConverter TrueColor="#DC2626" FalseColor="default" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </TextBlock.Foreground>
+                                                </TextBlock>
+                                            </Border>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding Amount}"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
-                </Grid>
-            </Border>
+                </Border>
+            </StackPanel>
 
             <!-- Main Content Card using ArgoTable -->
             <table:ArgoTable Grid.Row="2"

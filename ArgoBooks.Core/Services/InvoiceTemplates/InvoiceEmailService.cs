@@ -41,6 +41,7 @@ public class InvoiceEmailService : IDisposable
         CompanyData companyData,
         InvoiceEmailSettings emailSettings,
         string currencySymbol = "$",
+        string? payOnlineUrl = null,
         CancellationToken cancellationToken = default)
     {
         if (!InvoiceEmailSettings.IsConfigured)
@@ -77,7 +78,7 @@ public class InvoiceEmailService : IDisposable
         try
         {
             // Render the HTML email content
-            var html = _htmlRenderer.RenderInvoice(invoice, template, companyData, currencySymbol);
+            var html = _htmlRenderer.RenderInvoice(invoice, template, companyData, currencySymbol, payOnlineUrl);
             var plainText = _htmlRenderer.RenderPlainText(invoice, template, companyData, currencySymbol);
 
             // Build the subject line

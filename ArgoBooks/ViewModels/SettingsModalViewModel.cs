@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
@@ -534,6 +536,201 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
+    #region Payment Portal Settings
+
+    [ObservableProperty]
+    private bool _portalEnabled;
+
+    [ObservableProperty]
+    private bool _portalAutoPublish = true;
+
+    [ObservableProperty]
+    private bool _portalNotifyOnPayment = true;
+
+    [ObservableProperty]
+    private int _portalSyncInterval = 5;
+
+    [ObservableProperty]
+    private bool _isPortalApiConfigured;
+
+    [ObservableProperty]
+    private bool _stripeConnected;
+
+    [ObservableProperty]
+    private string? _stripeEmail;
+
+    [ObservableProperty]
+    private bool _paypalConnected;
+
+    [ObservableProperty]
+    private string? _paypalEmail;
+
+    [ObservableProperty]
+    private bool _squareConnected;
+
+    [ObservableProperty]
+    private string? _squareEmail;
+
+    [ObservableProperty]
+    private bool _isConnectingProvider;
+
+    public int[] SyncIntervalOptions { get; } = [0, 1, 2, 5, 10, 15, 30];
+
+    [RelayCommand]
+    private async Task ConnectStripeAsync()
+    {
+        await ConnectProviderAsync("stripe");
+    }
+
+    [RelayCommand]
+    private async Task ConnectPaypalAsync()
+    {
+        await ConnectProviderAsync("paypal");
+    }
+
+    [RelayCommand]
+    private async Task ConnectSquareAsync()
+    {
+        await ConnectProviderAsync("square");
+    }
+
+    [RelayCommand]
+    private async Task DisconnectStripeAsync()
+    {
+        await DisconnectProviderAsync("stripe");
+    }
+
+    [RelayCommand]
+    private async Task DisconnectPaypalAsync()
+    {
+        await DisconnectProviderAsync("paypal");
+    }
+
+    [RelayCommand]
+    private async Task DisconnectSquareAsync()
+    {
+        await DisconnectProviderAsync("square");
+    }
+
+    private async Task ConnectProviderAsync(string provider)
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        IsConnectingProvider = true;
+        try
+        {
+            var response = await portalService.InitiateConnectAsync(provider);
+            if (response.Success && !string.IsNullOrEmpty(response.AuthUrl))
+            {
+                // Open OAuth URL in default browser
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = response.AuthUrl,
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch
+        {
+            App.AddNotification("Error".Translate(),
+                "Failed to connect payment provider. Please check your internet connection.".Translate(),
+                NotificationType.Error);
+        }
+        finally
+        {
+            IsConnectingProvider = false;
+        }
+    }
+
+    private async Task DisconnectProviderAsync(string provider)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Disconnect Provider".Translate(),
+                Message = "Are you sure you want to disconnect this payment provider? Customers will no longer be able to pay using this method.".Translate(),
+                PrimaryButtonText = "Disconnect".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+        }
+
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        try
+        {
+            var success = await portalService.DisconnectProviderAsync(provider);
+            if (success)
+            {
+                switch (provider)
+                {
+                    case "stripe":
+                        StripeConnected = false;
+                        StripeEmail = null;
+                        break;
+                    case "paypal":
+                        PaypalConnected = false;
+                        PaypalEmail = null;
+                        break;
+                    case "square":
+                        SquareConnected = false;
+                        SquareEmail = null;
+                        break;
+                }
+            }
+        }
+        catch
+        {
+            App.AddNotification("Error".Translate(),
+                "Failed to disconnect provider. Please try again.".Translate(),
+                NotificationType.Error);
+        }
+    }
+
+    private void LoadPortalSettings()
+    {
+        IsPortalApiConfigured = PortalSettings.IsConfigured;
+        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        if (settings == null) return;
+
+        PortalEnabled = settings.Enabled;
+        PortalAutoPublish = settings.AutoPublishOnSend;
+        PortalNotifyOnPayment = settings.NotifyOnPayment;
+        PortalSyncInterval = settings.AutoSyncIntervalMinutes;
+
+        StripeConnected = settings.ConnectedAccounts.StripeConnected;
+        StripeEmail = settings.ConnectedAccounts.StripeEmail;
+        PaypalConnected = settings.ConnectedAccounts.PaypalConnected;
+        PaypalEmail = settings.ConnectedAccounts.PaypalEmail;
+        SquareConnected = settings.ConnectedAccounts.SquareConnected;
+        SquareEmail = settings.ConnectedAccounts.SquareEmail;
+    }
+
+    private void SavePortalSettings()
+    {
+        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        if (settings == null) return;
+
+        settings.Enabled = PortalEnabled;
+        settings.AutoPublishOnSend = PortalAutoPublish;
+        settings.NotifyOnPayment = PortalNotifyOnPayment;
+        settings.AutoSyncIntervalMinutes = PortalSyncInterval;
+
+        settings.ConnectedAccounts.StripeConnected = StripeConnected;
+        settings.ConnectedAccounts.StripeEmail = StripeEmail;
+        settings.ConnectedAccounts.PaypalConnected = PaypalConnected;
+        settings.ConnectedAccounts.PaypalEmail = PaypalEmail;
+        settings.ConnectedAccounts.SquareConnected = SquareConnected;
+        settings.ConnectedAccounts.SquareEmail = SquareEmail;
+    }
+
+    #endregion
+
     /// <summary>
     /// Whether there are unsaved changes in the settings.
     /// </summary>
@@ -573,7 +770,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// Opens the settings modal with a specific tab selected.
     /// </summary>
-    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security).</param>
+    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
     public void OpenWithTab(int tabIndex)
     {
         // Sync with current ThemeService values
@@ -620,6 +817,9 @@ public partial class SettingsModalViewModel : ViewModelBase
                 AnonymousDataCollection = globalSettings.Privacy.AnonymousDataCollectionConsent;
             }
         }
+
+        // Load portal settings
+        LoadPortalSettings();
 
         // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
@@ -768,6 +968,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.Notifications.RentalOverdueAlert = RentalOverdue;
             settings.Notifications.UnsavedChangesReminder = UnsavedChangesReminder;
             settings.Notifications.UnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
+
+            // Save payment portal settings
+            SavePortalSettings();
 
             // Restart the timer with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();

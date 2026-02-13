@@ -192,6 +192,23 @@ public static class InvoiceHtmlTemplates
                     {{/PaymentInstructions}}
                     {{/ShowPaymentInstructions}}
 
+                    {{#ShowPayOnline}}
+                    <!-- Pay Online Button -->
+                    <tr>
+                        <td style="padding: 0 40px 25px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: {{PrimaryColor}}; border-radius: 8px;">
+                                <tr>
+                                    <td style="padding: 20px 30px; text-align: center;">
+                                        <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #ffffff;">Pay This Invoice Online</p>
+                                        <p style="margin: 0 0 16px 0; font-size: 13px; color: rgba(255,255,255,0.85);">Securely pay with Stripe, PayPal, or Square</p>
+                                        <a href="{{PayOnlineUrl}}" style="display: inline-block; background-color: #ffffff; color: {{PrimaryColor}}; padding: 12px 32px; border-radius: 6px; font-size: 15px; font-weight: 600; text-decoration: none;">Pay Now</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {{/ShowPayOnline}}
+
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 25px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
@@ -397,6 +414,24 @@ public static class InvoiceHtmlTemplates
                     {{/PaymentInstructions}}
                     {{/ShowPaymentInstructions}}
 
+                    {{#ShowPayOnline}}
+                    <!-- Pay Online Button -->
+                    <tr>
+                        <td style="padding: 0 35px 25px 35px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="width: 8px; background-color: {{AccentColor}};"></td>
+                                    <td style="padding: 20px 25px; background-color: {{SecondaryColor}}; border-radius: 0 6px 6px 0; text-align: center;">
+                                        <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: {{HeaderColor}};">Pay This Invoice Online</p>
+                                        <p style="margin: 0 0 14px 0; font-size: 12px; color: #6b7280;">Securely pay with Stripe, PayPal, or Square</p>
+                                        <a href="{{PayOnlineUrl}}" style="display: inline-block; background-color: {{PrimaryColor}}; color: #ffffff; padding: 12px 32px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none;">Pay Now</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {{/ShowPayOnline}}
+
                     <!-- Footer -->
                     <tr>
                         <td>
@@ -558,6 +593,17 @@ public static class InvoiceHtmlTemplates
                     </tr>
                     {{/PaymentInstructions}}
                     {{/ShowPaymentInstructions}}
+
+                    {{#ShowPayOnline}}
+                    <!-- Pay Online Button -->
+                    <tr>
+                        <td style="padding: 15px; border-top: 1px solid {{SecondaryColor}}; text-align: center;">
+                            <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold; color: {{HeaderColor}};">PAY THIS INVOICE ONLINE</p>
+                            <p style="margin: 0 0 12px 0; font-size: 12px; color: #666666;">Securely pay with Stripe, PayPal, or Square</p>
+                            <a href="{{PayOnlineUrl}}" style="display: inline-block; background-color: {{PrimaryColor}}; color: #ffffff; padding: 12px 32px; font-size: 14px; font-weight: bold; text-decoration: none;">PAY NOW</a>
+                        </td>
+                    </tr>
+                    {{/ShowPayOnline}}
 
                     <!-- Footer -->
                     <tr>
@@ -751,6 +797,23 @@ public static class InvoiceHtmlTemplates
                     </tr>
                     {{/PaymentInstructions}}
                     {{/ShowPaymentInstructions}}
+
+                    {{#ShowPayOnline}}
+                    <!-- Pay Online Button -->
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: {{SecondaryColor}}; border-radius: 6px; border-top: 3px solid {{PrimaryColor}};">
+                                <tr>
+                                    <td style="padding: 25px; text-align: center;">
+                                        <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: {{HeaderColor}}; font-weight: 600;">Pay Online</p>
+                                        <p style="margin: 0 0 16px 0; font-size: 13px; color: #6b7280;">Securely pay with Stripe, PayPal, or Square</p>
+                                        <a href="{{PayOnlineUrl}}" style="display: inline-block; background-color: {{PrimaryColor}}; color: #ffffff; padding: 12px 36px; border-radius: 24px; font-size: 14px; font-weight: 600; text-decoration: none; letter-spacing: 0.5px;">Pay Now</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {{/ShowPayOnline}}
 
                     <!-- Footer -->
                     <tr>
@@ -964,6 +1027,15 @@ public static class InvoiceHtmlTemplates
             </div>
             {{/PaymentInstructions}}
             {{/ShowPaymentInstructions}}
+
+            {{#ShowPayOnline}}
+            <!-- Pay Online Button -->
+            <div style="text-align: center; margin: 30px 0; padding: 25px; background-color: {{PrimaryColor}}; border-radius: 8px;">
+                <div style="font-size: 16px; font-weight: bold; color: #ffffff; margin-bottom: 8px;">Pay This Invoice Online</div>
+                <div style="font-size: 13px; color: rgba(255,255,255,0.85); margin-bottom: 16px;">Securely pay with Stripe, PayPal, or Square</div>
+                <a href="{{PayOnlineUrl}}" style="display: inline-block; background-color: #ffffff; color: {{PrimaryColor}}; padding: 12px 36px; border-radius: 6px; font-size: 15px; font-weight: bold; text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px;">Pay Now</a>
+            </div>
+            {{/ShowPayOnline}}
 
             <!-- Footer -->
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
