@@ -8,7 +8,7 @@
 4. [Argo Books Payments Page (Business-Facing)](#4-argo-books-payments-page-business-facing)
 5. [Server/API Layer](#5-serverapi-layer)
 6. [Payment Flow End-to-End](#6-payment-flow-end-to-end)
-7. [Security Considerations](#7-security-considerations)
+7. [Token Security - Deep Dive](#7-token-security---deep-dive)
 8. [Implementation Phases](#8-implementation-phases)
 
 ---
@@ -59,31 +59,41 @@ Both are essential. The payment portal feature makes the payments page even more
 │       ↓                                                         │
 │  ┌──────────────────────────────────────────┐                   │
 │  │   Website Payment Portal                  │                  │
-│  │   (argorobots.com/pay/{token})            │                  │
+│  │   (argorobots.com/invoice/{token})        │                  │
 │  │                                           │                  │
 │  │   • Views invoice details                 │                  │
 │  │   • Sees all active invoices              │                  │
 │  │   • Views payment history                 │                  │
-│  │   • Pays via Stripe (card/ACH)            │                  │
+│  │   • Pays via Stripe, PayPal, or Square    │                  │
 │  └──────────────┬───────────────────────────┘                   │
 │                 │                                                │
 └─────────────────┼───────────────────────────────────────────────┘
                   │ HTTPS API calls
                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     SERVER (argorobots.com)                      │
+│              SERVER (argorobots.com - EXISTING)                  │
 │                                                                 │
 │  ┌──────────────────────────────────────────┐                   │
-│  │  Payment Portal API                       │                  │
-│  │  (PHP + MySQL on existing server)         │                  │
+│  │  Payment Portal API (NEW)                 │                  │
+│  │  (PHP + MySQL, same stack as existing)    │                  │
 │  │                                           │                  │
 │  │  • Stores published invoices              │                  │
-│  │  • Processes Stripe payments              │                  │
+│  │  • Reuses existing Stripe/PayPal/Square   │                  │
 │  │  • Records payment transactions           │                  │
 │  │  • Manages customer access tokens         │                  │
 │  │  • Provides sync endpoint for Argo Books  │                  │
 │  └──────────────┬───────────────────────────┘                   │
 │                 │                                                │
+│  ALREADY EXISTS:                                                │
+│  • stripe/stripe-php ^17.1                                      │
+│  • square/square ^42.1                                          │
+│  • PayPal REST API integration                                  │
+│  • Payment processing + fee calculation                         │
+│  • Webhook handling patterns                                    │
+│  • PDO/MySQL database layer                                     │
+│  • PHPMailer for email                                          │
+│  • .env-based configuration                                     │
+│                                                                 │
 └─────────────────┼───────────────────────────────────────────────┘
                   │ HTTPS API calls (sync)
                   ▼
@@ -110,6 +120,8 @@ Both are essential. The payment portal feature makes the payments page even more
 
 The server acts as the middleman. Argo Books publishes invoice data to the server. The customer views and pays on the website. Argo Books syncs to pull payment records back down. This works because Argo Books is a file-based app (no always-on database) -- the server provides the persistent online layer.
 
+**Key insight:** The existing website already has Stripe, PayPal, and Square fully integrated for license purchases (`/upgrade/standard/checkout/`). The payment portal reuses those same SDKs, credentials, processing fee logic, and patterns -- not built from scratch.
+
 ---
 
 ## 3. Website Payment Page (Customer-Facing)
@@ -118,19 +130,19 @@ The server acts as the middleman. Argo Books publishes invoice data to the serve
 
 Customers get a unique, secure link. There are two access paths:
 
-1. **Direct invoice link** (in the email they already receive): `https://argorobots.com/pay/i/{invoice-token}`
+1. **Direct invoice link** (in the email they already receive): `https://argorobots.com/invoice/{invoice-token}`
    - Shows a specific invoice with a "Pay Now" button
-   - The invoice token is a unique, non-guessable ID (UUID or similar)
+   - The invoice token is a cryptographically secure random string (see Section 7 for full security analysis)
 
-2. **Customer portal link**: `https://argorobots.com/pay/{customer-token}`
+2. **Customer portal link**: `https://argorobots.com/portal/{customer-token}`
    - Shows ALL active invoices for that customer
    - The customer token is a separate, long-lived token tied to the customer
 
-No login required -- token-based access (like how Google Docs sharing links work). This keeps it simple for customers who just want to pay.
+No login required -- token-based access (like how Google Docs sharing links work). This keeps it simple for customers who just want to pay. See **Section 7** for a detailed breakdown of why this is secure and what protections are in place.
 
 ### 3.2 Page Layout & Design
 
-The website will be a clean, modern, responsive page hosted on the existing argorobots.com server. The page has the following sections from top to bottom:
+The website will be a clean, modern, responsive page hosted on the existing argorobots.com server, matching the existing site's HTML/CSS/jQuery stack (no new frameworks needed).
 
 #### Header
 - Company logo (uploaded from Argo Books company settings)
@@ -161,9 +173,11 @@ The website will be a clean, modern, responsive page hosted on the existing argo
 │  Status: [OVERDUE badge]            Due: Feb 15, 2025    │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐  │
-│  │              [Pay $1,944.00 Now]                    │  │
+│  │  Pay with:  [Stripe]  [PayPal]  [Square]           │  │
 │  │                                                    │  │
-│  │   Or pay a partial amount: [________] [Pay]        │  │
+│  │         [Pay $1,944.00 Now]                        │  │
+│  │                                                    │  │
+│  │  Or pay a partial amount: [________] [Pay]         │  │
 │  └────────────────────────────────────────────────────┘  │
 │                                                          │
 │  Notes: Payment due within 30 days of issue date.        │
@@ -171,8 +185,18 @@ The website will be a clean, modern, responsive page hosted on the existing argo
 └──────────────────────────────────────────────────────────┘
 ```
 
+#### Payment Method Selection
+
+The customer chooses their preferred payment method, just like the existing license checkout page (`/upgrade/standard/checkout/?method=`):
+
+- **Stripe** -- Credit/debit card via Stripe Elements (existing `stripe/stripe-php ^17.1`)
+- **PayPal** -- PayPal Checkout SDK (existing PayPal REST API integration)
+- **Square** -- Square Web Payments SDK (existing `square/square ^42.1`)
+
+The existing `main.js` from `/upgrade/standard/checkout/` already handles all three payment method UIs -- the portal checkout JS can follow the same pattern.
+
 #### Active Invoices Tab (Customer Portal View)
-When a customer accesses their portal link, they see a tabbed interface:
+When a customer accesses their portal link (`/portal/{customer-token}`), they see a tabbed interface:
 
 **Tab 1: Active Invoices** (default)
 - Table/card list of all unpaid/partially paid invoices
@@ -193,18 +217,20 @@ When a customer accesses their portal link, they see a tabbed interface:
 - Click any invoice to expand and see full details + line items
 - Paid invoices shown with green checkmark
 
-#### Payment Flow (Stripe Checkout)
+#### Payment Flow
 
 When the customer clicks "Pay Now":
 
 1. **Amount confirmation** -- Shows the balance due, or lets them enter a custom (partial) amount
-2. **Stripe Checkout** -- Redirects to Stripe-hosted checkout page (or embedded Stripe Elements form)
-   - Accepts credit/debit cards
-   - Accepts ACH bank transfer (optional, lower fees)
-   - Stripe handles all PCI compliance
-3. **Confirmation page** -- After payment:
+2. **Payment method selection** -- Customer picks Stripe, PayPal, or Square
+3. **Checkout** -- Based on selection:
+   - **Stripe**: Embedded card form via Stripe Elements, calls `confirmCardPayment()` with client_secret from server-created PaymentIntent
+   - **PayPal**: PayPal Checkout button, creates order via `actions.order.create()`, captures on approval
+   - **Square**: Square Web Payments card form, gets source_id, posts to server `/v2/payments`
+4. **Server processing** -- Backend creates payment record, verifies amount, processes through the selected provider (reusing the same patterns from `process-stripe-payment.php`, `process-paypal-payment.php`, `process-square-payment.php`)
+5. **Confirmation page** -- After payment:
    - "Payment Successful" message with green checkmark
-   - Payment amount, date, reference number
+   - Payment amount, date, reference number, payment method used
    - Updated invoice status
    - Option to download receipt as PDF
    - "Return to invoices" link
@@ -223,12 +249,14 @@ When the customer clicks "Pay Now":
 | View all invoices | Complete invoice history including paid ones |
 | Pay full amount | One-click payment for the full balance |
 | Pay partial amount | Enter a custom amount for partial payment |
-| Stripe checkout | Secure payment via credit card or ACH bank transfer |
+| Stripe payment | Credit/debit card via Stripe Elements (existing integration) |
+| PayPal payment | PayPal Checkout (existing integration) |
+| Square payment | Square Web Payments (existing integration) |
 | Payment confirmation | Confirmation page with receipt details |
 | Download invoice PDF | Download a PDF copy of any invoice |
 | Download receipt | Download a payment receipt/confirmation |
 | Mobile responsive | Works on phone, tablet, and desktop |
-| No login required | Token-based access from email links |
+| No login required | Secure token-based access from email links |
 | Company branding | Shows the business's logo and name |
 | Real-time status | Invoice status updates immediately after payment |
 
@@ -239,6 +267,7 @@ On mobile, the layout collapses:
 - Line items scroll horizontally or stack vertically
 - Pay button is full-width and sticky at the bottom
 - Tabs become swipeable
+- Payment method selection becomes a vertical stack
 
 ---
 
@@ -270,7 +299,7 @@ The existing portal stub section gets upgraded:
 │  When customers receive invoices, they can pay through   │
 │  your online portal. Payments sync automatically.        │
 │                                                          │
-│  Portal URL: https://argorobots.com/pay/abc123    [Copy] │
+│  Portal URL: https://argorobots.com/portal/abc123 [Copy] │
 │                                                          │
 │  Last synced: 2 minutes ago                              │
 │                                                          │
@@ -295,7 +324,7 @@ This shows up as a small badge or icon in the table, so you can tell at a glance
 #### C. Sync Behavior
 
 When "Sync Now" is clicked (or on auto-sync):
-1. Argo Books calls the server API: `GET /api/portal/payments?since={lastSyncTimestamp}`
+1. Argo Books calls the server API: `GET /api/portal/payments/sync?since={lastSyncTimestamp}`
 2. Server returns all new payment records since last sync
 3. Argo Books creates Payment records in the local CompanyData
 4. Updates the corresponding Invoice status/balance (AmountPaid, Balance, Status)
@@ -322,16 +351,14 @@ A new collapsible section or tab showing invoices that are waiting for payment t
 
 Accessible via the settings button, or via the main app Settings modal:
 - **Portal API Key** -- Authentication key for the portal API (stored in .env or company settings)
-- **Stripe Configuration** -- Connected Stripe account info
 - **Auto-sync interval** -- How often to check for new payments (e.g., every 5 minutes when app is open)
-- **Payment methods enabled** -- Toggle credit card, ACH, etc.
 - **Notification preferences** -- Get notified when a payment comes in
 
 ### 4.3 Integration with Invoices Page
 
 When sending an invoice (existing email flow), Argo Books will also:
 1. **Publish the invoice to the server** -- POST invoice data to the portal API
-2. **Include the payment link in the email** -- The invoice email template gets a "Pay Online" button/link pointing to the portal
+2. **Include the payment link in the email** -- The invoice email template gets a "View & Pay Online" button/link pointing to the portal
 
 This happens transparently as part of the existing "Send Invoice" workflow. No new button needed -- sending an invoice automatically publishes it to the portal.
 
@@ -339,7 +366,25 @@ This happens transparently as part of the existing "Send Invoice" workflow. No n
 
 ## 5. Server/API Layer
 
-### 5.1 API Endpoints
+### 5.1 Building on the Existing Website
+
+The existing argorobots.com website already has everything we need as foundation:
+
+| What exists | Where | How the portal reuses it |
+|---|---|---|
+| Stripe PHP SDK (`^17.1`) | `composer.json`, `vendor/` | Same SDK for creating PaymentIntents for invoice payments |
+| Square PHP SDK (`^42.1`) | `composer.json`, `vendor/` | Same SDK for creating Square payments |
+| PayPal REST API client | `process-paypal-payment.php` | Same access token + order capture pattern |
+| Processing fee calculation | `config/pricing.php` | Same `calculate_processing_fee()` function |
+| PDO database connection | `db_connect.php` | Same connection for new portal tables |
+| .env configuration | `vlucas/phpdotenv` | Same `.env` file for portal API keys |
+| Email sending | `email_sender.php` + PHPMailer | Same for payment confirmation emails |
+| Security headers (CSP) | `.htaccess` | Extend existing CSP to allow portal pages |
+| Payment webhook patterns | `webhooks/` | Same patterns for portal payment webhooks |
+
+**No new SDKs or dependencies needed.** The portal is a new set of pages and API endpoints on the existing stack.
+
+### 5.2 New API Endpoints
 
 All endpoints live on the existing argorobots.com server alongside the existing invoice email API.
 
@@ -348,74 +393,78 @@ All endpoints live on the existing argorobots.com server alongside the existing 
 | `POST` | `/api/portal/invoices` | Publish/update an invoice from Argo Books to the portal |
 | `GET` | `/api/portal/invoices/{token}` | Get invoice data for customer-facing page |
 | `GET` | `/api/portal/customer/{token}` | Get all invoices for a customer |
-| `POST` | `/api/portal/payments/create` | Create a payment record (from Stripe webhook) |
+| `POST` | `/api/portal/checkout` | Create a payment session (Stripe/PayPal/Square, based on `method` param) |
+| `POST` | `/api/portal/webhooks/stripe` | Stripe webhook for invoice payment confirmation |
+| `POST` | `/api/portal/webhooks/paypal` | PayPal webhook/IPN for invoice payment confirmation |
+| `POST` | `/api/portal/webhooks/square` | Square webhook for invoice payment confirmation |
 | `GET` | `/api/portal/payments/sync` | Argo Books pulls new payments since last sync |
-| `POST` | `/api/portal/stripe/checkout` | Create a Stripe checkout session |
-| `POST` | `/api/portal/stripe/webhook` | Stripe webhook for payment confirmation |
 | `GET` | `/api/portal/status` | Check portal connection status |
 
-### 5.2 Database Schema (Server-Side MySQL)
+### 5.3 New Database Tables (Server-Side MySQL)
+
+Added to the existing MySQL database alongside `license_keys`, `payment_transactions`, `community_users`, etc.
 
 ```sql
 -- Published invoices (copy of invoice data for the portal)
-portal_invoices:
-  - id (PK)
-  - company_id          -- identifies which Argo Books company
-  - invoice_id          -- matches the Argo Books invoice ID (e.g., INV-2024-00042)
-  - invoice_token       -- unique URL token for direct invoice access
-  - customer_token      -- unique URL token for customer portal access
-  - customer_name
-  - customer_email
-  - invoice_data (JSON) -- full invoice details (line items, totals, etc.)
-  - status              -- mirrors Argo Books status
-  - total_amount
-  - balance_due
-  - currency
-  - created_at
-  - updated_at
+CREATE TABLE portal_invoices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  company_api_key VARCHAR(64) NOT NULL,       -- identifies which Argo Books company
+  invoice_id VARCHAR(32) NOT NULL,            -- matches Argo Books ID (e.g., INV-2024-00042)
+  invoice_token VARCHAR(64) NOT NULL UNIQUE,  -- secure URL token (see Section 7)
+  customer_token VARCHAR(64) NOT NULL,        -- secure customer portal token
+  customer_name VARCHAR(255) NOT NULL,
+  customer_email VARCHAR(255),
+  invoice_data JSON NOT NULL,                 -- full invoice details (line items, totals, etc.)
+  company_name VARCHAR(255),
+  company_logo_url VARCHAR(500),
+  status VARCHAR(20) DEFAULT 'sent',          -- mirrors Argo Books status
+  total_amount DECIMAL(12,2) NOT NULL,
+  balance_due DECIMAL(12,2) NOT NULL,
+  currency VARCHAR(3) DEFAULT 'USD',
+  due_date DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_invoice_token (invoice_token),
+  INDEX idx_customer_token (customer_token),
+  INDEX idx_company (company_api_key)
+);
 
 -- Payment records from online payments
-portal_payments:
-  - id (PK)
-  - company_id
-  - invoice_id
-  - customer_name
-  - amount
-  - currency
-  - payment_method      -- 'card' or 'ach'
-  - stripe_payment_id   -- Stripe payment intent ID
-  - stripe_charge_id    -- Stripe charge ID
-  - reference_number    -- generated confirmation number
-  - status              -- 'completed', 'pending', 'failed', 'refunded'
-  - synced              -- whether Argo Books has pulled this payment yet
-  - created_at
-
--- Company portal settings
-portal_companies:
-  - id (PK)
-  - company_name
-  - api_key             -- for authenticating Argo Books API calls
-  - stripe_account_id   -- connected Stripe account (Stripe Connect)
-  - logo_url
-  - settings (JSON)     -- portal preferences
-  - created_at
+CREATE TABLE portal_payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  company_api_key VARCHAR(64) NOT NULL,
+  invoice_id VARCHAR(32) NOT NULL,
+  customer_name VARCHAR(255),
+  amount DECIMAL(12,2) NOT NULL,
+  processing_fee DECIMAL(8,2) DEFAULT 0.00,
+  currency VARCHAR(3) DEFAULT 'USD',
+  payment_method VARCHAR(20) NOT NULL,        -- 'stripe', 'paypal', 'square'
+  provider_payment_id VARCHAR(255),           -- Stripe PaymentIntent ID / PayPal Order ID / Square Payment ID
+  provider_transaction_id VARCHAR(255),       -- Stripe Charge ID / PayPal Capture ID / Square Transaction ID
+  reference_number VARCHAR(32) NOT NULL,      -- human-readable confirmation number
+  status VARCHAR(20) DEFAULT 'completed',     -- 'completed', 'pending', 'failed', 'refunded'
+  synced_to_argo TINYINT(1) DEFAULT 0,        -- whether Argo Books has pulled this payment yet
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_company_sync (company_api_key, synced_to_argo),
+  INDEX idx_invoice (invoice_id)
+);
 ```
 
-### 5.3 Authentication
+### 5.4 Authentication
 
-- **Argo Books → Server**: API key in the `Authorization: Bearer {key}` header (same pattern as existing email API)
-- **Customer → Server**: Token in the URL path (no login required)
-- **Stripe → Server**: Stripe webhook signature verification
+- **Argo Books -> Server**: API key in the `Authorization: Bearer {key}` header (same pattern as existing `InvoiceEmailService` which uses `X-Api-Key` header)
+- **Customer -> Server**: Token in the URL path (no login required -- see Section 7 for security analysis)
+- **Stripe/PayPal/Square -> Server**: Webhook signature verification (existing patterns in `webhooks/`)
 
-### 5.4 How It Connects to Argo Books
+### 5.5 How It Connects to Argo Books
 
 Since Argo Books uses file-based storage (`.argo` files), there is no persistent database connection. Instead:
 
-1. **Publishing**: When the user sends an invoice, Argo Books makes an HTTP POST to the server with the invoice data. The server stores a copy.
+1. **Publishing**: When the user sends an invoice, Argo Books makes an HTTP POST to the server with the invoice data. The server stores a copy. This extends the existing `InvoiceEmailService` flow.
 2. **Syncing**: When the user clicks "Sync" (or on a timer), Argo Books makes an HTTP GET to pull new payment records. It then creates local Payment objects and updates Invoice balances in the in-memory CompanyData.
 3. **Saving**: The next time the user saves their `.argo` file, the synced payments are persisted locally.
 
-This is the same pattern used by the existing `InvoiceEmailService` -- HTTP calls to argorobots.com with API key auth.
+This is the exact same pattern used by the existing `InvoiceEmailService` -- HTTP calls to argorobots.com with API key auth.
 
 ---
 
@@ -430,7 +479,7 @@ This is the same pattern used by the existing `InvoiceEmailService` -- HTTP call
 4. NEW: Argo Books also publishes the invoice to the portal API
    POST /api/portal/invoices
    Body: { invoiceId, customerName, customerEmail, lineItems, total, dueDate, ... }
-5. Server stores the invoice and generates tokens
+5. Server stores the invoice and generates secure tokens
 6. Server returns: { invoiceToken, customerToken, portalUrl }
 7. The email template includes a "View & Pay Online" button with the portal URL
 8. Invoice status updates to "Sent"
@@ -440,20 +489,38 @@ This is the same pattern used by the existing `InvoiceEmailService` -- HTTP call
 
 ```
 1. Customer opens email, clicks "View & Pay Online"
-2. Browser loads: argorobots.com/pay/i/{invoice-token}
+2. Browser loads: argorobots.com/invoice/{invoice-token}
 3. Website fetches invoice data from: GET /api/portal/invoices/{token}
-4. Customer sees invoice details, clicks "Pay $X Now"
-5. Website creates Stripe checkout: POST /api/portal/stripe/checkout
-6. Customer is redirected to Stripe checkout (or sees embedded form)
-7. Customer enters card details, confirms payment
-8. Stripe processes payment, sends webhook to: POST /api/portal/stripe/webhook
-9. Server receives webhook:
-   a. Verifies Stripe signature
-   b. Creates a portal_payments record with status "completed"
-   c. Updates portal_invoices balance_due
-   d. If fully paid, updates status to "Paid"
-   e. Marks the payment as synced = false (Argo Books hasn't pulled it yet)
-10. Customer sees confirmation page with receipt
+4. Customer sees invoice details, selects payment method (Stripe/PayPal/Square)
+5. Customer clicks "Pay $X Now"
+6. Based on payment method:
+
+   STRIPE:
+   a. Frontend calls POST /api/portal/checkout with method=stripe
+   b. Server creates Stripe PaymentIntent (same as existing stripe-payment-intent.php)
+   c. Frontend receives client_secret, shows Stripe Elements card form
+   d. Customer enters card, frontend calls stripe.confirmCardPayment()
+   e. Stripe sends webhook to /api/portal/webhooks/stripe
+
+   PAYPAL:
+   a. Frontend renders PayPal Checkout button (same SDK as existing)
+   b. Customer clicks, PayPal order created via actions.order.create()
+   c. Customer approves in PayPal popup
+   d. Frontend captures order, sends to /api/portal/checkout for server verification
+   e. Server verifies via PayPal /v2/checkout/orders/{id}
+
+   SQUARE:
+   a. Frontend renders Square card form (same SDK as existing)
+   b. Customer enters card, frontend gets source_id
+   c. Frontend sends source_id to POST /api/portal/checkout with method=square
+   d. Server processes via Square /v2/payments endpoint
+
+7. Server records the payment:
+   a. Creates portal_payments record with status "completed"
+   b. Updates portal_invoices balance_due
+   c. If fully paid, updates invoice status to "Paid"
+   d. Sets synced_to_argo = 0 (Argo Books hasn't pulled it yet)
+8. Customer sees confirmation page with receipt
 ```
 
 ### 6.3 Syncing Payment to Argo Books
@@ -463,23 +530,24 @@ This is the same pattern used by the existing `InvoiceEmailService` -- HTTP call
 2. Clicks "Sync Now" (or auto-sync triggers)
 3. Argo Books calls: GET /api/portal/payments/sync?since={lastSyncTimestamp}
    Header: Authorization: Bearer {api-key}
-4. Server returns: [{ invoiceId, amount, date, method, referenceNumber, ... }]
-   (only payments where synced = false or created after lastSyncTimestamp)
+4. Server returns: [{ invoiceId, amount, date, method, referenceNumber, providerName, ... }]
+   (only payments where synced_to_argo = 0 or created after lastSyncTimestamp)
 5. For each new payment:
    a. Create a new Payment object in CompanyData.Payments
       - Id: auto-generated (PAY-2024-XXXXX)
       - InvoiceId: matched from server response
       - Amount: from server
-      - PaymentMethod: mapped (CreditCard, BankTransfer)
-      - ReferenceNumber: Stripe charge ID or confirmation number
-      - Notes: "Online payment via portal"
+      - PaymentMethod: mapped (CreditCard for Stripe/Square, PayPal for PayPal)
+      - ReferenceNumber: confirmation number from server
+      - Notes: "Online payment via [Stripe/PayPal/Square]"
       - Source: "Online" (new field)
    b. Update the linked Invoice:
       - AmountPaid += payment amount
       - Balance -= payment amount
       - Status = "Paid" (if Balance <= 0) or "Partial" (if Balance > 0)
-   c. Add InvoiceHistoryEntry: "Payment of $X received online"
-6. Server marks these payments as synced = true
+   c. Add InvoiceHistoryEntry: "Payment of $X received online via [provider]"
+6. Argo Books confirms sync: POST /api/portal/payments/sync/confirm
+   Server marks those payments as synced_to_argo = 1
 7. Argo Books updates LastSyncTime
 8. Payments table refreshes showing new online payments
 9. Invoice statuses update on the Invoices page too
@@ -507,45 +575,143 @@ This logic already partially exists in `PaymentsPageViewModel.GetPaymentStatus()
 
 ---
 
-## 7. Security Considerations
+## 7. Token Security - Deep Dive
 
-| Concern | Mitigation |
-|---------|------------|
-| Token guessing | Use UUID v4 tokens (128-bit random) for invoice and customer URLs |
-| Payment tampering | All payment processing goes through Stripe -- amounts are validated server-side, not from the client |
-| API key exposure | Portal API key stored in `.env` file (same pattern as existing email API key) |
-| Webhook spoofing | Verify Stripe webhook signatures using the signing secret |
-| Data exposure | Customer can only see their own invoices via their token -- no cross-customer access |
-| PCI compliance | Stripe handles all card data -- the portal never touches card numbers |
-| HTTPS | All communication over TLS (argorobots.com already has SSL) |
-| Rate limiting | API endpoints should have rate limits to prevent abuse |
+### The Concern
+
+> "Is having argorobots.com/invoice/{token} secure? What if someone enters a random token or somehow ends up on someone else's payment page?"
+
+This is a valid concern. Here's the full analysis:
+
+### Why Token-Based Access is Industry Standard
+
+Token-based access (no login required) is how most invoice/payment systems work:
+
+- **Stripe Invoices**: `invoice.stripe.com/i/inv_XXXXXXXX` (token in URL)
+- **PayPal Invoices**: `paypal.com/invoice/p/#XXXXXXXX` (token in URL)
+- **Square Invoices**: `squareup.com/pay-invoice/XXXXXXXX` (token in URL)
+- **FreshBooks**: `my.freshbooks.com/#/invoice/XXXXXXXX` (token in URL)
+- **QuickBooks**: `customer.qbo.intuit.com/qbo/pay/XXXXXXXX` (token in URL)
+
+None of these require the customer to create an account or log in. The token IS the authentication.
+
+### Why Random Guessing Won't Work
+
+The tokens will be 48-character hex strings generated from `random_bytes(24)` (PHP's cryptographically secure random generator). That gives **192 bits of entropy**.
+
+To put this in perspective:
+
+| Scenario | Probability |
+|----------|-------------|
+| Guessing a specific token correctly | 1 in 6.3 × 10⁵⁷ (a number with 57 zeros) |
+| Guessing ANY valid token if 1,000,000 invoices exist | 1 in 6.3 × 10⁵¹ |
+| Trying 1 billion guesses per second for 1 billion years | Still essentially 0% chance |
+
+For comparison, your chance of winning the lottery every week for a year straight is higher than guessing a single token. This is the same level of security that powers JWT tokens, API keys, and password reset links everywhere on the internet.
+
+### Additional Security Layers
+
+Beyond the unguessable tokens, we add these protections:
+
+**1. Rate Limiting**
+```
+The existing website already has rate limiting (rate_limits.json pattern).
+Portal token lookups will be rate-limited:
+- 10 failed lookups per IP per 15 minutes
+- After that, IP gets temporarily blocked
+- This makes automated guessing attempts practically impossible
+```
+
+**2. Token Expiration**
+```
+Invoice tokens can optionally expire:
+- Active invoice tokens: valid until invoice is paid or cancelled
+- Paid invoice tokens: remain viewable (read-only) for 90 days, then expire
+- Customer portal tokens: long-lived but can be revoked from Argo Books
+```
+
+**3. Read-Only Until Payment**
+```
+Even if someone somehow got a token:
+- They can only VIEW the invoice (customer name, amounts, line items)
+- They CANNOT modify the invoice
+- They CANNOT see other customers' invoices
+- They CAN pay the invoice -- but paying someone else's bill is not harmful
+  (the business gets the money, the "attacker" loses money)
+```
+
+**4. No Sensitive Data Exposed**
+```
+The invoice page shows:
+- Company name and logo (public info)
+- Customer first/last name (already on the invoice they received)
+- Invoice line items and amounts (already in the email)
+- Payment status
+
+It does NOT show:
+- Customer email address (masked or hidden)
+- Customer physical address (hidden)
+- Customer phone number (hidden)
+- Other customers' data
+- Payment card details (handled by Stripe/PayPal/Square, never on our page)
+- Internal business data
+```
+
+**5. Server-Side Validation**
+```
+When a token is used:
+- Token looked up via indexed database query (instant, not iterable)
+- Invalid tokens return a generic "Invoice not found" page (no info leakage)
+- No enumeration possible (tokens are random, not sequential)
+- All payment amounts validated server-side against the actual invoice balance
+```
+
+**6. Monitoring & Alerts**
+```
+- Log all token lookup attempts
+- Alert on unusual patterns (many failed lookups from same IP)
+- Ability to revoke/regenerate tokens from Argo Books if concerned
+```
+
+### Summary: Token Security
+
+The token approach is:
+- **More secure** than email-based login (emails can be compromised, reused passwords)
+- **Same approach** used by Stripe, PayPal, Square, FreshBooks, and QuickBooks for their own invoice portals
+- **Mathematically unguessable** with 192-bit random tokens
+- **Rate-limited** against brute force
+- **Low-risk even in worst case** (viewing an invoice is not sensitive; paying someone else's bill only hurts the attacker)
+
+The simplicity (no login) is actually a feature -- customers are more likely to pay promptly when they can click a link and pay immediately without creating yet another account.
 
 ---
 
 ## 8. Implementation Phases
 
 ### Phase 1: Server API & Database
-- Set up MySQL tables on argorobots.com
-- Build the portal API endpoints (PHP, matching existing server stack)
-- Integrate Stripe (create checkout sessions, handle webhooks)
-- Build invoice publish endpoint
-- Build payment sync endpoint
+- Add `portal_invoices` and `portal_payments` tables to existing MySQL database
+- Build the portal API endpoints (PHP, same patterns as existing `api/` folder)
+- Wire up checkout endpoints that reuse existing Stripe/PayPal/Square SDK code from `/upgrade/standard/checkout/`
+- Build invoice publish endpoint (receives data from Argo Books)
+- Build payment sync endpoint (returns new payments to Argo Books)
+- Add webhook endpoints for all three payment providers
 
 ### Phase 2: Customer-Facing Website
-- Build the payment portal frontend pages (HTML/CSS/JS on argorobots.com)
-- Invoice detail view with "Pay Now" flow
-- Customer portal view with Active Invoices, Payment History, All Invoices tabs
-- Stripe Checkout integration
-- Payment confirmation page
+- Build the portal frontend pages (HTML/CSS/jQuery, same stack as existing site)
+- Invoice detail view at `/invoice/{token}`
+- Customer portal view at `/portal/{token}` with Active Invoices, Payment History, All Invoices tabs
+- Payment method selection (Stripe/PayPal/Square) -- adapt existing `main.js` checkout logic
+- Payment confirmation page with receipt
 - PDF download for invoices and receipts
 - Mobile responsive design
+- Add CSP headers for portal pages in `.htaccess`
 
 ### Phase 3: Argo Books Integration
 - Create `PaymentPortalService` in ArgoBooks.Core (HTTP client for portal API)
 - Modify invoice send flow to also publish to portal
-- Update invoice email templates to include "Pay Online" button/link
-- Implement real sync in `PaymentsPageViewModel` (replace stub)
-- Implement `OpenPortal` command (open portal URL in browser)
+- Update invoice email templates to include "View & Pay Online" button/link
+- Implement real sync in `PaymentsPageViewModel` (replace the existing stub)
+- Implement `OpenPortal` command (open portal URL in default browser)
 - Add "Source" field to Payment model (Manual vs Online)
 - Add portal settings to CompanySettings and Settings modal
 - Add "Invoices Awaiting Payment" section to Payments page
@@ -553,8 +719,9 @@ This logic already partially exists in `PaymentsPageViewModel.GetPaymentStatus()
 - Add portal API key to `.env` configuration
 
 ### Phase 4: Polish & Testing
-- End-to-end testing of the full payment flow
-- Error handling (network failures, Stripe errors, sync conflicts)
+- End-to-end testing of the full payment flow (all 3 providers)
+- Error handling (network failures, payment errors, sync conflicts)
 - Auto-sync on a timer when app is open
 - Notifications when new online payments arrive
 - Edge cases: partial payments, refunds, currency conversion
+- Rate limiting and security testing on token endpoints
