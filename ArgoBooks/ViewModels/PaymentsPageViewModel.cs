@@ -193,7 +193,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
     /// <summary>
     /// Opens the payment portal in the default browser.
-    /// Uses the portal URL returned by the server, or falls back to the website base URL.
+    /// Uses the portal URL returned by the server, or falls back to the portal landing page.
     /// </summary>
     [RelayCommand]
     private void OpenPortal()
@@ -201,9 +201,8 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var url = PortalUrl;
         if (string.IsNullOrEmpty(url))
         {
-            // The portal uses token-based URLs (/portal/{token}), so bare /portal/ will 404.
-            // Fall back to the website base URL.
-            url = PortalSettings.ApiBaseUrl.Replace("/api/portal", "");
+            // Fall back to the portal landing page
+            url = PortalSettings.ApiBaseUrl.Replace("/api/portal", "/portal/");
         }
 
         try
