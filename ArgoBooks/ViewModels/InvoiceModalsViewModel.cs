@@ -1104,7 +1104,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData != null)
         {
             var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
-            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
+
+            // Show Pay Online button in preview when portal is configured and auto-publish is enabled
+            string? previewPayUrl = null;
+            var portalSettings = companySettings.PaymentPortal;
+            if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
+            {
+                previewPayUrl = portalSettings.PortalUrl ?? "https://argorobots.com/portal/";
+            }
+
+            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, previewPayUrl);
         }
         else
         {
