@@ -193,6 +193,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _hasSendError;
 
     [ObservableProperty]
+    private bool _showPortalConfigureLink;
+
+    [ObservableProperty]
     private bool _isShowingSuccess;
 
     [ObservableProperty]
@@ -689,15 +692,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
 
-        // Render HTML (show Pay Online button as non-clickable preview if portal is configured)
+        // Render HTML (show non-clickable Pay button only when portal is configured)
         var renderer = new InvoiceHtmlRenderer();
         var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
-        string? payOnlineUrl = null;
         var portalSettings = companyData.Settings.PaymentPortal;
-        if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
-        {
-            payOnlineUrl = "#";
-        }
+        string? payOnlineUrl = portalSettings.AutoPublishOnSend && !string.IsNullOrEmpty(portalSettings.PortalUrl)
+            ? "#" : null;
         PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol, payOnlineUrl);
 
         // Open modal in view-only preview mode
@@ -1111,13 +1111,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
 
-            // Show Pay Online button in preview when portal is configured (non-clickable)
-            string? previewPayUrl = null;
+            // Show non-clickable Pay Online button in preview when portal is configured
             var portalSettings = companySettings.PaymentPortal;
-            if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
-            {
-                previewPayUrl = "#";
-            }
+            string? previewPayUrl = portalSettings.AutoPublishOnSend && !string.IsNullOrEmpty(portalSettings.PortalUrl)
+                ? "#" : null;
 
             PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, previewPayUrl);
         }
@@ -1319,11 +1316,24 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
+        // Calculate invoice totals
+        invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
+        invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
+        invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit;
+        invoice.Balance = invoice.Total - invoice.AmountPaid;
+
         // Publish to payment portal first (to get the Pay Online URL for the email)
         string? payOnlineUrl = null;
         var portalSettings = companyData.Settings.PaymentPortal;
-        if (PortalSettings.IsConfigured && portalSettings.AutoPublishOnSend)
+        if (portalSettings.AutoPublishOnSend)
         {
+            if (string.IsNullOrEmpty(portalSettings.PortalUrl))
+            {
+                ShowPortalConfigureLink = true;
+                await ShowSendErrorAsync("Payment portal is not configured. Please set up the payment portal in Settings before sending invoices.".Translate());
+                return;
+            }
+
             try
             {
                 var portalService = App.PaymentPortalService;
@@ -1346,9 +1356,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 // Portal publish failure is non-blocking — continue with sending email
             }
-
-            // Fallback: use portal base URL if publish didn't return a specific invoice URL
-            payOnlineUrl ??= portalSettings.PortalUrl ?? "https://argorobots.com/portal/";
         }
 
         // Send the email (with Pay Online URL if portal publish succeeded)
@@ -1465,6 +1472,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         HasSendError = false;
         SendErrorMessage = string.Empty;
+        ShowPortalConfigureLink = false;
+    }
+
+    [RelayCommand]
+    private void OpenPortalSettings()
+    {
+        App.SettingsModalViewModel?.OpenWithTab(4);
     }
 
     #endregion
