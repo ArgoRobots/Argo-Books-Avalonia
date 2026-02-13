@@ -1348,7 +1348,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }
 
             // Fallback: use portal base URL if publish didn't return a specific invoice URL
-            payOnlineUrl ??= portalSettings.PortalUrl;
+            payOnlineUrl ??= portalSettings.PortalUrl ?? "https://argorobots.com/portal/";
         }
 
         // Send the email (with Pay Online URL if portal publish succeeded)
