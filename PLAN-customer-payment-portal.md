@@ -4,12 +4,13 @@
 
 1. [Answering Your Questions First](#1-answering-your-questions-first)
 2. [System Architecture Overview](#2-system-architecture-overview)
-3. [Website Payment Page (Customer-Facing)](#3-website-payment-page-customer-facing)
-4. [Argo Books Payments Page (Business-Facing)](#4-argo-books-payments-page-business-facing)
-5. [Server/API Layer](#5-serverapi-layer)
-6. [Payment Flow End-to-End](#6-payment-flow-end-to-end)
-7. [Token Security - Deep Dive](#7-token-security---deep-dive)
-8. [Implementation Phases](#8-implementation-phases)
+3. [Where Does the Money Go?](#3-where-does-the-money-go)
+4. [Website Payment Page (Customer-Facing)](#4-website-payment-page-customer-facing)
+5. [Argo Books Payments Page (Business-Facing)](#5-argo-books-payments-page-business-facing)
+6. [Server/API Layer](#6-serverapi-layer)
+7. [Payment Flow End-to-End](#7-payment-flow-end-to-end)
+8. [Token Security - Deep Dive](#8-token-security---deep-dive)
+9. [Implementation Phases](#9-implementation-phases)
 
 ---
 
@@ -78,27 +79,34 @@ Both are essential. The payment portal feature makes the payments page even more
 │  │  (PHP + MySQL, same stack as existing)    │                  │
 │  │                                           │                  │
 │  │  • Stores published invoices              │                  │
-│  │  • Reuses existing Stripe/PayPal/Square   │                  │
+│  │  • Routes payments via connected accounts │                  │
+│  │    (Stripe Connect / PayPal / Square)     │                  │
 │  │  • Records payment transactions           │                  │
 │  │  • Manages customer access tokens         │                  │
 │  │  • Provides sync endpoint for Argo Books  │                  │
 │  └──────────────┬───────────────────────────┘                   │
 │                 │                                                │
-│  ALREADY EXISTS:                                                │
-│  • stripe/stripe-php ^17.1                                      │
-│  • square/square ^42.1                                          │
-│  • PayPal REST API integration                                  │
-│  • Payment processing + fee calculation                         │
-│  • Webhook handling patterns                                    │
-│  • PDO/MySQL database layer                                     │
-│  • PHPMailer for email                                          │
-│  • .env-based configuration                                     │
+│  ALREADY EXISTS (reused by portal):                             │
+│  • stripe/stripe-php ^17.1 → now with Connect                  │
+│  • square/square ^42.1 → now with OAuth                        │
+│  • PayPal REST API → now with Marketplace                      │
+│  • PDO/MySQL, PHPMailer, .env config                           │
+│                                                                 │
+│  MONEY FLOW:                                                    │
+│  Customer pays → Stripe/PayPal/Square → Business's bank account │
+│                                     (optional ArgoRobots fee) ↗ │
 │                                                                 │
 └─────────────────┼───────────────────────────────────────────────┘
                   │ HTTPS API calls (sync)
                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    BUSINESS SIDE (Argo Books)                    │
+│                                                                 │
+│  ┌──────────────────────────────────────────┐                   │
+│  │  Settings                                 │                  │
+│  │  • Connect Stripe/PayPal/Square accounts  │                  │
+│  │  • OAuth flow for each provider           │                  │
+│  └──────────────────────────────────────────┘                   │
 │                                                                 │
 │  ┌──────────────────────────────────────────┐                   │
 │  │  Invoices Page                            │                  │
@@ -120,27 +128,168 @@ Both are essential. The payment portal feature makes the payments page even more
 
 The server acts as the middleman. Argo Books publishes invoice data to the server. The customer views and pays on the website. Argo Books syncs to pull payment records back down. This works because Argo Books is a file-based app (no always-on database) -- the server provides the persistent online layer.
 
-**Key insight:** The existing website already has Stripe, PayPal, and Square fully integrated for license purchases (`/upgrade/standard/checkout/`). The payment portal reuses those same SDKs, credentials, processing fee logic, and patterns -- not built from scratch.
+**Key insight:** The existing website already has the Stripe, PayPal, and Square SDKs installed for license purchases. The portal reuses those same SDKs but with **connected accounts** so money flows to the Argo Books user's bank account, not ArgoRobots'. See [Section 3](#3-where-does-the-money-go) for details.
 
 ---
 
-## 3. Website Payment Page (Customer-Facing)
+## 3. Where Does the Money Go?
 
-### 3.1 How Customers Access It
+### The Problem
+
+The existing website's Stripe/PayPal/Square integration sends money to **ArgoRobots' bank accounts** -- that's correct for license sales (customers buying Argo Books software). But the invoice payment portal is different:
+
+- An Argo Books user (a business/accountant) sends an invoice to their customer
+- Their customer pays the invoice through the portal
+- That money needs to go to **the Argo Books user's bank account**, not ArgoRobots'
+
+If a plumber sends a $500 invoice to a homeowner, and the homeowner pays online, that $500 goes to the plumber -- not to ArgoRobots.
+
+### The Solution: Connected Accounts (Stripe Connect / PayPal for Marketplaces / Square OAuth)
+
+Each payment provider has an official way for platforms to route payments to the correct business:
+
+#### Stripe Connect
+
+Stripe Connect is designed exactly for this. ArgoRobots becomes a "platform" and each Argo Books user connects their own Stripe account.
+
+```
+How it works:
+1. Argo Books user clicks "Connect Stripe Account" in Settings
+2. They're redirected to Stripe's OAuth page (hosted by Stripe)
+3. They log in to their Stripe account (or create one)
+4. They authorize ArgoRobots to create charges on their behalf
+5. Stripe returns a connected_account_id (e.g., "acct_1234567")
+6. This ID is stored on the server linked to their portal
+
+When a customer pays an invoice:
+- The payment is created with: stripe_account = "acct_1234567"
+- Money goes DIRECTLY to the Argo Books user's Stripe account
+- ArgoRobots can optionally take a small platform fee (application_fee_amount)
+  or charge nothing (free feature for users)
+```
+
+**Key Stripe Connect code change** (vs. the existing direct charge):
+```php
+// EXISTING (license sales - money goes to ArgoRobots):
+$payment_intent = \Stripe\PaymentIntent::create([
+    'amount' => 2500,
+    'currency' => 'cad',
+]);
+
+// NEW (invoice portal - money goes to the Argo Books user):
+$payment_intent = \Stripe\PaymentIntent::create([
+    'amount' => 194400,
+    'currency' => 'usd',
+    'application_fee_amount' => 0,  // or a small platform fee
+], [
+    'stripe_account' => 'acct_1234567',  // the Argo Books user's connected account
+]);
+```
+
+#### PayPal for Marketplaces
+
+PayPal has a similar system. The Argo Books user connects their PayPal account, and payments are routed to them.
+
+```
+How it works:
+1. Argo Books user clicks "Connect PayPal Account" in Settings
+2. They go through PayPal's partner onboarding flow
+3. PayPal returns a merchant_id for the user
+4. When a customer pays: the PayPal order is created with the user's merchant_id
+   as the payee, so money goes directly to their PayPal account
+```
+
+#### Square OAuth
+
+Square also supports OAuth for third-party applications.
+
+```
+How it works:
+1. Argo Books user clicks "Connect Square Account" in Settings
+2. They're redirected to Square's OAuth page
+3. They authorize ArgoRobots' app to process payments
+4. Square returns an access_token and merchant_id for the user
+5. When a customer pays: the payment is created using the user's access_token
+   and location_id, so money goes to their Square account
+```
+
+### What the Argo Books User Sees
+
+In the Argo Books Settings (or the Payment Portal settings), there's a "Payment Accounts" section:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Payment Accounts                                        │
+│                                                          │
+│  Connect your payment accounts so customers can pay      │
+│  invoices online. Money goes directly to your account.   │
+│                                                          │
+│  Stripe     [Connected ●]  john@plumbingco.com   [Disconnect] │
+│  PayPal     [Connect →]                                  │
+│  Square     [Connect →]                                  │
+│                                                          │
+│  At least one payment account must be connected for      │
+│  the payment portal to work. Customers will see only     │
+│  the payment methods you have connected.                 │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+- They connect whichever payment providers they use (could be all 3, could be just 1)
+- The customer-facing portal only shows the payment methods the business has connected
+- If a business only has Stripe connected, their customers only see a credit card option
+- If they have all 3, customers get to choose
+
+### Revenue Model (Optional)
+
+ArgoRobots can optionally take a small platform fee on each transaction:
+
+| Option | How it works |
+|--------|-------------|
+| **Free** (no fee) | Portal is a free feature of Argo Books. All money goes to the user. Good for user adoption. |
+| **Small platform fee** | e.g., 0.5% per transaction. Set via `application_fee_amount` in Stripe Connect. Covers server costs. |
+| **Premium-only feature** | Portal only available to Premium subscribers ($5/mo). No per-transaction fee. |
+
+This is a business decision. The technical implementation supports all options.
+
+### Summary
+
+```
+                    EXISTING (License Sales)
+                    ========================
+Customer  →  Stripe/PayPal/Square  →  ArgoRobots' Bank Account
+(buying Argo Books software)           (correct!)
+
+
+                    NEW (Invoice Portal)
+                    ====================
+Customer  →  Stripe Connect / PayPal / Square  →  Argo Books User's Bank Account
+(paying their plumber's invoice)                   (correct!)
+                                              ↘
+                                          Optional small
+                                          platform fee to
+                                          ArgoRobots
+```
+
+---
+
+## 4. Website Payment Page (Customer-Facing)
+
+### 4.1 How Customers Access It
 
 Customers get a unique, secure link. There are two access paths:
 
 1. **Direct invoice link** (in the email they already receive): `https://argorobots.com/invoice/{invoice-token}`
    - Shows a specific invoice with a "Pay Now" button
-   - The invoice token is a cryptographically secure random string (see Section 7 for full security analysis)
+   - The invoice token is a cryptographically secure random string (see Section 8 for full security analysis)
 
 2. **Customer portal link**: `https://argorobots.com/portal/{customer-token}`
    - Shows ALL active invoices for that customer
    - The customer token is a separate, long-lived token tied to the customer
 
-No login required -- token-based access (like how Google Docs sharing links work). This keeps it simple for customers who just want to pay. See **Section 7** for a detailed breakdown of why this is secure and what protections are in place.
+No login required -- token-based access (like how Google Docs sharing links work). This keeps it simple for customers who just want to pay. See **Section 8** for a detailed breakdown of why this is secure and what protections are in place.
 
-### 3.2 Page Layout & Design
+### 4.2 Page Layout & Design
 
 The website will be a clean, modern, responsive page hosted on the existing argorobots.com server, matching the existing site's HTML/CSS/jQuery stack (no new frameworks needed).
 
@@ -239,7 +388,7 @@ When the customer clicks "Pay Now":
 - **Download Invoice as PDF** button on each invoice
 - **Download Receipt** button after payment
 
-### 3.3 Feature List
+### 4.3 Feature List
 
 | Feature | Description |
 |---------|-------------|
@@ -260,7 +409,7 @@ When the customer clicks "Pay Now":
 | Company branding | Shows the business's logo and name |
 | Real-time status | Invoice status updates immediately after payment |
 
-### 3.4 Mobile Design
+### 4.4 Mobile Design
 
 On mobile, the layout collapses:
 - Invoice details become a stacked card layout (no wide table)
@@ -271,9 +420,9 @@ On mobile, the layout collapses:
 
 ---
 
-## 4. Argo Books Payments Page (Business-Facing)
+## 5. Argo Books Payments Page (Business-Facing)
 
-### 4.1 Current State
+### 5.1 Current State
 
 The Payments page already exists with:
 - Statistics cards (Received This Month, Transactions, Pending, Refunds)
@@ -282,7 +431,7 @@ The Payments page already exists with:
 - Add/Edit/Delete/Filter modals
 - Search, sorting, pagination, column visibility
 
-### 4.2 What Changes Are Needed
+### 5.2 What Changes Are Needed
 
 The Payments page needs these enhancements to work with the portal:
 
@@ -354,7 +503,7 @@ Accessible via the settings button, or via the main app Settings modal:
 - **Auto-sync interval** -- How often to check for new payments (e.g., every 5 minutes when app is open)
 - **Notification preferences** -- Get notified when a payment comes in
 
-### 4.3 Integration with Invoices Page
+### 5.3 Integration with Invoices Page
 
 When sending an invoice (existing email flow), Argo Books will also:
 1. **Publish the invoice to the server** -- POST invoice data to the portal API
@@ -364,9 +513,9 @@ This happens transparently as part of the existing "Send Invoice" workflow. No n
 
 ---
 
-## 5. Server/API Layer
+## 6. Server/API Layer
 
-### 5.1 Building on the Existing Website
+### 6.1 Building on the Existing Website
 
 The existing argorobots.com website already has everything we need as foundation:
 
@@ -384,7 +533,7 @@ The existing argorobots.com website already has everything we need as foundation
 
 **No new SDKs or dependencies needed.** The portal is a new set of pages and API endpoints on the existing stack.
 
-### 5.2 New API Endpoints
+### 6.2 New API Endpoints
 
 All endpoints live on the existing argorobots.com server alongside the existing invoice email API.
 
@@ -400,23 +549,37 @@ All endpoints live on the existing argorobots.com server alongside the existing 
 | `GET` | `/api/portal/payments/sync` | Argo Books pulls new payments since last sync |
 | `GET` | `/api/portal/status` | Check portal connection status |
 
-### 5.3 New Database Tables (Server-Side MySQL)
+### 6.3 New Database Tables (Server-Side MySQL)
 
 Added to the existing MySQL database alongside `license_keys`, `payment_transactions`, `community_users`, etc.
 
 ```sql
+-- Registered portal companies (one per Argo Books user)
+CREATE TABLE portal_companies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  api_key VARCHAR(64) NOT NULL UNIQUE,        -- for Argo Books <-> server authentication
+  company_name VARCHAR(255),
+  company_logo_url VARCHAR(500),
+  -- Connected payment accounts (from OAuth flows)
+  stripe_account_id VARCHAR(255),             -- Stripe Connect account ID (acct_xxx)
+  paypal_merchant_id VARCHAR(255),            -- PayPal merchant ID
+  square_merchant_id VARCHAR(255),            -- Square merchant ID
+  square_access_token TEXT,                   -- Square OAuth access token (encrypted)
+  settings JSON,                              -- portal preferences
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Published invoices (copy of invoice data for the portal)
 CREATE TABLE portal_invoices (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  company_api_key VARCHAR(64) NOT NULL,       -- identifies which Argo Books company
+  company_id INT NOT NULL,                    -- FK to portal_companies
   invoice_id VARCHAR(32) NOT NULL,            -- matches Argo Books ID (e.g., INV-2024-00042)
-  invoice_token VARCHAR(64) NOT NULL UNIQUE,  -- secure URL token (see Section 7)
+  invoice_token VARCHAR(64) NOT NULL UNIQUE,  -- secure URL token (see Section 8)
   customer_token VARCHAR(64) NOT NULL,        -- secure customer portal token
   customer_name VARCHAR(255) NOT NULL,
   customer_email VARCHAR(255),
   invoice_data JSON NOT NULL,                 -- full invoice details (line items, totals, etc.)
-  company_name VARCHAR(255),
-  company_logo_url VARCHAR(500),
   status VARCHAR(20) DEFAULT 'sent',          -- mirrors Argo Books status
   total_amount DECIMAL(12,2) NOT NULL,
   balance_due DECIMAL(12,2) NOT NULL,
@@ -426,13 +589,14 @@ CREATE TABLE portal_invoices (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_invoice_token (invoice_token),
   INDEX idx_customer_token (customer_token),
-  INDEX idx_company (company_api_key)
+  INDEX idx_company (company_id),
+  FOREIGN KEY (company_id) REFERENCES portal_companies(id)
 );
 
 -- Payment records from online payments
 CREATE TABLE portal_payments (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  company_api_key VARCHAR(64) NOT NULL,
+  company_id INT NOT NULL,                    -- FK to portal_companies
   invoice_id VARCHAR(32) NOT NULL,
   customer_name VARCHAR(255),
   amount DECIMAL(12,2) NOT NULL,
@@ -445,18 +609,19 @@ CREATE TABLE portal_payments (
   status VARCHAR(20) DEFAULT 'completed',     -- 'completed', 'pending', 'failed', 'refunded'
   synced_to_argo TINYINT(1) DEFAULT 0,        -- whether Argo Books has pulled this payment yet
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_company_sync (company_api_key, synced_to_argo),
-  INDEX idx_invoice (invoice_id)
+  INDEX idx_company_sync (company_id, synced_to_argo),
+  INDEX idx_invoice (invoice_id),
+  FOREIGN KEY (company_id) REFERENCES portal_companies(id)
 );
 ```
 
-### 5.4 Authentication
+### 6.4 Authentication
 
 - **Argo Books -> Server**: API key in the `Authorization: Bearer {key}` header (same pattern as existing `InvoiceEmailService` which uses `X-Api-Key` header)
 - **Customer -> Server**: Token in the URL path (no login required -- see Section 7 for security analysis)
 - **Stripe/PayPal/Square -> Server**: Webhook signature verification (existing patterns in `webhooks/`)
 
-### 5.5 How It Connects to Argo Books
+### 6.5 How It Connects to Argo Books
 
 Since Argo Books uses file-based storage (`.argo` files), there is no persistent database connection. Instead:
 
@@ -468,9 +633,9 @@ This is the exact same pattern used by the existing `InvoiceEmailService` -- HTT
 
 ---
 
-## 6. Payment Flow End-to-End
+## 7. Payment Flow End-to-End
 
-### 6.1 Publishing an Invoice
+### 7.1 Publishing an Invoice
 
 ```
 1. User creates invoice in Argo Books (Invoices Page)
@@ -485,7 +650,7 @@ This is the exact same pattern used by the existing `InvoiceEmailService` -- HTT
 8. Invoice status updates to "Sent"
 ```
 
-### 6.2 Customer Pays Online
+### 7.2 Customer Pays Online
 
 ```
 1. Customer opens email, clicks "View & Pay Online"
@@ -523,7 +688,7 @@ This is the exact same pattern used by the existing `InvoiceEmailService` -- HTT
 8. Customer sees confirmation page with receipt
 ```
 
-### 6.3 Syncing Payment to Argo Books
+### 7.3 Syncing Payment to Argo Books
 
 ```
 1. User opens Argo Books, goes to Payments page
@@ -553,7 +718,7 @@ This is the exact same pattern used by the existing `InvoiceEmailService` -- HTT
 9. Invoice statuses update on the Invoices page too
 ```
 
-### 6.4 Marking Invoices as Paid
+### 7.4 Marking Invoices as Paid
 
 An invoice gets marked as "Paid" through this logic:
 
@@ -575,7 +740,7 @@ This logic already partially exists in `PaymentsPageViewModel.GetPaymentStatus()
 
 ---
 
-## 7. Token Security - Deep Dive
+## 8. Token Security - Deep Dive
 
 ### The Concern
 
@@ -686,12 +851,16 @@ The simplicity (no login) is actually a feature -- customers are more likely to 
 
 ---
 
-## 8. Implementation Phases
+## 9. Implementation Phases
 
-### Phase 1: Server API & Database
-- Add `portal_invoices` and `portal_payments` tables to existing MySQL database
+### Phase 1: Server API, Database & Connected Accounts
+- Add `portal_companies`, `portal_invoices`, and `portal_payments` tables to existing MySQL database
+- Set up Stripe Connect (register ArgoRobots as a platform on Stripe)
+- Set up PayPal for Marketplaces (partner referral API)
+- Set up Square OAuth (register app for third-party access)
+- Build OAuth callback endpoints for each provider (user connects their account)
 - Build the portal API endpoints (PHP, same patterns as existing `api/` folder)
-- Wire up checkout endpoints that reuse existing Stripe/PayPal/Square SDK code from `/upgrade/standard/checkout/`
+- Build checkout endpoints that create charges on the user's connected account (not ArgoRobots')
 - Build invoice publish endpoint (receives data from Argo Books)
 - Build payment sync endpoint (returns new payments to Argo Books)
 - Add webhook endpoints for all three payment providers
@@ -700,7 +869,8 @@ The simplicity (no login) is actually a feature -- customers are more likely to 
 - Build the portal frontend pages (HTML/CSS/jQuery, same stack as existing site)
 - Invoice detail view at `/invoice/{token}`
 - Customer portal view at `/portal/{token}` with Active Invoices, Payment History, All Invoices tabs
-- Payment method selection (Stripe/PayPal/Square) -- adapt existing `main.js` checkout logic
+- Payment method selection -- only show providers the business has connected
+- Adapt existing `main.js` checkout logic for connected account payments
 - Payment confirmation page with receipt
 - PDF download for invoices and receipts
 - Mobile responsive design
@@ -708,6 +878,7 @@ The simplicity (no login) is actually a feature -- customers are more likely to 
 
 ### Phase 3: Argo Books Integration
 - Create `PaymentPortalService` in ArgoBooks.Core (HTTP client for portal API)
+- Add "Connect Payment Accounts" UI in Settings (OAuth flows for Stripe/PayPal/Square)
 - Modify invoice send flow to also publish to portal
 - Update invoice email templates to include "View & Pay Online" button/link
 - Implement real sync in `PaymentsPageViewModel` (replace the existing stub)
@@ -719,7 +890,8 @@ The simplicity (no login) is actually a feature -- customers are more likely to 
 - Add portal API key to `.env` configuration
 
 ### Phase 4: Polish & Testing
-- End-to-end testing of the full payment flow (all 3 providers)
+- End-to-end testing of the full payment flow (all 3 providers with connected accounts)
+- Test OAuth connect/disconnect flows for each provider
 - Error handling (network failures, payment errors, sync conflicts)
 - Auto-sync on a timer when app is open
 - Notifications when new online payments arrive
