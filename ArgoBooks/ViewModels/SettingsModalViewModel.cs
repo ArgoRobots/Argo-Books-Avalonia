@@ -629,6 +629,19 @@ public partial class SettingsModalViewModel : ViewModelBase
                     FileName = response.AuthUrl,
                     UseShellExecute = true
                 });
+
+                App.AddNotification("Connecting".Translate(),
+                    $"Opening {provider} authorization page in your browser...".Translate(),
+                    NotificationType.Info);
+            }
+            else
+            {
+                var message = !string.IsNullOrEmpty(response.Message)
+                    ? response.Message
+                    : $"Could not connect to {provider}. The payment portal server may be unavailable.";
+                App.AddNotification("Connection Failed".Translate(),
+                    message.Translate(),
+                    NotificationType.Error);
             }
         }
         catch

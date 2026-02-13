@@ -733,23 +733,6 @@
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
-                                <!-- API Configuration Status -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsVisible="{Binding !IsPortalApiConfigured}">
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="{loc:Loc 'API Key Required'}"
-                                                   FontSize="14"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource WarningBrush}" />
-                                        <TextBlock Text="{loc:Loc 'Add PAYMENT_PORTAL_API_KEY to your .env file to enable the payment portal.'}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Border>
-
                                 <!-- Portal Enable -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -766,7 +749,6 @@
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding PortalEnabled}"
-                                                      IsEnabled="{Binding IsPortalApiConfigured}"
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>

@@ -194,6 +194,15 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Opens the Settings modal to the Payment Portal tab.
+    /// </summary>
+    [RelayCommand]
+    private void OpenPortalSettings()
+    {
+        App.SettingsModalViewModel?.OpenWithTab(4);
+    }
+
+    /// <summary>
     /// Opens the payment portal in the default browser.
     /// </summary>
     [RelayCommand]

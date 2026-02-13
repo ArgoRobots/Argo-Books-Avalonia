@@ -189,6 +189,11 @@ public class App : Application
     public static QuickActionsSettingsModalViewModel? QuickActionsSettingsModalViewModel => _appShellViewModel?.QuickActionsSettingsModalViewModel;
 
     /// <summary>
+    /// Gets the settings modal view model for shared access.
+    /// </summary>
+    public static SettingsModalViewModel? SettingsModalViewModel => _appShellViewModel?.SettingsModalViewModel;
+
+    /// <summary>
     /// Gets the header view model for shared access.
     /// </summary>
     public static HeaderViewModel? HeaderViewModel => _appShellViewModel?.HeaderViewModel;

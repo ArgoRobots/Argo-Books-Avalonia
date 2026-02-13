@@ -182,11 +182,18 @@
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextWrapping="Wrap" />
                         </StackPanel>
-                        <TextBlock Grid.Column="2"
-                                   Text="{loc:Loc 'Not Configured'}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="2"
+                                Classes="primary-button"
+                                Command="{Binding OpenPortalSettingsCommand}"
+                                VerticalAlignment="Center"
+                                Padding="16,8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="{x:Static icons:Icons.Settings}"
+                                          Width="16" Height="16"
+                                          Foreground="White" />
+                                <TextBlock Text="{loc:Loc Configure}" />
+                            </StackPanel>
+                        </Button>
                     </Grid>
                 </Border>
 
