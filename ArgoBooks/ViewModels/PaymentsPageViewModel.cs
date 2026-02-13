@@ -59,16 +59,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private string? _portalUrl;
 
-    /// <summary>
-    /// Invoices published to the portal that are awaiting payment.
-    /// </summary>
-    public ObservableCollection<AwaitingPaymentItem> AwaitingPayments { get; } = [];
-
-    [ObservableProperty]
-    private string _awaitingPaymentsTotal = "$0.00";
-
-    [ObservableProperty]
-    private bool _hasAwaitingPayments;
 
     /// <summary>
     /// Initializes portal state from saved settings.
@@ -180,7 +170,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
             // Refresh the payments list
             LoadPayments();
-            LoadAwaitingPayments();
             UpdateOnlineStatistics();
         }
         catch (Exception)
@@ -204,6 +193,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
     /// <summary>
     /// Opens the payment portal in the default browser.
+    /// Uses the portal URL returned by the server, or falls back to the website base URL.
     /// </summary>
     [RelayCommand]
     private void OpenPortal()
@@ -211,7 +201,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var url = PortalUrl;
         if (string.IsNullOrEmpty(url))
         {
-            url = PortalSettings.ApiBaseUrl.Replace("/api/portal", "/portal");
+            // The portal uses token-based URLs (/portal/{token}), so bare /portal/ will 404.
+            // Fall back to the website base URL.
+            url = PortalSettings.ApiBaseUrl.Replace("/api/portal", "");
         }
 
         try
@@ -255,45 +247,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         }
     }
 
-    /// <summary>
-    /// Loads invoices that are published to the portal and awaiting payment.
-    /// </summary>
-    private void LoadAwaitingPayments()
-    {
-        AwaitingPayments.Clear();
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        var awaitingInvoices = companyData.Invoices
-            .Where(i => i.Status is InvoiceStatus.Sent or InvoiceStatus.Viewed
-                        or InvoiceStatus.Partial or InvoiceStatus.Overdue
-                        or InvoiceStatus.Pending)
-            .Where(i => i.Balance > 0)
-            .OrderBy(i => i.DueDate)
-            .Take(10)
-            .ToList();
-
-        decimal totalOutstandingUSD = 0;
-
-        foreach (var invoice in awaitingInvoices)
-        {
-            var customer = companyData.GetCustomer(invoice.CustomerId);
-            AwaitingPayments.Add(new AwaitingPaymentItem
-            {
-                InvoiceId = invoice.Id,
-                CustomerName = customer?.Name ?? "Unknown",
-                Amount = CurrencyService.FormatFromUSD(invoice.EffectiveBalanceUSD, invoice.IssueDate),
-                Status = invoice.Status.ToString(),
-                IsOverdue = invoice.IsOverdue
-            });
-
-            totalOutstandingUSD += invoice.EffectiveBalanceUSD;
-        }
-
-        AwaitingPaymentsTotal = CurrencyService.FormatFromUSD(totalOutstandingUSD, DateTime.Now);
-        HasAwaitingPayments = AwaitingPayments.Count > 0;
-    }
 
     /// <summary>
     /// Updates online-specific statistics.
@@ -481,7 +434,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         LoadPayments();
         LoadCustomerOptions();
         InitializePortalState();
-        LoadAwaitingPayments();
         UpdateOnlineStatistics();
 
         // Check portal status asynchronously
@@ -949,18 +901,6 @@ public partial class PaymentDisplayItem : ObservableObject
     /// Gets whether the amount is negative (refund).
     /// </summary>
     public bool IsRefund => Amount < 0;
-}
-
-/// <summary>
-/// Display model for invoices awaiting payment on the portal.
-/// </summary>
-public class AwaitingPaymentItem
-{
-    public string InvoiceId { get; set; } = string.Empty;
-    public string CustomerName { get; set; } = string.Empty;
-    public string Amount { get; set; } = "$0.00";
-    public string Status { get; set; } = "Sent";
-    public bool IsOverdue { get; set; }
 }
 
 /// <summary>

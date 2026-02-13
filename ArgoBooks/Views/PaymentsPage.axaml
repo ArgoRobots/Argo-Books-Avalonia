@@ -44,9 +44,9 @@
             <StackPanel Grid.Row="1" Spacing="0" Margin="0,0,0,24">
                 <!-- Portal Status Card -->
                 <Border Background="{DynamicResource SurfaceBrush}"
-                        CornerRadius="12,12,0,0"
+                        CornerRadius="12"
                         BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1,1,1,0"
+                        BorderThickness="1"
                         Padding="20"
                         IsVisible="{Binding IsPortalConfigured}">
                     <Grid ColumnDefinitions="Auto,*,Auto">
@@ -197,95 +197,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Awaiting Payments Section (shown below portal card when there are unpaid invoices) -->
-                <Border Background="{DynamicResource SurfaceBrush}"
-                        CornerRadius="0,0,12,12"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1,0,1,1"
-                        Padding="20,16"
-                        IsVisible="{Binding HasAwaitingPayments}">
-                    <StackPanel Spacing="12">
-                        <!-- Section Header -->
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{loc:Loc 'Invoices Awaiting Payment'}"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           VerticalAlignment="Center" />
-                                <Border Background="{DynamicResource InfoIconBgBrush}"
-                                        CornerRadius="10"
-                                        Padding="8,2"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding AwaitingPayments.Count}"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource InfoBrush}" />
-                                </Border>
-                            </StackPanel>
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding AwaitingPaymentsTotal, StringFormat='Total Outstanding: {0}'}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center" />
-                        </Grid>
-
-                        <!-- Awaiting Payment Items -->
-                        <ItemsControl ItemsSource="{Binding AwaitingPayments}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Padding="12,8"
-                                            Margin="0,0,0,2"
-                                            CornerRadius="6"
-                                            Background="{DynamicResource SurfaceAltBrush}">
-                                        <Grid ColumnDefinitions="*,Auto,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="{Binding CustomerName}"
-                                                           FontSize="13"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding InvoiceId}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </StackPanel>
-                                            <Border Grid.Column="1"
-                                                    Padding="8,4"
-                                                    CornerRadius="4"
-                                                    VerticalAlignment="Center"
-                                                    Margin="12,0">
-                                                <Border.Background>
-                                                    <Binding Path="IsOverdue">
-                                                        <Binding.Converter>
-                                                            <local:BoolToColorConverter TrueColor="#FEF2F2" FalseColor="Transparent" />
-                                                        </Binding.Converter>
-                                                    </Binding>
-                                                </Border.Background>
-                                                <TextBlock Text="{Binding Status}"
-                                                           FontSize="11"
-                                                           FontWeight="Medium">
-                                                    <TextBlock.Foreground>
-                                                        <Binding Path="IsOverdue">
-                                                            <Binding.Converter>
-                                                                <local:BoolToColorConverter TrueColor="#DC2626" FalseColor="default" />
-                                                            </Binding.Converter>
-                                                        </Binding>
-                                                    </TextBlock.Foreground>
-                                                </TextBlock>
-                                            </Border>
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding Amount}"
-                                                       FontSize="14"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                       VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
             </StackPanel>
 
             <!-- Main Content Card using ArgoTable -->
