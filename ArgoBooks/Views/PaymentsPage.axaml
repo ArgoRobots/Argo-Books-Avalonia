@@ -165,7 +165,7 @@
                         </Grid>
 
                         <!-- Portal Not Configured Warning -->
-                        <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConfigured}"
+                        <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConnected}"
                                                       ConfigureCommand="{Binding OpenPortalSettingsCommand}" />
                     </StackPanel>
                 </Border>
