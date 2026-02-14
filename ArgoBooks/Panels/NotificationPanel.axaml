@@ -126,11 +126,6 @@
                                                               Width="18" Height="18"
                                                               Foreground="{DynamicResource WarningBrush}"
                                                               IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsWarning}}" />
-                                                    <!-- Error Icon -->
-                                                    <PathIcon Data="{x:Static local:Icons.Info}"
-                                                              Width="18" Height="18"
-                                                              Foreground="{DynamicResource DangerBrush}"
-                                                              IsVisible="{Binding Type, Converter={x:Static vm:NotificationTypeConverters.IsError}}" />
                                                     <!-- System Icon -->
                                                     <PathIcon Data="{x:Static local:Icons.Settings}"
                                                               Width="18" Height="18"

@@ -1448,7 +1448,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.AddNotification(
             "Invoice Send Failed".Translate(),
             message,
-            NotificationType.Error);
+            NotificationType.Warning);
 
         return Task.CompletedTask;
     }

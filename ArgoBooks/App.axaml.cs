@@ -298,7 +298,7 @@ public class App : Application
                 AddNotification(
                     "Out of Stock Alert".Translate(),
                     message,
-                    NotificationType.Error);
+                    NotificationType.Warning);
             }
         }
 
@@ -318,7 +318,7 @@ public class App : Application
                 AddNotification(
                     "Invoice Overdue".Translate(),
                     message,
-                    NotificationType.Error);
+                    NotificationType.Warning);
             }
         }
 
@@ -338,7 +338,7 @@ public class App : Application
                 AddNotification(
                     "Rental Overdue".Translate(),
                     message,
-                    NotificationType.Error);
+                    NotificationType.Warning);
             }
         }
     }
@@ -363,7 +363,7 @@ public class App : Application
             AddNotification(
                 "Out of Stock".Translate(),
                 "{0} is now out of stock.".TranslateFormat(productName),
-                NotificationType.Error);
+                NotificationType.Warning);
         }
         else if (settings.LowStockAlert && status == InventoryStatus.LowStock)
         {
@@ -392,7 +392,7 @@ public class App : Application
             AddNotification(
                 "Invoice Overdue".Translate(),
                 "Invoice {0} is overdue.".TranslateFormat(invoice.InvoiceNumber),
-                NotificationType.Error);
+                NotificationType.Warning);
         }
     }
 
@@ -414,7 +414,7 @@ public class App : Application
             AddNotification(
                 "Rental Overdue".Translate(),
                 "Rental for {0} is overdue.".TranslateFormat(customerName),
-                NotificationType.Error);
+                NotificationType.Warning);
         }
     }
 

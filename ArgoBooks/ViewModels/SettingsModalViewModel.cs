@@ -1415,7 +1415,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Opens the telemetry data folder in the system file explorer.
     /// </summary>
     [RelayCommand]
-    private void OpenTelemetryFolder()
+    private async Task OpenTelemetryFolderAsync()
     {
         try
         {
@@ -1447,7 +1447,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to open telemetry folder");
-            App.AddNotification("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorDialogAsync("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message));
         }
     }
 
@@ -1486,7 +1486,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to delete telemetry data");
-            App.AddNotification("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorDialogAsync("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message));
         }
         finally
         {

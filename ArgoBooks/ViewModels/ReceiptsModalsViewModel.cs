@@ -428,7 +428,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (!File.Exists(filePath))
         {
-            App.AddNotification("Error".Translate(), "File not found.".Translate(), NotificationType.Error);
+            await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Error".Translate(),
+                Message = "File not found.".Translate(),
+                PrimaryButtonText = "OK".Translate(),
+                CancelButtonText = null
+            }) ?? Task.CompletedTask);
             return;
         }
 
@@ -440,7 +446,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.AddNotification("Error".Translate(), "Failed to read file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Error".Translate(),
+                Message = "Failed to read file: {0}".TranslateFormat(ex.Message),
+                PrimaryButtonText = "OK".Translate(),
+                CancelButtonText = null
+            }) ?? Task.CompletedTask);
         }
     }
 
@@ -708,7 +720,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CreateTransaction()
+    private async Task CreateTransactionAsync()
     {
         // Validate
         HasTotalError = false;
@@ -755,7 +767,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
         {
-            App.AddNotification("Error".Translate(), "No company is open.".Translate(), NotificationType.Error);
+            await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Error".Translate(),
+                Message = "No company is open.".Translate(),
+                PrimaryButtonText = "OK".Translate(),
+                CancelButtonText = null
+            }) ?? Task.CompletedTask);
             return;
         }
 
