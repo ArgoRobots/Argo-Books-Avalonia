@@ -89,33 +89,27 @@
 
                 <!-- Portal Not Configured Warning (shown below header bar) -->
                 <table:ArgoTable.InfoBannerContent>
-                    <Border Background="{DynamicResource WarningIconBgBrush}"
-                            BorderBrush="{DynamicResource WarningBrush}"
+                    <Border BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1"
-                            Padding="16,10"
+                            Padding="24,8"
                             IsVisible="{Binding !IsPortalConfigured}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <PathIcon Grid.Column="0"
-                                      Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                      Foreground="{DynamicResource WarningBrush}"
-                                      Width="18" Height="18"
-                                      VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{loc:Loc 'Payment portal is not configured. Set up the portal in Settings to create and send invoices.'}"
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                      Width="14" Height="14" />
+                            <TextBlock Text="{loc:Loc 'Payment portal is not configured.'}"
                                        FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center"
-                                       TextWrapping="Wrap"
-                                       Margin="10,0" />
-                            <Button Grid.Column="2"
-                                    Classes="primary-button"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <Button Classes="link-button"
                                     Command="{Binding OpenPortalSettingsCommand}"
-                                    VerticalAlignment="Center"
-                                    Padding="12,6"
-                                    FontSize="12">
-                                <TextBlock Text="{loc:Loc Configure}" />
+                                    Padding="0"
+                                    Cursor="Hand">
+                                <TextBlock Text="{loc:Loc 'Configure in Settings'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource PrimaryBrush}"
+                                           TextDecorations="Underline" />
                             </Button>
-                        </Grid>
+                        </StackPanel>
                     </Border>
                 </table:ArgoTable.InfoBannerContent>
 
