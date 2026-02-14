@@ -104,6 +104,9 @@
     <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SecondaryButtonHoverBrush}" />
     </Style>
+    <Style Selector="Button.secondary-button:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
 
     <!-- Danger Button (for destructive actions) -->
     <Style Selector="Button.danger-button">
