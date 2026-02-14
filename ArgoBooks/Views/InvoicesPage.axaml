@@ -84,6 +84,7 @@
                                 EmptyIcon="{x:Static icons:Icons.Invoices}"
                                 EmptyTitle="{Binding EmptyStateTitle}"
                                 EmptyMessage="{Binding EmptyStateMessage}"
+                                ShowHeaderBorder="{Binding IsPortalConfigured}"
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 

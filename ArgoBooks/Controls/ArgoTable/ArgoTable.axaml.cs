@@ -40,6 +40,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<bool> ShowHeaderProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowHeader), true);
 
+    public static readonly StyledProperty<bool> ShowHeaderBorderProperty =
+        AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowHeaderBorder), true);
+
     public static readonly StyledProperty<Thickness> HeaderPaddingProperty =
         AvaloniaProperty.Register<ArgoTable, Thickness>(nameof(HeaderPadding), new Thickness(24, 16));
 
@@ -195,6 +198,12 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(ShowHeaderProperty);
         set => SetValue(ShowHeaderProperty, value);
+    }
+
+    public bool ShowHeaderBorder
+    {
+        get => GetValue(ShowHeaderBorderProperty);
+        set => SetValue(ShowHeaderBorderProperty, value);
     }
 
     public Thickness HeaderPadding
