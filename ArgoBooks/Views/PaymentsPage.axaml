@@ -166,7 +166,8 @@
 
                         <!-- Portal Not Configured Warning -->
                         <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConnected}"
-                                                      ConfigureCommand="{Binding OpenPortalSettingsCommand}" />
+                                                      ConfigureCommand="{Binding OpenPortalSettingsCommand}"
+                                                      Margin="0" />
                     </StackPanel>
                 </Border>
 
