@@ -242,6 +242,13 @@
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
+                <!-- Portal Not Configured Warning (shown below header bar) -->
+                <table:ArgoTable.InfoBannerContent>
+                    <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConfigured}"
+                                                  ConfigureCommand="{Binding OpenPortalSettingsCommand}"
+                                                  Margin="0,8,0,0" />
+                </table:ArgoTable.InfoBannerContent>
+
                 <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
                 <table:ArgoTable.HeaderContent>
                     <StackPanel Orientation="Horizontal">
