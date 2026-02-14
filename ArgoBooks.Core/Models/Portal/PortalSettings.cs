@@ -26,11 +26,10 @@ public class PortalSettings
     public static string ApiKey => DotEnv.Get(ApiKeyEnvVar);
 
     /// <summary>
-    /// Whether the portal API is configured.
-    /// Always returns true — the portal is available by default.
+    /// Whether the portal API is configured (API key is present in .env).
     /// </summary>
     [JsonIgnore]
-    public static bool IsConfigured => true;
+    public static bool IsConfigured => DotEnv.HasValue(ApiKeyEnvVar);
 
     /// <summary>
     /// Whether the payment portal is enabled for this company.

@@ -404,11 +404,23 @@ public class PaymentPortalService : IDisposable
                 };
             }
 
+            var statusCode = (int)response.StatusCode;
+            var message = statusCode == 401
+                ? "Authentication failed. Your portal API key may be invalid or the company has not been registered. Please check your .env file."
+                : $"Failed to initiate connection (HTTP {statusCode}).";
+
+            // Try to extract server error message
+            var serverResponse = DeserializeResponse<PortalOAuthResponse>(content);
+            if (serverResponse != null && !string.IsNullOrEmpty(serverResponse.Message))
+            {
+                message = serverResponse.Message;
+            }
+
             return new PortalOAuthResponse
             {
                 Success = false,
-                Message = $"Failed to initiate connection: {(int)response.StatusCode}",
-                ErrorCode = ((int)response.StatusCode).ToString()
+                Message = message,
+                ErrorCode = statusCode.ToString()
             };
         }
         catch (TaskCanceledException)

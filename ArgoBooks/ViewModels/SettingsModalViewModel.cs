@@ -636,16 +636,13 @@ public partial class SettingsModalViewModel : ViewModelBase
                 var message = !string.IsNullOrEmpty(response.Message)
                     ? response.Message
                     : $"Could not connect to {provider}. The payment portal server may be unavailable.";
-                App.AddNotification("Connection Failed".Translate(),
-                    message.Translate(),
-                    NotificationType.Error);
+                await ShowErrorDialogAsync("Connection Failed".Translate(), message.Translate());
             }
         }
         catch
         {
-            App.AddNotification("Error".Translate(),
-                "Failed to connect payment provider. Please check your internet connection.".Translate(),
-                NotificationType.Error);
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to connect payment provider. Please check your internet connection.".Translate());
         }
         finally
         {
@@ -696,9 +693,23 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch
         {
-            App.AddNotification("Error".Translate(),
-                "Failed to disconnect provider. Please try again.".Translate(),
-                NotificationType.Error);
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to disconnect provider. Please try again.".Translate());
+        }
+    }
+
+    private static async Task ShowErrorDialogAsync(string title, string message)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = title,
+                Message = message,
+                PrimaryButtonText = "OK".Translate(),
+                CancelButtonText = null
+            });
         }
     }
 
