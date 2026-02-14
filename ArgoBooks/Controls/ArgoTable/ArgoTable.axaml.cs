@@ -27,6 +27,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<object?> RowsContentProperty =
         AvaloniaProperty.Register<ArgoTable, object?>(nameof(RowsContent));
 
+    public static readonly StyledProperty<object?> InfoBannerContentProperty =
+        AvaloniaProperty.Register<ArgoTable, object?>(nameof(InfoBannerContent));
+
     public static readonly StyledProperty<IEnumerable?> ItemsSourceProperty =
         AvaloniaProperty.Register<ArgoTable, IEnumerable?>(nameof(ItemsSource));
 
@@ -162,6 +165,15 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(RowsContentProperty);
         set => SetValue(RowsContentProperty, value);
+    }
+
+    /// <summary>
+    /// Optional info/warning banner displayed between the header and the table content.
+    /// </summary>
+    public object? InfoBannerContent
+    {
+        get => GetValue(InfoBannerContentProperty);
+        set => SetValue(InfoBannerContentProperty, value);
     }
 
     /// <summary>

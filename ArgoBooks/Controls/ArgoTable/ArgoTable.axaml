@@ -23,7 +23,7 @@
             BorderThickness="1"
             SizeChanged="OnBorderSizeChanged">
 
-        <Grid RowDefinitions="Auto,*,Auto">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
             <!-- Header with Title, Search and Buttons -->
             <Border Grid.Row="0"
                     Padding="{Binding #Root.HeaderPadding}"
@@ -119,8 +119,13 @@
                 </Grid>
             </Border>
 
+            <!-- Optional Info Banner -->
+            <ContentPresenter Grid.Row="1"
+                              Content="{Binding #Root.InfoBannerContent}"
+                              IsVisible="{Binding #Root.InfoBannerContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
             <!-- Table Content -->
-            <ScrollViewer Grid.Row="1"
+            <ScrollViewer Grid.Row="2"
                           x:Name="HorizontalTableScroll"
                           HorizontalScrollBarVisibility="{Binding #Root.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
                           VerticalScrollBarVisibility="Disabled">
@@ -190,7 +195,7 @@
             </ScrollViewer>
 
             <!-- Pagination Footer -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
                     Background="{DynamicResource SurfaceAltBrush}"
                     Padding="24,12"
                     CornerRadius="0,0,11,11"
