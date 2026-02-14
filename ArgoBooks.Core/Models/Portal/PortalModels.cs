@@ -263,3 +263,24 @@ public class PortalOAuthResponse
     [JsonPropertyName("errorCode")]
     public string? ErrorCode { get; set; }
 }
+
+/// <summary>
+/// Response from the portal company registration endpoint.
+/// </summary>
+public class PortalRegisterResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("api_key")]
+    public string? ApiKey { get; set; }
+
+    [JsonPropertyName("company_id")]
+    public int? CompanyId { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+}

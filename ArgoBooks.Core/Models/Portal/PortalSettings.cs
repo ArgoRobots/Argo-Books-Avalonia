@@ -15,9 +15,14 @@ public class PortalSettings
     public const string ApiBaseUrl = "https://argorobots.com/api/portal";
 
     /// <summary>
-    /// Environment variable name for the portal API key.
+    /// Environment variable name for the portal API key (per-company, obtained during registration).
     /// </summary>
     public const string ApiKeyEnvVar = "PAYMENT_PORTAL_API_KEY";
+
+    /// <summary>
+    /// Environment variable name for the master registration key (shared secret from the server .env).
+    /// </summary>
+    public const string RegistrationKeyEnvVar = "PORTAL_REGISTRATION_KEY";
 
     /// <summary>
     /// Gets the portal API key from .env file.

@@ -456,6 +456,73 @@ public class PaymentPortalService : IDisposable
 
     #endregion
 
+    #region Registration
+
+    /// <summary>
+    /// Registers the company with the payment portal using the master registration key.
+    /// On success, saves the returned per-company API key to .env.
+    /// </summary>
+    public async Task<PortalRegisterResponse> RegisterCompanyAsync(
+        string registrationKey,
+        string companyName,
+        string? ownerEmail,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = PortalSettings.ApiBaseUrl.TrimEnd('/') + "/register";
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", registrationKey);
+            request.Headers.Add("X-Api-Key", registrationKey);
+
+            var body = new { companyName, ownerEmail };
+            var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = DeserializeResponse<PortalRegisterResponse>(content);
+                if (result != null && !string.IsNullOrEmpty(result.ApiKey))
+                {
+                    // Persist the API key to .env
+                    DotEnv.Set(PortalSettings.ApiKeyEnvVar, result.ApiKey);
+                    return result;
+                }
+
+                return new PortalRegisterResponse
+                {
+                    Success = false,
+                    Message = "Server returned success but no API key."
+                };
+            }
+
+            var errorResponse = DeserializeResponse<PortalRegisterResponse>(content);
+            var message = errorResponse?.Error ?? errorResponse?.Message
+                ?? $"Registration failed (HTTP {(int)response.StatusCode}).";
+
+            if ((int)response.StatusCode == 401)
+                message = "Invalid registration key. Please check that the key matches your server's PORTAL_REGISTRATION_KEY.";
+
+            return new PortalRegisterResponse { Success = false, Message = message };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalRegisterResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new PortalRegisterResponse { Success = false, Message = $"Network error: {ex.Message}" };
+        }
+    }
+
+    #endregion
+
     #region Helpers
 
     private static HttpRequestMessage CreateRequest(HttpMethod method, string path)

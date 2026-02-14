@@ -614,6 +614,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         var portalService = App.PaymentPortalService;
         if (portalService == null) return;
 
+        // If no API key exists, try to auto-register first
+        if (!PortalSettings.IsConfigured)
+        {
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
+
         IsConnectingProvider = true;
         try
         {
@@ -643,6 +650,51 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             await ShowErrorDialogAsync("Error".Translate(),
                 "Failed to connect payment provider. Please check your internet connection.".Translate());
+        }
+        finally
+        {
+            IsConnectingProvider = false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to register the company with the portal using the registration key from .env.
+    /// Returns true if registration succeeded (or was already done), false otherwise.
+    /// </summary>
+    private async Task<bool> TryRegisterPortalAsync(PaymentPortalService portalService)
+    {
+        var registrationKey = DotEnv.Get(PortalSettings.RegistrationKeyEnvVar);
+        if (string.IsNullOrEmpty(registrationKey))
+        {
+            await ShowErrorDialogAsync(
+                "Portal Not Configured".Translate(),
+                $"No portal API key found. Please add your PORTAL_REGISTRATION_KEY to the .env file to register, or add an existing PAYMENT_PORTAL_API_KEY.".Translate());
+            return false;
+        }
+
+        IsConnectingProvider = true;
+        try
+        {
+            var companyData = App.CompanyManager?.CompanyData;
+            var companyName = companyData?.Settings.Company.Name ?? "My Company";
+            var ownerEmail = companyData?.Settings.Company.Email;
+
+            var result = await portalService.RegisterCompanyAsync(registrationKey, companyName, ownerEmail);
+            if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
+            {
+                IsPortalApiConfigured = true;
+                return true;
+            }
+
+            var message = result.Message ?? "Registration failed. Please check your registration key.";
+            await ShowErrorDialogAsync("Registration Failed".Translate(), message.Translate());
+            return false;
+        }
+        catch
+        {
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to register with the payment portal. Please check your internet connection.".Translate());
+            return false;
         }
         finally
         {

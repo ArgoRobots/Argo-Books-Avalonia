@@ -140,6 +140,57 @@ public static class DotEnv
     }
 
     /// <summary>
+    /// Sets an environment variable in the .env file. Creates the file if it doesn't exist.
+    /// Updates the in-memory cache and process environment variable immediately.
+    /// </summary>
+    /// <param name="key">The variable name.</param>
+    /// <param name="value">The value to set.</param>
+    public static void Set(string key, string value)
+    {
+        if (!_isLoaded) Load();
+
+        // Update in-memory cache and process env
+        EnvVars[key] = value;
+        Environment.SetEnvironmentVariable(key, value);
+
+        // Find or create .env file
+        var envPath = FindEnvFile();
+        if (string.IsNullOrEmpty(envPath))
+        {
+            envPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env");
+        }
+
+        // Read existing lines (or empty)
+        var lines = File.Exists(envPath) ? new List<string>(File.ReadAllLines(envPath)) : [];
+
+        // Replace existing key or append
+        var replaced = false;
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var trimmed = lines[i].Trim();
+            if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith('#')) continue;
+
+            var sep = trimmed.IndexOf('=');
+            if (sep <= 0) continue;
+
+            var existingKey = trimmed[..sep].Trim();
+            if (string.Equals(existingKey, key, StringComparison.OrdinalIgnoreCase))
+            {
+                lines[i] = $"{key}={value}";
+                replaced = true;
+                break;
+            }
+        }
+
+        if (!replaced)
+        {
+            lines.Add($"{key}={value}");
+        }
+
+        File.WriteAllLines(envPath, lines);
+    }
+
+    /// <summary>
     /// Reloads the .env file, clearing any cached values.
     /// </summary>
     public static void Reload()
