@@ -1,17 +1,13 @@
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
-using ArgoBooks.Views;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
-using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Services.InvoiceTemplates;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -89,13 +85,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private bool _isViewOnly;
-
-    /// <summary>
-    /// Whether the edit modal is in limited-edit mode (for invoices that have been sent).
-    /// When true, only Status, Due Date, and Notes can be modified.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isLimitedEdit;
 
     [ObservableProperty]
     private string _modalTitle = "Create Invoice";
@@ -687,7 +676,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
 
-        // Render HTML
         var renderer = new InvoiceHtmlRenderer();
         var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
         PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol);
@@ -720,7 +708,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             App.AddNotification(
                 "Cannot Continue Invoice",
-                "Only draft invoices can be continued. Use Edit for other invoice statuses.",
+                "Only draft invoices can be continued.",
                 NotificationType.Warning);
             return;
         }
@@ -776,68 +764,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #endregion
 
-    #region Edit Modal
-
-    public void OpenEditModal(InvoiceDisplayItem? item)
-    {
-        if (item == null) return;
-
-        LoadCustomerOptions(includeAllOption: false);
-        LoadProductOptions();
-
-        var invoice = App.CompanyManager?.CompanyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
-        if (invoice == null) return;
-
-        // Invoices beyond Draft/Pending can only be edited in limited mode (status, due date, notes)
-        IsLimitedEdit = invoice.Status != InvoiceStatus.Draft && invoice.Status != InvoiceStatus.Pending;
-
-        _editingInvoiceId = invoice.Id;
-        IsEditMode = true;
-        AllowPreview = false; // Edit mode doesn't show preview
-        ModalTitle = IsLimitedEdit
-            ? $"Update Invoice {invoice.Id}"
-            : $"Edit Invoice {invoice.Id}";
-        SaveButtonText = "Save Changes";
-
-        // Populate form
-        SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == invoice.CustomerId);
-        ModalIssueDate = new DateTimeOffset(invoice.IssueDate);
-        ModalDueDate = new DateTimeOffset(invoice.DueDate);
-        ModalStatus = invoice.Status.ToString();
-        ModalNotes = invoice.Notes;
-        TaxRate = invoice.TaxRate;
-        SecurityDeposit = invoice.SecurityDeposit;
-
-        // Populate line items
-        LineItems.Clear();
-        foreach (var lineItem in invoice.LineItems)
-        {
-            var displayItem = new LineItemDisplayModel
-            {
-                SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == lineItem.ProductId),
-                RentalRecordId = lineItem.RentalRecordId,
-                RevenueRecordId = lineItem.RevenueRecordId,
-                Description = lineItem.Description,
-                Quantity = lineItem.Quantity,
-                UnitPrice = lineItem.UnitPrice
-            };
-            displayItem.PropertyChanged += (_, _) => UpdateTotals();
-            LineItems.Add(displayItem);
-        }
-
-        UpdateTotals();
-        HasCustomerError = false;
-        ValidationMessage = string.Empty;
-        HasValidationMessage = false;
-
-        // Capture original values for change detection
-        CaptureOriginalValues();
-
-        IsCreateEditModalOpen = true;
-    }
-
-    #endregion
-
     #region Delete Confirmation
 
     public async void OpenDeleteConfirm(InvoiceDisplayItem? item)
@@ -863,29 +789,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
-        // Create undo action
-        var deletedInvoice = invoice;
-        var action = new DelegateAction(
-            $"Delete invoice {invoice.Id}",
-            () =>
-            {
-                companyData?.Invoices.Add(deletedInvoice);
-                InvoiceDeleted?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                companyData?.Invoices.Remove(deletedInvoice);
-                InvoiceDeleted?.Invoke(this, EventArgs.Empty);
-            });
-
-        // Remove the invoice
         companyData?.Invoices.Remove(invoice);
-
-        // Record undo action and mark as changed
-        App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
-
         InvoiceDeleted?.Invoke(this, EventArgs.Empty);
+
+        // Auto-save immediately
+        if (App.CompanyManager != null)
+        {
+            try { await App.CompanyManager.SaveCompanyAsync(); }
+            catch { /* non-fatal */ }
+        }
     }
 
     #endregion
@@ -1219,8 +1131,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Template OK, checking IsConfigured");
         System.Diagnostics.Debug.WriteLine($"CreateAndSendInvoice: InvoiceEmailSettings.IsConfigured = {InvoiceEmailSettings.IsConfigured}");
 
-        // Check if email API is configured
-        if (!InvoiceEmailSettings.IsConfigured)
+        // Check if email API is configured (only required when portal is NOT configured,
+        // since the portal server handles email delivery via sendEmail: true)
+        if (!PortalSettings.IsConfigured && !InvoiceEmailSettings.IsConfigured)
         {
             System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Not configured, calling ShowSendErrorAsync");
             await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
@@ -1302,91 +1215,124 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
-        // Try to send the email
-        try
+        // Calculate invoice totals
+        invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
+        invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
+        invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit;
+        invoice.Balance = invoice.Total - invoice.AmountPaid;
+
+        // Publish and send: portal handles both publishing and email delivery via sendEmail: true.
+        // When portal is not configured, fall back to desktop email sending.
+        if (PortalSettings.IsConfigured)
         {
-            var emailService = new InvoiceEmailService();
-            var emailSettings = companyData.Settings.InvoiceEmail;
-            var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
-
-            var response = await emailService.SendInvoiceAsync(
-                invoice,
-                SelectedTemplate,
-                companyData,
-                emailSettings,
-                currencySymbol);
-
-            if (!response.Success)
+            try
             {
-                await ShowSendErrorAsync(response.Message);
+                var portalService = App.PaymentPortalService;
+                if (portalService != null)
+                {
+                    var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+                    var publishResponse = await portalService.PublishInvoiceAsync(
+                        invoice, companyData, SelectedTemplate, currencySymbol);
+                    if (publishResponse.Success)
+                    {
+                        invoice.History.Add(new InvoiceHistoryEntry
+                        {
+                            Action = "Published to Portal",
+                            Details = "Invoice published to online payment portal",
+                            Timestamp = DateTime.UtcNow
+                        });
+
+                        if (publishResponse.EmailSent)
+                        {
+                            invoice.History.Add(new InvoiceHistoryEntry
+                            {
+                                Action = "Email Sent",
+                                Details = $"Invoice notification emailed to {customer.Email} by portal",
+                                Timestamp = DateTime.UtcNow
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var detail = !string.IsNullOrEmpty(publishResponse.Message)
+                            ? publishResponse.Message
+                            : "The payment portal did not return a payment link.";
+                        await ShowSendErrorAsync(
+                            $"{"Failed to publish invoice to payment portal:".Translate()} {detail}");
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowSendErrorAsync(
+                    $"{"Failed to publish invoice to payment portal:".Translate()} {ex.Message}");
                 return;
             }
-
-            // Email sent successfully - update invoice status
-            invoice.Status = InvoiceStatus.Sent;
-            invoice.History.Add(new InvoiceHistoryEntry
-            {
-                Action = "Sent",
-                Details = $"Invoice sent to {customer.Email}",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-        catch (Exception ex)
-        {
-            await ShowSendErrorAsync($"{"Failed to send invoice:".Translate()} {ex.Message}");
-            return;
-        }
-
-        // Create undo action based on whether we're continuing a draft or creating new
-        DelegateAction action;
-        if (isContinuingDraft)
-        {
-            // For continued drafts, we just updated the existing invoice
-            // Undo would need to restore the previous state (simplified: just mark as changed)
-            action = new DelegateAction(
-                $"Send invoice {invoice.Id}",
-                () =>
-                {
-                    invoice.Status = InvoiceStatus.Draft;
-                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    invoice.Status = InvoiceStatus.Sent;
-                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                });
         }
         else
         {
-            // For new invoices, undo removes the invoice
-            action = new DelegateAction(
-                $"Create and send invoice {invoice.Id}",
-                () =>
-                {
-                    companyData.Invoices.Remove(invoice);
-                    UnlinkInvoiceFromRentals(invoice, companyData);
-                    UnlinkInvoiceFromRevenue(invoice, companyData);
-                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.Invoices.Add(invoice);
-                    LinkInvoiceToRentals(invoice, companyData);
-            LinkInvoiceToRevenue(invoice, companyData);
-                    InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                });
+            // No portal configured - send email directly from the desktop app
+            try
+            {
+                var emailService = new InvoiceEmailService();
+                var emailSettings = companyData.Settings.InvoiceEmail;
+                var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
 
+                var response = await emailService.SendInvoiceAsync(
+                    invoice,
+                    SelectedTemplate,
+                    companyData,
+                    emailSettings,
+                    currencySymbol);
+
+                if (!response.Success)
+                {
+                    await ShowSendErrorAsync(response.Message);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowSendErrorAsync($"{"Failed to send invoice:".Translate()} {ex.Message}");
+                return;
+            }
+        }
+
+        // Update invoice status
+        invoice.Status = InvoiceStatus.Sent;
+        invoice.History.Add(new InvoiceHistoryEntry
+        {
+            Action = "Sent",
+            Details = $"Invoice sent to {customer.Email}",
+            Timestamp = DateTime.UtcNow
+        });
+
+        if (!isContinuingDraft)
+        {
             // Add the new invoice to the collection and link to rentals
             companyData.Invoices.Add(invoice);
             LinkInvoiceToRentals(invoice, companyData);
             LinkInvoiceToRevenue(invoice, companyData);
         }
 
-        // Record undo action and mark as changed
-        App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
-
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
+
+        // Auto-save so the sent/published state is persisted even if the user
+        // closes the app without manually saving.  The invoice has already been
+        // delivered to the portal/email recipient, so the local file must match.
+        if (App.CompanyManager != null)
+        {
+            try
+            {
+                await App.CompanyManager.SaveCompanyAsync();
+            }
+            catch
+            {
+                // Save failure is non-fatal here – the UI still shows unsaved-changes
+                // indicator so the user can retry manually.
+            }
+        }
 
         // Show success animation instead of closing immediately
         SuccessTitle = "Invoice Sent!".Translate();
@@ -1405,7 +1351,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.AddNotification(
             "Invoice Send Failed".Translate(),
             message,
-            NotificationType.Error);
+            NotificationType.Warning);
 
         return Task.CompletedTask;
     }
@@ -1491,7 +1437,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void SaveAsDraft()
+    private async Task SaveAsDraft()
     {
         // Validation - less strict for drafts
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
@@ -1534,353 +1480,21 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }).ToList()
         };
 
-        // Create undo action
-        var action = new DelegateAction(
-            $"Add draft invoice {invoiceId}",
-            () =>
-            {
-                companyData.Invoices.Remove(invoice);
-                UnlinkInvoiceFromRentals(invoice, companyData);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                companyData.Invoices.Add(invoice);
-                LinkInvoiceToRentals(invoice, companyData);
-            LinkInvoiceToRevenue(invoice, companyData);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            });
-
         // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
         LinkInvoiceToRentals(invoice, companyData);
 
-        // Record undo action and mark as changed
-        App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
-
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         CloseCreateEditModal();
+
+        // Auto-save immediately
+        if (App.CompanyManager != null)
+        {
+            try { await App.CompanyManager.SaveCompanyAsync(); }
+            catch { /* non-fatal */ }
+        }
     }
 
-    [RelayCommand]
-    private void SaveInvoice()
-    {
-        // Clear previous validation errors first
-        HasCustomerError = false;
-        ValidationMessage = string.Empty;
-        HasValidationMessage = false;
-        foreach (var lineItem in LineItems)
-        {
-            lineItem.HasProductError = false;
-        }
-
-        // Validation (skip customer/line-item checks in limited-edit mode since those fields are locked)
-        if (!IsLimitedEdit)
-        {
-            if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
-            {
-                HasCustomerError = true;
-                ValidationMessage = "Please select a customer".Translate();
-                HasValidationMessage = true;
-                return;
-            }
-
-            if (LineItems.Count == 0)
-            {
-                ValidationMessage = "Please add at least one line item".Translate();
-                HasValidationMessage = true;
-                return;
-            }
-
-            // Validate that all line items have a product selected (rental line items are exempt)
-            var hasProductErrors = false;
-            foreach (var lineItem in LineItems)
-            {
-                if (lineItem.SelectedProduct == null && string.IsNullOrEmpty(lineItem.RentalRecordId) && string.IsNullOrEmpty(lineItem.RevenueRecordId))
-                {
-                    lineItem.HasProductError = true;
-                    hasProductErrors = true;
-                }
-            }
-
-            if (hasProductErrors)
-            {
-                ValidationMessage = "Please select a product for all line items".Translate();
-                HasValidationMessage = true;
-                return;
-            }
-        }
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        if (IsEditMode)
-        {
-            SaveEditedInvoice(companyData);
-        }
-        else
-        {
-            SaveNewInvoice(companyData);
-        }
-
-        CloseCreateEditModal();
-    }
-
-    private void SaveNewInvoice(CompanyData companyData)
-    {
-        // Generate invoice ID
-        var nextNumber = (companyData.Invoices.Count) + 1;
-        var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
-
-        var invoice = new Invoice
-        {
-            Id = invoiceId,
-            InvoiceNumber = invoiceId,
-            CustomerId = SelectedCustomer!.Id!,
-            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
-            TaxRate = TaxRate,
-            SecurityDeposit = SecurityDeposit,
-            Notes = ModalNotes,
-            Status = InvoiceStatus.Draft,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
-            LineItems = LineItems.Select(i => new LineItem
-            {
-                ProductId = i.SelectedProduct?.Id,
-                RentalRecordId = i.RentalRecordId,
-                RevenueRecordId = i.RevenueRecordId,
-                Description = i.Description,
-                Quantity = i.Quantity ?? 0,
-                UnitPrice = i.UnitPrice ?? 0,
-                TaxRate = 0
-            }).ToList()
-        };
-
-        // Create undo action
-        var action = new DelegateAction(
-            $"Add invoice {invoiceId}",
-            () =>
-            {
-                companyData.Invoices.Remove(invoice);
-                UnlinkInvoiceFromRentals(invoice, companyData);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                companyData.Invoices.Add(invoice);
-                LinkInvoiceToRentals(invoice, companyData);
-            LinkInvoiceToRevenue(invoice, companyData);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                App.CheckAndNotifyInvoiceOverdue(invoice);
-            });
-
-        // Add the invoice and link to rentals
-        companyData.Invoices.Add(invoice);
-        LinkInvoiceToRentals(invoice, companyData);
-
-        // Record undo action and mark as changed
-        App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
-
-        InvoiceSaved?.Invoke(this, EventArgs.Empty);
-        App.CheckAndNotifyInvoiceOverdue(invoice);
-    }
-
-    private void SaveEditedInvoice(CompanyData companyData)
-    {
-        var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == _editingInvoiceId);
-        if (invoice == null) return;
-
-        if (IsLimitedEdit)
-        {
-            SaveLimitedEditInvoice(invoice);
-        }
-        else
-        {
-            SaveFullEditInvoice(invoice);
-        }
-
-        // Record undo action and mark as changed
-        App.CompanyManager?.MarkAsChanged();
-        InvoiceSaved?.Invoke(this, EventArgs.Empty);
-        App.CheckAndNotifyInvoiceOverdue(invoice);
-    }
-
-    /// <summary>
-    /// Saves only the limited fields (status, due date, notes) for sent invoices.
-    /// </summary>
-    private void SaveLimitedEditInvoice(Invoice invoice)
-    {
-        var originalDueDate = invoice.DueDate;
-        var originalStatus = invoice.Status;
-        var originalNotes = invoice.Notes;
-
-        var newDueDate = ModalDueDate?.DateTime ?? invoice.DueDate;
-        var newStatus = Enum.Parse<InvoiceStatus>(ModalStatus);
-        var newNotes = ModalNotes;
-
-        // Track history entries for each change
-        var historyEntries = new List<InvoiceHistoryEntry>();
-
-        if (newStatus != originalStatus)
-        {
-            historyEntries.Add(new InvoiceHistoryEntry
-            {
-                Action = newStatus.ToString(),
-                Details = $"Status changed from {originalStatus} to {newStatus}",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        if (newDueDate.Date != originalDueDate.Date)
-        {
-            historyEntries.Add(new InvoiceHistoryEntry
-            {
-                Action = "Updated",
-                Details = $"Due date changed from {originalDueDate:d} to {newDueDate:d}",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        if (newNotes != originalNotes)
-        {
-            historyEntries.Add(new InvoiceHistoryEntry
-            {
-                Action = "Updated",
-                Details = "Notes updated",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        invoice.DueDate = newDueDate;
-        invoice.Status = newStatus;
-        invoice.Notes = newNotes;
-        invoice.UpdatedAt = DateTime.Now;
-        foreach (var entry in historyEntries)
-            invoice.History.Add(entry);
-
-        var action = new DelegateAction(
-            $"Update invoice {_editingInvoiceId}",
-            () =>
-            {
-                invoice.DueDate = originalDueDate;
-                invoice.Status = originalStatus;
-                invoice.Notes = originalNotes;
-                foreach (var entry in historyEntries)
-                    invoice.History.Remove(entry);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                invoice.DueDate = newDueDate;
-                invoice.Status = newStatus;
-                invoice.Notes = newNotes;
-                foreach (var entry in historyEntries)
-                    invoice.History.Add(entry);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                App.CheckAndNotifyInvoiceOverdue(invoice);
-            });
-
-        App.UndoRedoManager.RecordAction(action);
-    }
-
-    /// <summary>
-    /// Saves all fields for draft/pending invoices (full edit).
-    /// </summary>
-    private void SaveFullEditInvoice(Invoice invoice)
-    {
-        // Store original values for undo
-        var originalCustomerId = invoice.CustomerId;
-        var originalIssueDate = invoice.IssueDate;
-        var originalDueDate = invoice.DueDate;
-        var originalStatus = invoice.Status;
-        var originalNotes = invoice.Notes;
-        var originalTaxRate = invoice.TaxRate;
-        var originalSecurityDeposit = invoice.SecurityDeposit;
-        var originalLineItems = invoice.LineItems.ToList();
-
-        var newStatus = Enum.Parse<InvoiceStatus>(ModalStatus);
-
-        // Track history for status changes and general edits
-        var historyEntries = new List<InvoiceHistoryEntry>();
-
-        if (newStatus != originalStatus)
-        {
-            historyEntries.Add(new InvoiceHistoryEntry
-            {
-                Action = newStatus.ToString(),
-                Details = $"Status changed from {originalStatus} to {newStatus}",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        historyEntries.Add(new InvoiceHistoryEntry
-        {
-            Action = "Edited",
-            Details = "Invoice details updated",
-            Timestamp = DateTime.UtcNow
-        });
-
-        // Apply changes
-        invoice.CustomerId = SelectedCustomer!.Id!;
-        invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
-        invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
-        invoice.Status = newStatus;
-        invoice.Notes = ModalNotes;
-        invoice.TaxRate = TaxRate;
-        invoice.SecurityDeposit = SecurityDeposit;
-        invoice.UpdatedAt = DateTime.Now;
-        foreach (var entry in historyEntries)
-            invoice.History.Add(entry);
-        invoice.LineItems = LineItems.Select(i => new LineItem
-        {
-            ProductId = i.SelectedProduct?.Id,
-            Description = i.Description,
-            Quantity = i.Quantity ?? 0,
-            UnitPrice = i.UnitPrice ?? 0,
-            TaxRate = 0
-        }).ToList();
-
-        // Capture new line items for undo/redo
-        var newLineItems = invoice.LineItems;
-
-        // Create undo action
-        var action = new DelegateAction(
-            $"Edit invoice {_editingInvoiceId}",
-            () =>
-            {
-                invoice.CustomerId = originalCustomerId;
-                invoice.IssueDate = originalIssueDate;
-                invoice.DueDate = originalDueDate;
-                invoice.Status = originalStatus;
-                invoice.Notes = originalNotes;
-                invoice.TaxRate = originalTaxRate;
-                invoice.SecurityDeposit = originalSecurityDeposit;
-                invoice.LineItems = originalLineItems;
-                foreach (var entry in historyEntries)
-                    invoice.History.Remove(entry);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                invoice.CustomerId = SelectedCustomer!.Id!;
-                invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
-                invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
-                invoice.Status = newStatus;
-                invoice.Notes = ModalNotes;
-                invoice.TaxRate = TaxRate;
-                invoice.SecurityDeposit = SecurityDeposit;
-                invoice.LineItems = newLineItems;
-                foreach (var entry in historyEntries)
-                    invoice.History.Add(entry);
-                InvoiceSaved?.Invoke(this, EventArgs.Empty);
-                App.CheckAndNotifyInvoiceOverdue(invoice);
-            });
-
-        App.UndoRedoManager.RecordAction(action);
-    }
 
     /// <summary>
     /// Links an invoice to any rental records referenced by its line items.
@@ -1951,7 +1565,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsFromRental = false;
         IsFromRevenue = false;
         IsViewOnly = false;
-        IsLimitedEdit = false;
         SelectedCustomer = null;
         ModalIssueDate = DateTimeOffset.Now;
         ModalDueDate = DateTimeOffset.Now.AddDays(30);

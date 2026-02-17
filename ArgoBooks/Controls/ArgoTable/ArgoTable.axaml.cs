@@ -27,6 +27,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<object?> RowsContentProperty =
         AvaloniaProperty.Register<ArgoTable, object?>(nameof(RowsContent));
 
+    public static readonly StyledProperty<object?> InfoBannerContentProperty =
+        AvaloniaProperty.Register<ArgoTable, object?>(nameof(InfoBannerContent));
+
     public static readonly StyledProperty<IEnumerable?> ItemsSourceProperty =
         AvaloniaProperty.Register<ArgoTable, IEnumerable?>(nameof(ItemsSource));
 
@@ -36,6 +39,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
 
     public static readonly StyledProperty<bool> ShowHeaderProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowHeader), true);
+
+    public static readonly StyledProperty<bool> ShowHeaderBorderProperty =
+        AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowHeaderBorder), true);
 
     public static readonly StyledProperty<Thickness> HeaderPaddingProperty =
         AvaloniaProperty.Register<ArgoTable, Thickness>(nameof(HeaderPadding), new Thickness(24, 16));
@@ -165,6 +171,15 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Optional info/warning banner displayed between the header and the table content.
+    /// </summary>
+    public object? InfoBannerContent
+    {
+        get => GetValue(InfoBannerContentProperty);
+        set => SetValue(InfoBannerContentProperty, value);
+    }
+
+    /// <summary>
     /// Items source for empty state detection.
     /// </summary>
     public IEnumerable? ItemsSource
@@ -183,6 +198,12 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(ShowHeaderProperty);
         set => SetValue(ShowHeaderProperty, value);
+    }
+
+    public bool ShowHeaderBorder
+    {
+        get => GetValue(ShowHeaderBorderProperty);
+        set => SetValue(ShowHeaderBorderProperty, value);
     }
 
     public Thickness HeaderPadding

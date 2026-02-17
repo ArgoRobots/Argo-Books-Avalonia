@@ -216,6 +216,12 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             App.RevenueModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
 
+        // Subscribe to invoice events to refresh when invoices are generated from revenue
+        if (App.InvoiceModalsViewModel != null)
+        {
+            App.InvoiceModalsViewModel.InvoiceSaved += OnInvoiceSaved;
+        }
+
         // Subscribe to date format changes to refresh date display
         DateFormatService.DateFormatChanged += (_, _) => FilterRevenue();
 
@@ -255,6 +261,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     }
 
     private void OnRevenueSaved(object? sender, EventArgs e)
+    {
+        LoadRevenue();
+    }
+
+    private void OnInvoiceSaved(object? sender, EventArgs e)
     {
         LoadRevenue();
     }

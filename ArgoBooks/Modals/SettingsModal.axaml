@@ -291,6 +291,26 @@
                                     </Grid>
                                 </Border>
 
+                                <!-- Payment Notifications -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Payment Received'}"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Get notified when an online payment is received'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding PortalNotifyOnPayment}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
                                 <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -724,6 +744,150 @@
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                IsVisible="{Binding NeedsPasswordForAutoLock}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Payment Portal Tab -->
+                    <TabItem Header="{loc:Loc 'Payment Portal'}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                            <StackPanel Spacing="16">
+                                <!-- Sync Interval -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <ComboBox ItemsSource="{Binding SyncIntervalOptions}"
+                                                  SelectedItem="{Binding PortalSyncInterval}"
+                                                  Classes="form-combobox"
+                                                  Width="100" />
+                                        <TextBlock Text="{loc:Loc 'minutes (0 = manual sync only)'}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Connected Payment Providers -->
+                                <StackPanel Spacing="8" Margin="0,8,0,0">
+                                    <TextBlock Text="{loc:Loc 'Connected Payment Providers'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                    <!-- Stripe -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            Padding="16">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="Stripe"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding StripeEmail}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource SuccessBrush}"
+                                                           IsVisible="{Binding StripeConnected}" />
+                                                <TextBlock Text="{loc:Loc 'Not connected'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           IsVisible="{Binding !StripeConnected}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Classes="primary-button"
+                                                    Content="{loc:Loc Connect}"
+                                                    Command="{Binding ConnectStripeCommand}"
+                                                    IsVisible="{Binding !StripeConnected}"
+                                                    IsEnabled="{Binding !IsConnectingProvider}"
+                                                    VerticalAlignment="Center"
+                                                    Padding="12,6" />
+                                            <Button Grid.Column="1"
+                                                    Classes="danger-button"
+                                                    Content="{loc:Loc Disconnect}"
+                                                    Command="{Binding DisconnectStripeCommand}"
+                                                    IsVisible="{Binding StripeConnected}"
+                                                    VerticalAlignment="Center"
+                                                    Padding="12,6" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- PayPal -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            Padding="16">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="PayPal"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding PaypalEmail}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource SuccessBrush}"
+                                                           IsVisible="{Binding PaypalConnected}" />
+                                                <TextBlock Text="{loc:Loc 'Not connected'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           IsVisible="{Binding !PaypalConnected}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Classes="primary-button"
+                                                    Content="{loc:Loc Connect}"
+                                                    Command="{Binding ConnectPaypalCommand}"
+                                                    IsVisible="{Binding !PaypalConnected}"
+                                                    IsEnabled="{Binding !IsConnectingProvider}"
+                                                    VerticalAlignment="Center"
+                                                    Padding="12,6" />
+                                            <Button Grid.Column="1"
+                                                    Classes="danger-button"
+                                                    Content="{loc:Loc Disconnect}"
+                                                    Command="{Binding DisconnectPaypalCommand}"
+                                                    IsVisible="{Binding PaypalConnected}"
+                                                    VerticalAlignment="Center"
+                                                    Padding="12,6" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Square -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            Padding="16">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="Square"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding SquareEmail}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource SuccessBrush}"
+                                                           IsVisible="{Binding SquareConnected}" />
+                                                <TextBlock Text="{loc:Loc 'Not connected'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           IsVisible="{Binding !SquareConnected}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Classes="primary-button"
+                                                    Content="{loc:Loc Connect}"
+                                                    Command="{Binding ConnectSquareCommand}"
+                                                    IsVisible="{Binding !SquareConnected}"
+                                                    IsEnabled="{Binding !IsConnectingProvider}"
+                                                    VerticalAlignment="Center"
+                                                    Padding="12,6" />
+                                            <Button Grid.Column="1"
+                                                    Classes="danger-button"
+                                                    Content="{loc:Loc Disconnect}"
+                                                    Command="{Binding DisconnectSquareCommand}"
+                                                    IsVisible="{Binding SquareConnected}"
+                                                    VerticalAlignment="Center"
+                                                    Padding="12,6" />
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

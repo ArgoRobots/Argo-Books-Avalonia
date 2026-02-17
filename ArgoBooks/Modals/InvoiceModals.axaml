@@ -64,7 +64,7 @@
                             </StackPanel>
                             <Button Grid.Column="1" Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}" Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <PathIcon Data="{x:Static icons:Icons.OpenInNew}" Width="14" Height="14" />
+                                    <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
                                     <TextBlock Text="{loc:Loc 'Open in Browser'}" />
                                 </StackPanel>
                             </Button>
@@ -80,7 +80,7 @@
                             <!-- Template and Customer Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <!-- Template Selection (left) -->
-                                <StackPanel Grid.Column="0" Spacing="6" IsEnabled="{Binding !IsLimitedEdit}">
+                                <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Email Template'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -93,7 +93,7 @@
                                 </StackPanel>
 
                                 <!-- Customer Selection (right) - hidden when from rental, disabled when limited edit -->
-                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromExternalSource}" IsEnabled="{Binding !IsLimitedEdit}">
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromExternalSource}">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
@@ -114,7 +114,7 @@
                             <!-- Dates Row - hidden when from rental -->
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
                                 <!-- Issue Date - disabled when limited edit -->
-                                <StackPanel Grid.Column="0" Spacing="6" IsEnabled="{Binding !IsLimitedEdit}">
+                                <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
@@ -135,7 +135,7 @@
                             </Grid>
 
                             <!-- Line Items Section - hidden when from rental, disabled when limited edit -->
-                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromExternalSource}" IsEnabled="{Binding !IsLimitedEdit}">
+                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromExternalSource}">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0"
                                                Text="{loc:Loc 'Line Items'}"
@@ -267,14 +267,14 @@
                                                 Spacing="8"
                                                 HorizontalAlignment="Right"
                                                 Margin="0,8,0,0">
-                                        <NumericUpDown Value="{Binding TaxRate, Mode=TwoWay}"
+                                        <NumericUpDown Value="{Binding TaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                                        Minimum="0"
                                                        Maximum="100"
                                                        FormatString="0.##"
                                                        Width="70"
                                                        ShowButtonSpinner="False"
                                                        Classes="line-item-input"
-                                                       IsEnabled="{Binding !IsLimitedEdit}" />
+                                                       />
                                         <TextBlock Text="%"
                                                    VerticalAlignment="Center"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -392,11 +392,6 @@
                                         Content="{loc:Loc Preview}"
                                         Command="{Binding OpenPreviewModalCommand}"
                                         IsVisible="{Binding AllowPreview}" />
-                                <!-- Save Changes button for editing only -->
-                                <Button Classes="primary-button"
-                                        Content="{loc:Loc 'Save Changes'}"
-                                        Command="{Binding SaveInvoiceCommand}"
-                                        IsVisible="{Binding !AllowPreview}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -408,7 +403,7 @@
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                 <Button Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <PathIcon Data="{x:Static icons:Icons.OpenInNew}" Width="14" Height="14" />
+                                        <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
                                         <TextBlock Text="{loc:Loc 'Open in Browser'}" />
                                     </StackPanel>
                                 </Button>
@@ -433,7 +428,7 @@
                                     IsVisible="{Binding HasSendError}">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <PathIcon Grid.Column="0"
-                                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                              Data="{x:Static icons:Icons.WarningCircle}"
                                               Foreground="{DynamicResource ErrorBrush}"
                                               Width="20"
                                               Height="20"
@@ -701,7 +696,7 @@
                                         VerticalAlignment="Center"
                                         Spacing="8"
                                         IsVisible="{Binding HistoryItems.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+                                <PathIcon Data="{x:Static icons:Icons.History}"
                                           Width="32" Height="32"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <TextBlock Text="{loc:Loc 'No history yet'}"

@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -534,6 +537,372 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
+    #region Payment Portal Settings
+
+    [ObservableProperty]
+    private bool _portalNotifyOnPayment = true;
+
+    [ObservableProperty]
+    private int _portalSyncInterval = 5;
+
+    [ObservableProperty]
+    private bool _stripeConnected;
+
+    [ObservableProperty]
+    private string? _stripeEmail;
+
+    [ObservableProperty]
+    private bool _paypalConnected;
+
+    [ObservableProperty]
+    private string? _paypalEmail;
+
+    [ObservableProperty]
+    private bool _squareConnected;
+
+    [ObservableProperty]
+    private string? _squareEmail;
+
+    [ObservableProperty]
+    private bool _isConnectingProvider;
+
+    public int[] SyncIntervalOptions { get; } = [0, 1, 2, 5, 10, 15, 30];
+
+    [RelayCommand]
+    private async Task ConnectStripeAsync()
+    {
+        await ConnectProviderAsync("stripe");
+    }
+
+    [RelayCommand]
+    private async Task ConnectPaypalAsync()
+    {
+        await ConnectProviderAsync("paypal");
+    }
+
+    [RelayCommand]
+    private async Task ConnectSquareAsync()
+    {
+        await ConnectProviderAsync("square");
+    }
+
+    [RelayCommand]
+    private async Task DisconnectStripeAsync()
+    {
+        await DisconnectProviderAsync("stripe");
+    }
+
+    [RelayCommand]
+    private async Task DisconnectPaypalAsync()
+    {
+        await DisconnectProviderAsync("paypal");
+    }
+
+    [RelayCommand]
+    private async Task DisconnectSquareAsync()
+    {
+        await DisconnectProviderAsync("square");
+    }
+
+    private async Task ConnectProviderAsync(string provider)
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        // If no API key exists, try to auto-register first
+        if (!PortalSettings.IsConfigured)
+        {
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
+
+        IsConnectingProvider = true;
+        try
+        {
+            var response = await portalService.InitiateConnectAsync(provider);
+            if (response.Success && !string.IsNullOrEmpty(response.AuthUrl))
+            {
+                // Open OAuth URL in default browser
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = response.AuthUrl,
+                    UseShellExecute = true
+                });
+
+                // Poll for status updates so the UI refreshes when the user completes OAuth
+                _ = PollForProviderConnectionAsync(provider);
+            }
+            else
+            {
+                var message = !string.IsNullOrEmpty(response.Message)
+                    ? response.Message
+                    : $"Could not connect to {provider}. The payment portal server may be unavailable.";
+                await ShowErrorDialogAsync("Connection Failed".Translate(), message.Translate());
+            }
+        }
+        catch
+        {
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to connect payment provider. Please check your internet connection.".Translate());
+        }
+        finally
+        {
+            IsConnectingProvider = false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to register the company with the portal using the registration key from .env.
+    /// Returns true if registration succeeded (or was already done), false otherwise.
+    /// </summary>
+    private async Task<bool> TryRegisterPortalAsync(PaymentPortalService portalService)
+    {
+        var registrationKey = DotEnv.Get(PortalSettings.RegistrationKeyEnvVar);
+        if (string.IsNullOrEmpty(registrationKey))
+        {
+            await ShowErrorDialogAsync(
+                "Portal Not Configured".Translate(),
+                $"No portal API key found. Please add your PORTAL_REGISTRATION_KEY to the .env file to register, or add an existing PAYMENT_PORTAL_API_KEY.".Translate());
+            return false;
+        }
+
+        IsConnectingProvider = true;
+        try
+        {
+            var companyData = App.CompanyManager?.CompanyData;
+            var companyName = companyData?.Settings.Company.Name ?? "My Company";
+            var ownerEmail = companyData?.Settings.Company.Email;
+
+            var result = await portalService.RegisterCompanyAsync(registrationKey, companyName, ownerEmail);
+            if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
+            {
+                return true;
+            }
+
+            var message = result.Message ?? "Registration failed. Please check your registration key.";
+            await ShowErrorDialogAsync("Registration Failed".Translate(), message.Translate());
+            return false;
+        }
+        catch
+        {
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to register with the payment portal. Please check your internet connection.".Translate());
+            return false;
+        }
+        finally
+        {
+            IsConnectingProvider = false;
+        }
+    }
+
+    private async Task DisconnectProviderAsync(string provider)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Disconnect Provider".Translate(),
+                Message = "Are you sure you want to disconnect this payment provider? Customers will no longer be able to pay using this method.".Translate(),
+                PrimaryButtonText = "Disconnect".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+        }
+
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        try
+        {
+            var success = await portalService.DisconnectProviderAsync(provider);
+            if (success)
+            {
+                switch (provider)
+                {
+                    case "stripe":
+                        StripeConnected = false;
+                        StripeEmail = null;
+                        break;
+                    case "paypal":
+                        PaypalConnected = false;
+                        PaypalEmail = null;
+                        break;
+                    case "square":
+                        SquareConnected = false;
+                        SquareEmail = null;
+                        break;
+                }
+
+                // Persist changes to local settings immediately
+                SavePortalSettings();
+            }
+        }
+        catch
+        {
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to disconnect provider. Please try again.".Translate());
+        }
+    }
+
+    private static async Task ShowErrorDialogAsync(string title, string message)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = title,
+                Message = message,
+                PrimaryButtonText = "OK".Translate(),
+                CancelButtonText = null
+            });
+        }
+    }
+
+    private void LoadPortalSettings()
+    {
+        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        if (settings == null) return;
+
+        PortalNotifyOnPayment = settings.NotifyOnPayment;
+        PortalSyncInterval = settings.AutoSyncIntervalMinutes;
+
+        StripeConnected = settings.ConnectedAccounts.StripeConnected;
+        StripeEmail = settings.ConnectedAccounts.StripeEmail;
+        PaypalConnected = settings.ConnectedAccounts.PaypalConnected;
+        PaypalEmail = settings.ConnectedAccounts.PaypalEmail;
+        SquareConnected = settings.ConnectedAccounts.SquareConnected;
+        SquareEmail = settings.ConnectedAccounts.SquareEmail;
+
+        // Fetch fresh provider status from the server in the background
+        _ = RefreshProviderStatusAsync();
+    }
+
+    private async Task RefreshProviderStatusAsync()
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        try
+        {
+            var status = await portalService.CheckStatusAsync();
+            if (status.Success && status.ConnectedProviders != null)
+            {
+                // Only treat a provider as connected if the server also returns a valid email,
+                // which confirms the OAuth flow actually completed (not just initiated).
+                StripeConnected = status.ConnectedProviders.StripeConnected
+                    && !string.IsNullOrEmpty(status.ConnectedProviders.StripeEmail);
+                StripeEmail = status.ConnectedProviders.StripeEmail;
+                PaypalConnected = status.ConnectedProviders.PaypalConnected
+                    && !string.IsNullOrEmpty(status.ConnectedProviders.PaypalEmail);
+                PaypalEmail = status.ConnectedProviders.PaypalEmail;
+                SquareConnected = status.ConnectedProviders.SquareConnected
+                    && !string.IsNullOrEmpty(status.ConnectedProviders.SquareEmail);
+                SquareEmail = status.ConnectedProviders.SquareEmail;
+                SavePortalSettings();
+
+                // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
+                if (!string.IsNullOrEmpty(status.PortalUrl))
+                {
+                    var portalSettings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+                    if (portalSettings != null)
+                        portalSettings.PortalUrl = status.PortalUrl;
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail — local cached values are still shown
+        }
+    }
+
+    private async Task PollForProviderConnectionAsync(string provider)
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        // Poll every 3 seconds for up to 5 minutes
+        const int intervalMs = 3000;
+        const int maxAttempts = 100;
+
+        for (var i = 0; i < maxAttempts; i++)
+        {
+            await Task.Delay(intervalMs);
+
+            try
+            {
+                var status = await portalService.CheckStatusAsync();
+                if (status.Success && status.ConnectedProviders != null)
+                {
+                    var connected = provider switch
+                    {
+                        "stripe" => status.ConnectedProviders.StripeConnected,
+                        "paypal" => status.ConnectedProviders.PaypalConnected,
+                        "square" => status.ConnectedProviders.SquareConnected,
+                        _ => false
+                    };
+
+                    // Require both connected flag AND a valid email to confirm OAuth completed
+                    var email = provider switch
+                    {
+                        "stripe" => status.ConnectedProviders.StripeEmail,
+                        "paypal" => status.ConnectedProviders.PaypalEmail,
+                        "square" => status.ConnectedProviders.SquareEmail,
+                        _ => null
+                    };
+
+                    if (connected && !string.IsNullOrEmpty(email))
+                    {
+                        // Dispatch property updates to the UI thread to ensure bindings refresh
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            StripeConnected = status.ConnectedProviders.StripeConnected;
+                            StripeEmail = status.ConnectedProviders.StripeEmail;
+                            PaypalConnected = status.ConnectedProviders.PaypalConnected;
+                            PaypalEmail = status.ConnectedProviders.PaypalEmail;
+                            SquareConnected = status.ConnectedProviders.SquareConnected;
+                            SquareEmail = status.ConnectedProviders.SquareEmail;
+                            SavePortalSettings();
+
+                            // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
+                            if (!string.IsNullOrEmpty(status.PortalUrl))
+                            {
+                                var portalSettings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+                                if (portalSettings != null)
+                                    portalSettings.PortalUrl = status.PortalUrl;
+                            }
+                        });
+                        return;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore transient errors and keep polling
+            }
+        }
+    }
+
+    private void SavePortalSettings()
+    {
+        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        if (settings == null) return;
+
+        settings.NotifyOnPayment = PortalNotifyOnPayment;
+        settings.AutoSyncIntervalMinutes = PortalSyncInterval;
+
+        settings.ConnectedAccounts.StripeConnected = StripeConnected;
+        settings.ConnectedAccounts.StripeEmail = StripeEmail;
+        settings.ConnectedAccounts.PaypalConnected = PaypalConnected;
+        settings.ConnectedAccounts.PaypalEmail = PaypalEmail;
+        settings.ConnectedAccounts.SquareConnected = SquareConnected;
+        settings.ConnectedAccounts.SquareEmail = SquareEmail;
+    }
+
+    #endregion
+
     /// <summary>
     /// Whether there are unsaved changes in the settings.
     /// </summary>
@@ -573,7 +942,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// Opens the settings modal with a specific tab selected.
     /// </summary>
-    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security).</param>
+    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
     public void OpenWithTab(int tabIndex)
     {
         // Sync with current ThemeService values
@@ -620,6 +989,9 @@ public partial class SettingsModalViewModel : ViewModelBase
                 AnonymousDataCollection = globalSettings.Privacy.AnonymousDataCollectionConsent;
             }
         }
+
+        // Load portal settings
+        LoadPortalSettings();
 
         // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
@@ -768,6 +1140,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.Notifications.RentalOverdueAlert = RentalOverdue;
             settings.Notifications.UnsavedChangesReminder = UnsavedChangesReminder;
             settings.Notifications.UnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
+
+            // Save payment portal settings
+            SavePortalSettings();
 
             // Restart the timer with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
@@ -1141,7 +1516,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Opens the telemetry data folder in the system file explorer.
     /// </summary>
     [RelayCommand]
-    private void OpenTelemetryFolder()
+    private async Task OpenTelemetryFolderAsync()
     {
         try
         {
@@ -1173,7 +1548,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to open telemetry folder");
-            App.AddNotification("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorDialogAsync("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message));
         }
     }
 
@@ -1212,7 +1587,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to delete telemetry data");
-            App.AddNotification("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            await ShowErrorDialogAsync("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message));
         }
         finally
         {
