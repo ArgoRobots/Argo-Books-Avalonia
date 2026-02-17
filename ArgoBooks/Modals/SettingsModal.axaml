@@ -753,26 +753,8 @@
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
-                                <!-- Sync Interval -->
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <ComboBox ItemsSource="{Binding SyncIntervalOptions}"
-                                                  SelectedItem="{Binding PortalSyncInterval}"
-                                                  Classes="form-combobox"
-                                                  Width="100" />
-                                        <TextBlock Text="{loc:Loc 'minutes (0 = manual sync only)'}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </StackPanel>
-
                                 <!-- Connected Payment Providers -->
-                                <StackPanel Spacing="8" Margin="0,8,0,0">
+                                <StackPanel Spacing="8">
                                     <TextBlock Text="{loc:Loc 'Connected Payment Providers'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -888,6 +870,24 @@
                                                     Padding="12,6" />
                                         </Grid>
                                     </Border>
+                                </StackPanel>
+
+                                <!-- Sync Interval -->
+                                <StackPanel Spacing="6" Margin="0,8,0,0">
+                                    <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <ComboBox ItemsSource="{Binding SyncIntervalOptions}"
+                                                  SelectedItem="{Binding PortalSyncInterval}"
+                                                  Classes="form-combobox"
+                                                  Width="100" />
+                                        <TextBlock Text="{loc:Loc 'minutes (0 = manual sync only)'}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

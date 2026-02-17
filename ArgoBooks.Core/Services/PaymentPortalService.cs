@@ -446,22 +446,42 @@ public class PaymentPortalService
 
     /// <summary>
     /// Disconnects a payment provider account.
+    /// Returns the full response including updated provider state.
     /// </summary>
-    public async Task<bool> DisconnectProviderAsync(
+    public async Task<PortalDisconnectResponse> DisconnectProviderAsync(
         string provider,
         CancellationToken cancellationToken = default)
     {
-        if (!PortalSettings.IsConfigured) return false;
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalDisconnectResponse { Success = false, Message = "Portal not configured." };
+        }
 
         try
         {
             using var request = CreateRequest(HttpMethod.Delete, $"/connect/{provider}");
             using var response = await _httpClient.SendAsync(request, cancellationToken);
-            return response.IsSuccessStatusCode;
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalDisconnectResponse>(content)
+                    ?? new PortalDisconnectResponse { Success = true };
+            }
+
+            return new PortalDisconnectResponse
+            {
+                Success = false,
+                Message = $"Server returned status {(int)response.StatusCode}"
+            };
         }
-        catch
+        catch (TaskCanceledException)
         {
-            return false;
+            return new PortalDisconnectResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new PortalDisconnectResponse { Success = false, Message = $"Network error: {ex.Message}" };
         }
     }
 

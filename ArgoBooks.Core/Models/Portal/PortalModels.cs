@@ -41,8 +41,42 @@ public class PortalPublishResponse
     [JsonPropertyName("emailSent")]
     public bool EmailSent { get; set; }
 
+    /// <summary>
+    /// The currently connected payment methods (e.g. ["stripe", "square"]).
+    /// Returned by the server so the desktop app can stay in sync.
+    /// </summary>
+    [JsonPropertyName("payment_methods")]
+    public List<string>? PaymentMethods { get; set; }
+
     [JsonPropertyName("errorCode")]
     public string? ErrorCode { get; set; }
+}
+
+/// <summary>
+/// Response from disconnecting a payment provider.
+/// </summary>
+public class PortalDisconnectResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    /// <summary>
+    /// The updated connected provider state after disconnection.
+    /// </summary>
+    [JsonPropertyName("connectedProviders")]
+    public ConnectedPaymentAccounts? ConnectedProviders { get; set; }
+
+    /// <summary>
+    /// The currently connected payment methods (e.g. ["paypal", "square"]).
+    /// </summary>
+    [JsonPropertyName("payment_methods")]
+    public List<string>? PaymentMethods { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public string? Timestamp { get; set; }
 }
 
 /// <summary>

@@ -1251,6 +1251,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                                 Timestamp = DateTime.UtcNow
                             });
                         }
+
+                        // Update local provider state from the server's response so the
+                        // desktop app stays in sync with which methods are available.
+                        if (publishResponse.PaymentMethods != null)
+                        {
+                            PaymentProviderService.UpdateFromPaymentMethods(publishResponse.PaymentMethods);
+                        }
                     }
                     else
                     {
