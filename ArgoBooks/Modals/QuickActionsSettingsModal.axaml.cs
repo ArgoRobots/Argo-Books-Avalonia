@@ -54,6 +54,15 @@ public partial class QuickActionsSettingsModal : UserControl
     }
 
     /// <summary>
+    /// Closes the modal when the backdrop is clicked.
+    /// </summary>
+    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is QuickActionsSettingsModalViewModel vm)
+            vm.CloseCommand.Execute(null);
+    }
+
+    /// <summary>
     /// Handles keyboard input for the modal.
     /// </summary>
     private void Modal_KeyDown(object? sender, KeyEventArgs e)

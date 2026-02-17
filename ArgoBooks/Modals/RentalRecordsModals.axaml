@@ -123,46 +123,52 @@
                                             <Border Padding="12,8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="*,60,70,Auto">
-                                                    <controls:SearchableDropdown Grid.Column="0"
-                                                             Margin="0,0,4,0"
-                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
-                                                             SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                                                             DisplayMemberPath="Name"
-                                                             Placeholder="{loc:Loc 'Search items...'}"
-                                                             ShowAddNew="False"
-                                                             EmptyMessage="{loc:Loc 'No items available.'}"
-                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).NavigateToCreateRentalItemCommand}"
-                                                             HasError="{Binding HasItemError}"
-                                                             ErrorMessage="{loc:Loc 'Select an item'}" />
-                                                    <TextBox Grid.Column="1"
-                                                             Text="{Binding Quantity, Mode=TwoWay}"
-                                                             Watermark="1"
-                                                             Classes="form-input"
-                                                             behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                                             MaxLength="5"
-                                                             HorizontalAlignment="Stretch"
-                                                             VerticalAlignment="Top"
-                                                             Margin="0,0,4,0" />
-                                                    <TextBlock Grid.Column="2"
-                                                               Text="{Binding AmountFormatted}"
-                                                               FontSize="13"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               HorizontalAlignment="Right" />
-                                                    <Button Grid.Column="3"
-                                                            Classes="icon-button danger"
-                                                            VerticalAlignment="Top"
-                                                            Margin="4,0,0,0"
-                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip.Tip="{loc:Loc 'Remove item'}">
-                                                        <PathIcon Data="{x:Static local:Icons.Delete}"
-                                                                  Width="14" Height="14" />
-                                                    </Button>
-                                                </Grid>
+                                                <StackPanel Spacing="4">
+                                                    <Grid ColumnDefinitions="*,60,70,Auto">
+                                                        <controls:SearchableDropdown Grid.Column="0"
+                                                                 Margin="0,0,4,0"
+                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
+                                                                 SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                                                                 DisplayMemberPath="Name"
+                                                                 Placeholder="{loc:Loc 'Search items...'}"
+                                                                 ShowAddNew="False"
+                                                                 EmptyMessage="{loc:Loc 'No items available.'}"
+                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).NavigateToCreateRentalItemCommand}"
+                                                                 HasError="{Binding HasItemError}"
+                                                                 ErrorMessage="{loc:Loc 'Select an item'}" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Text="{Binding Quantity, Mode=TwoWay}"
+                                                                 Watermark="1"
+                                                                 Classes="form-input"
+                                                                 behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                                                 MaxLength="5"
+                                                                 HorizontalAlignment="Stretch"
+                                                                 VerticalAlignment="Top"
+                                                                 Margin="0,0,4,0" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding AmountFormatted}"
+                                                                   FontSize="13"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Right" />
+                                                        <Button Grid.Column="3"
+                                                                Classes="icon-button danger"
+                                                                VerticalAlignment="Top"
+                                                                Margin="4,0,0,0"
+                                                                Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="{loc:Loc 'Remove item'}">
+                                                            <PathIcon Data="{x:Static local:Icons.Delete}"
+                                                                      Width="14" Height="14" />
+                                                        </Button>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding QuantityError}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               FontSize="11"
+                                                               IsVisible="{Binding QuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -330,46 +336,52 @@
                                             <Border Padding="12,8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="*,60,70,Auto">
-                                                    <controls:SearchableDropdown Grid.Column="0"
-                                                             Margin="0,0,4,0"
-                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
-                                                             SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                                                             DisplayMemberPath="Name"
-                                                             Placeholder="{loc:Loc 'Search items...'}"
-                                                             ShowAddNew="False"
-                                                             EmptyMessage="{loc:Loc 'No items available.'}"
-                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).NavigateToCreateRentalItemCommand}"
-                                                             HasError="{Binding HasItemError}"
-                                                             ErrorMessage="{loc:Loc 'Select an item'}" />
-                                                    <TextBox Grid.Column="1"
-                                                             Text="{Binding Quantity, Mode=TwoWay}"
-                                                             Watermark="1"
-                                                             Classes="form-input"
-                                                             behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                                             MaxLength="5"
-                                                             HorizontalAlignment="Stretch"
-                                                             VerticalAlignment="Top"
-                                                             Margin="0,0,4,0" />
-                                                    <TextBlock Grid.Column="2"
-                                                               Text="{Binding AmountFormatted}"
-                                                               FontSize="13"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               HorizontalAlignment="Right" />
-                                                    <Button Grid.Column="3"
-                                                            Classes="icon-button danger"
-                                                            VerticalAlignment="Top"
-                                                            Margin="4,0,0,0"
-                                                            Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip.Tip="{loc:Loc 'Remove item'}">
-                                                        <PathIcon Data="{x:Static local:Icons.Delete}"
-                                                                  Width="14" Height="14" />
-                                                    </Button>
-                                                </Grid>
+                                                <StackPanel Spacing="4">
+                                                    <Grid ColumnDefinitions="*,60,70,Auto">
+                                                        <controls:SearchableDropdown Grid.Column="0"
+                                                                 Margin="0,0,4,0"
+                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
+                                                                 SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                                                                 DisplayMemberPath="Name"
+                                                                 Placeholder="{loc:Loc 'Search items...'}"
+                                                                 ShowAddNew="False"
+                                                                 EmptyMessage="{loc:Loc 'No items available.'}"
+                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).NavigateToCreateRentalItemCommand}"
+                                                                 HasError="{Binding HasItemError}"
+                                                                 ErrorMessage="{loc:Loc 'Select an item'}" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Text="{Binding Quantity, Mode=TwoWay}"
+                                                                 Watermark="1"
+                                                                 Classes="form-input"
+                                                                 behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                                                 MaxLength="5"
+                                                                 HorizontalAlignment="Stretch"
+                                                                 VerticalAlignment="Top"
+                                                                 Margin="0,0,4,0" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding AmountFormatted}"
+                                                                   FontSize="13"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Right" />
+                                                        <Button Grid.Column="3"
+                                                                Classes="icon-button danger"
+                                                                VerticalAlignment="Top"
+                                                                Margin="4,0,0,0"
+                                                                Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="{loc:Loc 'Remove item'}">
+                                                            <PathIcon Data="{x:Static local:Icons.Delete}"
+                                                                      Width="14" Height="14" />
+                                                        </Button>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding QuantityError}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               FontSize="11"
+                                                               IsVisible="{Binding QuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

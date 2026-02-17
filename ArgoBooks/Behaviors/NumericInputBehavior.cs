@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace ArgoBooks.Behaviors;
