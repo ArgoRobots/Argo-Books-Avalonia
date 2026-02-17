@@ -272,6 +272,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             UpdateStatistics();
             FilterInvoices();
         };
+
+        // Subscribe to payment provider changes so invoice display reflects current state
+        PaymentProviderService.ProvidersChanged += (_, _) =>
+        {
+            FilterInvoices();
+        };
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)

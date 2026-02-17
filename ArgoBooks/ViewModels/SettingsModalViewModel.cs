@@ -716,27 +716,44 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         try
         {
-            var success = await portalService.DisconnectProviderAsync(provider);
-            if (success)
+            var response = await portalService.DisconnectProviderAsync(provider);
+            if (response.Success)
             {
-                switch (provider)
+                // Use the server's authoritative connected provider state from the response
+                if (response.ConnectedProviders != null)
                 {
-                    case "stripe":
-                        StripeConnected = false;
-                        StripeEmail = null;
-                        break;
-                    case "paypal":
-                        PaypalConnected = false;
-                        PaypalEmail = null;
-                        break;
-                    case "square":
-                        SquareConnected = false;
-                        SquareEmail = null;
-                        break;
+                    StripeConnected = response.ConnectedProviders.StripeConnected;
+                    StripeEmail = response.ConnectedProviders.StripeEmail;
+                    PaypalConnected = response.ConnectedProviders.PaypalConnected;
+                    PaypalEmail = response.ConnectedProviders.PaypalEmail;
+                    SquareConnected = response.ConnectedProviders.SquareConnected;
+                    SquareEmail = response.ConnectedProviders.SquareEmail;
+                }
+                else
+                {
+                    // Fallback: clear the specific provider if response didn't include full state
+                    switch (provider)
+                    {
+                        case "stripe":
+                            StripeConnected = false;
+                            StripeEmail = null;
+                            break;
+                        case "paypal":
+                            PaypalConnected = false;
+                            PaypalEmail = null;
+                            break;
+                        case "square":
+                            SquareConnected = false;
+                            SquareEmail = null;
+                            break;
+                    }
                 }
 
                 // Persist changes to local settings immediately
                 SavePortalSettings();
+
+                // Notify invoice views and other subscribers that provider state changed
+                PaymentProviderService.NotifyProvidersChanged();
             }
         }
         catch
@@ -810,6 +827,9 @@ public partial class SettingsModalViewModel : ViewModelBase
                     if (portalSettings != null)
                         portalSettings.PortalUrl = status.PortalUrl;
                 }
+
+                // Notify invoice views and other subscribers that provider state changed
+                PaymentProviderService.NotifyProvidersChanged();
             }
         }
         catch
@@ -873,6 +893,9 @@ public partial class SettingsModalViewModel : ViewModelBase
                                 if (portalSettings != null)
                                     portalSettings.PortalUrl = status.PortalUrl;
                             }
+
+                            // Notify invoice views and other subscribers that provider state changed
+                            PaymentProviderService.NotifyProvidersChanged();
                         });
                         return;
                     }
