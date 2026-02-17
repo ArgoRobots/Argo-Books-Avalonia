@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.ImportValidationDialog"
              x:DataType="vm:ImportValidationDialogViewModel">
@@ -41,7 +42,7 @@
                             <Border.Background>
                                 <SolidColorBrush Color="{DynamicResource WarningColor}" Opacity="0.15" />
                             </Border.Background>
-                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                            <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource WarningBrush}" />
                         </Border>
@@ -139,7 +140,7 @@
                                 IsVisible="{Binding HasIssues}">
                             <StackPanel Spacing="8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                    <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
                                               Width="16" Height="16"
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="How Auto-fix Works"
@@ -161,7 +162,7 @@
                                 IsVisible="{Binding HasErrors}">
                             <StackPanel Spacing="8">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                    <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
                                               Width="16" Height="16"
                                               Foreground="{DynamicResource DangerBrush}" />
                                     <TextBlock Text="Critical Errors"
@@ -199,7 +200,7 @@
                                                     CornerRadius="8,8,0,0">
                                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                                     <PathIcon Grid.Column="0"
-                                                              Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"
+                                                              Data="{x:Static icons:Icons.DocumentBlankAlt}"
                                                               Width="16" Height="16"
                                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                                               Margin="0,0,12,0"

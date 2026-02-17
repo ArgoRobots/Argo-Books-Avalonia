@@ -61,6 +61,23 @@ public class Payment
     [JsonPropertyName("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    #region Portal Support
+
+    /// <summary>
+    /// The source of this payment: "Manual" (entered in Argo Books) or "Online" (received via payment portal).
+    /// Defaults to "Manual" for backward compatibility.
+    /// </summary>
+    [JsonPropertyName("source")]
+    public string Source { get; set; } = "Manual";
+
+    /// <summary>
+    /// The portal payment ID from the server, used to prevent duplicate syncs.
+    /// </summary>
+    [JsonPropertyName("portalPaymentId")]
+    public string? PortalPaymentId { get; set; }
+
+    #endregion
+
     #region Currency Support
 
     /// <summary>

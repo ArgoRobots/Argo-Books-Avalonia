@@ -41,90 +41,170 @@
             </controls:StatCardsRow>
 
             <!-- Payment Portal Section (Row 1) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    Padding="20"
-                    Margin="0,0,0,24">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- Portal Icon -->
-                    <Border Grid.Column="0"
-                            Width="48" Height="48"
-                            CornerRadius="10"
-                            Background="{DynamicResource PrimaryIconBgBrush}"
-                            Margin="0,0,16,0"
-                            VerticalAlignment="Center">
-                        <PathIcon Data="{x:Static icons:Icons.Globe}"
-                                  Width="24" Height="24"
-                                  Foreground="{DynamicResource PrimaryBrush}" />
-                    </Border>
+            <StackPanel Grid.Row="1" Spacing="0" Margin="0,0,0,24">
+                <!-- Portal Status Card -->
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        Padding="20"
+                        IsVisible="{Binding IsPortalConfigured}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <!-- Portal Icon -->
+                            <Border Grid.Column="0"
+                                    Width="48" Height="48"
+                                    CornerRadius="10"
+                                    Background="{DynamicResource PrimaryIconBgBrush}"
+                                    Margin="0,0,16,0"
+                                    VerticalAlignment="Center">
+                                <PathIcon Data="{x:Static icons:Icons.Globe}"
+                                          Width="24" Height="24"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                            </Border>
 
-                    <!-- Portal Info -->
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <!-- Portal Info -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{loc:Loc 'Payment Portal'}"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <!-- Connected badge -->
+                                    <Border Background="{DynamicResource SuccessIconBgBrush}"
+                                            CornerRadius="4"
+                                            Padding="8,4"
+                                            IsVisible="{Binding IsPortalConnected}">
+                                        <TextBlock Text="{loc:Loc 'Connected'}"
+                                                   FontSize="11"
+                                                   FontWeight="Medium"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SuccessBrush}" />
+                                    </Border>
+                                    <!-- Disconnected badge -->
+                                    <Border Background="{DynamicResource WarningIconBgBrush}"
+                                            CornerRadius="4"
+                                            Padding="8,4"
+                                            IsVisible="{Binding !IsPortalConnected}">
+                                        <TextBlock Text="{loc:Loc 'Disconnected'}"
+                                                   FontSize="11"
+                                                   FontWeight="Medium"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{loc:Loc 'When customers receive invoices, they can pay through your online portal. Payments sync automatically.'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <PathIcon Data="{x:Static icons:Icons.Clock}"
+                                                  Width="14" Height="14"
+                                                  VerticalAlignment="Center"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{Binding LastSyncTime, StringFormat='Last synced: {0}'}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                    <!-- Online received this month -->
+                                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                                IsVisible="{Binding IsPortalConnected}">
+                                        <PathIcon Data="{x:Static icons:Icons.Payments}"
+                                                  Width="14" Height="14"
+                                                  VerticalAlignment="Center"
+                                                  Foreground="{DynamicResource SuccessBrush}" />
+                                        <TextBlock Text="{Binding OnlineReceivedThisMonth, StringFormat='Online this month: {0}'}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Portal Actions -->
+                            <StackPanel Grid.Column="2"
+                                        Orientation="Horizontal"
+                                        Spacing="12"
+                                        VerticalAlignment="Center">
+                                <Button Classes="secondary-button"
+                                        Command="{Binding OpenPortalSettingsCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="{x:Static icons:Icons.Settings}"
+                                                  Width="16" Height="16" />
+                                        <TextBlock Text="{loc:Loc Configure}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="secondary-button"
+                                        Command="{Binding SyncPortalCommand}"
+                                        IsEnabled="{Binding IsPortalConnected}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Classes.sync-spinning="{Binding IsSyncing}"
+                                                  Data="{x:Static icons:Icons.Refresh}"
+                                                  Width="16" Height="16"
+                                                  RenderTransformOrigin="50%,50%">
+                                            <PathIcon.RenderTransform>
+                                                <RotateTransform />
+                                            </PathIcon.RenderTransform>
+                                        </PathIcon>
+                                        <TextBlock Text="{loc:Loc 'Sync Now'}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Portal Not Configured Warning -->
+                        <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConnected}"
+                                                      ConfigureCommand="{Binding OpenPortalSettingsCommand}"
+                                                      Margin="0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Not Configured Card (shown when portal API key is missing) -->
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        Padding="20"
+                        IsVisible="{Binding !IsPortalConfigured}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                            <PathIcon Data="{x:Static icons:Icons.Globe}"
+                                      Width="24" Height="24"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="{loc:Loc 'Payment Portal'}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <Border Background="{DynamicResource SuccessIconBgBrush}"
-                                    CornerRadius="4"
-                                    Padding="8,4">
-                                <TextBlock Text="{loc:Loc 'Connected'}"
-                                           FontSize="11"
-                                           FontWeight="Medium"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SuccessBrush}" />
-                            </Border>
+                            <TextBlock Text="{loc:Loc 'Enable the payment portal to let customers pay invoices online via Stripe, PayPal, or Square.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" />
                         </StackPanel>
-                        <TextBlock Text="{loc:Loc 'When customers receive invoices, they can pay through your online portal. Payments sync automatically.'}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   TextWrapping="Wrap" />
-                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                            <PathIcon Data="{x:Static icons:Icons.Clock}"
-                                      Width="14" Height="14"
-                                      VerticalAlignment="Center"
-                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <TextBlock Text="{Binding LastSyncTime, StringFormat='Last synced: {0}'}"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Portal Actions -->
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                Spacing="12"
-                                VerticalAlignment="Center">
-                        <Button Classes="secondary-button"
-                                Command="{Binding SyncPortalCommand}">
+                        <Button Grid.Column="2"
+                                Classes="primary-button"
+                                Command="{Binding OpenPortalSettingsCommand}"
+                                VerticalAlignment="Center"
+                                Padding="16,8">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Classes.sync-spinning="{Binding IsSyncing}"
-                                          Data="{x:Static icons:Icons.Refresh}"
-                                          Width="16" Height="16"
-                                          RenderTransformOrigin="50%,50%">
-                                    <PathIcon.RenderTransform>
-                                        <RotateTransform />
-                                    </PathIcon.RenderTransform>
-                                </PathIcon>
-                                <TextBlock Text="{loc:Loc 'Sync Now'}" />
-                            </StackPanel>
-                        </Button>
-                        <Button Classes="primary-button"
-                                Command="{Binding OpenPortalCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
+                                <PathIcon Data="{x:Static icons:Icons.Settings}"
                                           Width="16" Height="16"
                                           Foreground="White" />
-                                <TextBlock Text="{loc:Loc 'Open Portal'}" />
+                                <TextBlock Text="{loc:Loc Configure}" />
                             </StackPanel>
                         </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
 
             <!-- Main Content Card using ArgoTable -->
             <table:ArgoTable Grid.Row="2"

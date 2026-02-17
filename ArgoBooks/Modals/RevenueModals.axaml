@@ -277,7 +277,7 @@
                                             Command="{Binding AttachReceiptCommand}"
                                             Margin="8,0,0,0">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
+                                            <PathIcon Data="{x:Static icons:Icons.DocumentBlank}"
                                                       Width="14" Height="14" />
                                             <TextBlock Text="{loc:Loc 'Attach'}" />
                                         </StackPanel>
@@ -339,7 +339,7 @@
                                     Padding="16"
                                     IsVisible="{Binding IsSavingTransaction}">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
-                                    <PathIcon Data="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"
+                                    <PathIcon Data="{x:Static icons:Icons.Spinner}"
                                               Width="20" Height="20"
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Converting currency...'}"

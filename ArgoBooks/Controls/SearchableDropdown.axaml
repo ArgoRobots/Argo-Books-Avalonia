@@ -6,6 +6,7 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:converters="using:ArgoBooks.Converters"
              xmlns:local="using:ArgoBooks"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="300"
              x:Class="ArgoBooks.Controls.SearchableDropdown"
              x:DataType="controls:SearchableDropdown"
@@ -93,7 +94,7 @@
                         Width="32" Height="32"
                         Margin="0"
                         Command="{Binding ToggleDropdownCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
-                    <PathIcon Data="M7 10l5 5 5-5z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
                               Width="16" Height="16"
                               Foreground="{DynamicResource TextTertiaryBrush}">
                         <PathIcon.Styles>

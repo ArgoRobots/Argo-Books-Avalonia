@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using ArgoBooks.ViewModels;
-using ArgoBooks.Controls;
 
 namespace ArgoBooks.Views;
 

@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="50"
+             x:Class="ArgoBooks.Controls.PortalWarningBanner"
+             x:DataType="controls:PortalWarningBanner">
+
+    <Border HorizontalAlignment="Center"
+            Background="{DynamicResource WarningLightBrush}"
+            BorderBrush="{DynamicResource WarningBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="14,8"
+            Margin="0,0,0,12">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                      Foreground="{DynamicResource WarningBrush}"
+                      Width="14" Height="14" />
+            <TextBlock Text="{loc:Loc 'Payment portal is not configured.'}"
+                       FontSize="13"
+                       Foreground="{DynamicResource WarningTextBrush}" />
+            <Button Command="{Binding ConfigureCommand, RelativeSource={RelativeSource AncestorType=controls:PortalWarningBanner}}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
+                    Cursor="Hand">
+                <TextBlock Text="{loc:Loc 'Configure in Settings'}"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource WarningTextBrush}"
+                           TextDecorations="Underline" />
+            </Button>
+        </StackPanel>
+    </Border>
+</UserControl>

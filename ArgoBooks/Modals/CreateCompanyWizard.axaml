@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.CreateCompanyWizard"
              x:DataType="vm:CreateCompanyViewModel">
@@ -45,7 +46,7 @@
                         <Button Grid.Column="1"
                                 Classes="icon-button"
                                 Command="{Binding CloseCommand}">
-                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
                                       Width="20" Height="20" />
                         </Button>
                     </Grid>
@@ -244,7 +245,7 @@
                                             ClipToBounds="True"
                                             Margin="0,0,16,0">
                                         <Panel>
-                                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z"
+                                            <PathIcon Data="{x:Static icons:Icons.GridDetailed}"
                                                       Width="40" Height="40"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       IsVisible="{Binding !HasLogo}" />
@@ -259,7 +260,7 @@
                                         <Button Classes="secondary-button"
                                                 Command="{Binding BrowseLogoCommand}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"
+                                                <PathIcon Data="{x:Static icons:Icons.ImportData}"
                                                           Width="16" Height="16" />
                                                 <TextBlock Text="{loc:Loc 'Upload Logo'}" />
                                             </StackPanel>
@@ -331,7 +332,7 @@
                                 Command="{Binding PreviousStepCommand}"
                                 IsVisible="{Binding CanGoBack}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                                <PathIcon Data="{x:Static icons:Icons.ArrowBack}"
                                           Width="16" Height="16" />
                                 <TextBlock Text="{loc:Loc Back}" />
                             </StackPanel>
@@ -352,7 +353,7 @@
                                 IsEnabled="{Binding IsStep1Valid}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="{loc:Loc Next}" />
-                                <PathIcon Data="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"
+                                <PathIcon Data="{x:Static icons:Icons.ArrowForward}"
                                           Width="16" Height="16" />
                             </StackPanel>
                         </Button>
@@ -363,7 +364,7 @@
                                 IsVisible="{Binding IsLastStep}"
                                 IsEnabled="{Binding CanCreate}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                <PathIcon Data="{x:Static icons:Icons.Check}"
                                           Width="16" Height="16" />
                                 <TextBlock Text="{loc:Loc 'Create Company'}" />
                             </StackPanel>

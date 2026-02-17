@@ -799,7 +799,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.AddNotification("Error", $"Failed to save receipt: {ex.Message}", NotificationType.Error);
+            await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Error",
+                Message = $"Failed to save receipt: {ex.Message}",
+                PrimaryButtonText = "OK",
+                CancelButtonText = null
+            }) ?? Task.CompletedTask);
         }
     }
 

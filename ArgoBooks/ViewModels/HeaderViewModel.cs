@@ -698,11 +698,6 @@ public enum NotificationType
     Warning,
 
     /// <summary>
-    /// Error notification.
-    /// </summary>
-    Error,
-
-    /// <summary>
     /// System/update notification.
     /// </summary>
     System

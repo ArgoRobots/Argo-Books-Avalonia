@@ -28,12 +28,6 @@ public static class NotificationTypeConverters
         new FuncValueConverter<NotificationType, bool>(type => type == NotificationType.Warning);
 
     /// <summary>
-    /// Converter that returns true if the notification type is Error.
-    /// </summary>
-    public static readonly IValueConverter IsError =
-        new FuncValueConverter<NotificationType, bool>(type => type == NotificationType.Error);
-
-    /// <summary>
     /// Converter that returns true if the notification type is System.
     /// </summary>
     public static readonly IValueConverter IsSystem =

@@ -288,7 +288,281 @@ public static class Icons
     public const string Warning = "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z";
 
     /// <summary>Open in new/external link icon.</summary>
-    public const string OpenInNew = "M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z";
+    public const string OpenExternal = "M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z";
+
+    /// <summary>Eye/visibility icon (Material Design).</summary>
+    public const string Eye = "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+
+    #endregion
+
+    #region Additional Icons
+
+    /// <summary>Chevron down (filled triangle) for dropdowns.</summary>
+    public const string ChevronDownSmall = "M7 10l5 5 5-5z";
+
+    /// <summary>Chevron up (filled triangle) for numeric controls.</summary>
+    public const string ChevronUpSmall = "M7 14l5-5 5 5z";
+
+    /// <summary>Exclamation mark in circle warning icon.</summary>
+    public const string WarningCircle = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z";
+
+    /// <summary>Image/picture icon with landscape.</summary>
+    public const string Image = "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z";
+
+    /// <summary>Document with short text lines.</summary>
+    public const string DocumentNotes = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z";
+
+    /// <summary>Bar chart icon.</summary>
+    public const string BarChart = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z";
+
+    /// <summary>Scan/focus viewfinder icon.</summary>
+    public const string ScanFocus = "M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zM5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z";
+
+    /// <summary>Search with plus/zoom in icon.</summary>
+    public const string ZoomIn = "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z";
+
+    /// <summary>Search with minus/zoom out icon.</summary>
+    public const string ZoomOut = "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z";
+
+    /// <summary>Loading spinner arc.</summary>
+    public const string Spinner = "M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z";
+
+    /// <summary>Partial circle for loading animation.</summary>
+    public const string LoadingArc = "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10";
+
+    /// <summary>Filter/funnel icon.</summary>
+    public const string Filter = "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z";
+
+    /// <summary>Up arrow icon.</summary>
+    public const string ArrowUp = "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z";
+
+    /// <summary>Down arrow icon.</summary>
+    public const string ArrowDown = "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z";
+
+    /// <summary>Left arrow/back icon.</summary>
+    public const string ArrowBack = "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z";
+
+    /// <summary>Right arrow/forward icon.</summary>
+    public const string ArrowForward = "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z";
+
+    /// <summary>Arrow up icon for upgrade actions.</summary>
+    public const string Upgrade = "M12 6L6 12h4v6h4v-6h4L12 6z";
+
+    /// <summary>Chat/message bubble icon.</summary>
+    public const string ChatBubble = "M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z";
+
+    /// <summary>Cloud with upload arrow icon.</summary>
+    public const string CloudUpload = "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z";
+
+    /// <summary>Redo/forward action icon.</summary>
+    public const string Redo = "M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z";
+
+    /// <summary>Plus sign (stroke/outline style).</summary>
+    public const string PlusStroke = "M12 4.5v15m7.5-7.5h-15";
+
+    /// <summary>Pencil edit icon (stroke/outline style).</summary>
+    public const string EditStroke = "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125";
+
+    /// <summary>Trash/delete icon (stroke/outline style).</summary>
+    public const string DeleteStroke = "M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0";
+
+    /// <summary>Chevron right (stroke/outline style).</summary>
+    public const string ChevronRightStroke = "M8.25 4.5l7.5 7.5-7.5 7.5";
+
+    /// <summary>Calendar icon with date squares.</summary>
+    public const string Calendar = "M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z";
+
+    /// <summary>Refresh circle with arrow (alternate).</summary>
+    public const string RefreshAlt = "M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z";
+
+    /// <summary>2x2 grid layout icon.</summary>
+    public const string Grid2x2 = "M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z";
+
+    /// <summary>Bar chart (alternate style).</summary>
+    public const string BarChartAlt = "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z";
+
+    /// <summary>Line chart with data points.</summary>
+    public const string LineChart = "M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z";
+
+    /// <summary>Detailed grid layout icon.</summary>
+    public const string GridDetailed = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z";
+
+    /// <summary>Shield/security icon.</summary>
+    public const string Security = "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z";
+
+    /// <summary>Clock with refresh/history icon.</summary>
+    public const string History = "M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z";
+
+    /// <summary>Bold text formatting (T).</summary>
+    public const string FormatBold = "M5 4v3h5.5v12h3V7H19V4z";
+
+    /// <summary>Undo/back arrow (alternate).</summary>
+    public const string UndoAlt = "M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z";
+
+    /// <summary>Selection with dashed border.</summary>
+    public const string SelectionDash = "M9 7H7v2h2V7zm0 4H7v2h2v-2zm0-8c-1.11 0-2 .9-2 2h2V3zm4 12h-2v2h2v-2zm6-12v2h2c0-1.1-.9-2-2-2zm-6 0h-2v2h2V3zM9 17v-2H7c0 1.1.89 2 2 2zm10-4h2v-2h-2v2zm0-4h2V7h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zM5 7H3v12c0 1.1.89 2 2 2h12v-2H5V7zm10-2h2V3h-2v2zm0 12h2v-2h-2v2z";
+
+    /// <summary>Select all/selection border.</summary>
+    public const string SelectionAll = "M3 5h2V3c-1.1 0-2 .9-2 2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zM3 9h2V7H3v2zm10-6h-2v2h2V3zm6 0v2h2c0-1.1-.9-2-2-2zM5 21v-2H3c0 1.1.9 2 2 2zm-2-4h2v-2H3v2zM9 3H7v2h2V3zm2 18h2v-2h-2v2zm8-8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zm0-12h2V7h-2v2zm0 8h2v-2h-2v2zm-4 4h2v-2h-2v2zm0-16h2V3h-2v2z";
+
+    /// <summary>Document with wider text lines.</summary>
+    public const string DocumentList = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H5v-2h7v2zm5-4H5v-2h12v2zm0-4H5V7h12v2z";
+
+    /// <summary>Triangle with exclamation (outlined).</summary>
+    public const string TriangleWarning = "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z";
+
+    /// <summary>Quarter circle arc.</summary>
+    public const string Arc = "M 12,1.5 A 10.5,10.5 0 0 1 22.5,12";
+
+    /// <summary>Play/triangle button.</summary>
+    public const string Play = "M8 5v14l11-7z";
+
+    /// <summary>Info circle (outlined).</summary>
+    public const string InfoOutline = "M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z";
+
+    /// <summary>Smiley/AI insights face icon.</summary>
+    public const string SmartInsights = "M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z";
+
+    /// <summary>Robot/AI face icon.</summary>
+    public const string Robot = "M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z";
+
+    /// <summary>Key/password icon.</summary>
+    public const string Key = "M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z";
+
+    /// <summary>Fullscreen expand corners icon.</summary>
+    public const string Fullscreen = "M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z";
+
+    /// <summary>Fullscreen with frame border.</summary>
+    public const string FullscreenAlt = "M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z";
+
+    /// <summary>Speaker/volume icon.</summary>
+    public const string Volume = "M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z";
+
+    /// <summary>Dashboard grid layout icon.</summary>
+    public const string DashboardGrid = "M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z";
+
+    /// <summary>Bulleted list icon.</summary>
+    public const string ListBullet = "M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z";
+
+    /// <summary>PDF file icon.</summary>
+    public const string FilePdf = "M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z";
+
+    /// <summary>Copy/duplicate pages icon.</summary>
+    public const string Copy = "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z";
+
+    /// <summary>Table with horizontal rows icon.</summary>
+    public const string TableRows = "M21 3H3C1.9 3 1 3.9 1 5v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v2H5zm0-4h14v2H5zm0-4h14v2H5z";
+
+    /// <summary>Plus in rounded box icon.</summary>
+    public const string AddBox = "M19 3H5c-1.11 0-2 .89-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z";
+
+    /// <summary>Bar chart in square frame.</summary>
+    public const string BarChartSquare = "M21 5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z";
+
+    /// <summary>Refresh with circular arrow.</summary>
+    public const string RefreshCircle = "M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z";
+
+    /// <summary>Warning triangle (stroke/outline style).</summary>
+    public const string WarningStroke = "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z";
+
+    /// <summary>Clock icon (stroke/outline style).</summary>
+    public const string ClockStroke = "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z";
+
+    /// <summary>Minus/subtract icon.</summary>
+    public const string Minus = "M19 13H5v-2h14v2z";
+
+    /// <summary>Blank document icon.</summary>
+    public const string DocumentBlank = "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z";
+
+    /// <summary>Blank document (alternate style).</summary>
+    public const string DocumentBlankAlt = "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z";
+
+    /// <summary>Small grid cells icon.</summary>
+    public const string GridSmall = "M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z";
+
+    /// <summary>Indent right/increase indent.</summary>
+    public const string IndentRight = "M13 8v3h10v2H13v3l-4-4 4-4zM3 4h2v16H3V4z";
+
+    /// <summary>Indent left/decrease indent.</summary>
+    public const string IndentLeft = "M11 8v3H1v2h10v3l4-4-4-4zM19 4h2v16h-2V4z";
+
+    /// <summary>Pie chart icon.</summary>
+    public const string PieChart = "M21,11H13V3A8,8 0 0,1 21,11M19,13A8,8 0 0,1 3,11A8,8 0 0,1 11,3V13H19Z";
+
+    /// <summary>Image gallery/stack icon.</summary>
+    public const string ImageGallery = "M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z";
+
+    /// <summary>Globe/world map icon (MDI style).</summary>
+    public const string GlobeAlt = "M17.9,17.39C17.64,16.59 16.89,16 16,16H15V13A1,1 0 0,0 14,12H8V10H10A1,1 0 0,0 11,9V7H13A2,2 0 0,0 15,5V4.59C17.93,5.77 20,8.64 20,12C20,14.08 19.2,15.97 17.9,17.39M11,19.93C7.05,19.44 4,16.08 4,12C4,11.38 4.08,10.79 4.21,10.21L9,15V16A2,2 0 0,0 11,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z";
+
+    /// <summary>List with bullet items (MDI style).</summary>
+    public const string ListAlt = "M3,13H5V11H3V13M3,17H5V15H3V17M3,9H5V7H3V9M7,13H21V11H7V13M7,17H21V15H7V17M7,7V9H21V7H7Z";
+
+    /// <summary>Chevron left (MDI style).</summary>
+    public const string ChevronLeftAlt = "M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z";
+
+    /// <summary>Chevron right (MDI style).</summary>
+    public const string ChevronRightAlt = "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z";
+
+    /// <summary>Minus icon (MDI style).</summary>
+    public const string MinusAlt = "M19,13H5V11H19V13Z";
+
+    /// <summary>Plus/add icon (MDI style).</summary>
+    public const string AddAlt = "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
+
+    /// <summary>Notepad document (MDI style).</summary>
+    public const string NotepadAlt = "M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z";
+
+    /// <summary>Text heading (T format).</summary>
+    public const string Heading = "M5,4V7H10.5V19H13.5V7H19V4H5Z";
+
+    /// <summary>Table with grid cells.</summary>
+    public const string TableGrid = "M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z";
+
+    /// <summary>Calendar icon (MDI style).</summary>
+    public const string CalendarAlt = "M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1";
+
+    /// <summary>Refresh/reload icon (MDI style).</summary>
+    public const string RefreshMdi = "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z";
+
+    /// <summary>Warning circle (MDI style).</summary>
+    public const string WarningCircleMdi = "M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z";
+
+    /// <summary>Stacked layers icon.</summary>
+    public const string Layers = "M2,2H16V16H2V2M14,14V4H4V14H14M22,8V22H8V20H20V8H22Z";
+
+    /// <summary>Stacked layers icon (alternate).</summary>
+    public const string LayersAlt = "M4,4H16V16H4V4M6,6V14H14V6H6M20,8V20H8V18H18V8H20Z";
+
+    /// <summary>QR code icon.</summary>
+    public const string QrCode = "M2,2H11V11H2V2M9,4H4V9H9V4M22,13V22H13V13H22M20,15H15V20H20V15M16,8V11H13V8H16M8,16H11V13H8V16Z";
+
+    /// <summary>Square/rectangle shape.</summary>
+    public const string Square = "M6,6H18V18H6V6M8,8V16H16V8H8Z";
+
+    /// <summary>Download to file icon.</summary>
+    public const string DownloadFile = "M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z";
+
+    /// <summary>Horizontal rule lines.</summary>
+    public const string HorizontalRules = "M5 18h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5V6zm0-4h14v2H5V2z";
+
+    /// <summary>Vertical rule lines.</summary>
+    public const string VerticalRules = "M4 5v14h2V5H4zm14 0v14h2V5h-2zM9 5h2v14H9V5zm4 0h2v14h-2V5z";
+
+    /// <summary>Align horizontal center.</summary>
+    public const string AlignHCenter = "M4 4v16h2V4H4zm14 0v16h2V4h-2zM7 12l2-2v1.5h6V10l2 2-2 2v-1.5H9V14l-2-2z";
+
+    /// <summary>Align vertical center.</summary>
+    public const string AlignVCenter = "M4 4h16v2H4V4zm0 14h16v2H4v-2zm8-11l-2 2h1.5v6H10l2 2 2-2h-1.5V9H14l-2-2z";
+
+    /// <summary>Align to top.</summary>
+    public const string AlignTop = "M8 11h3v10h2V11h3l-4-4-4 4zM4 3v2h16V3H4z";
+
+    /// <summary>Distribute vertically.</summary>
+    public const string DistributeV = "M8 19h3v4h2v-4h3l-4-4-4 4zm8-14h-3V1h-2v4H8l4 4 4-4zM4 11v2h16v-2H4z";
+
+    /// <summary>Distribute horizontally.</summary>
+    public const string DistributeH = "M5 8v3H1v2h4v3l4-4-4-4zm14 0v3h4v2h-4v3l-4-4 4-4zM11 4h2v16h-2V4z";
 
     #endregion
 }

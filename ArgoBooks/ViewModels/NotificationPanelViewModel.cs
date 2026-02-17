@@ -61,7 +61,7 @@ public partial class NotificationPanelViewModel : ViewModelBase
             {
                 Title = "Invoice Overdue",
                 Message = "INV-2024-001 is 5 days overdue",
-                Type = NotificationType.Error,
+                Type = NotificationType.Warning,
                 Timestamp = DateTime.Now.AddDays(-1)
             }
         ];

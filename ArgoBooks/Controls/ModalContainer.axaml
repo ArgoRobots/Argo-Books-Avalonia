@@ -5,6 +5,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:enums="using:ArgoBooks.Core.Enums"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="400"
              x:Class="ArgoBooks.Controls.ModalContainer"
              x:DataType="controls:ModalContainer">
@@ -74,7 +75,7 @@
                             IsVisible="{Binding ShowCloseButton, RelativeSource={RelativeSource AncestorType=controls:ModalContainer}}"
                             Command="{Binding CloseCommand, RelativeSource={RelativeSource AncestorType=controls:ModalContainer}}"
                             ToolTip.Tip="{loc:Loc Close}">
-                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                        <PathIcon Data="{x:Static icons:Icons.Close}"
                                   Width="18" Height="18"
                                   Foreground="{DynamicResource TextTertiaryBrush}" />
                     </Button>

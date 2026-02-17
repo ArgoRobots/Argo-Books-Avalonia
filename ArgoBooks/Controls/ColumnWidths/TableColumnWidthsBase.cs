@@ -141,15 +141,6 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             // Enough space now (with buffer), can reset overflow state
             _hasManualOverflow = false;
         }
-        else if (totalCurrentWidth > width)
-        {
-            // Window resize caused overflow - enable scrolling
-            _availableWidth = width;
-            _hasManualOverflow = true;
-            MinimumTotalWidth = totalCurrentWidth;
-            NeedsHorizontalScroll = true;
-            return;
-        }
 
         _availableWidth = width;
         RecalculateWidths();
@@ -290,7 +281,6 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             NeedsHorizontalScroll = _availableWidth < minTotalWidth;
 
             double fixedTotal = visibleColumns.Where(c => c.IsFixed).Sum(c => c.FixedWidth);
-            double totalStars = visibleColumns.Where(c => !c.IsFixed).Sum(c => c.StarValue);
             double availableForProportional = Math.Max(100, _availableWidth - fixedTotal - 48);
 
             if (NeedsHorizontalScroll)
@@ -303,13 +293,63 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
                 return;
             }
 
-            double widthPerStar = totalStars > 0 ? availableForProportional / totalStars : 0;
+            // Multi-pass distribution: when columns are clamped to MinWidth/MaxWidth,
+            // redistribute the excess to remaining proportional columns
+            var proportionalCols = visibleColumns.Where(c => !c.IsFixed).ToList();
+            var locked = new HashSet<string>();
+            var columnWidths = new Dictionary<string, double>();
+            var remaining = availableForProportional;
 
+            while (true)
+            {
+                var unlocked = proportionalCols.Where(c => !locked.Contains(c.Name)).ToList();
+                if (unlocked.Count == 0) break;
+
+                double totalStarsPass = unlocked.Sum(c => c.StarValue);
+                double widthPerStar = totalStarsPass > 0 ? remaining / totalStarsPass : 0;
+
+                bool anyNewLock = false;
+                foreach (var col in unlocked)
+                {
+                    double proposedWidth = col.StarValue * widthPerStar;
+                    if (proposedWidth < col.MinWidth)
+                    {
+                        columnWidths[col.Name] = col.MinWidth;
+                        locked.Add(col.Name);
+                        remaining -= col.MinWidth;
+                        anyNewLock = true;
+                    }
+                    else if (proposedWidth > col.MaxWidth)
+                    {
+                        columnWidths[col.Name] = col.MaxWidth;
+                        locked.Add(col.Name);
+                        remaining -= col.MaxWidth;
+                        anyNewLock = true;
+                    }
+                }
+
+                if (!anyNewLock)
+                {
+                    // All remaining columns fit proportionally
+                    foreach (var col in unlocked)
+                    {
+                        columnWidths[col.Name] = col.StarValue * widthPerStar;
+                    }
+                    break;
+                }
+            }
+
+            // Apply all widths
             foreach (var col in visibleColumns)
             {
-                col.CurrentWidth = col.IsFixed
-                    ? col.FixedWidth
-                    : Math.Max(col.MinWidth, Math.Min(col.MaxWidth, col.StarValue * widthPerStar));
+                if (col.IsFixed)
+                {
+                    col.CurrentWidth = col.FixedWidth;
+                }
+                else if (columnWidths.TryGetValue(col.Name, out var width))
+                {
+                    col.CurrentWidth = width;
+                }
                 ApplyWidthToProperty(col.Name, col.CurrentWidth);
             }
         }

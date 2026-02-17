@@ -49,6 +49,11 @@ public class App : Application
     private static FileService? _fileService;
 
     /// <summary>
+    /// Gets the payment portal service instance for online payment integration.
+    /// </summary>
+    public static PaymentPortalService? PaymentPortalService { get; private set; }
+
+    /// <summary>
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
@@ -184,6 +189,11 @@ public class App : Application
     public static QuickActionsSettingsModalViewModel? QuickActionsSettingsModalViewModel => _appShellViewModel?.QuickActionsSettingsModalViewModel;
 
     /// <summary>
+    /// Gets the settings modal view model for shared access.
+    /// </summary>
+    public static SettingsModalViewModel? SettingsModalViewModel => _appShellViewModel?.SettingsModalViewModel;
+
+    /// <summary>
     /// Gets the header view model for shared access.
     /// </summary>
     public static HeaderViewModel? HeaderViewModel => _appShellViewModel?.HeaderViewModel;
@@ -288,7 +298,7 @@ public class App : Application
                 AddNotification(
                     "Out of Stock Alert".Translate(),
                     message,
-                    NotificationType.Error);
+                    NotificationType.Warning);
             }
         }
 
@@ -308,7 +318,7 @@ public class App : Application
                 AddNotification(
                     "Invoice Overdue".Translate(),
                     message,
-                    NotificationType.Error);
+                    NotificationType.Warning);
             }
         }
 
@@ -328,7 +338,7 @@ public class App : Application
                 AddNotification(
                     "Rental Overdue".Translate(),
                     message,
-                    NotificationType.Error);
+                    NotificationType.Warning);
             }
         }
     }
@@ -353,7 +363,7 @@ public class App : Application
             AddNotification(
                 "Out of Stock".Translate(),
                 "{0} is now out of stock.".TranslateFormat(productName),
-                NotificationType.Error);
+                NotificationType.Warning);
         }
         else if (settings.LowStockAlert && status == InventoryStatus.LowStock)
         {
@@ -382,7 +392,7 @@ public class App : Application
             AddNotification(
                 "Invoice Overdue".Translate(),
                 "Invoice {0} is overdue.".TranslateFormat(invoice.InvoiceNumber),
-                NotificationType.Error);
+                NotificationType.Warning);
         }
     }
 
@@ -404,7 +414,7 @@ public class App : Application
             AddNotification(
                 "Rental Overdue".Translate(),
                 "Rental for {0} is overdue.".TranslateFormat(customerName),
-                NotificationType.Error);
+                NotificationType.Warning);
         }
     }
 
@@ -655,6 +665,9 @@ public class App : Application
                 SettingsService,
                 errorLogger,
                 appVersion);
+
+            // Initialize payment portal service
+            PaymentPortalService = new PaymentPortalService();
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -1177,9 +1190,6 @@ public class App : Application
                     }
                 }
             }
-
-            // Load company-specific chart preferences before navigating to Dashboard
-            ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();

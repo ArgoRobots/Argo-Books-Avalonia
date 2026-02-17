@@ -413,15 +413,23 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         var lineItems = new List<RentalLineItem>();
         var inventoryChanges = new List<(RentalItem Item, int OldAvailable, int OldRented, int QtyChange)>();
 
+        var hasAvailabilityIssue = false;
         foreach (var li in RentalLineItems)
         {
-            if (li.SelectedItem == null) return;
+            if (li.SelectedItem == null)
+            {
+                li.HasItemError = true;
+                li.ItemError = "Please select an item.".Translate();
+                hasAvailabilityIssue = true;
+                continue;
+            }
             var rentQty = int.TryParse(li.Quantity, out var q) ? q : 1;
             var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == li.SelectedItem.Id);
             if (item == null || item.AvailableQuantity < rentQty)
             {
                 li.QuantityError = item == null ? "Item not found." : $"Only {item.AvailableQuantity} available.";
-                return;
+                hasAvailabilityIssue = true;
+                continue;
             }
 
             lineItems.Add(new RentalLineItem
@@ -440,6 +448,9 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
             inventoryChanges.Add((item, item.AvailableQuantity, item.RentedQuantity, rentQty));
         }
+
+        if (hasAvailabilityIssue)
+            return;
 
         companyData.IdCounters.Rental++;
         var newId = $"RNT-{companyData.IdCounters.Rental:D3}";
@@ -1360,7 +1371,12 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             else if (_editingRecord == null && li.SelectedItem != null)
             {
                 var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == li.SelectedItem.Id);
-                if (item != null && qty > item.AvailableQuantity)
+                if (item == null)
+                {
+                    li.QuantityError = "Item not found in inventory.".Translate();
+                    isValid = false;
+                }
+                else if (qty > item.AvailableQuantity)
                 {
                     li.QuantityError = $"Only {item.AvailableQuantity} available.";
                     isValid = false;

@@ -5,6 +5,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="44"
              x:Class="ArgoBooks.Controls.ArgoTable.ArgoTableHeader"
              x:DataType="table:ArgoTableHeader"
@@ -33,7 +34,7 @@
                            Foreground="{DynamicResource TextPrimaryBrush}" />
                 <Panel Grid.Column="1" Width="12" Height="12" Margin="4,0,0,0">
                     <!-- Ascending Indicator -->
-                    <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronUpSmall}" Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}">
                         <PathIcon.IsVisible>
                             <MultiBinding Converter="{StaticResource SortIndicatorConverter}">
@@ -49,7 +50,7 @@
                         </PathIcon.IsVisible>
                     </PathIcon>
                     <!-- Descending Indicator -->
-                    <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}" Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}">
                         <PathIcon.IsVisible>
                             <MultiBinding Converter="{StaticResource SortIndicatorConverter}">

@@ -82,7 +82,7 @@ public partial class SidebarViewModel : ViewModelBase
 
     private SidebarItemModel? _insightsItem;
     private SidebarItemModel? _invoicesItem;
-    // private SidebarItemModel? _paymentsItem;
+    private SidebarItemModel? _paymentsItem;
 
     #endregion
 
@@ -158,9 +158,9 @@ public partial class SidebarViewModel : ViewModelBase
         _invoicesItem = CreateItem("Invoices", "Invoices", Icons.Invoices);
         _invoicesItem.IsVisible = HasPremium; // Hide by default unless premium
         TransactionItems.Add(_invoicesItem);
-        // _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
-        // _paymentsItem.IsVisible = HasPremium; // Hide by default unless premium
-        // TransactionItems.Add(_paymentsItem);
+        _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
+        _paymentsItem.IsVisible = HasPremium; // Hide by default unless premium
+        TransactionItems.Add(_paymentsItem);
 
         // Rentals Section (mockup: Rental Inventory, Rental Records)
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory", Icons.RentalInventory));
@@ -237,7 +237,7 @@ public partial class SidebarViewModel : ViewModelBase
     {
         _insightsItem?.IsVisible = value;
         _invoicesItem?.IsVisible = value;
-        // _paymentsItem?.IsVisible = value;
+        _paymentsItem?.IsVisible = value;
     }
 
     /// <summary>

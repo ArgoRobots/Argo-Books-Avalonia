@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.QuickActionsSettingsModal"
              x:DataType="vm:QuickActionsSettingsModalViewModel">
@@ -36,7 +37,8 @@
 
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Backdrop with fade animation -->
-        <Border Background="{DynamicResource OverlayBrush}">
+        <Border Background="{DynamicResource OverlayBrush}"
+                PointerPressed="Backdrop_PointerPressed">
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
@@ -130,7 +132,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource DangerIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                                        <PathIcon Data="{x:Static icons:Icons.ArrowDown}"
                                                   Width="16" Height="16" Foreground="{DynamicResource DangerBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -146,7 +148,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource SuccessIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
+                                        <PathIcon Data="{x:Static icons:Icons.ArrowUp}"
                                                   Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -203,7 +205,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource PrimaryIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"
+                                        <PathIcon Data="{x:Static icons:Icons.Suppliers}"
                                                   Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -310,7 +312,7 @@
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="6"
                                             Background="{DynamicResource WarningIconBgBrush}" Margin="0,0,12,0">
-                                        <PathIcon Data="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z"
+                                        <PathIcon Data="{x:Static icons:Icons.TriangleWarning}"
                                                   Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">

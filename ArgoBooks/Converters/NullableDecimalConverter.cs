@@ -1,13 +1,11 @@
-using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
 namespace ArgoBooks.Converters;
 
 /// <summary>
-/// Converter for binding decimal properties to TextBox.Text.
-/// Handles empty strings by returning 0 for the decimal property.
-/// Shows empty string when decimal is 0.
+/// Converter for binding decimal properties to TextBox.Text or NumericUpDown.Value.
+/// Handles empty/null values by returning 0 for the decimal property.
 /// </summary>
 public class NullableDecimalConverter : IValueConverter
 {
@@ -17,24 +15,33 @@ public class NullableDecimalConverter : IValueConverter
     public static readonly NullableDecimalConverter Instance = new();
 
     /// <summary>
-    /// Converts a decimal to string for display.
-    /// Shows "0.00" format for zero values.
+    /// Converts a decimal for display.
+    /// For string targets (TextBox): formats as "0.00".
+    /// For decimal? targets (NumericUpDown): passes through directly.
     /// </summary>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is decimal d)
         {
+            // NumericUpDown.Value is decimal? — return the value directly
+            if (targetType == typeof(decimal?) || targetType == typeof(decimal))
+                return d;
+
             return d.ToString("0.00", culture);
         }
-        return "0.00";
+
+        if (targetType == typeof(string))
+            return "0.00";
+        return 0m;
     }
 
     /// <summary>
-    /// Converts a string to decimal for binding.
-    /// Returns 0 if string is null or empty.
+    /// Converts back to decimal for binding.
+    /// Returns 0 if value is null, empty string, or unparseable.
     /// </summary>
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
+        if (value is decimal d) return d;
         if (value is string s)
         {
             if (string.IsNullOrWhiteSpace(s))

@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -37,29 +39,126 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     #region Payment Portal
 
     [ObservableProperty]
-    private string _lastSyncTime = "2 minutes ago";
+    private string _lastSyncTime = "Never";
 
     [ObservableProperty]
-    private bool _isPortalConnected = true;
+    private bool _isPortalConnected;
+
+    [ObservableProperty]
+    private bool _isPortalConfigured;
 
     [ObservableProperty]
     private bool _isSyncing;
 
+    [ObservableProperty]
+    private string _onlineReceivedThisMonth = "$0.00";
+
     /// <summary>
-    /// Syncs the payment portal data.
+    /// Initializes portal state from saved settings.
+    /// </summary>
+    private void InitializePortalState()
+    {
+        var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        IsPortalConfigured = PortalSettings.IsConfigured;
+        // Assume connected until the async check says otherwise, to avoid
+        // a brief flash of the "not configured" warning banner.
+        IsPortalConnected = IsPortalConfigured;
+
+        if (portalSettings?.LastSyncTime.HasValue == true)
+        {
+            LastSyncTime = FormatTimeSince(portalSettings.LastSyncTime.Value);
+        }
+    }
+
+    /// <summary>
+    /// Checks the portal connection status.
+    /// </summary>
+    private async Task CheckPortalStatusAsync()
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            IsPortalConnected = false;
+            IsPortalConfigured = false;
+            return;
+        }
+
+        IsPortalConfigured = true;
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        var status = await portalService.CheckStatusAsync();
+        IsPortalConnected = status.Connected;
+
+        // Update connected providers if returned
+        var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        if (portalSettings != null && status.ConnectedProviders != null)
+        {
+            portalSettings.ConnectedAccounts = status.ConnectedProviders;
+        }
+    }
+
+    /// <summary>
+    /// Syncs the payment portal data by pulling new online payments from the server.
     /// </summary>
     [RelayCommand]
     private async Task SyncPortal()
     {
         if (IsSyncing) return;
 
+        var portalService = App.PaymentPortalService;
+        var companyData = App.CompanyManager?.CompanyData;
+        if (portalService == null || companyData == null) return;
+
+        if (!PortalSettings.IsConfigured)
+        {
+            IsPortalConnected = false;
+            return;
+        }
+
         IsSyncing = true;
         try
         {
-            // Simulate sync delay
-            await Task.Delay(1500);
+            var portalSettings = companyData.Settings.PaymentPortal;
+
+            // Pull new payments from the server
+            var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
+
+            if (!syncResponse.Success)
+            {
+                IsPortalConnected = false;
+                return;
+            }
+
+            IsPortalConnected = true;
+
+            if (syncResponse.Payments.Count > 0)
+            {
+                // Process new payments into local data
+                var newPayments = PaymentPortalService.ProcessSyncedPayments(
+                    syncResponse.Payments, companyData);
+
+                if (newPayments.Count > 0)
+                {
+                    // Confirm the sync so the server marks them as synced
+                    var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
+                    await portalService.ConfirmSyncAsync(syncedIds);
+
+                    // Mark data as changed
+                    App.CompanyManager?.MarkAsChanged();
+                }
+            }
+
+            // Update sync timestamp
+            portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
             LastSyncTime = "Just now";
+
+            // Refresh the payments list
             LoadPayments();
+            UpdateOnlineStatistics();
+        }
+        catch (Exception)
+        {
+            IsPortalConnected = false;
         }
         finally
         {
@@ -68,12 +167,37 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
-    /// Opens the payment portal in the default browser.
+    /// Opens the Settings modal to the Payment Portal tab.
     /// </summary>
     [RelayCommand]
-    private void OpenPortal()
+    private void OpenPortalSettings()
     {
-        // TODO: Implement payment portal URL opening
+        App.SettingsModalViewModel?.OpenWithTab(4);
+    }
+
+    /// <summary>
+    /// Updates online-specific statistics.
+    /// </summary>
+    private void UpdateOnlineStatistics()
+    {
+        var now = DateTime.Now;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+        var onlineReceivedUSD = _allPayments
+            .Where(p => p.Date >= startOfMonth && p.Source == "Online" && p.Amount > 0)
+            .Sum(p => p.EffectiveAmountUSD);
+
+        OnlineReceivedThisMonth = CurrencyService.FormatFromUSD(onlineReceivedUSD, now);
+    }
+
+    private static string FormatTimeSince(DateTime utcTime)
+    {
+        var elapsed = DateTime.UtcNow - utcTime;
+
+        if (elapsed.TotalMinutes < 1) return "Just now";
+        if (elapsed.TotalMinutes < 60) return $"{(int)elapsed.TotalMinutes} min ago";
+        if (elapsed.TotalHours < 24) return $"{(int)elapsed.TotalHours}h ago";
+        return $"{(int)elapsed.TotalDays}d ago";
     }
 
     #endregion
@@ -236,6 +360,11 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
         LoadPayments();
         LoadCustomerOptions();
+        InitializePortalState();
+        UpdateOnlineStatistics();
+
+        // Check portal status asynchronously
+        _ = CheckPortalStatusAsync();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -510,13 +639,18 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 {
                     PaymentMethod.Cash => "Cash",
                     PaymentMethod.Check => "Check",
+                    PaymentMethod.CreditCard => "Credit Card",
+                    PaymentMethod.DebitCard => "Debit Card",
+                    PaymentMethod.BankTransfer => "Bank Transfer",
+                    PaymentMethod.PayPal => "PayPal",
+                    PaymentMethod.Square => "Square",
                     _ => payment.PaymentMethod.ToString()
                 },
                 Amount = payment.Amount,
                 AmountUSD = payment.EffectiveAmountUSD,
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
-                Notes = payment.Notes
+                Notes = payment.Notes,
             };
         }).ToList();
 

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="48" d:DesignHeight="48"
              x:Class="ArgoBooks.Controls.LoadingSpinner"
              x:DataType="controls:LoadingSpinner">
@@ -43,7 +44,7 @@
                 <Path Stroke="{Binding SpinnerBrush, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
                       StrokeThickness="3"
                       StrokeLineCap="Round"
-                      Data="M 12,1.5 A 10.5,10.5 0 0 1 22.5,12" />
+                      Data="{x:Static icons:Icons.Arc}" />
             </Panel>
         </Panel>
     </Viewbox>

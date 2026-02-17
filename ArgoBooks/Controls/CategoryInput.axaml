@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="40"
              x:Class="ArgoBooks.Controls.CategoryInput"
              x:DataType="controls:CategoryInput"
@@ -70,7 +71,7 @@
                         CornerRadius="4"
                         Cursor="Hand"
                         Command="{Binding #Root.ToggleDropdownCommand}">
-                    <PathIcon Data="M7 10l5 5 5-5z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
                               Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}" />
                 </Button>

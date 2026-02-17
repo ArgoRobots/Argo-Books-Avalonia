@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -329,6 +330,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         _allInvoices.Clear();
         Invoices.Clear();
+        CheckPortalConfiguration();
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Invoices == null)
@@ -592,18 +594,36 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Modal Commands
+    #region Portal Configuration
 
-    [RelayCommand]
-    private void OpenCreateModal()
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenCreateModalCommand))]
+    private bool _isPortalConfigured;
+
+    private void CheckPortalConfiguration()
     {
-        App.InvoiceModalsViewModel?.OpenCreateModal();
+        // Consider the portal configured if either the API key is present (portal registered)
+        // or a PortalUrl has been persisted from a previous server response.
+        var portalUrl = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal?.PortalUrl;
+        IsPortalConfigured = PortalSettings.IsConfigured || !string.IsNullOrEmpty(portalUrl);
     }
 
     [RelayCommand]
-    private void OpenEditModal(InvoiceDisplayItem? item)
+    private void OpenPortalSettings()
     {
-        App.InvoiceModalsViewModel?.OpenEditModal(item);
+        App.SettingsModalViewModel?.OpenWithTab(4);
+    }
+
+    #endregion
+
+    #region Modal Commands
+
+    private bool CanOpenCreateModal() => IsPortalConfigured;
+
+    [RelayCommand(CanExecute = nameof(CanOpenCreateModal))]
+    private void OpenCreateModal()
+    {
+        App.InvoiceModalsViewModel?.OpenCreateModal();
     }
 
     [RelayCommand]
@@ -717,12 +737,6 @@ public partial class InvoiceDisplayItem : ObservableObject
     /// Whether this invoice is a draft.
     /// </summary>
     public bool IsDraft => Status == InvoiceStatus.Draft;
-
-    /// <summary>
-    /// Whether this invoice can be edited (non-draft, non-cancelled invoices).
-    /// Drafts use "Continue" instead; cancelled invoices cannot be modified.
-    /// </summary>
-    public bool CanEdit => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
 
     /// <summary>
     /// Whether this invoice can be sent via email (not drafts or cancelled).

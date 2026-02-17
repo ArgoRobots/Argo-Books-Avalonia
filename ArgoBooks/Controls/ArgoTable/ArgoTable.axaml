@@ -23,12 +23,12 @@
             BorderThickness="1"
             SizeChanged="OnBorderSizeChanged">
 
-        <Grid RowDefinitions="Auto,*,Auto">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
             <!-- Header with Title, Search and Buttons -->
             <Border Grid.Row="0"
                     Padding="{Binding #Root.HeaderPadding}"
                     BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,0,1"
+                    BorderThickness="{Binding #Root.ShowHeaderBorder, Converter={x:Static local:BoolConverters.ToHeaderBorderThickness}}"
                     IsVisible="{Binding #Root.ShowHeader}">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <!-- Title -->
@@ -70,7 +70,7 @@
                                         IsVisible="{Binding #Root.SearchQuery, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                         Command="{Binding #Root.ClearSearchCommand}"
                                         ToolTip.Tip="{loc:Loc Clear}">
-                                    <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                    <PathIcon Data="{x:Static icons:Icons.Close}"
                                               Width="12" Height="12"
                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Button>
@@ -85,7 +85,7 @@
                                 Command="{Binding #Root.FilterCommand}"
                                 ToolTip.Tip="{loc:Loc 'Filter'}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                                <PathIcon Data="{x:Static icons:Icons.Filter}"
                                           Width="16" Height="16" />
                                 <TextBlock Text="{loc:Loc Filter}" IsVisible="{Binding #Root.ShowButtonText}" />
                             </StackPanel>
@@ -119,8 +119,13 @@
                 </Grid>
             </Border>
 
+            <!-- Optional Info Banner -->
+            <ContentPresenter Grid.Row="1"
+                              Content="{Binding #Root.InfoBannerContent}"
+                              IsVisible="{Binding #Root.InfoBannerContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
             <!-- Table Content -->
-            <ScrollViewer Grid.Row="1"
+            <ScrollViewer Grid.Row="2"
                           x:Name="HorizontalTableScroll"
                           HorizontalScrollBarVisibility="{Binding #Root.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
                           VerticalScrollBarVisibility="Disabled">
@@ -190,7 +195,7 @@
             </ScrollViewer>
 
             <!-- Pagination Footer -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
                     Background="{DynamicResource SurfaceAltBrush}"
                     Padding="24,12"
                     CornerRadius="0,0,11,11"

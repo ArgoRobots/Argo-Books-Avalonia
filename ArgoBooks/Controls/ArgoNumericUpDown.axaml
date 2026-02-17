@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="120" d:DesignHeight="32"
              x:Class="ArgoBooks.Controls.ArgoNumericUpDown"
              x:DataType="controls:ArgoNumericUpDown">
@@ -55,7 +56,7 @@
                             <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
                         </Style>
                     </RepeatButton.Styles>
-                    <PathIcon Data="M7 14l5-5 5 5z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronUpSmall}"
                               Width="10" Height="10"
                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </RepeatButton>
@@ -80,7 +81,7 @@
                             <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
                         </Style>
                     </RepeatButton.Styles>
-                    <PathIcon Data="M7 10l5 5 5-5z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
                               Width="10" Height="10"
                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </RepeatButton>

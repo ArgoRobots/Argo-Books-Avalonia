@@ -1,12 +1,5 @@
 using System.Text.Json;
 using ArgoBooks.Core.Data;
-using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Core.Models.Inventory;
-using ArgoBooks.Core.Models.Invoices;
-using ArgoBooks.Core.Models.Rentals;
-using ArgoBooks.Core.Models.Reports;
-using ArgoBooks.Core.Models.Tracking;
-using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Services;
 

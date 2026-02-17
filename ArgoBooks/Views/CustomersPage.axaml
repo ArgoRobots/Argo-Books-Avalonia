@@ -172,7 +172,7 @@
                                                     <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'View History'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).OpenHistoryModalCommand}"
                                                             CommandParameter="{Binding}">
-                                                        <PathIcon Data="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" Width="16" Height="16" />
+                                                        <PathIcon Data="{x:Static icons:Icons.ClockStroke}" Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button" ToolTip.Tip="{loc:Loc Edit}"
                                                             Command="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).OpenEditModalCommand}"
