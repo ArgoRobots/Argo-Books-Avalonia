@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="50"
              x:Class="ArgoBooks.Controls.UndoRedoButtonGroup"
              x:CompileBindings="False">
@@ -41,7 +42,7 @@
                         Classes.right="True"
                         Click="UndoDropdownButton_Click"
                         IsEnabled="{Binding CanUndo}">
-                    <PathIcon Data="M7 10l5 5 5-5z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
                               Width="10" Height="10" />
                 </Button>
             </Grid>
@@ -61,7 +62,7 @@
                         ToolTip.Tip="{Binding RedoTooltip}"
                         Command="{Binding RedoCommand}"
                         IsEnabled="{Binding CanRedo}">
-                    <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+                    <PathIcon Data="{x:Static icons:Icons.UndoAlt}"
                               Width="15" Height="15" />
                 </Button>
 
@@ -72,7 +73,7 @@
                         Classes.right="True"
                         Click="RedoDropdownButton_Click"
                         IsEnabled="{Binding CanRedo}">
-                    <PathIcon Data="M7 10l5 5 5-5z"
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
                               Width="10" Height="10" />
                 </Button>
             </Grid>
@@ -168,7 +169,7 @@
                                             Tag="{Binding Index}">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
-                                                      Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+                                                      Data="{x:Static icons:Icons.UndoAlt}"
                                                       Width="12" Height="12"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,8,0" />

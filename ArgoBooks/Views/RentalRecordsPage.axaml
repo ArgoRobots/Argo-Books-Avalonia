@@ -290,7 +290,7 @@
                                                             ToolTip.Tip="{loc:Loc 'View Details'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).OpenViewModalCommand}"
                                                             CommandParameter="{Binding}">
-                                                        <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                                        <PathIcon Data="{x:Static icons:Icons.Eye}"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button"
@@ -307,7 +307,7 @@
                                                             IsVisible="{Binding CanGenerateInvoice}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).GenerateInvoiceCommand}"
                                                             CommandParameter="{Binding}">
-                                                        <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                        <PathIcon Data="{x:Static icons:Icons.Invoices}"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <!-- Mark as Paid Button -->
@@ -316,7 +316,7 @@
                                                             IsVisible="{Binding CanMarkAsPaid}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).MarkAsPaidCommand}"
                                                             CommandParameter="{Binding}">
-                                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                                        <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger"

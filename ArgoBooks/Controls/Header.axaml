@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="60"
              x:Class="ArgoBooks.Controls.Header"
              x:DataType="vm:HeaderViewModel">
@@ -153,7 +154,7 @@
                         IsVisible="{Binding ShowUpgrade}">
                     <Panel Width="24" Height="24">
                         <Ellipse Fill="{DynamicResource PrimaryBrush}" Width="24" Height="24" />
-                        <PathIcon Data="M12 6L6 12h4v6h4v-6h4L12 6z"
+                        <PathIcon Data="{x:Static icons:Icons.Upgrade}"
                                   Width="12" Height="12"
                                   Foreground="White"
                                   HorizontalAlignment="Center"
@@ -216,7 +217,7 @@
                 <Button Classes="header-icon"
                         Command="{Binding OpenUserMenuCommand}"
                         ToolTip.Tip="{Binding UserDisplayName}">
-                    <PathIcon Data="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    <PathIcon Data="{x:Static icons:Icons.Employees}"
                               Width="22" Height="22" />
                 </Button>
                 -->

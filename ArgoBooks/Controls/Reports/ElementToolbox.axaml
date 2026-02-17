@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="400"
              x:Class="ArgoBooks.Controls.Reports.ElementToolbox"
              Background="#FAFAFA">
@@ -70,7 +71,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <PathIcon Classes="toolbox-icon"
                               Foreground="#2196F3"
-                              Data="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+                              Data="{x:Static icons:Icons.BarChartAlt}"/>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Chart}" FontWeight="Medium" FontSize="13"/>
                         <TextBlock Text="{loc:Loc 'Bar, line, pie charts'}" FontSize="11" Foreground="#757575"/>
@@ -85,7 +86,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <PathIcon Classes="toolbox-icon"
                               Foreground="#4CAF50"
-                              Data="M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z"/>
+                              Data="{x:Static icons:Icons.TableGrid}"/>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Table}" FontWeight="Medium" FontSize="13"/>
                         <TextBlock Text="{loc:Loc 'Transaction data table'}" FontSize="11" Foreground="#757575"/>
@@ -100,7 +101,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <PathIcon Classes="toolbox-icon"
                               Foreground="#607D8B"
-                              Data="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"/>
+                              Data="{x:Static icons:Icons.NotepadAlt}"/>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Summary}" FontWeight="Medium" FontSize="13"/>
                         <TextBlock Text="{loc:Loc 'Key metrics summary'}" FontSize="11" Foreground="#757575"/>
@@ -118,7 +119,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <PathIcon Classes="toolbox-icon"
                               Foreground="#FF9800"
-                              Data="M5,4V7H10.5V19H13.5V7H19V4H5Z"/>
+                              Data="{x:Static icons:Icons.Heading}"/>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Label}" FontWeight="Medium" FontSize="13"/>
                         <TextBlock Text="{loc:Loc 'Text label or heading'}" FontSize="11" Foreground="#757575"/>
@@ -133,7 +134,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <PathIcon Classes="toolbox-icon"
                               Foreground="#00BCD4"
-                              Data="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"/>
+                              Data="{x:Static icons:Icons.CalendarAlt}"/>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc 'Date Range'}" FontWeight="Medium" FontSize="13"/>
                         <TextBlock Text="{loc:Loc 'Report date period'}" FontSize="11" Foreground="#757575"/>
@@ -151,7 +152,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <PathIcon Classes="toolbox-icon"
                               Foreground="#9C27B0"
-                              Data="M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z"/>
+                              Data="{x:Static icons:Icons.ImageGallery}"/>
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Image}" FontWeight="Medium" FontSize="13"/>
                         <TextBlock Text="{loc:Loc 'Logo or picture'}" FontSize="11" Foreground="#757575"/>
@@ -172,7 +173,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <PathIcon Width="24" Height="24"
                                   Foreground="#4CAF50"
-                                  Data="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+                                  Data="{x:Static icons:Icons.LineChart}"/>
                         <TextBlock Text="{loc:Loc Revenue}" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Button>
@@ -186,7 +187,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <PathIcon Width="24" Height="24"
                                   Foreground="#F44336"
-                                  Data="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+                                  Data="{x:Static icons:Icons.LineChart}"/>
                         <TextBlock Text="{loc:Loc Expenses}" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Button>
@@ -200,7 +201,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <PathIcon Width="24" Height="24"
                                   Foreground="#2196F3"
-                                  Data="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+                                  Data="{x:Static icons:Icons.BarChartAlt}"/>
                         <TextBlock Text="{loc:Loc Profit}" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Button>
@@ -214,7 +215,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <PathIcon Width="24" Height="24"
                                   Foreground="#9C27B0"
-                                  Data="M21,11H13V3A8,8 0 0,1 21,11M19,13A8,8 0 0,1 3,11A8,8 0 0,1 11,3V13H19Z"/>
+                                  Data="{x:Static icons:Icons.PieChart}"/>
                         <TextBlock Text="{loc:Loc Distribution}" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Button>
@@ -228,7 +229,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <PathIcon Width="24" Height="24"
                                   Foreground="#00BCD4"
-                                  Data="M17.9,17.39C17.64,16.59 16.89,16 16,16H15V13A1,1 0 0,0 14,12H8V10H10A1,1 0 0,0 11,9V7H13A2,2 0 0,0 15,5V4.59C17.93,5.77 20,8.64 20,12C20,14.08 19.2,15.97 17.9,17.39M11,19.93C7.05,19.44 4,16.08 4,12C4,11.38 4.08,10.79 4.21,10.21L9,15V16A2,2 0 0,0 11,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                                  Data="{x:Static icons:Icons.GlobeAlt}"/>
                         <TextBlock Text="{loc:Loc 'World Map'}" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Button>
@@ -242,7 +243,7 @@
                     <StackPanel HorizontalAlignment="Center">
                         <PathIcon Width="24" Height="24"
                                   Foreground="#FF9800"
-                                  Data="M3,13H5V11H3V13M3,17H5V15H3V17M3,9H5V7H3V9M7,13H21V11H7V13M7,17H21V15H7V17M7,7V9H21V7H7Z"/>
+                                  Data="{x:Static icons:Icons.ListAlt}"/>
                         <TextBlock Text="{loc:Loc Growth}" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Button>

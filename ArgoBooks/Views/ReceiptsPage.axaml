@@ -81,14 +81,14 @@
                                 Classes.selected="{Binding IsGridView}"
                                 Command="{Binding SetGridViewCommand}"
                                 ToolTip.Tip="{loc:Loc 'Grid View'}">
-                            <PathIcon Data="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"
+                            <PathIcon Data="{x:Static icons:Icons.DashboardGrid}"
                                       Width="16" Height="16" />
                         </Button>
                         <Button Classes="view-toggle-button"
                                 Classes.selected="{Binding IsListView}"
                                 Command="{Binding SetListViewCommand}"
                                 ToolTip.Tip="{loc:Loc 'List View'}">
-                            <PathIcon Data="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                            <PathIcon Data="{x:Static icons:Icons.ListBullet}"
                                       Width="16" Height="16" />
                         </Button>
                     </StackPanel>
@@ -182,12 +182,12 @@
                                                            VerticalAlignment="Center"
                                                            IsVisible="{Binding !HasImage}">
                                                         <!-- Image Icon -->
-                                                        <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                                        <PathIcon Data="{x:Static icons:Icons.Image}"
                                                                   Width="40" Height="40"
                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                                   IsVisible="{Binding IsImage}" />
                                                         <!-- PDF Icon -->
-                                                        <PathIcon Data="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"
+                                                        <PathIcon Data="{x:Static icons:Icons.FilePdf}"
                                                                   Width="40" Height="40"
                                                                   Foreground="{DynamicResource ErrorBrush}"
                                                                   IsVisible="{Binding IsPdf}" />
@@ -388,7 +388,7 @@
                                                                 ToolTip.Tip="{loc:Loc 'Preview'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).OpenPreviewCommand}"
                                                                 CommandParameter="{Binding}">
-                                                            <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                                            <PathIcon Data="{x:Static icons:Icons.Eye}"
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                         <Button Classes="icon-button"
@@ -447,7 +447,7 @@
                         CornerRadius="40"
                         Background="White"
                         HorizontalAlignment="Center">
-                    <PathIcon Data="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z"
+                    <PathIcon Data="{x:Static icons:Icons.SmartInsights}"
                               Width="40" Height="40"
                               Foreground="{DynamicResource PrimaryBrush}" />
                 </Border>

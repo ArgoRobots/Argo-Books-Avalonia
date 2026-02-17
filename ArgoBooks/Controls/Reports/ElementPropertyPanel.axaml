@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="600"
              x:Class="ArgoBooks.Controls.Reports.ElementPropertyPanel"
              x:Name="PropertyPanel"
@@ -185,28 +186,28 @@
                             Click="OnBringToFrontClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
-                                  Data="M2,2H11V11H2V2M9,4H4V9H9V4M22,13V22H13V13H22M20,15H15V20H20V15M16,8V11H13V8H16M8,16H11V13H8V16Z"/>
+                                  Data="{x:Static icons:Icons.QrCode}"/>
                     </Button>
                     <Button x:Name="SendToBackButton"
                             ToolTip.Tip="{loc:Loc 'Send to Back'}"
                             Click="OnSendToBackClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
-                                  Data="M2,2H16V16H2V2M14,14V4H4V14H14M22,8V22H8V20H20V8H22Z"/>
+                                  Data="{x:Static icons:Icons.Layers}"/>
                     </Button>
                     <Button x:Name="BringForwardButton"
                             ToolTip.Tip="{loc:Loc 'Bring Forward'}"
                             Click="OnBringForwardClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
-                                  Data="M6,6H18V18H6V6M8,8V16H16V8H8Z"/>
+                                  Data="{x:Static icons:Icons.Square}"/>
                     </Button>
                     <Button x:Name="SendBackwardButton"
                             ToolTip.Tip="{loc:Loc 'Send Backward'}"
                             Click="OnSendBackwardClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
-                                  Data="M4,4H16V16H4V4M6,6V14H14V6H6M20,8V20H8V18H18V8H20Z"/>
+                                  Data="{x:Static icons:Icons.LayersAlt}"/>
                     </Button>
                 </StackPanel>
 

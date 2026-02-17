@@ -8,6 +8,7 @@
              xmlns:local="using:ArgoBooks"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
              x:DataType="vm:DashboardPageViewModel">
@@ -194,7 +195,7 @@
                                 IsVisible="{Binding ShowNewExpense}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource DangerIconBgBrush}">
-                                    <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                                    <PathIcon Data="{x:Static icons:Icons.ArrowDown}"
                                               Width="16" Height="16" Foreground="{DynamicResource DangerBrush}" />
                                 </Border>
                                 <TextBlock Text="{loc:Loc 'New Expense'}" FontSize="12" FontWeight="Medium"
@@ -208,7 +209,7 @@
                                 IsVisible="{Binding ShowNewRevenue}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
-                                    <PathIcon Data="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
+                                    <PathIcon Data="{x:Static icons:Icons.ArrowUp}"
                                               Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <TextBlock Text="{loc:Loc 'New Revenue'}" FontSize="12" FontWeight="Medium"
@@ -320,7 +321,7 @@
                                 IsVisible="{Binding ShowNewCategory}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
-                                    <PathIcon Data="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z"
+                                    <PathIcon Data="{x:Static icons:Icons.TriangleWarning}"
                                               Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
                                 </Border>
                                 <TextBlock Text="{loc:Loc 'New Category'}" FontSize="12" FontWeight="Medium"
@@ -604,7 +605,7 @@
                             <StackPanel HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="12">
-                                <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                <PathIcon Data="{x:Static icons:Icons.DocumentNotes}"
                                           Width="48" Height="48"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <TextBlock Text="{loc:Loc 'No recent transactions'}"

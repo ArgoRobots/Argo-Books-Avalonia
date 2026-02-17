@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="300"
              x:Class="ArgoBooks.Controls.SuccessAnimation"
              x:DataType="controls:SuccessAnimation">
@@ -52,7 +53,7 @@
                         <DoubleTransition Property="Opacity" Duration="0:0:0.5" Easing="CubicEaseOut" />
                     </Transitions>
                 </Border.Transitions>
-                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                <PathIcon Data="{x:Static icons:Icons.Check}"
                           Width="48" Height="48"
                           Foreground="White"
                           HorizontalAlignment="Center"

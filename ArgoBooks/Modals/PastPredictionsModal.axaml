@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.PastPredictionsModal"
              x:DataType="vm:PastPredictionsModalViewModel">
@@ -44,7 +45,7 @@
                                 Classes="icon-button"
                                 Width="32" Height="32"
                                 Command="{Binding CloseCommand}">
-                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource TextSecondaryBrush}" />
                         </Button>
@@ -179,7 +180,7 @@
                                         CornerRadius="28"
                                         Background="{DynamicResource BackgroundBrush}"
                                         HorizontalAlignment="Center">
-                                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                    <PathIcon Data="{x:Static icons:Icons.BarChart}"
                                               Width="28" Height="28"
                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
@@ -371,7 +372,7 @@
                                 IsVisible="{Binding HasPredictions}">
                             <Grid ColumnDefinitions="Auto,*">
                                 <PathIcon Grid.Column="0"
-                                          Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Data="{x:Static icons:Icons.Info}"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                           VerticalAlignment="Top"

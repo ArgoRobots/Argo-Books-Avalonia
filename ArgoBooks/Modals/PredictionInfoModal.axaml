@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              x:Class="ArgoBooks.Modals.PredictionInfoModal"
              x:DataType="vm:PredictionInfoModalViewModel">
@@ -42,7 +43,7 @@
                                 Classes="icon-button"
                                 Width="32" Height="32"
                                 Command="{Binding CloseCommand}">
-                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource TextSecondaryBrush}" />
                         </Button>
@@ -83,7 +84,7 @@
                                             Background="#EDE9FE"
                                             Margin="0,0,12,0"
                                             VerticalAlignment="Top">
-                                        <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                        <PathIcon Data="{x:Static icons:Icons.Clock}"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource VioletBrush}" />
                                     </Border>
@@ -111,7 +112,7 @@
                                             Background="{DynamicResource SuccessLightBrush}"
                                             Margin="0,0,12,0"
                                             VerticalAlignment="Top">
-                                        <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                        <PathIcon Data="{x:Static icons:Icons.TrendUp}"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource SuccessBrush}" />
                                     </Border>
@@ -139,7 +140,7 @@
                                             Background="{DynamicResource PrimaryLightBrush}"
                                             Margin="0,0,12,0"
                                             VerticalAlignment="Top">
-                                        <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                        <PathIcon Data="{x:Static icons:Icons.Check}"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource PrimaryBrush}" />
                                     </Border>
@@ -167,7 +168,7 @@
                                             Background="#F0FDF4"
                                             Margin="0,0,12,0"
                                             VerticalAlignment="Top">
-                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                        <PathIcon Data="{x:Static icons:Icons.DocumentNotes}"
                                                   Width="18" Height="18"
                                                   Foreground="#16A34A" />
                                     </Border>
@@ -195,7 +196,7 @@
                                             Background="{DynamicResource ErrorLightBrush}"
                                             Margin="0,0,12,0"
                                             VerticalAlignment="Top">
-                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                        <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
                                                   Width="18" Height="18"
                                                   Foreground="#EF4444" />
                                     </Border>
@@ -223,7 +224,7 @@
                                             Background="{DynamicResource WarningLightBrush}"
                                             Margin="0,0,12,0"
                                             VerticalAlignment="Top">
-                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                        <PathIcon Data="{x:Static icons:Icons.BarChart}"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource WarningBrush}" />
                                     </Border>
@@ -312,7 +313,7 @@
                                 Padding="16">
                             <Grid ColumnDefinitions="Auto,*">
                                 <PathIcon Grid.Column="0"
-                                          Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Data="{x:Static icons:Icons.Info}"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                           VerticalAlignment="Top"

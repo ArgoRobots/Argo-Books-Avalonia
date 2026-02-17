@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="40"
              x:Class="ArgoBooks.Controls.ArgoButton"
              x:DataType="controls:ArgoButton">
@@ -46,7 +47,7 @@
                         </Style.Animations>
                     </Style>
                 </Border.Styles>
-                <PathIcon Data="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"
+                <PathIcon Data="{x:Static icons:Icons.LoadingArc}"
                           Width="16" Height="16"
                           Foreground="{Binding Foreground, ElementName=InnerButton}" />
             </Border>
