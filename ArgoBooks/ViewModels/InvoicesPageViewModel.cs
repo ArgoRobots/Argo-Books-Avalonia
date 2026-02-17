@@ -274,8 +274,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         };
 
         // Subscribe to payment provider changes so invoice display reflects current state
+        // and the create button / warning banner update immediately
         PaymentProviderService.ProvidersChanged += (_, _) =>
         {
+            CheckPortalConfiguration();
             FilterInvoices();
         };
     }
@@ -608,10 +610,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     private void CheckPortalConfiguration()
     {
-        // Consider the portal configured if either the API key is present (portal registered)
-        // or a PortalUrl has been persisted from a previous server response.
+        // Consider the portal configured if the API key is present (or PortalUrl persisted)
+        // AND at least one payment provider is actually connected.
         var portalUrl = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal?.PortalUrl;
-        IsPortalConfigured = PortalSettings.IsConfigured || !string.IsNullOrEmpty(portalUrl);
+        var hasPortalKey = PortalSettings.IsConfigured || !string.IsNullOrEmpty(portalUrl);
+        var hasConnectedProvider = PaymentProviderService.GetConnectedMethods().Count > 0;
+        IsPortalConfigured = hasPortalKey && hasConnectedProvider;
     }
 
     [RelayCommand]

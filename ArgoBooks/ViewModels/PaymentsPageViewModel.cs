@@ -59,7 +59,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private void InitializePortalState()
     {
         var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
-        IsPortalConfigured = PortalSettings.IsConfigured;
+        var hasKey = PortalSettings.IsConfigured;
+        var hasConnectedProvider = PaymentProviderService.GetConnectedMethods().Count > 0;
+        IsPortalConfigured = hasKey && hasConnectedProvider;
         // Assume connected until the async check says otherwise, to avoid
         // a brief flash of the "not configured" warning banner.
         IsPortalConnected = IsPortalConfigured;
@@ -82,7 +84,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             return;
         }
 
-        IsPortalConfigured = true;
         var portalService = App.PaymentPortalService;
         if (portalService == null) return;
 
@@ -95,6 +96,10 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         {
             portalSettings.ConnectedAccounts = status.ConnectedProviders;
         }
+
+        // Require at least one connected provider to consider the portal configured
+        var hasConnectedProvider = PaymentProviderService.GetConnectedMethods().Count > 0;
+        IsPortalConfigured = hasConnectedProvider;
     }
 
     /// <summary>
@@ -383,6 +388,12 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         {
             UpdateStatistics();
             FilterPayments();
+        };
+
+        // Subscribe to payment provider changes so portal state updates immediately
+        PaymentProviderService.ProvidersChanged += (_, _) =>
+        {
+            InitializePortalState();
         };
     }
 
