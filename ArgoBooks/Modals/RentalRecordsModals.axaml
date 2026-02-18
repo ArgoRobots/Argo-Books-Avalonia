@@ -98,7 +98,7 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="*,60,70,Auto">
+                                    <Grid ColumnDefinitions="*,60,90,Auto">
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
                                             <TextBlock Text="{loc:Loc 'Rental Item'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -108,10 +108,11 @@
                                         <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
-                                                   Margin="0,0,4,0" />
+                                                   Margin="0,0,8,0" />
                                         <TextBlock Grid.Column="2" Text="{loc:Loc 'Amount'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Right" />
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,0,12,0" />
                                         <TextBlock Grid.Column="3" Width="32" />
                                     </Grid>
                                 </Border>
@@ -124,7 +125,7 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <StackPanel Spacing="4">
-                                                    <Grid ColumnDefinitions="*,60,70,Auto">
+                                                    <Grid ColumnDefinitions="*,60,90,Auto">
                                                         <controls:SearchableDropdown Grid.Column="0"
                                                                  Margin="0,0,4,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
@@ -152,11 +153,13 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right"
+                                                                   Margin="0,0,12,0" />
                                                         <Button Grid.Column="3"
                                                                 Classes="icon-button danger"
                                                                 VerticalAlignment="Top"
-                                                                Margin="4,0,0,0"
+                                                                Margin="8,0,0,0"
+                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsGreaterThanOne}}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 ToolTip.Tip="{loc:Loc 'Remove item'}">
@@ -311,7 +314,7 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="*,60,70,Auto">
+                                    <Grid ColumnDefinitions="*,60,90,Auto">
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
                                             <TextBlock Text="{loc:Loc 'Rental Item'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -321,10 +324,11 @@
                                         <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
-                                                   Margin="0,0,4,0" />
+                                                   Margin="0,0,8,0" />
                                         <TextBlock Grid.Column="2" Text="{loc:Loc 'Amount'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Right" />
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,0,12,0" />
                                         <TextBlock Grid.Column="3" Width="32" />
                                     </Grid>
                                 </Border>
@@ -337,7 +341,7 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <StackPanel Spacing="4">
-                                                    <Grid ColumnDefinitions="*,60,70,Auto">
+                                                    <Grid ColumnDefinitions="*,60,90,Auto">
                                                         <controls:SearchableDropdown Grid.Column="0"
                                                                  Margin="0,0,4,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
@@ -365,11 +369,13 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right"
+                                                                   Margin="0,0,12,0" />
                                                         <Button Grid.Column="3"
                                                                 Classes="icon-button danger"
                                                                 VerticalAlignment="Top"
-                                                                Margin="4,0,0,0"
+                                                                Margin="8,0,0,0"
+                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsGreaterThanOne}}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 ToolTip.Tip="{loc:Loc 'Remove item'}">

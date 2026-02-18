@@ -104,7 +104,7 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                    <Grid ColumnDefinitions="2*,80,90,100,Auto">
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
                                             <TextBlock Text="{loc:Loc 'Product'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -121,7 +121,8 @@
                                                    Margin="0,0,8,0" />
                                         <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Right" />
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,0,12,0" />
                                         <TextBlock Grid.Column="4" Width="32" />
                                     </Grid>
                                 </Border>
@@ -133,7 +134,7 @@
                                             <Border Padding="12,8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                                <Grid ColumnDefinitions="2*,80,90,100,Auto">
                                                     <controls:SearchableDropdown Grid.Column="0"
                                                              Margin="0,0,8,0"
                                                              ItemsSource="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).AvailableProducts}"
@@ -152,14 +153,14 @@
                                                              HorizontalContentAlignment="Center"
                                                              VerticalAlignment="Top"
                                                              Margin="0,0,8,0"
-                                                             MaxLength="10" />
+                                                             MaxLength="5" />
                                                     <TextBox Grid.Column="2"
                                                              Text="{Binding UnitCost, Mode=TwoWay}"
                                                              Classes="form-input-compact"
                                                              HorizontalContentAlignment="Center"
                                                              VerticalAlignment="Top"
                                                              Margin="0,0,8,0"
-                                                             MaxLength="20" />
+                                                             MaxLength="12" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding TotalDisplay}"
                                                                FontSize="14"
@@ -167,11 +168,12 @@
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                VerticalAlignment="Top"
                                                                HorizontalAlignment="Right"
-                                                               Margin="0,10,0,0" />
+                                                               Margin="0,10,12,0" />
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
                                                             VerticalAlignment="Top"
                                                             Margin="8,0,0,0"
+                                                            IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"
                                                             ToolTip.Tip="{loc:Loc 'Remove item'}">
