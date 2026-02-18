@@ -8,6 +8,7 @@ using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Transactions;
@@ -1940,11 +1941,35 @@ public class App : Application
                     if (!string.IsNullOrEmpty(args.LogoPath))
                     {
                         await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
+
+                        // Sync logo to payment portal (fire-and-forget)
+                        if (PortalSettings.IsConfigured && PaymentPortalService != null)
+                        {
+                            var portalLogoPath = CompanyManager.CurrentCompanyLogoPath;
+                            if (!string.IsNullOrEmpty(portalLogoPath))
+                            {
+                                _ = Task.Run(async () =>
+                                {
+                                    try { await PaymentPortalService.UploadCompanyLogoAsync(portalLogoPath); }
+                                    catch (Exception ex) { ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to upload logo to portal"); }
+                                });
+                            }
+                        }
                     }
                     else if (args.LogoSource == null && CompanyManager.CurrentCompanyLogoPath != null)
                     {
                         // Logo was removed
                         await CompanyManager.RemoveCompanyLogoAsync();
+
+                        // Remove logo from payment portal (fire-and-forget)
+                        if (PortalSettings.IsConfigured && PaymentPortalService != null)
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                try { await PaymentPortalService.DeleteCompanyLogoAsync(); }
+                                catch (Exception ex) { ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to delete logo from portal"); }
+                            });
+                        }
                     }
 
                     // Capture new logo state after changes

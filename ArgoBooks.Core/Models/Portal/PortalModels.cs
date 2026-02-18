@@ -338,3 +338,21 @@ public class PortalRegisterResponse
     [JsonPropertyName("error")]
     public string? Error { get; set; }
 }
+
+/// <summary>
+/// Response from logo upload/delete endpoints.
+/// </summary>
+public class PortalLogoResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("logo_url")]
+    public string? LogoUrl { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public string? Timestamp { get; set; }
+}

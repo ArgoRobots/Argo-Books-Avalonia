@@ -554,6 +554,126 @@ public class PaymentPortalService
 
     #endregion
 
+    #region Company Logo
+
+    /// <summary>
+    /// Uploads a company logo to the payment portal.
+    /// </summary>
+    public async Task<PortalLogoResponse> UploadCompanyLogoAsync(
+        string logoFilePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalLogoResponse { Success = false, Message = "Portal not configured." };
+        }
+
+        if (!File.Exists(logoFilePath))
+        {
+            return new PortalLogoResponse { Success = false, Message = "Logo file not found." };
+        }
+
+        try
+        {
+            var fileBytes = await File.ReadAllBytesAsync(logoFilePath, cancellationToken);
+            var fileName = Path.GetFileName(logoFilePath);
+            var extension = Path.GetExtension(logoFilePath).ToLowerInvariant();
+            var contentType = extension switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                ".bmp" => "image/bmp",
+                ".svg" => "image/svg+xml",
+                _ => "application/octet-stream"
+            };
+
+            using var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "logo", fileName);
+
+            using var request = CreateRequest(HttpMethod.Post, "/logo");
+            request.Content = content;
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalLogoResponse>(responseContent) ?? new PortalLogoResponse
+                {
+                    Success = true,
+                    Message = "Logo uploaded."
+                };
+            }
+
+            var errorResponse = DeserializeResponse<PortalLogoResponse>(responseContent);
+            return errorResponse ?? new PortalLogoResponse
+            {
+                Success = false,
+                Message = $"Upload failed with status {(int)response.StatusCode}"
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalLogoResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new PortalLogoResponse { Success = false, Message = $"Network error: {ex.Message}" };
+        }
+        catch (Exception ex)
+        {
+            return new PortalLogoResponse { Success = false, Message = $"Error: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// Deletes the company logo from the payment portal.
+    /// </summary>
+    public async Task<PortalLogoResponse> DeleteCompanyLogoAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalLogoResponse { Success = false, Message = "Portal not configured." };
+        }
+
+        try
+        {
+            using var request = CreateRequest(HttpMethod.Delete, "/logo");
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalLogoResponse>(content) ?? new PortalLogoResponse
+                {
+                    Success = true,
+                    Message = "Logo removed."
+                };
+            }
+
+            return new PortalLogoResponse
+            {
+                Success = false,
+                Message = $"Delete failed with status {(int)response.StatusCode}"
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalLogoResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new PortalLogoResponse { Success = false, Message = $"Network error: {ex.Message}" };
+        }
+    }
+
+    #endregion
+
     #region Helpers
 
     private static HttpRequestMessage CreateRequest(HttpMethod method, string path)

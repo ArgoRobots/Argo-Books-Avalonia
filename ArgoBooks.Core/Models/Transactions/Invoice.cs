@@ -69,6 +69,36 @@ public class Invoice
     public decimal SecurityDeposit { get; set; }
 
     /// <summary>
+    /// Custom fee label (e.g., "Setup Fee", "Rush Delivery").
+    /// </summary>
+    [JsonPropertyName("customFeeLabel")]
+    public string CustomFeeLabel { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Custom fee value (flat $ or %).
+    /// </summary>
+    [JsonPropertyName("customFeeAmount")]
+    public decimal CustomFeeAmount { get; set; }
+
+    /// <summary>
+    /// Whether the custom fee is a percentage of subtotal.
+    /// </summary>
+    [JsonPropertyName("customFeeIsPercent")]
+    public bool CustomFeeIsPercent { get; set; }
+
+    /// <summary>
+    /// Discount value (flat $ or %).
+    /// </summary>
+    [JsonPropertyName("discountAmount")]
+    public decimal DiscountAmount { get; set; }
+
+    /// <summary>
+    /// Whether the discount is a percentage of subtotal.
+    /// </summary>
+    [JsonPropertyName("discountIsPercent")]
+    public bool DiscountIsPercent { get; set; }
+
+    /// <summary>
     /// Total amount due.
     /// </summary>
     [JsonPropertyName("total")]

@@ -26,6 +26,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     private TimeZoneItem _originalTimeZone = TimeZones.FindById("UTC");
     private string _originalTimeFormat = "12h";
     private int _originalMaxPieSlices = 6;
+    private bool _originalLowStockAlert = true;
+    private bool _originalOutOfStockAlert = true;
+    private bool _originalInvoiceOverdue = true;
+    private bool _originalRentalOverdue = true;
+    private bool _originalUnsavedChangesReminder = true;
+    private int _originalUnsavedChangesReminderMinutes = 5;
 
     // Flag to prevent firing LanguageChanged when loading from settings
     private bool _isLoadingLanguage;
@@ -676,6 +682,17 @@ public partial class SettingsModalViewModel : ViewModelBase
             var result = await portalService.RegisterCompanyAsync(registrationKey, companyName, ownerEmail);
             if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
             {
+                // If company already has a logo, upload it to the portal (fire-and-forget)
+                var logoPath = App.CompanyManager?.CurrentCompanyLogoPath;
+                if (!string.IsNullOrEmpty(logoPath))
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try { await portalService.UploadCompanyLogoAsync(logoPath); }
+                        catch { /* Best-effort — don't block registration */ }
+                    });
+                }
+
                 return true;
             }
 
@@ -937,7 +954,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedCurrency != _originalCurrency ||
         SelectedTimeZone.Id != _originalTimeZone.Id ||
         SelectedTimeFormat != _originalTimeFormat ||
-        MaxPieSlices != _originalMaxPieSlices;
+        MaxPieSlices != _originalMaxPieSlices ||
+        LowStockAlert != _originalLowStockAlert ||
+        OutOfStockAlert != _originalOutOfStockAlert ||
+        InvoiceOverdue != _originalInvoiceOverdue ||
+        RentalOverdue != _originalRentalOverdue ||
+        UnsavedChangesReminder != _originalUnsavedChangesReminder ||
+        UnsavedChangesReminderMinutes != _originalUnsavedChangesReminderMinutes;
 
     /// <summary>
     /// Default constructor.
@@ -1028,6 +1051,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
+        _originalLowStockAlert = LowStockAlert;
+        _originalOutOfStockAlert = OutOfStockAlert;
+        _originalInvoiceOverdue = InvoiceOverdue;
+        _originalRentalOverdue = RentalOverdue;
+        _originalUnsavedChangesReminder = UnsavedChangesReminder;
+        _originalUnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
     }
@@ -1114,6 +1143,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             MaxPieSlices = _originalMaxPieSlices;
         }
+        LowStockAlert = _originalLowStockAlert;
+        OutOfStockAlert = _originalOutOfStockAlert;
+        InvoiceOverdue = _originalInvoiceOverdue;
+        RentalOverdue = _originalRentalOverdue;
+        UnsavedChangesReminder = _originalUnsavedChangesReminder;
+        UnsavedChangesReminderMinutes = _originalUnsavedChangesReminderMinutes;
     }
 
     /// <summary>
@@ -1146,6 +1181,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
+        _originalLowStockAlert = LowStockAlert;
+        _originalOutOfStockAlert = OutOfStockAlert;
+        _originalInvoiceOverdue = InvoiceOverdue;
+        _originalRentalOverdue = RentalOverdue;
+        _originalUnsavedChangesReminder = UnsavedChangesReminder;
+        _originalUnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
 
         // Save language, date format and currency to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
@@ -1169,8 +1210,6 @@ public partial class SettingsModalViewModel : ViewModelBase
 
             // Restart the timer with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
-
-            settings.ChangesMade = true;
         }
 
         // Save max pie slices, language, timezone and time format to global settings
