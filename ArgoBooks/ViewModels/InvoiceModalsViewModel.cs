@@ -168,6 +168,21 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private decimal _securityDeposit;
 
     [ObservableProperty]
+    private string _customFeeLabel = string.Empty;
+
+    [ObservableProperty]
+    private decimal _customFeeAmount;
+
+    [ObservableProperty]
+    private bool _customFeeIsPercent;
+
+    [ObservableProperty]
+    private decimal _discountAmount;
+
+    [ObservableProperty]
+    private bool _discountIsPercent;
+
+    [ObservableProperty]
     private string _validationMessage = string.Empty;
 
     [ObservableProperty]
@@ -274,14 +289,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     // Computed totals
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
     public decimal TaxAmount => Subtotal * (TaxRate / 100m);
-    public decimal Total => Subtotal + TaxAmount + SecurityDeposit;
+    public decimal CustomFeeCalculated => CustomFeeIsPercent ? Subtotal * (CustomFeeAmount / 100m) : CustomFeeAmount;
+    public decimal DiscountCalculated => DiscountIsPercent ? Subtotal * (DiscountAmount / 100m) : DiscountAmount;
+    public decimal Total => Subtotal + TaxAmount + SecurityDeposit + CustomFeeCalculated - DiscountCalculated;
 
     public string SubtotalFormatted => $"${Subtotal:N2}";
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
     public string SecurityDepositFormatted => $"${SecurityDeposit:N2}";
+    public string CustomFeeCalculatedFormatted => $"+${CustomFeeCalculated:N2}";
+    public string DiscountCalculatedFormatted => $"-${DiscountCalculated:N2}";
     public string TotalFormatted => $"${Total:N2}";
 
     public bool HasSecurityDeposit => SecurityDeposit > 0;
+    public bool HasCustomFee => CustomFeeAmount > 0;
+    public bool HasDiscount => DiscountAmount > 0;
 
     partial void OnSelectedTemplateChanged(InvoiceTemplate? value)
     {
@@ -302,6 +323,26 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         UpdateTotals();
     }
 
+    partial void OnCustomFeeAmountChanged(decimal value)
+    {
+        UpdateTotals();
+    }
+
+    partial void OnCustomFeeIsPercentChanged(bool value)
+    {
+        UpdateTotals();
+    }
+
+    partial void OnDiscountAmountChanged(decimal value)
+    {
+        UpdateTotals();
+    }
+
+    partial void OnDiscountIsPercentChanged(bool value)
+    {
+        UpdateTotals();
+    }
+
     private void UpdateTotals()
     {
         OnPropertyChanged(nameof(Subtotal));
@@ -311,6 +352,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(TaxAmountFormatted));
         OnPropertyChanged(nameof(SecurityDepositFormatted));
         OnPropertyChanged(nameof(HasSecurityDeposit));
+        OnPropertyChanged(nameof(CustomFeeCalculated));
+        OnPropertyChanged(nameof(CustomFeeCalculatedFormatted));
+        OnPropertyChanged(nameof(HasCustomFee));
+        OnPropertyChanged(nameof(DiscountCalculated));
+        OnPropertyChanged(nameof(DiscountCalculatedFormatted));
+        OnPropertyChanged(nameof(HasDiscount));
         OnPropertyChanged(nameof(TotalFormatted));
     }
 
@@ -727,6 +774,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalNotes = invoice.Notes;
         TaxRate = invoice.TaxRate;
         SecurityDeposit = invoice.SecurityDeposit;
+        CustomFeeLabel = invoice.CustomFeeLabel;
+        CustomFeeAmount = invoice.CustomFeeAmount;
+        CustomFeeIsPercent = invoice.CustomFeeIsPercent;
+        DiscountAmount = invoice.DiscountAmount;
+        DiscountIsPercent = invoice.DiscountIsPercent;
 
         // Populate line items
         LineItems.Clear();
@@ -986,11 +1038,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var previewInvoice = new Invoice
         {
             Id = "INV-PREVIEW",
-            InvoiceNumber = $"INV-{DateTime.Now:yyyy}-XXXXX",
+            InvoiceNumber = PeekNextInvoiceNumber(),
             CustomerId = SelectedCustomer?.Id ?? string.Empty,
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
             TaxRate = TaxRate,
+            CustomFeeLabel = CustomFeeLabel,
+            CustomFeeAmount = CustomFeeAmount,
+            CustomFeeIsPercent = CustomFeeIsPercent,
+            DiscountAmount = DiscountAmount,
+            DiscountIsPercent = DiscountIsPercent,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
             LineItems = LineItems.Select(li => new LineItem
@@ -1005,7 +1062,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         previewInvoice.TaxAmount = previewInvoice.Subtotal * (TaxRate / 100m);
         previewInvoice.SecurityDeposit = SecurityDeposit;
-        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount + SecurityDeposit;
+        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount + SecurityDeposit + CustomFeeCalculated - DiscountCalculated;
         previewInvoice.Balance = previewInvoice.Total;
 
         // Render HTML using the same renderer as the template designer
@@ -1148,6 +1205,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
+        // Prevent sending invoices with a total of $0 or less
+        if (Total <= 0)
+        {
+            await ShowSendErrorAsync("Cannot send an invoice for $0 or less.".Translate());
+            return;
+        }
+
         // Check if we're continuing a draft invoice or creating a new one
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
@@ -1170,6 +1234,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
             invoice.TaxRate = TaxRate;
             invoice.SecurityDeposit = SecurityDeposit;
+            invoice.CustomFeeLabel = CustomFeeLabel;
+            invoice.CustomFeeAmount = CustomFeeAmount;
+            invoice.CustomFeeIsPercent = CustomFeeIsPercent;
+            invoice.DiscountAmount = DiscountAmount;
+            invoice.DiscountIsPercent = DiscountIsPercent;
             invoice.Notes = ModalNotes;
             invoice.Status = InvoiceStatus.Pending;
             invoice.UpdatedAt = DateTime.Now;
@@ -1186,19 +1255,25 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
         else
         {
-            // Generate new invoice ID for new invoices
-            var nextNumber = (companyData.Invoices.Count) + 1;
-            var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
+            // Generate new invoice ID using IdGenerator
+            var idGenerator = new IdGenerator(companyData);
+            var invoiceId = idGenerator.NextInvoiceId();
+            var invoiceNumber = idGenerator.NextInvoiceNumber();
 
             invoice = new Invoice
             {
                 Id = invoiceId,
-                InvoiceNumber = invoiceId,
+                InvoiceNumber = invoiceNumber,
                 CustomerId = SelectedCustomer!.Id!,
                 IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
                 DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
                 TaxRate = TaxRate,
                 SecurityDeposit = SecurityDeposit,
+                CustomFeeLabel = CustomFeeLabel,
+                CustomFeeAmount = CustomFeeAmount,
+                CustomFeeIsPercent = CustomFeeIsPercent,
+                DiscountAmount = DiscountAmount,
+                DiscountIsPercent = DiscountIsPercent,
                 Notes = ModalNotes,
                 Status = InvoiceStatus.Pending,
                 CreatedAt = DateTime.Now,
@@ -1218,7 +1293,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Calculate invoice totals
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
-        invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit;
+        var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
+        var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
+        invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit + feeCalc - discCalc;
         invoice.Balance = invoice.Total - invoice.AmountPaid;
 
         // Publish and send: portal handles both publishing and email delivery via sendEmail: true.
@@ -1325,22 +1402,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
 
-        // Auto-save so the sent/published state is persisted even if the user
-        // closes the app without manually saving.  The invoice has already been
-        // delivered to the portal/email recipient, so the local file must match.
-        if (App.CompanyManager != null)
-        {
-            try
-            {
-                await App.CompanyManager.SaveCompanyAsync();
-            }
-            catch
-            {
-                // Save failure is non-fatal here – the UI still shows unsaved-changes
-                // indicator so the user can retry manually.
-            }
-        }
-
         // Show success animation instead of closing immediately
         SuccessTitle = "Invoice Sent!".Translate();
         SuccessMessage = "Your invoice has been sent to {0}".TranslateFormat(customer.Email);
@@ -1348,17 +1409,29 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsShowingSuccess = true;
     }
 
+    private string PeekNextInvoiceNumber()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+            return $"#INV-{DateTime.Now:yyyy}-001";
+
+        // If editing a draft, use its existing number
+        if (!string.IsNullOrEmpty(_editingInvoiceId))
+        {
+            var draft = companyData.Invoices.FirstOrDefault(i => i.Id == _editingInvoiceId);
+            if (draft != null)
+                return draft.InvoiceNumber;
+        }
+
+        var idGenerator = new IdGenerator(companyData);
+        return idGenerator.PeekNextInvoice().Number;
+    }
+
     private Task ShowSendErrorAsync(string message)
     {
         // Show inline error banner instead of message box (HTML renderer causes deadlock with message box)
         SendErrorMessage = message;
         HasSendError = true;
-
-        // Also show error notification
-        App.AddNotification(
-            "Invoice Send Failed".Translate(),
-            message,
-            NotificationType.Warning);
 
         return Task.CompletedTask;
     }
@@ -1471,6 +1544,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
             TaxRate = TaxRate,
             SecurityDeposit = SecurityDeposit,
+            CustomFeeLabel = CustomFeeLabel,
+            CustomFeeAmount = CustomFeeAmount,
+            CustomFeeIsPercent = CustomFeeIsPercent,
+            DiscountAmount = DiscountAmount,
+            DiscountIsPercent = DiscountIsPercent,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
             CreatedAt = DateTime.Now,
@@ -1579,6 +1657,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalNotes = string.Empty;
         TaxRate = 0;
         SecurityDeposit = 0;
+        CustomFeeLabel = string.Empty;
+        CustomFeeAmount = 0;
+        CustomFeeIsPercent = false;
+        DiscountAmount = 0;
+        DiscountIsPercent = false;
         LineItems.Clear();
         AddLineItem(); // Add one default line item
         HasCustomerError = false;

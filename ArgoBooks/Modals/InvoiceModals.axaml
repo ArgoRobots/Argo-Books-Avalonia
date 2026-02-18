@@ -57,18 +57,12 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1"
                             IsVisible="{Binding ShowPreviewContent}">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
+                        <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{loc:Loc 'Invoice Preview'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="{loc:Loc 'Review your invoice before sending'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
-                            <Button Grid.Column="1" Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}" Margin="0,0,12,0">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
-                                    <TextBlock Text="{loc:Loc 'Open in Browser'}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Grid.Column="2" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
                                 <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
                             </Button>
                         </Grid>
@@ -158,7 +152,7 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                    <Grid ColumnDefinitions="2*,80,90,100,Auto">
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
                                             <TextBlock Text="{loc:Loc 'Product / Service'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -175,7 +169,8 @@
                                                    Margin="0,0,8,0" />
                                         <TextBlock Grid.Column="3" Text="{loc:Loc Amount}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Right" />
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,0,12,0" />
                                         <TextBlock Grid.Column="4" Width="32" />
                                     </Grid>
                                 </Border>
@@ -187,7 +182,7 @@
                                             <Border Padding="12,8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                                <Grid ColumnDefinitions="2*,80,90,100,Auto">
                                                     <controls:SearchableDropdown Grid.Column="0"
                                                                  Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
@@ -203,6 +198,7 @@
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
                                                                    Minimum="1"
+                                                                   Maximum="99999"
                                                                    FormatString="0"
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
@@ -212,6 +208,7 @@
                                                     <NumericUpDown Grid.Column="2"
                                                                    Value="{Binding UnitPrice, Mode=TwoWay}"
                                                                    Minimum="0"
+                                                                   Maximum="999999999"
                                                                    FormatString="N2"
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
@@ -225,10 +222,12 @@
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                VerticalAlignment="Top"
                                                                HorizontalAlignment="Right"
-                                                               Margin="0,10,0,0" />
+                                                               Margin="0,10,12,0" />
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
                                                             VerticalAlignment="Top"
+                                                            Margin="8,0,0,0"
+                                                            IsVisible="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"
                                                             ToolTip.Tip="{loc:Loc 'Remove item'}">
@@ -247,74 +246,116 @@
                             <Border Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
                                     Padding="16">
-                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                                    <TextBlock Grid.Row="0" Grid.Column="0"
-                                               Text="{loc:Loc Subtotal}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Grid.Row="0" Grid.Column="1"
-                                               Text="{Binding SubtotalFormatted}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Spacing="10">
+                                    <!-- Subtotal -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{loc:Loc Subtotal}" FontSize="14"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0"
-                                               Text="{loc:Loc Tax}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,8,0,0" />
-                                    <StackPanel Grid.Row="1" Grid.Column="1"
-                                                Orientation="Horizontal"
-                                                Spacing="8"
-                                                HorizontalAlignment="Right"
-                                                Margin="0,8,0,0">
-                                        <NumericUpDown Value="{Binding TaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                       Minimum="0"
-                                                       Maximum="100"
-                                                       FormatString="0.##"
-                                                       Width="70"
-                                                       ShowButtonSpinner="False"
-                                                       Classes="line-item-input"
-                                                       />
-                                        <TextBlock Text="%"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Text="{Binding TaxAmountFormatted}"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   VerticalAlignment="Center"
-                                                   Margin="16,0,0,0" />
-                                    </StackPanel>
+                                    <!-- Tax -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{loc:Loc Tax}" FontSize="14"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="%" Width="32"
+                                                       TextAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <NumericUpDown Value="{Binding TaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                                           Minimum="0" Maximum="100" FormatString="0.##"
+                                                           Width="90" ShowButtonSpinner="False"
+                                                           Classes="line-item-input" />
+                                        </StackPanel>
+                                    </Grid>
 
                                     <!-- Security Deposit (shown only when applicable) -->
-                                    <TextBlock Grid.Row="2" Grid.Column="0"
-                                               Text="{loc:Loc 'Security Deposit'}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,8,0,0"
-                                               IsVisible="{Binding HasSecurityDeposit}" />
-                                    <TextBlock Grid.Row="2" Grid.Column="1"
-                                               Text="{Binding SecurityDepositFormatted}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               Margin="0,8,0,0"
-                                               IsVisible="{Binding HasSecurityDeposit}" />
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSecurityDeposit}">
+                                        <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="14"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SecurityDepositFormatted}" FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
 
-                                    <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
-                                            Height="1"
-                                            Background="{DynamicResource BorderBrush}"
-                                            Margin="0,12" />
+                                    <!-- Custom Fee (optional) -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="+" FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource SuccessBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBox Text="{Binding CustomFeeLabel, Mode=TwoWay}"
+                                                     Watermark="{loc:Loc 'Fee label'}"
+                                                     Classes="form-input"
+                                                     Width="140" MaxLength="50" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <ToggleButton IsChecked="{Binding CustomFeeIsPercent, Mode=TwoWay}"
+                                                          Content="{Binding CustomFeeIsPercent, Converter={x:Static local:PercentDollarConverter.Instance}}"
+                                                          Width="32" Height="28" Padding="0"
+                                                          FontSize="13" FontWeight="SemiBold"
+                                                          HorizontalContentAlignment="Center"
+                                                          VerticalContentAlignment="Center"
+                                                          ToolTip.Tip="{loc:Loc 'Toggle between $ and %'}" />
+                                            <NumericUpDown Value="{Binding CustomFeeAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                                           Minimum="0" Maximum="999999999" FormatString="N2"
+                                                           Width="90" ShowButtonSpinner="False"
+                                                           Classes="line-item-input" />
+                                            <TextBlock Text="{Binding CustomFeeCalculatedFormatted}" FontSize="13"
+                                                       Foreground="{DynamicResource SuccessBrush}"
+                                                       VerticalAlignment="Center" MinWidth="60"
+                                                       TextAlignment="Right"
+                                                       IsVisible="{Binding HasCustomFee}" />
+                                        </StackPanel>
+                                    </Grid>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0"
-                                               Text="{loc:Loc Total}"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Grid.Row="4" Grid.Column="1"
-                                               Text="{Binding TotalFormatted}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                </Grid>
+                                    <!-- Discount (optional) -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="−" FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource DangerBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Text="{loc:Loc Discount}" FontSize="14"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <ToggleButton IsChecked="{Binding DiscountIsPercent, Mode=TwoWay}"
+                                                          Content="{Binding DiscountIsPercent, Converter={x:Static local:PercentDollarConverter.Instance}}"
+                                                          Width="32" Height="28" Padding="0"
+                                                          FontSize="13" FontWeight="SemiBold"
+                                                          HorizontalContentAlignment="Center"
+                                                          VerticalContentAlignment="Center"
+                                                          ToolTip.Tip="{loc:Loc 'Toggle between $ and %'}" />
+                                            <NumericUpDown Value="{Binding DiscountAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                                           Minimum="0" Maximum="999999999" FormatString="N2"
+                                                           Width="90" ShowButtonSpinner="False"
+                                                           Classes="line-item-input" />
+                                            <TextBlock Text="{Binding DiscountCalculatedFormatted}" FontSize="13"
+                                                       Foreground="{DynamicResource DangerBrush}"
+                                                       VerticalAlignment="Center" MinWidth="60"
+                                                       TextAlignment="Right"
+                                                       IsVisible="{Binding HasDiscount}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Divider -->
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
+
+                                    <!-- Total -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{loc:Loc Total}" FontSize="16" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Grid>
+                                </StackPanel>
                             </Border>
 
                             <!-- Status (only for Edit) -->

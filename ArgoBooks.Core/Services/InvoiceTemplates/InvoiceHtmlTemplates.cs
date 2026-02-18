@@ -135,6 +135,18 @@ public static class InvoiceHtmlTemplates
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{SecurityDeposit}}</td>
                                 </tr>
                                 {{/ShowSecurityDeposit}}
+                                {{#ShowCustomFee}}
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{CustomFeeLabel}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                </tr>
+                                {{/ShowCustomFee}}
+                                {{#ShowDiscount}}
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Discount</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                </tr>
+                                {{/ShowDiscount}}
                                 <tr>
                                     <td colspan="2" style="border-top: 2px solid {{SecondaryColor}}; padding-top: 12px;"></td>
                                 </tr>
@@ -355,6 +367,18 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{SecurityDeposit}}</td>
                                             </tr>
                                             {{/ShowSecurityDeposit}}
+                                            {{#ShowCustomFee}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{CustomFeeLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                            </tr>
+                                            {{/ShowCustomFee}}
+                                            {{#ShowDiscount}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Discount</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                            </tr>
+                                            {{/ShowDiscount}}
                                             <tr>
                                                 <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
                                             </tr>
@@ -536,6 +560,18 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{SecurityDeposit}}</td>
                                             </tr>
                                             {{/ShowSecurityDeposit}}
+                                            {{#ShowCustomFee}}
+                                            <tr>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{CustomFeeLabel}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{CustomFeeAmount}}</td>
+                                            </tr>
+                                            {{/ShowCustomFee}}
+                                            {{#ShowDiscount}}
+                                            <tr>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Discount</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{DiscountAmount}}</td>
+                                            </tr>
+                                            {{/ShowDiscount}}
                                             <tr style="background-color: {{PrimaryColor}};">
                                                 <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">TOTAL</td>
                                                 <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;">{{Total}}</td>
@@ -710,6 +746,18 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{SecurityDeposit}}</td>
                                             </tr>
                                             {{/ShowSecurityDeposit}}
+                                            {{#ShowCustomFee}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{CustomFeeLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                            </tr>
+                                            {{/ShowCustomFee}}
+                                            {{#ShowDiscount}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Discount</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                            </tr>
+                                            {{/ShowDiscount}}
                                             <tr>
                                                 <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
                                             </tr>
@@ -928,6 +976,18 @@ public static class InvoiceHtmlTemplates
                         <span>{{SecurityDeposit}}</span>
                     </div>
                     {{/ShowSecurityDeposit}}
+                    {{#ShowCustomFee}}
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
+                        <span>{{CustomFeeLabel}}</span>
+                        <span>{{CustomFeeAmount}}</span>
+                    </div>
+                    {{/ShowCustomFee}}
+                    {{#ShowDiscount}}
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
+                        <span>Discount</span>
+                        <span>{{DiscountAmount}}</span>
+                    </div>
+                    {{/ShowDiscount}}
                     <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{HeaderColor}}; margin-top: 10px;">
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Total</span>
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;">{{Total}}</span>

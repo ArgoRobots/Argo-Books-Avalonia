@@ -168,6 +168,13 @@ public partial class InvoiceHtmlRenderer
             sb.AppendLine($"Tax ({invoice.TaxRate}%): {currencySymbol}{invoice.TaxAmount:N2}");
         if (invoice.SecurityDeposit > 0)
             sb.AppendLine($"Security Deposit: {currencySymbol}{invoice.SecurityDeposit:N2}");
+        if (invoice.CustomFeeAmount > 0)
+            sb.AppendLine($"{BuildFeeLabel(invoice)}: {currencySymbol}{CalculateCustomFee(invoice):N2}");
+        if (invoice.DiscountAmount > 0)
+        {
+            var discountLabel = invoice.DiscountIsPercent ? $"Discount ({invoice.DiscountAmount}%)" : "Discount";
+            sb.AppendLine($"{discountLabel}: -{currencySymbol}{CalculateDiscount(invoice):N2}");
+        }
         sb.AppendLine($"TOTAL: {currencySymbol}{invoice.Total:N2}");
 
         if (invoice.AmountPaid > 0)
@@ -272,6 +279,11 @@ public partial class InvoiceHtmlRenderer
             ["TaxAmount"] = $"{currencySymbol}{invoice.TaxAmount:N2}",
             ["ShowSecurityDeposit"] = invoice.SecurityDeposit > 0,
             ["SecurityDeposit"] = $"{currencySymbol}{invoice.SecurityDeposit:N2}",
+            ["ShowCustomFee"] = invoice.CustomFeeAmount > 0,
+            ["CustomFeeLabel"] = BuildFeeLabel(invoice),
+            ["CustomFeeAmount"] = $"{currencySymbol}{CalculateCustomFee(invoice):N2}",
+            ["ShowDiscount"] = invoice.DiscountAmount > 0,
+            ["DiscountAmount"] = $"-{currencySymbol}{CalculateDiscount(invoice):N2}",
             ["Total"] = $"{currencySymbol}{invoice.Total:N2}",
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
@@ -450,6 +462,26 @@ public partial class InvoiceHtmlRenderer
 
         // Replace commas with <br> for HTML display
         return formatted.Replace(", ", "<br>");
+    }
+
+    private static decimal CalculateCustomFee(Invoice invoice)
+    {
+        return invoice.CustomFeeIsPercent
+            ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m)
+            : invoice.CustomFeeAmount;
+    }
+
+    private static decimal CalculateDiscount(Invoice invoice)
+    {
+        return invoice.DiscountIsPercent
+            ? invoice.Subtotal * (invoice.DiscountAmount / 100m)
+            : invoice.DiscountAmount;
+    }
+
+    private static string BuildFeeLabel(Invoice invoice)
+    {
+        var label = !string.IsNullOrWhiteSpace(invoice.CustomFeeLabel) ? invoice.CustomFeeLabel : "Fee";
+        return invoice.CustomFeeIsPercent ? $"{label} ({invoice.CustomFeeAmount}%)" : label;
     }
 
     [GeneratedRegex(@"\{\{#(\w+)\}\}([\s\S]*?)\{\{/\1\}\}", RegexOptions.Compiled)]
