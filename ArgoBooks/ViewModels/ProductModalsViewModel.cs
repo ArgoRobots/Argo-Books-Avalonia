@@ -629,7 +629,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
     public void OpenFilterModal(bool isExpensesTab)
     {
-        _isExpensesTab = isExpensesTab;
+        IsExpensesTab = isExpensesTab;
         OpenFilterModal();
     }
 
@@ -705,7 +705,7 @@ public partial class ProductModalsViewModel : ObservableObject
             return;
 
         AvailableCategories.Clear();
-        var targetType = _isExpensesTab ? CategoryType.Expense : CategoryType.Revenue;
+        var targetType = IsExpensesTab ? CategoryType.Expense : CategoryType.Revenue;
         var categories = companyData.Categories
             .Where(c => c.Type == targetType)
             .OrderBy(c => c.Name);
