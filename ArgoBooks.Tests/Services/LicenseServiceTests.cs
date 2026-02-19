@@ -53,7 +53,7 @@ public class LicenseServiceTests
     [Fact]
     public async Task SaveLicenseAsync_ValidLicense_SavesSuccessfully()
     {
-        await _licenseService.SaveLicenseAsync(true, false, "TEST-LICENSE-KEY");
+        await _licenseService.SaveLicenseAsync(true, "TEST-LICENSE-KEY");
 
         Assert.NotNull(_settingsService.SavedSettings);
         Assert.NotNull(_settingsService.SavedSettings.License.LicenseData);
@@ -66,7 +66,7 @@ public class LicenseServiceTests
     {
         _settingsService.ReturnNullSettings = true;
 
-        await _licenseService.SaveLicenseAsync(true, false, "TEST-KEY");
+        await _licenseService.SaveLicenseAsync(true, "TEST-KEY");
 
         // Should not throw and should not save
         Assert.Null(_settingsService.SavedSettings);
@@ -77,7 +77,7 @@ public class LicenseServiceTests
     {
         var beforeSave = DateTime.UtcNow;
 
-        await _licenseService.SaveLicenseAsync(true, true, "TEST-KEY");
+        await _licenseService.SaveLicenseAsync(true, "TEST-KEY");
 
         var afterSave = DateTime.UtcNow;
         Assert.NotNull(_settingsService.SavedSettings?.License.LastValidationDate);
@@ -86,47 +86,23 @@ public class LicenseServiceTests
     }
 
     [Fact]
-    public async Task SaveLicenseAsync_StandardLicense_SavesCorrectly()
-    {
-        await _licenseService.SaveLicenseAsync(true, false, "STANDARD-KEY");
-
-        var loaded = _licenseService.LoadLicense();
-
-        Assert.True(loaded.HasStandard);
-        Assert.False(loaded.HasPremium);
-    }
-
-    [Fact]
     public async Task SaveLicenseAsync_PremiumLicense_SavesCorrectly()
     {
-        await _licenseService.SaveLicenseAsync(false, true, "PREMIUM-KEY");
+        await _licenseService.SaveLicenseAsync(true, "PREMIUM-KEY");
 
         var loaded = _licenseService.LoadLicense();
 
-        Assert.False(loaded.HasStandard);
-        Assert.True(loaded.HasPremium);
-    }
-
-    [Fact]
-    public async Task SaveLicenseAsync_BothLicenses_SavesCorrectly()
-    {
-        await _licenseService.SaveLicenseAsync(true, true, "BOTH-KEY");
-
-        var loaded = _licenseService.LoadLicense();
-
-        Assert.True(loaded.HasStandard);
-        Assert.True(loaded.HasPremium);
+        Assert.True(loaded);
     }
 
     [Fact]
     public async Task SaveLicenseAsync_NoLicense_SavesCorrectly()
     {
-        await _licenseService.SaveLicenseAsync(false, false, null);
+        await _licenseService.SaveLicenseAsync(false, null);
 
         var loaded = _licenseService.LoadLicense();
 
-        Assert.False(loaded.HasStandard);
-        Assert.False(loaded.HasPremium);
+        Assert.False(loaded);
     }
 
     #endregion
@@ -134,73 +110,67 @@ public class LicenseServiceTests
     #region LoadLicense Tests
 
     [Fact]
-    public void LoadLicense_NoSavedLicense_ReturnsFalseFalse()
+    public void LoadLicense_NoSavedLicense_ReturnsFalse()
     {
         _settingsService.ClearLicenseData();
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     [Fact]
-    public void LoadLicense_NullSettings_ReturnsFalseFalse()
+    public void LoadLicense_NullSettings_ReturnsFalse()
     {
         _settingsService.ReturnNullSettings = true;
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     [Fact]
-    public void LoadLicense_NullLicenseData_ReturnsFalseFalse()
+    public void LoadLicense_NullLicenseData_ReturnsFalse()
     {
         _settingsService.GetSettings()!.License.LicenseData = null;
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     [Fact]
-    public void LoadLicense_NullSalt_ReturnsFalseFalse()
+    public void LoadLicense_NullSalt_ReturnsFalse()
     {
         _settingsService.GetSettings()!.License.Salt = null;
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     [Fact]
-    public void LoadLicense_NullIv_ReturnsFalseFalse()
+    public void LoadLicense_NullIv_ReturnsFalse()
     {
         _settingsService.GetSettings()!.License.Iv = null;
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     [Fact]
-    public async Task LoadLicense_AfterSave_ReturnsCorrectValues()
+    public async Task LoadLicense_AfterSave_ReturnsCorrectValue()
     {
-        await _licenseService.SaveLicenseAsync(true, true, "TEST-KEY");
+        await _licenseService.SaveLicenseAsync(true, "TEST-KEY");
 
         var result = _licenseService.LoadLicense();
 
-        Assert.True(result.HasStandard);
-        Assert.True(result.HasPremium);
+        Assert.True(result);
     }
 
     [Fact]
-    public void LoadLicense_InvalidEncryptedData_ReturnsFalseFalse()
+    public void LoadLicense_InvalidEncryptedData_ReturnsFalse()
     {
         _encryptionService.ThrowOnDecrypt = true;
         var settings = _settingsService.GetSettings()!;
@@ -210,8 +180,7 @@ public class LicenseServiceTests
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     #endregion
@@ -221,7 +190,7 @@ public class LicenseServiceTests
     [Fact]
     public async Task ClearLicenseAsync_ClearsLicenseData()
     {
-        await _licenseService.SaveLicenseAsync(true, true, "TEST-KEY");
+        await _licenseService.SaveLicenseAsync(true, "TEST-KEY");
         await _licenseService.ClearLicenseAsync();
 
         Assert.Null(_settingsService.SavedSettings?.License.LicenseData);
@@ -238,15 +207,14 @@ public class LicenseServiceTests
     }
 
     [Fact]
-    public async Task ClearLicenseAsync_AfterClear_LoadReturnsNoLicense()
+    public async Task ClearLicenseAsync_AfterClear_LoadReturnsFalse()
     {
-        await _licenseService.SaveLicenseAsync(true, true, "TEST-KEY");
+        await _licenseService.SaveLicenseAsync(true, "TEST-KEY");
         await _licenseService.ClearLicenseAsync();
 
         var result = _licenseService.LoadLicense();
 
-        Assert.False(result.HasStandard);
-        Assert.False(result.HasPremium);
+        Assert.False(result);
     }
 
     #endregion
@@ -254,18 +222,15 @@ public class LicenseServiceTests
     #region Round-Trip Tests
 
     [Theory]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    [InlineData(false, false)]
-    public async Task SaveAndLoad_RoundTrip_PreservesValues(bool hasStandard, bool hasPremium)
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SaveAndLoad_RoundTrip_PreservesValues(bool hasPremium)
     {
-        await _licenseService.SaveLicenseAsync(hasStandard, hasPremium, "LICENSE-KEY");
+        await _licenseService.SaveLicenseAsync(hasPremium, "LICENSE-KEY");
 
         var result = _licenseService.LoadLicense();
 
-        Assert.Equal(hasStandard, result.HasStandard);
-        Assert.Equal(hasPremium, result.HasPremium);
+        Assert.Equal(hasPremium, result);
     }
 
     #endregion
@@ -382,7 +347,7 @@ public class LicenseServiceTests
         public Task<bool> IsBiometricAvailableAsync() => Task.FromResult(false);
         public StringComparer PathComparer => StringComparer.OrdinalIgnoreCase;
         public void StorePasswordForBiometric(string key, string password) { }
-        
+
         /// <summary>
         /// Returns a stable mock machine ID for testing.
         /// </summary>

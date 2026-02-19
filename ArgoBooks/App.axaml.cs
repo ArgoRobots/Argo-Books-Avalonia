@@ -429,9 +429,9 @@ public class App : Application
     /// <summary>
     /// Raises the PlanStatusChanged event.
     /// </summary>
-    public static void RaisePlanStatusChanged(bool hasStandard, bool hasPremium)
+    public static void RaisePlanStatusChanged(bool hasPremium)
     {
-        PlanStatusChanged?.Invoke(null, new PlanStatusChangedEventArgs(hasStandard, hasPremium));
+        PlanStatusChanged?.Invoke(null, new PlanStatusChangedEventArgs(hasPremium));
     }
 
     #endregion
@@ -3697,8 +3697,7 @@ public class App : Application
 /// <summary>
 /// Event arguments for plan status changes.
 /// </summary>
-public class PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium) : EventArgs
+public class PlanStatusChangedEventArgs(bool hasPremium) : EventArgs
 {
-    public bool HasStandard { get; } = hasStandard;
     public bool HasPremium { get; } = hasPremium;
 }

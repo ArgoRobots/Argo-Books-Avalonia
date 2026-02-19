@@ -21,7 +21,6 @@ public class LicenseService
     /// </summary>
     private class LicenseData
     {
-        public bool HasStandard { get; init; }
         public bool HasPremium { get; init; }
         public string? LicenseKey { get; init; }
         public DateTime ActivationDate { get; init; }
@@ -50,10 +49,9 @@ public class LicenseService
     /// <summary>
     /// Saves the license status securely.
     /// </summary>
-    /// <param name="hasStandard">Whether user has Standard plan.</param>
     /// <param name="hasPremium">Whether user has Premium plan.</param>
     /// <param name="licenseKey">The license key that was verified.</param>
-    public async Task SaveLicenseAsync(bool hasStandard, bool hasPremium, string? licenseKey)
+    public async Task SaveLicenseAsync(bool hasPremium, string? licenseKey)
     {
         var settings = _settingsService.GetSettings();
         if (settings == null)
@@ -61,7 +59,6 @@ public class LicenseService
 
         var licenseData = new LicenseData
         {
-            HasStandard = hasStandard,
             HasPremium = hasPremium,
             LicenseKey = licenseKey,
             ActivationDate = DateTime.UtcNow
@@ -92,8 +89,8 @@ public class LicenseService
     /// <summary>
     /// Loads the saved license status.
     /// </summary>
-    /// <returns>Tuple of (hasStandard, hasPremium) or (false, false) if no valid license.</returns>
-    public (bool HasStandard, bool HasPremium) LoadLicense()
+    /// <returns>True if the user has Premium access, false otherwise.</returns>
+    public bool LoadLicense()
     {
         try
         {
@@ -102,7 +99,7 @@ public class LicenseService
                 settings.License.Salt == null ||
                 settings.License.Iv == null)
             {
-                return (false, false);
+                return false;
             }
 
             var encryptedData = Convert.FromBase64String(settings.License.LicenseData);
@@ -111,14 +108,14 @@ public class LicenseService
             var licenseData = TryDecryptLicense(encryptedData, machineKey, settings.License.Salt, settings.License.Iv);
 
             if (licenseData == null)
-                return (false, false);
+                return false;
 
-            return (licenseData.HasStandard, licenseData.HasPremium);
+            return licenseData.HasPremium;
         }
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.License, "Failed to load license status");
-            return (false, false);
+            return false;
         }
     }
 
