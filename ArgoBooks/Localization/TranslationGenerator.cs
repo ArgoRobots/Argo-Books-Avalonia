@@ -360,22 +360,30 @@ public partial class TranslationGenerator
     }
 
     /// <summary>
-    /// Translates all collected strings to the specified languages.
+    /// Translates all collected strings to the specified languages, saving each language file immediately.
+    /// Only translates strings that don't already exist in the output files, preserving progress across runs.
     /// </summary>
     /// <param name="englishStrings">Dictionary of key -> English text.</param>
     /// <param name="targetLanguages">List of target languages (names like "French" or ISO codes like "fr").</param>
+    /// <param name="outputDirectory">Directory to save JSON files to after each language completes.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Dictionary of ISO code -> (key -> translated text).</returns>
-    public async Task<Dictionary<string, Dictionary<string, string>>> TranslateAllAsync(
+    public async Task TranslateAllAsync(
         Dictionary<string, string> englishStrings,
         IEnumerable<string> targetLanguages,
+        string outputDirectory,
         CancellationToken cancellationToken = default)
     {
-        var results = new Dictionary<string, Dictionary<string, string>>();
-        var languageList = targetLanguages.ToList();
+        Directory.CreateDirectory(outputDirectory);
 
+        var languageList = targetLanguages.ToList();
         var totalLanguages = languageList.Count;
         var currentLanguage = 0;
+
+        var jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
 
         foreach (var language in languageList)
         {
@@ -398,20 +406,75 @@ public partial class TranslationGenerator
             }
 
             if (isoCode == "en")
+                continue;
+
+            var filePath = Path.Combine(outputDirectory, $"{isoCode}.json");
+
+            // Load existing translations to preserve previous work
+            var existing = await LoadExistingTranslationsAsync(filePath);
+
+            // Build full translation: reuse existing, identify new strings to translate
+            var fullTranslation = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var stringsToTranslate = new Dictionary<string, string>();
+
+            foreach (var (key, englishText) in englishStrings)
             {
-                // For English, just copy the strings
-                results["en"] = new Dictionary<string, string>(englishStrings);
+                if (existing.TryGetValue(key, out var existingTranslation) && !string.IsNullOrEmpty(existingTranslation))
+                {
+                    fullTranslation[key] = existingTranslation;
+                }
+                else
+                {
+                    stringsToTranslate[key] = englishText;
+                }
+            }
+
+            if (stringsToTranslate.Count == 0)
+            {
+                ReportProgress($"Skipping {displayName} ({isoCode}) - already up to date", currentLanguage, totalLanguages);
                 continue;
             }
 
-            ReportProgress($"Translating to {displayName} ({isoCode})...", currentLanguage, totalLanguages);
+            ReportProgress($"Translating {stringsToTranslate.Count} new strings to {displayName} ({isoCode})...", currentLanguage, totalLanguages);
 
-            var translations = await TranslateToLanguageAsync(englishStrings, isoCode, cancellationToken);
-            results[isoCode] = translations;
+            // Translate only the new strings
+            var translations = await TranslateToLanguageAsync(stringsToTranslate, isoCode, cancellationToken);
+
+            foreach (var (key, value) in translations)
+            {
+                fullTranslation[key] = value;
+            }
+
+            // Save immediately after this language completes
+            var json = JsonSerializer.Serialize(fullTranslation, jsonOptions);
+            await File.WriteAllTextAsync(filePath, json);
+            ReportProgress($"Saved {isoCode}.json ({stringsToTranslate.Count} new, {fullTranslation.Count} total)", currentLanguage, totalLanguages);
+
             _languagesTranslated++;
         }
+    }
 
-        return results;
+    /// <summary>
+    /// Loads existing translations from a JSON file if it exists.
+    /// </summary>
+    private static async Task<Dictionary<string, string>> LoadExistingTranslationsAsync(string filePath)
+    {
+        if (!File.Exists(filePath))
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(filePath);
+            var existing = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            if (existing != null)
+                return new Dictionary<string, string>(existing, StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            // If file is corrupt, start fresh
+        }
+
+        return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -525,33 +588,6 @@ public partial class TranslationGenerator
     }
 
     /// <summary>
-    /// Saves translation results to JSON files.
-    /// </summary>
-    /// <param name="translations">Dictionary of ISO code -> (key -> translated text).</param>
-    /// <param name="outputDirectory">Directory to save JSON files.</param>
-    public async Task SaveTranslationsAsync(
-        Dictionary<string, Dictionary<string, string>> translations,
-        string outputDirectory)
-    {
-        Directory.CreateDirectory(outputDirectory);
-
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-
-        foreach (var (isoCode, languageTranslations) in translations)
-        {
-            var filePath = Path.Combine(outputDirectory, $"{isoCode}.json");
-            var json = JsonSerializer.Serialize(languageTranslations, options);
-            await File.WriteAllTextAsync(filePath, json);
-
-            ReportProgress($"Saved {isoCode}.json", 0, 0);
-        }
-    }
-
-    /// <summary>
     /// Generates translations for all supported languages.
     /// </summary>
     /// <param name="sourceDirectory">Source code directory to scan.</param>
@@ -562,7 +598,6 @@ public partial class TranslationGenerator
         string outputDirectory,
         CancellationToken cancellationToken = default)
     {
-        // Collect strings from source
         var englishStrings = CollectStrings(sourceDirectory);
 
         if (englishStrings.Count == 0)
@@ -571,16 +606,9 @@ public partial class TranslationGenerator
             return;
         }
 
-        // Translate to all languages
-        var translations = await TranslateAllAsync(
-            englishStrings,
-            Languages.All,
-            cancellationToken);
+        await TranslateAllAsync(englishStrings, Languages.All, outputDirectory, cancellationToken);
 
-        // Save to files
-        await SaveTranslationsAsync(translations, outputDirectory);
-
-        ReportProgress("Translation generation complete!", translations.Count, translations.Count);
+        ReportProgress("Translation generation complete!", _languagesTranslated, _languagesTranslated);
     }
 
     /// <summary>
@@ -604,14 +632,9 @@ public partial class TranslationGenerator
             return;
         }
 
-        var translations = await TranslateAllAsync(
-            englishStrings,
-            languages,
-            cancellationToken);
+        await TranslateAllAsync(englishStrings, languages, outputDirectory, cancellationToken);
 
-        await SaveTranslationsAsync(translations, outputDirectory);
-
-        ReportProgress("Translation generation complete!", translations.Count, translations.Count);
+        ReportProgress("Translation generation complete!", _languagesTranslated, _languagesTranslated);
     }
 
     /// <summary>

@@ -214,15 +214,14 @@ Console.WriteLine();
 
 try
 {
-    var translations = await generator.TranslateAllAsync(
+    await generator.TranslateAllAsync(
         strings,
         languagesToTranslate,
+        outputDir,
         CancellationToken.None);
 
-    await generator.SaveTranslationsAsync(translations, outputDir);
-
     Console.WriteLine($"\nDone! Translations saved to: {outputDir}");
-    Console.WriteLine($"Generated {translations.Count} language files.");
+    Console.WriteLine($"Translated {generator.LanguagesTranslated} languages.");
 
     // Print Azure API usage summary
     Console.WriteLine();
@@ -236,6 +235,8 @@ try
 catch (Exception ex)
 {
     Console.WriteLine($"\nERROR: Translation failed: {ex.Message}");
+    if (generator.LanguagesTranslated > 0)
+        Console.WriteLine($"  {generator.LanguagesTranslated} language(s) were saved before the error. Re-run to continue.");
     return 1;
 }
 
