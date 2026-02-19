@@ -115,7 +115,9 @@ public partial class ProductModalsViewModel : ObservableObject
 
     /// <summary>
     /// Whether we're in expenses tab (purchase) or revenue tab (sales).
+    /// Used to show the relevant price field (Cost Price for expenses, Unit Price for revenue).
     /// </summary>
+    [ObservableProperty]
     private bool _isExpensesTab = true;
 
     // Original values for change detection in edit mode
@@ -233,7 +235,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
     public void OpenAddModal(bool isExpensesTab)
     {
-        _isExpensesTab = isExpensesTab;
+        IsExpensesTab = isExpensesTab;
         OpenAddModal();
     }
 
@@ -415,7 +417,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
     public void OpenEditModal(ProductDisplayItem? item, bool isExpensesTab)
     {
-        _isExpensesTab = isExpensesTab;
+        IsExpensesTab = isExpensesTab;
         OpenEditModal(item);
     }
 
