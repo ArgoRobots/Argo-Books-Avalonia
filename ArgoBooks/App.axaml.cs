@@ -429,9 +429,9 @@ public class App : Application
     /// <summary>
     /// Raises the PlanStatusChanged event.
     /// </summary>
-    public static void RaisePlanStatusChanged(bool hasStandard, bool hasPremium)
+    public static void RaisePlanStatusChanged(bool hasPremium)
     {
-        PlanStatusChanged?.Invoke(null, new PlanStatusChangedEventArgs(hasStandard, hasPremium));
+        PlanStatusChanged?.Invoke(null, new PlanStatusChangedEventArgs(hasPremium));
     }
 
     #endregion
@@ -894,10 +894,10 @@ public class App : Application
             // Load and apply saved license status
             if (LicenseService != null && _appShellViewModel != null)
             {
-                var (hasStandard, hasPremium) = LicenseService.LoadLicense();
-                if (hasStandard || hasPremium)
+                var hasPremium = LicenseService.LoadLicense();
+                if (hasPremium)
                 {
-                    _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
+                    _appShellViewModel.SetPlanStatus(hasPremium);
                 }
             }
 
@@ -3547,7 +3547,7 @@ public class App : Application
                 _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
-            _productsPageViewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            _productsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             // Reset modal state
             _productsPageViewModel.IsAddModalOpen = false;
             if (param is Dictionary<string, object?> dict)
@@ -3697,8 +3697,7 @@ public class App : Application
 /// <summary>
 /// Event arguments for plan status changes.
 /// </summary>
-public class PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium) : EventArgs
+public class PlanStatusChangedEventArgs(bool hasPremium) : EventArgs
 {
-    public bool HasStandard { get; } = hasStandard;
     public bool HasPremium { get; } = hasPremium;
 }

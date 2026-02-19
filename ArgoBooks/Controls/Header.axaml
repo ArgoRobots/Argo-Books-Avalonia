@@ -196,15 +196,6 @@
                               Width="20" Height="20" />
                 </Button>
 
-                <!-- My Plan - hidden when user has Premium -->
-                <Button Classes="header-icon"
-                        Command="{Binding OpenMyPlanCommand}"
-                        ToolTip.Tip="{loc:Loc 'My Plan'}"
-                        IsVisible="{Binding ShowUpgrade}">
-                    <PathIcon Data="{x:Static local:Icons.Star}"
-                              Width="20" Height="20" />
-                </Button>
-
                 <!-- Settings -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenSettingsCommand}"

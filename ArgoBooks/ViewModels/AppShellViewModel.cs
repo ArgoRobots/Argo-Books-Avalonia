@@ -360,6 +360,12 @@ public partial class AppShellViewModel : ViewModelBase
         // Create upgrade modal
         UpgradeModalViewModel = new UpgradeModalViewModel();
 
+        // Wire up license verification to enable premium features
+        UpgradeModalViewModel.KeyVerified += (_, _) =>
+        {
+            SetPremiumStatus(true);
+        };
+
         // Create company creation wizard
         CreateCompanyViewModel = new CreateCompanyViewModel();
 
@@ -529,18 +535,6 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up header's history button to open version history modal
         HeaderViewModel.OpenHistoryRequested += (_, _) => VersionHistoryModalViewModel.OpenCommand.Execute(null);
-
-        // Wire up header's my plan button to open upgrade modal
-        HeaderViewModel.OpenMyPlanRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
-
-        // Wire up license verification to enable premium features
-        UpgradeModalViewModel.KeyVerified += (_, _) =>
-        {
-            SidebarViewModel.HasPremium = true;
-            UpgradeModalViewModel.HasPremium = true;
-            HeaderViewModel.HasPremium = true;
-            UserPanelViewModel.HasPremium = true;
-        };
 
         // Wire up file menu's create new company to open the wizard
         FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
@@ -802,15 +796,10 @@ public partial class AppShellViewModel : ViewModelBase
     public void SetPremiumStatus(bool hasPremium)
     {
         SidebarViewModel.HasPremium = hasPremium;
-    }
-
-    /// <summary>
-    /// Sets the standard plan status to show or hide standard features.
-    /// </summary>
-    public void SetStandardStatus(bool hasStandard)
-    {
-        SidebarViewModel.HasStandard = hasStandard;
-        SettingsModalViewModel.HasStandard = hasStandard;
+        SettingsModalViewModel.HasPremium = hasPremium;
+        UpgradeModalViewModel.HasPremium = hasPremium;
+        HeaderViewModel.HasPremium = hasPremium;
+        UserPanelViewModel.HasPremium = hasPremium;
     }
 
     /// <summary>
@@ -824,19 +813,17 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Sets all plan statuses at once.
     /// </summary>
-    public void SetPlanStatus(bool hasStandard, bool hasPremium, bool hasEnterprise = false)
+    public void SetPlanStatus(bool hasPremium, bool hasEnterprise = false)
     {
-        SidebarViewModel.HasStandard = hasStandard;
         SidebarViewModel.HasPremium = hasPremium;
         SidebarViewModel.HasEnterprise = hasEnterprise;
-        SettingsModalViewModel.HasStandard = hasStandard;
-        UpgradeModalViewModel.HasStandard = hasStandard;
+        SettingsModalViewModel.HasPremium = hasPremium;
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
         UserPanelViewModel.HasPremium = hasPremium;
 
         // Notify any subscribers (e.g., ProductsPageViewModel) of plan status change
-        App.RaisePlanStatusChanged(hasStandard, hasPremium);
+        App.RaisePlanStatusChanged(hasPremium);
     }
 
     /// <summary>

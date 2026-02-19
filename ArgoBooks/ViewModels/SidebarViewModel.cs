@@ -68,9 +68,6 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showTeam; // Hidden until enterprise plan (always false for now)
 
     [ObservableProperty]
-    private bool _hasStandard; // Standard plan or higher
-
-    [ObservableProperty]
     private bool _hasPremium; // Premium plan
 
     [ObservableProperty]

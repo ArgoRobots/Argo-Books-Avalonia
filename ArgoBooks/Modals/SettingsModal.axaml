@@ -671,28 +671,28 @@
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        IsVisible="{Binding CanEnableWindowsHello}" />
-                                            <!-- Show "requires password" message when has Standard but no password -->
+                                            <!-- Show "requires password" message when has Premium but no password -->
                                             <TextBlock Text="{loc:Loc 'Requires a password to be set first'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        IsVisible="{Binding NeedsPasswordForWindowsHello}" />
-                                            <!-- Show "requires Standard" message when doesn't have Standard plan -->
-                                            <TextBlock Text="{loc:Loc 'Requires Standard plan or higher'}"
+                                            <!-- Show "requires Premium" message when doesn't have Premium plan -->
+                                            <TextBlock Text="{loc:Loc 'Requires Premium plan'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       IsVisible="{Binding !HasStandard}" />
+                                                       IsVisible="{Binding !HasPremium}" />
                                         </StackPanel>
-                                        <!-- Toggle when user has standard AND password -->
+                                        <!-- Toggle when user has Premium AND password -->
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding WindowsHelloEnabled}"
                                                       IsVisible="{Binding CanEnableWindowsHello}"
                                                       VerticalAlignment="Center" />
-                                        <!-- Upgrade button when user doesn't have standard -->
+                                        <!-- Upgrade button when user doesn't have Premium -->
                                         <Button Grid.Column="1"
                                                 Classes="primary-button"
                                                 Content="{loc:Loc 'Upgrade Now'}"
                                                 Command="{Binding UpgradeNowCommand}"
-                                                IsVisible="{Binding !HasStandard}"
+                                                IsVisible="{Binding !HasPremium}"
                                                 VerticalAlignment="Center"
                                                 Padding="12,6" />
                                     </Grid>

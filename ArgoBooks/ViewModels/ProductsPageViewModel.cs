@@ -168,7 +168,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private const int FreeProductLimit = 10;
 
     [ObservableProperty]
-    private bool _hasStandard;
+    private bool _hasPremium;
 
     [ObservableProperty]
     private int _expenseProductsCount;
@@ -177,19 +177,19 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private int _revenueProductsCount;
 
     /// <summary>
-    /// Gets remaining expense products the user can add (when no standard plan).
+    /// Gets remaining expense products the user can add (on the Free plan).
     /// </summary>
     public int RemainingExpenseProducts => Math.Max(0, FreeProductLimit - ExpenseProductsCount);
 
     /// <summary>
-    /// Gets remaining revenue products the user can add (when no standard plan).
+    /// Gets remaining revenue products the user can add (on the Free plan).
     /// </summary>
     public int RemainingRevenueProducts => Math.Max(0, FreeProductLimit - RevenueProductsCount);
 
     /// <summary>
     /// Gets whether the user can add more products to the current tab.
     /// </summary>
-    public bool CanAddProduct => HasStandard || (IsExpensesTabSelected ? RemainingExpenseProducts > 0 : RemainingRevenueProducts > 0);
+    public bool CanAddProduct => HasPremium || (IsExpensesTabSelected ? RemainingExpenseProducts > 0 : RemainingRevenueProducts > 0);
 
     /// <summary>
     /// Gets the text showing remaining products for the current tab.
@@ -206,7 +206,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Gets whether to show the upgrade button (when limit is reached).
     /// </summary>
-    public bool ShowUpgradeButton => !HasStandard && !CanAddProduct;
+    public bool ShowUpgradeButton => !HasPremium && !CanAddProduct;
 
     /// <summary>
     /// Event raised when the upgrade button is clicked.
@@ -216,7 +216,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Gets whether to show the remaining products label (only when no standard plan).
     /// </summary>
-    public bool ShowRemainingProducts => !HasStandard;
+    public bool ShowRemainingProducts => !HasPremium;
 
     partial void OnExpenseProductsCountChanged(int value)
     {
@@ -234,7 +234,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         OnPropertyChanged(nameof(ShowUpgradeButton));
     }
 
-    partial void OnHasStandardChanged(bool value)
+    partial void OnHasPremiumChanged(bool value)
     {
         OnPropertyChanged(nameof(CanAddProduct));
         OnPropertyChanged(nameof(ShowRemainingProducts));
@@ -434,12 +434,11 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
-    /// Handles plan status changes by updating HasStandard.
+    /// Handles plan status changes by updating HasPremium.
     /// </summary>
     private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
     {
-        HasStandard = e.HasStandard;
-        _ = e.HasPremium; // Available for future use
+        HasPremium = e.HasPremium;
     }
 
     /// <summary>

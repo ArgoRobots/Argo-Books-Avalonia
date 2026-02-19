@@ -354,15 +354,6 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the My Plan / Upgrade modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenMyPlan()
-    {
-        OpenMyPlanRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
     /// Opens the user menu.
     /// </summary>
     [RelayCommand]
@@ -456,11 +447,6 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when settings modal should be opened.
     /// </summary>
     public event EventHandler? OpenSettingsRequested;
-
-    /// <summary>
-    /// Event raised when My Plan / Upgrade modal should be opened.
-    /// </summary>
-    public event EventHandler? OpenMyPlanRequested;
 
     /// <summary>
     /// Event raised when save is requested.

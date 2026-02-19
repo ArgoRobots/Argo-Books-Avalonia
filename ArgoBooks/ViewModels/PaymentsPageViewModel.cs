@@ -142,12 +142,12 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 var newPayments = PaymentPortalService.ProcessSyncedPayments(
                     syncResponse.Payments, companyData);
 
+                // Always confirm all payments the server sent so they aren't re-sent
+                var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
+                await portalService.ConfirmSyncAsync(syncedIds);
+
                 if (newPayments.Count > 0)
                 {
-                    // Confirm the sync so the server marks them as synced
-                    var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
-                    await portalService.ConfirmSyncAsync(syncedIds);
-
                     // Mark data as changed
                     App.CompanyManager?.MarkAsChanged();
                 }
