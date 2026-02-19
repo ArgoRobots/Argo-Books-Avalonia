@@ -894,10 +894,10 @@ public class App : Application
             // Load and apply saved license status
             if (LicenseService != null && _appShellViewModel != null)
             {
-                var (hasStandard, hasPremium) = LicenseService.LoadLicense();
-                if (hasStandard || hasPremium)
+                var hasPremium = LicenseService.LoadLicense();
+                if (hasPremium)
                 {
-                    _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
+                    _appShellViewModel.SetPlanStatus(hasPremium);
                 }
             }
 
@@ -3547,7 +3547,7 @@ public class App : Application
                 _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
-            _productsPageViewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            _productsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             // Reset modal state
             _productsPageViewModel.IsAddModalOpen = false;
             if (param is Dictionary<string, object?> dict)

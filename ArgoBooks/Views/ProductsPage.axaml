@@ -156,7 +156,7 @@
                 <!-- Extra Buttons Content (Remaining Products + Upgrade) -->
                 <table:ArgoTable.ExtraButtonsContent>
                     <StackPanel Orientation="Horizontal" Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                        <!-- Remaining Products Label (only shown without standard plan) -->
+                        <!-- Remaining Products Label (only shown on Free plan) -->
                         <TextBlock Text="{Binding RemainingProductsText}"
                                    FontSize="12"
                                    Foreground="{DynamicResource TextTertiaryBrush}"

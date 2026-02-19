@@ -274,7 +274,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     #region Security Settings
 
     [ObservableProperty]
-    private bool _hasStandard; // Whether user has Standard plan or higher
+    private bool _hasPremium; // Whether user has Premium plan
 
     [ObservableProperty]
     private bool _windowsHelloEnabled;
@@ -289,15 +289,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _hasPassword;
 
     /// <summary>
-    /// Whether Windows Hello can be enabled (requires Standard plan AND password).
+    /// Whether Windows Hello can be enabled (requires Premium plan AND password).
     /// </summary>
-    public bool CanEnableWindowsHello => HasStandard && HasPassword;
+    public bool CanEnableWindowsHello => HasPremium && HasPassword;
 
     /// <summary>
     /// Whether the user needs to set a password before enabling Windows Hello.
-    /// Shows when user has Standard plan but no password.
+    /// Shows when user has Premium plan but no password.
     /// </summary>
-    public bool NeedsPasswordForWindowsHello => HasStandard && !HasPassword;
+    public bool NeedsPasswordForWindowsHello => HasPremium && !HasPassword;
 
     /// <summary>
     /// Whether the user needs to set a password before enabling Auto-Lock.
@@ -445,9 +445,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called when HasStandard changes - notify Windows Hello properties.
+    /// Called when HasPremium changes - notify Windows Hello properties.
     /// </summary>
-    partial void OnHasStandardChanged(bool value)
+    partial void OnHasPremiumChanged(bool value)
     {
         OnPropertyChanged(nameof(CanEnableWindowsHello));
         OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
