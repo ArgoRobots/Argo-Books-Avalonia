@@ -20,8 +20,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private const string LicenseValidationUrl = "https://argorobots.com/api/license/validate.php";
     private const string ApiHostUrl = "https://argorobots.com";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
-    private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";
-    private const string PremiumUpgradeUrl = "http://localhost/argo-books-website/upgrade/premium/";
+    private const string PricingApiUrl = "https://argorobots.com/api/pricing/plans.php";
+    private const string PremiumUpgradeUrl = "https://argorobots.com/upgrade/premium/";
     private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
 
     [ObservableProperty]
@@ -70,28 +70,22 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
     }
 
+    #region Pricing
+
+    [ObservableProperty]
+    private string _premiumMonthlyPrice = "$10 CAD";
+
+    [ObservableProperty]
+    private string _premiumBillingPeriod = "/month";
+
+    private bool _hasFetchedPricing;
+
+    #endregion
+
     #region Plan Status
 
     [ObservableProperty]
-    private bool _hasStandard;
-
-    [ObservableProperty]
     private bool _hasPremium;
-
-    /// <summary>
-    /// Gets whether to show "Active" badge on Standard card (has Standard but not Premium).
-    /// </summary>
-    public bool ShowStandardActive => HasStandard && !HasPremium;
-
-    /// <summary>
-    /// Gets whether to show "Included" text on Standard card (has Premium).
-    /// </summary>
-    public bool ShowStandardIncluded => HasPremium;
-
-    /// <summary>
-    /// Gets whether to show Select Standard button (no plan at all).
-    /// </summary>
-    public bool ShowSelectStandard => !HasStandard && !HasPremium;
 
     /// <summary>
     /// Gets whether to show "Active" badge on Premium card.
@@ -108,17 +102,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
     /// </summary>
     public bool ShowCancelPremium => HasPremium;
 
-    partial void OnHasStandardChanged(bool value)
-    {
-        OnPropertyChanged(nameof(ShowStandardActive));
-        OnPropertyChanged(nameof(ShowSelectStandard));
-    }
-
     partial void OnHasPremiumChanged(bool value)
     {
-        OnPropertyChanged(nameof(ShowStandardActive));
-        OnPropertyChanged(nameof(ShowStandardIncluded));
-        OnPropertyChanged(nameof(ShowSelectStandard));
         OnPropertyChanged(nameof(ShowPremiumActive));
         OnPropertyChanged(nameof(ShowSelectPremium));
         OnPropertyChanged(nameof(ShowCancelPremium));
@@ -147,6 +132,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private void Open()
     {
         IsOpen = true;
+
+        // Fetch pricing in the background when modal opens (once per session)
+        if (!_hasFetchedPricing)
+        {
+            _ = FetchPricingAsync();
+        }
     }
 
     [RelayCommand]
@@ -158,13 +149,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
-    }
-
-    [RelayCommand]
-    private void SelectStandard()
-    {
-        OpenUrl(StandardUpgradeUrl);
-        Close();
     }
 
     [RelayCommand]
@@ -292,16 +276,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 SuccessMessage = message.Replace("can be redeemed", "has been redeemed");
 
                 // Save license securely
-                // API returns types like "standard_key", "premium_key" - check with Contains
                 var licenseType = response.Type?.ToLowerInvariant() ?? "";
-                var hasStandard = licenseType.Contains("standard") || licenseType.Contains("premium");
                 var hasPremium = licenseType.Contains("premium");
 
                 if (App.LicenseService != null)
                 {
                     try
                     {
-                        await App.LicenseService.SaveLicenseAsync(hasStandard, hasPremium, key);
+                        await App.LicenseService.SaveLicenseAsync(hasPremium, key);
                     }
                     catch (Exception ex)
                     {
@@ -403,6 +385,59 @@ public partial class UpgradeModalViewModel : ViewModelBase
     #region Events
 
     public event EventHandler<string>? KeyVerified;
+
+    #endregion
+
+    #region Pricing API
+
+    /// <summary>
+    /// Fetches plan pricing from the website API.
+    /// Falls back to hardcoded defaults if the request fails.
+    /// </summary>
+    private async Task FetchPricingAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetStringAsync(PricingApiUrl);
+            var pricing = JsonSerializer.Deserialize<PricingApiResponse>(response);
+
+            if (pricing?.Premium != null)
+            {
+                PremiumMonthlyPrice = pricing.Premium.PriceDisplay;
+                PremiumBillingPeriod = pricing.Premium.BillingPeriod;
+            }
+
+            _hasFetchedPricing = true;
+        }
+        catch (Exception ex)
+        {
+            _hasFetchedPricing = true;
+
+            // Only log if it's not a connectivity issue
+            var isConnectivityError = ex is HttpRequestException
+                || (ex is TaskCanceledException tce && (tce.InnerException is TimeoutException || tce.CancellationToken != default));
+
+            if (!isConnectivityError || await _connectivityService.IsInternetAvailableAsync())
+            {
+                App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch pricing from API");
+            }
+        }
+    }
+
+    private class PricingApiResponse
+    {
+        [JsonPropertyName("premium")]
+        public PlanPricing? Premium { get; init; }
+    }
+
+    private class PlanPricing
+    {
+        [JsonPropertyName("price_display")]
+        public string PriceDisplay { get; init; } = "$10 CAD";
+
+        [JsonPropertyName("billing_period")]
+        public string BillingPeriod { get; init; } = "/month";
+    }
 
     #endregion
 
