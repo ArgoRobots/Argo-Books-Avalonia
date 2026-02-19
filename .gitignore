@@ -460,11 +460,6 @@ $RECYCLE.BIN/
 .env.local
 .env.*.local
 
-##
-## Translation tool output
-##
-**/translations/
-
 # Draw.io
 *.bkp
 *.dtmp
