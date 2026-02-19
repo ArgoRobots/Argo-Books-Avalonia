@@ -200,6 +200,7 @@ public class ErrorLoggerTests
         Assert.NotEmpty(json);
         Assert.Contains("Test error", json);
         Assert.Contains("Test warning", json);
+        Assert.Contains("Api", json);
     }
 
     #endregion
