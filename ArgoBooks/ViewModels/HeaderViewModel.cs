@@ -106,6 +106,9 @@ public partial class HeaderViewModel : ViewModelBase
     private string? _userInitials;
 
     [ObservableProperty]
+    private int _userId;
+
+    [ObservableProperty]
     private string? _userEmail;
 
     [ObservableProperty]
@@ -259,7 +262,9 @@ public partial class HeaderViewModel : ViewModelBase
         PageTitle = "Dashboard";
         HasUnreadNotifications = true;
         UnreadNotificationCount = 3;
+        UserId = 1;
         UserDisplayName = "John Doe";
+        UserEmail = "john@example.com";
         UserInitials = "JD";
         UserRole = "Administrator";
     }
@@ -493,8 +498,9 @@ public partial class HeaderViewModel : ViewModelBase
     /// <param name="email">User email.</param>
     /// <param name="role">User role.</param>
     /// <param name="avatarSource">Optional avatar image.</param>
-    public void SetUserInfo(string? displayName, string? email = null, string? role = null, Bitmap? avatarSource = null)
+    public void SetUserInfo(string? displayName, string? email = null, string? role = null, Bitmap? avatarSource = null, int userId = 0)
     {
+        UserId = userId;
         UserDisplayName = displayName;
         UserEmail = email;
         UserRole = role;

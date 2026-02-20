@@ -3,6 +3,7 @@ using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -509,6 +510,17 @@ public partial class ProductModalsViewModel : ObservableObject
         }
 
         var productToEdit = _editingProduct;
+        App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
+        if (oldSku != newSku) changes["SKU"] = new FieldChange { OldValue = oldSku ?? "", NewValue = newSku ?? "" };
+        if (oldUnitPrice != newUnitPrice) changes["Unit Price"] = new FieldChange { OldValue = oldUnitPrice.ToString("F2"), NewValue = newUnitPrice.ToString("F2") };
+        if (oldCostPrice != newCostPrice) changes["Cost Price"] = new FieldChange { OldValue = oldCostPrice.ToString("F2"), NewValue = newCostPrice.ToString("F2") };
+        if (oldTrackInventory != newTrackInventory) changes["Track Inventory"] = new FieldChange { OldValue = oldTrackInventory.ToString(), NewValue = newTrackInventory.ToString() };
+        if (oldReorderPoint != newReorderPoint) changes["Reorder Point"] = new FieldChange { OldValue = oldReorderPoint.ToString(), NewValue = newReorderPoint.ToString() };
+        if (oldOverstockThreshold != newOverstockThreshold) changes["Overstock Threshold"] = new FieldChange { OldValue = oldOverstockThreshold.ToString(), NewValue = newOverstockThreshold.ToString() };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         productToEdit.Name = newName;
         productToEdit.Description = newDescription;
         productToEdit.Sku = newSku;
@@ -593,6 +605,7 @@ public partial class ProductModalsViewModel : ObservableObject
         if (product != null)
         {
             var deletedProduct = product;
+            App.EventLogService?.CapturePreDeletionSnapshot("Product", deletedProduct.Id);
             companyData.Products.Remove(product);
             companyData.MarkAsModified();
 

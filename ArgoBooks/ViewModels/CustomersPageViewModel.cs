@@ -651,6 +651,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
         // Update the customer
         var customerToEdit = _editingCustomer;
+        App.EventLogService?.CapturePreModificationSnapshot("Customer", customerToEdit.Id);
         customerToEdit.Name = newName;
         customerToEdit.Email = newEmail;
         customerToEdit.Phone = newPhone;

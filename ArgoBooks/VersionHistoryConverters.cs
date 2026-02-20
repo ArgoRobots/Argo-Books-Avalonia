@@ -20,4 +20,11 @@ public static class VersionHistoryConverters
     public static readonly IValueConverter UndoneStrikethrough =
         new FuncValueConverter<bool, TextDecorationCollection?>(isUndone =>
             isUndone ? TextDecorations.Strikethrough : null);
+
+    /// <summary>
+    /// Converts IsUndo (bool) to the appropriate icon geometry (Undo or Redo).
+    /// </summary>
+    public static readonly IValueConverter UndoRedoIcon =
+        new FuncValueConverter<bool, Geometry?>(isUndo =>
+            Geometry.Parse(isUndo ? Icons.Undo : Icons.Redo));
 }

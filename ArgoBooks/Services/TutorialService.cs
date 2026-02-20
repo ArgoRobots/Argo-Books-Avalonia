@@ -10,6 +10,7 @@ public class TutorialService
 {
     private IGlobalSettingsService? _globalSettingsService;
     private string? _currentCompanyPath;
+    private bool _hintsDisabledThisSession;
 
     /// <summary>
     /// Gets the singleton instance of the TutorialService.
@@ -172,7 +173,7 @@ public class TutorialService
     /// <summary>
     /// Gets whether first-visit hints should be shown.
     /// </summary>
-    public bool ShowFirstVisitHints => Settings.ShowFirstVisitHints;
+    public bool ShowFirstVisitHints => !_hintsDisabledThisSession && Settings.ShowFirstVisitHints;
 
     /// <summary>
     /// Sets the global settings service for tutorial persistence.
@@ -440,13 +441,14 @@ public class TutorialService
     /// </summary>
     public void DisableFirstVisitHints()
     {
+        _hintsDisabledThisSession = true;
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.ShowFirstVisitHints = false;
             SaveSettings();
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
+        TutorialStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -454,13 +456,14 @@ public class TutorialService
     /// </summary>
     public void EnableFirstVisitHints()
     {
+        _hintsDisabledThisSession = false;
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.ShowFirstVisitHints = true;
             SaveSettings();
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
+        TutorialStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -469,6 +472,7 @@ public class TutorialService
     /// </summary>
     public void ResetAllTutorials()
     {
+        _hintsDisabledThisSession = false;
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {

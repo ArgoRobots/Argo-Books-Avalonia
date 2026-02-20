@@ -63,9 +63,27 @@ public partial class VersionHistoryItem : ObservableObject
 
     /// <summary>
     /// Whether the undo/redo button should be visible at all.
-    /// Hidden for undo/redo meta-events.
     /// </summary>
-    public bool ShowUndoRedoButton => Action is not (AuditAction.Undone or AuditAction.Redone);
+    public bool ShowUndoRedoButton => CanUndo || CanRedo;
+
+    /// <summary>
+    /// Formatted summary of field-level changes for Modified events (e.g., "Name: 'test' → '123test'").
+    /// </summary>
+    public string? ChangesSummary
+    {
+        get
+        {
+            if (Event.Changes == null || Event.Changes.Count == 0)
+                return null;
+            return string.Join("\n", Event.Changes.Select(c =>
+                $"{c.Key}: '{c.Value.OldValue}' → '{c.Value.NewValue}'"));
+        }
+    }
+
+    /// <summary>
+    /// Whether there are field-level changes to display.
+    /// </summary>
+    public bool HasChanges => Event.Changes is { Count: > 0 };
 
     /// <summary>
     /// Gets the ChangeType equivalent for reusing existing converters.
@@ -74,10 +92,18 @@ public partial class VersionHistoryItem : ObservableObject
     {
         AuditAction.Added => ChangeType.Added,
         AuditAction.Deleted => ChangeType.Deleted,
-        AuditAction.Undone => ChangeType.Deleted,
-        AuditAction.Redone => ChangeType.Added,
         _ => ChangeType.Modified
     };
+
+    /// <summary>
+    /// Nested undo/redo sub-items for this event.
+    /// </summary>
+    public ObservableCollection<VersionHistorySubItem> SubItems { get; } = [];
+
+    /// <summary>
+    /// Whether this event has any sub-items.
+    /// </summary>
+    public bool HasSubItems => SubItems.Count > 0;
 
     public VersionHistoryItem(AuditEvent evt, VersionHistoryModalViewModel parent, EventLogService eventLogService)
     {
@@ -97,6 +123,27 @@ public partial class VersionHistoryItem : ObservableObject
         CanUndo = eventLogService.CanUndoEvent(Event);
         CanRedo = eventLogService.CanRedoEvent(Event);
     }
+}
+
+/// <summary>
+/// Display item for an undo/redo sub-entry nested under a parent event.
+/// </summary>
+public class VersionHistorySubItem
+{
+    /// <summary>
+    /// Whether this is an undo (true) or redo (false).
+    /// </summary>
+    public bool IsUndo { get; init; }
+
+    /// <summary>
+    /// Label text ("Undone" or "Redone").
+    /// </summary>
+    public string Label => IsUndo ? "Undone" : "Redone";
+
+    /// <summary>
+    /// Formatted time string (e.g., "3:42 PM").
+    /// </summary>
+    public string TimeText { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -214,13 +261,10 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
 
         if (_eventLogService.UndoEvent(item.Event))
         {
-            // Also remove the action from the UndoRedoManager's stack
-            // so the standard Ctrl+Z doesn't re-undo it
-            var action = GetUndoableActionForEvent(item.Event);
-            if (action != null)
-                App.UndoRedoManager.RemoveFromUndoStack(action);
-
             App.CompanyManager?.MarkAsChanged();
+
+            // Refresh the current page so the UI reflects the undone change
+            App.NavigationService?.RefreshCurrentPage();
         }
     }
 
@@ -236,6 +280,9 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
         if (_eventLogService.RedoEvent(item.Event))
         {
             App.CompanyManager?.MarkAsChanged();
+
+            // Refresh the current page so the UI reflects the redone change
+            App.NavigationService?.RefreshCurrentPage();
         }
     }
 
@@ -265,40 +312,91 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
 
     /// <summary>
     /// Rebuilds the grouped timeline from the event log.
+    /// Undo/redo meta-events are nested as sub-items under their parent events.
     /// </summary>
     private void RefreshEvents()
     {
         if (_eventLogService == null)
             return;
 
-        // Parse filter
+        // Parse filter — "Undone" means "show events that have been undone"
         AuditAction? actionFilter = SelectedActionFilter switch
         {
             "Added" => AuditAction.Added,
             "Modified" => AuditAction.Modified,
             "Deleted" => AuditAction.Deleted,
-            "Undone" => AuditAction.Undone,
             _ => null
         };
+        var filterUndoneOnly = SelectedActionFilter == "Undone";
 
         var entityTypeFilter = SelectedEntityTypeFilter is "All" or null
             ? null
             : SelectedEntityTypeFilter;
 
-        // Get events filtered by action/entity type (no text search — we handle that with Levenshtein)
-        // Only show saved events — unsaved events are still pending in the undo stack
-        var events = _eventLogService.GetFilteredEvents(
+        // Get all events (no action filter yet — we need meta-events for nesting)
+        var allEvents = _eventLogService.GetFilteredEvents(
             searchQuery: null,
-            actionFilter: actionFilter,
+            actionFilter: null,
             entityTypeFilter: entityTypeFilter)
-            .Where(e => e.IsSaved)
             .ToList();
+
+        // Meta-events (Undone/Redone) are always included as sub-items (even unsaved)
+        // so that clicking undo in the modal immediately shows the nested entry
+        var metaEvents = allEvents
+            .Where(e => e.Action is AuditAction.Undone or AuditAction.Redone)
+            .ToList();
+
+        // Primary events must be saved to appear in the timeline
+        var allPrimaryEvents = allEvents
+            .Where(e => e.IsSaved && e.Action is not (AuditAction.Undone or AuditAction.Redone))
+            .ToList();
+        var primaryEvents = allPrimaryEvents.ToList();
+
+        // Apply action filter to primary events only
+        if (actionFilter.HasValue)
+            primaryEvents = primaryEvents.Where(e => e.Action == actionFilter.Value).ToList();
+
+        // Apply "Undone" filter — show only events that have been undone
+        if (filterUndoneOnly)
+            primaryEvents = primaryEvents.Where(e => e.IsUndone).ToList();
+
+        // Compute per-entity sequential undo/redo constraints.
+        // For each entity, only the most recent non-undone event can be undone,
+        // and only the oldest undone event can be redone. This prevents nonsensical
+        // operations like undoing an "Add" when the entity was subsequently deleted.
+        var undoableEventIds = new HashSet<string>();
+        var redoableEventIds = new HashSet<string>();
+
+        var eventsByEntity = allPrimaryEvents
+            .Where(e => !string.IsNullOrEmpty(e.EntityType) && !string.IsNullOrEmpty(e.EntityId))
+            .GroupBy(e => (e.EntityType, e.EntityId));
+
+        foreach (var entityGroup in eventsByEntity)
+        {
+            var ordered = entityGroup.OrderByDescending(e => e.Timestamp).ToList();
+
+            // Most recent non-undone event can be undone
+            var latestActive = ordered.FirstOrDefault(e => !e.IsUndone);
+            if (latestActive != null)
+                undoableEventIds.Add(latestActive.Id);
+
+            // Oldest undone event can be redone (forward chronological order)
+            var oldestUndone = ordered.LastOrDefault(e => e.IsUndone);
+            if (oldestUndone != null)
+                redoableEventIds.Add(oldestUndone.Id);
+        }
+
+        // Build lookup: parent event ID → list of meta-events
+        var metaByParent = metaEvents
+            .Where(e => !string.IsNullOrEmpty(e.RelatedEventId))
+            .GroupBy(e => e.RelatedEventId!)
+            .ToDictionary(g => g.Key, g => g.OrderBy(e => e.Timestamp).ToList());
 
         // Apply fuzzy search using Levenshtein scoring
         List<AuditEvent> filteredEvents;
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
-            filteredEvents = events
+            filteredEvents = primaryEvents
                 .Select(e => new
                 {
                     Event = e,
@@ -316,15 +414,20 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
         }
         else
         {
-            filteredEvents = events
+            filteredEvents = primaryEvents
                 .OrderByDescending(e => e.Timestamp)
                 .ToList();
         }
 
-        TotalEventCount = _eventLogService.SavedEventCount;
+        // Count only primary events (meta-events are sub-items, not counted separately)
+        var totalPrimaryCount = _eventLogService.GetFilteredEvents(searchQuery: null)
+            .Count(e => e.IsSaved && e.Action is not (AuditAction.Undone or AuditAction.Redone));
+
+        TotalEventCount = totalPrimaryCount;
         FilteredEventCount = filteredEvents.Count;
         HasEvents = TotalEventCount > 0;
         IsFiltered = actionFilter.HasValue
+                     || filterUndoneOnly
                      || !string.IsNullOrWhiteSpace(entityTypeFilter)
                      || !string.IsNullOrWhiteSpace(SearchQuery);
         ShowNoResults = HasEvents && IsFiltered && FilteredEventCount == 0;
@@ -346,7 +449,29 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
             var historyGroup = new VersionHistoryGroup { DateLabel = dateLabel };
             foreach (var evt in group)
             {
-                historyGroup.Items.Add(new VersionHistoryItem(evt, this, _eventLogService));
+                var item = new VersionHistoryItem(evt, this, _eventLogService);
+
+                // Apply per-entity sequential constraints
+                if (item.CanUndo && !undoableEventIds.Contains(evt.Id))
+                    item.CanUndo = false;
+                if (item.CanRedo && !redoableEventIds.Contains(evt.Id))
+                    item.CanRedo = false;
+
+                // Attach undo/redo meta-events as sub-items
+                if (metaByParent.TryGetValue(evt.Id, out var relatedMeta))
+                {
+                    foreach (var meta in relatedMeta)
+                    {
+                        item.SubItems.Add(new VersionHistorySubItem
+                        {
+                            IsUndo = meta.Action == AuditAction.Undone,
+                            TimeText = meta.Timestamp.ToLocalTime().ToString("h:mm tt")
+                        });
+                    }
+
+                }
+
+                historyGroup.Items.Add(item);
             }
             Groups.Add(historyGroup);
         }
@@ -361,13 +486,4 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
         }
     }
 
-    private IUndoableAction? GetUndoableActionForEvent(AuditEvent evt)
-    {
-        // The EventLogService maintains the mapping internally.
-        // For RemoveFromUndoStack, we need to search by description match
-        // since the action reference is inside the service.
-        // This is a best-effort approach — if the action isn't in the stack, it's a no-op.
-        var undoHistory = App.UndoRedoManager.UndoHistory;
-        return undoHistory.FirstOrDefault(a => a.Description == evt.Description);
-    }
 }

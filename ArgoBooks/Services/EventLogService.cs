@@ -22,8 +22,14 @@ public class EventLogService
 {
     private readonly List<AuditEvent> _events = [];
     private readonly Dictionary<string, IUndoableAction> _undoableActions = new();
+    private readonly Dictionary<IUndoableAction, string> _actionToEventId = new();
     private readonly int _maxEventCount;
     private CompanyData? _companyData;
+    private UndoRedoManager? _undoRedoManager;
+    private string? _pendingPreModSnapshot;
+    private string? _pendingDeletionEntityId;
+    private string? _pendingDeletionSnapshot;
+    private Dictionary<string, FieldChange>? _pendingChanges;
 
     /// <summary>
     /// Raised when an event is recorded or modified (for UI updates).
@@ -40,6 +46,89 @@ public class EventLogService
     }
 
     /// <summary>
+    /// Sets the UndoRedoManager reference for bidirectional synchronization.
+    /// When EventLogService performs selective undo/redo, it removes the action from
+    /// UndoRedoManager's stacks. When UndoRedoManager performs linear undo/redo,
+    /// EventLogService updates the audit trail.
+    /// </summary>
+    public void SetUndoRedoManager(UndoRedoManager undoRedoManager)
+    {
+        if (_undoRedoManager != null)
+        {
+            _undoRedoManager.ActionUndone -= OnLinearUndo;
+            _undoRedoManager.ActionRedone -= OnLinearRedo;
+        }
+
+        _undoRedoManager = undoRedoManager;
+        _undoRedoManager.ActionUndone += OnLinearUndo;
+        _undoRedoManager.ActionRedone += OnLinearRedo;
+    }
+
+    /// <summary>
+    /// Called when UndoRedoManager performs a linear undo (Ctrl+Z).
+    /// Finds the matching audit event and updates its state.
+    /// </summary>
+    private void OnLinearUndo(object? sender, ActionRecordedEventArgs e)
+    {
+        var eventId = _actionToEventId.GetValueOrDefault(e.Action);
+        if (eventId == null) return;
+
+        var evt = _events.FirstOrDefault(ev => ev.Id == eventId);
+        if (evt == null || evt.IsUndone) return;
+
+        evt.IsUndone = true;
+
+        // Record the undo in the audit trail
+        var undoEvent = new AuditEvent
+        {
+            Id = GenerateEventId(),
+            Timestamp = DateTime.UtcNow,
+            Action = AuditAction.Undone,
+            EntityType = evt.EntityType,
+            EntityId = evt.EntityId,
+            EntityName = evt.EntityName,
+            Description = $"Undo: {evt.Description}",
+            RelatedEventId = evt.Id
+        };
+        _events.Add(undoEvent);
+
+        TrimIfNeeded();
+        EventsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Called when UndoRedoManager performs a linear redo (Ctrl+Y).
+    /// Finds the matching audit event and updates its state.
+    /// </summary>
+    private void OnLinearRedo(object? sender, ActionRecordedEventArgs e)
+    {
+        var eventId = _actionToEventId.GetValueOrDefault(e.Action);
+        if (eventId == null) return;
+
+        var evt = _events.FirstOrDefault(ev => ev.Id == eventId);
+        if (evt == null || !evt.IsUndone) return;
+
+        evt.IsUndone = false;
+
+        // Record the redo in the audit trail
+        var redoEvent = new AuditEvent
+        {
+            Id = GenerateEventId(),
+            Timestamp = DateTime.UtcNow,
+            Action = AuditAction.Redone,
+            EntityType = evt.EntityType,
+            EntityId = evt.EntityId,
+            EntityName = evt.EntityName,
+            Description = $"Redo: {evt.Description}",
+            RelatedEventId = evt.Id
+        };
+        _events.Add(redoEvent);
+
+        TrimIfNeeded();
+        EventsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Initializes the service with persisted events from a loaded company file.
     /// Reconstructs undoable actions for persisted events that have entity snapshots
     /// or whose entities can be found in CompanyData.
@@ -48,6 +137,7 @@ public class EventLogService
     {
         _events.Clear();
         _undoableActions.Clear();
+        _actionToEventId.Clear();
         _companyData = companyData;
 
         if (persistedEvents.Count > _maxEventCount)
@@ -81,8 +171,50 @@ public class EventLogService
     {
         _events.Clear();
         _undoableActions.Clear();
+        _actionToEventId.Clear();
         _companyData = null;
         EventsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Captures the current state of an entity before it is modified.
+    /// Call this BEFORE applying changes to the entity. The captured snapshot
+    /// will be consumed by the next <see cref="RecordFromAction"/> call for a Modified event.
+    /// </summary>
+    public void CapturePreModificationSnapshot(string entityType, string entityId)
+    {
+        _pendingPreModSnapshot = null;
+        if (_companyData != null && !string.IsNullOrEmpty(entityType) && !string.IsNullOrEmpty(entityId))
+        {
+            _pendingPreModSnapshot = EntityCollectionHelper.FindAndSerializeEntity(
+                _companyData, entityType, entityId);
+        }
+    }
+
+    /// <summary>
+    /// Captures the current state of an entity before it is deleted.
+    /// Call this BEFORE removing the entity from the collection. The captured info
+    /// will be consumed by the next <see cref="RecordFromAction"/> call for a Deleted event.
+    /// </summary>
+    public void CapturePreDeletionSnapshot(string entityType, string entityId)
+    {
+        _pendingDeletionEntityId = null;
+        _pendingDeletionSnapshot = null;
+        if (_companyData != null && !string.IsNullOrEmpty(entityType) && !string.IsNullOrEmpty(entityId))
+        {
+            _pendingDeletionEntityId = entityId;
+            _pendingDeletionSnapshot = EntityCollectionHelper.FindAndSerializeEntity(
+                _companyData, entityType, entityId);
+        }
+    }
+
+    /// <summary>
+    /// Sets pending field-level changes to be attached to the next recorded Modified event.
+    /// Call this before RecordAction for an edit operation.
+    /// </summary>
+    public void SetPendingChanges(Dictionary<string, FieldChange> changes)
+    {
+        _pendingChanges = changes;
     }
 
     /// <summary>
@@ -122,6 +254,7 @@ public class EventLogService
 
         _events.Add(evt);
         _undoableActions[evt.Id] = action;
+        _actionToEventId[action] = evt.Id;
 
         TrimIfNeeded();
         EventsChanged?.Invoke(this, EventArgs.Empty);
@@ -140,25 +273,45 @@ public class EventLogService
 
         string entityId = "";
         string? entitySnapshot = null;
+        Dictionary<string, FieldChange>? changes = null;
 
+        // For Delete actions, use pre-deletion capture (entity already removed from collection)
+        if (auditAction == AuditAction.Deleted && _pendingDeletionEntityId != null)
+        {
+            entityId = _pendingDeletionEntityId;
+            entitySnapshot = _pendingDeletionSnapshot;
+        }
         // Try to resolve entity ID and capture snapshot for persistence
-        if (_companyData != null && !string.IsNullOrEmpty(entityType))
+        else if (_companyData != null && !string.IsNullOrEmpty(entityType))
         {
             entityId = EntityCollectionHelper.FindEntityIdByName(_companyData, entityType, entityName) ?? "";
 
             if (!string.IsNullOrEmpty(entityId))
             {
-                // Capture entity snapshot for Added events (entity just added, state is correct).
-                // For Deleted events, the entity is already removed so FindAndSerialize returns null.
-                // For Modified events, the entity has the new values — not useful for undo
-                // (we'd need pre-modification state). Modified undo requires future enhancement.
                 if (auditAction == AuditAction.Added)
                 {
+                    // Entity just added — capture its current state
                     entitySnapshot = EntityCollectionHelper.FindAndSerializeEntity(
                         _companyData, entityType, entityId);
                 }
+                else if (auditAction == AuditAction.Modified && _pendingPreModSnapshot != null)
+                {
+                    // Use the pre-modification snapshot captured before the edit
+                    entitySnapshot = _pendingPreModSnapshot;
+                }
             }
         }
+
+        // Consume pending field-level changes for Modified events
+        if (auditAction == AuditAction.Modified && _pendingChanges != null)
+        {
+            changes = _pendingChanges;
+        }
+
+        _pendingPreModSnapshot = null;
+        _pendingDeletionEntityId = null;
+        _pendingDeletionSnapshot = null;
+        _pendingChanges = null;
 
         return RecordEvent(
             action,
@@ -167,6 +320,7 @@ public class EventLogService
             entityType,
             entityId: entityId,
             entityName: entityName,
+            changes: changes,
             entitySnapshot: entitySnapshot);
     }
 
@@ -206,6 +360,9 @@ public class EventLogService
         {
             action.Undo();
             evt.IsUndone = true;
+
+            // Remove from UndoRedoManager stacks to prevent double-execution
+            _undoRedoManager?.RemoveFromBothStacks(action);
 
             // Record the undo as a new event
             var undoEvent = new AuditEvent
@@ -247,6 +404,9 @@ public class EventLogService
         {
             action.Redo();
             evt.IsUndone = false;
+
+            // Remove from UndoRedoManager stacks to prevent double-execution
+            _undoRedoManager?.RemoveFromBothStacks(action);
 
             // Record the redo as a new event
             var redoEvent = new AuditEvent
@@ -384,7 +544,11 @@ public class EventLogService
         foreach (var evt in eventsToRemove)
         {
             _events.Remove(evt);
-            _undoableActions.Remove(evt.Id);
+            if (_undoableActions.TryGetValue(evt.Id, out var action))
+            {
+                _actionToEventId.Remove(action);
+                _undoableActions.Remove(evt.Id);
+            }
         }
 
         // Mark all remaining unsaved events as saved
@@ -516,7 +680,10 @@ public class EventLogService
 
             var action = TryReconstructAction(evt, companyData);
             if (action != null)
+            {
                 _undoableActions[evt.Id] = action;
+                _actionToEventId[action] = evt.Id;
+            }
         }
     }
 
@@ -664,7 +831,11 @@ public class EventLogService
             // Clean up action references for trimmed events
             foreach (var id in removedIds)
             {
-                _undoableActions.Remove(id);
+                if (_undoableActions.TryGetValue(id, out var action))
+                {
+                    _actionToEventId.Remove(action);
+                    _undoableActions.Remove(id);
+                }
             }
         }
     }

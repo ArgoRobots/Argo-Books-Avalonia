@@ -2,6 +2,7 @@ using ArgoBooks.Services;
 using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -532,6 +533,18 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         var customerToEdit = _editingCustomer;
+        App.EventLogService?.CapturePreModificationSnapshot("Customer", customerToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        if (oldCompanyName != newCompanyName) changes["Company"] = new FieldChange { OldValue = oldCompanyName ?? "", NewValue = newCompanyName ?? "" };
+        if (oldEmail != newEmail) changes["Email"] = new FieldChange { OldValue = oldEmail, NewValue = newEmail };
+        if (oldPhone != newPhone) changes["Phone"] = new FieldChange { OldValue = oldPhone, NewValue = newPhone };
+        var oldAddr = $"{oldAddress.Street}, {oldAddress.City}, {oldAddress.State} {oldAddress.ZipCode}".Trim(' ', ',');
+        var newAddr = $"{newAddress.Street}, {newAddress.City}, {newAddress.State} {newAddress.ZipCode}".Trim(' ', ',');
+        if (oldAddr != newAddr) changes["Address"] = new FieldChange { OldValue = oldAddr, NewValue = newAddr };
+        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
+        if (oldStatus != newStatus) changes["Status"] = new FieldChange { OldValue = oldStatus.ToString(), NewValue = newStatus.ToString() };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         customerToEdit.Name = newName;
         customerToEdit.CompanyName = newCompanyName;
         customerToEdit.Email = newEmail;
@@ -607,6 +620,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         if (customer != null)
         {
             var deletedCustomer = customer;
+            App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
             companyData.Customers.Remove(customer);
             companyData.MarkAsModified();
 

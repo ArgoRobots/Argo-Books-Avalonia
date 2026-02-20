@@ -168,6 +168,22 @@ public class NavigationService : INavigationService
     }
 
     /// <summary>
+    /// Re-creates the current page to refresh its content from CompanyData.
+    /// Does not affect the back/forward navigation stacks.
+    /// </summary>
+    public void RefreshCurrentPage()
+    {
+        if (_currentEntry == null)
+            return;
+
+        if (_pageFactories.TryGetValue(_currentEntry.PageName, out var factory))
+        {
+            var page = factory(_currentEntry.Parameter);
+            _navigationCallback?.Invoke(page);
+        }
+    }
+
+    /// <summary>
     /// Performs the actual navigation by invoking the factory and callback.
     /// </summary>
     private void PerformNavigation(string? previousPageName)

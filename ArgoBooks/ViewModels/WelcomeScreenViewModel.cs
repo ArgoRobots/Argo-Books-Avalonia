@@ -198,6 +198,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
         TutorialService.Instance.CompleteWelcomeTutorial();
         TutorialService.Instance.CompleteAppTour();
         TutorialService.Instance.HideSetupChecklist();
+        TutorialService.Instance.DisableFirstVisitHints();
         IsTutorialMode = false;
         SkipTutorialRequested?.Invoke(this, EventArgs.Empty);
     }

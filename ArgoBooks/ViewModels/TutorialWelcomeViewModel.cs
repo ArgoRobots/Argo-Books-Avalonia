@@ -60,6 +60,7 @@ public partial class TutorialWelcomeViewModel : ViewModelBase
         IsOpen = false;
         TutorialService.Instance.CompleteWelcomeTutorial();
         TutorialService.Instance.CompleteAppTour();
+        TutorialService.Instance.DisableFirstVisitHints();
         TutorialSkipped?.Invoke(this, EventArgs.Empty);
     }
 }

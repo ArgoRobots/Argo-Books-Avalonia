@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Localization;
@@ -417,6 +418,13 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
         // Update the location
         var locationToEdit = _editingLocation;
+        App.EventLogService?.CapturePreModificationSnapshot("Location", locationToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        var oldAddr = $"{oldAddress.Street}, {oldAddress.City}, {oldAddress.State} {oldAddress.ZipCode}".Trim(' ', ',');
+        var newAddr = $"{newAddress.Street}, {newAddress.City}, {newAddress.State} {newAddress.ZipCode}".Trim(' ', ',');
+        if (oldAddr != newAddr) changes["Address"] = new FieldChange { OldValue = oldAddr, NewValue = newAddr };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         locationToEdit.Name = newName;
         locationToEdit.Address = newAddress;
 
@@ -477,6 +485,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         if (location != null)
         {
             var deletedLocation = location;
+            App.EventLogService?.CapturePreDeletionSnapshot("Location", deletedLocation.Id);
             companyData.Locations.Remove(location);
             companyData.MarkAsModified();
 

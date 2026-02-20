@@ -777,9 +777,9 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Sets the user information on the header.
     /// </summary>
-    public void SetUserInfo(string? displayName, string? email = null, string? role = null)
+    public void SetUserInfo(string? displayName, string? email = null, string? role = null, int userId = 0)
     {
-        HeaderViewModel.SetUserInfo(displayName, email, role);
+        HeaderViewModel.SetUserInfo(displayName, email, role, userId: userId);
     }
 
     /// <summary>

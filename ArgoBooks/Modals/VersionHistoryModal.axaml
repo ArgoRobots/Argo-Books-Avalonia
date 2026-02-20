@@ -219,99 +219,155 @@
                                                     <ItemsControl ItemsSource="{Binding Items}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate DataType="vm:VersionHistoryItem">
-                                                                <Border Padding="24,8,16,8"
-                                                                        Background="Transparent"
-                                                                        Opacity="{Binding IsUndone, Converter={x:Static local:VersionHistoryConverters.UndoneOpacity}}">
-                                                                    <Border.Styles>
-                                                                        <Style Selector="Border:pointerover">
-                                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-                                                                        </Style>
-                                                                    </Border.Styles>
-                                                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                                                                        <!-- Timeline connector line + indicator dot -->
-                                                                        <Panel Grid.Column="0"
-                                                                               Width="20"
-                                                                               Margin="0,0,12,0"
-                                                                               VerticalAlignment="Center">
-                                                                            <!-- Colored action indicator -->
-                                                                            <!-- Added = green -->
-                                                                            <Border Width="20" Height="20"
-                                                                                    CornerRadius="10"
-                                                                                    Background="{DynamicResource SuccessIconBgBrush}"
-                                                                                    IsVisible="{Binding ChangeType, Converter={StaticResource IsAddedConverter}}">
-                                                                                <PathIcon Data="{x:Static icons:Icons.PlusStroke}"
-                                                                                          Width="10" Height="10"
-                                                                                          Foreground="{DynamicResource SuccessBrush}" />
-                                                                            </Border>
-                                                                            <!-- Modified = yellow -->
-                                                                            <Border Width="20" Height="20"
-                                                                                    CornerRadius="10"
-                                                                                    Background="{DynamicResource WarningIconBgBrush}"
-                                                                                    IsVisible="{Binding ChangeType, Converter={StaticResource IsModifiedConverter}}">
-                                                                                <PathIcon Data="{x:Static icons:Icons.EditStroke}"
-                                                                                          Width="10" Height="10"
-                                                                                          Foreground="{DynamicResource WarningBrush}" />
-                                                                            </Border>
-                                                                            <!-- Deleted = red -->
-                                                                            <Border Width="20" Height="20"
-                                                                                    CornerRadius="10"
-                                                                                    Background="{DynamicResource DangerIconBgBrush}"
-                                                                                    IsVisible="{Binding ChangeType, Converter={StaticResource IsDeletedConverter}}">
-                                                                                <PathIcon Data="{x:Static icons:Icons.DeleteStroke}"
-                                                                                          Width="10" Height="10"
-                                                                                          Foreground="{DynamicResource DangerBrush}" />
-                                                                            </Border>
-                                                                        </Panel>
+                                                                <StackPanel>
+                                                                    <!-- Primary event row -->
+                                                                    <Border Padding="24,8,16,8"
+                                                                            Background="Transparent"
+                                                                            Opacity="{Binding IsUndone, Converter={x:Static local:VersionHistoryConverters.UndoneOpacity}}">
+                                                                        <Border.Styles>
+                                                                            <Style Selector="Border:pointerover">
+                                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                                            </Style>
+                                                                        </Border.Styles>
+                                                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                                            <!-- Timeline connector line + indicator dot -->
+                                                                            <Panel Grid.Column="0"
+                                                                                   Width="20"
+                                                                                   Margin="0,0,12,0"
+                                                                                   VerticalAlignment="Center">
+                                                                                <!-- Colored action indicator -->
+                                                                                <!-- Added = green -->
+                                                                                <Border Width="20" Height="20"
+                                                                                        CornerRadius="10"
+                                                                                        Background="{DynamicResource SuccessIconBgBrush}"
+                                                                                        IsVisible="{Binding ChangeType, Converter={StaticResource IsAddedConverter}}">
+                                                                                    <PathIcon Data="{x:Static icons:Icons.PlusStroke}"
+                                                                                              Width="10" Height="10"
+                                                                                              Foreground="{DynamicResource SuccessBrush}" />
+                                                                                </Border>
+                                                                                <!-- Modified = yellow -->
+                                                                                <Border Width="20" Height="20"
+                                                                                        CornerRadius="10"
+                                                                                        Background="{DynamicResource WarningIconBgBrush}"
+                                                                                        IsVisible="{Binding ChangeType, Converter={StaticResource IsModifiedConverter}}">
+                                                                                    <PathIcon Data="{x:Static icons:Icons.EditStroke}"
+                                                                                              Width="10" Height="10"
+                                                                                              Foreground="{DynamicResource WarningBrush}" />
+                                                                                </Border>
+                                                                                <!-- Deleted = red -->
+                                                                                <Border Width="20" Height="20"
+                                                                                        CornerRadius="10"
+                                                                                        Background="{DynamicResource DangerIconBgBrush}"
+                                                                                        IsVisible="{Binding ChangeType, Converter={StaticResource IsDeletedConverter}}">
+                                                                                    <PathIcon Data="{x:Static icons:Icons.DeleteStroke}"
+                                                                                              Width="10" Height="10"
+                                                                                              Foreground="{DynamicResource DangerBrush}" />
+                                                                                </Border>
+                                                                            </Panel>
 
-                                                                        <!-- Time -->
-                                                                        <TextBlock Grid.Column="1"
-                                                                                   Text="{Binding TimeText}"
-                                                                                   FontSize="12"
-                                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                                   VerticalAlignment="Center"
-                                                                                   Width="70"
-                                                                                   Margin="0,0,8,0" />
-
-                                                                        <!-- Description -->
-                                                                        <StackPanel Grid.Column="2"
-                                                                                    VerticalAlignment="Center"
-                                                                                    Spacing="2">
-                                                                            <TextBlock Text="{Binding Description}"
-                                                                                       FontSize="13"
-                                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                                       TextTrimming="CharacterEllipsis"
-                                                                                       TextDecorations="{Binding IsUndone, Converter={x:Static local:VersionHistoryConverters.UndoneStrikethrough}}" />
-                                                                            <TextBlock Text="{Binding EntityTypeText}"
-                                                                                       FontSize="11"
+                                                                            <!-- Time -->
+                                                                            <TextBlock Grid.Column="1"
+                                                                                       Text="{Binding TimeText}"
+                                                                                       FontSize="12"
                                                                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                                       IsVisible="{Binding EntityTypeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                                                                        </StackPanel>
+                                                                                       VerticalAlignment="Center"
+                                                                                       Width="70"
+                                                                                       Margin="0,0,8,0" />
 
-                                                                        <!-- Undo/Redo Button -->
-                                                                        <Panel Grid.Column="3"
-                                                                               Margin="8,0,0,0"
-                                                                               IsVisible="{Binding ShowUndoRedoButton}">
-                                                                            <!-- Undo Button -->
-                                                                            <Button Classes="undo-redo-btn"
-                                                                                    Command="{Binding Parent.UndoItemCommand}"
-                                                                                    CommandParameter="{Binding}"
-                                                                                    ToolTip.Tip="{loc:Loc 'Undo this change'}"
-                                                                                    IsVisible="{Binding CanUndo}">
-                                                                                <PathIcon Data="{x:Static local:Icons.Undo}"
-                                                                                          Width="14" Height="14" />
-                                                                            </Button>
-                                                                            <!-- Redo Button -->
-                                                                            <Button Classes="undo-redo-btn"
-                                                                                    Command="{Binding Parent.RedoItemCommand}"
-                                                                                    CommandParameter="{Binding}"
-                                                                                    ToolTip.Tip="{loc:Loc 'Redo this change'}"
-                                                                                    IsVisible="{Binding CanRedo}">
-                                                                                <PathIcon Data="{x:Static icons:Icons.Redo}"
-                                                                                          Width="14" Height="14" />
-                                                                            </Button>
-                                                                        </Panel>
-                                                                    </Grid>
-                                                                </Border>
+                                                                            <!-- Description -->
+                                                                            <StackPanel Grid.Column="2"
+                                                                                        VerticalAlignment="Center"
+                                                                                        Spacing="2">
+                                                                                <TextBlock Text="{Binding Description}"
+                                                                                           FontSize="13"
+                                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                                           TextTrimming="CharacterEllipsis"
+                                                                                           TextDecorations="{Binding IsUndone, Converter={x:Static local:VersionHistoryConverters.UndoneStrikethrough}}" />
+                                                                                <TextBlock Text="{Binding EntityTypeText}"
+                                                                                           FontSize="11"
+                                                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                           IsVisible="{Binding EntityTypeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                                                <!-- Field-level changes for edit events -->
+                                                                                <TextBlock Text="{Binding ChangesSummary}"
+                                                                                           FontSize="11"
+                                                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                           FontStyle="Italic"
+                                                                                           TextWrapping="Wrap"
+                                                                                           IsVisible="{Binding HasChanges}"
+                                                                                           Margin="0,2,0,0" />
+                                                                            </StackPanel>
+
+                                                                            <!-- Undo/Redo Button -->
+                                                                            <Panel Grid.Column="3"
+                                                                                   Margin="8,0,0,0"
+                                                                                   IsVisible="{Binding ShowUndoRedoButton}">
+                                                                                <!-- Undo Button -->
+                                                                                <Button Classes="undo-redo-btn"
+                                                                                        Command="{Binding Parent.UndoItemCommand}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        ToolTip.Tip="{loc:Loc 'Undo this change'}"
+                                                                                        IsVisible="{Binding CanUndo}">
+                                                                                    <PathIcon Data="{x:Static local:Icons.Undo}"
+                                                                                              Width="14" Height="14" />
+                                                                                </Button>
+                                                                                <!-- Redo Button -->
+                                                                                <Button Classes="undo-redo-btn"
+                                                                                        Command="{Binding Parent.RedoItemCommand}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        ToolTip.Tip="{loc:Loc 'Redo this change'}"
+                                                                                        IsVisible="{Binding CanRedo}">
+                                                                                    <PathIcon Data="{x:Static icons:Icons.Redo}"
+                                                                                              Width="14" Height="14" />
+                                                                                </Button>
+                                                                            </Panel>
+                                                                        </Grid>
+                                                                    </Border>
+
+                                                                    <!-- Nested undo/redo sub-items -->
+                                                                    <ItemsControl ItemsSource="{Binding SubItems}"
+                                                                                  IsVisible="{Binding HasSubItems}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate DataType="vm:VersionHistorySubItem">
+                                                                                <Border Padding="56,3,16,3"
+                                                                                        Background="Transparent">
+                                                                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*">
+                                                                                        <!-- Small dot -->
+                                                                                        <Ellipse Grid.Column="0"
+                                                                                                 Width="4" Height="4"
+                                                                                                 Fill="{DynamicResource TextTertiaryBrush}"
+                                                                                                 VerticalAlignment="Center"
+                                                                                                 Opacity="0.6"
+                                                                                                 Margin="8,0,10,0" />
+
+                                                                                        <!-- Undo/Redo icon -->
+                                                                                        <PathIcon Grid.Column="1"
+                                                                                                  Data="{Binding IsUndo, Converter={x:Static local:VersionHistoryConverters.UndoRedoIcon}}"
+                                                                                                  Width="11" Height="11"
+                                                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                                  VerticalAlignment="Center"
+                                                                                                  Margin="0,0,6,0" />
+
+                                                                                        <!-- Label -->
+                                                                                        <TextBlock Grid.Column="2"
+                                                                                                   Text="{Binding Label}"
+                                                                                                   FontSize="12"
+                                                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                                   VerticalAlignment="Center"
+                                                                                                   Margin="0,0,8,0" />
+
+                                                                                        <!-- Time -->
+                                                                                        <TextBlock Grid.Column="3"
+                                                                                                   Text="{Binding TimeText}"
+                                                                                                   FontSize="11"
+                                                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                                   VerticalAlignment="Center"
+                                                                                                   Opacity="0.6" />
+                                                                                    </Grid>
+                                                                                </Border>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>

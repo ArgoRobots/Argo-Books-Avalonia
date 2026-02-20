@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Localization;
@@ -402,6 +403,17 @@ public partial class SupplierModalsViewModel : ObservableObject
         }
 
         var supplierToEdit = _editingSupplier;
+        App.EventLogService?.CapturePreModificationSnapshot("Supplier", supplierToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        if (oldEmail != newEmail) changes["Email"] = new FieldChange { OldValue = oldEmail, NewValue = newEmail };
+        if (oldPhone != newPhone) changes["Phone"] = new FieldChange { OldValue = oldPhone, NewValue = newPhone };
+        if (oldWebsite != newWebsite) changes["Website"] = new FieldChange { OldValue = oldWebsite, NewValue = newWebsite };
+        var oldAddr = $"{oldAddress.Street}, {oldAddress.City}, {oldAddress.State} {oldAddress.ZipCode}".Trim(' ', ',');
+        var newAddr = $"{newAddress.Street}, {newAddress.City}, {newAddress.State} {newAddress.ZipCode}".Trim(' ', ',');
+        if (oldAddr != newAddr) changes["Address"] = new FieldChange { OldValue = oldAddr, NewValue = newAddr };
+        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         supplierToEdit.Name = newName;
         supplierToEdit.Email = newEmail;
         supplierToEdit.Phone = newPhone;
@@ -448,6 +460,7 @@ public partial class SupplierModalsViewModel : ObservableObject
         if (supplier == null) return;
 
         var deletedSupplier = supplier;
+        App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
         companyData?.Suppliers.Remove(supplier);
         companyData?.MarkAsModified();
 
