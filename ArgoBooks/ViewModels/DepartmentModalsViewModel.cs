@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -207,6 +208,11 @@ public partial class DepartmentModalsViewModel : ObservableObject
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
 
         var deptToEdit = _editingDepartment;
+        App.EventLogService?.CapturePreModificationSnapshot("Department", deptToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         deptToEdit.Name = newName;
         deptToEdit.Description = newDescription;
         companyData.MarkAsModified();
@@ -248,6 +254,7 @@ public partial class DepartmentModalsViewModel : ObservableObject
         if (department == null) return;
 
         var deletedDept = department;
+        App.EventLogService?.CapturePreDeletionSnapshot("Department", deletedDept.Id);
         companyData?.Departments.Remove(department);
         companyData?.MarkAsModified();
 

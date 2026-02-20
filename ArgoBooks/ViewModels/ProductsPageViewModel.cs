@@ -918,6 +918,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Update the product
         var productToEdit = _editingProduct;
+        App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
         productToEdit.Name = newName;
         productToEdit.Description = newDescription;
         productToEdit.Sku = newSku;

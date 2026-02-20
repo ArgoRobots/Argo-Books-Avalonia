@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
@@ -352,6 +353,13 @@ public partial class CategoryModalsViewModel : ObservableObject
         }
 
         var categoryToEdit = _editingCategory;
+        App.EventLogService?.CapturePreModificationSnapshot("Category", categoryToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
+        if (oldItemType != newItemType) changes["Item Type"] = new FieldChange { OldValue = oldItemType, NewValue = newItemType };
+        if (oldIcon != newIcon) changes["Icon"] = new FieldChange { OldValue = oldIcon, NewValue = newIcon };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         categoryToEdit.Name = newName;
         categoryToEdit.Description = newDescription;
         categoryToEdit.ItemType = newItemType;
@@ -435,6 +443,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         }
         
         var deletedCategory = category;
+        App.EventLogService?.CapturePreDeletionSnapshot("Category", deletedCategory.Id);
         companyData?.Categories.Remove(category);
         companyData?.MarkAsModified();
 

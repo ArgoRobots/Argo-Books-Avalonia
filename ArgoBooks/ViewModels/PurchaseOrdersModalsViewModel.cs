@@ -533,6 +533,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var oldNotes = order.Notes;
 
         // Update order
+        App.EventLogService?.CapturePreModificationSnapshot("PurchaseOrder", order.Id);
         order.SupplierId = SelectedSupplier!.Id;
         order.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
         order.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);

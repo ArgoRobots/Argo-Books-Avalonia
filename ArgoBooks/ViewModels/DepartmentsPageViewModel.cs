@@ -526,6 +526,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Update the department
         var departmentToEdit = _editingDepartment;
+        App.EventLogService?.CapturePreModificationSnapshot("Department", departmentToEdit.Id);
         departmentToEdit.Name = newName;
         departmentToEdit.Description = newDescription;
         departmentToEdit.Icon = newIcon;

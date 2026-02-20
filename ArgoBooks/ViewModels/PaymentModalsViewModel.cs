@@ -2,6 +2,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Transactions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -497,6 +498,14 @@ public partial class PaymentModalsViewModel : ObservableObject
         }
 
         var paymentToEdit = _editingPayment;
+        App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldDate != newDate) changes["Date"] = new FieldChange { OldValue = oldDate.ToString("d"), NewValue = newDate.ToString("d") };
+        if (oldAmount != newAmount) changes["Amount"] = new FieldChange { OldValue = oldAmount.ToString("F2"), NewValue = newAmount.ToString("F2") };
+        if (oldPaymentMethod != newPaymentMethod) changes["Payment Method"] = new FieldChange { OldValue = oldPaymentMethod.ToString(), NewValue = newPaymentMethod.ToString() };
+        if (oldReferenceNumber != newReferenceNumber) changes["Reference"] = new FieldChange { OldValue = oldReferenceNumber ?? "", NewValue = newReferenceNumber ?? "" };
+        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         paymentToEdit.InvoiceId = newInvoiceId;
         paymentToEdit.CustomerId = newCustomerId;
         paymentToEdit.Date = newDate;
@@ -571,6 +580,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         if (payment != null)
         {
             var deletedPayment = payment;
+            App.EventLogService?.CapturePreDeletionSnapshot("Payment", deletedPayment.Id);
             companyData.Payments.Remove(payment);
             companyData.MarkAsModified();
 

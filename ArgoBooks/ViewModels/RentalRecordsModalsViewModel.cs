@@ -727,6 +727,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         var totalDeposit = newLineItems.Sum(li => li.SecurityDeposit * li.Quantity);
         var totalQty = newLineItems.Sum(li => li.Quantity);
 
+        App.EventLogService?.CapturePreModificationSnapshot("Rental", recordToEdit.Id);
         recordToEdit.RentalItemId = firstLi.RentalItemId;
         recordToEdit.CustomerId = newCustomerId!;
         recordToEdit.AccountantId = newAccountantId;

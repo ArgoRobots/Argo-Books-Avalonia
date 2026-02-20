@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -572,6 +573,17 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         }
 
         var itemToEdit = _editingItem;
+        App.EventLogService?.CapturePreModificationSnapshot("RentalItem", itemToEdit.Id);
+        var changes = new Dictionary<string, FieldChange>();
+        if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
+        if (oldTotalQuantity != newTotalQty) changes["Total Quantity"] = new FieldChange { OldValue = oldTotalQuantity.ToString(), NewValue = newTotalQty.ToString() };
+        if (oldDailyRate != newDailyRate) changes["Daily Rate"] = new FieldChange { OldValue = oldDailyRate.ToString("F2"), NewValue = newDailyRate.ToString("F2") };
+        if (oldWeeklyRate != newWeeklyRate) changes["Weekly Rate"] = new FieldChange { OldValue = oldWeeklyRate.ToString("F2"), NewValue = newWeeklyRate.ToString("F2") };
+        if (oldMonthlyRate != newMonthlyRate) changes["Monthly Rate"] = new FieldChange { OldValue = oldMonthlyRate.ToString("F2"), NewValue = newMonthlyRate.ToString("F2") };
+        if (oldSecurityDeposit != newSecurityDeposit) changes["Security Deposit"] = new FieldChange { OldValue = oldSecurityDeposit.ToString("F2"), NewValue = newSecurityDeposit.ToString("F2") };
+        if (oldStatus != newStatus) changes["Status"] = new FieldChange { OldValue = oldStatus.ToString(), NewValue = newStatus.ToString() };
+        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes ?? "", NewValue = newNotes };
+        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         itemToEdit.ProductId = newProductId;
         itemToEdit.Name = newName;
         itemToEdit.SupplierId = newSupplierId;
@@ -659,6 +671,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         if (rentalItem != null)
         {
             var deletedItem = rentalItem;
+            App.EventLogService?.CapturePreDeletionSnapshot("RentalItem", deletedItem.Id);
             companyData.RentalInventory.Remove(rentalItem);
             companyData.MarkAsModified();
 

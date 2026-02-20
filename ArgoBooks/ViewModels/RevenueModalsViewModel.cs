@@ -236,6 +236,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         }
 
         var deletedRevenue = revenue;
+        App.EventLogService?.CapturePreDeletionSnapshot("Revenue", deletedRevenue.Id);
         var capturedReceipt = deletedReceipt;
         var action = new DelegateAction(
             $"Delete revenue {revenue.Id}",
@@ -574,6 +575,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var modelLineItems = CreateModelLineItems();
 
         // Apply changes
+        App.EventLogService?.CapturePreModificationSnapshot("Revenue", revenue.Id);
         revenue.Date = ModalDate?.DateTime ?? DateTime.Now;
         revenue.CustomerId = SelectedCustomer?.Id;
         revenue.Description = description;

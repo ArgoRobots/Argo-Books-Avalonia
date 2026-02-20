@@ -119,6 +119,18 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
     public event EventHandler<ActionRecordedEventArgs>? ActionRecorded;
 
     /// <summary>
+    /// Event raised after a linear undo is performed (Ctrl+Z).
+    /// The EventLogService subscribes to sync the audit trail.
+    /// </summary>
+    public event EventHandler<ActionRecordedEventArgs>? ActionUndone;
+
+    /// <summary>
+    /// Event raised after a linear redo is performed (Ctrl+Y).
+    /// The EventLogService subscribes to sync the audit trail.
+    /// </summary>
+    public event EventHandler<ActionRecordedEventArgs>? ActionRedone;
+
+    /// <summary>
     /// Initializes a new instance of the UndoRedoManager.
     /// </summary>
     /// <param name="maxHistorySize">Maximum number of actions to keep in history.</param>
@@ -274,6 +286,40 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
     }
 
     /// <summary>
+    /// Removes a specific action from the redo stack without executing it.
+    /// Used by EventLogService for selective redo (the service calls action.Redo() itself).
+    /// </summary>
+    /// <param name="action">The action to remove.</param>
+    /// <returns>True if the action was found and removed.</returns>
+    public bool RemoveFromRedoStack(IUndoableAction action)
+    {
+        if (!_redoStack.Contains(action))
+            return false;
+
+        var tempList = _redoStack.ToList();
+        tempList.Remove(action);
+
+        _redoStack.Clear();
+        for (int i = tempList.Count - 1; i >= 0; i--)
+        {
+            _redoStack.Push(tempList[i]);
+        }
+
+        OnStateChanged();
+        return true;
+    }
+
+    /// <summary>
+    /// Removes a specific action from both undo and redo stacks without executing it.
+    /// Used by EventLogService to prevent double-execution when it handles undo/redo itself.
+    /// </summary>
+    public void RemoveFromBothStacks(IUndoableAction action)
+    {
+        RemoveFromUndoStack(action);
+        RemoveFromRedoStack(action);
+    }
+
+    /// <summary>
     /// Undoes the last action.
     /// </summary>
     /// <returns>True if an action was undone.</returns>
@@ -289,6 +335,7 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
             action.Undo();
             _redoStack.Push(action);
             OnStateChanged();
+            ActionUndone?.Invoke(this, new ActionRecordedEventArgs(action));
             return true;
         }
         finally
@@ -313,6 +360,7 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
             action.Redo();
             _undoStack.Push(action);
             OnStateChanged();
+            ActionRedone?.Invoke(this, new ActionRecordedEventArgs(action));
             return true;
         }
         finally
