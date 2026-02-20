@@ -61,6 +61,12 @@ public interface INavigationService
     void ClearHistory();
 
     /// <summary>
+    /// Re-creates the current page to refresh its content.
+    /// Does not affect the back/forward navigation stacks.
+    /// </summary>
+    void RefreshCurrentPage();
+
+    /// <summary>
     /// Registers a navigation guard that can prevent navigation.
     /// </summary>
     /// <param name="guard">The guard callback to register.</param>

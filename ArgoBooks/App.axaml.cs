@@ -1153,6 +1153,9 @@ public class App : Application
             {
                 EventLogService = new Services.EventLogService();
 
+                // Wire bidirectional sync between UndoRedoManager and EventLogService
+                EventLogService.SetUndoRedoManager(UndoRedoManager);
+
                 // Wire UndoRedoManager to automatically record audit events
                 // when any CRUD operation records an undoable action
                 UndoRedoManager.ActionRecorded += (_, e) =>
@@ -1991,14 +1994,12 @@ public class App : Application
                     // Mark settings as changed
                     settings.ChangesMade = true;
 
-                    // If company name changed, save and rename file (skip for sample company)
+                    // If company name changed, schedule a file rename (skip for sample company).
+                    // The rename is deferred to save time so that closing without saving
+                    // leaves the original file untouched.
                     var oldFilePath = CompanyManager.CurrentFilePath;
                     if (nameChanged && CompanyManager.CurrentFilePath != null && !CompanyManager.IsSampleCompany)
                     {
-                        // Save first to persist the new name in the file
-                        await CompanyManager.SaveCompanyAsync();
-
-                        // Rename the file
                         var currentPath = CompanyManager.CurrentFilePath;
                         var directory = Path.GetDirectoryName(currentPath);
                         var newFileName = args.CompanyName + ".argo";
@@ -2006,10 +2007,10 @@ public class App : Application
 
                         if (currentPath != newPath && !File.Exists(newPath))
                         {
-                            CompanyManager.RenameFile(newPath);
+                            CompanyManager.SetPendingRename(newPath);
                         }
                     }
-                    var newFilePath = CompanyManager.CurrentFilePath;
+                    var newFilePath = CompanyManager.PendingRenamePath ?? CompanyManager.CurrentFilePath;
 
                     // Update UI
                     _mainWindowViewModel?.OpenCompany(args.CompanyName);
@@ -2017,7 +2018,7 @@ public class App : Application
                     _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
                     _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
                         args.CompanyName,
-                        CompanyManager.CurrentFilePath,
+                        CompanyManager.PendingRenamePath ?? CompanyManager.CurrentFilePath,
                         logo);
 
                     // Record undo/redo action
@@ -2045,15 +2046,10 @@ public class App : Application
                             // Restore old logo
                             RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
 
-                            // Rename file back if it was renamed
-                            if (oldFilePath != newFilePath && oldFilePath != null)
+                            // Clear pending rename (revert to original file name)
+                            if (oldFilePath != newFilePath)
                             {
-                                try
-                                {
-                                    if (!File.Exists(oldFilePath))
-                                        CompanyManager!.RenameFile(oldFilePath);
-                                }
-                                catch { /* Continue if rename fails - settings are already correct */ }
+                                CompanyManager!.ClearPendingRename();
                             }
 
                             settings.ChangesMade = true;
@@ -2073,15 +2069,10 @@ public class App : Application
                             // Restore new logo
                             RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);
 
-                            // Rename file to new name if it was renamed
+                            // Re-schedule the file rename
                             if (oldFilePath != newFilePath && newFilePath != null)
                             {
-                                try
-                                {
-                                    if (!File.Exists(newFilePath))
-                                        CompanyManager!.RenameFile(newFilePath);
-                                }
-                                catch { /* Continue if rename fails - settings are already correct */ }
+                                CompanyManager!.SetPendingRename(newFilePath);
                             }
 
                             settings.ChangesMade = true;
@@ -3202,6 +3193,11 @@ public class App : Application
         try
         {
             await CompanyManager!.SaveCompanyAsAsync(filePath);
+
+            // Refresh UI with the (possibly updated) company name
+            var newName = CompanyManager.CurrentCompanyName ?? "Company";
+            RefreshCompanyUI(newName);
+
             await LoadRecentCompaniesAsync();
             return true;
         }

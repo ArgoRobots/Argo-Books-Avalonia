@@ -21,6 +21,7 @@ public class CompanyManager : IDisposable
     private CompanyData? _companyData;
     private FileStream? _fileLock;
     private bool _isDisposed;
+    private string? _pendingRenamePath;
 
     /// <summary>
     /// Gets whether a company is currently open.
@@ -102,24 +103,26 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
-    /// Renames the current company file, releasing and re-acquiring the file lock around the move.
+    /// Schedules a file rename to be applied on the next save.
+    /// The rename is deferred so that closing without saving leaves the original file untouched.
     /// </summary>
-    public void RenameFile(string newPath)
+    public void SetPendingRename(string newPath)
     {
-        if (_currentFilePath == null || _currentFilePath == newPath)
-            return;
-
-        ReleaseFileLock();
-        try
-        {
-            File.Move(_currentFilePath, newPath);
-            _currentFilePath = newPath;
-        }
-        finally
-        {
-            AcquireFileLock(_currentFilePath);
-        }
+        _pendingRenamePath = newPath;
     }
+
+    /// <summary>
+    /// Clears any pending rename (e.g., when changes are undone or discarded).
+    /// </summary>
+    public void ClearPendingRename()
+    {
+        _pendingRenamePath = null;
+    }
+
+    /// <summary>
+    /// Gets the path the file will be renamed to on next save, or null if no rename is pending.
+    /// </summary>
+    public string? PendingRenamePath => _pendingRenamePath;
 
     /// <summary>
     /// Event raised when a company is opened.
@@ -317,6 +320,14 @@ public class CompanyManager : IDisposable
             _currentFilePath = filePath;
             _currentPassword = password;
 
+            // Sync the company name from the file name so that external renames
+            // (e.g., via the OS file explorer) are reflected in the app
+            var fileBaseName = Path.GetFileNameWithoutExtension(filePath);
+            if (!string.IsNullOrEmpty(fileBaseName) && _companyData.Settings.Company.Name != fileBaseName)
+            {
+                _companyData.Settings.Company.Name = fileBaseName;
+            }
+
             // Hold a read lock on the file to prevent deletion while the company is open
             AcquireFileLock(filePath);
 
@@ -370,6 +381,35 @@ public class CompanyManager : IDisposable
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
         await _fileService.SaveCompanyDataAsync(companyDir, _companyData!, cancellationToken);
 
+        // Apply pending rename before saving so the file is saved at the new path
+        if (_pendingRenamePath != null && _pendingRenamePath != _currentFilePath)
+        {
+            var oldPath = _currentFilePath;
+            ReleaseFileLock();
+            try
+            {
+                if (!File.Exists(_pendingRenamePath))
+                {
+                    File.Move(_currentFilePath, _pendingRenamePath);
+                    _currentFilePath = _pendingRenamePath;
+                }
+            }
+            finally
+            {
+                AcquireFileLock(_currentFilePath);
+            }
+
+            // Update the recent companies list so the old path is replaced with the new one
+            if (_currentFilePath != oldPath)
+            {
+                _settingsService.RemoveRecentCompany(oldPath);
+                _settingsService.AddRecentCompany(_currentFilePath);
+                await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
+            }
+
+            _pendingRenamePath = null;
+        }
+
         // Release file lock before saving (save uses exclusive access), then re-acquire
         ReleaseFileLock();
         await _fileService.SaveCompanyAsync(_currentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
@@ -408,6 +448,13 @@ public class CompanyManager : IDisposable
         if (newPassword == string.Empty)
         {
             passwordToUse = null; // Remove encryption
+        }
+
+        // Sync company name with the new file name so they stay consistent
+        var newName = Path.GetFileNameWithoutExtension(newFilePath);
+        if (!string.IsNullOrEmpty(newName) && _companyData!.Settings.Company.Name != newName)
+        {
+            _companyData.Settings.Company.Name = newName;
         }
 
         // Save data to temp directory
@@ -451,6 +498,7 @@ public class CompanyManager : IDisposable
         _companyData = null;
         _currentFilePath = null;
         _currentPassword = null;
+        _pendingRenamePath = null;
 
         // Raise event
         CompanyClosed?.Invoke(this, EventArgs.Empty);
