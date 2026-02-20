@@ -17,7 +17,7 @@ namespace ArgoBooks.ViewModels;
 public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-    private const string LicenseValidationUrl = "https://argorobots.com/api/license/validate.php";
+    private const string LicenseRedeemUrl = "https://argorobots.com/api/license/redeem.php";
     private const string ApiHostUrl = "https://argorobots.com";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private const string PricingApiUrl = "https://argorobots.com/api/pricing/plans.php";
@@ -266,14 +266,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         try
         {
-            var response = await ValidateLicenseAsync(key);
+            var response = await RedeemLicenseAsync(key);
 
             if (response?.Success == true)
             {
                 IsVerificationSuccess = true;
-                // Fix server message: change "can be redeemed" to "has been redeemed"
-                var message = response.Message ?? "License activated successfully!";
-                SuccessMessage = message.Replace("can be redeemed", "has been redeemed");
+                SuccessMessage = response.Message ?? "License activated successfully!";
 
                 // Save license securely
                 var licenseType = response.Type?.ToLowerInvariant() ?? "";
@@ -324,7 +322,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "License verification request failed");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "License redemption request failed");
             VerificationError = "Verification failed: {0}".TranslateFormat(ex.Message);
         }
         finally
@@ -367,15 +365,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Validates a license key against the server.
+    /// Redeems a license key on the server, marking it as used.
     /// </summary>
-    private async Task<LicenseResponse?> ValidateLicenseAsync(string licenseKey)
+    private async Task<LicenseResponse?> RedeemLicenseAsync(string premiumKey)
     {
-        var requestBody = new { license_key = licenseKey };
+        var userId = App.HeaderViewModel?.UserId ?? 0;
+        var email = App.HeaderViewModel?.UserEmail ?? "";
+
+        var requestBody = new { premium_key = premiumKey, user_id = userId, email };
         var json = JsonSerializer.Serialize(requestBody);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await HttpClient.PostAsync(LicenseValidationUrl, content);
+        var response = await HttpClient.PostAsync(LicenseRedeemUrl, content);
         var responseJson = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<LicenseResponse>(responseJson);
     }
@@ -457,11 +458,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
         [JsonPropertyName("message")]
         public string? Message { get; init; }
 
-        [JsonPropertyName("activation_date")]
-        public string? ActivationDate { get; init; }
+        [JsonPropertyName("subscription_id")]
+        public string? SubscriptionId { get; init; }
 
-        [JsonPropertyName("key")]
-        public string? Key { get; init; }
+        [JsonPropertyName("end_date")]
+        public string? EndDate { get; init; }
+
+        [JsonPropertyName("duration_months")]
+        public int DurationMonths { get; init; }
     }
 
     #endregion
