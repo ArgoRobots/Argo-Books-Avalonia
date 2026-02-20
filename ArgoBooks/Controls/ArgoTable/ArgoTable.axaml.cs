@@ -96,6 +96,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<bool> ShowAddButtonProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowAddButton), true);
 
+    public static readonly StyledProperty<bool> IsAddButtonEnabledProperty =
+        AvaloniaProperty.Register<ArgoTable, bool>(nameof(IsAddButtonEnabled), true);
+
     public static readonly StyledProperty<ICommand?> AddCommandProperty =
         AvaloniaProperty.Register<ArgoTable, ICommand?>(nameof(AddCommand));
 
@@ -303,6 +306,12 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(ShowAddButtonProperty);
         set => SetValue(ShowAddButtonProperty, value);
+    }
+
+    public bool IsAddButtonEnabled
+    {
+        get => GetValue(IsAddButtonEnabledProperty);
+        set => SetValue(IsAddButtonEnabledProperty, value);
     }
 
     public ICommand? AddCommand
@@ -543,10 +552,10 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
             RaisePropertyChanged(nameof(MinimumTotalWidth));
             RaisePropertyChanged(nameof(NeedsHorizontalScroll));
 
-            if (change.OldValue is TableColumnWidthsBase oldBase)
-                oldBase.PropertyChanged -= OnColumnWidthsPropertyChanged;
-            if (change.NewValue is TableColumnWidthsBase newBase)
-                newBase.PropertyChanged += OnColumnWidthsPropertyChanged;
+            if (change.OldValue is INotifyPropertyChanged oldNotify)
+                oldNotify.PropertyChanged -= OnColumnWidthsPropertyChanged;
+            if (change.NewValue is INotifyPropertyChanged newNotify)
+                newNotify.PropertyChanged += OnColumnWidthsPropertyChanged;
         }
     }
 

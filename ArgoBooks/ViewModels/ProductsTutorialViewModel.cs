@@ -158,6 +158,7 @@ public partial class ProductsTutorialViewModel : ViewModelBase
     private void Skip()
     {
         TutorialService.Instance.MarkPageVisited(TutorialService.Pages.Products);
+        TutorialService.Instance.DisableFirstVisitHints();
         IsOpen = false;
     }
 

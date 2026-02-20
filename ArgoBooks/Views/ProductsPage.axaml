@@ -137,6 +137,7 @@
                                 AddCommand="{Binding OpenAddModalCommand}"
                                 AddButtonText="{loc:Loc 'Add Product'}"
                                 AddButtonTooltip="{loc:Loc 'Add Product'}"
+                                IsAddButtonEnabled="{Binding CanAddProduct}"
                                 ColumnWidthsManager="{Binding ColumnWidths}"
                                 CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
                                 TotalPages="{Binding TotalPages}"
@@ -149,31 +150,41 @@
                                 EmptyIcon="{x:Static icons:Icons.Products}"
                                 EmptyTitle="{loc:Loc 'No products found'}"
                                 EmptyMessage="{loc:Loc 'Add your first product to start tracking your inventory.'}"
-                                ShowExtraButtons="{Binding ShowRemainingProducts}"
+                                ShowHeaderBorder="{Binding !ShowRemainingProducts}"
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
-                <!-- Extra Buttons Content (Remaining Products + Upgrade) -->
-                <table:ArgoTable.ExtraButtonsContent>
-                    <StackPanel Orientation="Horizontal" Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
-                        <!-- Remaining Products Label (only shown on Free plan) -->
-                        <TextBlock Text="{Binding RemainingProductsText}"
-                                   FontSize="12"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   VerticalAlignment="Center"
-                                   IsVisible="{Binding ShowRemainingProducts}" />
-
-                        <!-- Upgrade Button (shown when limit reached) -->
-                        <Button Classes="secondary-button"
-                                Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
-                                Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                                Content="{loc:Loc Upgrade}"
-                                Command="{Binding UpgradeCommand}"
-                                IsVisible="{Binding ShowUpgradeButton}"
-                                ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc Upgrade}}"
-                                Padding="12,6" />
-                    </StackPanel>
-                </table:ArgoTable.ExtraButtonsContent>
+                <!-- Product Limit Warning Banner (shown on Free plan, below header bar) -->
+                <table:ArgoTable.InfoBannerContent>
+                    <Border HorizontalAlignment="Center"
+                            Background="{DynamicResource WarningLightBrush}"
+                            BorderBrush="{DynamicResource WarningBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14,8"
+                            Margin="0,8,0,8"
+                            IsVisible="{Binding ShowRemainingProducts}">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                                      Foreground="{DynamicResource WarningBrush}"
+                                      Width="14" Height="14" />
+                            <TextBlock Text="{Binding RemainingProductsText}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource WarningTextBrush}" />
+                            <Button Command="{Binding UpgradeCommand}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Cursor="Hand">
+                                <TextBlock Text="{loc:Loc Upgrade}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WarningTextBrush}"
+                                           TextDecorations="Underline" />
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </table:ArgoTable.InfoBannerContent>
 
                 <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
                 <table:ArgoTable.HeaderContent>
