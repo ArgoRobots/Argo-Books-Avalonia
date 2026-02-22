@@ -365,14 +365,13 @@ public partial class UpgradeModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Redeems a license key on the server, marking it as used.
+    /// Redeems a license key on the server, marking it as used and binding to this device.
     /// </summary>
     private async Task<LicenseResponse?> RedeemLicenseAsync(string premiumKey)
     {
-        var userId = App.HeaderViewModel?.UserId ?? 0;
-        var email = App.HeaderViewModel?.UserEmail ?? "";
+        var deviceId = App.LicenseService?.GetDeviceId() ?? "";
 
-        var requestBody = new { premium_key = premiumKey, user_id = userId, email };
+        var requestBody = new { premium_key = premiumKey, device_id = deviceId };
         var json = JsonSerializer.Serialize(requestBody);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
