@@ -918,7 +918,7 @@ public class App : Application
     /// Validates the stored license key online on startup.
     /// Checks subscription status and device ownership. If invalid, clears premium and shows a message.
     /// </summary>
-    private async Task ValidateLicenseOnStartupAsync()
+    private static async Task ValidateLicenseOnStartupAsync()
     {
         try
         {
