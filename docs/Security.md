@@ -42,10 +42,6 @@ Secure key generation from passwords.
 - Biometric authentication toggle
 - Password change requirements
 
-### License Validation Flow
-
-![Security Architecture](diagrams/security/license-validation-flow.svg)
-
 ## Authentication Flow On File Open
 
 ![Security Architecture](diagrams/security/authentication-flow.svg)
@@ -55,6 +51,6 @@ Secure key generation from passwords.
 | Practice | Implementation |
 |----------|----------------|
 | **No Plaintext Passwords** | Passwords never stored, only derived keys |
-| **Secure Memory** | Sensitive data cleared after use |d
+| **Secure Memory** | Sensitive data cleared after use |
 | **Auto-Lock** | Configurable timeout for idle sessions |
 | **Local Storage** | Data never sent to cloud without consent |
