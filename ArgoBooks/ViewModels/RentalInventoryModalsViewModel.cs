@@ -613,7 +613,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
                 itemToEdit.MonthlyRate = oldMonthlyRate;
                 itemToEdit.SecurityDeposit = oldSecurityDeposit;
                 itemToEdit.Status = oldStatus;
-                itemToEdit.Notes = oldNotes;
+                itemToEdit.Notes = oldNotes ?? string.Empty;
                 companyData.MarkAsModified();
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             },
