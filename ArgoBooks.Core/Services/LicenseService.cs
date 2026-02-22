@@ -11,9 +11,14 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class LicenseService
 {
+    private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
+    private const string LicenseValidateUrl = "https://argorobots.com/api/license/validate.php";
+    private const string ApiHostUrl = "https://argorobots.com";
+
     private readonly IEncryptionService _encryptionService;
     private readonly IGlobalSettingsService _settingsService;
     private readonly IPlatformService _platformService;
+    private readonly IConnectivityService _connectivityService;
     private readonly IErrorLogger? _errorLogger;
 
     /// <summary>
@@ -31,7 +36,7 @@ public class LicenseService
     /// Uses the default platform service from the factory.
     /// </summary>
     public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IErrorLogger? errorLogger = null)
-        : this(encryptionService, settingsService, PlatformServiceFactory.GetPlatformService(), errorLogger)
+        : this(encryptionService, settingsService, PlatformServiceFactory.GetPlatformService(), new ConnectivityService(), errorLogger)
     {
     }
 
@@ -39,10 +44,19 @@ public class LicenseService
     /// Initializes a new instance of the LicenseService with a specific platform service.
     /// </summary>
     public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IPlatformService platformService, IErrorLogger? errorLogger = null)
+        : this(encryptionService, settingsService, platformService, new ConnectivityService(), errorLogger)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the LicenseService with all dependencies.
+    /// </summary>
+    public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IPlatformService platformService, IConnectivityService connectivityService, IErrorLogger? errorLogger = null)
     {
         _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
+        _connectivityService = connectivityService ?? throw new ArgumentNullException(nameof(connectivityService));
         _errorLogger = errorLogger;
     }
 
@@ -180,6 +194,126 @@ public class LicenseService
     }
 
     /// <summary>
+    /// Gets a hashed device identifier for server-side device tracking.
+    /// </summary>
+    public string GetDeviceId() => GetMachineKey();
+
+    /// <summary>
+    /// Validates the stored license key online, checking subscription status and device ownership.
+    /// </summary>
+    public async Task<LicenseValidationResult> ValidateLicenseOnlineAsync(CancellationToken cancellationToken = default)
+    {
+        var licenseKey = GetLicenseKey();
+        if (string.IsNullOrEmpty(licenseKey))
+        {
+            return new LicenseValidationResult
+            {
+                Status = LicenseValidationStatus.InvalidKey,
+                Message = "No license key found."
+            };
+        }
+
+        try
+        {
+            var deviceId = GetDeviceId();
+            var requestBody = new { license_key = licenseKey, device_id = deviceId };
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await HttpClient.PostAsync(LicenseValidateUrl, content, cancellationToken);
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<LicenseValidateResponse>(responseJson);
+
+            if (result == null)
+            {
+                return new LicenseValidationResult
+                {
+                    Status = LicenseValidationStatus.NetworkError,
+                    Message = "Invalid server response."
+                };
+            }
+
+            if (result.Success)
+            {
+                return new LicenseValidationResult
+                {
+                    Status = LicenseValidationStatus.Valid,
+                    Message = result.Message
+                };
+            }
+
+            var status = result.Status?.ToLowerInvariant() switch
+            {
+                "invalid_key" => LicenseValidationStatus.InvalidKey,
+                "expired" => LicenseValidationStatus.ExpiredSubscription,
+                "wrong_device" => LicenseValidationStatus.WrongDevice,
+                _ => LicenseValidationStatus.InvalidKey
+            };
+
+            return new LicenseValidationResult
+            {
+                Status = status,
+                Message = result.Message
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Network, "License validation network error");
+            return new LicenseValidationResult
+            {
+                Status = LicenseValidationStatus.NetworkError,
+                Message = await GetConnectivityErrorMessageAsync(cancellationToken)
+            };
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Network, "License validation timeout");
+            return new LicenseValidationResult
+            {
+                Status = LicenseValidationStatus.NetworkError,
+                Message = await GetConnectivityErrorMessageAsync(cancellationToken)
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new LicenseValidationResult
+            {
+                Status = LicenseValidationStatus.NetworkError,
+                Message = "Request was cancelled."
+            };
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.License, "License validation failed");
+            return new LicenseValidationResult
+            {
+                Status = LicenseValidationStatus.NetworkError,
+                Message = $"Validation error: {ex.Message}"
+            };
+        }
+    }
+
+    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
+            if (!hasInternet)
+                return "No internet connection. Please check your network and try again.";
+
+            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
+            if (!isApiReachable)
+                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
+
+            return "Unable to validate license. Please try again.";
+        }
+        catch
+        {
+            return "Unable to validate license. Please check your internet connection.";
+        }
+    }
+
+    /// <summary>
     /// Gets a machine-specific key for encryption using stable platform identifiers.
     /// </summary>
     private string GetMachineKey()
@@ -198,4 +332,36 @@ public class LicenseService
         return Convert.ToBase64String(hashBytes);
     }
 
+    private class LicenseValidateResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; init; }
+
+        [JsonPropertyName("status")]
+        public string? Status { get; init; }
+
+        [JsonPropertyName("message")]
+        public string? Message { get; init; }
+    }
+}
+
+/// <summary>
+/// Status of an online license validation check.
+/// </summary>
+public enum LicenseValidationStatus
+{
+    Valid,
+    InvalidKey,
+    ExpiredSubscription,
+    WrongDevice,
+    NetworkError
+}
+
+/// <summary>
+/// Result of an online license validation check.
+/// </summary>
+public class LicenseValidationResult
+{
+    public LicenseValidationStatus Status { get; init; }
+    public string? Message { get; init; }
 }

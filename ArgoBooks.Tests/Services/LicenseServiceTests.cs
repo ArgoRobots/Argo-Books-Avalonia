@@ -13,6 +13,7 @@ public class LicenseServiceTests
     private readonly MockEncryptionService _encryptionService;
     private readonly MockGlobalSettingsService _settingsService;
     private readonly MockPlatformService _platformService;
+    private readonly MockConnectivityService _connectivityService;
     private readonly LicenseService _licenseService;
 
     public LicenseServiceTests()
@@ -20,7 +21,8 @@ public class LicenseServiceTests
         _encryptionService = new MockEncryptionService();
         _settingsService = new MockGlobalSettingsService();
         _platformService = new MockPlatformService();
-        _licenseService = new LicenseService(_encryptionService, _settingsService, _platformService);
+        _connectivityService = new MockConnectivityService();
+        _licenseService = new LicenseService(_encryptionService, _settingsService, _platformService, _connectivityService);
     }
 
     #region Constructor Tests
@@ -235,6 +237,36 @@ public class LicenseServiceTests
 
     #endregion
 
+    #region GetDeviceId Tests
+
+    [Fact]
+    public void GetDeviceId_ReturnsNonNullNonEmptyString()
+    {
+        var deviceId = _licenseService.GetDeviceId();
+
+        Assert.False(string.IsNullOrEmpty(deviceId));
+    }
+
+    [Fact]
+    public void GetDeviceId_ReturnsConsistentValue()
+    {
+        var deviceId1 = _licenseService.GetDeviceId();
+        var deviceId2 = _licenseService.GetDeviceId();
+
+        Assert.Equal(deviceId1, deviceId2);
+    }
+
+    [Fact]
+    public async Task ValidateLicenseOnlineAsync_NoLicenseKey_ReturnsInvalidKey()
+    {
+        // No license saved — GetLicenseKey() returns null
+        var result = await _licenseService.ValidateLicenseOnlineAsync();
+
+        Assert.Equal(LicenseValidationStatus.InvalidKey, result.Status);
+    }
+
+    #endregion
+
     #region Mock Classes
 
     private class MockEncryptionService : IEncryptionService
@@ -357,6 +389,15 @@ public class LicenseServiceTests
         /// Mock implementation that does nothing.
         /// </summary>
         public void RegisterFileTypeAssociations(string iconPath) { }
+    }
+
+    private class MockConnectivityService : IConnectivityService
+    {
+        public Task<bool> IsInternetAvailableAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(true);
+
+        public Task<bool> IsHostReachableAsync(string host, CancellationToken cancellationToken = default)
+            => Task.FromResult(true);
     }
 
     #endregion

@@ -898,6 +898,9 @@ public class App : Application
                 if (hasPremium)
                 {
                     _appShellViewModel.SetPlanStatus(hasPremium);
+
+                    // Validate license online in the background
+                    _ = ValidateLicenseOnStartupAsync();
                 }
             }
 
@@ -908,6 +911,63 @@ public class App : Application
         {
             // Log error but don't crash the app
             ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Error during async initialization");
+        }
+    }
+
+    /// <summary>
+    /// Validates the stored license key online on startup.
+    /// Checks subscription status and device ownership. If invalid, clears premium and shows a message.
+    /// </summary>
+    private async Task ValidateLicenseOnStartupAsync()
+    {
+        try
+        {
+            if (LicenseService == null || _appShellViewModel == null)
+                return;
+
+            var result = await LicenseService.ValidateLicenseOnlineAsync();
+
+            switch (result.Status)
+            {
+                case LicenseValidationStatus.Valid:
+                    // License is valid — nothing to do
+                    return;
+
+                case LicenseValidationStatus.NetworkError:
+                    // No internet or server unreachable — allow offline use
+                    return;
+
+                case LicenseValidationStatus.InvalidKey:
+                    await LicenseService.ClearLicenseAsync();
+                    _appShellViewModel.SetPlanStatus(false);
+                    RaisePlanStatusChanged(false);
+                    await ShowErrorMessageBoxAsync(
+                        "License Issue".Translate(),
+                        "Your license key is no longer valid. Please contact support or enter a new key.".Translate());
+                    break;
+
+                case LicenseValidationStatus.ExpiredSubscription:
+                    await LicenseService.ClearLicenseAsync();
+                    _appShellViewModel.SetPlanStatus(false);
+                    RaisePlanStatusChanged(false);
+                    await ShowErrorMessageBoxAsync(
+                        "Subscription Expired".Translate(),
+                        "Your premium subscription has expired. Please renew your subscription to continue using premium features.".Translate());
+                    break;
+
+                case LicenseValidationStatus.WrongDevice:
+                    await LicenseService.ClearLicenseAsync();
+                    _appShellViewModel.SetPlanStatus(false);
+                    RaisePlanStatusChanged(false);
+                    await ShowErrorMessageBoxAsync(
+                        "License Deactivated".Translate(),
+                        "Your license key has been activated on a different device. Premium features have been deactivated on this device. You can re-enter your key in the Upgrade menu to reactivate.".Translate());
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogError(ex, ErrorCategory.License, "Error during startup license validation");
         }
     }
 
