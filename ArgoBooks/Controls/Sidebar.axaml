@@ -170,12 +170,14 @@
             <StackPanel Spacing="0" Margin="0,15,0,20">
                 <!-- Main Section -->
                 <controls:SidebarSection Title="{loc:Loc Main}"
+                                         SectionKey="Main"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding MainItems}" />
 
                 <!-- Transactions Section -->
                 <controls:SidebarSection Title="{loc:Loc Transactions}"
+                                         SectionKey="Transactions"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding TransactionItems}"
@@ -183,6 +185,7 @@
 
                 <!-- Rentals Section -->
                 <controls:SidebarSection Title="{loc:Loc Rentals}"
+                                         SectionKey="Rentals"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding RentalItems}"
@@ -190,12 +193,14 @@
 
                 <!-- Management Section -->
                 <controls:SidebarSection Title="{loc:Loc Management}"
+                                         SectionKey="Management"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding ManagementItems}" />
 
                 <!-- Inventory Section -->
                 <controls:SidebarSection Title="{loc:Loc Inventory}"
+                                         SectionKey="Inventory"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding InventoryItems}"
@@ -203,6 +208,7 @@
 
                 <!-- Team Section -->
                 <controls:SidebarSection Title="{loc:Loc Team}"
+                                         SectionKey="Team"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding TeamItems}"
@@ -210,6 +216,7 @@
 
                 <!-- Tracking Section -->
                 <controls:SidebarSection Title="{loc:Loc Tracking}"
+                                         SectionKey="Tracking"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
                                          Items="{Binding TrackingItems}" />

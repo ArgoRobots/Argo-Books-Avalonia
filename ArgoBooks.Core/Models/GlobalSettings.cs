@@ -57,6 +57,12 @@ public class UiSettings
     public EmojiPickerSettings EmojiPicker { get; set; } = new();
 
     /// <summary>
+    /// Persisted sidebar section expanded states, keyed by section key (e.g., "Main", "Transactions").
+    /// Value is true when expanded, false when collapsed.
+    /// </summary>
+    public Dictionary<string, bool> SidebarSectionExpanded { get; set; } = new();
+
+    /// <summary>
     /// Persisted column visibility settings per page.
     /// Key is the page name (e.g., "Expenses"), value is a dictionary of column name to visibility.
     /// </summary>
