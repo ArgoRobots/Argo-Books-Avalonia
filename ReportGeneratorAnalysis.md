@@ -78,8 +78,8 @@ The renderer always shows `$` despite the app supporting multi-currency transact
 Throughout the report pipeline, errors are caught and silently discarded:
 - `ExportToImageAsync` (`ReportRenderer.cs:208-211`): `catch { return false; }`
 - `ExportToPdfAsync` (`ReportRenderer.cs:241-245`): `catch { return false; }`
-- `GeneratePreview` (`ReportsPageViewModel.cs:1316-1318`): `catch { PreviewImage = null; }`
-- Multiple methods in `ReportTemplateStorage`: `catch { /* return empty/false */ }`
+- `GeneratePreview` (`ReportsPageViewModel.cs:1328-1331`): `catch { PreviewImage = null; }`
+- Several methods in `ReportTemplateStorage` (`GetSavedTemplateNames`, `GetAllTemplatesAsync`, `DeleteTemplate`, `RenameTemplateAsync`, `CopyImageToStorage`): `catch { /* return empty/false */ }`. Note: `SaveTemplateAsync` and `LoadTemplateAsync` do log errors to `_errorLogger`.
 
 Users get generic "Export failed" messages with no diagnostic information.
 
@@ -103,31 +103,13 @@ Segoe UI is a **Windows-only** font. On macOS and Linux, this falls back to `SKT
 
 ### 6. Date Range Inconsistency Between Services
 
-`ReportTableDataService.GetDateRange()` and `ReportChartDataService.GetDateRange()` have **different logic** for end-date normalization. The chart service adds `.AddDays(1).AddSeconds(-1)` for custom ranges (`ReportChartDataService.cs:23-24`), while the table service does not (`ReportTableDataService.cs:25-27`).
+`ReportTableDataService.GetDateRange()` and `ReportChartDataService.GetDateRange()` have **different logic** for end-date normalization. The chart service adds `.AddDays(1).AddSeconds(-1)` for custom ranges (`ReportChartDataService.cs:23-24`), while the table service does not (`ReportTableDataService.cs:28-30`).
 
 Tables and charts in the same report can show slightly different data for the same date range.
 
 **Improvement:** Extract shared date range logic into a common utility.
 
-### 7. No Inventory-Specific Reports
-
-Inventory management is a core feature, but the report generator has no inventory-focused templates:
-- Stock Valuation Report
-- Inventory Turnover Report
-- Low Stock / Reorder Report
-- Inventory Movement History
-
-The data exists in `CompanyData` but isn't surfaced through the report generator.
-
-### 8. No Rental Reports
-
-Rental management is a key feature, but reports only have `RentalsPerCustomer` as a single chart. Missing:
-- Active rental status overview
-- Rental revenue by period
-- Equipment utilization rate
-- Overdue rentals
-
-### 9. Chart Data Recalculated on Every Render
+### 7. Chart Data Recalculated on Every Render
 
 **Location:** `ReportRenderer.cs:77-80`
 
@@ -139,7 +121,7 @@ Rental management is a key feature, but reports only have `RentalsPerCustomer` a
 
 ## Low-Severity Problems
 
-### 10. Pie Chart Legend Truncation at 12 Characters
+### 8. Pie Chart Legend Truncation at 12 Characters
 
 **Location:** `ReportRenderer.cs:971`
 
@@ -149,14 +131,14 @@ if (legendText.Length > 12) legendText = legendText[..12] + "...";
 
 Country names, product names, and company names > 12 chars are cut off with no user control. "United States" becomes "United State...".
 
-### 11. No Year-over-Year Comparison Reports
+### 9. No Year-over-Year Comparison Reports
 
 No mechanism to compare two time periods side-by-side (e.g., "Q1 2025 vs Q1 2024"). `CalculateGrowthRate` computes a single percentage but doesn't expose comparative data visually.
 
-### 12. Image Elements Use Absolute Paths
+### 10. Image Elements May Use Absolute Paths
 
-`ImageReportElement.ImagePath` stores absolute paths. Templates with embedded logos break when opened on different machines or after OS reinstalls.
+`ImageReportElement.ImagePath` stores file paths that can be absolute. `ReportTemplateStorage` provides `CopyImageToStorage()` and `ResolveImagePath()` to partially mitigate this by copying images to a shared directory and resolving relative paths. However, images added directly (not through template storage) still use absolute paths, and templates can break when opened on different machines or after OS reinstalls.
 
-### 13. Chart Distribution Capped at Top 10
+### 11. Chart Distribution Capped at Top 10
 
-Most distribution chart methods (e.g., `GetRevenueDistribution`, `GetExpensesByCountryOfDestination`) use `.Take(10)`. Users with more than 10 categories/countries/products see incomplete data with no "Other" aggregation bucket.
+Most distribution chart methods use `.Take(10)` (13 instances across `ReportChartDataService`, including `GetRevenueDistribution`, `GetExpenseDistribution`, `GetRevenueByCustomerCountry`, `GetExpensesByCountryOfDestination`, `GetExpensesBySupplierCompany`, `GetRevenueByCompanyOfOrigin`, `GetRevenueByCompanyOfDestination`, `GetTopCustomersByRevenue`, `GetRentalsPerCustomer`, `GetReturnsByCategory`, `GetReturnsByProduct`, `GetLossesByCategory`, and `GetLossesByProduct`). Users with more than 10 categories/countries/products see incomplete data with no "Other" aggregation bucket.
