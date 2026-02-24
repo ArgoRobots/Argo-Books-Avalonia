@@ -417,9 +417,35 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         foreach (var element in _selectedElements)
         {
+            // Clip out higher Z-order elements so selection visuals
+            // don't render on top of elements that are above this one
+            canvas.Save();
+            ClipHigherZOrderElements(canvas, element);
+
             DrawSelectionBorder(canvas, element);
             DrawResizeHandles(canvas, element);
             DrawElementTypeIndicator(canvas, element);
+
+            canvas.Restore();
+        }
+    }
+
+    private void ClipHigherZOrderElements(SKCanvas canvas, ReportElementBase element)
+    {
+        if (Configuration == null) return;
+
+        foreach (var other in Configuration.Elements)
+        {
+            if (other.ZOrder <= element.ZOrder || !other.IsVisible) continue;
+
+            var rect = new SKRect(
+                (float)other.X,
+                (float)other.Y,
+                (float)(other.X + other.Width),
+                (float)(other.Y + other.Height)
+            );
+
+            canvas.ClipRect(rect, SKClipOperation.Difference);
         }
     }
 
@@ -509,26 +535,8 @@ public partial class SkiaReportDesignCanvas : UserControl
             (float)(element.Y + element.Height) + offset
         );
 
-        // Get elements with higher Z-order that might overlap with the hover rect
-        var higherZOrderElements = Configuration.Elements
-            .Where(e => e.ZOrder > element.ZOrder && e.IsVisible)
-            .ToList();
-
-        // Save canvas state
         canvas.Save();
-
-        // Exclude each higher Z-order element from the clip region using Difference
-        foreach (var higherElement in higherZOrderElements)
-        {
-            var higherRect = new SKRect(
-                (float)higherElement.X,
-                (float)higherElement.Y,
-                (float)(higherElement.X + higherElement.Width),
-                (float)(higherElement.Y + higherElement.Height)
-            );
-
-            canvas.ClipRect(higherRect, SKClipOperation.Difference);
-        }
+        ClipHigherZOrderElements(canvas, element);
 
         using var borderPaint = new SKPaint();
         borderPaint.Color = new SKColor(59, 130, 246, 180); // Semi-transparent blue
@@ -538,7 +546,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         canvas.DrawRect(rect, borderPaint);
 
-        // Restore canvas state
         canvas.Restore();
     }
 
