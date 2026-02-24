@@ -566,6 +566,103 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isElementPanelExpanded = true;
 
+    #region Page Management
+
+    [ObservableProperty]
+    private int _currentDesignerPage = 1;
+
+    public string CurrentDesignerPageDisplay =>
+        $"Page {CurrentDesignerPage} of {Configuration.PageCount}";
+
+    public bool CanDeletePage => Configuration.PageCount > 1;
+
+    public bool CanGoToPreviousPage => CurrentDesignerPage > 1;
+
+    public bool CanGoToNextPage => CurrentDesignerPage < Configuration.PageCount;
+
+    partial void OnCurrentDesignerPageChanged(int value)
+    {
+        OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+    }
+
+    [RelayCommand]
+    private void NextDesignerPage()
+    {
+        if (CurrentDesignerPage < Configuration.PageCount)
+        {
+            CurrentDesignerPage++;
+        }
+    }
+
+    [RelayCommand]
+    private void PreviousDesignerPage()
+    {
+        if (CurrentDesignerPage > 1)
+        {
+            CurrentDesignerPage--;
+        }
+    }
+
+    [RelayCommand]
+    private void AddPage()
+    {
+        UndoRedoManager.RecordAction(new AddPageAction(Configuration));
+        Configuration.PageCount++;
+        CurrentDesignerPage = Configuration.PageCount;
+        OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
+        OnPropertyChanged(nameof(CanDeletePage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+    }
+
+    [RelayCommand]
+    private void DeletePage()
+    {
+        if (Configuration.PageCount <= 1) return;
+
+        var pageToDelete = CurrentDesignerPage;
+        var elementsOnPage = Configuration.Elements
+            .Where(e => e.PageNumber == pageToDelete).ToList();
+
+        // Record undo action before making changes
+        UndoRedoManager.RecordAction(new DeletePageAction(Configuration, pageToDelete, elementsOnPage));
+
+        // Remove elements on this page
+        foreach (var element in elementsOnPage)
+        {
+            Configuration.Elements.Remove(element);
+        }
+
+        // Renumber elements on higher pages
+        foreach (var element in Configuration.Elements.Where(e => e.PageNumber > pageToDelete))
+        {
+            element.PageNumber--;
+        }
+
+        Configuration.PageCount--;
+
+        // Navigate to a valid page
+        if (CurrentDesignerPage > Configuration.PageCount)
+        {
+            CurrentDesignerPage = Configuration.PageCount;
+        }
+        else
+        {
+            // Force refresh even if page number didn't change
+            OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
+        }
+
+        SelectedElement = null;
+        OnPropertyChanged(nameof(CanDeletePage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
+
     #region Context Menu
 
     [ObservableProperty]
@@ -798,6 +895,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             _ => new LabelReportElement()
         };
 
+        element.PageNumber = CurrentDesignerPage;
         Configuration.AddElement(element);
         UndoRedoManager.RecordAction(new AddElementAction(Configuration, element));
         SelectedElement = element;
@@ -1297,6 +1395,51 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _exportMessage;
 
+    [ObservableProperty]
+    private int _currentPreviewPage = 1;
+
+    [ObservableProperty]
+    private int _totalPreviewPages = 1;
+
+    private List<Bitmap>? _previewPageBitmaps;
+
+    public bool CanGoToPreviousPreviewPage => CurrentPreviewPage > 1;
+    public bool CanGoToNextPreviewPage => CurrentPreviewPage < TotalPreviewPages;
+    public string PreviewPageDisplay => $"Page {CurrentPreviewPage} of {TotalPreviewPages}";
+    public bool HasMultiplePreviewPages => TotalPreviewPages > 1;
+
+    partial void OnCurrentPreviewPageChanged(int value)
+    {
+        if (_previewPageBitmaps != null && value >= 1 && value <= _previewPageBitmaps.Count)
+        {
+            PreviewImage = _previewPageBitmaps[value - 1];
+        }
+        OnPropertyChanged(nameof(CanGoToPreviousPreviewPage));
+        OnPropertyChanged(nameof(CanGoToNextPreviewPage));
+        OnPropertyChanged(nameof(PreviewPageDisplay));
+    }
+
+    partial void OnTotalPreviewPagesChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasMultiplePreviewPages));
+        OnPropertyChanged(nameof(CanGoToNextPreviewPage));
+        OnPropertyChanged(nameof(PreviewPageDisplay));
+    }
+
+    [RelayCommand]
+    private void NextPreviewPage()
+    {
+        if (CurrentPreviewPage < TotalPreviewPages)
+            CurrentPreviewPage++;
+    }
+
+    [RelayCommand]
+    private void PreviousPreviewPage()
+    {
+        if (CurrentPreviewPage > 1)
+            CurrentPreviewPage--;
+    }
+
     public ObservableCollection<ExportFormatOption> ExportFormats { get; } =
     [
         new("PDF Document", ExportFormat.PDF, "For printing & sharing"),
@@ -1319,8 +1462,27 @@ public partial class ReportsPageViewModel : ViewModelBase
             const int resolutionMultiplier = 2;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance);
-            using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
-            PreviewImage = ConvertToBitmap(skBitmap);
+
+            // Dispose previous page bitmaps
+            if (_previewPageBitmaps != null)
+            {
+                foreach (var bmp in _previewPageBitmaps)
+                    bmp.Dispose();
+            }
+
+            var pageCount = Math.Max(1, Configuration.PageCount);
+            var bitmaps = new List<Bitmap>();
+
+            for (int page = 1; page <= pageCount; page++)
+            {
+                using var skBitmap = renderer.CreatePagePreview(page, width * resolutionMultiplier, height * resolutionMultiplier);
+                bitmaps.Add(ConvertToBitmap(skBitmap));
+            }
+
+            _previewPageBitmaps = bitmaps;
+            TotalPreviewPages = pageCount;
+            CurrentPreviewPage = 1;
+            PreviewImage = bitmaps.Count > 0 ? bitmaps[0] : null;
 
             // Request fit-to-window after preview is generated
             PreviewFitToWindowRequested?.Invoke(this, EventArgs.Empty);
@@ -1370,7 +1532,23 @@ public partial class ReportsPageViewModel : ViewModelBase
             bool success;
             if (SelectedExportFormat == ExportFormat.PDF)
             {
+                // PDF handles multi-page internally
                 success = await renderer.ExportToPdfAsync(ExportFilePath);
+            }
+            else if (Configuration.PageCount > 1)
+            {
+                // Multi-page image export: export each page as a separate file
+                var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+                var baseName = Path.GetFileNameWithoutExtension(ExportFilePath);
+                var ext = Path.GetExtension(ExportFilePath);
+                success = true;
+
+                for (int page = 1; page <= Configuration.PageCount; page++)
+                {
+                    var pageFilePath = Path.Combine(dir, $"{baseName}_p{page}{ext}");
+                    var pageSuccess = await renderer.ExportPageToImageAsync(pageFilePath, page, SelectedExportFormat, ExportQuality);
+                    if (!pageSuccess) success = false;
+                }
             }
             else
             {
