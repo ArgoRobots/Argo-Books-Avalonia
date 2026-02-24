@@ -272,6 +272,37 @@ public class ReportFilters
     /// </summary>
     [JsonPropertyName("dateFormat")]
     public string DateFormat { get; set; } = "MMM yyyy";
+
+    /// <summary>
+    /// Checks if the preset name indicates a custom range.
+    /// </summary>
+    public static bool IsCustomRange(string? presetName)
+    {
+        if (string.IsNullOrEmpty(presetName))
+            return true;
+
+        var lower = presetName.ToLowerInvariant();
+        return lower is "custom" or "custom range";
+    }
+
+    /// <summary>
+    /// Gets the date range based on filters, with consistent end-date normalization.
+    /// Used by both chart and table data services to ensure identical date ranges.
+    /// </summary>
+    public (DateTime Start, DateTime End) GetDateRange()
+    {
+        // For custom ranges, use the explicit start/end dates from filters
+        if (string.IsNullOrEmpty(DatePresetName) || IsCustomRange(DatePresetName))
+        {
+            var start = StartDate?.Date ?? DateTime.MinValue;
+            // Normalize end date to include the entire day (end of day)
+            var end = EndDate?.Date.AddDays(1).AddSeconds(-1) ?? DateTime.MaxValue;
+            return (start, end);
+        }
+
+        // For preset names, calculate the date range
+        return DatePresetNames.GetDateRange(DatePresetName);
+    }
 }
 
 /// <summary>

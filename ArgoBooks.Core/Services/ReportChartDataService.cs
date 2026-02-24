@@ -10,36 +10,12 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ReportChartDataService(CompanyData? companyData, ReportFilters filters)
 {
-    /// <summary>
-    /// Gets the date range based on filters.
-    /// Handles both preset names and custom ranges.
-    /// </summary>
-    private (DateTime Start, DateTime End) GetDateRange()
-    {
-        // For custom ranges, use the explicit start/end dates from filters
-        if (string.IsNullOrEmpty(filters.DatePresetName) || IsCustomRange(filters.DatePresetName))
-        {
-            var start = filters.StartDate?.Date ?? DateTime.MinValue;
-            // Normalize end date to include the entire day (end of day)
-            var end = filters.EndDate?.Date.AddDays(1).AddSeconds(-1) ?? DateTime.MaxValue;
-            return (start, end);
-        }
-
-        // For preset names, calculate the date range
-        return DatePresetNames.GetDateRange(filters.DatePresetName);
-    }
+    private readonly Dictionary<ChartDataType, object> _cache = new();
 
     /// <summary>
-    /// Checks if the preset name indicates a custom range.
+    /// Gets the date range based on filters (delegates to shared ReportFilters.GetDateRange).
     /// </summary>
-    private static bool IsCustomRange(string? presetName)
-    {
-        if (string.IsNullOrEmpty(presetName))
-            return true;
-
-        var lower = presetName.ToLowerInvariant();
-        return lower is "custom" or "custom range";
-    }
+    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange();
 
     /// <summary>
     /// Gets the effective date range, constrained by actual sales data.
@@ -1545,8 +1521,22 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Gets chart data for a specific chart type.
+    /// Results are cached per chart type for the lifetime of this service instance.
     /// </summary>
     public object GetChartData(ChartDataType chartType)
+    {
+        if (_cache.TryGetValue(chartType, out var cached))
+            return cached;
+
+        var result = ComputeChartData(chartType);
+        _cache[chartType] = result;
+        return result;
+    }
+
+    /// <summary>
+    /// Computes chart data for a specific chart type.
+    /// </summary>
+    private object ComputeChartData(ChartDataType chartType)
     {
         return chartType switch
         {

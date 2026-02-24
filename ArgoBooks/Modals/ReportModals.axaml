@@ -17,7 +17,8 @@
 
     <Panel>
         <!-- ======================= PAGE SETTINGS MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}"
+                               ClosingCommand="{Binding ReportsPageViewModel.ClosePageSettingsCommand}">
             <controls:ModalOverlay.ModalContent>
                 <modals:ReportPageSettingsModal DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
@@ -26,7 +27,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= SAVE TEMPLATE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsSaveTemplateOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsSaveTemplateOpen}"
+                               ClosingCommand="{Binding ReportsPageViewModel.CloseSaveTemplateCommand}">
             <controls:ModalOverlay.ModalContent>
                 <modals:ReportSaveTemplateModal DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
@@ -35,7 +37,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= DELETE TEMPLATE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsDeleteTemplateOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsDeleteTemplateOpen}"
+                               ClosingCommand="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -100,7 +103,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= RENAME TEMPLATE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsRenameTemplateOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsRenameTemplateOpen}"
+                               ClosingCommand="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"

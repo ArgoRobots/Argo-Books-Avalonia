@@ -15,20 +15,9 @@ namespace ArgoBooks.Core.Services;
 public class ReportTableDataService(CompanyData? companyData, ReportFilters filters)
 {
     /// <summary>
-    /// Gets the date range based on filters.
+    /// Gets the date range based on filters (delegates to shared ReportFilters.GetDateRange).
     /// </summary>
-    private (DateTime Start, DateTime End) GetDateRange()
-    {
-        if (!string.IsNullOrEmpty(filters.DatePresetName) &&
-            filters.DatePresetName != DatePresetNames.Custom)
-        {
-            return DatePresetNames.GetDateRange(filters.DatePresetName);
-        }
-
-        var start = filters.StartDate ?? DateTime.MinValue;
-        var end = filters.EndDate ?? DateTime.MaxValue;
-        return (start, end);
-    }
+    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange();
 
     #region Sales Data
 

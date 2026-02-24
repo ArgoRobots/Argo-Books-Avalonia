@@ -1318,15 +1318,16 @@ public partial class ReportsPageViewModel : ViewModelBase
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
-            using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance);
+            using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
             using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
 
             // Request fit-to-window after preview is generated
             PreviewFitToWindowRequested?.Invoke(this, EventArgs.Empty);
         }
-        catch
+        catch (Exception ex)
         {
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to generate report preview");
             PreviewImage = null;
         }
     }
@@ -1365,7 +1366,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             var companyData = App.CompanyManager?.CompanyData;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
-            using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance);
+            using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             bool success;
             if (SelectedExportFormat == ExportFormat.PDF)
@@ -1614,7 +1615,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(Enum.GetValues<VerticalTextAlignment>());
 
     public ObservableCollection<string> FontFamilies { get; } =
-        ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS"];
+        ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS", "DejaVu Sans", "Liberation Sans", "Noto Sans"];
 
     public ObservableCollection<string> DateFormats { get; } =
         ["MM/dd/yyyy", "dd/MM/yyyy", "yyyy-MM-dd", "MMMM d, yyyy", "MMM d, yyyy", "d MMMM yyyy", "d MMM yyyy"];
