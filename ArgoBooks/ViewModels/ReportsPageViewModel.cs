@@ -1118,6 +1118,8 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft;
     private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers;
     private string _originalBackgroundColor = "#FFFFFF";
+    private double _originalTitleFontSize = 18;
+    private string _originalPageSettingsDatePreset = DatePresetNames.ThisMonth;
 
     [RelayCommand]
     private void OpenPageSettings()
@@ -1133,6 +1135,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         _originalShowFooter = ShowFooter;
         _originalShowPageNumbers = ShowPageNumbers;
         _originalBackgroundColor = BackgroundColor;
+        _originalTitleFontSize = TitleFontSize;
+        _originalPageSettingsDatePreset = PageSettingsDatePreset;
 
         IsPageSettingsOpen = true;
     }
@@ -1151,6 +1155,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowFooter = _originalShowFooter;
         ShowPageNumbers = _originalShowPageNumbers;
         BackgroundColor = _originalBackgroundColor;
+        TitleFontSize = _originalTitleFontSize;
+        PageSettingsDatePreset = _originalPageSettingsDatePreset;
 
         IsPageSettingsOpen = false;
 
@@ -1538,6 +1544,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _backgroundColor = "#FFFFFF";
 
+    [ObservableProperty]
+    private double _titleFontSize = 18;
+
+    [ObservableProperty]
+    private string _pageSettingsDatePreset = DatePresetNames.ThisMonth;
+
     public ObservableCollection<PageSize> PageSizes { get; } =
         new(Enum.GetValues<PageSize>());
 
@@ -1694,6 +1706,32 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
     }
 
+    partial void OnTitleFontSizeChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.TitleFontSize = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnPageSettingsDatePresetChanged(string value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.Filters.DatePresetName = value;
+
+            // Sync the step-1 SelectedDatePreset so everything stays consistent
+            SelectedDatePreset = value;
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == value;
+            }
+
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     [RelayCommand]
     private void ApplyPageSettings()
     {
@@ -1704,6 +1742,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         Configuration.ShowFooter = ShowFooter;
         Configuration.ShowPageNumbers = ShowPageNumbers;
         Configuration.BackgroundColor = BackgroundColor;
+        Configuration.TitleFontSize = TitleFontSize;
+        Configuration.Filters.DatePresetName = PageSettingsDatePreset;
+
+        // Sync the step-1 date preset
+        SelectedDatePreset = PageSettingsDatePreset;
+        foreach (var option in DatePresets)
+        {
+            option.IsSelected = option.Name == PageSettingsDatePreset;
+        }
 
         UpdateCanvasDimensions();
         IsPageSettingsOpen = false;
@@ -2208,11 +2255,13 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowFooter = Configuration.ShowFooter;
         ShowPageNumbers = Configuration.ShowPageNumbers;
         BackgroundColor = Configuration.BackgroundColor;
+        TitleFontSize = Configuration.TitleFontSize;
 
         // Update date preset and radio button selection
         if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
         {
             SelectedDatePreset = Configuration.Filters.DatePresetName;
+            PageSettingsDatePreset = Configuration.Filters.DatePresetName;
 
             // Update IsSelected on all date preset options
             foreach (var option in DatePresets)

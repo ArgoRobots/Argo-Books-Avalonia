@@ -323,9 +323,13 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         // Draw header/footer areas if enabled (use Configuration's settings)
-        if (Configuration.ShowHeader || Configuration.ShowFooter)
+        if (Configuration.ShowHeader)
         {
-            DrawHeaderFooter(canvas, baseWidth, baseHeight);
+            DrawHeader(canvas, baseWidth);
+        }
+        if (Configuration.ShowFooter)
+        {
+            DrawFooter(canvas, baseWidth, baseHeight);
         }
 
         // Render all elements using the shared renderer
@@ -370,12 +374,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
     }
 
-    private void DrawHeaderFooter(SKCanvas canvas, int width, int height)
+    private void DrawHeader(SKCanvas canvas, int width)
     {
         var headerHeight = (float)PageDimensions.HeaderHeight;
-        var footerHeight = (float)PageDimensions.FooterHeight;
 
-        // Header separator line
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
         separatorPaint.Style = SKPaintStyle.Stroke;
@@ -383,18 +385,26 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         canvas.DrawLine(40, headerHeight, width - 40, headerHeight, separatorPaint);
 
-        // Footer separator line
-        canvas.DrawLine(40, height - footerHeight, width - 40, height - footerHeight, separatorPaint);
-
-        // Header title
-        using var titleFont = new SKFont(SKTypeface.Default, 18);
+        var titleFontSize = (float)(Configuration?.TitleFontSize ?? 18);
+        using var titleFont = new SKFont(SKTypeface.Default, titleFontSize);
         using var titlePaint = new SKPaint();
         titlePaint.Color = SKColors.Black;
         titlePaint.IsAntialias = true;
         var title = Configuration?.Title ?? "Report Title";
         canvas.DrawText(title, width / 2f, 35, SKTextAlign.Center, titleFont, titlePaint);
+    }
 
-        // Footer text
+    private void DrawFooter(SKCanvas canvas, int width, int height)
+    {
+        var footerHeight = (float)PageDimensions.FooterHeight;
+
+        using var separatorPaint = new SKPaint();
+        separatorPaint.Color = SKColors.LightGray;
+        separatorPaint.Style = SKPaintStyle.Stroke;
+        separatorPaint.StrokeWidth = 1;
+
+        canvas.DrawLine(40, height - footerHeight, width - 40, height - footerHeight, separatorPaint);
+
         using var footerFont = new SKFont(SKTypeface.Default, 11);
         using var footerPaint = new SKPaint();
         footerPaint.Color = SKColors.Gray;

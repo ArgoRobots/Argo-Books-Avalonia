@@ -549,29 +549,22 @@
                                                    FontSize="13"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,Auto">
-                                            <TextBlock Grid.Row="0" Grid.Column="0"
-                                                       Text="{loc:Loc 'Start Date'}"
-                                                       FontSize="11"
-                                                       Margin="0,0,0,4"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Grid.Row="0" Grid.Column="2"
-                                                       Text="{loc:Loc 'End Date'}"
-                                                       FontSize="11"
-                                                       Margin="0,0,0,4"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <DatePicker Grid.Row="1" Grid.Column="0"
-                                                        SelectedDate="{Binding CustomStartDate}"
-                                                        HorizontalAlignment="Stretch" />
-                                            <TextBlock Grid.Row="1" Grid.Column="1"
-                                                       Text="{loc:Loc 'to'}"
-                                                       Margin="12,0"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <DatePicker Grid.Row="1" Grid.Column="2"
-                                                        SelectedDate="{Binding CustomEndDate}"
-                                                        HorizontalAlignment="Stretch" />
-                                        </Grid>
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'Start Date'}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding CustomStartDate}"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'End Date'}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding CustomEndDate}"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

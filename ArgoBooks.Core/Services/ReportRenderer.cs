@@ -83,7 +83,7 @@ public class ReportRenderer : IDisposable
         _boldTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default;
 
         _defaultFont = new SKFont(_defaultTypeface, 12 * renderScale);
-        _headerFont = new SKFont(_boldTypeface, 18 * renderScale);
+        _headerFont = new SKFont(_boldTypeface, (float)config.TitleFontSize * renderScale);
 
         _backgroundPaint = new SKPaint
         {
@@ -1955,6 +1955,24 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(image);
 
+        // Calculate corner radius from percentage (based on shorter side)
+        var cornerRadius = 0f;
+        if (image.CornerRadiusPercent > 0)
+        {
+            var shortSide = Math.Min(rect.Width, rect.Height);
+            cornerRadius = shortSide * image.CornerRadiusPercent / 200f; // 100% = fully round
+        }
+
+        // Apply rounded clip if needed
+        var hasRoundedCorners = cornerRadius > 0;
+        if (hasRoundedCorners)
+        {
+            canvas.Save();
+            var clipPath = new SKPath();
+            clipPath.AddRoundRect(rect, cornerRadius, cornerRadius);
+            canvas.ClipPath(clipPath, SKClipOperation.Intersect, true);
+        }
+
         // Check if user has set a background color (not transparent)
         var hasUserBackground = !string.IsNullOrEmpty(image.BackgroundColor) && image.BackgroundColor != "#00FFFFFF";
 
@@ -2011,6 +2029,12 @@ public class ReportRenderer : IDisposable
             DrawPlaceholder(canvas, rect, Tr("No image selected"), !hasUserBackground);
         }
 
+        // Restore canvas before drawing border (so border draws on top of clip)
+        if (hasRoundedCorners)
+        {
+            canvas.Restore();
+        }
+
         // Draw border
         if (image.BorderThickness > 0 && image.BorderColor != "#00FFFFFF")
         {
@@ -2021,7 +2045,16 @@ public class ReportRenderer : IDisposable
                 StrokeWidth = image.BorderThickness * _renderScale,
                 IsAntialias = true
             };
-            canvas.DrawRect(rect, borderPaint);
+            if (hasRoundedCorners)
+            {
+                var borderPath = new SKPath();
+                borderPath.AddRoundRect(rect, cornerRadius, cornerRadius);
+                canvas.DrawPath(borderPath, borderPaint);
+            }
+            else
+            {
+                canvas.DrawRect(rect, borderPaint);
+            }
         }
     }
 

@@ -62,6 +62,12 @@ public class ReportConfiguration
     public bool ShowFooter { get; set; } = true;
 
     /// <summary>
+    /// Font size for the page title in the header (in points).
+    /// </summary>
+    [JsonPropertyName("titleFontSize")]
+    public double TitleFontSize { get; set; } = 18;
+
+    /// <summary>
     /// Data filtering configuration.
     /// </summary>
     [JsonPropertyName("filters")]
@@ -161,6 +167,7 @@ public class ReportConfiguration
             ShowPageNumbers = ShowPageNumbers,
             ShowHeader = ShowHeader,
             ShowFooter = ShowFooter,
+            TitleFontSize = TitleFontSize,
             Filters = new ReportFilters
             {
                 StartDate = Filters.StartDate,

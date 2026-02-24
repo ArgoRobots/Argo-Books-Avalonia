@@ -670,6 +670,40 @@ public partial class ElementPropertyPanel : UserControl
         };
         panel.Children.Add(scaleModeCombo);
 
+        // Corner Radius
+        panel.Children.Add(new TextBlock
+        {
+            Text = Tr("Corner Radius (%)"),
+            Classes = { "property-label" },
+            Margin = new Thickness(0, 8, 0, 0)
+        });
+
+        var cornerRadiusInput = new NumericUpDown
+        {
+            Classes = { "property-input" },
+            Value = image.CornerRadiusPercent,
+            Minimum = 0,
+            Maximum = 100
+        };
+        cornerRadiusInput.ValueChanged += (_, _) =>
+        {
+            if (_isUpdating) return;
+            if (cornerRadiusInput.Value is not { } newValue)
+            {
+                DataValidationErrors.SetErrors(cornerRadiusInput, null);
+                return;
+            }
+            var oldValue = image.CornerRadiusPercent;
+            image.CornerRadiusPercent = (int)newValue;
+            OnPropertyChanged(image, nameof(image.CornerRadiusPercent), oldValue, image.CornerRadiusPercent);
+        };
+        cornerRadiusInput.LostFocus += (_, _) =>
+        {
+            if (cornerRadiusInput.Value is null)
+                cornerRadiusInput.Value = image.CornerRadiusPercent;
+        };
+        panel.Children.Add(cornerRadiusInput);
+
         return panel;
     }
 
