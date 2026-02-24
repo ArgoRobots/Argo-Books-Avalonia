@@ -29,7 +29,7 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="{loc:Loc 'Filter Lost/Damaged Items'}"
+                            <TextBlock Text="{loc:Loc 'Filter Lost / Damaged Items'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -158,7 +158,7 @@
                                                   Foreground="{DynamicResource ErrorBrush}" />
                                     </Border>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{loc:Loc 'Lost/Damaged Details'}"
+                                        <TextBlock Text="{loc:Loc 'Lost / Damaged Details'}"
                                                    FontSize="18"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -312,7 +312,7 @@
                                                   Width="20" Height="20"
                                                   Foreground="#D97706" />
                                     </Border>
-                                    <TextBlock Text="{loc:Loc 'Undo Lost/Damaged'}"
+                                    <TextBlock Text="{loc:Loc 'Undo Lost / Damaged'}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"

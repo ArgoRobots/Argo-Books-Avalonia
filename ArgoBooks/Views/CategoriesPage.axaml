@@ -88,7 +88,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Products/Services'}" ColumnName="ProductCount" SortProperty="ProductCount"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Products / Services'}" ColumnName="ProductCount" SortProperty="ProductCount"
                                                    ColumnWidth="{Binding ColumnWidths.ProductCountColumnWidth}"
                                                    IsColumnVisible="{Binding ShowProductCountColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -213,7 +213,7 @@
                 <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Category Name'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="{loc:Loc 'Products/Services'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="{loc:Loc 'Products / Services'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

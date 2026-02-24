@@ -792,14 +792,14 @@ public class DateRangeReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#808080";
+    } = "#000000";
 
     [JsonPropertyName("fontSize")]
     public double FontSize
     {
         get;
         set => SetField(ref field, value);
-    } = 11;
+    } = 13;
 
     [JsonPropertyName("isBold")]
     public bool IsBold

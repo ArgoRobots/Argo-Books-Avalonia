@@ -549,7 +549,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
         if (relatedLostDamaged != null)
         {
-            return "Lost/Damaged";
+            return "Lost / Damaged";
         }
 
         // Check for returns related to this purchase
@@ -788,7 +788,7 @@ public partial class ExpenseDisplayItem : ObservableObject
 
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
-    public bool IsLostDamaged => StatusDisplay == "Lost/Damaged";
+    public bool IsLostDamaged => StatusDisplay == "Lost / Damaged";
     public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
     public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
 

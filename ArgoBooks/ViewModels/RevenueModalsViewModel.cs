@@ -268,7 +268,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     public void OpenMarkAsLostDamagedModal(RevenueDisplayItem? item)
     {
-        OpenItemStatusModal(item, "LostDamaged", "Mark as Lost/Damaged", "Mark as Lost/Damaged", false, LostDamagedReasonOptions);
+        OpenItemStatusModal(item, "LostDamaged", "Mark as Lost / Damaged", "Mark as Lost / Damaged", false, LostDamagedReasonOptions);
     }
 
     public void OpenMarkAsReturnedModal(RevenueDisplayItem? item)
@@ -278,7 +278,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     public void OpenUndoLostDamagedModal(RevenueDisplayItem? item)
     {
-        OpenItemStatusModal(item, "UndoLostDamaged", "Undo Lost/Damaged Status", "Undo Status", true, UndoReasonOptions);
+        OpenItemStatusModal(item, "UndoLostDamaged", "Undo Lost / Damaged Status", "Undo Status", true, UndoReasonOptions);
     }
 
     public void OpenUndoReturnedModal(RevenueDisplayItem? item)

@@ -48,6 +48,9 @@ public partial class SidebarSection : UserControl
     public static readonly StyledProperty<double> ContentMaxHeightProperty =
         AvaloniaProperty.Register<SidebarSection, double>(nameof(ContentMaxHeight), double.PositiveInfinity);
 
+    public static readonly StyledProperty<string?> SectionKeyProperty =
+        AvaloniaProperty.Register<SidebarSection, string?>(nameof(SectionKey));
+
     #endregion
 
     #region Properties
@@ -116,6 +119,15 @@ public partial class SidebarSection : UserControl
     }
 
     /// <summary>
+    /// Gets or sets a stable key used for persisting the section's expanded state.
+    /// </summary>
+    public string? SectionKey
+    {
+        get => GetValue(SectionKeyProperty);
+        set => SetValue(SectionKeyProperty, value);
+    }
+
+    /// <summary>
     /// Command to toggle the expanded state.
     /// </summary>
     public ICommand ToggleExpandedCommand { get; }
@@ -143,6 +155,16 @@ public partial class SidebarSection : UserControl
     {
         base.OnLoaded(e);
 
+        // Restore persisted expanded state
+        if (!string.IsNullOrEmpty(SectionKey))
+        {
+            var sectionStates = App.SettingsService?.GlobalSettings.Ui.SidebarSectionExpanded;
+            if (sectionStates != null && sectionStates.TryGetValue(SectionKey, out var expanded))
+            {
+                IsExpanded = expanded;
+            }
+        }
+
         // Measure and set initial state without animation
         if (ContentItems != null)
         {
@@ -158,6 +180,20 @@ public partial class SidebarSection : UserControl
     private void ToggleExpanded()
     {
         IsExpanded = !IsExpanded;
+        SaveExpandedState();
+    }
+
+    private void SaveExpandedState()
+    {
+        if (string.IsNullOrEmpty(SectionKey))
+            return;
+
+        var settings = App.SettingsService?.GlobalSettings;
+        if (settings != null)
+        {
+            settings.Ui.SidebarSectionExpanded[SectionKey] = IsExpanded;
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
+        }
     }
 
     private void AnimateExpandCollapse(bool isExpanding)

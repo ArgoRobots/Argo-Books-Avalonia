@@ -103,6 +103,29 @@
                         <controls:ColorPickerInput ColorValue="{Binding BackgroundColor, Mode=TwoWay}" />
                     </StackPanel>
 
+                    <!-- Title Font Size -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{loc:Loc 'Title Font Size'}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <NumericUpDown Value="{Binding TitleFontSize}"
+                                       Minimum="8" Maximum="48" />
+                    </StackPanel>
+
+                    <!-- Date Range -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{loc:Loc 'Date Range'}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox ItemsSource="{Binding DatePresets}"
+                                  SelectedValue="{Binding PageSettingsDatePreset}"
+                                  SelectedValueBinding="{Binding Name}"
+                                  DisplayMemberBinding="{Binding Name}"
+                                  HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
                     <!-- Display Options -->
                     <StackPanel Spacing="12">
                         <TextBlock Text="{loc:Loc 'Display Options'}"

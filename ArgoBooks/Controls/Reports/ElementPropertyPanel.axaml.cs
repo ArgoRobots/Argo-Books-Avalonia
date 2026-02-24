@@ -502,9 +502,19 @@ public partial class ElementPropertyPanel : UserControl
         fontSizeInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
+            if (fontSizeInput.Value is not { } newValue)
+            {
+                DataValidationErrors.SetErrors(fontSizeInput, null);
+                return;
+            }
             var oldValue = label.FontSize;
-            label.FontSize = (double)(fontSizeInput.Value ?? 14);
+            label.FontSize = (double)newValue;
             OnPropertyChanged(label, nameof(label.FontSize), oldValue, label.FontSize);
+        };
+        fontSizeInput.LostFocus += (_, _) =>
+        {
+            if (fontSizeInput.Value is null)
+                fontSizeInput.Value = (decimal)label.FontSize;
         };
         panel.Children.Add(fontSizeInput);
 
@@ -660,6 +670,40 @@ public partial class ElementPropertyPanel : UserControl
         };
         panel.Children.Add(scaleModeCombo);
 
+        // Corner Radius
+        panel.Children.Add(new TextBlock
+        {
+            Text = Tr("Corner Radius (%)"),
+            Classes = { "property-label" },
+            Margin = new Thickness(0, 8, 0, 0)
+        });
+
+        var cornerRadiusInput = new NumericUpDown
+        {
+            Classes = { "property-input" },
+            Value = image.CornerRadiusPercent,
+            Minimum = 0,
+            Maximum = 100
+        };
+        cornerRadiusInput.ValueChanged += (_, _) =>
+        {
+            if (_isUpdating) return;
+            if (cornerRadiusInput.Value is not { } newValue)
+            {
+                DataValidationErrors.SetErrors(cornerRadiusInput, null);
+                return;
+            }
+            var oldValue = image.CornerRadiusPercent;
+            image.CornerRadiusPercent = (int)newValue;
+            OnPropertyChanged(image, nameof(image.CornerRadiusPercent), oldValue, image.CornerRadiusPercent);
+        };
+        cornerRadiusInput.LostFocus += (_, _) =>
+        {
+            if (cornerRadiusInput.Value is null)
+                cornerRadiusInput.Value = image.CornerRadiusPercent;
+        };
+        panel.Children.Add(cornerRadiusInput);
+
         return panel;
     }
 
@@ -713,9 +757,19 @@ public partial class ElementPropertyPanel : UserControl
         fontSizeInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
+            if (fontSizeInput.Value is not { } newValue)
+            {
+                DataValidationErrors.SetErrors(fontSizeInput, null);
+                return;
+            }
             var oldValue = dateRange.FontSize;
-            dateRange.FontSize = (double)(fontSizeInput.Value ?? 12);
+            dateRange.FontSize = (double)newValue;
             OnPropertyChanged(dateRange, nameof(dateRange.FontSize), oldValue, dateRange.FontSize);
+        };
+        fontSizeInput.LostFocus += (_, _) =>
+        {
+            if (fontSizeInput.Value is null)
+                fontSizeInput.Value = (decimal)dateRange.FontSize;
         };
         panel.Children.Add(fontSizeInput);
 

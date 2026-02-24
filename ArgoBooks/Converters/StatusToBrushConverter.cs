@@ -96,7 +96,7 @@ public static class StatusConverters
             ["Unpaid"] = OrangeBg,
             ["Returned"] = BlueBg,
             ["Partial Return"] = PurpleBg,
-            ["Lost/Damaged"] = RedBg,
+            ["Lost / Damaged"] = RedBg,
             ["Cancelled"] = GrayBg
         });
 
@@ -108,7 +108,7 @@ public static class StatusConverters
             ["Unpaid"] = OrangeFg,
             ["Returned"] = BlueFg,
             ["Partial Return"] = PurpleFg,
-            ["Lost/Damaged"] = RedFg,
+            ["Lost / Damaged"] = RedFg,
             ["Cancelled"] = GrayFg
         }, GrayFg);
 

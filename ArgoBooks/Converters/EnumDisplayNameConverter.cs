@@ -13,9 +13,24 @@ public class EnumDisplayNameConverter : IValueConverter
     {
         return value switch
         {
+            TransactionType transactionType => transactionType.GetDisplayName(),
             TableSortOrder sortOrder => sortOrder.GetDisplayName(),
             _ => value?.ToString() ?? string.Empty
         };
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converter that returns true if the transaction type supports Include Returns/Losses options.
+/// </summary>
+public class TransactionTypeSupportsReturnsConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is TransactionType transactionType && transactionType.SupportsReturnsAndLosses();
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

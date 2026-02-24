@@ -299,6 +299,7 @@ public class SpreadsheetImportService
                 ValidateReturnsReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case "Lost Damaged":
+            case "Lost / Damaged":
             case "Lost/Damaged":
                 ValidateLostDamagedReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
@@ -1112,6 +1113,7 @@ public class SpreadsheetImportService
                 ImportReturns(data, headers, rows);
                 break;
             case "Lost Damaged":
+            case "Lost / Damaged":
             case "Lost/Damaged":
                 ImportLostDamaged(data, headers, rows);
                 break;

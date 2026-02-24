@@ -131,9 +131,10 @@ public partial class ReportsPageViewModel : ViewModelBase
             else if (CurrentStep == 2)
             {
                 Step1Completed = false;
-                // Preserve chart selections before reloading template
+                // Preserve chart selections and date preset before reloading template
                 // (will be restored in ApplyConfigurationToPageSettings after template loads)
                 _chartTypesToPreserve = Configuration.Filters.SelectedChartTypes.ToList();
+                _datePresetToPreserve = SelectedDatePreset;
 
                 // Clear undo history and reload the template to discard layout changes
                 UndoRedoManager.Clear();
@@ -246,6 +247,11 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// Chart types to preserve during template reload (when going back from step 2).
     /// </summary>
     private List<ChartDataType>? _chartTypesToPreserve;
+
+    /// <summary>
+    /// Date preset to preserve during template reload (when going back from step 2).
+    /// </summary>
+    private string? _datePresetToPreserve;
 
     [ObservableProperty]
     private string _selectedDatePreset = DatePresetNames.ThisMonth;
@@ -1118,6 +1124,8 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft;
     private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers;
     private string _originalBackgroundColor = "#FFFFFF";
+    private double _originalTitleFontSize = 18;
+    private string _originalPageSettingsDatePreset = DatePresetNames.ThisMonth;
 
     [RelayCommand]
     private void OpenPageSettings()
@@ -1133,6 +1141,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         _originalShowFooter = ShowFooter;
         _originalShowPageNumbers = ShowPageNumbers;
         _originalBackgroundColor = BackgroundColor;
+        _originalTitleFontSize = TitleFontSize;
+        _originalPageSettingsDatePreset = PageSettingsDatePreset;
 
         IsPageSettingsOpen = true;
     }
@@ -1151,6 +1161,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowFooter = _originalShowFooter;
         ShowPageNumbers = _originalShowPageNumbers;
         BackgroundColor = _originalBackgroundColor;
+        TitleFontSize = _originalTitleFontSize;
+        PageSettingsDatePreset = _originalPageSettingsDatePreset;
 
         IsPageSettingsOpen = false;
 
@@ -1538,6 +1550,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _backgroundColor = "#FFFFFF";
 
+    [ObservableProperty]
+    private double _titleFontSize = 18;
+
+    [ObservableProperty]
+    private string _pageSettingsDatePreset = DatePresetNames.ThisMonth;
+
     public ObservableCollection<PageSize> PageSizes { get; } =
         new(Enum.GetValues<PageSize>());
 
@@ -1694,6 +1712,32 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
     }
 
+    partial void OnTitleFontSizeChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.TitleFontSize = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnPageSettingsDatePresetChanged(string value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.Filters.DatePresetName = value;
+
+            // Sync the step-1 SelectedDatePreset so everything stays consistent
+            SelectedDatePreset = value;
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == value;
+            }
+
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     [RelayCommand]
     private void ApplyPageSettings()
     {
@@ -1704,6 +1748,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         Configuration.ShowFooter = ShowFooter;
         Configuration.ShowPageNumbers = ShowPageNumbers;
         Configuration.BackgroundColor = BackgroundColor;
+        Configuration.TitleFontSize = TitleFontSize;
+        Configuration.Filters.DatePresetName = PageSettingsDatePreset;
+
+        // Sync the step-1 date preset
+        SelectedDatePreset = PageSettingsDatePreset;
+        foreach (var option in DatePresets)
+        {
+            option.IsSelected = option.Name == PageSettingsDatePreset;
+        }
 
         UpdateCanvasDimensions();
         IsPageSettingsOpen = false;
@@ -1888,11 +1941,12 @@ public partial class ReportsPageViewModel : ViewModelBase
         UndoRedoViewModel = new UndoRedoButtonGroupViewModel(UndoRedoManager);
         UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
 
-        // Load element panel state from settings
+        // Load element panel and grid state from settings
         var uiSettings = App.SettingsService?.GlobalSettings.Ui;
         if (uiSettings != null)
         {
             _isElementPanelExpanded = !uiSettings.ReportsElementPanelCollapsed;
+            _showGrid = uiSettings.ReportsShowGrid;
         }
 
         InitializeCollections();
@@ -1937,6 +1991,19 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (settings != null)
         {
             settings.Ui.ReportsElementPanelCollapsed = !value;
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
+        }
+    }
+
+    /// <summary>
+    /// Saves the grid visibility state when it changes.
+    /// </summary>
+    partial void OnShowGridChanged(bool value)
+    {
+        var settings = App.SettingsService?.GlobalSettings;
+        if (settings != null)
+        {
+            settings.Ui.ReportsShowGrid = value;
             _ = App.SettingsService?.SaveGlobalSettingsAsync();
         }
     }
@@ -2208,11 +2275,27 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowFooter = Configuration.ShowFooter;
         ShowPageNumbers = Configuration.ShowPageNumbers;
         BackgroundColor = Configuration.BackgroundColor;
+        TitleFontSize = Configuration.TitleFontSize;
 
-        // Update date preset and radio button selection
-        if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
+        // Check if we need to restore a preserved date preset (when going back from step 2)
+        if (_datePresetToPreserve != null)
         {
+            SelectedDatePreset = _datePresetToPreserve;
+            PageSettingsDatePreset = _datePresetToPreserve;
+
+            // Update IsSelected on all date preset options
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == _datePresetToPreserve;
+            }
+
+            _datePresetToPreserve = null;
+        }
+        else if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
+        {
+            // Update date preset and radio button selection from configuration
             SelectedDatePreset = Configuration.Filters.DatePresetName;
+            PageSettingsDatePreset = Configuration.Filters.DatePresetName;
 
             // Update IsSelected on all date preset options
             foreach (var option in DatePresets)

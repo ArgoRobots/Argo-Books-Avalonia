@@ -268,7 +268,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     public void OpenMarkAsLostDamagedModal(ExpenseDisplayItem? item)
     {
-        OpenItemStatusModal(item, "LostDamaged", "Mark as Lost/Damaged", "Mark as Lost/Damaged", false, LostDamagedReasonOptions);
+        OpenItemStatusModal(item, "LostDamaged", "Mark as Lost / Damaged", "Mark as Lost / Damaged", false, LostDamagedReasonOptions);
     }
 
     public void OpenMarkAsReturnedModal(ExpenseDisplayItem? item)
@@ -278,7 +278,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     public void OpenUndoLostDamagedModal(ExpenseDisplayItem? item)
     {
-        OpenItemStatusModal(item, "UndoLostDamaged", "Undo Lost/Damaged Status", "Undo Status", true, UndoReasonOptions);
+        OpenItemStatusModal(item, "UndoLostDamaged", "Undo Lost / Damaged Status", "Undo Status", true, UndoReasonOptions);
     }
 
     public void OpenUndoReturnedModal(ExpenseDisplayItem? item)
