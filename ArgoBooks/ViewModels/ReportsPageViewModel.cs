@@ -1362,8 +1362,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     #region Step 3 - Preview & Export
 
-    [ObservableProperty]
-    private Bitmap? _previewImage;
+    public ObservableCollection<Bitmap> PreviewPageImages { get; } = new();
 
     [ObservableProperty]
     private ExportFormat _selectedExportFormat = ExportFormat.PDF;
@@ -1395,51 +1394,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _exportMessage;
 
-    [ObservableProperty]
-    private int _currentPreviewPage = 1;
-
-    [ObservableProperty]
-    private int _totalPreviewPages = 1;
-
-    private List<Bitmap>? _previewPageBitmaps;
-
-    public bool CanGoToPreviousPreviewPage => CurrentPreviewPage > 1;
-    public bool CanGoToNextPreviewPage => CurrentPreviewPage < TotalPreviewPages;
-    public string PreviewPageDisplay => $"Page {CurrentPreviewPage} of {TotalPreviewPages}";
-    public bool HasMultiplePreviewPages => TotalPreviewPages > 1;
-
-    partial void OnCurrentPreviewPageChanged(int value)
-    {
-        if (_previewPageBitmaps != null && value >= 1 && value <= _previewPageBitmaps.Count)
-        {
-            PreviewImage = _previewPageBitmaps[value - 1];
-        }
-        OnPropertyChanged(nameof(CanGoToPreviousPreviewPage));
-        OnPropertyChanged(nameof(CanGoToNextPreviewPage));
-        OnPropertyChanged(nameof(PreviewPageDisplay));
-    }
-
-    partial void OnTotalPreviewPagesChanged(int value)
-    {
-        OnPropertyChanged(nameof(HasMultiplePreviewPages));
-        OnPropertyChanged(nameof(CanGoToNextPreviewPage));
-        OnPropertyChanged(nameof(PreviewPageDisplay));
-    }
-
-    [RelayCommand]
-    private void NextPreviewPage()
-    {
-        if (CurrentPreviewPage < TotalPreviewPages)
-            CurrentPreviewPage++;
-    }
-
-    [RelayCommand]
-    private void PreviousPreviewPage()
-    {
-        if (CurrentPreviewPage > 1)
-            CurrentPreviewPage--;
-    }
-
     public ObservableCollection<ExportFormatOption> ExportFormats { get; } =
     [
         new("PDF Document", ExportFormat.PDF, "For printing & sharing"),
@@ -1464,27 +1418,19 @@ public partial class ReportsPageViewModel : ViewModelBase
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             // Dispose previous page bitmaps
-            if (_previewPageBitmaps != null)
-            {
-                foreach (var bmp in _previewPageBitmaps)
-                    bmp.Dispose();
-            }
+            foreach (var bmp in PreviewPageImages)
+                bmp.Dispose();
+            PreviewPageImages.Clear();
 
             var pageCount = Math.Max(1, Configuration.PageCount);
-            var bitmaps = new List<Bitmap>();
 
             for (int page = 1; page <= pageCount; page++)
             {
                 using var skBitmap = renderer.CreatePagePreview(page, width * resolutionMultiplier, height * resolutionMultiplier);
                 var bitmap = ConvertToBitmap(skBitmap);
                 if (bitmap != null)
-                    bitmaps.Add(bitmap);
+                    PreviewPageImages.Add(bitmap);
             }
-
-            _previewPageBitmaps = bitmaps;
-            TotalPreviewPages = pageCount;
-            CurrentPreviewPage = 1;
-            PreviewImage = bitmaps.Count > 0 ? bitmaps[0] : null;
 
             // Request fit-to-window after preview is generated
             PreviewFitToWindowRequested?.Invoke(this, EventArgs.Empty);
@@ -1492,7 +1438,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to generate report preview");
-            PreviewImage = null;
+            foreach (var bmp in PreviewPageImages)
+                bmp.Dispose();
+            PreviewPageImages.Clear();
         }
     }
 
@@ -2161,6 +2109,10 @@ public partial class ReportsPageViewModel : ViewModelBase
     public void Cleanup()
     {
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+
+        foreach (var bmp in PreviewPageImages)
+            bmp.Dispose();
+        PreviewPageImages.Clear();
     }
 
     /// <summary>

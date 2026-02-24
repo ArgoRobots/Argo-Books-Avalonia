@@ -731,28 +731,20 @@ public partial class ReportsPage : UserControl
     }
 
     /// <summary>
-    /// Zooms the preview to fit the entire content in the viewport.
+    /// Zooms the preview to fit page width in the viewport.
     /// </summary>
     private void PreviewZoomToFit()
     {
         if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
         if (DataContext is not ReportsPageViewModel vm) return;
 
-        // Use the display dimensions (original page size, not the 2x rendered size)
         var imageWidth = vm.PreviewDisplayWidth;
-        var imageHeight = vm.PreviewDisplayHeight;
+        if (imageWidth <= 0) return;
 
-        if (imageWidth <= 0 || imageHeight <= 0) return;
+        var viewportWidth = _previewScrollViewer.Bounds.Width;
+        if (viewportWidth <= 0) return;
 
-        var viewportWidth = _previewScrollViewer.Bounds.Width - 20; // Account for 10px padding on each side
-        var viewportHeight = _previewScrollViewer.Bounds.Height - 20;
-
-        if (viewportWidth <= 0 || viewportHeight <= 0) return;
-
-        var scaleX = viewportWidth / imageWidth;
-        var scaleY = viewportHeight / imageHeight;
-
-        _previewZoomLevel = Math.Min(scaleX, scaleY);
+        _previewZoomLevel = viewportWidth / imageWidth;
         _previewZoomLevel = Math.Clamp(_previewZoomLevel, 0.25, 4.0);
         ApplyPreviewZoom();
 
