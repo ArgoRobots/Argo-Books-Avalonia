@@ -116,7 +116,7 @@ public class ReportRenderer : IDisposable
     /// <summary>
     /// Renders the report to a bitmap.
     /// </summary>
-    public SKBitmap RenderToBitmap()
+    private SKBitmap RenderToBitmap()
     {
         var (width, height) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
         var scaledWidth = (int)(width * _renderScale);
@@ -133,7 +133,7 @@ public class ReportRenderer : IDisposable
     /// <summary>
     /// Renders the report to a canvas.
     /// </summary>
-    public void RenderToCanvas(SKCanvas canvas, int width, int height)
+    private void RenderToCanvas(SKCanvas canvas, int width, int height)
     {
         canvas.Clear(_backgroundPaint.Color);
 
@@ -1086,8 +1086,7 @@ public class ReportRenderer : IDisposable
                 barPaint.Style = SKPaintStyle.Fill;
                 barPaint.IsAntialias = true;
 
-                SKRect barRect;
-                barRect = point.Value >= 0
+                var barRect = point.Value >= 0
                     ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY)
                     : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
@@ -1425,7 +1424,6 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(table);
         var columns = GetVisibleColumns(table);
-        var columnCount = Math.Max(columns.Count, 1);
 
         // Get table data
         var tableData = GetTableData(table, columns);
@@ -1636,8 +1634,6 @@ public class ReportRenderer : IDisposable
 
                 colX += colWidth;
             }
-
-            currentY += headerRowHeight;
         }
 
         // Draw outer border
