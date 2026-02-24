@@ -73,7 +73,26 @@ public enum MatchSizeMode
 public enum TransactionType
 {
     Revenue,
-    Expenses
+    Expenses,
+    Invoices,
+    Payments,
+    RentalRecords,
+    RentalItems,
+    Inventory,
+    PurchaseOrders,
+    StockAdjustments,
+    StockTransfers,
+    Returns,
+    LostDamaged,
+    Receipts,
+    Customers,
+    Suppliers,
+    Products,
+    Employees,
+    Departments,
+    Categories,
+    Locations,
+    Accountants
 }
 
 /// <summary>

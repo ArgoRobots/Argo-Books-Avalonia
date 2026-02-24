@@ -1649,24 +1649,45 @@ public class ReportRenderer : IDisposable
     {
         var parts = new List<string>();
 
-        // Transaction type
         var typeText = table.TransactionType switch
         {
             TransactionType.Revenue => Tr("Revenue"),
             TransactionType.Expenses => Tr("Expenses"),
-            _ => Tr("Revenue & Expenses")
+            TransactionType.Invoices => Tr("Invoices"),
+            TransactionType.Payments => Tr("Payments"),
+            TransactionType.RentalRecords => Tr("Rental Records"),
+            TransactionType.RentalItems => Tr("Rental Items"),
+            TransactionType.Inventory => Tr("Inventory"),
+            TransactionType.PurchaseOrders => Tr("Purchase Orders"),
+            TransactionType.StockAdjustments => Tr("Stock Adjustments"),
+            TransactionType.StockTransfers => Tr("Stock Transfers"),
+            TransactionType.Returns => Tr("Returns"),
+            TransactionType.LostDamaged => Tr("Lost & Damaged"),
+            TransactionType.Receipts => Tr("Receipts"),
+            TransactionType.Customers => Tr("Customers"),
+            TransactionType.Suppliers => Tr("Suppliers"),
+            TransactionType.Products => Tr("Products"),
+            TransactionType.Employees => Tr("Employees"),
+            TransactionType.Departments => Tr("Departments"),
+            TransactionType.Categories => Tr("Categories"),
+            TransactionType.Locations => Tr("Locations"),
+            TransactionType.Accountants => Tr("Accountants"),
+            _ => Tr("Data")
         };
         parts.Add(typeText);
 
-        // Include returns/losses
-        var inclusions = new List<string>();
-        if (table.IncludeReturns)
-            inclusions.Add(Tr("Returns"));
-        if (table.IncludeLosses)
-            inclusions.Add(Tr("Losses"));
+        // Include returns/losses (only relevant for Revenue/Expenses)
+        if (table.TransactionType is TransactionType.Revenue or TransactionType.Expenses)
+        {
+            var inclusions = new List<string>();
+            if (table.IncludeReturns)
+                inclusions.Add(Tr("Returns"));
+            if (table.IncludeLosses)
+                inclusions.Add(Tr("Losses"));
 
-        if (inclusions.Count > 0)
-            parts.Add("(" + Tr("incl.") + " " + string.Join(", ", inclusions) + ")");
+            if (inclusions.Count > 0)
+                parts.Add("(" + Tr("incl.") + " " + string.Join(", ", inclusions) + ")");
+        }
 
         return string.Join(" ", parts);
     }
@@ -1716,7 +1737,15 @@ public class ReportRenderer : IDisposable
     private Dictionary<string, string> CalculateTableTotals(List<List<string>> tableData, List<string> columns, int rowCount)
     {
         var totals = new Dictionary<string, string>();
-        var numericColumns = new HashSet<string> { "Qty", "Unit Price", "Total", "Shipping" };
+        var numericColumns = new HashSet<string>
+        {
+            "Qty", "Unit Price", "Total", "Shipping", "Paid", "Balance",
+            "Rate", "Daily Rate", "Weekly Rate", "Monthly Rate",
+            "Unit Cost", "In Stock", "Reserved", "Available",
+            "Total Qty", "Rented", "Previous", "New",
+            "Capacity", "In Use", "Budget", "Salary", "Price", "Cost",
+            "Employees", "Transactions"
+        };
 
         for (int colIndex = 0; colIndex < columns.Count; colIndex++)
         {
@@ -1809,76 +1838,290 @@ public class ReportRenderer : IDisposable
     {
         var result = new List<List<string>>();
 
-        // Return empty list for design mode - no placeholder data
         if (_companyData == null)
             return result;
 
-        var transactionType = table.TransactionType;
+        var tableDataService = new ReportTableDataService(_companyData, _config.Filters);
 
-        // Build a list of transaction records
-        var transactions = new List<(DateTime Date, string Id, string Company, string Product, decimal Qty, decimal UnitPrice, decimal Total, string Status, string Accountant, decimal Shipping)>();
-
-        // Get revenue transactions
-        if (transactionType == TransactionType.Revenue)
+        switch (table.TransactionType)
         {
-            foreach (var revenue in _companyData.Revenues)
-            {
-                var customerName = _companyData.Customers.FirstOrDefault(c => c.Id == revenue.CustomerId)?.Name ?? "N/A";
-                var productName = revenue.LineItems.FirstOrDefault()?.Description ?? revenue.Description;
-                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == revenue.AccountantId)?.Name ?? "";
-                transactions.Add((revenue.Date, revenue.Id, customerName, productName, revenue.Quantity, revenue.UnitPrice, revenue.Total, revenue.PaymentStatus, accountantName, revenue.ShippingCost));
-            }
-        }
-
-        // Get expense transactions
-        if (transactionType == TransactionType.Expenses)
-        {
-            foreach (var expense in _companyData.Expenses)
-            {
-                var supplierName = _companyData.Suppliers.FirstOrDefault(s => s.Id == expense.SupplierId)?.Name ?? "N/A";
-                var productName = expense.LineItems.FirstOrDefault()?.Description ?? expense.Description;
-                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == expense.AccountantId)?.Name ?? "";
-                transactions.Add((expense.Date, expense.Id, supplierName, productName, expense.Quantity, expense.UnitPrice, expense.Total, "Paid", accountantName, expense.ShippingCost));
-            }
-        }
-
-        // Sort transactions
-        var sortOrder = table.SortOrder;
-        transactions = sortOrder switch
-        {
-            TableSortOrder.DateAscending => transactions.OrderBy(t => t.Date).ToList(),
-            TableSortOrder.DateDescending => transactions.OrderByDescending(t => t.Date).ToList(),
-            TableSortOrder.AmountAscending => transactions.OrderBy(t => t.Total).ToList(),
-            TableSortOrder.AmountDescending => transactions.OrderByDescending(t => t.Total).ToList(),
-            _ => transactions.OrderByDescending(t => t.Date).ToList()
-        };
-
-        // Convert to row data based on visible columns
-        foreach (var trans in transactions)
-        {
-            var row = new List<string>();
-            foreach (var col in columns)
-            {
-                var value = col switch
-                {
-                    "Date" => trans.Date.ToString("MM/dd/yyyy"),
-                    "ID" => trans.Id,
-                    "Company" => trans.Company,
-                    "Product" => trans.Product,
-                    "Qty" => trans.Qty.ToString("N0"),
-                    "Unit Price" => FormatCurrency(trans.UnitPrice),
-                    "Total" => FormatCurrency(trans.Total),
-                    "Status" => trans.Status,
-                    "Accountant" => trans.Accountant,
-                    "Shipping" => FormatCurrency(trans.Shipping),
-                    _ => ""
-                };
-                row.Add(value);
-            }
-            result.Add(row);
+            case TransactionType.Revenue:
+                foreach (var r in tableDataService.GetRevenueTableData(table))
+                    result.Add(MapTransactionRow(r, columns));
+                break;
+            case TransactionType.Expenses:
+                foreach (var r in tableDataService.GetExpensesTableData(table))
+                    result.Add(MapTransactionRow(r, columns));
+                break;
+            case TransactionType.Invoices:
+                foreach (var r in tableDataService.GetInvoicesTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.IssueDate.ToString("MM/dd/yyyy"),
+                        "ID" => r.InvoiceNumber,
+                        "Company" => r.CustomerName,
+                        "Due Date" => r.DueDate.ToString("MM/dd/yyyy"),
+                        "Total" => FormatCurrency(r.Total),
+                        "Paid" => FormatCurrency(r.AmountPaid),
+                        "Balance" => FormatCurrency(r.Balance),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Payments:
+                foreach (var r in tableDataService.GetPaymentsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.Date.ToString("MM/dd/yyyy"),
+                        "Company" => r.CustomerName,
+                        "Total" => FormatCurrency(r.Amount),
+                        "Method" => r.PaymentMethod,
+                        "ID" => r.ReferenceNumber,
+                        "Invoice" => r.InvoiceId,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.RentalRecords:
+                foreach (var r in tableDataService.GetRentalRecordsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Item" => r.ItemName,
+                        "Company" => r.CustomerName,
+                        "Date" => r.StartDate.ToString("MM/dd/yyyy"),
+                        "Due Date" => r.DueDate.ToString("MM/dd/yyyy"),
+                        "Return Date" => r.ReturnDate?.ToString("MM/dd/yyyy") ?? "",
+                        "Rate" => FormatCurrency(r.RateAmount),
+                        "Total" => FormatCurrency(r.TotalCost),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.RentalItems:
+                foreach (var r in tableDataService.GetRentalItemsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Total Qty" => r.TotalQuantity.ToString("N0"),
+                        "Available" => r.AvailableQuantity.ToString("N0"),
+                        "Rented" => r.RentedQuantity.ToString("N0"),
+                        "Daily Rate" => FormatCurrency(r.DailyRate),
+                        "Weekly Rate" => FormatCurrency(r.WeeklyRate),
+                        "Monthly Rate" => FormatCurrency(r.MonthlyRate),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Inventory:
+                foreach (var r in tableDataService.GetInventoryTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Product" => r.ProductName,
+                        "SKU" => r.Sku,
+                        "Location" => r.LocationName,
+                        "In Stock" => r.InStock.ToString("N0"),
+                        "Reserved" => r.Reserved.ToString("N0"),
+                        "Available" => r.Available.ToString("N0"),
+                        "Unit Cost" => FormatCurrency(r.UnitCost),
+                        "Total" => FormatCurrency(r.TotalValue),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.PurchaseOrders:
+                foreach (var r in tableDataService.GetPurchaseOrdersTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "ID" => r.PoNumber,
+                        "Company" => r.SupplierName,
+                        "Date" => r.OrderDate.ToString("MM/dd/yyyy"),
+                        "Due Date" => r.ExpectedDeliveryDate.ToString("MM/dd/yyyy"),
+                        "Total" => FormatCurrency(r.Total),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.StockAdjustments:
+                foreach (var r in tableDataService.GetStockAdjustmentsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.Timestamp.ToString("MM/dd/yyyy"),
+                        "Product" => r.ProductName,
+                        "Type" => r.AdjustmentType,
+                        "Qty" => r.Quantity.ToString("N0"),
+                        "Previous" => r.PreviousStock.ToString("N0"),
+                        "New" => r.NewStock.ToString("N0"),
+                        "Reason" => r.Reason,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.StockTransfers:
+                foreach (var r in tableDataService.GetStockTransfersTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.TransferDate.ToString("MM/dd/yyyy"),
+                        "Product" => r.ProductName,
+                        "From" => r.SourceLocation,
+                        "To" => r.DestinationLocation,
+                        "Qty" => r.Quantity.ToString("N0"),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Returns:
+                foreach (var r in tableDataService.GetReturnsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.ReturnDate.ToString("MM/dd/yyyy"),
+                        "ID" => r.OriginalTransactionId,
+                        "Product" => r.ProductName,
+                        "Category" => r.CategoryName,
+                        "Qty" => r.Quantity.ToString("N0"),
+                        "Total" => FormatCurrency(r.RefundAmount),
+                        "Reason" => r.Reason,
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.LostDamaged:
+                foreach (var r in tableDataService.GetLossesTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.ReportedDate.ToString("MM/dd/yyyy"),
+                        "Product" => r.ProductName,
+                        "Category" => r.CategoryName,
+                        "Qty" => r.Quantity.ToString("N0"),
+                        "Total" => FormatCurrency(r.EstimatedValue),
+                        "Reason" => r.Reason,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Receipts:
+                foreach (var r in tableDataService.GetReceiptsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Date" => r.Date.ToString("MM/dd/yyyy"),
+                        "File" => r.FileName,
+                        "Company" => r.Supplier,
+                        "Total" => FormatCurrency(r.Amount),
+                        "Source" => r.Source,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Customers:
+                foreach (var r in tableDataService.GetCustomersTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Company" => r.CompanyName,
+                        "Country" => r.Country,
+                        "Total" => FormatCurrency(r.TotalPurchases),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Suppliers:
+                foreach (var r in tableDataService.GetSuppliersTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Contact" => r.ContactPerson,
+                        "Country" => r.Country,
+                        "Terms" => r.PaymentTerms,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Products:
+                foreach (var r in tableDataService.GetProductsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "SKU" => r.Sku,
+                        "Category" => r.CategoryName,
+                        "Price" => FormatCurrency(r.UnitPrice),
+                        "Cost" => FormatCurrency(r.CostPrice),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Employees:
+                foreach (var r in tableDataService.GetEmployeesTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.FullName,
+                        "Position" => r.Position,
+                        "Department" => r.DepartmentName,
+                        "Date" => r.HireDate.ToString("MM/dd/yyyy"),
+                        "Type" => r.EmploymentType,
+                        "Salary" => FormatCurrency(r.SalaryAmount),
+                        "Status" => r.Status,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Departments:
+                foreach (var r in tableDataService.GetDepartmentsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Head" => r.HeadName,
+                        "Employees" => r.EmployeeCount.ToString("N0"),
+                        "Budget" => FormatCurrency(r.Budget),
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Categories:
+                foreach (var r in tableDataService.GetCategoriesTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Type" => r.Type,
+                        "Item Type" => r.ItemType,
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Locations:
+                foreach (var r in tableDataService.GetLocationsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Contact" => r.ContactPerson,
+                        "Capacity" => r.Capacity.ToString("N0"),
+                        "In Use" => r.CurrentUtilization.ToString("N0"),
+                        "Utilization" => r.UtilizationPercentage.ToString("F1") + "%",
+                        _ => ""
+                    }).ToList());
+                break;
+            case TransactionType.Accountants:
+                foreach (var r in tableDataService.GetAccountantsTableData(table))
+                    result.Add(columns.Select(col => col switch
+                    {
+                        "Name" => r.Name,
+                        "Email" => r.Email,
+                        "Phone" => r.Phone,
+                        "Transactions" => r.AssignedTransactions.ToString("N0"),
+                        _ => ""
+                    }).ToList());
+                break;
         }
 
         return result;
+    }
+
+    private List<string> MapTransactionRow(TransactionTableRow r, List<string> columns)
+    {
+        return columns.Select(col => col switch
+        {
+            "Date" => r.Date.ToString("MM/dd/yyyy"),
+            "ID" => r.TransactionId,
+            "Company" => r.CompanyName,
+            "Product" => r.ProductName,
+            "Qty" => r.Quantity.ToString("N0"),
+            "Unit Price" => FormatCurrency(r.UnitPrice),
+            "Total" => FormatCurrency(r.Total),
+            "Status" => r.Status,
+            "Accountant" => r.AccountantName,
+            "Shipping" => FormatCurrency(r.ShippingCost),
+            _ => ""
+        }).ToList();
     }
 
     private void RenderLabel(SKCanvas canvas, LabelReportElement label)
@@ -2373,19 +2616,46 @@ public class ReportRenderer : IDisposable
 
     private static List<string> GetVisibleColumns(TableReportElement table)
     {
-        var columns = new List<string>();
+        // For Revenue/Expenses, use the existing column visibility flags
+        if (table.TransactionType is TransactionType.Revenue or TransactionType.Expenses)
+        {
+            var columns = new List<string>();
+            if (table.ShowDateColumn) columns.Add("Date");
+            if (table.ShowTransactionIdColumn) columns.Add("ID");
+            if (table.ShowCompanyColumn) columns.Add("Company");
+            if (table.ShowProductColumn) columns.Add("Product");
+            if (table.ShowQuantityColumn) columns.Add("Qty");
+            if (table.ShowTotalColumn) columns.Add("Total");
+            if (table.ShowStatusColumn) columns.Add("Status");
+            if (table.ShowAccountantColumn) columns.Add("Accountant");
+            if (table.ShowShippingColumn) columns.Add("Shipping");
+            return columns.Count > 0 ? columns : ["Date", "Description", "Amount"];
+        }
 
-        if (table.ShowDateColumn) columns.Add("Date");
-        if (table.ShowTransactionIdColumn) columns.Add("ID");
-        if (table.ShowCompanyColumn) columns.Add("Company");
-        if (table.ShowProductColumn) columns.Add("Product");
-        if (table.ShowQuantityColumn) columns.Add("Qty");
-        if (table.ShowTotalColumn) columns.Add("Total");
-        if (table.ShowStatusColumn) columns.Add("Status");
-        if (table.ShowAccountantColumn) columns.Add("Accountant");
-        if (table.ShowShippingColumn) columns.Add("Shipping");
-
-        return columns.Count > 0 ? columns : ["Date", "Description", "Amount"];
+        // For other types, return their natural column set
+        return table.TransactionType switch
+        {
+            TransactionType.Invoices => ["Date", "ID", "Company", "Due Date", "Total", "Paid", "Balance", "Status"],
+            TransactionType.Payments => ["Date", "Company", "Total", "Method", "ID"],
+            TransactionType.RentalRecords => ["Item", "Company", "Date", "Due Date", "Rate", "Total", "Status"],
+            TransactionType.RentalItems => ["Name", "Total Qty", "Available", "Rented", "Daily Rate", "Status"],
+            TransactionType.Inventory => ["Product", "SKU", "Location", "In Stock", "Available", "Unit Cost", "Total", "Status"],
+            TransactionType.PurchaseOrders => ["ID", "Company", "Date", "Due Date", "Total", "Status"],
+            TransactionType.StockAdjustments => ["Date", "Product", "Type", "Qty", "Previous", "New", "Reason"],
+            TransactionType.StockTransfers => ["Date", "Product", "From", "To", "Qty", "Status"],
+            TransactionType.Returns => ["Date", "Product", "Qty", "Total", "Reason", "Status"],
+            TransactionType.LostDamaged => ["Date", "Product", "Qty", "Total", "Reason"],
+            TransactionType.Receipts => ["Date", "File", "Company", "Total", "Source"],
+            TransactionType.Customers => ["Name", "Company", "Country", "Total", "Status"],
+            TransactionType.Suppliers => ["Name", "Contact", "Country", "Terms"],
+            TransactionType.Products => ["Name", "SKU", "Category", "Price", "Cost", "Status"],
+            TransactionType.Employees => ["Name", "Position", "Department", "Date", "Salary", "Status"],
+            TransactionType.Departments => ["Name", "Head", "Employees", "Budget"],
+            TransactionType.Categories => ["Name", "Type", "Item Type"],
+            TransactionType.Locations => ["Name", "Contact", "Capacity", "In Use", "Utilization"],
+            TransactionType.Accountants => ["Name", "Email", "Phone", "Transactions"],
+            _ => ["Date", "Description", "Amount"]
+        };
     }
 
     private string GetDateRangeText(string dateFormat)
