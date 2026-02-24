@@ -67,6 +67,11 @@ public class UiSettings
     /// Key is the page name (e.g., "Expenses"), value is a dictionary of column name to visibility.
     /// </summary>
     public Dictionary<string, Dictionary<string, bool>> ColumnVisibility { get; set; } = new();
+
+    /// <summary>
+    /// Whether the grid is shown on the report designer canvas.
+    /// </summary>
+    public bool ReportsShowGrid { get; set; } = true;
 }
 
 public class EmojiPickerSettings
