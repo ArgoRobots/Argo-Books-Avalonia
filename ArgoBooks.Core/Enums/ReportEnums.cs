@@ -235,6 +235,46 @@ public enum VerticalTextAlignment
 public static class ReportEnumExtensions
 {
     /// <summary>
+    /// Gets a user-friendly display name for a transaction type.
+    /// </summary>
+    public static string GetDisplayName(this TransactionType transactionType)
+    {
+        return transactionType switch
+        {
+            TransactionType.Revenue => "Revenue",
+            TransactionType.Expenses => "Expenses",
+            TransactionType.Invoices => "Invoices",
+            TransactionType.Payments => "Payments",
+            TransactionType.RentalRecords => "Rental Records",
+            TransactionType.RentalItems => "Rental Items",
+            TransactionType.Inventory => "Inventory",
+            TransactionType.PurchaseOrders => "Purchase Orders",
+            TransactionType.StockAdjustments => "Stock Adjustments",
+            TransactionType.StockTransfers => "Stock Transfers",
+            TransactionType.Returns => "Returns",
+            TransactionType.LostDamaged => "Lost / Damaged",
+            TransactionType.Receipts => "Receipts",
+            TransactionType.Customers => "Customers",
+            TransactionType.Suppliers => "Suppliers",
+            TransactionType.Products => "Products",
+            TransactionType.Employees => "Employees",
+            TransactionType.Departments => "Departments",
+            TransactionType.Categories => "Categories",
+            TransactionType.Locations => "Locations",
+            TransactionType.Accountants => "Accountants",
+            _ => transactionType.ToString()
+        };
+    }
+
+    /// <summary>
+    /// Returns true if the transaction type supports Include Returns/Losses options.
+    /// </summary>
+    public static bool SupportsReturnsAndLosses(this TransactionType transactionType)
+    {
+        return transactionType is TransactionType.Revenue or TransactionType.Expenses;
+    }
+
+    /// <summary>
     /// Gets a user-friendly display name for a table sort order.
     /// </summary>
     public static string GetDisplayName(this TableSortOrder sortOrder)

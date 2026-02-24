@@ -17,6 +17,7 @@
     <UserControl.Resources>
         <converters:EqualConverter x:Key="EqualConverter" />
         <converters:EnumDisplayNameConverter x:Key="EnumDisplayNameConverter" />
+        <converters:TransactionTypeSupportsReturnsConverter x:Key="TransactionTypeSupportsReturnsConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -1175,14 +1176,22 @@
                                     <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding TransactionTypes}"
                                               SelectedItem="{Binding SelectedSummaryElement.TransactionType}"
-                                              HorizontalAlignment="Stretch" />
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumDisplayNameConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
                                 <CheckBox Content="{loc:Loc 'Show Total Revenue'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalRevenue}" />
                                 <CheckBox Content="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
                                 <CheckBox Content="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
                                 <CheckBox Content="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
-                                <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
-                                <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
+                                <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}"
+                                          IsVisible="{Binding SelectedSummaryElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
+                                <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}"
+                                          IsVisible="{Binding SelectedSummaryElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
 
                                 <TextBlock Text="{loc:Loc 'Formatting'}"
                                            FontSize="12"
@@ -1265,10 +1274,18 @@
                                         <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TransactionTypes}"
                                                   SelectedItem="{Binding SelectedTableElement.TransactionType}"
-                                                  HorizontalAlignment="Stretch" />
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumDisplayNameConverter}}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
                                     </StackPanel>
-                                    <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
-                                    <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
+                                    <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns}"
+                                              IsVisible="{Binding SelectedTableElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
+                                    <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses}"
+                                              IsVisible="{Binding SelectedTableElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Sort Order'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TableSortOrders}"
