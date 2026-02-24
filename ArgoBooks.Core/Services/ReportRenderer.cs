@@ -1476,8 +1476,8 @@ public class ReportRenderer : IDisposable
         actualHeight = Math.Min(actualHeight, rect.Height);
         var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + actualHeight);
 
-        // Draw table background for the entire element bounds (matching design canvas)
-        canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
+        // Draw table background only behind actual table content (not the full element bounds)
+        canvas.DrawRect(tableRect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
 
         var currentY = rect.Top;
 
