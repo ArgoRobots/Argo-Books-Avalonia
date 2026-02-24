@@ -502,9 +502,19 @@ public partial class ElementPropertyPanel : UserControl
         fontSizeInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
+            if (fontSizeInput.Value is not { } newValue)
+            {
+                DataValidationErrors.SetErrors(fontSizeInput, null);
+                return;
+            }
             var oldValue = label.FontSize;
-            label.FontSize = (double)(fontSizeInput.Value ?? 14);
+            label.FontSize = (double)newValue;
             OnPropertyChanged(label, nameof(label.FontSize), oldValue, label.FontSize);
+        };
+        fontSizeInput.LostFocus += (_, _) =>
+        {
+            if (fontSizeInput.Value is null)
+                fontSizeInput.Value = (decimal)label.FontSize;
         };
         panel.Children.Add(fontSizeInput);
 
@@ -713,9 +723,19 @@ public partial class ElementPropertyPanel : UserControl
         fontSizeInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
+            if (fontSizeInput.Value is not { } newValue)
+            {
+                DataValidationErrors.SetErrors(fontSizeInput, null);
+                return;
+            }
             var oldValue = dateRange.FontSize;
-            dateRange.FontSize = (double)(fontSizeInput.Value ?? 12);
+            dateRange.FontSize = (double)newValue;
             OnPropertyChanged(dateRange, nameof(dateRange.FontSize), oldValue, dateRange.FontSize);
+        };
+        fontSizeInput.LostFocus += (_, _) =>
+        {
+            if (fontSizeInput.Value is null)
+                fontSizeInput.Value = (decimal)dateRange.FontSize;
         };
         panel.Children.Add(fontSizeInput);
 
