@@ -850,7 +850,7 @@
                                               Width="14" Height="14" />
                                 </Button>
                                 <Button Classes="toolbar-button" Command="{Binding DeletePageCommand}" IsEnabled="{Binding CanDeletePage}" ToolTip.Tip="{loc:Loc 'Delete Page'}">
-                                    <PathIcon Data="{x:Static icons:Icons.TrashMdi}"
+                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
                                               Width="14" Height="14" />
                                 </Button>
 

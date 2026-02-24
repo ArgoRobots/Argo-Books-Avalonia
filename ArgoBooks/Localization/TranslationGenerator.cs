@@ -233,7 +233,7 @@ public partial class TranslationGenerator
                 AddString(strings, match.Groups[1].Value);
             }
 
-            // Find Tr("text") patterns (local helper method in ReportRenderer, ElementPropertyPanel, etc.)
+            // Find Tr("text") patterns (local helper method in ReportRenderer, etc.)
             var localTrMatches = LocalTrCallRegex().Matches(content);
             foreach (Match match in localTrMatches)
             {
