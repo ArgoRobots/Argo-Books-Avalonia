@@ -10,7 +10,8 @@
              x:Class="ArgoBooks.Modals.ReportPageSettingsModal"
              x:DataType="vm:ReportsPageViewModel">
 
-    <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}">
+    <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}"
+                           ClosingCommand="{Binding ClosePageSettingsCommand}">
         <controls:ModalOverlay.ModalContent>
             <Border Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"

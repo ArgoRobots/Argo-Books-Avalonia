@@ -127,15 +127,15 @@ public class ReportTemplateStorage
                         names.Add(templateData.Name);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Skip invalid files
+                    _errorLogger?.LogWarning($"Failed to read template file {Path.GetFileName(file)}: {ex.Message}", "ReportTemplateStorage");
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Return empty list on error
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to enumerate report templates");
         }
 
         return names;
@@ -165,15 +165,15 @@ public class ReportTemplateStorage
                         templates.Add(templateData);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Skip invalid files
+                    _errorLogger?.LogWarning($"Failed to read template file {Path.GetFileName(file)}: {ex.Message}", "ReportTemplateStorage");
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Return empty list on error
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to enumerate report templates");
         }
 
         return templates.OrderByDescending(t => t.ModifiedAt).ToList();
@@ -195,9 +195,9 @@ public class ReportTemplateStorage
                 return true;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Return false on error
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to delete report template '{templateName}'");
         }
 
         return false;
@@ -235,9 +235,9 @@ public class ReportTemplateStorage
                 return true;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Return false on error
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to rename report template '{oldName}' to '{newName}'");
         }
 
         return false;
@@ -295,8 +295,9 @@ public class ReportTemplateStorage
             File.Copy(sourcePath, destPath, false);
             return fileName;
         }
-        catch
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to copy image to template storage");
             return sourcePath;
         }
     }

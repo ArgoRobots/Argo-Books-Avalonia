@@ -3,6 +3,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Telemetry;
 using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
@@ -17,6 +18,8 @@ public class ReportRenderer : IDisposable
     private readonly float _renderScale;
     private readonly ReportChartDataService? _chartDataService;
     private readonly ITranslationProvider _translationProvider;
+    private readonly IErrorLogger? _errorLogger;
+    private readonly string _currencySymbol;
 
     // Cached paints
     private readonly SKPaint _backgroundPaint;
@@ -61,17 +64,44 @@ public class ReportRenderer : IDisposable
     /// <summary>
     /// Formats a Y-axis value based on whether the chart shows currency.
     /// </summary>
-    private static string FormatYAxisValue(double value, ChartDataType chartType)
+    private string FormatYAxisValue(double value, ChartDataType chartType)
     {
-        return ShouldShowCurrency(chartType) ? $"${value:N0}" : $"{value:N0}";
+        return ShouldShowCurrency(chartType) ? $"{_currencySymbol}{value:N0}" : $"{value:N0}";
     }
 
-    public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f, ITranslationProvider? translationProvider = null)
+    /// <summary>
+    /// Resolves the best available default typeface for the current platform.
+    /// Tries platform-specific fonts before falling back to SKTypeface.Default.
+    /// </summary>
+    private static SKTypeface ResolveDefaultTypeface(SKFontStyle? fontStyle = null)
+    {
+        // Platform font candidates in priority order
+        string[] candidates = ["Segoe UI", ".AppleSystemUIFont", "San Francisco", "DejaVu Sans", "Liberation Sans", "Noto Sans"];
+
+        foreach (var fontName in candidates)
+        {
+            var typeface = fontStyle != null
+                ? SKTypeface.FromFamilyName(fontName, fontStyle)
+                : SKTypeface.FromFamilyName(fontName);
+
+            if (typeface != null && typeface.FamilyName != SKTypeface.Default.FamilyName)
+                return typeface;
+        }
+
+        return SKTypeface.Default;
+    }
+
+    public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f, ITranslationProvider? translationProvider = null, IErrorLogger? errorLogger = null)
     {
         _config = config;
         _companyData = companyData;
         _renderScale = renderScale;
         _translationProvider = translationProvider ?? DefaultTranslationProvider.Instance;
+        _errorLogger = errorLogger;
+
+        // Resolve currency symbol from company settings
+        var currencyCode = companyData?.Settings.Localization.Currency;
+        _currencySymbol = !string.IsNullOrEmpty(currencyCode) ? CurrencyInfo.GetSymbol(currencyCode) : "$";
 
         // Initialize chart data service for rendering actual charts
         if (companyData != null)
@@ -79,8 +109,8 @@ public class ReportRenderer : IDisposable
             _chartDataService = new ReportChartDataService(companyData, config.Filters);
         }
 
-        _defaultTypeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
-        _boldTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default;
+        _defaultTypeface = ResolveDefaultTypeface();
+        _boldTypeface = ResolveDefaultTypeface(SKFontStyle.Bold);
 
         _defaultFont = new SKFont(_defaultTypeface, 12 * renderScale);
         _headerFont = new SKFont(_boldTypeface, (float)config.TitleFontSize * renderScale);
@@ -205,8 +235,9 @@ public class ReportRenderer : IDisposable
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to export report to image");
             return false;
         }
     }
@@ -239,8 +270,9 @@ public class ReportRenderer : IDisposable
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to export report to PDF");
             return false;
         }
     }
@@ -325,7 +357,8 @@ public class ReportRenderer : IDisposable
         // Draw chart title
         if (chart.ShowTitle)
         {
-            using var titleFont = new SKFont(_boldTypeface, (float)chart.TitleFontSize * _renderScale);
+            var chartTitleTypeface = SKTypeface.FromFamilyName(chart.TitleFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
+            using var titleFont = new SKFont(chartTitleTypeface, (float)chart.TitleFontSize * _renderScale);
             using var titlePaint = new SKPaint();
             titlePaint.Color = SKColors.Black;
             titlePaint.IsAntialias = true;
@@ -968,7 +1001,8 @@ public class ReportRenderer : IDisposable
 
                 // Legend text
                 var legendText = point.Label;
-                if (legendText.Length > 12) legendText = legendText[..12] + "...";
+                var maxChars = chart.LegendMaxCharacters;
+                if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
                 legendText = $"{legendText} ({percentage:P0})";
 
                 canvas.DrawText(legendText, legendX + legendBoxSize + 5 * _renderScale, legendY + legendBoxSize - 2 * _renderScale, SKTextAlign.Left, labelFont, labelPaint);

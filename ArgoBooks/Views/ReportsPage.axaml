@@ -965,7 +965,13 @@
                                 <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
                                 <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" IsVisible="{Binding IsDistributionChartSelected}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Title Font'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FontFamilies}"
+                                              SelectedItem="{Binding SelectedChartElement.TitleFontFamily}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Axis Font'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
                                               SelectedItem="{Binding SelectedChartElement.FontFamily}"
                                               HorizontalAlignment="Stretch" />
@@ -977,6 +983,10 @@
                                 <StackPanel Spacing="4" IsVisible="{Binding IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Legend Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
+                                </StackPanel>
+                                <StackPanel Spacing="4" IsVisible="{Binding IsDistributionChartSelected}">
+                                    <TextBlock Text="{loc:Loc 'Legend Max Characters'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendMaxCharacters}" Minimum="5" Maximum="50" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
