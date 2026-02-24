@@ -360,7 +360,7 @@
                                                     </Button>
                                                     <!-- Mark as Lost/Damaged (shown when not already marked) -->
                                                     <Button Classes="icon-button warning"
-                                                            ToolTip.Tip="{loc:Loc 'Mark as Lost/Damaged'}"
+                                                            ToolTip.Tip="{loc:Loc 'Mark as Lost / Damaged'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).MarkAsLostDamagedCommand}"
                                                             CommandParameter="{Binding}"
                                                             IsVisible="{Binding CanMarkAsLostDamaged}">
@@ -369,7 +369,7 @@
                                                     </Button>
                                                     <!-- Undo Lost/Damaged (shown when already marked as lost/damaged) -->
                                                     <Button Classes="icon-button warning"
-                                                            ToolTip.Tip="{loc:Loc 'Undo Lost/Damaged'}"
+                                                            ToolTip.Tip="{loc:Loc 'Undo Lost / Damaged'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).UndoLostDamagedCommand}"
                                                             CommandParameter="{Binding}"
                                                             IsVisible="{Binding IsLostDamaged}">

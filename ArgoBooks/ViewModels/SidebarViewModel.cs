@@ -165,7 +165,7 @@ public partial class SidebarViewModel : ViewModelBase
 
         // Management Section (mockup: Customers, Products/Services, Categories, Suppliers)
         ManagementItems.Add(CreateItem("Customers", "Customers", Icons.Customers));
-        ManagementItems.Add(CreateItem("Products/Services", "Products", Icons.Products));
+        ManagementItems.Add(CreateItem("Products / Services", "Products", Icons.Products));
         ManagementItems.Add(CreateItem("Categories", "Categories", Icons.Categories));
         ManagementItems.Add(CreateItem("Suppliers", "Suppliers", Icons.Suppliers));
 
@@ -186,7 +186,7 @@ public partial class SidebarViewModel : ViewModelBase
 
         // Tracking Section (mockup: Returns, Lost/Damaged, Receipts)
         TrackingItems.Add(CreateItem("Returns", "Returns", Icons.Returns));
-        TrackingItems.Add(CreateItem("Lost/Damaged", "LostDamaged", Icons.LostDamaged));
+        TrackingItems.Add(CreateItem("Lost / Damaged", "LostDamaged", Icons.LostDamaged));
         TrackingItems.Add(CreateItem("Receipts", "Receipts", Icons.Receipts));
 
         // Set Dashboard as active by default
