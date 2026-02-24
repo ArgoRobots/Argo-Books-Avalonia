@@ -206,8 +206,128 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// Renders only the elements for a specific page to a canvas (for design mode).
+    /// Does not clear the canvas or render header/footer.
+    /// </summary>
+    public void RenderElementsToCanvas(SKCanvas canvas, int pageNumber)
+    {
+        foreach (var element in _config.GetElementsByZOrderForPage(pageNumber))
+        {
+            if (!element.IsVisible)
+                continue;
+
+            RenderElement(canvas, element);
+        }
+    }
+
+    /// <summary>
+    /// Renders a specific page to a canvas, including header, elements, and footer.
+    /// </summary>
+    public void RenderPageToCanvas(SKCanvas canvas, int pageNumber, int width, int height)
+    {
+        canvas.Clear(_backgroundPaint.Color);
+
+        if (_config.ShowHeader)
+        {
+            RenderHeader(canvas, width);
+        }
+
+        foreach (var element in _config.GetElementsByZOrderForPage(pageNumber))
+        {
+            if (!element.IsVisible)
+                continue;
+
+            RenderElement(canvas, element);
+        }
+
+        if (_config.ShowFooter)
+        {
+            RenderFooter(canvas, width, height);
+        }
+    }
+
+    /// <summary>
+    /// Renders a specific page to a bitmap.
+    /// </summary>
+    public SKBitmap RenderPageToBitmap(int pageNumber)
+    {
+        var (width, height) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+        var scaledWidth = (int)(width * _renderScale);
+        var scaledHeight = (int)(height * _renderScale);
+
+        _config.CurrentPageNumber = pageNumber;
+        _config.TotalPageCount = _config.PageCount;
+
+        var bitmap = new SKBitmap(scaledWidth, scaledHeight);
+        using var canvas = new SKCanvas(bitmap);
+
+        RenderPageToCanvas(canvas, pageNumber, scaledWidth, scaledHeight);
+
+        return bitmap;
+    }
+
+    /// <summary>
+    /// Creates a preview bitmap for a specific page at the specified scale.
+    /// </summary>
+    public SKBitmap CreatePagePreview(int pageNumber, int maxWidth, int maxHeight)
+    {
+        var (width, height) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+
+        var scaleX = (float)maxWidth / width;
+        var scaleY = (float)maxHeight / height;
+        var scale = Math.Min(scaleX, scaleY);
+
+        var previewWidth = (int)(width * scale);
+        var previewHeight = (int)(height * scale);
+
+        _config.CurrentPageNumber = pageNumber;
+        _config.TotalPageCount = _config.PageCount;
+
+        var bitmap = new SKBitmap(previewWidth, previewHeight);
+        using var canvas = new SKCanvas(bitmap);
+
+        canvas.Scale(scale, scale);
+        RenderPageToCanvas(canvas, pageNumber, width, height);
+
+        return bitmap;
+    }
+
+    /// <summary>
     /// Exports the report to an image file.
     /// </summary>
+    public async Task<bool> ExportPageToImageAsync(string filePath, int pageNumber, ExportFormat format, int quality = 95)
+    {
+        try
+        {
+            using var bitmap = RenderPageToBitmap(pageNumber);
+            using var image = SKImage.FromBitmap(bitmap);
+
+            var formatType = format switch
+            {
+                ExportFormat.PNG => SKEncodedImageFormat.Png,
+                ExportFormat.JPEG => SKEncodedImageFormat.Jpeg,
+                _ => SKEncodedImageFormat.Png
+            };
+
+            using var data = image.Encode(formatType, quality);
+
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await using var stream = File.Create(filePath);
+            data.SaveTo(stream);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<bool> ExportToImageAsync(string filePath, ExportFormat format, int quality = 95)
     {
         try
@@ -259,13 +379,19 @@ public class ReportRenderer : IDisposable
                 Directory.CreateDirectory(directory);
             }
 
+            _config.TotalPageCount = _config.PageCount;
+
             await using var stream = File.Create(filePath);
             using var document = SKDocument.CreatePdf(stream);
-            using var canvas = document.BeginPage(scaledWidth, scaledHeight);
 
-            RenderToCanvas(canvas, scaledWidth, scaledHeight);
+            for (int page = 1; page <= _config.PageCount; page++)
+            {
+                _config.CurrentPageNumber = page;
+                using var canvas = document.BeginPage(scaledWidth, scaledHeight);
+                RenderPageToCanvas(canvas, page, scaledWidth, scaledHeight);
+                document.EndPage();
+            }
 
-            document.EndPage();
             document.Close();
 
             return true;
@@ -2545,7 +2671,10 @@ public class ReportRenderer : IDisposable
         // Draw page number if enabled
         if (_config.ShowPageNumbers)
         {
-            canvas.DrawText($"{Tr("Page")} {_config.CurrentPageNumber}", width - margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
+            var pageText = _config.TotalPageCount > 1
+                ? $"{Tr("Page")} {_config.CurrentPageNumber} {Tr("of")} {_config.TotalPageCount}"
+                : $"{Tr("Page")} {_config.CurrentPageNumber}";
+            canvas.DrawText(pageText, width - margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
         }
     }
 

@@ -44,6 +44,12 @@ public class ReportConfiguration
     public string BackgroundColor { get; set; } = "#FFFFFF";
 
     /// <summary>
+    /// Number of pages in the report.
+    /// </summary>
+    [JsonPropertyName("pageCount")]
+    public int PageCount { get; set; } = 1;
+
+    /// <summary>
     /// Whether to show page numbers.
     /// </summary>
     [JsonPropertyName("showPageNumbers")]
@@ -86,10 +92,17 @@ public class ReportConfiguration
     public bool HasManualChartLayout { get; set; }
 
     /// <summary>
-    /// Current page number for display in footer.
+    /// Current page number for display in footer (runtime only).
     /// </summary>
     [JsonIgnore]
     public int CurrentPageNumber { get; set; } = 1;
+
+    /// <summary>
+    /// Total page count for display in footer (runtime only).
+    /// Set during rendering to enable "Page X of Y" display.
+    /// </summary>
+    [JsonIgnore]
+    public int TotalPageCount { get; set; } = 1;
 
     /// <summary>
     /// Whether to use 24-hour time format in the report footer.
@@ -104,6 +117,14 @@ public class ReportConfiguration
     public List<ReportElementBase> GetElementsByZOrder()
     {
         return Elements.OrderBy(e => e.ZOrder).ToList();
+    }
+
+    /// <summary>
+    /// Gets elements for a specific page, sorted by Z-order (for rendering).
+    /// </summary>
+    public List<ReportElementBase> GetElementsByZOrderForPage(int pageNumber)
+    {
+        return Elements.Where(e => e.PageNumber == pageNumber).OrderBy(e => e.ZOrder).ToList();
     }
 
     /// <summary>
@@ -154,6 +175,7 @@ public class ReportConfiguration
         {
             Id = Guid.NewGuid().ToString(),
             Title = Title,
+            PageCount = PageCount,
             PageSize = PageSize,
             PageOrientation = PageOrientation,
             PageMargins = new ReportMargins

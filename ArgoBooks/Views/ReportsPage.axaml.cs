@@ -236,8 +236,8 @@ public partial class ReportsPage : UserControl
 
     private void OnCanvasRefreshRequested(object? sender, EventArgs e)
     {
-        // Invalidate the canvas to repaint with updated translations
-        _designCanvas?.InvalidateVisual();
+        // Invalidate the canvas to repaint with updated content
+        _designCanvas?.InvalidateCanvas();
     }
 
     private void OnToolbarLayoutUpdated(object? sender, EventArgs e)

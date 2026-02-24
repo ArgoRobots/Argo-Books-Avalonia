@@ -67,6 +67,9 @@ public partial class SkiaReportDesignCanvas : UserControl
     public static readonly StyledProperty<bool> ShowHeaderFooterProperty =
         AvaloniaProperty.Register<SkiaReportDesignCanvas, bool>(nameof(ShowHeaderFooter), true);
 
+    public static readonly StyledProperty<int> CurrentDesignerPageProperty =
+        AvaloniaProperty.Register<SkiaReportDesignCanvas, int>(nameof(CurrentDesignerPage), 1);
+
     public static readonly StyledProperty<ReportUndoRedoManager?> UndoRedoManagerProperty =
         AvaloniaProperty.Register<SkiaReportDesignCanvas, ReportUndoRedoManager?>(nameof(UndoRedoManager));
 
@@ -108,6 +111,15 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         get => GetValue(ShowHeaderFooterProperty);
         set => SetValue(ShowHeaderFooterProperty, value);
+    }
+
+    /// <summary>
+    /// The currently displayed page in the designer (1-based).
+    /// </summary>
+    public int CurrentDesignerPage
+    {
+        get => GetValue(CurrentDesignerPageProperty);
+        set => SetValue(CurrentDesignerPageProperty, Math.Max(1, value));
     }
 
     public ReportUndoRedoManager? UndoRedoManager
@@ -265,8 +277,15 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
         else if (change.Property == ShowGridProperty ||
                  change.Property == GridSizeProperty ||
-                 change.Property == ShowHeaderFooterProperty)
+                 change.Property == ShowHeaderFooterProperty ||
+                 change.Property == CurrentDesignerPageProperty)
         {
+            if (change.Property == CurrentDesignerPageProperty)
+            {
+                _selectedElements.Clear();
+                _hoveredElement = null;
+                NotifySelectionChanged();
+            }
             InvalidateCanvas();
         }
     }
@@ -332,12 +351,12 @@ public partial class SkiaReportDesignCanvas : UserControl
             DrawFooter(canvas, baseWidth, baseHeight);
         }
 
-        // Render all elements using the shared renderer
+        // Render elements for the current page using the shared renderer
         // Pass company data so tables render with actual data in designer
         var companyData = App.CompanyManager?.CompanyData;
         Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
         using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
-        renderer.RenderElementsToCanvas(canvas);
+        renderer.RenderElementsToCanvas(canvas, CurrentDesignerPage);
 
         // Draw hover highlight after elements, but clipped to avoid rendering over higher Z-order elements
         if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
@@ -410,7 +429,11 @@ public partial class SkiaReportDesignCanvas : UserControl
         footerPaint.Color = SKColors.Gray;
         footerPaint.IsAntialias = true;
         canvas.DrawText("Generated: [Date/Time]", 40, height - 15, SKTextAlign.Left, footerFont, footerPaint);
-        canvas.DrawText("Page 1", width - 40, height - 15, SKTextAlign.Right, footerFont, footerPaint);
+        var pageCount = Configuration?.PageCount ?? 1;
+        var pageText = pageCount > 1
+            ? $"Page {CurrentDesignerPage} of {pageCount}"
+            : $"Page {CurrentDesignerPage}";
+        canvas.DrawText(pageText, width - 40, height - 15, SKTextAlign.Right, footerFont, footerPaint);
     }
 
     private void DrawSelectionVisuals(SKCanvas canvas)
@@ -436,7 +459,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         foreach (var other in Configuration.Elements)
         {
-            if (other.ZOrder <= element.ZOrder || !other.IsVisible) continue;
+            if (other.PageNumber != CurrentDesignerPage || other.ZOrder <= element.ZOrder || !other.IsVisible) continue;
 
             var rect = new SKRect(
                 (float)other.X,
@@ -765,8 +788,10 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         if (Configuration == null) return null;
 
-        // Check in reverse Z-order (topmost first)
-        foreach (var element in Configuration.Elements.OrderByDescending(e => e.ZOrder))
+        // Check in reverse Z-order (topmost first), filtered to current page
+        foreach (var element in Configuration.Elements
+            .Where(e => e.PageNumber == CurrentDesignerPage)
+            .OrderByDescending(e => e.ZOrder))
         {
             var rect = new Rect(element.X, element.Y, element.Width, element.Height);
             if (rect.Contains(point))
@@ -1314,7 +1339,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             var selectionRect = new Rect(x, y, width, height);
             _selectedElements.Clear();
 
-            foreach (var element in Configuration.Elements)
+            foreach (var element in Configuration.Elements.Where(e => e.PageNumber == CurrentDesignerPage))
             {
                 var elementRect = new Rect(element.X, element.Y, element.Width, element.Height);
                 if (selectionRect.Intersects(elementRect))
@@ -1414,7 +1439,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Configuration == null) return;
 
         _selectedElements.Clear();
-        _selectedElements.AddRange(Configuration.Elements);
+        _selectedElements.AddRange(Configuration.Elements.Where(e => e.PageNumber == CurrentDesignerPage));
         InvalidateCanvas();
 
         if (_selectedElements.Count > 0)
@@ -1479,6 +1504,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         if (Configuration == null) return;
 
+        element.PageNumber = CurrentDesignerPage;
         Configuration.AddElement(element);
         _selectedElements.Clear();
         _selectedElements.Add(element);

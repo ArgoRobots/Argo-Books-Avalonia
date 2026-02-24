@@ -97,6 +97,16 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Which page this element belongs to (1-based).
+    /// </summary>
+    [JsonPropertyName("pageNumber")]
+    public int PageNumber
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 1;
+
+    /// <summary>
     /// Whether the element is visible.
     /// </summary>
     [JsonPropertyName("isVisible")]
@@ -278,6 +288,7 @@ public class ChartReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             ChartType = ChartType,
             ChartStyle = ChartStyle,
@@ -589,6 +600,7 @@ public class TableReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             TransactionType = TransactionType,
             IncludeReturns = IncludeReturns,
@@ -706,6 +718,7 @@ public class LabelReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             Text = Text,
             FontFamily = FontFamily,
@@ -787,6 +800,7 @@ public class ImageReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             ImagePath = ImagePath,
             ScaleMode = ScaleMode,
@@ -880,6 +894,7 @@ public class DateRangeReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             DateFormat = DateFormat,
             TextColor = TextColor,
@@ -1010,6 +1025,7 @@ public class SummaryReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             TransactionType = TransactionType,
             IncludeReturns = IncludeReturns,

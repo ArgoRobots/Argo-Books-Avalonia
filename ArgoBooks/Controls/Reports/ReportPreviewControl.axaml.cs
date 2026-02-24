@@ -133,6 +133,7 @@ public partial class ReportPreviewControl : UserControl
     private LayoutTransformControl? _zoomTransformControl;
 
     private Bitmap? _currentBitmap;
+    private List<Bitmap>? _pageBitmaps;
 
     private double _pageWidth;
     private double _pageHeight;
@@ -282,28 +283,36 @@ public partial class ReportPreviewControl : UserControl
             var width = (int)_pageWidth;
             var height = (int)_pageHeight;
             var companyData = App.CompanyManager?.CompanyData;
+            var pageCount = Math.Max(1, config.PageCount);
 
             await Task.Run(() =>
             {
-                // Generate preview bitmap using SkiaSharp with company data for chart rendering
                 config!.Use24HourFormat = TimeZoneService.Is24HourFormat;
                 using var renderer = new ReportRenderer(config, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
-                using var skBitmap = renderer.CreatePreview(width, height);
 
-                // Convert SKBitmap to Avalonia Bitmap
-                using var stream = new MemoryStream();
-                using var image = SkiaSharp.SKImage.FromBitmap(skBitmap);
-                using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
-                data.SaveTo(stream);
-                stream.Position = 0;
+                var bitmaps = new List<Bitmap>();
 
-                var avaloniaBitmap = new Bitmap(stream);
+                for (int page = 1; page <= pageCount; page++)
+                {
+                    using var skBitmap = renderer.CreatePagePreview(page, width, height);
+
+                    using var stream = new MemoryStream();
+                    using var image = SkiaSharp.SKImage.FromBitmap(skBitmap);
+                    using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+                    data.SaveTo(stream);
+                    stream.Position = 0;
+
+                    bitmaps.Add(new Bitmap(stream));
+                }
 
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    SetPreviewBitmap(avaloniaBitmap);
+                    ClearPageBitmaps();
+                    _pageBitmaps = bitmaps;
+                    TotalPages = pageCount;
+                    CurrentPage = 1;
+                    SetPreviewBitmap(bitmaps.Count > 0 ? bitmaps[0] : null);
                     IsLoading = false;
-                    // Fit to page after preview is generated
                     ZoomToFitPage();
                 });
             });
@@ -318,19 +327,31 @@ public partial class ReportPreviewControl : UserControl
 
     private void SetPreviewBitmap(Bitmap? bitmap)
     {
-        // Dispose of previous bitmap
-        _currentBitmap?.Dispose();
         _currentBitmap = bitmap;
 
-        _previewImage?.Source = bitmap;
+        if (_previewImage != null)
+            _previewImage.Source = bitmap;
     }
 
     private void ClearPreview()
     {
-        _currentBitmap?.Dispose();
         _currentBitmap = null;
+        ClearPageBitmaps();
 
-        _previewImage?.Source = null;
+        if (_previewImage != null)
+            _previewImage.Source = null;
+    }
+
+    private void ClearPageBitmaps()
+    {
+        if (_pageBitmaps != null)
+        {
+            foreach (var bitmap in _pageBitmaps)
+            {
+                bitmap.Dispose();
+            }
+            _pageBitmaps = null;
+        }
     }
 
     #endregion
@@ -561,8 +582,10 @@ public partial class ReportPreviewControl : UserControl
     {
         _pageNumberInput?.Value = CurrentPage;
 
-        // In the future, this would render a different page
-        // For now, we only support single-page reports
+        if (_pageBitmaps != null && CurrentPage >= 1 && CurrentPage <= _pageBitmaps.Count)
+        {
+            SetPreviewBitmap(_pageBitmaps[CurrentPage - 1]);
+        }
     }
 
     private void UpdatePageInfo()
