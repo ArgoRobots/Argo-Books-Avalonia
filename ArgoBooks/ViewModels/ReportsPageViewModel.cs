@@ -1476,7 +1476,9 @@ public partial class ReportsPageViewModel : ViewModelBase
             for (int page = 1; page <= pageCount; page++)
             {
                 using var skBitmap = renderer.CreatePagePreview(page, width * resolutionMultiplier, height * resolutionMultiplier);
-                bitmaps.Add(ConvertToBitmap(skBitmap));
+                var bitmap = ConvertToBitmap(skBitmap);
+                if (bitmap != null)
+                    bitmaps.Add(bitmap);
             }
 
             _previewPageBitmaps = bitmaps;
