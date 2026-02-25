@@ -10,7 +10,8 @@ public enum ReportElementType
     Label,
     Image,
     DateRange,
-    Summary
+    Summary,
+    AccountingTable
 }
 
 /// <summary>
@@ -230,6 +231,35 @@ public enum VerticalTextAlignment
 }
 
 /// <summary>
+/// Types of accounting reports available.
+/// </summary>
+public enum AccountingReportType
+{
+    IncomeStatement,
+    BalanceSheet,
+    CashFlowStatement,
+    TrialBalance,
+    GeneralLedger,
+    AccountsReceivableAging,
+    AccountsPayableAging,
+    TaxSummary
+}
+
+/// <summary>
+/// Row types for structured accounting tables.
+/// </summary>
+public enum AccountingRowType
+{
+    SectionHeader,
+    DataRow,
+    SubtotalRow,
+    TotalRow,
+    GrandTotalRow,
+    SeparatorLine,
+    BlankRow
+}
+
+/// <summary>
 /// Extension methods for report enums.
 /// </summary>
 public static class ReportEnumExtensions
@@ -349,6 +379,25 @@ public static class ReportEnumExtensions
             ChartDataType.ExpenseVsRevenueLosses => "Expense vs Revenue Losses",
 
             _ => chartType.ToString()
+        };
+    }
+
+    /// <summary>
+    /// Gets a user-friendly display name for an accounting report type.
+    /// </summary>
+    public static string GetDisplayName(this AccountingReportType reportType)
+    {
+        return reportType switch
+        {
+            AccountingReportType.IncomeStatement => "Income Statement",
+            AccountingReportType.BalanceSheet => "Balance Sheet",
+            AccountingReportType.CashFlowStatement => "Cash Flow Statement",
+            AccountingReportType.TrialBalance => "Trial Balance",
+            AccountingReportType.GeneralLedger => "General Ledger",
+            AccountingReportType.AccountsReceivableAging => "Accounts Receivable Aging",
+            AccountingReportType.AccountsPayableAging => "Accounts Payable Aging",
+            AccountingReportType.TaxSummary => "Tax Summary",
+            _ => reportType.ToString()
         };
     }
 }

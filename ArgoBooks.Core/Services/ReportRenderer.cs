@@ -451,6 +451,9 @@ public class ReportRenderer : IDisposable
             case SummaryReportElement summary:
                 RenderSummary(canvas, summary);
                 break;
+            case AccountingTableReportElement accounting:
+                RenderAccountingTable(canvas, accounting);
+                break;
         }
     }
 
@@ -2615,6 +2618,249 @@ public class ReportRenderer : IDisposable
         {
             canvas.DrawText(lines[i], x, startY + (i * lineHeight), textAlign, font, textPaint);
         }
+    }
+
+    private void RenderAccountingTable(SKCanvas canvas, AccountingTableReportElement element)
+    {
+        var rect = GetScaledRect(element);
+
+        // Draw white background
+        canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
+
+        // Get accounting data
+        var dataService = new AccountingReportDataService(_companyData, _config.Filters);
+        var tableData = dataService.GetReportData(element.ReportType);
+
+        // Create typefaces and fonts
+        var typeface = SKTypeface.FromFamilyName(element.FontFamily) ?? _defaultTypeface;
+        var boldTypeface = SKTypeface.FromFamilyName(element.FontFamily, SKFontStyle.Bold) ?? _defaultTypeface;
+        var italicTypeface = SKTypeface.FromFamilyName(element.FontFamily, SKFontStyle.Italic) ?? _defaultTypeface;
+
+        var titleFontSize = (float)element.TitleFontSize * _renderScale;
+        var headerFontSize = (float)element.HeaderFontSize * _renderScale;
+        var dataFontSize = (float)element.FontSize * _renderScale;
+        var cellPadding = (float)element.CellPadding * _renderScale;
+        var dataRowHeight = (float)element.DataRowHeight * _renderScale;
+        var headerRowHeight = (float)element.HeaderRowHeight * _renderScale;
+        var indentWidth = (float)element.IndentWidth * _renderScale;
+
+        using var titleFont = new SKFont(boldTypeface, titleFontSize);
+        using var headerFont = new SKFont(boldTypeface, headerFontSize);
+        using var dataFont = new SKFont(typeface, dataFontSize);
+        using var boldDataFont = new SKFont(boldTypeface, dataFontSize);
+        using var sectionFont = new SKFont(boldTypeface, headerFontSize);
+        using var italicFont = new SKFont(italicTypeface, dataFontSize * 0.9f);
+        using var grandTotalFont = new SKFont(boldTypeface, dataFontSize * 1.1f);
+
+        // Calculate column widths from ratios
+        var availableWidth = rect.Width - (cellPadding * 2);
+        var columnWidths = new float[tableData.ColumnWidthRatios.Count];
+        for (int i = 0; i < tableData.ColumnWidthRatios.Count; i++)
+            columnWidths[i] = availableWidth * (float)tableData.ColumnWidthRatios[i];
+
+        // If no ratios defined, use default 2-column split
+        if (columnWidths.Length == 0)
+        {
+            columnWidths = [availableWidth * 0.65f, availableWidth * 0.35f];
+        }
+
+        var currentY = rect.Top;
+        var contentLeft = rect.Left + cellPadding;
+
+        // --- Draw Title ---
+        var titleBarHeight = headerRowHeight * 1.4f;
+        var titleRect = new SKRect(rect.Left, currentY, rect.Right, currentY + titleBarHeight);
+        canvas.DrawRect(titleRect, new SKPaint { Color = ParseColor(element.HeaderBackgroundColor), Style = SKPaintStyle.Fill });
+
+        using var titlePaint = new SKPaint { Color = ParseColor(element.HeaderTextColor), IsAntialias = true };
+        canvas.DrawText(tableData.Title, rect.MidX, currentY + titleBarHeight * 0.65f, SKTextAlign.Center, titleFont, titlePaint);
+        currentY += titleBarHeight;
+
+        // --- Draw Subtitle ---
+        if (!string.IsNullOrEmpty(tableData.Subtitle))
+        {
+            var subtitleHeight = dataRowHeight * 1.2f;
+            using var subtitlePaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
+            canvas.DrawText(tableData.Subtitle, rect.MidX, currentY + subtitleHeight * 0.7f, SKTextAlign.Center, italicFont, subtitlePaint);
+            currentY += subtitleHeight;
+        }
+
+        // --- Draw Column Headers ---
+        if (tableData.ColumnHeaders.Count > 0)
+        {
+            var colHeaderRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
+            canvas.DrawRect(colHeaderRect, new SKPaint { Color = ParseColor(element.HeaderBackgroundColor), Style = SKPaintStyle.Fill });
+
+            using var colHeaderPaint = new SKPaint { Color = ParseColor(element.HeaderTextColor), IsAntialias = true };
+            var colX = contentLeft;
+            for (int i = 0; i < tableData.ColumnHeaders.Count && i < columnWidths.Length; i++)
+            {
+                var textAlign = i == 0 ? SKTextAlign.Left : SKTextAlign.Right;
+                var textX = i == 0 ? colX + cellPadding : colX + columnWidths[i] - cellPadding;
+                canvas.DrawText(tableData.ColumnHeaders[i], textX, currentY + headerRowHeight * 0.65f, textAlign, headerFont, colHeaderPaint);
+                colX += columnWidths[i];
+            }
+            currentY += headerRowHeight;
+
+            // Header bottom border
+            canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
+                new SKPaint { Color = ParseColor(element.GridLineColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
+        }
+
+        // --- Draw Rows ---
+        int dataRowIndex = 0;
+        foreach (var row in tableData.Rows)
+        {
+            if (currentY + dataRowHeight > rect.Bottom - dataRowHeight)
+                break; // Stop if we'd overflow
+
+            switch (row.RowType)
+            {
+                case AccountingRowType.SectionHeader:
+                {
+                    var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.SectionHeaderBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    using var sectionPaint = new SKPaint { Color = ParseColor(element.SectionHeaderTextColor), IsAntialias = true };
+                    canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + headerRowHeight * 0.65f, SKTextAlign.Left, sectionFont, sectionPaint);
+                    currentY += headerRowHeight;
+                    break;
+                }
+
+                case AccountingRowType.DataRow:
+                {
+                    // Alternate row coloring
+                    if (element.AlternateRowColors && dataRowIndex % 2 == 1)
+                    {
+                        var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + dataRowHeight);
+                        canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.AlternateRowColor), Style = SKPaintStyle.Fill });
+                    }
+
+                    using var dataPaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
+                    var indent = row.IndentLevel * indentWidth;
+                    canvas.DrawText(row.Label, contentLeft + cellPadding + indent, currentY + dataRowHeight * 0.7f, SKTextAlign.Left, dataFont, dataPaint);
+
+                    // Draw value columns (right-aligned)
+                    var valX = contentLeft + columnWidths[0];
+                    for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
+                    {
+                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.7f, SKTextAlign.Right, dataFont, dataPaint);
+                        valX += columnWidths[i + 1];
+                    }
+
+                    // Grid line
+                    if (element.ShowGridLines)
+                    {
+                        canvas.DrawLine(rect.Left, currentY + dataRowHeight, rect.Right, currentY + dataRowHeight,
+                            new SKPaint { Color = ParseColor(element.GridLineColor), StrokeWidth = 0.5f * _renderScale, Style = SKPaintStyle.Stroke });
+                    }
+
+                    currentY += dataRowHeight;
+                    dataRowIndex++;
+                    break;
+                }
+
+                case AccountingRowType.SubtotalRow:
+                {
+                    // Top border line
+                    canvas.DrawLine(rect.Left + cellPadding, currentY, rect.Right - cellPadding, currentY,
+                        new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
+
+                    var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + dataRowHeight);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.SubtotalBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    using var subtotalPaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
+                    var indent = row.IndentLevel * indentWidth;
+                    canvas.DrawText(row.Label, contentLeft + cellPadding + indent, currentY + dataRowHeight * 0.7f, SKTextAlign.Left, boldDataFont, subtotalPaint);
+
+                    var valX = contentLeft + columnWidths[0];
+                    for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
+                    {
+                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.7f, SKTextAlign.Right, boldDataFont, subtotalPaint);
+                        valX += columnWidths[i + 1];
+                    }
+
+                    currentY += dataRowHeight;
+                    break;
+                }
+
+                case AccountingRowType.TotalRow:
+                {
+                    // Top border (thicker)
+                    canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
+                        new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1.5f * _renderScale, Style = SKPaintStyle.Stroke });
+
+                    var rowRect = new SKRect(rect.Left, currentY + 1 * _renderScale, rect.Right, currentY + dataRowHeight * 1.1f);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    using var totalPaint = new SKPaint { Color = ParseColor(element.TotalTextColor), IsAntialias = true };
+                    canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + dataRowHeight * 0.75f, SKTextAlign.Left, boldDataFont, totalPaint);
+
+                    var valX = contentLeft + columnWidths[0];
+                    for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
+                    {
+                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.75f, SKTextAlign.Right, boldDataFont, totalPaint);
+                        valX += columnWidths[i + 1];
+                    }
+
+                    currentY += dataRowHeight * 1.1f;
+                    break;
+                }
+
+                case AccountingRowType.GrandTotalRow:
+                {
+                    // Double top border
+                    canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
+                        new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
+                    canvas.DrawLine(rect.Left, currentY + 3 * _renderScale, rect.Right, currentY + 3 * _renderScale,
+                        new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
+
+                    var grandRowHeight = dataRowHeight * 1.3f;
+                    var rowRect = new SKRect(rect.Left, currentY + 4 * _renderScale, rect.Right, currentY + grandRowHeight);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    using var grandPaint = new SKPaint { Color = ParseColor(element.TotalTextColor), IsAntialias = true };
+                    canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + grandRowHeight * 0.65f, SKTextAlign.Left, grandTotalFont, grandPaint);
+
+                    var valX = contentLeft + columnWidths[0];
+                    for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
+                    {
+                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + grandRowHeight * 0.65f, SKTextAlign.Right, grandTotalFont, grandPaint);
+                        valX += columnWidths[i + 1];
+                    }
+
+                    currentY += grandRowHeight;
+                    break;
+                }
+
+                case AccountingRowType.SeparatorLine:
+                {
+                    currentY += dataRowHeight * 0.25f;
+                    canvas.DrawLine(rect.Left + cellPadding, currentY, rect.Right - cellPadding, currentY,
+                        new SKPaint { Color = ParseColor(element.GridLineColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
+                    currentY += dataRowHeight * 0.25f;
+                    break;
+                }
+
+                case AccountingRowType.BlankRow:
+                {
+                    currentY += dataRowHeight * 0.5f;
+                    break;
+                }
+            }
+        }
+
+        // --- Draw Footnote ---
+        if (!string.IsNullOrEmpty(tableData.Footnote) && currentY + dataRowHeight <= rect.Bottom)
+        {
+            currentY += dataRowHeight * 0.3f;
+            using var footnotePaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
+            footnotePaint.Color = footnotePaint.Color.WithAlpha(150);
+            canvas.DrawText(tableData.Footnote, rect.MidX, currentY + dataFontSize, SKTextAlign.Center, italicFont, footnotePaint);
+        }
+
+        // --- Draw Outer Border ---
+        canvas.DrawRect(rect, new SKPaint { Color = ParseColor(element.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale });
     }
 
     #endregion

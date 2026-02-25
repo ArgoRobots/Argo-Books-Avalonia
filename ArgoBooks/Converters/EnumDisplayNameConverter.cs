@@ -15,6 +15,7 @@ public class EnumDisplayNameConverter : IValueConverter
         {
             TransactionType transactionType => transactionType.GetDisplayName(),
             TableSortOrder sortOrder => sortOrder.GetDisplayName(),
+            AccountingReportType accountingReportType => accountingReportType.GetDisplayName(),
             _ => value?.ToString() ?? string.Empty
         };
     }
