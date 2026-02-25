@@ -29,6 +29,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     private const double HandleSize = 10;
     private const double HandleHitArea = 14;
     private const double SelectionBorderWidth = 2;
+    private const int PageGap = 24; // Gap between pages in pixels
 
     #endregion
 
@@ -43,6 +44,51 @@ public partial class SkiaReportDesignCanvas : UserControl
             return (800, 1000);
 
         return PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+    }
+
+    /// <summary>
+    /// Gets the total number of pages to render.
+    /// </summary>
+    private int GetPageCount() => Math.Max(1, Configuration?.PageCount ?? 1);
+
+    /// <summary>
+    /// Gets the total canvas height for all pages stacked vertically.
+    /// </summary>
+    private int GetTotalCanvasHeight()
+    {
+        var (_, pageHeight) = GetPageDimensions();
+        var pageCount = GetPageCount();
+        return pageCount * pageHeight + (pageCount - 1) * PageGap;
+    }
+
+    /// <summary>
+    /// Gets the Y offset for a given page number (1-based) in the stacked layout.
+    /// </summary>
+    private int GetPageYOffset(int pageNumber)
+    {
+        var (_, pageHeight) = GetPageDimensions();
+        return (pageNumber - 1) * (pageHeight + PageGap);
+    }
+
+    /// <summary>
+    /// Determines which page a canvas Y coordinate falls on, and the local Y within that page.
+    /// Returns (pageNumber, localY). pageNumber is 0 if the point is in a gap.
+    /// </summary>
+    private (int PageNumber, double LocalY) GetPageAtCanvasY(double canvasY)
+    {
+        var (_, pageHeight) = GetPageDimensions();
+        var pageCount = GetPageCount();
+        var stride = pageHeight + PageGap;
+
+        for (int page = 1; page <= pageCount; page++)
+        {
+            var pageTop = GetPageYOffset(page);
+            var pageBottom = pageTop + pageHeight;
+            if (canvasY >= pageTop && canvasY < pageBottom)
+                return (page, canvasY - pageTop);
+        }
+
+        return (0, 0); // In a gap between pages
     }
 
     #endregion
@@ -277,16 +323,14 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
         else if (change.Property == ShowGridProperty ||
                  change.Property == GridSizeProperty ||
-                 change.Property == ShowHeaderFooterProperty ||
-                 change.Property == CurrentDesignerPageProperty)
+                 change.Property == ShowHeaderFooterProperty)
         {
-            if (change.Property == CurrentDesignerPageProperty)
-            {
-                _selectedElements.Clear();
-                _hoveredElement = null;
-                NotifySelectionChanged();
-            }
             InvalidateCanvas();
+        }
+        else if (change.Property == CurrentDesignerPageProperty)
+        {
+            // Scroll to the target page
+            ScrollToPage(CurrentDesignerPage);
         }
     }
 
@@ -315,9 +359,12 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         if (baseWidth <= 0 || baseHeight <= 0) return;
 
+        var pageCount = GetPageCount();
+        var totalHeight = GetTotalCanvasHeight();
+
         // Render at higher resolution for better quality
         var renderWidth = (int)(baseWidth * RenderScale);
-        var renderHeight = (int)(baseHeight * RenderScale);
+        var renderHeight = (int)(totalHeight * RenderScale);
 
         // Create or resize bitmap
         if (_renderBitmap == null || _renderBitmap.Width != renderWidth || _renderBitmap.Height != renderHeight)
@@ -331,44 +378,61 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Scale canvas for high-resolution rendering
         canvas.Scale(RenderScale, RenderScale);
 
-        // Clear with page background
-        var bgColor = SKColor.Parse(Configuration.BackgroundColor);
-        canvas.Clear(bgColor);
+        // Clear with gap background color
+        canvas.Clear(new SKColor(200, 200, 200)); // Neutral gray for gaps
 
-        // Draw grid if enabled
-        if (ShowGrid)
-        {
-            DrawGrid(canvas, baseWidth, baseHeight);
-        }
-
-        // Draw header/footer areas if enabled (use Configuration's settings)
-        if (Configuration.ShowHeader)
-        {
-            DrawHeader(canvas, baseWidth);
-        }
-        if (Configuration.ShowFooter)
-        {
-            DrawFooter(canvas, baseWidth, baseHeight);
-        }
-
-        // Render elements for the current page using the shared renderer
-        // Pass company data so tables render with actual data in designer
         var companyData = App.CompanyManager?.CompanyData;
         Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
         using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
-        renderer.RenderElementsToCanvas(canvas, CurrentDesignerPage);
 
-        // Draw hover highlight after elements, but clipped to avoid rendering over higher Z-order elements
-        if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
+        // Render each page stacked vertically
+        for (int page = 1; page <= pageCount; page++)
         {
-            DrawHoverHighlightClipped(canvas, _hoveredElement);
+            var pageYOffset = GetPageYOffset(page);
+
+            canvas.Save();
+            canvas.Translate(0, pageYOffset);
+
+            // Draw page background
+            var bgColor = SKColor.Parse(Configuration.BackgroundColor);
+            canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
+
+            // Draw grid if enabled
+            if (ShowGrid)
+            {
+                DrawGrid(canvas, baseWidth, baseHeight);
+            }
+
+            // Draw header/footer
+            if (Configuration.ShowHeader)
+            {
+                DrawHeader(canvas, baseWidth);
+            }
+            if (Configuration.ShowFooter)
+            {
+                DrawFooter(canvas, baseWidth, baseHeight, page, pageCount);
+            }
+
+            // Render elements for this page
+            renderer.RenderElementsToCanvas(canvas, page);
+
+            canvas.Restore();
         }
 
-        // Draw selection visuals on top
+        // Draw hover highlight and selection visuals (need page offset translation)
+        if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
+        {
+            var pageOffset = GetPageYOffset(_hoveredElement.PageNumber);
+            canvas.Save();
+            canvas.Translate(0, pageOffset);
+            DrawHoverHighlightClipped(canvas, _hoveredElement);
+            canvas.Restore();
+        }
+
         DrawSelectionVisuals(canvas);
 
         // Convert SKBitmap to Avalonia Bitmap
-        UpdateCanvasImage(baseWidth, baseHeight);
+        UpdateCanvasImage(baseWidth, totalHeight);
     }
 
     private void DrawGrid(SKCanvas canvas, int width, int height)
@@ -413,8 +477,11 @@ public partial class SkiaReportDesignCanvas : UserControl
         canvas.DrawText(title, width / 2f, 35, SKTextAlign.Center, titleFont, titlePaint);
     }
 
-    private void DrawFooter(SKCanvas canvas, int width, int height)
+    private void DrawFooter(SKCanvas canvas, int width, int height, int pageNumber = 0, int totalPages = 0)
     {
+        if (pageNumber == 0) pageNumber = CurrentDesignerPage;
+        if (totalPages == 0) totalPages = Configuration?.PageCount ?? 1;
+
         var footerHeight = (float)PageDimensions.FooterHeight;
 
         using var separatorPaint = new SKPaint();
@@ -429,10 +496,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         footerPaint.Color = SKColors.Gray;
         footerPaint.IsAntialias = true;
         canvas.DrawText("Generated: [Date/Time]", 40, height - 15, SKTextAlign.Left, footerFont, footerPaint);
-        var pageCount = Configuration?.PageCount ?? 1;
-        var pageText = pageCount > 1
-            ? $"Page {CurrentDesignerPage} of {pageCount}"
-            : $"Page {CurrentDesignerPage}";
+        var pageText = totalPages > 1
+            ? $"Page {pageNumber} of {totalPages}"
+            : $"Page {pageNumber}";
         canvas.DrawText(pageText, width - 40, height - 15, SKTextAlign.Right, footerFont, footerPaint);
     }
 
@@ -440,9 +506,12 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         foreach (var element in _selectedElements)
         {
+            var pageOffset = GetPageYOffset(element.PageNumber);
+
             // Clip out higher Z-order elements so selection visuals
             // don't render on top of elements that are above this one
             canvas.Save();
+            canvas.Translate(0, pageOffset);
             ClipHigherZOrderElements(canvas, element);
 
             DrawSelectionBorder(canvas, element);
@@ -459,7 +528,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         foreach (var other in Configuration.Elements)
         {
-            if (other.PageNumber != CurrentDesignerPage || other.ZOrder <= element.ZOrder || !other.IsVisible) continue;
+            if (other.PageNumber != element.PageNumber || other.ZOrder <= element.ZOrder || !other.IsVisible) continue;
 
             var rect = new SKRect(
                 (float)other.X,
@@ -733,8 +802,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Apply the new zoom level
         ZoomLevel = newZoom;
 
-        // Get page dimensions
-        var (pageWidth, pageHeight) = GetPageDimensions();
+        // Get canvas dimensions (page width, total stacked height)
+        var (pageWidth, _) = GetPageDimensions();
+        var totalHeight = GetTotalCanvasHeight();
 
         // Schedule the scroll adjustment after layout is updated
         Dispatcher.UIThread.Post(() =>
@@ -744,7 +814,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             var newViewportWidth = _scrollViewer.Viewport.Width;
             var newViewportHeight = _scrollViewer.Viewport.Height;
             var newExtentWidth = pageWidth * newZoom + margin * 2;
-            var newExtentHeight = pageHeight * newZoom + margin * 2;
+            var newExtentHeight = totalHeight * newZoom + margin * 2;
 
             // Calculate where the canvas point is in the new content space
             var newContentX = canvasX * newZoom + margin;
@@ -784,17 +854,23 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     #region Hit Testing
 
-    private ReportElementBase? GetElementAtPoint(Point point)
+    private ReportElementBase? GetElementAtPoint(Point canvasPoint)
     {
         if (Configuration == null) return null;
 
-        // Check in reverse Z-order (topmost first), filtered to current page
+        // Determine which page this point falls on
+        var (pageNumber, localY) = GetPageAtCanvasY(canvasPoint.Y);
+        if (pageNumber == 0) return null; // In a gap
+
+        var localPoint = new Point(canvasPoint.X, localY);
+
+        // Check in reverse Z-order (topmost first), filtered to the page under the cursor
         foreach (var element in Configuration.Elements
-            .Where(e => e.PageNumber == CurrentDesignerPage)
+            .Where(e => e.PageNumber == pageNumber)
             .OrderByDescending(e => e.ZOrder))
         {
             var rect = new Rect(element.X, element.Y, element.Width, element.Height);
-            if (rect.Contains(point))
+            if (rect.Contains(localPoint))
             {
                 return element;
             }
@@ -803,8 +879,12 @@ public partial class SkiaReportDesignCanvas : UserControl
         return null;
     }
 
-    private ResizeHandle GetResizeHandleAtPoint(Point point, ReportElementBase element)
+    private ResizeHandle GetResizeHandleAtPoint(Point canvasPoint, ReportElementBase element)
     {
+        // Convert canvas point to page-local coordinates for this element's page
+        var pageOffset = GetPageYOffset(element.PageNumber);
+        var localPoint = new Point(canvasPoint.X, canvasPoint.Y - pageOffset);
+
         var handles = GetResizeHandlePositions(element);
 
         foreach (var kvp in handles)
@@ -817,7 +897,7 @@ public partial class SkiaReportDesignCanvas : UserControl
                 HandleHitArea
             );
 
-            if (handleRect.Contains(point))
+            if (handleRect.Contains(localPoint))
             {
                 return kvp.Key;
             }
@@ -1083,9 +1163,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
     }
 
-    private void HandleDrag(Point point)
+    private void HandleDrag(Point canvasPoint)
     {
-        var delta = point - _interactionStartPoint;
+        // Use canvas-space delta (same offset applies regardless of page)
+        var delta = canvasPoint - _interactionStartPoint;
 
         foreach (var element in _selectedElements)
         {
@@ -1101,7 +1182,7 @@ public partial class SkiaReportDesignCanvas : UserControl
                     newY = Math.Round(newY / GridSize) * GridSize;
                 }
 
-                // Constrain to canvas bounds
+                // Constrain to page bounds
                 var (pageWidth, pageHeight) = GetPageDimensions();
                 newX = Math.Max(0, Math.Min(newX, pageWidth - element.Width));
                 newY = Math.Max(0, Math.Min(newY, pageHeight - element.Height));
@@ -1319,32 +1400,38 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
     }
 
-    private void UpdateSelectionRectangle(Point point)
+    private void UpdateSelectionRectangle(Point canvasPoint)
     {
         if (_selectionRectangle == null) return;
 
-        var x = Math.Min(_interactionStartPoint.X, point.X);
-        var y = Math.Min(_interactionStartPoint.Y, point.Y);
-        var width = Math.Abs(point.X - _interactionStartPoint.X);
-        var height = Math.Abs(point.Y - _interactionStartPoint.Y);
+        var x = Math.Min(_interactionStartPoint.X, canvasPoint.X);
+        var y = Math.Min(_interactionStartPoint.Y, canvasPoint.Y);
+        var width = Math.Abs(canvasPoint.X - _interactionStartPoint.X);
+        var height = Math.Abs(canvasPoint.Y - _interactionStartPoint.Y);
 
         Canvas.SetLeft(_selectionRectangle, x);
         Canvas.SetTop(_selectionRectangle, y);
         _selectionRectangle.Width = width;
         _selectionRectangle.Height = height;
 
-        // Update selection based on rectangle
+        // Update selection based on rectangle (check all pages)
         if (Configuration != null)
         {
             var selectionRect = new Rect(x, y, width, height);
             _selectedElements.Clear();
 
-            foreach (var element in Configuration.Elements.Where(e => e.PageNumber == CurrentDesignerPage))
+            var pageCount = GetPageCount();
+            for (int page = 1; page <= pageCount; page++)
             {
-                var elementRect = new Rect(element.X, element.Y, element.Width, element.Height);
-                if (selectionRect.Intersects(elementRect))
+                var pageOffset = GetPageYOffset(page);
+                foreach (var element in Configuration.Elements.Where(e => e.PageNumber == page))
                 {
-                    _selectedElements.Add(element);
+                    // Convert element rect to canvas space by adding page offset
+                    var elementRect = new Rect(element.X, element.Y + pageOffset, element.Width, element.Height);
+                    if (selectionRect.Intersects(elementRect))
+                    {
+                        _selectedElements.Add(element);
+                    }
                 }
             }
         }
@@ -1548,7 +1635,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     }
 
     /// <summary>
-    /// Zooms to fit the page within the available viewport.
+    /// Zooms to fit the page width within the available viewport.
     /// </summary>
     public void ZoomToFit()
     {
@@ -1559,37 +1646,43 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         // Use Bounds if Viewport is not yet calculated (layout not complete)
         var viewportWidth = scrollViewer.Viewport.Width > 0 ? scrollViewer.Viewport.Width : scrollViewer.Bounds.Width;
-        var viewportHeight = scrollViewer.Viewport.Height > 0 ? scrollViewer.Viewport.Height : scrollViewer.Bounds.Height;
 
         // Account for margins - the LayoutTransformControl has 10px margin on each side (20px total)
         viewportWidth -= 20;
-        viewportHeight -= 20;
 
-        if (viewportWidth <= 0 || viewportHeight <= 0) return;
+        if (viewportWidth <= 0) return;
 
-        var (pageWidth, pageHeight) = GetPageDimensions();
+        var (pageWidth, _) = GetPageDimensions();
 
-        var scaleX = viewportWidth / pageWidth;
-        var scaleY = viewportHeight / pageHeight;
+        ZoomLevel = Math.Clamp(viewportWidth / pageWidth, MinZoom, MaxZoom);
 
-        ZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
-
-        // Center the canvas after fitting
+        // Scroll to top after fitting
         Dispatcher.UIThread.Post(() =>
         {
-            scrollViewer.UpdateLayout();
+            if (scrollViewer != null)
+                scrollViewer.Offset = new Vector(0, 0);
+        }, DispatcherPriority.Render);
+    }
 
-            // Calculate the extent size (content size including margins)
-            var extentWidth = scrollViewer.Extent.Width;
-            var extentHeight = scrollViewer.Extent.Height;
-            var actualViewportWidth = scrollViewer.Viewport.Width;
-            var actualViewportHeight = scrollViewer.Viewport.Height;
+    /// <summary>
+    /// Scrolls the canvas to bring a specific page into view.
+    /// </summary>
+    private void ScrollToPage(int pageNumber)
+    {
+        if (_scrollViewer == null) return;
 
-            // Calculate centered offset - center the content within the scrollable area
-            var centerOffsetX = Math.Max(0, (extentWidth - actualViewportWidth) / 2);
-            var centerOffsetY = Math.Max(0, (extentHeight - actualViewportHeight) / 2);
+        var pageYOffset = GetPageYOffset(pageNumber);
+        var zoom = ZoomLevel;
+        const double margin = 10;
 
-            scrollViewer.Offset = new Vector(centerOffsetX, centerOffsetY);
+        // Calculate the scroll offset to show this page at the top
+        var scrollY = pageYOffset * zoom;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_scrollViewer == null) return;
+            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+            _scrollViewer.Offset = new Vector(_scrollViewer.Offset.X, Math.Clamp(scrollY, 0, maxY));
         }, DispatcherPriority.Render);
     }
 
