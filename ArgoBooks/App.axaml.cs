@@ -1947,7 +1947,8 @@ public class App : Application
             settings?.Company.Phone,
             settings?.Company.Country,
             settings?.Company.City,
-            settings?.Company.Address);
+            settings?.Company.Address,
+            settings?.Company.Email);
     }
 
     /// <summary>
@@ -1976,6 +1977,7 @@ public class App : Application
                     var oldBusinessType = settings.Company.BusinessType;
                     var oldIndustry = settings.Company.Industry;
                     var oldPhone = settings.Company.Phone;
+                    var oldEmail = settings.Company.Email;
                     var oldCountry = settings.Company.Country;
                     var oldCity = settings.Company.City;
                     var oldAddress = settings.Company.Address;
@@ -1996,6 +1998,7 @@ public class App : Application
                     settings.Company.BusinessType = args.BusinessType;
                     settings.Company.Industry = args.Industry;
                     settings.Company.Phone = args.Phone;
+                    settings.Company.Email = args.Email;
                     settings.Company.Country = args.Country;
                     settings.Company.City = args.City;
                     settings.Company.Address = args.Address;
@@ -2099,6 +2102,7 @@ public class App : Application
                             settings.Company.BusinessType = oldBusinessType;
                             settings.Company.Industry = oldIndustry;
                             settings.Company.Phone = oldPhone;
+                            settings.Company.Email = oldEmail;
                             settings.Company.Country = oldCountry;
                             settings.Company.City = oldCity;
                             settings.Company.Address = oldAddress;

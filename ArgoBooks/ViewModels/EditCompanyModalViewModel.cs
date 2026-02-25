@@ -48,6 +48,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _address;
 
+    [ObservableProperty]
+    private string _email = "";
+
     /// <summary>
     /// Available business types (shared data source).
     /// </summary>
@@ -88,6 +91,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _originalCountry;
     private string? _originalCity;
     private string? _originalAddress;
+    private string _originalEmail = "";
 
     /// <summary>
     /// Whether any changes have been made.
@@ -101,7 +105,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         SelectedPhoneCountry != _originalSelectedPhoneCountry ||
         Country != _originalCountry ||
         City != _originalCity ||
-        Address != _originalAddress;
+        Address != _originalAddress ||
+        Email != _originalEmail;
 
     /// <summary>
     /// Whether the form is valid for saving.
@@ -126,7 +131,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         string? phone = null,
         string? country = null,
         string? city = null,
-        string? address = null)
+        string? address = null,
+        string? email = null)
     {
         _originalCompanyName = companyName;
         _originalBusinessType = businessType;
@@ -148,35 +154,51 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
         if (!string.IsNullOrWhiteSpace(phone))
         {
-            // Try to parse the phone number - format is typically "+1 (555) 555-5555"
-            // The PhoneInput control will handle parsing when we set the value
+            // Try to parse the phone number - format is typically "+1 5551000000"
             var dialCodes = PhoneInput.AllDialCodes;
-            foreach (var dialCode in dialCodes.OrderByDescending(d => d.DialCode.Length))
-            {
-                if (phone.StartsWith(dialCode.DialCode))
-                {
-                    _originalSelectedPhoneCountry = dialCode;
-                    _originalPhoneNumber = phone[dialCode.DialCode.Length..].Trim();
-                    SelectedPhoneCountry = dialCode;
-                    PhoneNumber = _originalPhoneNumber;
-                    break;
-                }
-            }
+            CountryDialCode? matchedDialCode = null;
 
-            // If no country code matched, just set the raw phone number
-            if (SelectedPhoneCountry == null && !string.IsNullOrWhiteSpace(phone))
+            // Find all dial codes that match the phone prefix
+            var matchingCodes = dialCodes
+                .Where(d => phone.StartsWith(d.DialCode))
+                .OrderByDescending(d => d.DialCode.Length)
+                .ToList();
+
+            if (matchingCodes.Count > 0)
             {
-                _originalPhoneNumber = phone;
-                PhoneNumber = phone;
+                // If the company country is set and multiple codes share the same dial code,
+                // prefer the one matching the company country
+                matchedDialCode = matchingCodes.FirstOrDefault(d =>
+                    !string.IsNullOrEmpty(country) &&
+                    d.Name.Equals(country, StringComparison.OrdinalIgnoreCase))
+                    ?? matchingCodes[0];
+
+                var remaining = phone[matchedDialCode.DialCode.Length..].Trim();
+                _originalSelectedPhoneCountry = matchedDialCode;
+                _originalPhoneNumber = remaining;
+                SelectedPhoneCountry = matchedDialCode;
+                PhoneNumber = remaining;
+            }
+            else
+            {
+                // No dial code prefix found — extract raw digits and default to US
+                var digits = new string(phone.Where(char.IsDigit).ToArray());
+                _originalPhoneNumber = digits;
+                PhoneNumber = digits;
+                var usDialCode = dialCodes.FirstOrDefault(c => c.Code == "US");
+                _originalSelectedPhoneCountry = usDialCode;
+                SelectedPhoneCountry = usDialCode;
             }
         }
 
         _originalCountry = country;
         _originalCity = city;
         _originalAddress = address;
+        _originalEmail = email ?? "";
         Country = country;
         City = city;
         Address = address;
+        Email = email ?? "";
 
         IsOpen = true;
     }
@@ -271,6 +293,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             LogoSource = LogoSource,
             LogoPath = LogoPath,
             Phone = fullPhone,
+            Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
             Country = Country,
             City = City,
             Address = Address
@@ -324,6 +347,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     partial void OnCountryChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnCityChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(HasChanges));
 
     /// <summary>
     /// Event raised when the company is saved.
@@ -347,6 +371,7 @@ public class CompanyEditedEventArgs : EventArgs
     public Bitmap? LogoSource { get; set; }
     public string? LogoPath { get; set; }
     public string? Phone { get; set; }
+    public string? Email { get; set; }
     public string? Country { get; set; }
     public string? City { get; set; }
     public string? Address { get; set; }

@@ -67,7 +67,7 @@
                         </StackPanel>
 
                         <!-- Two column layout for fields -->
-                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto">
+                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto">
                             <!-- Business Type -->
                             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Business Type'}"
@@ -104,17 +104,29 @@
                                                      PhoneNumber="{Binding PhoneNumber, Mode=TwoWay}" />
                             </StackPanel>
 
-                            <!-- Country -->
+                            <!-- Email -->
                             <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc Email}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Classes="form-input"
+                                         Text="{Binding Email, Mode=TwoWay}"
+                                         Watermark="{loc:Loc 'Enter email address'}"
+                                         MaxLength="200" />
+                            </StackPanel>
+
+                            <!-- Country -->
+                            <StackPanel Grid.Row="4" Grid.Column="0" Spacing="6">
                                 <TextBlock Text="{loc:Loc Country}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:CountryInput SelectedCountryName="{Binding Country, Mode=TwoWay}" />
+                                <controls:CountryInput x:Name="CountryInput" SelectedCountryName="{Binding Country, Mode=TwoWay}" />
                             </StackPanel>
 
                             <!-- City -->
-                            <StackPanel Grid.Row="4" Grid.Column="0" Spacing="6">
+                            <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
                                 <TextBlock Text="{loc:Loc City}"
                                            FontSize="13"
                                            FontWeight="Medium"
@@ -126,7 +138,7 @@
                             </StackPanel>
 
                             <!-- Address -->
-                            <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
+                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Spacing="6">
                                 <TextBlock Text="{loc:Loc Address}"
                                            FontSize="13"
                                            FontWeight="Medium"
