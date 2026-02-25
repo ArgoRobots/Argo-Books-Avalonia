@@ -328,6 +328,42 @@ public class ReportRenderer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Exports an effective page (including continuation pages) to an image file.
+    /// </summary>
+    public async Task<bool> ExportEffectivePageToImageAsync(string filePath, EffectivePage page, ExportFormat format, int quality = 95)
+    {
+        try
+        {
+            using var bitmap = RenderEffectivePageToBitmap(page);
+            using var image = SKImage.FromBitmap(bitmap);
+
+            var formatType = format switch
+            {
+                ExportFormat.PNG => SKEncodedImageFormat.Png,
+                ExportFormat.JPEG => SKEncodedImageFormat.Jpeg,
+                _ => SKEncodedImageFormat.Png
+            };
+
+            using var data = image.Encode(formatType, quality);
+
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await using var stream = File.Create(filePath);
+            data.SaveTo(stream);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<bool> ExportToImageAsync(string filePath, ExportFormat format, int quality = 95)
     {
         try
@@ -379,16 +415,20 @@ public class ReportRenderer : IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            _config.TotalPageCount = _config.PageCount;
+            // Compute continuation plan for overflow handling
+            if (_continuationPlan == null)
+                ComputeContinuationPlan();
+
+            _config.TotalPageCount = EffectivePageCount;
 
             await using var stream = File.Create(filePath);
             using var document = SKDocument.CreatePdf(stream);
 
-            for (int page = 1; page <= _config.PageCount; page++)
+            foreach (var effectivePage in _continuationPlan!.Pages)
             {
-                _config.CurrentPageNumber = page;
+                _config.CurrentPageNumber = effectivePage.EffectivePageNumber;
                 using var canvas = document.BeginPage(scaledWidth, scaledHeight);
-                RenderPageToCanvas(canvas, page, scaledWidth, scaledHeight);
+                RenderEffectivePageToCanvas(canvas, effectivePage, scaledWidth, scaledHeight);
                 document.EndPage();
             }
 
@@ -426,6 +466,359 @@ public class ReportRenderer : IDisposable
 
         return bitmap;
     }
+
+    #region Page Continuation Planning
+
+    private PageContinuationPlan? _continuationPlan;
+
+    /// <summary>
+    /// The effective number of pages after accounting for continuation pages.
+    /// </summary>
+    public int EffectivePageCount => _continuationPlan?.TotalPageCount ?? _config.PageCount;
+
+    /// <summary>
+    /// Gets the continuation plan (must call ComputeContinuationPlan first).
+    /// </summary>
+    public PageContinuationPlan? GetContinuationPlan() => _continuationPlan;
+
+    /// <summary>
+    /// Computes the height of a single accounting row based on its type.
+    /// Single source of truth used by both the planner and the renderer.
+    /// </summary>
+    internal static float GetAccountingRowHeight(AccountingRowType rowType, float dataRowHeight, float headerRowHeight)
+    {
+        return rowType switch
+        {
+            AccountingRowType.SectionHeader => headerRowHeight,
+            AccountingRowType.DataRow => dataRowHeight,
+            AccountingRowType.SubtotalRow => dataRowHeight,
+            AccountingRowType.TotalRow => dataRowHeight * 1.1f,
+            AccountingRowType.GrandTotalRow => dataRowHeight * 1.3f,
+            AccountingRowType.SeparatorLine => dataRowHeight * 0.5f,
+            AccountingRowType.BlankRow => dataRowHeight * 0.5f,
+            _ => dataRowHeight
+        };
+    }
+
+    /// <summary>
+    /// Computes the height consumed by the accounting table header area on the first page
+    /// (title bar + subtitle + column headers).
+    /// </summary>
+    internal static float GetAccountingTableFirstPageHeaderHeight(
+        AccountingTableReportElement element, AccountingTableData tableData, float renderScale)
+    {
+        var headerRowHeight = (float)element.HeaderRowHeight * renderScale;
+        var dataRowHeight = (float)element.DataRowHeight * renderScale;
+
+        var height = headerRowHeight * 1.4f; // Title bar
+        if (!string.IsNullOrEmpty(tableData.Subtitle))
+            height += dataRowHeight * 1.2f; // Subtitle
+        if (tableData.ColumnHeaders.Count > 0)
+            height += headerRowHeight; // Column headers
+        return height;
+    }
+
+    /// <summary>
+    /// Computes the height consumed by the continuation page header area
+    /// ("(Continued)" indicator + column headers).
+    /// </summary>
+    internal static float GetAccountingTableContinuationHeaderHeight(
+        AccountingTableReportElement element, AccountingTableData tableData, float renderScale)
+    {
+        var headerRowHeight = (float)element.HeaderRowHeight * renderScale;
+        var dataRowHeight = (float)element.DataRowHeight * renderScale;
+
+        var height = dataRowHeight * 0.8f; // "(Continued)" indicator
+        if (tableData.ColumnHeaders.Count > 0)
+            height += headerRowHeight; // Column headers
+        return height;
+    }
+
+    /// <summary>
+    /// Computes the continuation plan for all accounting tables that may overflow.
+    /// Must be called before rendering begins.
+    /// </summary>
+    public void ComputeContinuationPlan()
+    {
+        var plan = new PageContinuationPlan();
+        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+
+        // Build effective pages: start with all template pages
+        // Then insert continuation pages after each template page as needed
+        for (int templatePage = 1; templatePage <= _config.PageCount; templatePage++)
+        {
+            // Add the original template page
+            plan.Pages.Add(new EffectivePage
+            {
+                SourcePageNumber = templatePage,
+                ContinuationElementId = null,
+                StartRowIndex = 0,
+                RowCount = 0,
+                EffectivePageNumber = 0 // will be assigned later
+            });
+
+            // Check each accounting table on this page for overflow
+            var accountingElements = _config.Elements
+                .OfType<AccountingTableReportElement>()
+                .Where(e => e.PageNumber == templatePage && e.IsVisible)
+                .OrderBy(e => e.ZOrder)
+                .ToList();
+
+            foreach (var element in accountingElements)
+            {
+                var dataService = new AccountingReportDataService(_companyData, _config.Filters);
+                var tableData = dataService.GetReportData(element.ReportType);
+                plan.CachedTableData[element.Id] = tableData;
+
+                if (tableData.Rows.Count == 0)
+                    continue;
+
+                var dataRowHeight = (float)element.DataRowHeight * _renderScale;
+                var headerRowHeight = (float)element.HeaderRowHeight * _renderScale;
+
+                // Compute available height on the first page (element's own rect)
+                var rect = GetScaledRect(element);
+                var firstPageAvailable = rect.Height
+                    - GetAccountingTableFirstPageHeaderHeight(element, tableData, _renderScale);
+
+                // Walk rows to find how many fit on page 1
+                float accumulatedHeight = 0;
+                int firstPageRowCount = 0;
+                int dataRowIndex = 0;
+
+                for (int i = 0; i < tableData.Rows.Count; i++)
+                {
+                    var rowHeight = GetAccountingRowHeight(tableData.Rows[i].RowType, dataRowHeight, headerRowHeight);
+                    if (accumulatedHeight + rowHeight > firstPageAvailable)
+                        break;
+                    accumulatedHeight += rowHeight;
+                    firstPageRowCount++;
+                    if (tableData.Rows[i].RowType == AccountingRowType.DataRow)
+                        dataRowIndex++;
+                }
+
+                // If all rows fit, no continuation needed
+                if (firstPageRowCount >= tableData.Rows.Count)
+                    continue;
+
+                plan.FirstPageRowCounts[element.Id] = firstPageRowCount;
+
+                // Compute continuation pages
+                // Available height on continuation pages: full content area
+                var continuationTop = PageDimensions.HeaderHeight * _renderScale;
+                var continuationBottom = pageHeight * _renderScale - PageDimensions.FooterHeight * _renderScale;
+                var continuationAvailable = continuationBottom - continuationTop
+                    - GetAccountingTableContinuationHeaderHeight(element, tableData, _renderScale);
+
+                // Reserve space for footnote on last page
+                var footnoteHeight = !string.IsNullOrEmpty(tableData.Footnote)
+                    ? dataRowHeight * 1.3f
+                    : 0f;
+
+                int currentRowIndex = firstPageRowCount;
+                while (currentRowIndex < tableData.Rows.Count)
+                {
+                    // Determine if this might be the last page
+                    // Try to fit remaining rows
+                    float pageAccumulated = 0;
+                    int pageRowCount = 0;
+                    int pageDataRowStart = dataRowIndex;
+
+                    // Compute how many rows fit
+                    for (int i = currentRowIndex; i < tableData.Rows.Count; i++)
+                    {
+                        var rowHeight = GetAccountingRowHeight(tableData.Rows[i].RowType, dataRowHeight, headerRowHeight);
+                        if (pageAccumulated + rowHeight > continuationAvailable)
+                            break;
+                        pageAccumulated += rowHeight;
+                        pageRowCount++;
+                        if (tableData.Rows[i].RowType == AccountingRowType.DataRow)
+                            dataRowIndex++;
+                    }
+
+                    bool isLast = currentRowIndex + pageRowCount >= tableData.Rows.Count;
+
+                    // If this is the last page and footnote would overflow, reduce rows
+                    if (isLast && footnoteHeight > 0 && pageAccumulated + footnoteHeight > continuationAvailable)
+                    {
+                        // Recalculate with footnote space reserved
+                        var availableWithFootnote = continuationAvailable - footnoteHeight;
+                        pageAccumulated = 0;
+                        pageRowCount = 0;
+                        dataRowIndex = pageDataRowStart;
+
+                        for (int i = currentRowIndex; i < tableData.Rows.Count; i++)
+                        {
+                            var rowHeight = GetAccountingRowHeight(tableData.Rows[i].RowType, dataRowHeight, headerRowHeight);
+                            if (pageAccumulated + rowHeight > availableWithFootnote)
+                                break;
+                            pageAccumulated += rowHeight;
+                            pageRowCount++;
+                            if (tableData.Rows[i].RowType == AccountingRowType.DataRow)
+                                dataRowIndex++;
+                        }
+
+                        isLast = currentRowIndex + pageRowCount >= tableData.Rows.Count;
+                    }
+
+                    // Safety: always progress at least 1 row to prevent infinite loop
+                    if (pageRowCount == 0)
+                    {
+                        pageRowCount = 1;
+                        if (tableData.Rows[currentRowIndex].RowType == AccountingRowType.DataRow)
+                            dataRowIndex++;
+                    }
+
+                    plan.Pages.Add(new EffectivePage
+                    {
+                        SourcePageNumber = templatePage,
+                        ContinuationElementId = element.Id,
+                        StartRowIndex = currentRowIndex,
+                        RowCount = pageRowCount,
+                        DataRowStartIndex = pageDataRowStart,
+                        IsLastContinuationPage = currentRowIndex + pageRowCount >= tableData.Rows.Count,
+                        EffectivePageNumber = 0 // assigned below
+                    });
+
+                    currentRowIndex += pageRowCount;
+                }
+            }
+        }
+
+        // Assign effective page numbers
+        for (int i = 0; i < plan.Pages.Count; i++)
+        {
+            plan.Pages[i].EffectivePageNumber = i + 1;
+        }
+
+        _continuationPlan = plan;
+    }
+
+    /// <summary>
+    /// Renders a single effective page (original or continuation) to a canvas.
+    /// </summary>
+    public void RenderEffectivePageToCanvas(SKCanvas canvas, EffectivePage page, int width, int height)
+    {
+        // Use DrawRect instead of Clear so stacked pages aren't wiped out
+        canvas.DrawRect(0, 0, width, height, _backgroundPaint);
+
+        if (_config.ShowHeader)
+        {
+            RenderHeader(canvas, width);
+        }
+
+        if (page.IsContinuationPage)
+        {
+            // Continuation page: render only the overflowing accounting table
+            var element = _config.Elements
+                .OfType<AccountingTableReportElement>()
+                .FirstOrDefault(e => e.Id == page.ContinuationElementId);
+
+            if (element != null && _continuationPlan?.CachedTableData.TryGetValue(element.Id, out var tableData) == true)
+            {
+                // Position the table in the full content area
+                var margin = PageDimensions.Margin * _renderScale;
+                var contentTop = PageDimensions.HeaderHeight * _renderScale;
+                var contentBottom = height - PageDimensions.FooterHeight * _renderScale;
+                var overrideRect = new SKRect(margin, contentTop, width - margin, contentBottom);
+
+                RenderAccountingTableSlice(canvas, element, tableData,
+                    page.StartRowIndex, page.RowCount, page.DataRowStartIndex,
+                    showTitle: false, showSubtitle: false,
+                    showFootnote: page.IsLastContinuationPage,
+                    showContinuedIndicator: true,
+                    overrideRect: overrideRect);
+            }
+        }
+        else
+        {
+            // Original template page: render all elements
+            foreach (var element in _config.GetElementsByZOrderForPage(page.SourcePageNumber))
+            {
+                if (!element.IsVisible)
+                    continue;
+
+                if (element is AccountingTableReportElement accounting
+                    && _continuationPlan?.FirstPageRowCounts.TryGetValue(accounting.Id, out var firstPageRowCount) == true
+                    && _continuationPlan.CachedTableData.TryGetValue(accounting.Id, out var tableData))
+                {
+                    // This table overflows — render only the first page's rows
+                    RenderAccountingTableSlice(canvas, accounting, tableData,
+                        startRowIndex: 0, rowCount: firstPageRowCount, dataRowStartIndex: 0,
+                        showTitle: true, showSubtitle: true,
+                        showFootnote: false,
+                        showContinuedIndicator: false);
+                }
+                else if (element is AccountingTableReportElement accounting2
+                    && _continuationPlan?.CachedTableData.TryGetValue(accounting2.Id, out var cachedData) == true)
+                {
+                    // This table doesn't overflow but we have cached data — use it
+                    RenderAccountingTableSlice(canvas, accounting2, cachedData,
+                        startRowIndex: 0, rowCount: cachedData.Rows.Count, dataRowStartIndex: 0,
+                        showTitle: true, showSubtitle: true,
+                        showFootnote: true,
+                        showContinuedIndicator: false);
+                }
+                else
+                {
+                    RenderElement(canvas, element);
+                }
+            }
+        }
+
+        if (_config.ShowFooter)
+        {
+            RenderFooter(canvas, width, height);
+        }
+    }
+
+    /// <summary>
+    /// Renders an effective page to a bitmap.
+    /// </summary>
+    public SKBitmap RenderEffectivePageToBitmap(EffectivePage page)
+    {
+        var (width, height) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+        var scaledWidth = (int)(width * _renderScale);
+        var scaledHeight = (int)(height * _renderScale);
+
+        _config.CurrentPageNumber = page.EffectivePageNumber;
+        _config.TotalPageCount = EffectivePageCount;
+
+        var bitmap = new SKBitmap(scaledWidth, scaledHeight);
+        using var canvas = new SKCanvas(bitmap);
+
+        RenderEffectivePageToCanvas(canvas, page, scaledWidth, scaledHeight);
+
+        return bitmap;
+    }
+
+    /// <summary>
+    /// Creates a preview bitmap for an effective page at the specified scale.
+    /// </summary>
+    public SKBitmap CreateEffectivePagePreview(EffectivePage page, int maxWidth, int maxHeight)
+    {
+        var (width, height) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+
+        var scaleX = (float)maxWidth / width;
+        var scaleY = (float)maxHeight / height;
+        var scale = Math.Min(scaleX, scaleY);
+
+        var previewWidth = (int)(width * scale);
+        var previewHeight = (int)(height * scale);
+
+        _config.CurrentPageNumber = page.EffectivePageNumber;
+        _config.TotalPageCount = EffectivePageCount;
+
+        var bitmap = new SKBitmap(previewWidth, previewHeight);
+        using var canvas = new SKCanvas(bitmap);
+
+        canvas.Scale(scale, scale);
+        RenderEffectivePageToCanvas(canvas, page, width, height);
+
+        return bitmap;
+    }
+
+    #endregion
 
     #region Element Rendering
 
@@ -2622,14 +3015,30 @@ public class ReportRenderer : IDisposable
 
     private void RenderAccountingTable(SKCanvas canvas, AccountingTableReportElement element)
     {
-        var rect = GetScaledRect(element);
+        // Backward-compatible wrapper for designer mode (no continuation plan)
+        var dataService = new AccountingReportDataService(_companyData, _config.Filters);
+        var tableData = dataService.GetReportData(element.ReportType);
+
+        RenderAccountingTableSlice(canvas, element, tableData,
+            startRowIndex: 0, rowCount: tableData.Rows.Count, dataRowStartIndex: 0,
+            showTitle: true, showSubtitle: true, showFootnote: true,
+            showContinuedIndicator: false);
+    }
+
+    /// <summary>
+    /// Renders a slice of an accounting table. Used for both single-page rendering
+    /// and multi-page continuation rendering.
+    /// </summary>
+    private void RenderAccountingTableSlice(
+        SKCanvas canvas, AccountingTableReportElement element, AccountingTableData tableData,
+        int startRowIndex, int rowCount, int dataRowStartIndex,
+        bool showTitle, bool showSubtitle, bool showFootnote, bool showContinuedIndicator,
+        SKRect? overrideRect = null)
+    {
+        var rect = overrideRect ?? GetScaledRect(element);
 
         // Draw white background
         canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
-
-        // Get accounting data
-        var dataService = new AccountingReportDataService(_companyData, _config.Filters);
-        var tableData = dataService.GetReportData(element.ReportType);
 
         // Create typefaces and fonts
         var typeface = SKTypeface.FromFamilyName(element.FontFamily) ?? _defaultTypeface;
@@ -2667,17 +3076,33 @@ public class ReportRenderer : IDisposable
         var currentY = rect.Top;
         var contentLeft = rect.Left + cellPadding;
 
-        // --- Draw Title ---
-        var titleBarHeight = headerRowHeight * 1.4f;
-        var titleRect = new SKRect(rect.Left, currentY, rect.Right, currentY + titleBarHeight);
-        canvas.DrawRect(titleRect, new SKPaint { Color = ParseColor(element.HeaderBackgroundColor), Style = SKPaintStyle.Fill });
+        // --- Draw Title (only on first page) ---
+        if (showTitle)
+        {
+            var titleBarHeight = headerRowHeight * 1.4f;
+            var titleRect = new SKRect(rect.Left, currentY, rect.Right, currentY + titleBarHeight);
+            canvas.DrawRect(titleRect, new SKPaint { Color = ParseColor(element.HeaderBackgroundColor), Style = SKPaintStyle.Fill });
 
-        using var titlePaint = new SKPaint { Color = ParseColor(element.HeaderTextColor), IsAntialias = true };
-        canvas.DrawText(tableData.Title, rect.MidX, currentY + titleBarHeight * 0.65f, SKTextAlign.Center, titleFont, titlePaint);
-        currentY += titleBarHeight;
+            using var titlePaint = new SKPaint { Color = ParseColor(element.HeaderTextColor), IsAntialias = true };
+            canvas.DrawText(tableData.Title, rect.MidX, currentY + titleBarHeight * 0.65f, SKTextAlign.Center, titleFont, titlePaint);
+            currentY += titleBarHeight;
+        }
 
-        // --- Draw Subtitle ---
-        if (!string.IsNullOrEmpty(tableData.Subtitle))
+        // --- Draw "(Continued)" indicator (on continuation pages) ---
+        if (showContinuedIndicator)
+        {
+            var continuedHeight = dataRowHeight * 0.8f;
+            var continuedRect = new SKRect(rect.Left, currentY, rect.Right, currentY + continuedHeight);
+            canvas.DrawRect(continuedRect, new SKPaint { Color = ParseColor(element.HeaderBackgroundColor), Style = SKPaintStyle.Fill });
+
+            using var continuedPaint = new SKPaint { Color = ParseColor(element.HeaderTextColor), IsAntialias = true };
+            var continuedText = $"{tableData.Title} ({Tr("Continued")})";
+            canvas.DrawText(continuedText, rect.MidX, currentY + continuedHeight * 0.65f, SKTextAlign.Center, italicFont, continuedPaint);
+            currentY += continuedHeight;
+        }
+
+        // --- Draw Subtitle (only on first page) ---
+        if (showSubtitle && !string.IsNullOrEmpty(tableData.Subtitle))
         {
             var subtitleHeight = dataRowHeight * 1.2f;
             using var subtitlePaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
@@ -2685,7 +3110,7 @@ public class ReportRenderer : IDisposable
             currentY += subtitleHeight;
         }
 
-        // --- Draw Column Headers ---
+        // --- Draw Column Headers (always shown) ---
         if (tableData.ColumnHeaders.Count > 0)
         {
             var colHeaderRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
@@ -2707,12 +3132,16 @@ public class ReportRenderer : IDisposable
                 new SKPaint { Color = ParseColor(element.GridLineColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
         }
 
-        // --- Draw Rows ---
-        int dataRowIndex = 0;
-        foreach (var row in tableData.Rows)
+        // --- Draw Rows (only the assigned slice) ---
+        int dataRowIndex = dataRowStartIndex;
+        var endRowIndex = Math.Min(startRowIndex + rowCount, tableData.Rows.Count);
+
+        for (int rowIdx = startRowIndex; rowIdx < endRowIndex; rowIdx++)
         {
+            var row = tableData.Rows[rowIdx];
+
             if (currentY + dataRowHeight > rect.Bottom - dataRowHeight)
-                break; // Stop if we'd overflow
+                break; // Safety: stop if we'd overflow (shouldn't happen with correct planning)
 
             switch (row.RowType)
             {
@@ -2850,8 +3279,8 @@ public class ReportRenderer : IDisposable
             }
         }
 
-        // --- Draw Footnote ---
-        if (!string.IsNullOrEmpty(tableData.Footnote) && currentY + dataRowHeight <= rect.Bottom)
+        // --- Draw Footnote (only on last page) ---
+        if (showFootnote && !string.IsNullOrEmpty(tableData.Footnote) && currentY + dataRowHeight <= rect.Bottom)
         {
             currentY += dataRowHeight * 0.3f;
             using var footnotePaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };

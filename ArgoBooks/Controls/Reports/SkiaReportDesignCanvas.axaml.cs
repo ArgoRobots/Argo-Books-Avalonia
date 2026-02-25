@@ -47,9 +47,14 @@ public partial class SkiaReportDesignCanvas : UserControl
     }
 
     /// <summary>
-    /// Gets the total number of pages to render.
+    /// Gets the total number of pages to render (including continuation pages).
     /// </summary>
-    private int GetPageCount() => Math.Max(1, Configuration?.PageCount ?? 1);
+    private int GetPageCount()
+    {
+        if (_continuationPlan != null && _continuationPlan.TotalPageCount > 0)
+            return _continuationPlan.TotalPageCount;
+        return Math.Max(1, Configuration?.PageCount ?? 1);
+    }
 
     /// <summary>
     /// Gets the total canvas height for all pages stacked vertically.
@@ -212,6 +217,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     // Render state
     private SKBitmap? _renderBitmap;
     private bool _needsRender = true;
+    private PageContinuationPlan? _continuationPlan;
 
     #endregion
 
@@ -359,6 +365,13 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         if (baseWidth <= 0 || baseHeight <= 0) return;
 
+        // Compute continuation plan first to know the correct page count and canvas size
+        var companyData = App.CompanyManager?.CompanyData;
+        Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
+        using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
+        renderer.ComputeContinuationPlan();
+        _continuationPlan = renderer.GetContinuationPlan();
+
         var pageCount = GetPageCount();
         var totalHeight = GetTotalCanvasHeight();
 
@@ -381,42 +394,70 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Clear with gap background color
         canvas.Clear(new SKColor(200, 200, 200)); // Neutral gray for gaps
 
-        var companyData = App.CompanyManager?.CompanyData;
-        Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
-        using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
-
-        // Render each page stacked vertically
-        for (int page = 1; page <= pageCount; page++)
+        // Render effective pages stacked vertically
+        if (_continuationPlan?.Pages.Count > 0)
         {
-            var pageYOffset = GetPageYOffset(page);
+            Configuration.TotalPageCount = _continuationPlan.TotalPageCount;
 
-            canvas.Save();
-            canvas.Translate(0, pageYOffset);
-
-            // Draw page background
-            var bgColor = SKColor.Parse(Configuration.BackgroundColor);
-            canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
-
-            // Draw grid if enabled
-            if (ShowGrid)
+            foreach (var effectivePage in _continuationPlan.Pages)
             {
-                DrawGrid(canvas, baseWidth, baseHeight);
-            }
+                var pageYOffset = GetPageYOffset(effectivePage.EffectivePageNumber);
 
-            // Draw header/footer
-            if (Configuration.ShowHeader)
+                canvas.Save();
+                canvas.Translate(0, pageYOffset);
+
+                // Draw page background
+                var bgColor = SKColor.Parse(Configuration.BackgroundColor);
+                canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
+
+                // Draw grid if enabled (only on template pages, not continuation)
+                if (ShowGrid && !effectivePage.IsContinuationPage)
+                {
+                    DrawGrid(canvas, baseWidth, baseHeight);
+                }
+
+                // RenderEffectivePageToCanvas handles header/footer/elements internally
+                Configuration.CurrentPageNumber = effectivePage.EffectivePageNumber;
+                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight);
+
+                canvas.Restore();
+            }
+        }
+        else
+        {
+            // Fallback: render template pages directly (no continuation needed)
+            for (int page = 1; page <= pageCount; page++)
             {
-                DrawHeader(canvas, baseWidth);
-            }
-            if (Configuration.ShowFooter)
-            {
-                DrawFooter(canvas, baseWidth, baseHeight, page, pageCount);
-            }
+                var pageYOffset = GetPageYOffset(page);
 
-            // Render elements for this page
-            renderer.RenderElementsToCanvas(canvas, page);
+                canvas.Save();
+                canvas.Translate(0, pageYOffset);
 
-            canvas.Restore();
+                // Draw page background
+                var bgColor = SKColor.Parse(Configuration.BackgroundColor);
+                canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
+
+                // Draw grid if enabled
+                if (ShowGrid)
+                {
+                    DrawGrid(canvas, baseWidth, baseHeight);
+                }
+
+                // Draw header/footer
+                if (Configuration.ShowHeader)
+                {
+                    DrawHeader(canvas, baseWidth);
+                }
+                if (Configuration.ShowFooter)
+                {
+                    DrawFooter(canvas, baseWidth, baseHeight, page, pageCount);
+                }
+
+                // Render elements for this page
+                renderer.RenderElementsToCanvas(canvas, page);
+
+                canvas.Restore();
+            }
         }
 
         // Draw hover highlight and selection visuals (need page offset translation)
@@ -1676,7 +1717,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         var pageYOffset = GetPageYOffset(pageNumber);
         var zoom = ZoomLevel;
-        const double margin = 10;
 
         // Calculate the scroll offset to show this page at the top
         var scrollY = pageYOffset * zoom;
