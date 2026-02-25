@@ -1467,14 +1467,31 @@ public partial class ReportsPageViewModel : ViewModelBase
                 bmp.Dispose();
             PreviewPageImages.Clear();
 
-            var pageCount = Math.Max(1, Configuration.PageCount);
+            // Compute continuation plan for overflow handling
+            renderer.ComputeContinuationPlan();
+            var continuationPlan = renderer.GetContinuationPlan();
+            var effectivePages = continuationPlan?.Pages ?? [];
+            var pageCount = Math.Max(1, effectivePages.Count > 0 ? effectivePages.Count : Configuration.PageCount);
 
-            for (int page = 1; page <= pageCount; page++)
+            if (effectivePages.Count > 0)
             {
-                using var skBitmap = renderer.CreatePagePreview(page, width * resolutionMultiplier, height * resolutionMultiplier);
-                var bitmap = ConvertToBitmap(skBitmap);
-                if (bitmap != null)
-                    PreviewPageImages.Add(bitmap);
+                foreach (var effectivePage in effectivePages)
+                {
+                    using var skBitmap = renderer.CreateEffectivePagePreview(effectivePage, width * resolutionMultiplier, height * resolutionMultiplier);
+                    var bitmap = ConvertToBitmap(skBitmap);
+                    if (bitmap != null)
+                        PreviewPageImages.Add(bitmap);
+                }
+            }
+            else
+            {
+                for (int page = 1; page <= pageCount; page++)
+                {
+                    using var skBitmap = renderer.CreatePagePreview(page, width * resolutionMultiplier, height * resolutionMultiplier);
+                    var bitmap = ConvertToBitmap(skBitmap);
+                    if (bitmap != null)
+                        PreviewPageImages.Add(bitmap);
+                }
             }
 
             // Request fit-to-window after preview is generated
@@ -1531,24 +1548,44 @@ public partial class ReportsPageViewModel : ViewModelBase
                 // PDF handles multi-page internally
                 success = await renderer.ExportToPdfAsync(ExportFilePath);
             }
-            else if (Configuration.PageCount > 1)
-            {
-                // Multi-page image export: export each page as a separate file
-                var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
-                var baseName = Path.GetFileNameWithoutExtension(ExportFilePath);
-                var ext = Path.GetExtension(ExportFilePath);
-                success = true;
-
-                for (int page = 1; page <= Configuration.PageCount; page++)
-                {
-                    var pageFilePath = Path.Combine(dir, $"{baseName}_p{page}{ext}");
-                    var pageSuccess = await renderer.ExportPageToImageAsync(pageFilePath, page, SelectedExportFormat, ExportQuality);
-                    if (!pageSuccess) success = false;
-                }
-            }
             else
             {
-                success = await renderer.ExportToImageAsync(ExportFilePath, SelectedExportFormat, ExportQuality);
+                // Compute continuation plan for multi-page support
+                renderer.ComputeContinuationPlan();
+                var plan = renderer.GetContinuationPlan();
+                var effectivePageCount = renderer.EffectivePageCount;
+
+                if (effectivePageCount > 1)
+                {
+                    // Multi-page image export: export each page as a separate file
+                    var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+                    var baseName = Path.GetFileNameWithoutExtension(ExportFilePath);
+                    var ext = Path.GetExtension(ExportFilePath);
+                    success = true;
+
+                    if (plan?.Pages.Count > 0)
+                    {
+                        foreach (var effectivePage in plan.Pages)
+                        {
+                            var pageFilePath = Path.Combine(dir, $"{baseName}_p{effectivePage.EffectivePageNumber}{ext}");
+                            var pageSuccess = await renderer.ExportEffectivePageToImageAsync(pageFilePath, effectivePage, SelectedExportFormat, ExportQuality);
+                            if (!pageSuccess) success = false;
+                        }
+                    }
+                    else
+                    {
+                        for (int page = 1; page <= Configuration.PageCount; page++)
+                        {
+                            var pageFilePath = Path.Combine(dir, $"{baseName}_p{page}{ext}");
+                            var pageSuccess = await renderer.ExportPageToImageAsync(pageFilePath, page, SelectedExportFormat, ExportQuality);
+                            if (!pageSuccess) success = false;
+                        }
+                    }
+                }
+                else
+                {
+                    success = await renderer.ExportToImageAsync(ExportFilePath, SelectedExportFormat, ExportQuality);
+                }
             }
 
             if (success)
