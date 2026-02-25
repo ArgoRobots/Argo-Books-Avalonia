@@ -134,6 +134,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -166,6 +167,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -198,6 +200,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -230,6 +233,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -265,6 +269,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -300,6 +305,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -332,6 +338,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Revenue,
@@ -364,6 +371,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters =
             {
                 TransactionType = TransactionType.Expenses,
@@ -812,6 +820,7 @@ public static class ReportTemplateFactory
             ShowHeader = true,
             ShowFooter = true,
             ShowPageNumbers = true,
+            ShowCompanyDetails = true,
             Filters = { DatePresetName = datePreset }
         };
 
