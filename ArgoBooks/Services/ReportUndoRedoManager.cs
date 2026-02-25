@@ -495,3 +495,86 @@ public class BatchMoveResizeAction(
         }
     }
 }
+
+/// <summary>
+/// Action for adding a new page to the report.
+/// </summary>
+public class AddPageAction(ReportConfiguration config) : IReportUndoableAction
+{
+    private readonly int _newPageNumber = config.PageCount + 1;
+
+    public string Description => "Add page".Translate();
+
+    public void Undo()
+    {
+        // Remove any elements that were added to the new page
+        var elementsOnPage = config.Elements.Where(e => e.PageNumber == _newPageNumber).ToList();
+        foreach (var element in elementsOnPage)
+        {
+            config.Elements.Remove(element);
+        }
+        config.PageCount--;
+    }
+
+    public void Redo()
+    {
+        config.PageCount++;
+    }
+}
+
+/// <summary>
+/// Action for deleting a page from the report.
+/// </summary>
+public class DeletePageAction : IReportUndoableAction
+{
+    private readonly ReportConfiguration _config;
+    private readonly int _deletedPageNumber;
+    private readonly List<ReportElementBase> _removedElements;
+
+    public DeletePageAction(ReportConfiguration config, int pageNumber, List<ReportElementBase> removedElements)
+    {
+        _config = config;
+        _deletedPageNumber = pageNumber;
+        _removedElements = removedElements.Select(e => e.Clone()).ToList();
+        // Preserve original page numbers in clones
+        for (int i = 0; i < _removedElements.Count; i++)
+        {
+            _removedElements[i].PageNumber = removedElements[i].PageNumber;
+        }
+    }
+
+    public string Description => "Delete page".Translate();
+
+    public void Undo()
+    {
+        // Renumber pages above the deleted page back up
+        foreach (var element in _config.Elements.Where(e => e.PageNumber >= _deletedPageNumber))
+        {
+            element.PageNumber++;
+        }
+        _config.PageCount++;
+
+        // Restore removed elements
+        foreach (var element in _removedElements)
+        {
+            _config.Elements.Add(element.Clone());
+        }
+    }
+
+    public void Redo()
+    {
+        // Remove elements on the deleted page
+        var elementsOnPage = _config.Elements.Where(e => e.PageNumber == _deletedPageNumber).ToList();
+        foreach (var element in elementsOnPage)
+        {
+            _config.Elements.Remove(element);
+        }
+
+        // Renumber pages above the deleted page down
+        foreach (var element in _config.Elements.Where(e => e.PageNumber > _deletedPageNumber))
+        {
+            element.PageNumber--;
+        }
+        _config.PageCount--;
+    }
+}

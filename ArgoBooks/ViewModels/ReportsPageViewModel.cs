@@ -53,6 +53,37 @@ public partial class ReportsPageViewModel : ViewModelBase
             "#9E9E9E", "#F5F5F5")
     ];
 
+    /// <summary>
+    /// Accounting template options for the Step 1 template grid (Accounting section).
+    /// </summary>
+    public ObservableCollection<ReportTemplateOption> AccountingTemplateOptions { get; } =
+    [
+        new(ReportTemplateFactory.TemplateNames.IncomeStatement, "Income Statement", "Profit & Loss report",
+            "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM7 17h5v-1H7v1zm0-2h10v-1H7v1zm0-2h10v-1H7v1z",
+            "#27AE60", "#E8F8F5"),
+        new(ReportTemplateFactory.TemplateNames.BalanceSheet, "Balance Sheet", "Assets, liabilities & equity",
+            "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM10 9h8v1.5h-8V9zm0 3h4v1.5h-4V12zm0-6h8v1.5h-8V6z",
+            "#2980B9", "#EBF5FB"),
+        new(ReportTemplateFactory.TemplateNames.CashFlowStatement, "Cash Flow", "Track money in and out",
+            "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
+            "#8E44AD", "#F5EEF8"),
+        new(ReportTemplateFactory.TemplateNames.TrialBalance, "Trial Balance", "Verify debit/credit balances",
+            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM12 6v2h5v2h-5v2l-4-3 4-3zm-1 6v2H6v-2h5v-2l4 3-4 3v-2H6v-2h5z",
+            "#E67E22", "#FDF2E9"),
+        new(ReportTemplateFactory.TemplateNames.GeneralLedger, "General Ledger", "Complete transaction record",
+            "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z",
+            "#2C3E50", "#EBEDEF"),
+        new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Receivables by age",
+            "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.96-3.12 3.19z",
+            "#16A085", "#E8F6F3"),
+        new(ReportTemplateFactory.TemplateNames.APaging, "AP Aging", "Payables by age",
+            "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H11.5v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.65c.09 1.71 1.37 2.66 2.85 2.97V19h1.72v-1.67c1.52-.29 2.72-1.16 2.72-2.74 0-2.22-1.9-2.97-3.63-3.45z",
+            "#C0392B", "#FDEDEC"),
+        new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax collected & owed",
+            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
+            "#D35400", "#FBEEE6")
+    ];
+
     #endregion
 
     #region Wizard Step Management
@@ -317,6 +348,12 @@ public partial class ReportsPageViewModel : ViewModelBase
                 template.IsSelected = template.TemplateName == templateName;
             }
 
+            // Update IsSelected on all accounting template options
+            foreach (var template in AccountingTemplateOptions)
+            {
+                template.IsSelected = template.TemplateName == templateName;
+            }
+
             // Update IsSelected on all custom template options
             foreach (var customTemplate in CustomTemplateNames)
             {
@@ -335,6 +372,12 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Update IsSelected on all built-in template options
         foreach (var template in ReportTemplateOptions)
+        {
+            template.IsSelected = template.TemplateName == templateName;
+        }
+
+        // Update IsSelected on all accounting template options
+        foreach (var template in AccountingTemplateOptions)
         {
             template.IsSelected = template.TemplateName == templateName;
         }
@@ -431,6 +474,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsTableSelected));
         OnPropertyChanged(nameof(IsDateRangeSelected));
         OnPropertyChanged(nameof(IsSummarySelected));
+        OnPropertyChanged(nameof(SelectedAccountingTableElement));
+        OnPropertyChanged(nameof(IsAccountingTableSelected));
         OnPropertyChanged(nameof(IsDistributionChartSelected));
     }
 
@@ -496,6 +541,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public TableReportElement? SelectedTableElement => SelectedElement as TableReportElement;
     public DateRangeReportElement? SelectedDateRangeElement => SelectedElement as DateRangeReportElement;
     public SummaryReportElement? SelectedSummaryElement => SelectedElement as SummaryReportElement;
+    public AccountingTableReportElement? SelectedAccountingTableElement => SelectedElement as AccountingTableReportElement;
 
     /// <summary>
     /// Gets or sets the selected chart style as a ChartStyleOption for the ComboBox binding.
@@ -523,6 +569,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public bool IsTableSelected => SelectedElement is TableReportElement;
     public bool IsDateRangeSelected => SelectedElement is DateRangeReportElement;
     public bool IsSummarySelected => SelectedElement is SummaryReportElement;
+    public bool IsAccountingTableSelected => SelectedElement is AccountingTableReportElement;
 
     /// <summary>
     /// Whether the selected chart is a distribution/pie chart that benefits from legend display.
@@ -565,6 +612,104 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isElementPanelExpanded = true;
+
+    #region Page Management
+
+    [ObservableProperty]
+    private int _currentDesignerPage = 1;
+
+    public string CurrentDesignerPageDisplay =>
+        $"Page {CurrentDesignerPage} of {Configuration.PageCount}";
+
+    public bool CanDeletePage => Configuration.PageCount > 1;
+
+    public bool CanGoToPreviousPage => CurrentDesignerPage > 1;
+
+    public bool CanGoToNextPage => CurrentDesignerPage < Configuration.PageCount;
+
+    partial void OnCurrentDesignerPageChanged(int value)
+    {
+        OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+    }
+
+    [RelayCommand]
+    private void NextDesignerPage()
+    {
+        if (CurrentDesignerPage < Configuration.PageCount)
+        {
+            CurrentDesignerPage++;
+        }
+    }
+
+    [RelayCommand]
+    private void PreviousDesignerPage()
+    {
+        if (CurrentDesignerPage > 1)
+        {
+            CurrentDesignerPage--;
+        }
+    }
+
+    [RelayCommand]
+    private void AddPage()
+    {
+        UndoRedoManager.RecordAction(new AddPageAction(Configuration));
+        Configuration.PageCount++;
+        CurrentDesignerPage = Configuration.PageCount;
+        OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
+        OnPropertyChanged(nameof(CanDeletePage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void DeletePage()
+    {
+        if (Configuration.PageCount <= 1) return;
+
+        var pageToDelete = CurrentDesignerPage;
+        var elementsOnPage = Configuration.Elements
+            .Where(e => e.PageNumber == pageToDelete).ToList();
+
+        // Record undo action before making changes
+        UndoRedoManager.RecordAction(new DeletePageAction(Configuration, pageToDelete, elementsOnPage));
+
+        // Remove elements on this page
+        foreach (var element in elementsOnPage)
+        {
+            Configuration.Elements.Remove(element);
+        }
+
+        // Renumber elements on higher pages
+        foreach (var element in Configuration.Elements.Where(e => e.PageNumber > pageToDelete))
+        {
+            element.PageNumber--;
+        }
+
+        Configuration.PageCount--;
+
+        // Navigate to a valid page
+        if (CurrentDesignerPage > Configuration.PageCount)
+        {
+            CurrentDesignerPage = Configuration.PageCount;
+        }
+        else
+        {
+            // Force refresh even if page number didn't change
+            OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
+        }
+
+        SelectedElement = null;
+        OnPropertyChanged(nameof(CanDeletePage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
 
     #region Context Menu
 
@@ -795,9 +940,11 @@ public partial class ReportsPageViewModel : ViewModelBase
             ReportElementType.Image => new ImageReportElement { X = 100, Y = 150, Width = 150, Height = 150 },
             ReportElementType.DateRange => new DateRangeReportElement { X = 100, Y = 150, Width = 200, Height = 30 },
             ReportElementType.Summary => new SummaryReportElement { X = 100, Y = 150, Width = 200, Height = 120 },
+            ReportElementType.AccountingTable => new AccountingTableReportElement { X = 100, Y = 150, Width = 500, Height = 600 },
             _ => new LabelReportElement()
         };
 
+        element.PageNumber = CurrentDesignerPage;
         Configuration.AddElement(element);
         UndoRedoManager.RecordAction(new AddElementAction(Configuration, element));
         SelectedElement = element;
@@ -1264,8 +1411,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     #region Step 3 - Preview & Export
 
-    [ObservableProperty]
-    private Bitmap? _previewImage;
+    public ObservableCollection<Bitmap> PreviewPageImages { get; } = new();
 
     [ObservableProperty]
     private ExportFormat _selectedExportFormat = ExportFormat.PDF;
@@ -1289,9 +1435,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _previewDisplayWidth = 612;
 
     [ObservableProperty]
-    private double _previewDisplayHeight = 792;
-
-    [ObservableProperty]
     private bool _isExporting;
 
     [ObservableProperty]
@@ -1311,16 +1454,28 @@ public partial class ReportsPageViewModel : ViewModelBase
             var companyData = App.CompanyManager?.CompanyData;
             var (width, height) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
 
-            // Store display dimensions (original page size)
+            // Store display width (original page width for zoom calculations)
             PreviewDisplayWidth = width;
-            PreviewDisplayHeight = height;
 
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
-            using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
-            PreviewImage = ConvertToBitmap(skBitmap);
+
+            // Dispose previous page bitmaps
+            foreach (var bmp in PreviewPageImages)
+                bmp.Dispose();
+            PreviewPageImages.Clear();
+
+            var pageCount = Math.Max(1, Configuration.PageCount);
+
+            for (int page = 1; page <= pageCount; page++)
+            {
+                using var skBitmap = renderer.CreatePagePreview(page, width * resolutionMultiplier, height * resolutionMultiplier);
+                var bitmap = ConvertToBitmap(skBitmap);
+                if (bitmap != null)
+                    PreviewPageImages.Add(bitmap);
+            }
 
             // Request fit-to-window after preview is generated
             PreviewFitToWindowRequested?.Invoke(this, EventArgs.Empty);
@@ -1328,7 +1483,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to generate report preview");
-            PreviewImage = null;
+            foreach (var bmp in PreviewPageImages)
+                bmp.Dispose();
+            PreviewPageImages.Clear();
         }
     }
 
@@ -1371,7 +1528,23 @@ public partial class ReportsPageViewModel : ViewModelBase
             bool success;
             if (SelectedExportFormat == ExportFormat.PDF)
             {
+                // PDF handles multi-page internally
                 success = await renderer.ExportToPdfAsync(ExportFilePath);
+            }
+            else if (Configuration.PageCount > 1)
+            {
+                // Multi-page image export: export each page as a separate file
+                var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+                var baseName = Path.GetFileNameWithoutExtension(ExportFilePath);
+                var ext = Path.GetExtension(ExportFilePath);
+                success = true;
+
+                for (int page = 1; page <= Configuration.PageCount; page++)
+                {
+                    var pageFilePath = Path.Combine(dir, $"{baseName}_p{page}{ext}");
+                    var pageSuccess = await renderer.ExportPageToImageAsync(pageFilePath, page, SelectedExportFormat, ExportQuality);
+                    if (!pageSuccess) success = false;
+                }
             }
             else
             {
@@ -1601,6 +1774,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<TableDataSelection> TableDataSelections { get; } =
         new(Enum.GetValues<TableDataSelection>());
+
+    public ObservableCollection<AccountingReportType> AccountingReportTypes { get; } =
+        new(Enum.GetValues<AccountingReportType>());
 
     public ObservableCollection<TableSortOrder> TableSortOrders { get; } =
         new(Enum.GetValues<TableSortOrder>());
@@ -1968,6 +2144,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Force ItemsControls to re-render with new translations by notifying collection changes
         OnPropertyChanged(nameof(ReportTemplateOptions));
+        OnPropertyChanged(nameof(AccountingTemplateOptions));
         OnPropertyChanged(nameof(DatePresets));
 
         // Refresh the preview and canvas to show translated content
@@ -1981,6 +2158,10 @@ public partial class ReportsPageViewModel : ViewModelBase
     public void Cleanup()
     {
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+
+        foreach (var bmp in PreviewPageImages)
+            bmp.Dispose();
+        PreviewPageImages.Clear();
     }
 
     /// <summary>

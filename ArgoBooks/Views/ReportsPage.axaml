@@ -210,8 +210,96 @@
                                 <Panel Margin="24">
                                     <!-- Templates Tab Content -->
                                     <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
+
+                                    <!-- Visual / Analytical Section Header -->
+                                    <TextBlock Text="{loc:Loc 'Visual / Analytical'}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Opacity="0.7"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,0,0,4" />
+
                                     <!-- Built-in Templates Grid (responsive) -->
                                     <ItemsControl ItemsSource="{Binding ReportTemplateOptions}"
+                                                  HorizontalAlignment="Center">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Margin="0,0,12,12"
+                                                        Padding="20,24"
+                                                        CornerRadius="8"
+                                                        Width="200"
+                                                        HorizontalContentAlignment="Center"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
+                                                        CommandParameter="{Binding TemplateName}"
+                                                        Classes.selected="{Binding IsSelected}">
+                                                    <Button.Styles>
+                                                        <Style Selector="Button">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                                            <Setter Property="BorderThickness" Value="2" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected:pointerover">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                    </Button.Styles>
+                                                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                                        <Border Background="{Binding IconBackground}"
+                                                                CornerRadius="12"
+                                                                Padding="12"
+                                                                HorizontalAlignment="Center">
+                                                            <PathIcon Data="{Binding IconData}"
+                                                                      Width="28" Height="28"
+                                                                      Foreground="{Binding IconForeground}" />
+                                                        </Border>
+                                                        <TextBlock Text="{Binding DisplayName, Converter={StaticResource TranslateConverter}}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <TextBlock Text="{Binding Description, Converter={StaticResource TranslateConverter}}"
+                                                                   FontSize="12"
+                                                                   HorizontalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   TextWrapping="Wrap"
+                                                                   TextAlignment="Center"
+                                                                   MinHeight="32" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Accounting Section Header -->
+                                    <TextBlock Text="{loc:Loc 'Accounting'}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Opacity="0.7"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,8,0,4" />
+
+                                    <!-- Accounting Templates Grid -->
+                                    <ItemsControl ItemsSource="{Binding AccountingTemplateOptions}"
                                                   HorizontalAlignment="Center">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
@@ -660,6 +748,14 @@
                                     <TextBlock Text="{loc:Loc 'Image'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.AccountingTable}" ToolTip.Tip="{loc:Loc 'Add Accounting Table'}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{x:Static icons:Icons.Receipts}"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Accounting'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
 
                         <!-- Collapsed Content (Icon-only buttons) -->
@@ -696,6 +792,11 @@
                             </Button>
                             <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Image}" ToolTip.Tip="{loc:Loc 'Add Image'}">
                                 <PathIcon Data="{x:Static icons:Icons.Image}"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                            </Button>
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.AccountingTable}" ToolTip.Tip="{loc:Loc 'Add Accounting Table'}">
+                                <PathIcon Data="{x:Static icons:Icons.Receipts}"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
@@ -825,8 +926,7 @@
                                     <PathIcon Data="{x:Static icons:Icons.Settings}"
                                               Width="16" Height="16" />
                                 </Button>
-
-                        </StackPanel>
+                                </StackPanel>
                         </ScrollViewer>
                     </Border>
 
@@ -841,6 +941,7 @@
                                                         ShowGrid="{Binding ShowGrid}"
                                                         GridSize="{Binding GridSize}"
                                                         SnapToGrid="{Binding SnapToGrid}"
+                                                        CurrentDesignerPage="{Binding CurrentDesignerPage}"
                                                         UndoRedoManager="{Binding UndoRedoManager}" />
 
                         <!-- Save Confirmation Overlay -->
@@ -1465,6 +1566,95 @@
                                 </StackPanel>
                             </StackPanel>
 
+                            <!-- Accounting Table Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsAccountingTableSelected}">
+                                <TextBlock Text="{loc:Loc 'Accounting Table Properties'}"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Report Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding AccountingReportTypes}"
+                                              SelectedItem="{Binding SelectedAccountingTableElement.ReportType}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumDisplayNameConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <CheckBox Content="{loc:Loc 'Show Company Header'}" IsChecked="{Binding SelectedAccountingTableElement.ShowCompanyHeader}" />
+                                <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedAccountingTableElement.ShowGridLines}" />
+                                <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedAccountingTableElement.AlternateRowColors}" />
+
+                                <TextBlock Text="{loc:Loc 'Font'}"
+                                           FontSize="11"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding FontFamilies}"
+                                                  SelectedItem="{Binding SelectedAccountingTableElement.FontFamily}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{loc:Loc 'Row Heights'}"
+                                           FontSize="11"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Header'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Data'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{loc:Loc 'Colors'}"
+                                           FontSize="11"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderTextColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Section Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.SectionHeaderBackgroundColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Total BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalBackgroundColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Total Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalTextColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Grid Lines'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.GridLineColor, Mode=TwoWay}" />
+                                </StackPanel>
+                            </StackPanel>
+
                             <!-- No Selection Message -->
                             <StackPanel IsVisible="{Binding SelectedElement, Converter={x:Static ObjectConverters.IsNull}}"
                                         Spacing="8"
@@ -1499,23 +1689,34 @@
                 <Border Grid.Column="0"
                         Background="{DynamicResource BackgroundSecondaryBrush}"
                         Margin="24">
-                    <Border Background="{DynamicResource SurfaceBrush}"
-                            CornerRadius="8">
-                        <ScrollViewer x:Name="PreviewScrollViewer"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Auto">
-                            <!-- Zoom container using LayoutTransformControl for proper scroll behavior -->
-                            <LayoutTransformControl x:Name="PreviewZoomTransformControl">
-                                <Border Padding="10" Background="{DynamicResource SurfaceBrush}">
-                                    <Image x:Name="PreviewImage"
-                                           Source="{Binding PreviewImage}"
-                                           Width="{Binding PreviewDisplayWidth}"
-                                           Height="{Binding PreviewDisplayHeight}"
-                                           Stretch="Fill" />
-                                </Border>
-                            </LayoutTransformControl>
-                        </ScrollViewer>
-                    </Border>
+                    <ScrollViewer x:Name="PreviewScrollViewer"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <LayoutTransformControl x:Name="PreviewZoomTransformControl"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Top"
+                                                Margin="10">
+                            <ItemsControl ItemsSource="{Binding PreviewPageImages}"
+                                          Width="{Binding PreviewDisplayWidth}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="16"
+                                                    Margin="0,10" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <Border Background="{DynamicResource SurfaceBrush}"
+                                                CornerRadius="4"
+                                                BoxShadow="0 1 4 0 #22000000">
+                                            <Image Source="{Binding}"
+                                                   Stretch="Uniform" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </LayoutTransformControl>
+                    </ScrollViewer>
                 </Border>
 
                 <!-- Export Settings -->
@@ -1612,9 +1813,13 @@
                                          Watermark="{loc:Loc 'Select file path...'}"
                                          Padding="12,10" />
                                 <Button Grid.Column="1"
-                                        Content="{loc:Loc 'Browse'}"
+                                        Classes="toolbar-button"
                                         Margin="8,0,0,0"
-                                        Command="{Binding BrowseExportPathCommand}" />
+                                        ToolTip.Tip="{loc:Loc 'Browse'}"
+                                        Command="{Binding BrowseExportPathCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.FolderFilled}"
+                                              Width="16" Height="16" />
+                                </Button>
                             </Grid>
                         </StackPanel>
 
@@ -1643,7 +1848,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="24,16">
-            <Grid ColumnDefinitions="*,Auto,*">
+            <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Previous Button -->
                 <Button Grid.Column="0"
                         Classes="secondary-button"
@@ -1687,6 +1892,17 @@
                         <PathIcon Data="{x:Static icons:Icons.ScanFocus}"
                                   Width="16" Height="16" />
                     </Button>
+
+                    <!-- Add/Delete Page -->
+                    <Border Width="1" Height="20" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+                    <Button Classes="toolbar-button" Command="{Binding AddPageCommand}" ToolTip.Tip="{loc:Loc 'Add Page'}">
+                        <PathIcon Data="{x:Static icons:Icons.AddAlt}"
+                                  Width="16" Height="16" />
+                    </Button>
+                    <Button Classes="toolbar-button" Command="{Binding DeletePageCommand}" IsEnabled="{Binding CanDeletePage}" ToolTip.Tip="{loc:Loc 'Delete Page'}">
+                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                  Width="16" Height="16" />
+                    </Button>
                 </StackPanel>
 
                 <!-- Center: Zoom Controls (Step 3 - Preview) -->
@@ -1715,7 +1931,6 @@
                                TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <Button Classes="toolbar-button" Click="OnPreviewZoomFitClick" ToolTip.Tip="{loc:Loc 'Fit to Window'}">
-                        <!-- Fit to window icon: corners with center focus dot -->
                         <PathIcon Data="{x:Static icons:Icons.ScanFocus}"
                                   Width="16" Height="16" />
                     </Button>

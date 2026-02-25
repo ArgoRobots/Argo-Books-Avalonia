@@ -24,6 +24,7 @@ public class ElementPropertyChangingEventArgs(string propertyName, object? oldVa
 [JsonDerivedType(typeof(ImageReportElement), "Image")]
 [JsonDerivedType(typeof(DateRangeReportElement), "DateRange")]
 [JsonDerivedType(typeof(SummaryReportElement), "Summary")]
+[JsonDerivedType(typeof(AccountingTableReportElement), "AccountingTable")]
 public abstract class ReportElementBase : INotifyPropertyChanged
 {
     /// <summary>
@@ -95,6 +96,16 @@ public abstract class ReportElementBase : INotifyPropertyChanged
         get;
         set => SetField(ref field, value);
     }
+
+    /// <summary>
+    /// Which page this element belongs to (1-based).
+    /// </summary>
+    [JsonPropertyName("pageNumber")]
+    public int PageNumber
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 1;
 
     /// <summary>
     /// Whether the element is visible.
@@ -278,6 +289,7 @@ public class ChartReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             ChartType = ChartType,
             ChartStyle = ChartStyle,
@@ -589,6 +601,7 @@ public class TableReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             TransactionType = TransactionType,
             IncludeReturns = IncludeReturns,
@@ -706,6 +719,7 @@ public class LabelReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             Text = Text,
             FontFamily = FontFamily,
@@ -787,6 +801,7 @@ public class ImageReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             ImagePath = ImagePath,
             ScaleMode = ScaleMode,
@@ -880,6 +895,7 @@ public class DateRangeReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             DateFormat = DateFormat,
             TextColor = TextColor,
@@ -1010,6 +1026,7 @@ public class SummaryReportElement : ReportElementBase
             Width = Width,
             Height = Height,
             ZOrder = ZOrder,
+            PageNumber = PageNumber,
             IsVisible = IsVisible,
             TransactionType = TransactionType,
             IncludeReturns = IncludeReturns,
@@ -1025,6 +1042,231 @@ public class SummaryReportElement : ReportElementBase
             FontSize = FontSize,
             HorizontalAlignment = HorizontalAlignment,
             VerticalAlignment = VerticalAlignment
+        };
+    }
+}
+
+/// <summary>
+/// Accounting table element for structured financial reports (Balance Sheet, P&L, etc.).
+/// </summary>
+public class AccountingTableReportElement : ReportElementBase
+{
+    [JsonPropertyName("reportType")]
+    public AccountingReportType ReportType
+    {
+        get;
+        set => SetField(ref field, value);
+    } = AccountingReportType.IncomeStatement;
+
+    [JsonPropertyName("showCompanyHeader")]
+    public bool ShowCompanyHeader
+    {
+        get;
+        set => SetField(ref field, value);
+    } = true;
+
+    [JsonPropertyName("companyHeaderText")]
+    public string CompanyHeaderText
+    {
+        get;
+        set => SetField(ref field, value);
+    } = string.Empty;
+
+    [JsonPropertyName("fontSize")]
+    public double FontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 8;
+
+    [JsonPropertyName("fontFamily")]
+    public string FontFamily
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
+
+    [JsonPropertyName("headerFontSize")]
+    public double HeaderFontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 9;
+
+    [JsonPropertyName("headerFontFamily")]
+    public string HeaderFontFamily
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
+
+    [JsonPropertyName("titleFontSize")]
+    public double TitleFontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 12;
+
+    [JsonPropertyName("headerBackgroundColor")]
+    public string HeaderBackgroundColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#2C3E50";
+
+    [JsonPropertyName("headerTextColor")]
+    public string HeaderTextColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
+
+    [JsonPropertyName("sectionHeaderBackgroundColor")]
+    public string SectionHeaderBackgroundColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#ECF0F1";
+
+    [JsonPropertyName("sectionHeaderTextColor")]
+    public string SectionHeaderTextColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#2C3E50";
+
+    [JsonPropertyName("subtotalBackgroundColor")]
+    public string SubtotalBackgroundColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#F8F9FA";
+
+    [JsonPropertyName("totalBackgroundColor")]
+    public string TotalBackgroundColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#2C3E50";
+
+    [JsonPropertyName("totalTextColor")]
+    public string TotalTextColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
+
+    [JsonPropertyName("dataRowTextColor")]
+    public string DataRowTextColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#2C3E50";
+
+    [JsonPropertyName("gridLineColor")]
+    public string GridLineColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#D5D8DC";
+
+    [JsonPropertyName("baseRowColor")]
+    public string BaseRowColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
+
+    [JsonPropertyName("alternateRowColor")]
+    public string AlternateRowColor
+    {
+        get;
+        set => SetField(ref field, value);
+    } = "#F8F9FA";
+
+    [JsonPropertyName("dataRowHeight")]
+    public double DataRowHeight
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 18;
+
+    [JsonPropertyName("headerRowHeight")]
+    public double HeaderRowHeight
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 22;
+
+    [JsonPropertyName("cellPadding")]
+    public double CellPadding
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 4;
+
+    [JsonPropertyName("showGridLines")]
+    public bool ShowGridLines
+    {
+        get;
+        set => SetField(ref field, value);
+    } = true;
+
+    [JsonPropertyName("alternateRowColors")]
+    public bool AlternateRowColors
+    {
+        get;
+        set => SetField(ref field, value);
+    }
+
+    [JsonPropertyName("indentWidth")]
+    public double IndentWidth
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 20;
+
+    public override double MinimumSize => 200;
+    public override string DisplayName => "Accounting Table";
+    public override ReportElementType GetElementType() => ReportElementType.AccountingTable;
+
+    public override ReportElementBase Clone()
+    {
+        return new AccountingTableReportElement
+        {
+            Id = Guid.NewGuid().ToString(),
+            X = X,
+            Y = Y,
+            Width = Width,
+            Height = Height,
+            ZOrder = ZOrder,
+            PageNumber = PageNumber,
+            IsVisible = IsVisible,
+            ReportType = ReportType,
+            ShowCompanyHeader = ShowCompanyHeader,
+            CompanyHeaderText = CompanyHeaderText,
+            FontSize = FontSize,
+            FontFamily = FontFamily,
+            HeaderFontSize = HeaderFontSize,
+            HeaderFontFamily = HeaderFontFamily,
+            TitleFontSize = TitleFontSize,
+            HeaderBackgroundColor = HeaderBackgroundColor,
+            HeaderTextColor = HeaderTextColor,
+            SectionHeaderBackgroundColor = SectionHeaderBackgroundColor,
+            SectionHeaderTextColor = SectionHeaderTextColor,
+            SubtotalBackgroundColor = SubtotalBackgroundColor,
+            TotalBackgroundColor = TotalBackgroundColor,
+            TotalTextColor = TotalTextColor,
+            DataRowTextColor = DataRowTextColor,
+            GridLineColor = GridLineColor,
+            BaseRowColor = BaseRowColor,
+            AlternateRowColor = AlternateRowColor,
+            DataRowHeight = DataRowHeight,
+            HeaderRowHeight = HeaderRowHeight,
+            CellPadding = CellPadding,
+            ShowGridLines = ShowGridLines,
+            AlternateRowColors = AlternateRowColors,
+            IndentWidth = IndentWidth
         };
     }
 }
