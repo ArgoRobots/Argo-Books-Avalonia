@@ -1502,7 +1502,10 @@
                     <ScrollViewer x:Name="PreviewScrollViewer"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Auto">
-                        <LayoutTransformControl x:Name="PreviewZoomTransformControl">
+                        <LayoutTransformControl x:Name="PreviewZoomTransformControl"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Top"
+                                                Margin="10">
                             <ItemsControl ItemsSource="{Binding PreviewPageImages}"
                                           Width="{Binding PreviewDisplayWidth}">
                                 <ItemsControl.ItemsPanel>
