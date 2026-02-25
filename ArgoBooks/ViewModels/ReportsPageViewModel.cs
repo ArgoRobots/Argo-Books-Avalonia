@@ -1386,9 +1386,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _previewDisplayWidth = 612;
 
     [ObservableProperty]
-    private double _previewDisplayHeight = 792;
-
-    [ObservableProperty]
     private bool _isExporting;
 
     [ObservableProperty]
@@ -1408,9 +1405,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             var companyData = App.CompanyManager?.CompanyData;
             var (width, height) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
 
-            // Store display dimensions (original page size)
+            // Store display width (original page width for zoom calculations)
             PreviewDisplayWidth = width;
-            PreviewDisplayHeight = height;
 
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;

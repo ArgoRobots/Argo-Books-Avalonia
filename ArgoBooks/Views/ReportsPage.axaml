@@ -1532,23 +1532,21 @@
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Auto">
                         <LayoutTransformControl x:Name="PreviewZoomTransformControl">
-                            <ItemsControl ItemsSource="{Binding PreviewPageImages}">
+                            <ItemsControl ItemsSource="{Binding PreviewPageImages}"
+                                          Width="{Binding PreviewDisplayWidth}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Spacing="16"
-                                                    Background="{DynamicResource BackgroundSecondaryBrush}" />
+                                                    Margin="0,10" />
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:CompileBindings="False">
                                         <Border Background="{DynamicResource SurfaceBrush}"
                                                 CornerRadius="4"
-                                                HorizontalAlignment="Center"
                                                 BoxShadow="0 1 4 0 #22000000">
                                             <Image Source="{Binding}"
-                                                   Width="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).PreviewDisplayWidth}"
-                                                   Height="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).PreviewDisplayHeight}"
-                                                   Stretch="Fill" />
+                                                   Stretch="Uniform" />
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
