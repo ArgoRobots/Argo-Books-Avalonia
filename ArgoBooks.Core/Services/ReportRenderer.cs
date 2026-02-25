@@ -720,8 +720,8 @@ public class ReportRenderer : IDisposable
                 // Position the table in the full content area
                 var marginLeft = (float)_config.PageMargins.Left * _renderScale;
                 var marginRight = (float)_config.PageMargins.Right * _renderScale;
-                var contentTop = PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) * _renderScale;
-                var contentBottom = height - PageDimensions.FooterHeight * _renderScale;
+                var contentTop = (PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) + (float)_config.PageMargins.Top) * _renderScale;
+                var contentBottom = height - (PageDimensions.FooterHeight + (float)_config.PageMargins.Bottom) * _renderScale;
                 var overrideRect = new SKRect(marginLeft, contentTop, width - marginRight, contentBottom);
 
                 RenderAccountingTableSlice(canvas, element, tableData,

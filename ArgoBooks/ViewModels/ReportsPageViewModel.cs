@@ -932,15 +932,22 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void AddElement(ReportElementType elementType)
     {
+        var margins = Configuration.PageMargins;
+        var headerHeight = Configuration.ShowHeader
+            ? PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails)
+            : 0;
+        var defaultX = margins.Left;
+        var defaultY = headerHeight + margins.Top;
+
         ReportElementBase element = elementType switch
         {
-            ReportElementType.Chart => new ChartReportElement { X = 100, Y = 150, Width = 300, Height = 200 },
-            ReportElementType.Table => new TableReportElement { X = 100, Y = 150, Width = 400, Height = 200 },
-            ReportElementType.Label => new LabelReportElement { X = 100, Y = 150, Width = 200, Height = 40 },
-            ReportElementType.Image => new ImageReportElement { X = 100, Y = 150, Width = 150, Height = 150 },
-            ReportElementType.DateRange => new DateRangeReportElement { X = 100, Y = 150, Width = 200, Height = 30 },
-            ReportElementType.Summary => new SummaryReportElement { X = 100, Y = 150, Width = 200, Height = 120 },
-            ReportElementType.AccountingTable => new AccountingTableReportElement { X = 100, Y = 150, Width = 500, Height = 600 },
+            ReportElementType.Chart => new ChartReportElement { X = defaultX, Y = defaultY, Width = 300, Height = 200 },
+            ReportElementType.Table => new TableReportElement { X = defaultX, Y = defaultY, Width = 400, Height = 200 },
+            ReportElementType.Label => new LabelReportElement { X = defaultX, Y = defaultY, Width = 200, Height = 40 },
+            ReportElementType.Image => new ImageReportElement { X = defaultX, Y = defaultY, Width = 150, Height = 150 },
+            ReportElementType.DateRange => new DateRangeReportElement { X = defaultX, Y = defaultY, Width = 200, Height = 30 },
+            ReportElementType.Summary => new SummaryReportElement { X = defaultX, Y = defaultY, Width = 200, Height = 120 },
+            ReportElementType.AccountingTable => new AccountingTableReportElement { X = defaultX, Y = defaultY, Width = 500, Height = 600 },
             _ => new LabelReportElement()
         };
 

@@ -411,8 +411,8 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var bgColor = SKColor.Parse(Configuration.BackgroundColor);
                 canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
 
-                // Draw grid if enabled (only on template pages, not continuation)
-                if (ShowGrid && !effectivePage.IsContinuationPage)
+                // Draw grid if enabled
+                if (ShowGrid)
                 {
                     DrawGrid(canvas, baseWidth, baseHeight);
                 }
@@ -486,12 +486,14 @@ public partial class SkiaReportDesignCanvas : UserControl
         var margins = Configuration?.PageMargins;
         var left = margins?.Left ?? PageDimensions.Margin;
         var right = pageWidth - (margins?.Right ?? PageDimensions.Margin);
+        var marginTop = margins?.Top ?? PageDimensions.Margin;
+        var marginBottom = margins?.Bottom ?? PageDimensions.Margin;
         var top = (Configuration?.ShowHeader ?? false)
-            ? PageDimensions.GetHeaderHeight(Configuration?.ShowCompanyDetails ?? false)
-            : (margins?.Top ?? PageDimensions.Margin);
+            ? PageDimensions.GetHeaderHeight(Configuration?.ShowCompanyDetails ?? false) + marginTop
+            : marginTop;
         var bottom = (Configuration?.ShowFooter ?? false)
-            ? pageHeight - PageDimensions.FooterHeight
-            : pageHeight - (margins?.Bottom ?? PageDimensions.Margin);
+            ? pageHeight - PageDimensions.FooterHeight - marginBottom
+            : pageHeight - marginBottom;
         return (left, top, right, bottom);
     }
 
