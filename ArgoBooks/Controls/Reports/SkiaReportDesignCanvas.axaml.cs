@@ -407,15 +407,19 @@ public partial class SkiaReportDesignCanvas : UserControl
                 canvas.Save();
                 canvas.Translate(0, pageYOffset);
 
-                // RenderEffectivePageToCanvas handles background/header/footer/elements internally
-                Configuration.CurrentPageNumber = effectivePage.EffectivePageNumber;
-                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight);
+                // Draw page background
+                var bgColor = SKColor.Parse(Configuration.BackgroundColor);
+                canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
 
-                // Draw grid overlay after content (only on template pages, not continuation)
+                // Draw grid if enabled (only on template pages, not continuation)
                 if (ShowGrid && !effectivePage.IsContinuationPage)
                 {
                     DrawGrid(canvas, baseWidth, baseHeight);
                 }
+
+                // Render content (skip background since we already drew it above)
+                Configuration.CurrentPageNumber = effectivePage.EffectivePageNumber;
+                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight, skipBackground: true);
 
                 canvas.Restore();
             }
@@ -434,6 +438,12 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var bgColor = SKColor.Parse(Configuration.BackgroundColor);
                 canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
 
+                // Draw grid if enabled
+                if (ShowGrid)
+                {
+                    DrawGrid(canvas, baseWidth, baseHeight);
+                }
+
                 // Draw header/footer
                 if (Configuration.ShowHeader)
                 {
@@ -446,12 +456,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
                 // Render elements for this page
                 renderer.RenderElementsToCanvas(canvas, page);
-
-                // Draw grid overlay after content
-                if (ShowGrid)
-                {
-                    DrawGrid(canvas, baseWidth, baseHeight);
-                }
 
                 canvas.Restore();
             }
