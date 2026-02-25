@@ -1714,7 +1714,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         var pageYOffset = GetPageYOffset(pageNumber);
         var zoom = ZoomLevel;
-        const double margin = 10;
 
         // Calculate the scroll offset to show this page at the top
         var scrollY = pageYOffset * zoom;
