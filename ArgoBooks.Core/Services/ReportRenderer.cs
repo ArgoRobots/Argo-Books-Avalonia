@@ -699,7 +699,8 @@ public class ReportRenderer : IDisposable
     /// </summary>
     public void RenderEffectivePageToCanvas(SKCanvas canvas, EffectivePage page, int width, int height)
     {
-        canvas.Clear(_backgroundPaint.Color);
+        // Use DrawRect instead of Clear so stacked pages aren't wiped out
+        canvas.DrawRect(0, 0, width, height, _backgroundPaint);
 
         if (_config.ShowHeader)
         {
