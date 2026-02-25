@@ -1689,30 +1689,21 @@
                                   Width="16" Height="16" />
                     </Button>
 
-                    <!-- Page Navigation -->
-                    <Border Width="1" Height="20" Background="{DynamicResource BorderBrush}" Margin="4,0" />
-                    <Button Classes="toolbar-button" Command="{Binding PreviousDesignerPageCommand}" IsEnabled="{Binding CanGoToPreviousPage}" ToolTip.Tip="{loc:Loc 'Previous Page'}">
-                        <PathIcon Data="{x:Static icons:Icons.ChevronLeftAlt}"
-                                  Width="14" Height="14" />
-                    </Button>
-                    <TextBlock Text="{Binding CurrentDesignerPageDisplay}"
-                               VerticalAlignment="Center"
-                               FontSize="12"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <Button Classes="toolbar-button" Command="{Binding NextDesignerPageCommand}" IsEnabled="{Binding CanGoToNextPage}" ToolTip.Tip="{loc:Loc 'Next Page'}">
-                        <PathIcon Data="{x:Static icons:Icons.ChevronRightAlt}"
-                                  Width="14" Height="14" />
-                    </Button>
-
                     <!-- Add/Delete Page -->
                     <Border Width="1" Height="20" Background="{DynamicResource BorderBrush}" Margin="4,0" />
                     <Button Classes="toolbar-button" Command="{Binding AddPageCommand}" ToolTip.Tip="{loc:Loc 'Add Page'}">
-                        <PathIcon Data="{x:Static icons:Icons.AddAlt}"
-                                  Width="14" Height="14" />
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{x:Static icons:Icons.AddAlt}"
+                                      Width="14" Height="14" />
+                            <TextBlock Text="{loc:Loc 'Add Page'}" VerticalAlignment="Center" FontSize="12" />
+                        </StackPanel>
                     </Button>
                     <Button Classes="toolbar-button" Command="{Binding DeletePageCommand}" IsEnabled="{Binding CanDeletePage}" ToolTip.Tip="{loc:Loc 'Delete Page'}">
-                        <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                  Width="14" Height="14" />
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                      Width="14" Height="14" />
+                            <TextBlock Text="{loc:Loc 'Delete Page'}" VerticalAlignment="Center" FontSize="12" />
+                        </StackPanel>
                     </Button>
                 </StackPanel>
 
