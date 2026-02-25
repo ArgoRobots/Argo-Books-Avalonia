@@ -980,6 +980,10 @@
                                     <TextBlock Text="{loc:Loc 'Title Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
                                 </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Axis Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.AxisFontSize}" Minimum="6" Maximum="24" />
+                                </StackPanel>
                                 <StackPanel Spacing="4" IsVisible="{Binding IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Legend Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
