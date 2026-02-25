@@ -1971,6 +1971,18 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyPageSettings()
     {
+        var oldSettings = new PageSettingsSnapshot(
+            _originalPageSize, _originalPageOrientation,
+            _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft,
+            _originalShowHeader, _originalShowFooter, _originalShowPageNumbers, _originalShowCompanyDetails,
+            _originalBackgroundColor, _originalTitleFontSize, _originalPageSettingsDatePreset);
+
+        var newSettings = new PageSettingsSnapshot(
+            PageSize, PageOrientation,
+            MarginTop, MarginRight, MarginBottom, MarginLeft,
+            ShowHeader, ShowFooter, ShowPageNumbers, ShowCompanyDetails,
+            BackgroundColor, TitleFontSize, PageSettingsDatePreset);
+
         Configuration.PageSize = PageSize;
         Configuration.PageOrientation = PageOrientation;
         Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, MarginBottom);
@@ -1989,10 +2001,43 @@ public partial class ReportsPageViewModel : ViewModelBase
             option.IsSelected = option.Name == PageSettingsDatePreset;
         }
 
+        if (oldSettings != newSettings)
+        {
+            UndoRedoManager.RecordAction(new PageSettingsChangeAction(
+                Configuration, oldSettings, newSettings, ApplyPageSettingsSnapshot));
+        }
+
         UpdateCanvasDimensions();
         IsPageSettingsOpen = false;
 
         // Refresh the canvas after modal closes
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    private void ApplyPageSettingsSnapshot(PageSettingsSnapshot s)
+    {
+        PageSize = s.PageSize;
+        PageOrientation = s.PageOrientation;
+        MarginTop = s.MarginTop;
+        MarginRight = s.MarginRight;
+        MarginBottom = s.MarginBottom;
+        MarginLeft = s.MarginLeft;
+        ShowHeader = s.ShowHeader;
+        ShowFooter = s.ShowFooter;
+        ShowPageNumbers = s.ShowPageNumbers;
+        ShowCompanyDetails = s.ShowCompanyDetails;
+        BackgroundColor = s.BackgroundColor;
+        TitleFontSize = s.TitleFontSize;
+        PageSettingsDatePreset = s.DatePreset;
+
+        SelectedDatePreset = s.DatePreset;
+        foreach (var option in DatePresets)
+        {
+            option.IsSelected = option.Name == s.DatePreset;
+        }
+
+        UpdateCanvasDimensions();
         PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         OnPropertyChanged(nameof(Configuration));
     }

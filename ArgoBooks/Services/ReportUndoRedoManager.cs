@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Localization;
 
@@ -576,5 +577,75 @@ public class DeletePageAction : IReportUndoableAction
             element.PageNumber--;
         }
         _config.PageCount--;
+    }
+}
+
+/// <summary>
+/// Snapshot of all page settings for undo/redo.
+/// </summary>
+public record PageSettingsSnapshot(
+    PageSize PageSize,
+    PageOrientation PageOrientation,
+    double MarginTop,
+    double MarginRight,
+    double MarginBottom,
+    double MarginLeft,
+    bool ShowHeader,
+    bool ShowFooter,
+    bool ShowPageNumbers,
+    bool ShowCompanyDetails,
+    string BackgroundColor,
+    double TitleFontSize,
+    string DatePreset);
+
+/// <summary>
+/// Action for changing page settings. Captures a full snapshot of all settings
+/// so that undo/redo restores the complete state.
+/// </summary>
+public class PageSettingsChangeAction : IReportUndoableAction
+{
+    private readonly ReportConfiguration _config;
+    private readonly PageSettingsSnapshot _oldSettings;
+    private readonly PageSettingsSnapshot _newSettings;
+    private readonly Action<PageSettingsSnapshot> _applyToViewModel;
+
+    public PageSettingsChangeAction(
+        ReportConfiguration config,
+        PageSettingsSnapshot oldSettings,
+        PageSettingsSnapshot newSettings,
+        Action<PageSettingsSnapshot> applyToViewModel)
+    {
+        _config = config;
+        _oldSettings = oldSettings;
+        _newSettings = newSettings;
+        _applyToViewModel = applyToViewModel;
+    }
+
+    public string Description => "Change page settings".Translate();
+
+    public void Undo()
+    {
+        ApplyToConfig(_oldSettings);
+        _applyToViewModel(_oldSettings);
+    }
+
+    public void Redo()
+    {
+        ApplyToConfig(_newSettings);
+        _applyToViewModel(_newSettings);
+    }
+
+    private void ApplyToConfig(PageSettingsSnapshot s)
+    {
+        _config.PageSize = s.PageSize;
+        _config.PageOrientation = s.PageOrientation;
+        _config.PageMargins = new ReportMargins(s.MarginLeft, s.MarginTop, s.MarginRight, s.MarginBottom);
+        _config.ShowHeader = s.ShowHeader;
+        _config.ShowFooter = s.ShowFooter;
+        _config.ShowPageNumbers = s.ShowPageNumbers;
+        _config.ShowCompanyDetails = s.ShowCompanyDetails;
+        _config.BackgroundColor = s.BackgroundColor;
+        _config.TitleFontSize = s.TitleFontSize;
+        _config.Filters.DatePresetName = s.DatePreset;
     }
 }

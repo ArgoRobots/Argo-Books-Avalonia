@@ -407,19 +407,15 @@ public partial class SkiaReportDesignCanvas : UserControl
                 canvas.Save();
                 canvas.Translate(0, pageYOffset);
 
-                // Draw page background
-                var bgColor = SKColor.Parse(Configuration.BackgroundColor);
-                canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
+                // RenderEffectivePageToCanvas handles background/header/footer/elements internally
+                Configuration.CurrentPageNumber = effectivePage.EffectivePageNumber;
+                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight);
 
-                // Draw grid if enabled (only on template pages, not continuation)
+                // Draw grid overlay after content (only on template pages, not continuation)
                 if (ShowGrid && !effectivePage.IsContinuationPage)
                 {
                     DrawGrid(canvas, baseWidth, baseHeight);
                 }
-
-                // RenderEffectivePageToCanvas handles header/footer/elements internally
-                Configuration.CurrentPageNumber = effectivePage.EffectivePageNumber;
-                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight);
 
                 canvas.Restore();
             }
@@ -438,12 +434,6 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var bgColor = SKColor.Parse(Configuration.BackgroundColor);
                 canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
 
-                // Draw grid if enabled
-                if (ShowGrid)
-                {
-                    DrawGrid(canvas, baseWidth, baseHeight);
-                }
-
                 // Draw header/footer
                 if (Configuration.ShowHeader)
                 {
@@ -456,6 +446,12 @@ public partial class SkiaReportDesignCanvas : UserControl
 
                 // Render elements for this page
                 renderer.RenderElementsToCanvas(canvas, page);
+
+                // Draw grid overlay after content
+                if (ShowGrid)
+                {
+                    DrawGrid(canvas, baseWidth, baseHeight);
+                }
 
                 canvas.Restore();
             }
@@ -1680,7 +1676,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         foreach (var element in _selectedElements.ToList())
         {
-            Configuration.Elements.Remove(element);
+            UndoRedoManager?.RecordAction(new RemoveElementAction(Configuration, element));
+            Configuration.RemoveElement(element.Id);
             ElementRemoved?.Invoke(this, element);
         }
 
