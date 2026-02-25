@@ -510,6 +510,7 @@
   "str_showheader": "Show Header",
   "str_showfooter": "Show Footer",
   "str_showpagenumbers": "Show Page Numbers",
+  "str_showcompanydetails": "Show Company Details",
   "str_saveyourcurrentreportlayoutasareusabletemplate": "Save your current report layout as a reusable template.",
   "str_filterreturns": "Filter Returns",
   "str_returndetails": "Return Details",

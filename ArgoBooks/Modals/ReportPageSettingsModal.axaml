@@ -140,6 +140,8 @@
                                   IsChecked="{Binding ShowFooter}" />
                         <CheckBox Content="{loc:Loc 'Show Page Numbers'}"
                                   IsChecked="{Binding ShowPageNumbers}" />
+                        <CheckBox Content="{loc:Loc 'Show Company Details'}"
+                                  IsChecked="{Binding ShowCompanyDetails}" />
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

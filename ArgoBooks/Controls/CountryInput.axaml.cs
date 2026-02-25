@@ -80,6 +80,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             {
                 _searchText = value;
                 RaisePropertyChanged();
+
                 if (!_isUpdatingText)
                 {
                     UpdateFilteredCountries();
@@ -215,27 +216,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             _countryListBox.PointerWheelChanged += OnCountryListBoxPointerWheelChanged;
             _countryListBox.PointerReleased += OnCountryListBoxPointerReleased;
         }
-
-        // Ensure the search text is updated when the control loads
-        // This handles cases where the property was set before the control was fully loaded
-        if (!string.IsNullOrEmpty(SelectedCountryName) && SelectedCountry == null)
-        {
-            // First try exact match
-            var country = PhoneInput.AllDialCodes.FirstOrDefault(c =>
-                c.Name.Equals(SelectedCountryName, StringComparison.OrdinalIgnoreCase));
-            // If no match, try normalizing the country name (handles USA, UK, etc.)
-            if (country == null)
-            {
-                var normalizedName = Countries.NormalizeCountry(SelectedCountryName);
-                if (normalizedName != null)
-                {
-                    country = PhoneInput.AllDialCodes.FirstOrDefault(c =>
-                        c.Name.Equals(normalizedName, StringComparison.OrdinalIgnoreCase));
-                }
-            }
-            SelectedCountry = country;
-        }
-        UpdateSearchText();
     }
 
     private void OnCountryListBoxPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -343,8 +323,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     private void UpdateSearchText()
     {
         _isUpdatingText = true;
-        _searchText = SelectedCountry?.Name ?? string.Empty;
-        RaisePropertyChanged(nameof(SearchText));
+        SearchText = SelectedCountry?.Name ?? string.Empty;
         _isUpdatingText = false;
     }
 

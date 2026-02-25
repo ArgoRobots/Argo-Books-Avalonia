@@ -368,6 +368,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Compute continuation plan first to know the correct page count and canvas size
         var companyData = App.CompanyManager?.CompanyData;
         Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
+        Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
         using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
         renderer.ComputeContinuationPlan();
         _continuationPlan = renderer.GetContinuationPlan();
@@ -500,7 +501,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void DrawHeader(SKCanvas canvas, int width)
     {
-        var headerHeight = (float)PageDimensions.HeaderHeight;
+        var showCompanyDetails = Configuration?.ShowCompanyDetails ?? false;
+        var headerHeight = (float)PageDimensions.GetHeaderHeight(showCompanyDetails);
 
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
@@ -509,13 +511,98 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         canvas.DrawLine(40, headerHeight, width - 40, headerHeight, separatorPaint);
 
-        var titleFontSize = (float)(Configuration?.TitleFontSize ?? 18);
-        using var titleFont = new SKFont(SKTypeface.Default, titleFontSize);
-        using var titlePaint = new SKPaint();
-        titlePaint.Color = SKColors.Black;
-        titlePaint.IsAntialias = true;
+        if (showCompanyDetails)
+        {
+            DrawCompanyDetailsHeader(canvas, width, headerHeight);
+        }
+        else
+        {
+            var titleFontSize = (float)(Configuration?.TitleFontSize ?? 18);
+            using var titleFont = new SKFont(SKTypeface.Default, titleFontSize);
+            using var titlePaint = new SKPaint();
+            titlePaint.Color = SKColors.Black;
+            titlePaint.IsAntialias = true;
+            var title = Configuration?.Title ?? "Report Title";
+            canvas.DrawText(title, width / 2f, 35, SKTextAlign.Center, titleFont, titlePaint);
+        }
+    }
+
+    private void DrawCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight)
+    {
+        var companyInfo = App.CompanyManager?.CompanyData?.Settings.Company;
+        var logoPath = App.CompanyManager?.CurrentCompanyLogoPath;
+
+        using var companyNameFont = new SKFont(SKTypeface.FromFamilyName(SKTypeface.Default.FamilyName, SKFontStyle.Bold) ?? SKTypeface.Default, 14f);
+        using var detailFont = new SKFont(SKTypeface.Default, 8.5f);
+        using var titleFont = new SKFont(SKTypeface.FromFamilyName(SKTypeface.Default.FamilyName, SKFontStyle.Bold) ?? SKTypeface.Default, (float)(Configuration?.TitleFontSize ?? 18));
+
+        using var blackPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+        using var grayPaint = new SKPaint { Color = SKColor.Parse("#555555"), IsAntialias = true };
+
+        var logoSize = 40f;
+        var logoPadding = 10f;
+        var margin = 40f;
+        var hasLogo = !string.IsNullOrEmpty(logoPath) && File.Exists(logoPath);
+        var textStartX = hasLogo ? margin + logoSize + logoPadding : margin;
+
+        // Draw logo
+        if (hasLogo)
+        {
+            try
+            {
+                using var stream = File.OpenRead(logoPath!);
+                using var bitmap = SKBitmap.Decode(stream);
+                if (bitmap != null)
+                {
+                    var logoRect = new SKRect(margin, 8, margin + logoSize, 8 + logoSize);
+                    canvas.DrawBitmap(bitmap, logoRect);
+                }
+            }
+            catch
+            {
+                // Silently skip
+            }
+        }
+
+        // Company name
+        var currentY = 18f;
+        var companyName = companyInfo?.Name ?? "[Company Name]";
+        canvas.DrawText(companyName, textStartX, currentY, SKTextAlign.Left, companyNameFont, blackPaint);
+        currentY += 16f;
+
+        // Address line
+        var addressParts = new List<string>();
+        if (!string.IsNullOrEmpty(companyInfo?.Address)) addressParts.Add(companyInfo.Address);
+        if (!string.IsNullOrEmpty(companyInfo?.City)) addressParts.Add(companyInfo.City);
+        if (!string.IsNullOrEmpty(companyInfo?.ProvinceState)) addressParts.Add(companyInfo.ProvinceState);
+        if (!string.IsNullOrEmpty(companyInfo?.Country)) addressParts.Add(companyInfo.Country);
+
+        if (addressParts.Count > 0)
+        {
+            canvas.DrawText(string.Join(", ", addressParts), textStartX, currentY, SKTextAlign.Left, detailFont, grayPaint);
+            currentY += 11f;
+        }
+
+        // Contact line
+        var contactParts = new List<string>();
+        if (!string.IsNullOrEmpty(companyInfo?.Phone)) contactParts.Add($"Phone: {companyInfo.Phone}");
+        if (!string.IsNullOrEmpty(companyInfo?.Email)) contactParts.Add($"Email: {companyInfo.Email}");
+
+        if (contactParts.Count > 0)
+        {
+            canvas.DrawText(string.Join("  |  ", contactParts), textStartX, currentY, SKTextAlign.Left, detailFont, grayPaint);
+            currentY += 12f;
+        }
+
+        // Report title (centered, immediately below company info)
+        if (hasLogo)
+        {
+            var logoBottom = 8 + 40 + 2;
+            currentY = Math.Max(currentY, logoBottom);
+        }
+        currentY += 4f;
         var title = Configuration?.Title ?? "Report Title";
-        canvas.DrawText(title, width / 2f, 35, SKTextAlign.Center, titleFont, titlePaint);
+        canvas.DrawText(title, width / 2f, currentY, SKTextAlign.Center, titleFont, blackPaint);
     }
 
     private void DrawFooter(SKCanvas canvas, int width, int height, int pageNumber = 0, int totalPages = 0)

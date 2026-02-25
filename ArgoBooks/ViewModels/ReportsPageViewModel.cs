@@ -1269,7 +1269,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     private PageSize _originalPageSize;
     private PageOrientation _originalPageOrientation;
     private double _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft;
-    private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers;
+    private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers, _originalShowCompanyDetails;
     private string _originalBackgroundColor = "#FFFFFF";
     private double _originalTitleFontSize = 18;
     private string _originalPageSettingsDatePreset = DatePresetNames.ThisMonth;
@@ -1287,6 +1287,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         _originalShowHeader = ShowHeader;
         _originalShowFooter = ShowFooter;
         _originalShowPageNumbers = ShowPageNumbers;
+        _originalShowCompanyDetails = ShowCompanyDetails;
         _originalBackgroundColor = BackgroundColor;
         _originalTitleFontSize = TitleFontSize;
         _originalPageSettingsDatePreset = PageSettingsDatePreset;
@@ -1307,6 +1308,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowHeader = _originalShowHeader;
         ShowFooter = _originalShowFooter;
         ShowPageNumbers = _originalShowPageNumbers;
+        ShowCompanyDetails = _originalShowCompanyDetails;
         BackgroundColor = _originalBackgroundColor;
         TitleFontSize = _originalTitleFontSize;
         PageSettingsDatePreset = _originalPageSettingsDatePreset;
@@ -1460,6 +1462,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
+            Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             // Dispose previous page bitmaps
@@ -1540,6 +1543,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             var companyData = App.CompanyManager?.CompanyData;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
+            Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
             using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             bool success;
@@ -1759,6 +1763,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _showPageNumbers = true;
 
     [ObservableProperty]
+    private bool _showCompanyDetails;
+
+    [ObservableProperty]
     private string _backgroundColor = "#FFFFFF";
 
     [ObservableProperty]
@@ -1917,6 +1924,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
     }
 
+    partial void OnShowCompanyDetailsChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowCompanyDetails = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     partial void OnBackgroundColorChanged(string value)
     {
         if (IsPageSettingsOpen)
@@ -1961,6 +1977,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         Configuration.ShowHeader = ShowHeader;
         Configuration.ShowFooter = ShowFooter;
         Configuration.ShowPageNumbers = ShowPageNumbers;
+        Configuration.ShowCompanyDetails = ShowCompanyDetails;
         Configuration.BackgroundColor = BackgroundColor;
         Configuration.TitleFontSize = TitleFontSize;
         Configuration.Filters.DatePresetName = PageSettingsDatePreset;
@@ -2493,6 +2510,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowHeader = Configuration.ShowHeader;
         ShowFooter = Configuration.ShowFooter;
         ShowPageNumbers = Configuration.ShowPageNumbers;
+        ShowCompanyDetails = Configuration.ShowCompanyDetails;
         BackgroundColor = Configuration.BackgroundColor;
         TitleFontSize = Configuration.TitleFontSize;
 
@@ -2652,7 +2670,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Calculate layout for charts using a grid layout
         var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
         const double margin = PageDimensions.Margin;
-        const double headerHeight = PageDimensions.HeaderHeight;
+        double headerHeight = PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails);
         const double footerHeight = PageDimensions.FooterHeight;
         const double spacing = 10;
 

@@ -195,7 +195,8 @@ public class SampleCompanyService
             BusinessType = "Retail & Services",
             Industry = "Technology",
             Email = "info@techflowsolutions.com",
-            Phone = "555-100-0000"
+            Phone = "+1 5551000000",
+            Country = "Canada"
         };
 
         companyData.Settings.AppVersion = AppInfo.VersionNumber;

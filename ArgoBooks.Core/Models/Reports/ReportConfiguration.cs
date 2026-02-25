@@ -68,6 +68,13 @@ public class ReportConfiguration
     public bool ShowFooter { get; set; } = true;
 
     /// <summary>
+    /// Whether to show company details (logo, name, address, phone, email) in the report header.
+    /// Standard for formal accounting documents like balance sheets, income statements, etc.
+    /// </summary>
+    [JsonPropertyName("showCompanyDetails")]
+    public bool ShowCompanyDetails { get; set; }
+
+    /// <summary>
     /// Font size for the page title in the header (in points).
     /// </summary>
     [JsonPropertyName("titleFontSize")]
@@ -110,6 +117,13 @@ public class ReportConfiguration
     /// </summary>
     [JsonIgnore]
     public bool Use24HourFormat { get; set; }
+
+    /// <summary>
+    /// Full file path to the company logo image.
+    /// Runtime-only, resolved from CompanyManager's temp directory.
+    /// </summary>
+    [JsonIgnore]
+    public string? CompanyLogoPath { get; set; }
 
     /// <summary>
     /// Gets elements sorted by Z-order (for rendering).
@@ -189,6 +203,7 @@ public class ReportConfiguration
             ShowPageNumbers = ShowPageNumbers,
             ShowHeader = ShowHeader,
             ShowFooter = ShowFooter,
+            ShowCompanyDetails = ShowCompanyDetails,
             TitleFontSize = TitleFontSize,
             Filters = new ReportFilters
             {
@@ -374,6 +389,12 @@ public static class PageDimensions
     public const int HeaderHeight = 80;
 
     /// <summary>
+    /// Header height in pixels when company details are shown.
+    /// Accommodates logo, company name, address, and report title.
+    /// </summary>
+    public const int CompanyDetailsHeaderHeight = 90;
+
+    /// <summary>
     /// Footer height in pixels (matches LayoutContext in ReportTemplateFactory).
     /// </summary>
     public const int FooterHeight = 50;
@@ -392,6 +413,12 @@ public static class PageDimensions
     /// Render scale for high-quality export.
     /// </summary>
     public const float RenderScale = 3f;
+
+    /// <summary>
+    /// Gets the effective header height based on whether company details are shown.
+    /// </summary>
+    public static int GetHeaderHeight(bool showCompanyDetails) =>
+        showCompanyDetails ? CompanyDetailsHeaderHeight : HeaderHeight;
 
     /// <summary>
     /// Gets the dimensions for a page size in pixels (96 DPI).

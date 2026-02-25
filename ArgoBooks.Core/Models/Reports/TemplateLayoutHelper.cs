@@ -27,9 +27,9 @@ public static class TemplateLayoutHelper
         public double Margin { get; } = PageDimensions.Margin;
 
         /// <summary>
-        /// Height of the header area.
+        /// Height of the header area. Varies based on whether company details are shown.
         /// </summary>
-        public double HeaderHeight { get; } = PageDimensions.HeaderHeight;
+        public double HeaderHeight { get; }
 
         /// <summary>
         /// Height of the footer area.
@@ -74,15 +74,17 @@ public static class TemplateLayoutHelper
             var (width, height) = PageDimensions.GetDimensions(config.PageSize, config.PageOrientation);
             PageWidth = width;
             PageHeight = height;
+            HeaderHeight = PageDimensions.GetHeaderHeight(config.ShowCompanyDetails);
         }
 
         /// <summary>
         /// Creates a layout context with explicit page dimensions.
         /// </summary>
-        public LayoutContext(double pageWidth, double pageHeight)
+        public LayoutContext(double pageWidth, double pageHeight, bool showCompanyDetails = false)
         {
             PageWidth = pageWidth;
             PageHeight = pageHeight;
+            HeaderHeight = PageDimensions.GetHeaderHeight(showCompanyDetails);
         }
     }
 

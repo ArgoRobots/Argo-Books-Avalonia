@@ -279,6 +279,8 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         {
             _isUpdatingText = true;
             _formattedPhoneNumber = FormatPhoneNumber(PhoneNumber);
+            if (_phoneNumberBox != null)
+                _phoneNumberBox.Text = _formattedPhoneNumber;
             RaisePropertyChanged(nameof(FormattedPhoneNumber));
             UpdateFullPhoneNumber();
             _isUpdatingText = false;
@@ -300,6 +302,10 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         {
             _phoneNumberBox.TextChanged += OnPhoneNumberTextChanged;
             UpdatePhoneNumberPlaceholder();
+
+            // Sync any phone number that was set before the control loaded
+            if (!string.IsNullOrEmpty(_formattedPhoneNumber))
+                _phoneNumberBox.Text = _formattedPhoneNumber;
         }
 
         if (_countrySearchBox != null)

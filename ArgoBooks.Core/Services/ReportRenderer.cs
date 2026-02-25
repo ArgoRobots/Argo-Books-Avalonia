@@ -3298,15 +3298,22 @@ public class ReportRenderer : IDisposable
 
     private void RenderHeader(SKCanvas canvas, int width)
     {
-        var headerHeight = PageDimensions.HeaderHeight * _renderScale;
+        var headerHeight = PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) * _renderScale;
         var margin = (float)_config.PageMargins.Left * _renderScale;
 
         // Draw header background
         var headerRect = new SKRect(0, 0, width, headerHeight);
         canvas.DrawRect(headerRect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
 
-        // Draw title
-        canvas.DrawText(_config.Title, width / 2f, headerHeight / 2 + 6 * _renderScale, SKTextAlign.Center, _headerFont, _headerPaint);
+        if (_config.ShowCompanyDetails && _companyData != null)
+        {
+            RenderCompanyDetailsHeader(canvas, width, headerHeight, margin);
+        }
+        else
+        {
+            // Draw title centered in header
+            canvas.DrawText(_config.Title, width / 2f, headerHeight / 2 + 6 * _renderScale, SKTextAlign.Center, _headerFont, _headerPaint);
+        }
 
         // Draw separator line
         var separatorPaint = new SKPaint
@@ -3316,6 +3323,100 @@ public class ReportRenderer : IDisposable
             StrokeWidth = 1 * _renderScale
         };
         canvas.DrawLine(margin, headerHeight - 5 * _renderScale, width - margin, headerHeight - 5 * _renderScale, separatorPaint);
+    }
+
+    private void RenderCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight, float margin)
+    {
+        var companyInfo = _companyData!.Settings.Company;
+        var logoPath = _config.CompanyLogoPath;
+
+        // Font sizes
+        var companyNameFontSize = 14f * _renderScale;
+        var detailFontSize = 8.5f * _renderScale;
+        var titleFontSize = (float)_config.TitleFontSize * _renderScale;
+
+        using var companyNameFont = new SKFont(_boldTypeface, companyNameFontSize);
+        using var detailFont = new SKFont(_defaultTypeface, detailFontSize);
+        using var titleFont = new SKFont(_boldTypeface, titleFontSize);
+
+        using var blackPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+        using var grayPaint = new SKPaint { Color = SKColor.Parse("#555555"), IsAntialias = true };
+
+        var logoSize = 40f * _renderScale;
+        var logoPadding = 10f * _renderScale;
+        var hasLogo = !string.IsNullOrEmpty(logoPath) && File.Exists(logoPath);
+
+        // Calculate text start X (after logo if present)
+        var textStartX = margin;
+        if (hasLogo)
+            textStartX = margin + logoSize + logoPadding;
+
+        // --- Draw Logo ---
+        if (hasLogo)
+        {
+            try
+            {
+                using var stream = File.OpenRead(logoPath!);
+                using var bitmap = SKBitmap.Decode(stream);
+                if (bitmap != null)
+                {
+                    var logoRect = new SKRect(margin, 8 * _renderScale, margin + logoSize, 8 * _renderScale + logoSize);
+                    canvas.DrawBitmap(bitmap, logoRect);
+                }
+            }
+            catch
+            {
+                // Silently skip logo if it can't be loaded
+            }
+        }
+
+        // --- Draw Company Name ---
+        var currentY = 18f * _renderScale;
+        if (!string.IsNullOrEmpty(companyInfo.Name))
+        {
+            canvas.DrawText(companyInfo.Name, textStartX, currentY, SKTextAlign.Left, companyNameFont, blackPaint);
+            currentY += companyNameFontSize + 2 * _renderScale;
+        }
+
+        // --- Draw Address Line ---
+        var addressParts = new List<string>();
+        if (!string.IsNullOrEmpty(companyInfo.Address))
+            addressParts.Add(companyInfo.Address);
+        if (!string.IsNullOrEmpty(companyInfo.City))
+            addressParts.Add(companyInfo.City);
+        if (!string.IsNullOrEmpty(companyInfo.ProvinceState))
+            addressParts.Add(companyInfo.ProvinceState);
+        if (!string.IsNullOrEmpty(companyInfo.Country))
+            addressParts.Add(companyInfo.Country);
+
+        if (addressParts.Count > 0)
+        {
+            canvas.DrawText(string.Join(", ", addressParts), textStartX, currentY, SKTextAlign.Left, detailFont, grayPaint);
+            currentY += detailFontSize + 1 * _renderScale;
+        }
+
+        // --- Draw Contact Line (Phone | Email) ---
+        var contactParts = new List<string>();
+        if (!string.IsNullOrEmpty(companyInfo.Phone))
+            contactParts.Add($"{Tr("Phone")}: {companyInfo.Phone}");
+        if (!string.IsNullOrEmpty(companyInfo.Email))
+            contactParts.Add($"{Tr("Email")}: {companyInfo.Email}");
+
+        if (contactParts.Count > 0)
+        {
+            canvas.DrawText(string.Join("  |  ", contactParts), textStartX, currentY, SKTextAlign.Left, detailFont, grayPaint);
+            currentY += detailFontSize + 2 * _renderScale;
+        }
+
+        // --- Draw Report Title (centered, immediately below company info) ---
+        // Ensure title clears the logo area
+        if (hasLogo)
+        {
+            var logoBottom = (8 + 40) * _renderScale + 2 * _renderScale;
+            currentY = Math.Max(currentY, logoBottom);
+        }
+        currentY += 4 * _renderScale;
+        canvas.DrawText(_config.Title, width / 2f, currentY, SKTextAlign.Center, titleFont, blackPaint);
     }
 
     private void RenderFooter(SKCanvas canvas, int width, int height)
