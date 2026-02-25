@@ -745,7 +745,7 @@ public partial class ReportsPage : UserControl
         if (viewportWidth <= 0) return;
 
         _previewZoomLevel = viewportWidth / imageWidth;
-        _previewZoomLevel = Math.Clamp(_previewZoomLevel, 0.25, 4.0);
+        _previewZoomLevel = Math.Clamp(_previewZoomLevel, SkiaReportDesignCanvas.MinZoom, SkiaReportDesignCanvas.MaxZoom);
         ApplyPreviewZoom();
 
         // Update ViewModel
