@@ -477,8 +477,27 @@ public partial class SkiaReportDesignCanvas : UserControl
         UpdateCanvasImage(baseWidth, totalHeight);
     }
 
+    /// <summary>
+    /// Gets the content area where elements can be placed (inside margins, between header/footer).
+    /// </summary>
+    private (double Left, double Top, double Right, double Bottom) GetContentBounds()
+    {
+        var (pageWidth, pageHeight) = GetPageDimensions();
+        var margins = Configuration?.PageMargins;
+        var left = margins?.Left ?? PageDimensions.Margin;
+        var right = pageWidth - (margins?.Right ?? PageDimensions.Margin);
+        var top = (Configuration?.ShowHeader ?? false)
+            ? PageDimensions.GetHeaderHeight(Configuration?.ShowCompanyDetails ?? false)
+            : (margins?.Top ?? PageDimensions.Margin);
+        var bottom = (Configuration?.ShowFooter ?? false)
+            ? pageHeight - PageDimensions.FooterHeight
+            : pageHeight - (margins?.Bottom ?? PageDimensions.Margin);
+        return (left, top, right, bottom);
+    }
+
     private void DrawGrid(SKCanvas canvas, int width, int height)
     {
+        var (left, top, right, bottom) = GetContentBounds();
         var gridSize = (float)GridSize;
         using var gridPaint = new SKPaint();
         gridPaint.Color = new SKColor(200, 200, 200, 100);
@@ -486,16 +505,22 @@ public partial class SkiaReportDesignCanvas : UserControl
         gridPaint.StrokeWidth = 1;
         gridPaint.IsAntialias = false;
 
+        // Align grid lines to the content area origin
+        var startX = (float)left;
+        var startY = (float)top;
+        var endX = (float)right;
+        var endY = (float)bottom;
+
         // Vertical lines
-        for (float x = gridSize; x < width; x += gridSize)
+        for (float x = startX; x <= endX; x += gridSize)
         {
-            canvas.DrawLine(x, 0, x, height, gridPaint);
+            canvas.DrawLine(x, startY, x, endY, gridPaint);
         }
 
         // Horizontal lines
-        for (float y = gridSize; y < height; y += gridSize)
+        for (float y = startY; y <= endY; y += gridSize)
         {
-            canvas.DrawLine(0, y, width, y, gridPaint);
+            canvas.DrawLine(startX, y, endX, y, gridPaint);
         }
     }
 
@@ -503,13 +528,15 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         var showCompanyDetails = Configuration?.ShowCompanyDetails ?? false;
         var headerHeight = (float)PageDimensions.GetHeaderHeight(showCompanyDetails);
+        var marginLeft = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
+        var marginRight = (float)(Configuration?.PageMargins.Right ?? PageDimensions.Margin);
 
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
         separatorPaint.Style = SKPaintStyle.Stroke;
         separatorPaint.StrokeWidth = 1;
 
-        canvas.DrawLine(40, headerHeight, width - 40, headerHeight, separatorPaint);
+        canvas.DrawLine(marginLeft, headerHeight, width - marginRight, headerHeight, separatorPaint);
 
         if (showCompanyDetails)
         {
@@ -541,7 +568,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         var logoSize = 40f;
         var logoPadding = 10f;
-        var margin = 40f;
+        var margin = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
         var hasLogo = !string.IsNullOrEmpty(logoPath) && File.Exists(logoPath);
         var textStartX = hasLogo ? margin + logoSize + logoPadding : margin;
 
@@ -611,23 +638,25 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (totalPages == 0) totalPages = Configuration?.PageCount ?? 1;
 
         var footerHeight = (float)PageDimensions.FooterHeight;
+        var marginLeft = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
+        var marginRight = (float)(Configuration?.PageMargins.Right ?? PageDimensions.Margin);
 
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
         separatorPaint.Style = SKPaintStyle.Stroke;
         separatorPaint.StrokeWidth = 1;
 
-        canvas.DrawLine(40, height - footerHeight, width - 40, height - footerHeight, separatorPaint);
+        canvas.DrawLine(marginLeft, height - footerHeight, width - marginRight, height - footerHeight, separatorPaint);
 
         using var footerFont = new SKFont(SKTypeface.Default, 11);
         using var footerPaint = new SKPaint();
         footerPaint.Color = SKColors.Gray;
         footerPaint.IsAntialias = true;
-        canvas.DrawText("Generated: [Date/Time]", 40, height - 15, SKTextAlign.Left, footerFont, footerPaint);
+        canvas.DrawText("Generated: [Date/Time]", marginLeft, height - 15, SKTextAlign.Left, footerFont, footerPaint);
         var pageText = totalPages > 1
             ? $"Page {pageNumber} of {totalPages}"
             : $"Page {pageNumber}";
-        canvas.DrawText(pageText, width - 40, height - 15, SKTextAlign.Right, footerFont, footerPaint);
+        canvas.DrawText(pageText, width - marginRight, height - 15, SKTextAlign.Right, footerFont, footerPaint);
     }
 
     private void DrawSelectionVisuals(SKCanvas canvas)
@@ -1306,17 +1335,18 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var newX = startBounds.Position.X + delta.X;
                 var newY = startBounds.Position.Y + delta.Y;
 
-                // Apply grid snapping only when grid is visible
+                // Constrain to content area (inside margins, between header/footer)
+                var (cLeft, cTop, cRight, cBottom) = GetContentBounds();
+
+                // Apply grid snapping aligned to content area origin
                 if (SnapToGrid && ShowGrid)
                 {
-                    newX = Math.Round(newX / GridSize) * GridSize;
-                    newY = Math.Round(newY / GridSize) * GridSize;
+                    newX = cLeft + Math.Round((newX - cLeft) / GridSize) * GridSize;
+                    newY = cTop + Math.Round((newY - cTop) / GridSize) * GridSize;
                 }
 
-                // Constrain to page bounds
-                var (pageWidth, pageHeight) = GetPageDimensions();
-                newX = Math.Max(0, Math.Min(newX, pageWidth - element.Width));
-                newY = Math.Max(0, Math.Min(newY, pageHeight - element.Height));
+                newX = Math.Max(cLeft, Math.Min(newX, cRight - element.Width));
+                newY = Math.Max(cTop, Math.Min(newY, cBottom - element.Height));
 
                 element.X = newX;
                 element.Y = newY;
@@ -1465,14 +1495,21 @@ public partial class SkiaReportDesignCanvas : UserControl
             newHeight = minSize;
         }
 
-        // Apply grid snapping only when grid is visible
+        // Constrain to content area (inside margins, between header/footer)
+        var (cLeft, cTop, cRight, cBottom) = GetContentBounds();
+
+        // Apply grid snapping aligned to content area origin
         if (SnapToGrid && ShowGrid)
         {
-            newX = Math.Round(newX / GridSize) * GridSize;
-            newY = Math.Round(newY / GridSize) * GridSize;
+            newX = cLeft + Math.Round((newX - cLeft) / GridSize) * GridSize;
+            newY = cTop + Math.Round((newY - cTop) / GridSize) * GridSize;
             newWidth = Math.Round(newWidth / GridSize) * GridSize;
             newHeight = Math.Round(newHeight / GridSize) * GridSize;
         }
+        newX = Math.Max(cLeft, newX);
+        newY = Math.Max(cTop, newY);
+        newWidth = Math.Min(newWidth, cRight - newX);
+        newHeight = Math.Min(newHeight, cBottom - newY);
 
         element.X = newX;
         element.Y = newY;

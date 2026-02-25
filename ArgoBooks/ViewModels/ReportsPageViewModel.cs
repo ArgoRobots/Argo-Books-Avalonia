@@ -2714,14 +2714,16 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Calculate layout for charts using a grid layout
         var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
-        const double margin = PageDimensions.Margin;
+        var marginLeft = Configuration.PageMargins.Left;
+        var marginRight = Configuration.PageMargins.Right;
+        var marginBottom = Configuration.PageMargins.Bottom;
         double headerHeight = PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails);
         const double footerHeight = PageDimensions.FooterHeight;
         const double spacing = 10;
 
-        var contentWidth = pageWidth - (margin * 2);
-        var contentHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
-        var startY = headerHeight + margin;
+        var contentWidth = pageWidth - marginLeft - marginRight;
+        var contentHeight = pageHeight - headerHeight - footerHeight - marginBottom;
+        var startY = headerHeight;
 
         // Determine grid dimensions based on number of charts
         var chartCount = chartElements.Count;
@@ -2737,7 +2739,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             int row = i / columns;
             int col = i % columns;
 
-            chartElements[i].X = margin + (col * (cellWidth + spacing));
+            chartElements[i].X = marginLeft + (col * (cellWidth + spacing));
             chartElements[i].Y = startY + (row * (cellHeight + spacing));
             chartElements[i].Width = cellWidth;
             chartElements[i].Height = cellHeight;

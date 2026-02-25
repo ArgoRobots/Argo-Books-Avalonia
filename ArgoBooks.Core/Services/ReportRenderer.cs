@@ -718,10 +718,11 @@ public class ReportRenderer : IDisposable
             if (element != null && _continuationPlan?.CachedTableData.TryGetValue(element.Id, out var tableData) == true)
             {
                 // Position the table in the full content area
-                var margin = PageDimensions.Margin * _renderScale;
-                var contentTop = PageDimensions.HeaderHeight * _renderScale;
+                var marginLeft = (float)_config.PageMargins.Left * _renderScale;
+                var marginRight = (float)_config.PageMargins.Right * _renderScale;
+                var contentTop = PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) * _renderScale;
                 var contentBottom = height - PageDimensions.FooterHeight * _renderScale;
-                var overrideRect = new SKRect(margin, contentTop, width - margin, contentBottom);
+                var overrideRect = new SKRect(marginLeft, contentTop, width - marginRight, contentBottom);
 
                 RenderAccountingTableSlice(canvas, element, tableData,
                     page.StartRowIndex, page.RowCount, page.DataRowStartIndex,
@@ -3300,7 +3301,8 @@ public class ReportRenderer : IDisposable
     private void RenderHeader(SKCanvas canvas, int width)
     {
         var headerHeight = PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) * _renderScale;
-        var margin = (float)_config.PageMargins.Left * _renderScale;
+        var marginLeft = (float)_config.PageMargins.Left * _renderScale;
+        var marginRight = (float)_config.PageMargins.Right * _renderScale;
 
         // Draw header background
         var headerRect = new SKRect(0, 0, width, headerHeight);
@@ -3308,7 +3310,7 @@ public class ReportRenderer : IDisposable
 
         if (_config.ShowCompanyDetails && _companyData != null)
         {
-            RenderCompanyDetailsHeader(canvas, width, headerHeight, margin);
+            RenderCompanyDetailsHeader(canvas, width, headerHeight, marginLeft);
         }
         else
         {
@@ -3323,7 +3325,7 @@ public class ReportRenderer : IDisposable
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1 * _renderScale
         };
-        canvas.DrawLine(margin, headerHeight - 5 * _renderScale, width - margin, headerHeight - 5 * _renderScale, separatorPaint);
+        canvas.DrawLine(marginLeft, headerHeight - 5 * _renderScale, width - marginRight, headerHeight - 5 * _renderScale, separatorPaint);
     }
 
     private void RenderCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight, float margin)
@@ -3424,7 +3426,8 @@ public class ReportRenderer : IDisposable
     {
         var footerHeight = PageDimensions.FooterHeight * _renderScale;
         var footerY = height - footerHeight;
-        var margin = (float)_config.PageMargins.Left * _renderScale;
+        var marginLeft = (float)_config.PageMargins.Left * _renderScale;
+        var marginRight = (float)_config.PageMargins.Right * _renderScale;
 
         // Draw separator line
         var separatorPaint = new SKPaint
@@ -3433,7 +3436,7 @@ public class ReportRenderer : IDisposable
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1 * _renderScale
         };
-        canvas.DrawLine(margin, footerY + 5 * _renderScale, width - margin, footerY + 5 * _renderScale, separatorPaint);
+        canvas.DrawLine(marginLeft, footerY + 5 * _renderScale, width - marginRight, footerY + 5 * _renderScale, separatorPaint);
 
         // Draw timestamp
         using var footerFont = new SKFont(_defaultTypeface, 10 * _renderScale);
@@ -3443,7 +3446,7 @@ public class ReportRenderer : IDisposable
 
         var timeFormat = _config.Use24HourFormat ? "HH:mm" : "h:mm tt";
         var timestamp = DateTime.Now.ToString($"MMM dd, yyyy {timeFormat}");
-        canvas.DrawText($"{Tr("Generated")}: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
+        canvas.DrawText($"{Tr("Generated")}: {timestamp}", marginLeft, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
 
         // Draw page number if enabled
         if (_config.ShowPageNumbers)
@@ -3451,7 +3454,7 @@ public class ReportRenderer : IDisposable
             var pageText = _config.TotalPageCount > 1
                 ? $"{Tr("Page")} {_config.CurrentPageNumber} {Tr("of")} {_config.TotalPageCount}"
                 : $"{Tr("Page")} {_config.CurrentPageNumber}";
-            canvas.DrawText(pageText, width - margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
+            canvas.DrawText(pageText, width - marginRight, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
         }
     }
 

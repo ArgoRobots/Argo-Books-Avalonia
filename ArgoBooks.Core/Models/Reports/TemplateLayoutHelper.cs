@@ -22,9 +22,24 @@ public static class TemplateLayoutHelper
         public double PageHeight { get; }
 
         /// <summary>
-        /// Margin from page edges.
+        /// Left margin from page edge.
         /// </summary>
-        public double Margin { get; } = PageDimensions.Margin;
+        public double MarginLeft { get; }
+
+        /// <summary>
+        /// Right margin from page edge.
+        /// </summary>
+        public double MarginRight { get; }
+
+        /// <summary>
+        /// Bottom margin from page edge.
+        /// </summary>
+        public double MarginBottom { get; }
+
+        /// <summary>
+        /// Left margin (alias for positioning calculations).
+        /// </summary>
+        public double Margin => MarginLeft;
 
         /// <summary>
         /// Height of the header area. Varies based on whether company details are shown.
@@ -59,12 +74,12 @@ public static class TemplateLayoutHelper
         /// <summary>
         /// Available width for content (page width minus margins).
         /// </summary>
-        public double ContentWidth => PageWidth - (Margin * 2);
+        public double ContentWidth => PageWidth - MarginLeft - MarginRight;
 
         /// <summary>
         /// Available height for content (from ContentTop to footer area).
         /// </summary>
-        public double ContentHeight => PageHeight - ContentTop - FooterHeight - Margin;
+        public double ContentHeight => PageHeight - ContentTop - FooterHeight - MarginBottom;
 
         /// <summary>
         /// Creates a layout context from a report configuration.
@@ -75,6 +90,9 @@ public static class TemplateLayoutHelper
             PageWidth = width;
             PageHeight = height;
             HeaderHeight = PageDimensions.GetHeaderHeight(config.ShowCompanyDetails);
+            MarginLeft = config.PageMargins.Left;
+            MarginRight = config.PageMargins.Right;
+            MarginBottom = config.PageMargins.Bottom;
         }
 
         /// <summary>
@@ -85,6 +103,9 @@ public static class TemplateLayoutHelper
             PageWidth = pageWidth;
             PageHeight = pageHeight;
             HeaderHeight = PageDimensions.GetHeaderHeight(showCompanyDetails);
+            MarginLeft = PageDimensions.Margin;
+            MarginRight = PageDimensions.Margin;
+            MarginBottom = PageDimensions.Margin;
         }
     }
 
