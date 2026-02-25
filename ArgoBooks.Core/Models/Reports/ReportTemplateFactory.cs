@@ -22,7 +22,30 @@ public static class ReportTemplateFactory
         public const string GeographicAnalysis = "Geographic Analysis";
         public const string CustomerAnalysis = "Customer Analysis";
         public const string ExpenseBreakdown = "Expense Breakdown";
+        public const string IncomeStatement = "Income Statement";
+        public const string BalanceSheet = "Balance Sheet";
+        public const string CashFlowStatement = "Cash Flow Statement";
+        public const string TrialBalance = "Trial Balance";
+        public const string GeneralLedger = "General Ledger";
+        public const string ARaging = "Accounts Receivable Aging";
+        public const string APaging = "Accounts Payable Aging";
+        public const string TaxSummary = "Tax Summary";
     }
+
+    /// <summary>
+    /// Gets all available accounting template names.
+    /// </summary>
+    public static string[] GetAccountingTemplateNames() =>
+    [
+        TemplateNames.IncomeStatement,
+        TemplateNames.BalanceSheet,
+        TemplateNames.CashFlowStatement,
+        TemplateNames.TrialBalance,
+        TemplateNames.GeneralLedger,
+        TemplateNames.ARaging,
+        TemplateNames.APaging,
+        TemplateNames.TaxSummary
+    ];
 
     /// <summary>
     /// Gets all available built-in template names.
@@ -39,7 +62,8 @@ public static class ReportTemplateFactory
             TemplateNames.LossesAnalysis,
             TemplateNames.GeographicAnalysis,
             TemplateNames.CustomerAnalysis,
-            TemplateNames.ExpenseBreakdown
+            TemplateNames.ExpenseBreakdown,
+            .. GetAccountingTemplateNames()
         ];
     }
 
@@ -59,7 +83,15 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.LossesAnalysis ||
                templateName == TemplateNames.GeographicAnalysis ||
                templateName == TemplateNames.CustomerAnalysis ||
-               templateName == TemplateNames.ExpenseBreakdown;
+               templateName == TemplateNames.ExpenseBreakdown ||
+               templateName == TemplateNames.IncomeStatement ||
+               templateName == TemplateNames.BalanceSheet ||
+               templateName == TemplateNames.CashFlowStatement ||
+               templateName == TemplateNames.TrialBalance ||
+               templateName == TemplateNames.GeneralLedger ||
+               templateName == TemplateNames.ARaging ||
+               templateName == TemplateNames.APaging ||
+               templateName == TemplateNames.TaxSummary;
     }
 
     /// <summary>
@@ -77,6 +109,14 @@ public static class ReportTemplateFactory
             TemplateNames.GeographicAnalysis => CreateGeographicAnalysisTemplate(),
             TemplateNames.CustomerAnalysis => CreateCustomerAnalysisTemplate(),
             TemplateNames.ExpenseBreakdown => CreateExpenseBreakdownTemplate(),
+            TemplateNames.IncomeStatement => CreateAccountingTemplate(AccountingReportType.IncomeStatement, "Income Statement", DatePresetNames.YearToDate),
+            TemplateNames.BalanceSheet => CreateAccountingTemplate(AccountingReportType.BalanceSheet, "Balance Sheet", DatePresetNames.YearToDate),
+            TemplateNames.CashFlowStatement => CreateAccountingTemplate(AccountingReportType.CashFlowStatement, "Cash Flow Statement", DatePresetNames.YearToDate),
+            TemplateNames.TrialBalance => CreateAccountingTemplate(AccountingReportType.TrialBalance, "Trial Balance", DatePresetNames.YearToDate),
+            TemplateNames.GeneralLedger => CreateAccountingTemplate(AccountingReportType.GeneralLedger, "General Ledger", DatePresetNames.ThisMonth),
+            TemplateNames.ARaging => CreateAccountingTemplate(AccountingReportType.AccountsReceivableAging, "Accounts Receivable Aging", DatePresetNames.AllTime),
+            TemplateNames.APaging => CreateAccountingTemplate(AccountingReportType.AccountsPayableAging, "Accounts Payable Aging", DatePresetNames.AllTime),
+            TemplateNames.TaxSummary => CreateAccountingTemplate(AccountingReportType.TaxSummary, "Tax Summary", DatePresetNames.YearToDate),
             _ => new ReportConfiguration()
         };
     }
@@ -760,6 +800,44 @@ public static class ReportTemplateFactory
             Y = dateRangeBounds.Y,
             Height = dateRangeBounds.Height
         });
+    }
+
+    private static ReportConfiguration CreateAccountingTemplate(AccountingReportType reportType, string title, string datePreset)
+    {
+        var config = new ReportConfiguration
+        {
+            Title = title,
+            PageSize = PageSize.Letter,
+            PageOrientation = PageOrientation.Portrait,
+            ShowHeader = true,
+            ShowFooter = true,
+            ShowPageNumbers = true,
+            Filters = { DatePresetName = datePreset }
+        };
+
+        var context = new LayoutContext(config);
+
+        // Date range element at the top
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = dateRangeBounds.X,
+            Y = dateRangeBounds.Y,
+            Width = dateRangeBounds.Width,
+            Height = dateRangeBounds.Height
+        });
+
+        // Accounting table filling the content area
+        config.AddElement(new AccountingTableReportElement
+        {
+            ReportType = reportType,
+            X = context.Margin,
+            Y = context.ContentTop,
+            Width = context.ContentWidth,
+            Height = context.ContentHeight
+        });
+
+        return config;
     }
 
     #endregion
