@@ -172,6 +172,31 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         UpdateFilteredCountries();
     }
 
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == SelectedCountryNameProperty && !_isUpdatingText)
+        {
+            var name = change.NewValue as string ?? string.Empty;
+            // First try exact match
+            var country = PhoneInput.AllDialCodes.FirstOrDefault(c =>
+                c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            // If no match, try normalizing the country name (handles USA, UK, etc.)
+            if (country == null && !string.IsNullOrWhiteSpace(name))
+            {
+                var normalizedName = Countries.NormalizeCountry(name);
+                if (normalizedName != null)
+                {
+                    country = PhoneInput.AllDialCodes.FirstOrDefault(c =>
+                        c.Name.Equals(normalizedName, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            SelectedCountry = country;
+            UpdateSearchText();
+        }
+    }
+
     protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
     {
         base.OnLoaded(e);
