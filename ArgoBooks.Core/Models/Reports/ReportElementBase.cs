@@ -215,6 +215,13 @@ public class ChartReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = 12;
 
+    [JsonPropertyName("axisFontSize")]
+    public double AxisFontSize
+    {
+        get;
+        set => SetField(ref field, value);
+    } = 10;
+
     [JsonPropertyName("legendFontSize")]
     public double LegendFontSize
     {
@@ -279,6 +286,7 @@ public class ChartReportElement : ReportElementBase
             FontFamily = FontFamily,
             TitleFontFamily = TitleFontFamily,
             TitleFontSize = TitleFontSize,
+            AxisFontSize = AxisFontSize,
             LegendFontSize = LegendFontSize,
             LegendMaxCharacters = LegendMaxCharacters,
             BorderColor = BorderColor,

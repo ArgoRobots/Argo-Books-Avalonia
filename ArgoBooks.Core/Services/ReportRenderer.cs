@@ -600,7 +600,7 @@ public class ReportRenderer : IDisposable
 
             // Draw Y-axis value labels using the full padded range
             var value = paddedMaxValue - totalRange * i / gridLineCount;
-            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
+            using var yLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
@@ -662,7 +662,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels - dynamically based on date range and available width
-        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -736,7 +736,7 @@ public class ReportRenderer : IDisposable
 
             // Draw Y-axis value labels using the full padded range
             var value = paddedMaxValue - totalRange * i / gridLineCount;
-            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
+            using var yLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
@@ -876,7 +876,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels - dynamically based on date range and available width
-        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -942,7 +942,7 @@ public class ReportRenderer : IDisposable
         var legendX = centerX + radius + 20 * _renderScale;
         var legendY = chartArea.Top + 10 * _renderScale;
 
-        using var labelFont = new SKFont(chartTypeface, 9 * _renderScale);
+        using var labelFont = new SKFont(chartTypeface, (float)chart.LegendFontSize * _renderScale);
         using var labelPaint = new SKPaint();
         labelPaint.Color = SKColors.Black;
         labelPaint.IsAntialias = true;
@@ -1063,7 +1063,7 @@ public class ReportRenderer : IDisposable
 
             // Draw Y-axis value labels using the full padded range
             var value = paddedMaxValue - totalRange * i / gridLineCount;
-            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
+            using var yLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
@@ -1129,7 +1129,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels - dynamically based on date range and available width
-        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -1201,7 +1201,7 @@ public class ReportRenderer : IDisposable
 
             // Draw Y-axis value labels using the full padded range
             var value = paddedMaxValue - totalRange * i / gridLineCount;
-            using var yLabelFont = new SKFont(chartTypeface, 9 * _renderScale);
+            using var yLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
             using var yLabelPaint = new SKPaint();
             yLabelPaint.Color = ChartAxisColor;
             yLabelPaint.IsAntialias = true;
@@ -1342,7 +1342,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw X-axis labels
-        using var xLabelFont = new SKFont(chartTypeface, 10 * _renderScale);
+        using var xLabelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
         using var xLabelPaint = new SKPaint();
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
@@ -1391,8 +1391,8 @@ public class ReportRenderer : IDisposable
         var maxBarWidth = chartArea.Width * 0.6f;
         var labelWidth = chartArea.Width * 0.25f;
 
-        using var labelFont = new SKFont(chartTypeface, 10 * _renderScale);
-        using var valueFont = new SKFont(chartTypeface, 9 * _renderScale);
+        using var labelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
+        using var valueFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
         using var labelPaint = new SKPaint();
         labelPaint.Color = SKColors.Black;
         labelPaint.IsAntialias = true;
