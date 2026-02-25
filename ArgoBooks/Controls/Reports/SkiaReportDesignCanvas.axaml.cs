@@ -289,7 +289,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             _canvasImage.PointerReleased += OnCanvasPointerReleased;
         }
 
-        // Wire up pointer wheel for zoom-to-cursor (only fires when not already handled by parent)
+        // Wire up pointer wheel for Ctrl+scroll zoom-to-cursor (only fires when not already handled by parent)
         _scrollViewer?.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble);
 
         // Wire up keyboard events
@@ -751,7 +751,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        // Zoom with scroll wheel (no modifier key required)
+        // Only zoom when Ctrl is held; otherwise let ScrollViewer handle it for panning
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            return;
+
         if (_scrollViewer == null || _canvasImage == null)
             return;
 

@@ -389,6 +389,10 @@ public partial class ReportsPage : UserControl
 
     private void OnCanvasPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
+        // Only zoom when Ctrl is held; otherwise let ScrollViewer handle it for panning
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            return;
+
         // Zoom at cursor position
         if (_designCanvas != null && DataContext is ReportsPageViewModel vm)
         {
@@ -451,6 +455,10 @@ public partial class ReportsPage : UserControl
 
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
+        // Only zoom when Ctrl is held; otherwise let ScrollViewer handle it for panning
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            return;
+
         // Zoom at cursor position
         if (_previewScrollViewer != null && _previewZoomTransformControl != null)
         {
