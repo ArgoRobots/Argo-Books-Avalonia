@@ -1834,7 +1834,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="24,16">
-            <Grid ColumnDefinitions="*,Auto,*">
+            <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Previous Button -->
                 <Button Grid.Column="0"
                         Classes="secondary-button"
@@ -1882,18 +1882,12 @@
                     <!-- Add/Delete Page -->
                     <Border Width="1" Height="20" Background="{DynamicResource BorderBrush}" Margin="4,0" />
                     <Button Classes="toolbar-button" Command="{Binding AddPageCommand}" ToolTip.Tip="{loc:Loc 'Add Page'}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <PathIcon Data="{x:Static icons:Icons.AddAlt}"
-                                      Width="14" Height="14" />
-                            <TextBlock Text="{loc:Loc 'Add Page'}" VerticalAlignment="Center" FontSize="12" />
-                        </StackPanel>
+                        <PathIcon Data="{x:Static icons:Icons.AddAlt}"
+                                  Width="16" Height="16" />
                     </Button>
                     <Button Classes="toolbar-button" Command="{Binding DeletePageCommand}" IsEnabled="{Binding CanDeletePage}" ToolTip.Tip="{loc:Loc 'Delete Page'}">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                      Width="14" Height="14" />
-                            <TextBlock Text="{loc:Loc 'Delete Page'}" VerticalAlignment="Center" FontSize="12" />
-                        </StackPanel>
+                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                  Width="16" Height="16" />
                     </Button>
                 </StackPanel>
 
