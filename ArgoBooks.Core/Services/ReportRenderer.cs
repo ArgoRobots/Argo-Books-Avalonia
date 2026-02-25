@@ -942,7 +942,7 @@ public class ReportRenderer : IDisposable
         var legendX = centerX + radius + 20 * _renderScale;
         var legendY = chartArea.Top + 10 * _renderScale;
 
-        using var labelFont = new SKFont(chartTypeface, 9 * _renderScale);
+        using var labelFont = new SKFont(chartTypeface, (float)chart.LegendFontSize * _renderScale);
         using var labelPaint = new SKPaint();
         labelPaint.Color = SKColors.Black;
         labelPaint.IsAntialias = true;
