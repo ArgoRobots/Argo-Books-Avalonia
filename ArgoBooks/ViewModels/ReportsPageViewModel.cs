@@ -662,6 +662,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanDeletePage));
         OnPropertyChanged(nameof(CanGoToNextPage));
         OnPropertyChanged(nameof(CanGoToPreviousPage));
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
