@@ -1868,9 +1868,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<ChartStyleOption> ChartStyleOptions { get; } =
     [
-        new(ReportChartStyle.Bar, "Bar"),
+        new(ReportChartStyle.Bar, "Column"),
         new(ReportChartStyle.Line, "Line"),
-        new(ReportChartStyle.StepLine, "Step line"),
+        new(ReportChartStyle.StepLine, "Step Line"),
         new(ReportChartStyle.Area, "Area"),
         new(ReportChartStyle.Scatter, "Scatter")
     ];
@@ -2310,6 +2310,14 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Refresh the preview and canvas to show translated content
         GeneratePreview();
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Refreshes the report design canvas (e.g. after company logo changes).
+    /// </summary>
+    public void RefreshCanvas()
+    {
         CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 

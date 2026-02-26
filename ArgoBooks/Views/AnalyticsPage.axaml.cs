@@ -29,6 +29,22 @@ public partial class AnalyticsPage : UserControl
 
         // Subscribe to ViewModel events when DataContext changes
         DataContextChanged += OnDataContextChanged;
+
+        // Recalculate chart date labels when page resizes
+        SizeChanged += OnPageSizeChanged;
+    }
+
+    private void OnPageSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is AnalyticsPageViewModel viewModel)
+        {
+            // Charts are in *,* grids so each is roughly half the page width minus margins/padding
+            var chartWidth = (e.NewSize.Width / 2) - 80;
+            if (chartWidth > 0)
+            {
+                viewModel.UpdateChartWidth(chartWidth);
+            }
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)

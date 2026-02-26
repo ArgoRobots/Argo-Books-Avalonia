@@ -23,6 +23,13 @@ public class ChartLoaderService
     // Chart text size matching WinForms version
     private const float AxisTextSize = 14f;
 
+    // Minimum gap between labels (in pixels)
+    private const float LabelGap = 30f;
+
+    // Registered date axes for dynamic width recalculation
+    private readonly List<(DateTime[] dates, Action<Axis[]> setter)> _dateAxisRegistrations = new();
+    private double _lastChartWidth;
+
     // Chart colors
     private static readonly SKColor RevenueColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
     private static readonly SKColor ExpenseColor = SKColor.Parse("#EF4444"); // Red
@@ -250,7 +257,7 @@ public class ChartLoaderService
                 Name = name,
                 Fill = new SolidColorPaint(color),
                 Stroke = null,
-                MaxBarWidth = 50
+                MaxBarWidth = 100
             }
         };
     }
@@ -311,7 +318,7 @@ public class ChartLoaderService
                 Name = name,
                 Fill = new SolidColorPaint(color),
                 Stroke = null,
-                MaxBarWidth = 50
+                MaxBarWidth = 100
             }
         };
     }
@@ -353,7 +360,8 @@ public class ChartLoaderService
                     Name = name,
                     Fill = new SolidColorPaint(ProfitColor),
                     Stroke = null,
-                    MaxBarWidth = 50
+                    MaxBarWidth = 100,
+                    IgnoresBarPosition = true
                 };
             }
 
@@ -365,7 +373,8 @@ public class ChartLoaderService
                     Name = $"{name} (Loss)",
                     Fill = new SolidColorPaint(ExpenseColor),
                     Stroke = null,
-                    MaxBarWidth = 50
+                    MaxBarWidth = 100,
+                    IgnoresBarPosition = true
                 };
             }
 
@@ -417,9 +426,38 @@ public class ChartLoaderService
     /// Creates X-axis configuration for a cartesian chart with proportional date spacing.
     /// Use this for time-series charts where date spacing should be proportional to actual time differences.
     /// </summary>
-    /// <param name="dates">The actual DateTime values for proportional positioning.</param>
-    /// <returns>Configured X-axis array.</returns>
-    public Axis[] CreateDateXAxes(DateTime[]? dates = null)
+    /// <summary>
+    /// Registers a date chart axis for dynamic width recalculation.
+    /// When UpdateAllDateAxes is called, all registered setters are invoked with recalculated axes.
+    /// </summary>
+    public void RegisterDateChart(DateTime[] dates, Action<Axis[]> setter, double chartWidth = 0)
+    {
+        _dateAxisRegistrations.Add((dates, setter));
+        var width = chartWidth > 0 ? chartWidth : _lastChartWidth;
+        setter(CreateDateXAxes(dates, width));
+    }
+
+    /// <summary>
+    /// Recalculates all registered date axes for a new chart width.
+    /// </summary>
+    public void UpdateAllDateAxes(double chartWidth)
+    {
+        _lastChartWidth = chartWidth;
+        foreach (var (dates, setter) in _dateAxisRegistrations)
+        {
+            setter(CreateDateXAxes(dates, chartWidth));
+        }
+    }
+
+    /// <summary>
+    /// Clears all date axis registrations (call before reloading chart data).
+    /// </summary>
+    public void ClearDateAxisRegistrations()
+    {
+        _dateAxisRegistrations.Clear();
+    }
+
+    public Axis[] CreateDateXAxes(DateTime[]? dates = null, double chartWidth = 0)
     {
         if (dates == null || dates.Length == 0)
         {
@@ -427,9 +465,72 @@ public class ChartLoaderService
         }
 
         // Calculate min and max OADate values with padding
-        var minDate = dates.Min().ToOADate();
-        var maxDate = dates.Max().ToOADate();
+        var sortedOADates = dates.Select(d => d.ToOADate()).OrderBy(d => d).ToArray();
+        var minDate = sortedOADates[0];
+        var maxDate = sortedOADates[^1];
         var padding = Math.Max(0.5, (maxDate - minDate) * 0.05); // 5% padding or at least 0.5 days
+
+        // Select labels by pixel position so closely-spaced dates don't overlap.
+        // Walk left to right and only include a label if it won't collide with the previous one.
+        double[] separators;
+        using var font = new SKFont(SKTypeface.Default, AxisTextSize);
+        using var paint = new SKPaint();
+        var sampleLabel = DateFormatService.Format(new DateTime(2025, 12, 31));
+        var labelWidth = font.MeasureText(sampleLabel, paint);
+        var axisMin = minDate - padding;
+        var axisMax = maxDate + padding;
+        var axisRange = axisMax - axisMin;
+
+        if (chartWidth > 0 && axisRange > 0)
+        {
+            var pixelsPerUnit = chartWidth / axisRange;
+            var minSpacing = labelWidth + LabelGap;
+            var selected = new List<double> { sortedOADates[0] };
+            var lastPixel = (sortedOADates[0] - axisMin) * pixelsPerUnit;
+
+            for (var i = 1; i < sortedOADates.Length; i++)
+            {
+                var pixel = (sortedOADates[i] - axisMin) * pixelsPerUnit;
+                if (pixel - lastPixel >= minSpacing)
+                {
+                    selected.Add(sortedOADates[i]);
+                    lastPixel = pixel;
+                }
+            }
+            separators = selected.ToArray();
+        }
+        else
+        {
+            // Fallback when chart width is unknown: pick evenly-spaced indices
+            var maxLabels = 6;
+            if (sortedOADates.Length <= maxLabels)
+            {
+                separators = sortedOADates;
+            }
+            else
+            {
+                var step = (double)(sortedOADates.Length - 1) / (maxLabels - 1);
+                separators = Enumerable.Range(0, maxLabels)
+                    .Select(i => sortedOADates[(int)Math.Round(i * step)])
+                    .Distinct()
+                    .ToArray();
+            }
+        }
+
+        // Calculate UnitWidth based on minimum gap between consecutive dates.
+        // This tells LiveCharts how wide each data point "slot" is, so column bars
+        // fill the space between points instead of defaulting to 1 day.
+        double unitWidth = 1;
+        if (sortedOADates.Length >= 2)
+        {
+            var minGap = double.MaxValue;
+            for (var i = 1; i < sortedOADates.Length; i++)
+            {
+                var gap = sortedOADates[i] - sortedOADates[i - 1];
+                if (gap > 0 && gap < minGap) minGap = gap;
+            }
+            if (minGap < double.MaxValue) unitWidth = minGap;
+        }
 
         var axis = new Axis
         {
@@ -438,6 +539,8 @@ public class ChartLoaderService
             LabelsRotation = 0,
             MinLimit = minDate - padding,
             MaxLimit = maxDate + padding,
+            UnitWidth = unitWidth,
+            CustomSeparators = separators,
             Labeler = value =>
             {
                 // Validate OADate range to prevent exceptions
@@ -455,8 +558,7 @@ public class ChartLoaderService
                 {
                     return string.Empty;
                 }
-            },
-            MinStep = 1 // Minimum step of 1 day
+            }
         };
 
         return [axis];

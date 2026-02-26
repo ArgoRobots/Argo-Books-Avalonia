@@ -714,10 +714,22 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Loads all dashboard data from the company data.
     /// </summary>
+    /// <summary>
+    /// Recalculates all date axis labels for the given chart width.
+    /// Called by the view when the chart container resizes.
+    /// </summary>
+    public void UpdateChartWidth(double chartWidth)
+    {
+        ChartLoaderService.UpdateAllDateAxes(chartWidth);
+    }
+
     public void LoadDashboardData()
     {
         var data = _companyManager?.CompanyData;
         if (data == null) return;
+
+        // Clear previous registrations before reloading
+        ChartLoaderService.ClearDateAxisRegistrations();
 
         // Correct rental statuses before displaying
         CorrectRentalStatuses(data);
@@ -917,7 +929,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var (series, labels, dates, totalProfit) = ChartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
 
         ProfitsChartSeries = series;
-        ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
+        ChartLoaderService.RegisterDateChart(dates, axes => ProfitsChartXAxes = axes);
         ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         ProfitsChartTitle = $"Total profits: {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
@@ -930,7 +942,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         var (series, dates) = ChartLoaderService.LoadRevenueVsExpensesChart(data, StartDate, EndDate);
         RevenueVsExpensesSeries = series;
-        RevenueVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
+        ChartLoaderService.RegisterDateChart(dates, axes => RevenueVsExpensesXAxes = axes);
         RevenueVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueVsExpensesData = series.Count > 0 && dates.Length > 0;
     }

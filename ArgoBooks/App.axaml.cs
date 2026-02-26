@@ -2083,6 +2083,7 @@ public class App : Application
                         args.CompanyName,
                         CompanyManager.PendingRenamePath ?? CompanyManager.CurrentFilePath,
                         logo);
+                    _reportsPageViewModel?.RefreshCanvas();
 
                     // Record undo/redo action
                     var newName = args.CompanyName;
@@ -2211,6 +2212,7 @@ public class App : Application
             companyName,
             CompanyManager?.CurrentFilePath,
             logo);
+        _reportsPageViewModel?.RefreshCanvas();
     }
 
     /// <summary>
