@@ -941,7 +941,7 @@
                                                         ShowGrid="{Binding ShowGrid}"
                                                         GridSize="{Binding GridSize}"
                                                         SnapToGrid="{Binding SnapToGrid}"
-                                                        CurrentDesignerPage="{Binding CurrentDesignerPage}"
+                                                        CurrentDesignerPage="{Binding CurrentDesignerPage, Mode=TwoWay}"
                                                         UndoRedoManager="{Binding UndoRedoManager}" />
 
                         <!-- Save Confirmation Overlay -->

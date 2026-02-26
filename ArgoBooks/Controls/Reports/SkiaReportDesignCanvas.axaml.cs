@@ -298,6 +298,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Wire up pointer wheel for Ctrl+scroll zoom-to-cursor (only fires when not already handled by parent)
         _scrollViewer?.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble);
 
+        // Track scroll changes to update CurrentDesignerPage based on what's visible
+        if (_scrollViewer != null)
+            _scrollViewer.ScrollChanged += OnScrollChanged;
+
         // Wire up keyboard events
         KeyDown += OnKeyDown;
 
@@ -306,6 +310,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void OnUnloaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (_scrollViewer != null)
+            _scrollViewer.ScrollChanged -= OnScrollChanged;
         _renderBitmap?.Dispose();
         _renderBitmap = null;
     }
@@ -1838,6 +1844,8 @@ public partial class SkiaReportDesignCanvas : UserControl
     /// <summary>
     /// Scrolls the canvas to bring a specific page into view.
     /// </summary>
+    private bool _isScrollingToPage;
+
     private void ScrollToPage(int pageNumber)
     {
         if (_scrollViewer == null) return;
@@ -1848,12 +1856,65 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Calculate the scroll offset to show this page at the top
         var scrollY = pageYOffset * zoom;
 
+        _isScrollingToPage = true;
         Dispatcher.UIThread.Post(() =>
         {
             if (_scrollViewer == null) return;
             var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
             _scrollViewer.Offset = new Vector(_scrollViewer.Offset.X, Math.Clamp(scrollY, 0, maxY));
+            _isScrollingToPage = false;
         }, DispatcherPriority.Render);
+    }
+
+    private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        // Don't update CurrentDesignerPage while we're programmatically scrolling to a page
+        if (_isScrollingToPage || _scrollViewer == null) return;
+
+        // Determine which page is at the center of the viewport
+        var (page, _) = GetViewportCenterOnPage();
+        if (page > 0 && page != CurrentDesignerPage)
+        {
+            _isScrollingToPage = true; // Prevent feedback loop
+            CurrentDesignerPage = page;
+            _isScrollingToPage = false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the page number and page-local coordinates at the center of the current viewport.
+    /// </summary>
+    public (int PageNumber, double LocalX, double LocalY) GetViewportCenterOnPage()
+    {
+        if (_scrollViewer == null)
+            return (CurrentDesignerPage, 0, 0);
+
+        var zoom = ZoomLevel;
+        const double margin = 10.0; // LayoutTransformControl margin
+
+        // Viewport center in scroll content space
+        var contentX = _scrollViewer.Offset.X + _scrollViewer.Viewport.Width / 2;
+        var contentY = _scrollViewer.Offset.Y + _scrollViewer.Viewport.Height / 2;
+
+        // Account for centering when content is smaller than viewport
+        var centeringOffsetX = Math.Max(0, (_scrollViewer.Viewport.Width - _scrollViewer.Extent.Width) / 2);
+        var centeringOffsetY = Math.Max(0, (_scrollViewer.Viewport.Height - _scrollViewer.Extent.Height) / 2);
+
+        // Convert to canvas coordinates (remove centering, margin, and zoom)
+        var canvasX = (contentX - centeringOffsetX - margin) / zoom;
+        var canvasY = (contentY - centeringOffsetY - margin) / zoom;
+
+        // Determine which page and local position
+        var (pageNumber, localY) = GetPageAtCanvasY(canvasY);
+        if (pageNumber == 0)
+        {
+            // In a gap — snap to nearest page
+            pageNumber = Math.Max(1, Math.Min(GetPageCount(), CurrentDesignerPage));
+            var (_, pageHeight) = GetPageDimensions();
+            localY = pageHeight / 2;
+        }
+
+        return (pageNumber, canvasX, localY);
     }
 
     /// <summary>

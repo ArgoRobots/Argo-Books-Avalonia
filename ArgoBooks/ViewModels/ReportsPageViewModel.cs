@@ -618,6 +618,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private int _currentDesignerPage = 1;
 
+    /// <summary>
+    /// Callback to get the viewport center position from the canvas (page number, local X, local Y).
+    /// Set by the View code-behind when the canvas is available.
+    /// </summary>
+    public Func<(int PageNumber, double LocalX, double LocalY)>? GetViewportCenter { get; set; }
+
     public string CurrentDesignerPageDisplay =>
         $"Page {CurrentDesignerPage} of {Configuration.PageCount}";
 
@@ -932,26 +938,75 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void AddElement(ReportElementType elementType)
     {
-        var margins = Configuration.PageMargins;
-        var headerHeight = Configuration.ShowHeader
-            ? PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails)
-            : 0;
-        var defaultX = margins.Left;
-        var defaultY = headerHeight + margins.Top;
+        // Get element dimensions first so we can center it
+        var (width, height) = elementType switch
+        {
+            ReportElementType.Chart => (300.0, 200.0),
+            ReportElementType.Table => (400.0, 200.0),
+            ReportElementType.Label => (200.0, 40.0),
+            ReportElementType.Image => (150.0, 150.0),
+            ReportElementType.DateRange => (200.0, 30.0),
+            ReportElementType.Summary => (200.0, 120.0),
+            ReportElementType.AccountingTable => (500.0, 600.0),
+            _ => (200.0, 40.0)
+        };
+
+        // Place at the center of the user's current viewport
+        var viewportCenter = GetViewportCenter?.Invoke();
+        int pageNumber;
+        double centerX, centerY;
+
+        if (viewportCenter.HasValue)
+        {
+            pageNumber = viewportCenter.Value.PageNumber;
+            centerX = viewportCenter.Value.LocalX;
+            centerY = viewportCenter.Value.LocalY;
+        }
+        else
+        {
+            // Fallback: top-left of content area on current page
+            pageNumber = CurrentDesignerPage;
+            var margins = Configuration.PageMargins;
+            var headerHeight = Configuration.ShowHeader
+                ? PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails)
+                : 0;
+            centerX = margins.Left + width / 2;
+            centerY = headerHeight + margins.Top + height / 2;
+        }
+
+        // Center the element on the viewport center point
+        var elementX = centerX - width / 2;
+        var elementY = centerY - height / 2;
+
+        // Clamp to content bounds
+        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+        var ml = Configuration.PageMargins.Left;
+        var mr = Configuration.PageMargins.Right;
+        var mt = Configuration.PageMargins.Top;
+        var mb = Configuration.PageMargins.Bottom;
+        var hh = Configuration.ShowHeader ? PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails) : 0;
+        var fh = Configuration.ShowFooter ? PageDimensions.FooterHeight : 0;
+        var contentLeft = ml;
+        var contentTop = hh + mt;
+        var contentRight = pageWidth - mr;
+        var contentBottom = pageHeight - fh - mb;
+
+        elementX = Math.Max(contentLeft, Math.Min(elementX, contentRight - width));
+        elementY = Math.Max(contentTop, Math.Min(elementY, contentBottom - height));
 
         ReportElementBase element = elementType switch
         {
-            ReportElementType.Chart => new ChartReportElement { X = defaultX, Y = defaultY, Width = 300, Height = 200 },
-            ReportElementType.Table => new TableReportElement { X = defaultX, Y = defaultY, Width = 400, Height = 200 },
-            ReportElementType.Label => new LabelReportElement { X = defaultX, Y = defaultY, Width = 200, Height = 40 },
-            ReportElementType.Image => new ImageReportElement { X = defaultX, Y = defaultY, Width = 150, Height = 150 },
-            ReportElementType.DateRange => new DateRangeReportElement { X = defaultX, Y = defaultY, Width = 200, Height = 30 },
-            ReportElementType.Summary => new SummaryReportElement { X = defaultX, Y = defaultY, Width = 200, Height = 120 },
-            ReportElementType.AccountingTable => new AccountingTableReportElement { X = defaultX, Y = defaultY, Width = 500, Height = 600 },
+            ReportElementType.Chart => new ChartReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Table => new TableReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Label => new LabelReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Image => new ImageReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.DateRange => new DateRangeReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Summary => new SummaryReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.AccountingTable => new AccountingTableReportElement { X = elementX, Y = elementY, Width = width, Height = height },
             _ => new LabelReportElement()
         };
 
-        element.PageNumber = CurrentDesignerPage;
+        element.PageNumber = pageNumber;
         Configuration.AddElement(element);
         UndoRedoManager.RecordAction(new AddElementAction(Configuration, element));
         SelectedElement = element;
