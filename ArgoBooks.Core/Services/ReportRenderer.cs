@@ -1143,16 +1143,11 @@ public class ReportRenderer : IDisposable
         // Draw X-axis (baseline)
         canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
 
-        // Calculate bar dimensions
+        // Calculate bar dimensions - spread evenly across full chart width
         var barCount = dataPoints.Count;
-        var totalBarSpace = chartArea.Width;
-        var barSpacing = 4 * _renderScale;
+        var categoryWidth = chartArea.Width / barCount;
         var maxBarWidth = 50 * _renderScale;
-        var barWidth = Math.Min(maxBarWidth, (totalBarSpace - (barSpacing * (barCount + 1))) / barCount);
-
-        // Center the bars in the chart area
-        var totalBarsWidth = (barWidth * barCount) + (barSpacing * (barCount - 1));
-        var startX = chartArea.Left + (chartArea.Width - totalBarsWidth) / 2;
+        var barWidth = Math.Min(maxBarWidth, categoryWidth * 0.7f);
 
         // Choose bar color based on chart type
         var barColor = chart.ChartType switch
@@ -1168,11 +1163,12 @@ public class ReportRenderer : IDisposable
         barPaint.Style = SKPaintStyle.Fill;
         barPaint.IsAntialias = true;
 
-        // Draw bars
+        // Draw bars - centered within each category slot
         for (int i = 0; i < dataPoints.Count; i++)
         {
             var point = dataPoints[i];
-            var x = startX + (i * (barWidth + barSpacing));
+            var categoryCenterX = chartArea.Left + (i * categoryWidth) + (categoryWidth / 2);
+            var x = categoryCenterX - (barWidth / 2);
 
             // Calculate bar height based on value relative to total range
             var barHeight = chartArea.Height * (float)(Math.Abs(point.Value) / totalRange);
@@ -1191,24 +1187,14 @@ public class ReportRenderer : IDisposable
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
 
-        var labelIndices = GetXAxisLabelIndices(dataPoints, chartArea.Width, _renderScale);
+        var sampleLabel = FormatXAxisLabel(dataPoints[0]);
+        var measuredLabelWidth = xLabelFont.MeasureText(sampleLabel, xLabelPaint);
+        var labelIndices = GetXAxisLabelIndices(dataPoints, chartArea.Width, measuredLabelWidth, _renderScale);
         var labelY = chartArea.Bottom + 18 * _renderScale;
 
-        for (int idx = 0; idx < labelIndices.Length; idx++)
-        {
-            var i = labelIndices[idx];
-            var point = dataPoints[i];
-            var x = startX + (i * (barWidth + barSpacing));
-            var label = FormatXAxisLabel(point);
-            var labelX = x + barWidth / 2;
-
-            // Left-align first label, right-align last label, center others
-            var align = idx == 0 ? SKTextAlign.Left
-                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
-                      : SKTextAlign.Center;
-
-            canvas.DrawText(label, labelX, labelY, align, xLabelFont, xLabelPaint);
-        }
+        DrawXAxisLabelsWithOverflowProtection(canvas, labelY, labelIndices,
+            i => (FormatXAxisLabel(dataPoints[i]), chartArea.Left + (i * categoryWidth) + (categoryWidth / 2)),
+            xLabelFont, xLabelPaint, chartArea);
     }
 
     /// <summary>
@@ -1405,22 +1391,14 @@ public class ReportRenderer : IDisposable
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
 
-        var labelIndices = GetXAxisLabelIndices(dataPoints, chartArea.Width, _renderScale);
+        var sampleLabel = FormatXAxisLabel(dataPoints[0]);
+        var measuredLabelWidth = xLabelFont.MeasureText(sampleLabel, xLabelPaint);
+        var labelIndices = GetXAxisLabelIndices(dataPoints, chartArea.Width, measuredLabelWidth, _renderScale);
         var labelY = chartArea.Bottom + 18 * _renderScale;
 
-        for (int idx = 0; idx < labelIndices.Length; idx++)
-        {
-            var i = labelIndices[idx];
-            var label = FormatXAxisLabel(dataPoints[i]);
-            var labelX = points[i].X;
-
-            // Left-align first label, right-align last label, center others
-            var align = idx == 0 ? SKTextAlign.Left
-                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
-                      : SKTextAlign.Center;
-
-            canvas.DrawText(label, labelX, labelY, align, xLabelFont, xLabelPaint);
-        }
+        DrawXAxisLabelsWithOverflowProtection(canvas, labelY, labelIndices,
+            i => (FormatXAxisLabel(dataPoints[i]), points[i].X),
+            xLabelFont, xLabelPaint, chartArea);
     }
 
     /// <summary>
@@ -1658,22 +1636,14 @@ public class ReportRenderer : IDisposable
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
 
-        var labelIndices = GetXAxisLabelIndices(firstSeriesPoints, chartArea.Width, _renderScale);
+        var sampleLabel = labels.First();
+        var measuredLabelWidth = xLabelFont.MeasureText(sampleLabel, xLabelPaint);
+        var labelIndices = GetXAxisLabelIndices(firstSeriesPoints, chartArea.Width, measuredLabelWidth, _renderScale);
         var labelY = chartArea.Bottom + 18 * _renderScale;
 
-        for (int idx = 0; idx < labelIndices.Length; idx++)
-        {
-            var categoryIndex = labelIndices[idx];
-            var categoryCenterX = chartArea.Left + (categoryIndex * categoryWidth) + (categoryWidth / 2);
-            var label = labels[categoryIndex];
-
-            // Left-align first label, right-align last label, center others
-            var align = idx == 0 ? SKTextAlign.Left
-                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
-                      : SKTextAlign.Center;
-
-            canvas.DrawText(label, categoryCenterX, labelY, align, xLabelFont, xLabelPaint);
-        }
+        DrawXAxisLabelsWithOverflowProtection(canvas, labelY, labelIndices,
+            categoryIndex => (labels[categoryIndex], chartArea.Left + (categoryIndex * categoryWidth) + (categoryWidth / 2)),
+            xLabelFont, xLabelPaint, chartArea);
     }
 
     /// <summary>
@@ -1871,21 +1841,14 @@ public class ReportRenderer : IDisposable
         xLabelPaint.Color = ChartAxisColor;
         xLabelPaint.IsAntialias = true;
 
-        var labelIndices = GetXAxisLabelIndices(firstSeriesPoints, chartArea.Width, _renderScale);
+        var sampleLabel = FormatXAxisLabel(firstSeriesPoints[0]);
+        var measuredLabelWidth = xLabelFont.MeasureText(sampleLabel, xLabelPaint);
+        var labelIndices = GetXAxisLabelIndices(firstSeriesPoints, chartArea.Width, measuredLabelWidth, _renderScale);
         var labelY = chartArea.Bottom + 18 * _renderScale;
 
-        for (int idx = 0; idx < labelIndices.Length; idx++)
-        {
-            var i = labelIndices[idx];
-            var label = FormatXAxisLabel(firstSeriesPoints[i]);
-            var labelX = chartArea.Left + (i * xSpacing);
-
-            var align = idx == 0 ? SKTextAlign.Left
-                      : idx == labelIndices.Length - 1 ? SKTextAlign.Right
-                      : SKTextAlign.Center;
-
-            canvas.DrawText(label, labelX, labelY, align, xLabelFont, xLabelPaint);
-        }
+        DrawXAxisLabelsWithOverflowProtection(canvas, labelY, labelIndices,
+            i => (FormatXAxisLabel(firstSeriesPoints[i]), chartArea.Left + (i * xSpacing)),
+            xLabelFont, xLabelPaint, chartArea);
     }
 
     /// <summary>
@@ -3354,6 +3317,9 @@ public class ReportRenderer : IDisposable
         if (hasLogo)
             textStartX = margin + logoSize + logoPadding;
 
+        // Top padding to keep company info away from the page edge
+        var topPadding = 10f * _renderScale;
+
         // --- Draw Logo ---
         if (hasLogo)
         {
@@ -3363,7 +3329,7 @@ public class ReportRenderer : IDisposable
                 using var bitmap = SKBitmap.Decode(stream);
                 if (bitmap != null)
                 {
-                    var logoRect = new SKRect(margin, 8 * _renderScale, margin + logoSize, 8 * _renderScale + logoSize);
+                    var logoRect = new SKRect(margin, topPadding + 8 * _renderScale, margin + logoSize, topPadding + 8 * _renderScale + logoSize);
                     canvas.DrawBitmap(bitmap, logoRect);
                 }
             }
@@ -3374,7 +3340,7 @@ public class ReportRenderer : IDisposable
         }
 
         // --- Draw Company Name ---
-        var currentY = 18f * _renderScale;
+        var currentY = topPadding + 18f * _renderScale;
         if (!string.IsNullOrEmpty(companyInfo.Name))
         {
             canvas.DrawText(companyInfo.Name, textStartX, currentY, SKTextAlign.Left, companyNameFont, blackPaint);
@@ -3415,7 +3381,7 @@ public class ReportRenderer : IDisposable
         // Ensure title clears the logo area
         if (hasLogo)
         {
-            var logoBottom = (8 + 40) * _renderScale + 2 * _renderScale;
+            var logoBottom = topPadding + (8 + 40) * _renderScale + 2 * _renderScale;
             currentY = Math.Max(currentY, logoBottom);
         }
         currentY += 4 * _renderScale;
@@ -3496,18 +3462,19 @@ public class ReportRenderer : IDisposable
     /// Calculates how many labels fit based on available width and distributes them evenly,
     /// matching how LiveCharts handles axis labels.
     /// </summary>
-    private static int[] GetXAxisLabelIndices(List<ChartDataPoint> dataPoints, float chartWidth, float renderScale)
+    private static int[] GetXAxisLabelIndices(List<ChartDataPoint> dataPoints, float chartWidth, float measuredLabelWidth, float renderScale)
     {
         var totalCount = dataPoints.Count;
         if (totalCount == 0) return [];
         if (totalCount == 1) return [0];
         if (totalCount == 2) return [0, 1];
 
-        // Estimate label width (date format like "MM-dd-yyyy" ~85px at base size)
-        var estimatedLabelWidth = 85 * renderScale;
+        // Use measured label width plus a minimum gap between labels
+        var labelGap = 20 * renderScale;
+        var labelSlotWidth = measuredLabelWidth + labelGap;
 
         // Calculate how many labels can fit with spacing
-        var maxLabels = Math.Max(2, (int)(chartWidth / estimatedLabelWidth));
+        var maxLabels = Math.Max(2, (int)(chartWidth / labelSlotWidth));
 
         // Don't show more labels than data points
         if (maxLabels >= totalCount)
@@ -3529,6 +3496,42 @@ public class ReportRenderer : IDisposable
         }
 
         return indices.OrderBy(x => x).ToArray();
+    }
+
+    /// <summary>
+    /// Draws X-axis labels with special handling for the last label to prevent right-edge overflow.
+    /// If the last label would overflow the chart's right edge, it is shifted left to fit.
+    /// If shifting would cause it to overlap with the previous label, it is skipped entirely.
+    /// </summary>
+    private void DrawXAxisLabelsWithOverflowProtection(
+        SKCanvas canvas, float labelY, int[] labelIndices,
+        Func<int, (string label, float x)> getLabelInfo,
+        SKFont font, SKPaint paint, SKRect chartArea)
+    {
+        float prevLabelRightEdge = float.MinValue;
+
+        for (int idx = 0; idx < labelIndices.Length; idx++)
+        {
+            var (label, labelX) = getLabelInfo(labelIndices[idx]);
+            var labelWidth = font.MeasureText(label, paint);
+            var halfWidth = labelWidth / 2;
+
+            // For the last label, prevent right-edge overflow
+            if (idx == labelIndices.Length - 1 && labelX + halfWidth > chartArea.Right)
+            {
+                var adjustedX = chartArea.Right - halfWidth;
+                var minGap = 4 * _renderScale;
+
+                // If shifting left would overlap the previous label, skip it entirely
+                if (adjustedX - halfWidth < prevLabelRightEdge + minGap)
+                    continue;
+
+                labelX = adjustedX;
+            }
+
+            canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, font, paint);
+            prevLabelRightEdge = labelX + halfWidth;
+        }
     }
 
     private static SKColor ParseColor(string colorString)
