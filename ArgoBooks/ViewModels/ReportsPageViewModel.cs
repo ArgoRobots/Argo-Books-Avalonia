@@ -618,6 +618,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private int _currentDesignerPage = 1;
 
+    /// <summary>
+    /// Callback to get the viewport center position from the canvas (page number, local X, local Y).
+    /// Set by the View code-behind when the canvas is available.
+    /// </summary>
+    public Func<(int PageNumber, double LocalX, double LocalY)>? GetViewportCenter { get; set; }
+
     public string CurrentDesignerPageDisplay =>
         $"Page {CurrentDesignerPage} of {Configuration.PageCount}";
 
@@ -932,19 +938,75 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void AddElement(ReportElementType elementType)
     {
+        // Get element dimensions first so we can center it
+        var (width, height) = elementType switch
+        {
+            ReportElementType.Chart => (300.0, 200.0),
+            ReportElementType.Table => (400.0, 200.0),
+            ReportElementType.Label => (200.0, 40.0),
+            ReportElementType.Image => (150.0, 150.0),
+            ReportElementType.DateRange => (200.0, 30.0),
+            ReportElementType.Summary => (200.0, 120.0),
+            ReportElementType.AccountingTable => (500.0, 600.0),
+            _ => (200.0, 40.0)
+        };
+
+        // Place at the center of the user's current viewport
+        var viewportCenter = GetViewportCenter?.Invoke();
+        int pageNumber;
+        double centerX, centerY;
+
+        if (viewportCenter.HasValue)
+        {
+            pageNumber = viewportCenter.Value.PageNumber;
+            centerX = viewportCenter.Value.LocalX;
+            centerY = viewportCenter.Value.LocalY;
+        }
+        else
+        {
+            // Fallback: top-left of content area on current page
+            pageNumber = CurrentDesignerPage;
+            var margins = Configuration.PageMargins;
+            var headerHeight = Configuration.ShowHeader
+                ? PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails)
+                : 0;
+            centerX = margins.Left + width / 2;
+            centerY = headerHeight + margins.Top + height / 2;
+        }
+
+        // Center the element on the viewport center point
+        var elementX = centerX - width / 2;
+        var elementY = centerY - height / 2;
+
+        // Clamp to content bounds
+        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+        var ml = Configuration.PageMargins.Left;
+        var mr = Configuration.PageMargins.Right;
+        var mt = Configuration.PageMargins.Top;
+        var mb = Configuration.PageMargins.Bottom;
+        var hh = Configuration.ShowHeader ? PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails) : 0;
+        var fh = Configuration.ShowFooter ? PageDimensions.FooterHeight : 0;
+        var contentLeft = ml;
+        var contentTop = hh + mt;
+        var contentRight = pageWidth - mr;
+        var contentBottom = pageHeight - fh - mb;
+
+        elementX = Math.Max(contentLeft, Math.Min(elementX, contentRight - width));
+        elementY = Math.Max(contentTop, Math.Min(elementY, contentBottom - height));
+
         ReportElementBase element = elementType switch
         {
-            ReportElementType.Chart => new ChartReportElement { X = 100, Y = 150, Width = 300, Height = 200 },
-            ReportElementType.Table => new TableReportElement { X = 100, Y = 150, Width = 400, Height = 200 },
-            ReportElementType.Label => new LabelReportElement { X = 100, Y = 150, Width = 200, Height = 40 },
-            ReportElementType.Image => new ImageReportElement { X = 100, Y = 150, Width = 150, Height = 150 },
-            ReportElementType.DateRange => new DateRangeReportElement { X = 100, Y = 150, Width = 200, Height = 30 },
-            ReportElementType.Summary => new SummaryReportElement { X = 100, Y = 150, Width = 200, Height = 120 },
-            ReportElementType.AccountingTable => new AccountingTableReportElement { X = 100, Y = 150, Width = 500, Height = 600 },
+            ReportElementType.Chart => new ChartReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Table => new TableReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Label => new LabelReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Image => new ImageReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.DateRange => new DateRangeReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.Summary => new SummaryReportElement { X = elementX, Y = elementY, Width = width, Height = height },
+            ReportElementType.AccountingTable => new AccountingTableReportElement { X = elementX, Y = elementY, Width = width, Height = height },
             _ => new LabelReportElement()
         };
 
-        element.PageNumber = CurrentDesignerPage;
+        element.PageNumber = pageNumber;
         Configuration.AddElement(element);
         UndoRedoManager.RecordAction(new AddElementAction(Configuration, element));
         SelectedElement = element;
@@ -1061,7 +1123,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (SelectedElements.Count == 0) return;
 
-        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
 
         if (SelectedElements.Count == 1)
         {
@@ -1119,7 +1181,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
         }
 
-        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Align {0}".TranslateFormat(alignment)));
         OnPropertyChanged(nameof(Configuration));
     }
@@ -1129,7 +1191,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (SelectedElements.Count < 3) return;
 
-        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
 
         var sorted = direction == DistributeDirection.Horizontal
             ? SelectedElements.OrderBy(e => e.X).ToList()
@@ -1164,7 +1226,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
         }
 
-        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Distribute {0}".TranslateFormat(direction.ToString())));
         OnPropertyChanged(nameof(Configuration));
     }
@@ -1174,7 +1236,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (SelectedElements.Count < 2) return;
 
-        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         var reference = SelectedElements[0];
 
         foreach (var element in SelectedElements.Skip(1))
@@ -1194,7 +1256,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
         }
 
-        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Match {0}".TranslateFormat(mode.ToString())));
         OnPropertyChanged(nameof(Configuration));
     }
@@ -1971,6 +2033,18 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyPageSettings()
     {
+        var oldSettings = new PageSettingsSnapshot(
+            _originalPageSize, _originalPageOrientation,
+            _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft,
+            _originalShowHeader, _originalShowFooter, _originalShowPageNumbers, _originalShowCompanyDetails,
+            _originalBackgroundColor, _originalTitleFontSize, _originalPageSettingsDatePreset);
+
+        var newSettings = new PageSettingsSnapshot(
+            PageSize, PageOrientation,
+            MarginTop, MarginRight, MarginBottom, MarginLeft,
+            ShowHeader, ShowFooter, ShowPageNumbers, ShowCompanyDetails,
+            BackgroundColor, TitleFontSize, PageSettingsDatePreset);
+
         Configuration.PageSize = PageSize;
         Configuration.PageOrientation = PageOrientation;
         Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, MarginBottom);
@@ -1989,10 +2063,43 @@ public partial class ReportsPageViewModel : ViewModelBase
             option.IsSelected = option.Name == PageSettingsDatePreset;
         }
 
+        if (oldSettings != newSettings)
+        {
+            UndoRedoManager.RecordAction(new PageSettingsChangeAction(
+                Configuration, oldSettings, newSettings, ApplyPageSettingsSnapshot));
+        }
+
         UpdateCanvasDimensions();
         IsPageSettingsOpen = false;
 
         // Refresh the canvas after modal closes
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    private void ApplyPageSettingsSnapshot(PageSettingsSnapshot s)
+    {
+        PageSize = s.PageSize;
+        PageOrientation = s.PageOrientation;
+        MarginTop = s.MarginTop;
+        MarginRight = s.MarginRight;
+        MarginBottom = s.MarginBottom;
+        MarginLeft = s.MarginLeft;
+        ShowHeader = s.ShowHeader;
+        ShowFooter = s.ShowFooter;
+        ShowPageNumbers = s.ShowPageNumbers;
+        ShowCompanyDetails = s.ShowCompanyDetails;
+        BackgroundColor = s.BackgroundColor;
+        TitleFontSize = s.TitleFontSize;
+        PageSettingsDatePreset = s.DatePreset;
+
+        SelectedDatePreset = s.DatePreset;
+        foreach (var option in DatePresets)
+        {
+            option.IsSelected = option.Name == s.DatePreset;
+        }
+
+        UpdateCanvasDimensions();
         PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         OnPropertyChanged(nameof(Configuration));
     }
@@ -2669,14 +2776,16 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Calculate layout for charts using a grid layout
         var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
-        const double margin = PageDimensions.Margin;
+        var marginLeft = Configuration.PageMargins.Left;
+        var marginRight = Configuration.PageMargins.Right;
+        var marginBottom = Configuration.PageMargins.Bottom;
         double headerHeight = PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails);
         const double footerHeight = PageDimensions.FooterHeight;
         const double spacing = 10;
 
-        var contentWidth = pageWidth - (margin * 2);
-        var contentHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
-        var startY = headerHeight + margin;
+        var contentWidth = pageWidth - marginLeft - marginRight;
+        var contentHeight = pageHeight - headerHeight - footerHeight - marginBottom;
+        var startY = headerHeight;
 
         // Determine grid dimensions based on number of charts
         var chartCount = chartElements.Count;
@@ -2692,7 +2801,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             int row = i / columns;
             int col = i % columns;
 
-            chartElements[i].X = margin + (col * (cellWidth + spacing));
+            chartElements[i].X = marginLeft + (col * (cellWidth + spacing));
             chartElements[i].Y = startY + (row * (cellHeight + spacing));
             chartElements[i].Width = cellWidth;
             chartElements[i].Height = cellHeight;

@@ -79,6 +79,10 @@ public partial class ReportsPage : UserControl
             _designCanvas.PointerReleased += OnCanvasPointerReleased;
             _designCanvas.SelectionChanged += OnCanvasSelectionChanged;
             _designCanvas.ContextMenuRequested += OnCanvasContextMenuRequested;
+
+            // Provide viewport center callback to ViewModel for element placement
+            if (DataContext is ReportsPageViewModel vm2)
+                vm2.GetViewportCenter = _designCanvas.GetViewportCenterOnPage;
         }
 
         // Wire up keyboard shortcuts
@@ -106,6 +110,10 @@ public partial class ReportsPage : UserControl
             vm.TemplateLoaded += OnTemplateLoaded;
             vm.PreviewFitToWindowRequested += OnPreviewFitToWindowRequested;
             vm.CanvasRefreshRequested += OnCanvasRefreshRequested;
+
+            // Ensure viewport center callback is wired (may have missed it if DataContext wasn't ready earlier)
+            if (_designCanvas != null)
+                vm.GetViewportCenter = _designCanvas.GetViewportCenterOnPage;
 
             // Subscribe to UndoRedoManager state changes to update asterisk visibility
             vm.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;

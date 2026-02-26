@@ -198,7 +198,8 @@ public partial class SkiaReportDesignCanvas : UserControl
     private Point _elementStartPosition;
     private Size _elementStartSize;
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
-    private readonly Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
+    private readonly Dictionary<string, (Point Position, Size Size, int PageNumber)> _multiDragStartBounds = new();
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _dragOriginalBounds = new();
 
     // Panning state
     private Point _panStartPoint;
@@ -298,6 +299,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Wire up pointer wheel for Ctrl+scroll zoom-to-cursor (only fires when not already handled by parent)
         _scrollViewer?.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble);
 
+        // Track scroll changes to update CurrentDesignerPage based on what's visible
+        if (_scrollViewer != null)
+            _scrollViewer.ScrollChanged += OnScrollChanged;
+
         // Wire up keyboard events
         KeyDown += OnKeyDown;
 
@@ -306,6 +311,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void OnUnloaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (_scrollViewer != null)
+            _scrollViewer.ScrollChanged -= OnScrollChanged;
         _renderBitmap?.Dispose();
         _renderBitmap = null;
     }
@@ -411,15 +418,15 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var bgColor = SKColor.Parse(Configuration.BackgroundColor);
                 canvas.DrawRect(0, 0, baseWidth, baseHeight, new SKPaint { Color = bgColor, Style = SKPaintStyle.Fill });
 
-                // Draw grid if enabled (only on template pages, not continuation)
-                if (ShowGrid && !effectivePage.IsContinuationPage)
+                // Draw grid if enabled
+                if (ShowGrid)
                 {
                     DrawGrid(canvas, baseWidth, baseHeight);
                 }
 
-                // RenderEffectivePageToCanvas handles header/footer/elements internally
+                // Render content (skip background since we already drew it above)
                 Configuration.CurrentPageNumber = effectivePage.EffectivePageNumber;
-                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight);
+                renderer.RenderEffectivePageToCanvas(canvas, effectivePage, baseWidth, baseHeight, skipBackground: true);
 
                 canvas.Restore();
             }
@@ -477,8 +484,29 @@ public partial class SkiaReportDesignCanvas : UserControl
         UpdateCanvasImage(baseWidth, totalHeight);
     }
 
+    /// <summary>
+    /// Gets the content area where elements can be placed (inside margins, between header/footer).
+    /// </summary>
+    private (double Left, double Top, double Right, double Bottom) GetContentBounds()
+    {
+        var (pageWidth, pageHeight) = GetPageDimensions();
+        var margins = Configuration?.PageMargins;
+        var left = margins?.Left ?? PageDimensions.Margin;
+        var right = pageWidth - (margins?.Right ?? PageDimensions.Margin);
+        var marginTop = margins?.Top ?? PageDimensions.Margin;
+        var marginBottom = margins?.Bottom ?? PageDimensions.Margin;
+        var top = (Configuration?.ShowHeader ?? false)
+            ? PageDimensions.GetHeaderHeight(Configuration?.ShowCompanyDetails ?? false) + marginTop
+            : marginTop;
+        var bottom = (Configuration?.ShowFooter ?? false)
+            ? pageHeight - PageDimensions.FooterHeight - marginBottom
+            : pageHeight - marginBottom;
+        return (left, top, right, bottom);
+    }
+
     private void DrawGrid(SKCanvas canvas, int width, int height)
     {
+        var (left, top, right, bottom) = GetContentBounds();
         var gridSize = (float)GridSize;
         using var gridPaint = new SKPaint();
         gridPaint.Color = new SKColor(200, 200, 200, 100);
@@ -486,16 +514,22 @@ public partial class SkiaReportDesignCanvas : UserControl
         gridPaint.StrokeWidth = 1;
         gridPaint.IsAntialias = false;
 
+        // Align grid lines to the content area origin
+        var startX = (float)left;
+        var startY = (float)top;
+        var endX = (float)right;
+        var endY = (float)bottom;
+
         // Vertical lines
-        for (float x = gridSize; x < width; x += gridSize)
+        for (float x = startX; x <= endX; x += gridSize)
         {
-            canvas.DrawLine(x, 0, x, height, gridPaint);
+            canvas.DrawLine(x, startY, x, endY, gridPaint);
         }
 
         // Horizontal lines
-        for (float y = gridSize; y < height; y += gridSize)
+        for (float y = startY; y <= endY; y += gridSize)
         {
-            canvas.DrawLine(0, y, width, y, gridPaint);
+            canvas.DrawLine(startX, y, endX, y, gridPaint);
         }
     }
 
@@ -503,13 +537,15 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         var showCompanyDetails = Configuration?.ShowCompanyDetails ?? false;
         var headerHeight = (float)PageDimensions.GetHeaderHeight(showCompanyDetails);
+        var marginLeft = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
+        var marginRight = (float)(Configuration?.PageMargins.Right ?? PageDimensions.Margin);
 
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
         separatorPaint.Style = SKPaintStyle.Stroke;
         separatorPaint.StrokeWidth = 1;
 
-        canvas.DrawLine(40, headerHeight, width - 40, headerHeight, separatorPaint);
+        canvas.DrawLine(marginLeft, headerHeight, width - marginRight, headerHeight, separatorPaint);
 
         if (showCompanyDetails)
         {
@@ -541,7 +577,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         var logoSize = 40f;
         var logoPadding = 10f;
-        var margin = 40f;
+        var margin = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
         var hasLogo = !string.IsNullOrEmpty(logoPath) && File.Exists(logoPath);
         var textStartX = hasLogo ? margin + logoSize + logoPadding : margin;
 
@@ -611,23 +647,25 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (totalPages == 0) totalPages = Configuration?.PageCount ?? 1;
 
         var footerHeight = (float)PageDimensions.FooterHeight;
+        var marginLeft = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
+        var marginRight = (float)(Configuration?.PageMargins.Right ?? PageDimensions.Margin);
 
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
         separatorPaint.Style = SKPaintStyle.Stroke;
         separatorPaint.StrokeWidth = 1;
 
-        canvas.DrawLine(40, height - footerHeight, width - 40, height - footerHeight, separatorPaint);
+        canvas.DrawLine(marginLeft, height - footerHeight, width - marginRight, height - footerHeight, separatorPaint);
 
         using var footerFont = new SKFont(SKTypeface.Default, 11);
         using var footerPaint = new SKPaint();
         footerPaint.Color = SKColors.Gray;
         footerPaint.IsAntialias = true;
-        canvas.DrawText("Generated: [Date/Time]", 40, height - 15, SKTextAlign.Left, footerFont, footerPaint);
+        canvas.DrawText("Generated: [Date/Time]", marginLeft, height - 15, SKTextAlign.Left, footerFont, footerPaint);
         var pageText = totalPages > 1
             ? $"Page {pageNumber} of {totalPages}"
             : $"Page {pageNumber}";
-        canvas.DrawText(pageText, width - 40, height - 15, SKTextAlign.Right, footerFont, footerPaint);
+        canvas.DrawText(pageText, width - marginRight, height - 15, SKTextAlign.Right, footerFont, footerPaint);
     }
 
     private void DrawSelectionVisuals(SKCanvas canvas)
@@ -1288,44 +1326,98 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         // Store start bounds for all selected elements
         _multiDragStartBounds.Clear();
+        _dragOriginalBounds.Clear();
         foreach (var element in _selectedElements)
         {
-            _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height));
+            _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height), element.PageNumber);
+            _dragOriginalBounds[element.Id] = element.BoundsWithPage;
         }
     }
 
     private void HandleDrag(Point canvasPoint)
     {
-        // Use canvas-space delta (same offset applies regardless of page)
         var delta = canvasPoint - _interactionStartPoint;
+        var (cLeft, cTop, cRight, cBottom) = GetContentBounds();
+        var pageCount = GetPageCount();
+        var pageTransferred = false;
 
         foreach (var element in _selectedElements)
         {
-            if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
-            {
-                var newX = startBounds.Position.X + delta.X;
-                var newY = startBounds.Position.Y + delta.Y;
+            if (!_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
+                continue;
 
-                // Apply grid snapping only when grid is visible
-                if (SnapToGrid && ShowGrid)
+            var newX = startBounds.Position.X + delta.X;
+            var newY = startBounds.Position.Y + delta.Y;
+
+            // Grid snapping aligned to content area origin
+            if (SnapToGrid && ShowGrid)
+            {
+                newX = cLeft + Math.Round((newX - cLeft) / GridSize) * GridSize;
+                newY = cTop + Math.Round((newY - cTop) / GridSize) * GridSize;
+            }
+
+            // Clamp within current page's content bounds
+            newX = Math.Max(cLeft, Math.Min(newX, cRight - element.Width));
+            newY = Math.Max(cTop, Math.Min(newY, cBottom - element.Height));
+
+            // Edge trigger: detect cursor on a different page than the element
+            var (cursorPage, _) = GetPageAtCanvasY(canvasPoint.Y);
+
+            // If cursor is in a gap, determine nearest page
+            if (cursorPage == 0)
+            {
+                var (_, pageHeight) = GetPageDimensions();
+                for (int p = 1; p <= pageCount; p++)
                 {
-                    newX = Math.Round(newX / GridSize) * GridSize;
-                    newY = Math.Round(newY / GridSize) * GridSize;
+                    var pageBottom = GetPageYOffset(p) + pageHeight;
+                    var nextPageTop = GetPageYOffset(p) + pageHeight + PageGap;
+                    if (canvasPoint.Y >= pageBottom && canvasPoint.Y < nextPageTop)
+                    {
+                        // In gap after page p — pick the page the cursor is closer to
+                        var gapMid = pageBottom + PageGap / 2.0;
+                        cursorPage = canvasPoint.Y < gapMid ? p : Math.Min(p + 1, pageCount);
+                        break;
+                    }
+                }
+                // Above first page or below last page
+                if (cursorPage == 0)
+                    cursorPage = canvasPoint.Y < 0 ? 1 : pageCount;
+            }
+
+            // Transfer element to the cursor's page if different
+            if (cursorPage != element.PageNumber && cursorPage >= 1 && cursorPage <= pageCount)
+            {
+                if (cursorPage > element.PageNumber)
+                {
+                    // Moving down: place at top of content area
+                    element.PageNumber = cursorPage;
+                    newY = cTop;
+                }
+                else
+                {
+                    // Moving up: place at bottom of content area
+                    element.PageNumber = cursorPage;
+                    newY = cBottom - element.Height;
                 }
 
-                // Constrain to page bounds
-                var (pageWidth, pageHeight) = GetPageDimensions();
-                newX = Math.Max(0, Math.Min(newX, pageWidth - element.Width));
-                newY = Math.Max(0, Math.Min(newY, pageHeight - element.Height));
-
-                element.X = newX;
-                element.Y = newY;
+                pageTransferred = true;
             }
+
+            element.X = newX;
+            element.Y = newY;
         }
 
-        // Mark as manually positioned
-        Configuration?.HasManualChartLayout = true;
+        // Rebase start bounds after page transfer so continued dragging is smooth
+        if (pageTransferred)
+        {
+            foreach (var element in _selectedElements)
+            {
+                _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height), element.PageNumber);
+            }
+            _interactionStartPoint = canvasPoint;
+        }
 
+        Configuration?.HasManualChartLayout = true;
         InvalidateCanvas();
     }
 
@@ -1338,22 +1430,21 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Record undo action for moved elements (as a single batch action)
         if (UndoRedoManager != null && Configuration != null && _selectedElements.Count > 0)
         {
-            var oldBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
-            var newBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
+            var oldBounds = new Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)>();
+            var newBounds = new Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)>();
             var hasMoved = false;
 
             foreach (var element in _selectedElements)
             {
-                if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
+                if (_dragOriginalBounds.TryGetValue(element.Id, out var original))
                 {
-                    var old = (startBounds.Position.X, startBounds.Position.Y, startBounds.Size.Width, startBounds.Size.Height);
-                    var current = (element.X, element.Y, element.Width, element.Height);
-
-                    // Check if position actually changed
-                    if (Math.Abs(old.Item1 - current.Item1) > 0.1 || Math.Abs(old.Item2 - current.Item2) > 0.1)
+                    // Check if position or page actually changed
+                    if (Math.Abs(original.X - element.X) > 0.1 ||
+                        Math.Abs(original.Y - element.Y) > 0.1 ||
+                        original.PageNumber != element.PageNumber)
                     {
-                        oldBounds[element.Id] = old;
-                        newBounds[element.Id] = current;
+                        oldBounds[element.Id] = original;
+                        newBounds[element.Id] = element.BoundsWithPage;
                         hasMoved = true;
                     }
                 }
@@ -1368,6 +1459,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         _multiDragStartBounds.Clear();
+        _dragOriginalBounds.Clear();
     }
 
     #endregion
@@ -1465,14 +1557,21 @@ public partial class SkiaReportDesignCanvas : UserControl
             newHeight = minSize;
         }
 
-        // Apply grid snapping only when grid is visible
+        // Constrain to content area (inside margins, between header/footer)
+        var (cLeft, cTop, cRight, cBottom) = GetContentBounds();
+
+        // Apply grid snapping aligned to content area origin
         if (SnapToGrid && ShowGrid)
         {
-            newX = Math.Round(newX / GridSize) * GridSize;
-            newY = Math.Round(newY / GridSize) * GridSize;
+            newX = cLeft + Math.Round((newX - cLeft) / GridSize) * GridSize;
+            newY = cTop + Math.Round((newY - cTop) / GridSize) * GridSize;
             newWidth = Math.Round(newWidth / GridSize) * GridSize;
             newHeight = Math.Round(newHeight / GridSize) * GridSize;
         }
+        newX = Math.Max(cLeft, newX);
+        newY = Math.Max(cTop, newY);
+        newWidth = Math.Min(newWidth, cRight - newX);
+        newHeight = Math.Min(newHeight, cBottom - newY);
 
         element.X = newX;
         element.Y = newY;
@@ -1680,7 +1779,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         foreach (var element in _selectedElements.ToList())
         {
-            Configuration.Elements.Remove(element);
+            UndoRedoManager?.RecordAction(new RemoveElementAction(Configuration, element));
+            Configuration.RemoveElement(element.Id);
             ElementRemoved?.Invoke(this, element);
         }
 
@@ -1798,6 +1898,8 @@ public partial class SkiaReportDesignCanvas : UserControl
     /// <summary>
     /// Scrolls the canvas to bring a specific page into view.
     /// </summary>
+    private bool _isScrollingToPage;
+
     private void ScrollToPage(int pageNumber)
     {
         if (_scrollViewer == null) return;
@@ -1808,12 +1910,65 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Calculate the scroll offset to show this page at the top
         var scrollY = pageYOffset * zoom;
 
+        _isScrollingToPage = true;
         Dispatcher.UIThread.Post(() =>
         {
             if (_scrollViewer == null) return;
             var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
             _scrollViewer.Offset = new Vector(_scrollViewer.Offset.X, Math.Clamp(scrollY, 0, maxY));
+            _isScrollingToPage = false;
         }, DispatcherPriority.Render);
+    }
+
+    private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        // Don't update CurrentDesignerPage while we're programmatically scrolling to a page
+        if (_isScrollingToPage || _scrollViewer == null) return;
+
+        // Determine which page is at the center of the viewport
+        var (page, _, _) = GetViewportCenterOnPage();
+        if (page > 0 && page != CurrentDesignerPage)
+        {
+            _isScrollingToPage = true; // Prevent feedback loop
+            CurrentDesignerPage = page;
+            _isScrollingToPage = false;
+        }
+    }
+
+    /// <summary>
+    /// Returns the page number and page-local coordinates at the center of the current viewport.
+    /// </summary>
+    public (int PageNumber, double LocalX, double LocalY) GetViewportCenterOnPage()
+    {
+        if (_scrollViewer == null)
+            return (CurrentDesignerPage, 0, 0);
+
+        var zoom = ZoomLevel;
+        const double margin = 10.0; // LayoutTransformControl margin
+
+        // Viewport center in scroll content space
+        var contentX = _scrollViewer.Offset.X + _scrollViewer.Viewport.Width / 2;
+        var contentY = _scrollViewer.Offset.Y + _scrollViewer.Viewport.Height / 2;
+
+        // Account for centering when content is smaller than viewport
+        var centeringOffsetX = Math.Max(0, (_scrollViewer.Viewport.Width - _scrollViewer.Extent.Width) / 2);
+        var centeringOffsetY = Math.Max(0, (_scrollViewer.Viewport.Height - _scrollViewer.Extent.Height) / 2);
+
+        // Convert to canvas coordinates (remove centering, margin, and zoom)
+        var canvasX = (contentX - centeringOffsetX - margin) / zoom;
+        var canvasY = (contentY - centeringOffsetY - margin) / zoom;
+
+        // Determine which page and local position
+        var (pageNumber, localY) = GetPageAtCanvasY(canvasY);
+        if (pageNumber == 0)
+        {
+            // In a gap — snap to nearest page
+            pageNumber = Math.Max(1, Math.Min(GetPageCount(), CurrentDesignerPage));
+            var (_, pageHeight) = GetPageDimensions();
+            localY = pageHeight / 2;
+        }
+
+        return (pageNumber, canvasX, localY);
     }
 
     /// <summary>

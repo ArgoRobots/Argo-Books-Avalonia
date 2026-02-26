@@ -732,20 +732,20 @@
                                     <TextBlock Text="{loc:Loc 'Summary'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Table}" ToolTip.Tip="{loc:Loc 'Add Table'}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="{x:Static icons:Icons.Grid2x2}"
-                                              Width="18" Height="18"
-                                              Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Table'}" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
                             <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Image}" ToolTip.Tip="{loc:Loc 'Add Image'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{x:Static icons:Icons.Image}"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Image'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Table}" ToolTip.Tip="{loc:Loc 'Add Table'}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{x:Static icons:Icons.Grid2x2}"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Table'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
                             <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.AccountingTable}" ToolTip.Tip="{loc:Loc 'Add Accounting Table'}">
@@ -785,13 +785,13 @@
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Table}" ToolTip.Tip="{loc:Loc 'Add Table'}">
-                                <PathIcon Data="{x:Static icons:Icons.Grid2x2}"
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Image}" ToolTip.Tip="{loc:Loc 'Add Image'}">
+                                <PathIcon Data="{x:Static icons:Icons.Image}"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Image}" ToolTip.Tip="{loc:Loc 'Add Image'}">
-                                <PathIcon Data="{x:Static icons:Icons.Image}"
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="{x:Static enums:ReportElementType.Table}" ToolTip.Tip="{loc:Loc 'Add Table'}">
+                                <PathIcon Data="{x:Static icons:Icons.Grid2x2}"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
@@ -941,7 +941,7 @@
                                                         ShowGrid="{Binding ShowGrid}"
                                                         GridSize="{Binding GridSize}"
                                                         SnapToGrid="{Binding SnapToGrid}"
-                                                        CurrentDesignerPage="{Binding CurrentDesignerPage}"
+                                                        CurrentDesignerPage="{Binding CurrentDesignerPage, Mode=TwoWay}"
                                                         UndoRedoManager="{Binding UndoRedoManager}" />
 
                         <!-- Save Confirmation Overlay -->

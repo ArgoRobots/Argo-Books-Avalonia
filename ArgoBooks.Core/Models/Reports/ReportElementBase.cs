@@ -150,6 +150,16 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets or sets bounds including page number, for undo/redo of cross-page moves.
+    /// </summary>
+    [JsonIgnore]
+    public (double X, double Y, double Width, double Height, int PageNumber) BoundsWithPage
+    {
+        get => (X, Y, Width, Height, PageNumber);
+        set { (X, Y, Width, Height) = (value.X, value.Y, value.Width, value.Height); PageNumber = value.PageNumber; }
+    }
+
+    /// <summary>
     /// Raises the PropertyChanged event.
     /// </summary>
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

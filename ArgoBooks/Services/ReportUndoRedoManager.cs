@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Localization;
 
@@ -463,17 +464,17 @@ public class ElementPropertyChangeAction(
 }
 
 /// <summary>
-/// Action for batch operations (alignment, distribution, sizing).
+/// Action for batch operations (alignment, distribution, sizing, cross-page moves).
 /// </summary>
 public class BatchMoveResizeAction(
     ReportConfiguration config,
-    Dictionary<string, (double X, double Y, double Width, double Height)> oldBounds,
-    Dictionary<string, (double X, double Y, double Width, double Height)> newBounds,
+    Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> oldBounds,
+    Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> newBounds,
     string description)
     : IReportUndoableAction
 {
-    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _oldBounds = new(oldBounds);
-    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _newBounds = new(newBounds);
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _oldBounds = new(oldBounds);
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _newBounds = new(newBounds);
 
     public string Description { get; } = description;
 
@@ -482,7 +483,8 @@ public class BatchMoveResizeAction(
         foreach (var kvp in _oldBounds)
         {
             var element = config.GetElementById(kvp.Key);
-            element?.Bounds = kvp.Value;
+            if (element == null) continue;
+            element.BoundsWithPage = kvp.Value;
         }
     }
 
@@ -491,7 +493,8 @@ public class BatchMoveResizeAction(
         foreach (var kvp in _newBounds)
         {
             var element = config.GetElementById(kvp.Key);
-            element?.Bounds = kvp.Value;
+            if (element == null) continue;
+            element.BoundsWithPage = kvp.Value;
         }
     }
 }
@@ -576,5 +579,75 @@ public class DeletePageAction : IReportUndoableAction
             element.PageNumber--;
         }
         _config.PageCount--;
+    }
+}
+
+/// <summary>
+/// Snapshot of all page settings for undo/redo.
+/// </summary>
+public record PageSettingsSnapshot(
+    PageSize PageSize,
+    PageOrientation PageOrientation,
+    double MarginTop,
+    double MarginRight,
+    double MarginBottom,
+    double MarginLeft,
+    bool ShowHeader,
+    bool ShowFooter,
+    bool ShowPageNumbers,
+    bool ShowCompanyDetails,
+    string BackgroundColor,
+    double TitleFontSize,
+    string DatePreset);
+
+/// <summary>
+/// Action for changing page settings. Captures a full snapshot of all settings
+/// so that undo/redo restores the complete state.
+/// </summary>
+public class PageSettingsChangeAction : IReportUndoableAction
+{
+    private readonly ReportConfiguration _config;
+    private readonly PageSettingsSnapshot _oldSettings;
+    private readonly PageSettingsSnapshot _newSettings;
+    private readonly Action<PageSettingsSnapshot> _applyToViewModel;
+
+    public PageSettingsChangeAction(
+        ReportConfiguration config,
+        PageSettingsSnapshot oldSettings,
+        PageSettingsSnapshot newSettings,
+        Action<PageSettingsSnapshot> applyToViewModel)
+    {
+        _config = config;
+        _oldSettings = oldSettings;
+        _newSettings = newSettings;
+        _applyToViewModel = applyToViewModel;
+    }
+
+    public string Description => "Change page settings".Translate();
+
+    public void Undo()
+    {
+        ApplyToConfig(_oldSettings);
+        _applyToViewModel(_oldSettings);
+    }
+
+    public void Redo()
+    {
+        ApplyToConfig(_newSettings);
+        _applyToViewModel(_newSettings);
+    }
+
+    private void ApplyToConfig(PageSettingsSnapshot s)
+    {
+        _config.PageSize = s.PageSize;
+        _config.PageOrientation = s.PageOrientation;
+        _config.PageMargins = new ReportMargins(s.MarginLeft, s.MarginTop, s.MarginRight, s.MarginBottom);
+        _config.ShowHeader = s.ShowHeader;
+        _config.ShowFooter = s.ShowFooter;
+        _config.ShowPageNumbers = s.ShowPageNumbers;
+        _config.ShowCompanyDetails = s.ShowCompanyDetails;
+        _config.BackgroundColor = s.BackgroundColor;
+        _config.TitleFontSize = s.TitleFontSize;
+        _config.Filters.DatePresetName = s.DatePreset;
     }
 }
