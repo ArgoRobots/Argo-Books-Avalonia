@@ -206,7 +206,7 @@ public class ChartReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = ReportChartStyle.Bar;
+    } = ReportChartStyle.Area;
 
     [JsonPropertyName("showLegend")]
     public bool ShowLegend
