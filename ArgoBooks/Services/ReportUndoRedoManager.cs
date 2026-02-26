@@ -464,17 +464,17 @@ public class ElementPropertyChangeAction(
 }
 
 /// <summary>
-/// Action for batch operations (alignment, distribution, sizing).
+/// Action for batch operations (alignment, distribution, sizing, cross-page moves).
 /// </summary>
 public class BatchMoveResizeAction(
     ReportConfiguration config,
-    Dictionary<string, (double X, double Y, double Width, double Height)> oldBounds,
-    Dictionary<string, (double X, double Y, double Width, double Height)> newBounds,
+    Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> oldBounds,
+    Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> newBounds,
     string description)
     : IReportUndoableAction
 {
-    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _oldBounds = new(oldBounds);
-    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _newBounds = new(newBounds);
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _oldBounds = new(oldBounds);
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _newBounds = new(newBounds);
 
     public string Description { get; } = description;
 
@@ -483,7 +483,8 @@ public class BatchMoveResizeAction(
         foreach (var kvp in _oldBounds)
         {
             var element = config.GetElementById(kvp.Key);
-            element?.Bounds = kvp.Value;
+            if (element == null) continue;
+            element.BoundsWithPage = kvp.Value;
         }
     }
 
@@ -492,7 +493,8 @@ public class BatchMoveResizeAction(
         foreach (var kvp in _newBounds)
         {
             var element = config.GetElementById(kvp.Key);
-            element?.Bounds = kvp.Value;
+            if (element == null) continue;
+            element.BoundsWithPage = kvp.Value;
         }
     }
 }

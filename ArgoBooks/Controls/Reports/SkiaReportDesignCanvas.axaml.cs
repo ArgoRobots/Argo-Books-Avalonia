@@ -198,7 +198,8 @@ public partial class SkiaReportDesignCanvas : UserControl
     private Point _elementStartPosition;
     private Size _elementStartSize;
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
-    private readonly Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
+    private readonly Dictionary<string, (Point Position, Size Size, int PageNumber)> _multiDragStartBounds = new();
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _dragOriginalBounds = new();
 
     // Panning state
     private Point _panStartPoint;
@@ -1325,45 +1326,98 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         // Store start bounds for all selected elements
         _multiDragStartBounds.Clear();
+        _dragOriginalBounds.Clear();
         foreach (var element in _selectedElements)
         {
-            _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height));
+            _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height), element.PageNumber);
+            _dragOriginalBounds[element.Id] = element.BoundsWithPage;
         }
     }
 
     private void HandleDrag(Point canvasPoint)
     {
-        // Use canvas-space delta (same offset applies regardless of page)
         var delta = canvasPoint - _interactionStartPoint;
+        var (cLeft, cTop, cRight, cBottom) = GetContentBounds();
+        var pageCount = GetPageCount();
+        var pageTransferred = false;
 
         foreach (var element in _selectedElements)
         {
-            if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
+            if (!_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
+                continue;
+
+            var newX = startBounds.Position.X + delta.X;
+            var newY = startBounds.Position.Y + delta.Y;
+
+            // Grid snapping aligned to content area origin
+            if (SnapToGrid && ShowGrid)
             {
-                var newX = startBounds.Position.X + delta.X;
-                var newY = startBounds.Position.Y + delta.Y;
+                newX = cLeft + Math.Round((newX - cLeft) / GridSize) * GridSize;
+                newY = cTop + Math.Round((newY - cTop) / GridSize) * GridSize;
+            }
 
-                // Constrain to content area (inside margins, between header/footer)
-                var (cLeft, cTop, cRight, cBottom) = GetContentBounds();
+            // Clamp within current page's content bounds
+            newX = Math.Max(cLeft, Math.Min(newX, cRight - element.Width));
+            newY = Math.Max(cTop, Math.Min(newY, cBottom - element.Height));
 
-                // Apply grid snapping aligned to content area origin
-                if (SnapToGrid && ShowGrid)
+            // Edge trigger: detect cursor on a different page than the element
+            var (cursorPage, _) = GetPageAtCanvasY(canvasPoint.Y);
+
+            // If cursor is in a gap, determine nearest page
+            if (cursorPage == 0)
+            {
+                var (_, pageHeight) = GetPageDimensions();
+                for (int p = 1; p <= pageCount; p++)
                 {
-                    newX = cLeft + Math.Round((newX - cLeft) / GridSize) * GridSize;
-                    newY = cTop + Math.Round((newY - cTop) / GridSize) * GridSize;
+                    var pageBottom = GetPageYOffset(p) + pageHeight;
+                    var nextPageTop = GetPageYOffset(p) + pageHeight + PageGap;
+                    if (canvasPoint.Y >= pageBottom && canvasPoint.Y < nextPageTop)
+                    {
+                        // In gap after page p — pick the page the cursor is closer to
+                        var gapMid = pageBottom + PageGap / 2.0;
+                        cursorPage = canvasPoint.Y < gapMid ? p : Math.Min(p + 1, pageCount);
+                        break;
+                    }
+                }
+                // Above first page or below last page
+                if (cursorPage == 0)
+                    cursorPage = canvasPoint.Y < 0 ? 1 : pageCount;
+            }
+
+            // Transfer element to the cursor's page if different
+            if (cursorPage != element.PageNumber && cursorPage >= 1 && cursorPage <= pageCount)
+            {
+                if (cursorPage > element.PageNumber)
+                {
+                    // Moving down: place at top of content area
+                    element.PageNumber = cursorPage;
+                    newY = cTop;
+                }
+                else
+                {
+                    // Moving up: place at bottom of content area
+                    element.PageNumber = cursorPage;
+                    newY = cBottom - element.Height;
                 }
 
-                newX = Math.Max(cLeft, Math.Min(newX, cRight - element.Width));
-                newY = Math.Max(cTop, Math.Min(newY, cBottom - element.Height));
-
-                element.X = newX;
-                element.Y = newY;
+                pageTransferred = true;
             }
+
+            element.X = newX;
+            element.Y = newY;
         }
 
-        // Mark as manually positioned
-        Configuration?.HasManualChartLayout = true;
+        // Rebase start bounds after page transfer so continued dragging is smooth
+        if (pageTransferred)
+        {
+            foreach (var element in _selectedElements)
+            {
+                _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height), element.PageNumber);
+            }
+            _interactionStartPoint = canvasPoint;
+        }
 
+        Configuration?.HasManualChartLayout = true;
         InvalidateCanvas();
     }
 
@@ -1376,22 +1430,21 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Record undo action for moved elements (as a single batch action)
         if (UndoRedoManager != null && Configuration != null && _selectedElements.Count > 0)
         {
-            var oldBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
-            var newBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
+            var oldBounds = new Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)>();
+            var newBounds = new Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)>();
             var hasMoved = false;
 
             foreach (var element in _selectedElements)
             {
-                if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
+                if (_dragOriginalBounds.TryGetValue(element.Id, out var original))
                 {
-                    var old = (startBounds.Position.X, startBounds.Position.Y, startBounds.Size.Width, startBounds.Size.Height);
-                    var current = (element.X, element.Y, element.Width, element.Height);
-
-                    // Check if position actually changed
-                    if (Math.Abs(old.Item1 - current.Item1) > 0.1 || Math.Abs(old.Item2 - current.Item2) > 0.1)
+                    // Check if position or page actually changed
+                    if (Math.Abs(original.X - element.X) > 0.1 ||
+                        Math.Abs(original.Y - element.Y) > 0.1 ||
+                        original.PageNumber != element.PageNumber)
                     {
-                        oldBounds[element.Id] = old;
-                        newBounds[element.Id] = current;
+                        oldBounds[element.Id] = original;
+                        newBounds[element.Id] = element.BoundsWithPage;
                         hasMoved = true;
                     }
                 }
@@ -1406,6 +1459,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         _multiDragStartBounds.Clear();
+        _dragOriginalBounds.Clear();
     }
 
     #endregion

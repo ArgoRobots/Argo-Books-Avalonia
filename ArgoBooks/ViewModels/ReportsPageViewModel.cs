@@ -1123,7 +1123,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (SelectedElements.Count == 0) return;
 
-        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
 
         if (SelectedElements.Count == 1)
         {
@@ -1181,7 +1181,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
         }
 
-        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Align {0}".TranslateFormat(alignment)));
         OnPropertyChanged(nameof(Configuration));
     }
@@ -1191,7 +1191,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (SelectedElements.Count < 3) return;
 
-        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
 
         var sorted = direction == DistributeDirection.Horizontal
             ? SelectedElements.OrderBy(e => e.X).ToList()
@@ -1226,7 +1226,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
         }
 
-        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Distribute {0}".TranslateFormat(direction.ToString())));
         OnPropertyChanged(nameof(Configuration));
     }
@@ -1236,7 +1236,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (SelectedElements.Count < 2) return;
 
-        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var oldBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         var reference = SelectedElements[0];
 
         foreach (var element in SelectedElements.Skip(1))
@@ -1256,7 +1256,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
         }
 
-        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
+        var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.BoundsWithPage);
         UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Match {0}".TranslateFormat(mode.ToString())));
         OnPropertyChanged(nameof(Configuration));
     }
