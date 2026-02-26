@@ -245,7 +245,6 @@ public static class ReportTemplateFactory
 
         config.Filters.SelectedChartTypes.AddRange(
         [
-            ChartDataType.ReturnsOverTime,
             ChartDataType.ReturnReasons,
             ChartDataType.ReturnFinancialImpact,
             ChartDataType.ReturnsByCategory,
@@ -281,7 +280,6 @@ public static class ReportTemplateFactory
 
         config.Filters.SelectedChartTypes.AddRange(
         [
-            ChartDataType.LossesOverTime,
             ChartDataType.LossReasons,
             ChartDataType.LossFinancialImpact,
             ChartDataType.LossesByCategory,
@@ -503,8 +501,8 @@ public static class ReportTemplateFactory
     {
         var context = new LayoutContext(config);
 
-        // Create vertical stack: summary (15%), then 3 equal charts below the date range
-        var stack = CreateVerticalStack(context, 0.15, 0.28, 0.28, 0.29);
+        // Create vertical stack: summary (20%), then 3 charts below the date range
+        var stack = CreateVerticalStack(context, 0.20, 0.27, 0.27, 0.26);
 
         config.AddElement(new SummaryReportElement
         {
