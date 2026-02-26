@@ -1872,7 +1872,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (_isScrollingToPage || _scrollViewer == null) return;
 
         // Determine which page is at the center of the viewport
-        var (page, _) = GetViewportCenterOnPage();
+        var (page, _, _) = GetViewportCenterOnPage();
         if (page > 0 && page != CurrentDesignerPage)
         {
             _isScrollingToPage = true; // Prevent feedback loop

@@ -81,8 +81,8 @@ public partial class ReportsPage : UserControl
             _designCanvas.ContextMenuRequested += OnCanvasContextMenuRequested;
 
             // Provide viewport center callback to ViewModel for element placement
-            if (DataContext is ReportsPageViewModel vm)
-                vm.GetViewportCenter = _designCanvas.GetViewportCenterOnPage;
+            if (DataContext is ReportsPageViewModel vm2)
+                vm2.GetViewportCenter = _designCanvas.GetViewportCenterOnPage;
         }
 
         // Wire up keyboard shortcuts
