@@ -3124,6 +3124,22 @@ public class App : Application
             {
                 // Close the password modal if it was open
                 passwordModal.Close();
+
+                // Time-shift sample company data if needed
+                if (CompanyManager.IsSampleCompany && CompanyManager.CompanyData != null)
+                {
+                    if (SampleCompanyService.TimeShiftSampleData(CompanyManager.CompanyData))
+                    {
+                        CompanyManager.NotifyDataChanged();
+                        _suppressSavedFeedback = true;
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    CompanyManager.CompanyData.MarkAsSaved();
+                    _mainWindowViewModel!.HasUnsavedChanges = false;
+                    _appShellViewModel!.HeaderViewModel.HasUnsavedChanges = false;
+                    ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
+                }
+
                 await LoadRecentCompaniesAsync();
             }
             else
