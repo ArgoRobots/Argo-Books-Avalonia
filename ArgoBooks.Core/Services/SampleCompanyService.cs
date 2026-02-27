@@ -103,7 +103,12 @@ public class SampleCompanyService
             PatchRentalRecordFinancials(context.CompanyData);
 
             // Add additional active rental records for richer sample data
-            AddSampleActiveRentals(context.CompanyData);
+            // Use the data's max date as the reference point (not DateTime.Today)
+            // so that TimeShiftSampleData can shift these dates along with everything else.
+            var maxDate = FindMaxDate(context.CompanyData);
+            if (maxDate == DateTime.MinValue)
+                maxDate = DateTime.Today;
+            AddSampleActiveRentals(context.CompanyData, maxDate);
 
             // Save company data to temp directory
             await _fileService.SaveCompanyDataAsync(companyDir, context.CompanyData, cancellationToken);
@@ -305,13 +310,13 @@ public class SampleCompanyService
     /// <summary>
     /// Adds additional active rental records to the sample company for richer demo data.
     /// </summary>
-    private static void AddSampleActiveRentals(CompanyData data)
+    private static void AddSampleActiveRentals(CompanyData data, DateTime referenceDate)
     {
         var items = data.RentalInventory;
         var customers = data.Customers;
         if (items.Count == 0 || customers.Count == 0) return;
 
-        var today = DateTime.Today;
+        var today = referenceDate;
         var maxId = data.Rentals
             .Select(r => int.TryParse(r.Id.Replace("RNT-", ""), out var n) ? n : 0)
             .DefaultIfEmpty(0)
@@ -344,8 +349,8 @@ public class SampleCompanyService
             DueDate = today.AddDays(9),
             Status = RentalStatus.Active,
             Paid = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = referenceDate,
+            UpdatedAt = referenceDate
         });
 
         // Active rental 2 - started 2 days ago, due in 5 days, multi-item (2 different items)
@@ -369,8 +374,8 @@ public class SampleCompanyService
             DueDate = today.AddDays(5),
             Status = RentalStatus.Active,
             Paid = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = referenceDate,
+            UpdatedAt = referenceDate
         });
 
         // Active rental 3 - started 10 days ago, due in 4 days, weekly rate (single item)
@@ -388,8 +393,8 @@ public class SampleCompanyService
             DueDate = today.AddDays(4),
             Status = RentalStatus.Active,
             Paid = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = referenceDate,
+            UpdatedAt = referenceDate
         });
 
         // Active rental 4 - overdue, started 20 days ago, due 3 days ago (single item)
@@ -407,8 +412,8 @@ public class SampleCompanyService
             DueDate = today.AddDays(-3),
             Status = RentalStatus.Active,
             Paid = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = referenceDate,
+            UpdatedAt = referenceDate
         });
 
         foreach (var rental in newRentals)
@@ -445,10 +450,10 @@ public class SampleCompanyService
         if (maxDate == DateTime.MinValue)
             return false;
 
-        var targetDate = DateTime.Today.AddDays(-3);
+        var targetDate = DateTime.Today.AddDays(-1);
         var offset = targetDate - maxDate.Date;
 
-        if (Math.Abs(offset.TotalDays) <= 3)
+        if (Math.Abs(offset.TotalDays) <= 1)
             return false;
 
         ApplyDateOffset(data, offset);
