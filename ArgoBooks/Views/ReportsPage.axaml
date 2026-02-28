@@ -618,7 +618,7 @@
                                         <DataTemplate DataType="vm:DatePresetOption">
                                             <RadioButton Content="{Binding Name, Converter={StaticResource TranslateConverter}}"
                                                          GroupName="DateRange"
-                                                         IsChecked="{Binding IsSelected}"
+                                                         IsChecked="{Binding IsSelected, Mode=OneWay}"
                                                          Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
                                                          CommandParameter="{Binding}"
                                                          Margin="0,3"
@@ -1799,6 +1799,17 @@
                                     Maximum="100"
                                     TickFrequency="5"
                                     IsSnapToTickEnabled="True" />
+                        </StackPanel>
+
+                        <!-- File Name -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'File Name'}"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Text="{Binding ExportFileName}"
+                                     Watermark="{loc:Loc 'Enter file name...'}"
+                                     Padding="12,10" />
                         </StackPanel>
 
                         <!-- File Path -->
