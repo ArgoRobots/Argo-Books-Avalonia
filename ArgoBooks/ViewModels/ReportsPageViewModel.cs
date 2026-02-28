@@ -2807,35 +2807,27 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (chartElements.Count == 0)
             return;
 
-        // Calculate layout for charts using a grid layout
-        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
-        var marginLeft = Configuration.PageMargins.Left;
-        var marginRight = Configuration.PageMargins.Right;
-        var marginBottom = Configuration.PageMargins.Bottom;
-        double headerHeight = PageDimensions.GetHeaderHeight(Configuration.ShowCompanyDetails);
-        const double footerHeight = PageDimensions.FooterHeight;
+        // Use LayoutContext for consistent positioning that accounts for
+        // top margin, date range space, and footer/bottom margin
+        var context = new TemplateLayoutHelper.LayoutContext(Configuration);
         const double spacing = 10;
-
-        var contentWidth = pageWidth - marginLeft - marginRight;
-        var contentHeight = pageHeight - headerHeight - footerHeight - marginBottom;
-        var startY = headerHeight;
 
         // Determine grid dimensions based on number of charts
         var chartCount = chartElements.Count;
         int columns = chartCount <= 2 ? chartCount : (chartCount <= 4 ? 2 : 3);
         int rows = (int)Math.Ceiling((double)chartCount / columns);
 
-        var cellWidth = (contentWidth - (spacing * (columns - 1))) / columns;
-        var cellHeight = (contentHeight - (spacing * (rows - 1))) / rows;
+        var cellWidth = (context.ContentWidth - (spacing * (columns - 1))) / columns;
+        var cellHeight = (context.ContentHeight - (spacing * (rows - 1))) / rows;
 
-        // Position each chart element in the grid
+        // Position each chart element in the grid below date range area
         for (int i = 0; i < chartElements.Count; i++)
         {
             int row = i / columns;
             int col = i % columns;
 
-            chartElements[i].X = marginLeft + (col * (cellWidth + spacing));
-            chartElements[i].Y = startY + (row * (cellHeight + spacing));
+            chartElements[i].X = context.Margin + (col * (cellWidth + spacing));
+            chartElements[i].Y = context.ContentTop + (row * (cellHeight + spacing));
             chartElements[i].Width = cellWidth;
             chartElements[i].Height = cellHeight;
         }
