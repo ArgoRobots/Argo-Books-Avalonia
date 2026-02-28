@@ -824,9 +824,10 @@ public static class ReportTemplateFactory
 
         var context = new LayoutContext(config);
 
-        // Skip period date range for point-in-time reports (aging reports) since
-        // they show "As of [date]" in the table subtitle and don't filter by period.
-        var isPointInTime = reportType == AccountingReportType.AccountsReceivableAging
+        // Skip period date range for point-in-time reports since they don't filter by period.
+        // Balance Sheet is a snapshot ("As of" a date), aging reports show "As of [date]" in subtitle.
+        var isPointInTime = reportType == AccountingReportType.BalanceSheet
+                            || reportType == AccountingReportType.AccountsReceivableAging
                             || reportType == AccountingReportType.AccountsPayableAging;
 
         if (!isPointInTime)

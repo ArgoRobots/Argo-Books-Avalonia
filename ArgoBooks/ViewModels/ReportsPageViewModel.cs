@@ -310,6 +310,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _isCustomDateRange;
 
     [ObservableProperty]
+    private bool _isDateRangeEnabled = true;
+
+    [ObservableProperty]
     private TransactionType _selectedTransactionType = TransactionType.Revenue;
 
     public ObservableCollection<string> TemplateNames { get; } = [];
@@ -326,6 +329,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     partial void OnSelectedTemplateNameChanged(string value)
     {
+        IsDateRangeEnabled = value != ReportTemplateFactory.TemplateNames.BalanceSheet;
         LoadTemplate(value);
     }
 
