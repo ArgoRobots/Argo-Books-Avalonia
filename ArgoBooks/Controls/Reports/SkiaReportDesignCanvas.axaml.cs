@@ -539,17 +539,18 @@ public partial class SkiaReportDesignCanvas : UserControl
         var headerHeight = (float)PageDimensions.GetHeaderHeight(showCompanyDetails);
         var marginLeft = (float)(Configuration?.PageMargins.Left ?? PageDimensions.Margin);
         var marginRight = (float)(Configuration?.PageMargins.Right ?? PageDimensions.Margin);
+        var marginTop = (float)(Configuration?.PageMargins.Top ?? PageDimensions.Margin);
 
         using var separatorPaint = new SKPaint();
         separatorPaint.Color = SKColors.LightGray;
         separatorPaint.Style = SKPaintStyle.Stroke;
         separatorPaint.StrokeWidth = 1;
 
-        canvas.DrawLine(marginLeft, headerHeight, width - marginRight, headerHeight, separatorPaint);
+        canvas.DrawLine(marginLeft, marginTop + headerHeight, width - marginRight, marginTop + headerHeight, separatorPaint);
 
         if (showCompanyDetails)
         {
-            DrawCompanyDetailsHeader(canvas, width, headerHeight);
+            DrawCompanyDetailsHeader(canvas, width, headerHeight, marginTop);
         }
         else
         {
@@ -559,11 +560,11 @@ public partial class SkiaReportDesignCanvas : UserControl
             titlePaint.Color = SKColors.Black;
             titlePaint.IsAntialias = true;
             var title = Configuration?.Title ?? "Report Title";
-            canvas.DrawText(title, width / 2f, 35, SKTextAlign.Center, titleFont, titlePaint);
+            canvas.DrawText(title, width / 2f, marginTop + 35, SKTextAlign.Center, titleFont, titlePaint);
         }
     }
 
-    private void DrawCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight)
+    private void DrawCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight, float marginTop)
     {
         var companyInfo = App.CompanyManager?.CompanyData?.Settings.Company;
         var logoPath = App.CompanyManager?.CurrentCompanyLogoPath;
@@ -590,7 +591,7 @@ public partial class SkiaReportDesignCanvas : UserControl
                 using var bitmap = SKBitmap.Decode(stream);
                 if (bitmap != null)
                 {
-                    var logoRect = new SKRect(margin, 8, margin + logoSize, 8 + logoSize);
+                    var logoRect = new SKRect(margin, marginTop + 8, margin + logoSize, marginTop + 8 + logoSize);
                     canvas.DrawBitmap(bitmap, logoRect);
                 }
             }
@@ -601,7 +602,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         // Company name
-        var currentY = 18f;
+        var currentY = marginTop + 18f;
         var companyName = companyInfo?.Name ?? "[Company Name]";
         canvas.DrawText(companyName, textStartX, currentY, SKTextAlign.Left, companyNameFont, blackPaint);
         currentY += 16f;
@@ -633,7 +634,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Report title (centered, immediately below company info)
         if (hasLogo)
         {
-            var logoBottom = 8 + 40 + 2;
+            var logoBottom = marginTop + 8 + 40 + 2;
             currentY = Math.Max(currentY, logoBottom);
         }
         currentY += 4f;
