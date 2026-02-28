@@ -774,29 +774,29 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Calculate comparison period based on selected date range
         var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
-        // Calculate current period revenue (using USD for consistent calculations)
+        // Calculate current period revenue (pre-tax, since tax is a liability not revenue)
         var currentRevenueUSD = data.Revenues
             .Where(s => s.Date >= StartDate && s.Date <= EndDate)
-            .Sum(s => s.EffectiveTotalUSD);
+            .Sum(s => s.EffectiveSubtotalUSD);
 
         // Calculate previous period revenue for comparison
         var prevRevenueUSD = data.Revenues
             .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
-            .Sum(s => s.EffectiveTotalUSD);
+            .Sum(s => s.EffectiveSubtotalUSD);
 
         TotalRevenue = FormatCurrencyFromUSD(currentRevenueUSD, DateTime.Now);
         RevenueChangeValue = CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD);
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
-        // Calculate current period expenses (using USD for consistent calculations)
+        // Calculate current period expenses (pre-tax, since tax is a liability not expense)
         var currentExpensesUSD = data.Expenses
             .Where(p => p.Date >= StartDate && p.Date <= EndDate)
-            .Sum(p => p.EffectiveTotalUSD);
+            .Sum(p => p.EffectiveSubtotalUSD);
 
         // Calculate previous period expenses for comparison
         var prevExpensesUSD = data.Expenses
             .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
-            .Sum(p => p.EffectiveTotalUSD);
+            .Sum(p => p.EffectiveSubtotalUSD);
 
         TotalExpenses = FormatCurrencyFromUSD(currentExpensesUSD, DateTime.Now);
         ExpenseChangeValue = CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD);
@@ -840,8 +840,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 Id = s.Id,
                 Type = "Revenue",
                 Description = string.IsNullOrEmpty(s.Description) ? "Revenue Transaction" : s.Description,
-                Amount = FormatCurrencyFromUSD(s.EffectiveTotalUSD, s.Date),
-                AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveTotalUSD, s.Date),
+                Amount = FormatCurrencyFromUSD(s.EffectiveSubtotalUSD, s.Date),
+                AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveSubtotalUSD, s.Date),
                 Date = s.Date,
                 DateFormatted = FormatDate(s.Date),
                 Status = string.Empty,
@@ -861,8 +861,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 Id = p.Id,
                 Type = "Expense",
                 Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
-                Amount = FormatCurrencyFromUSD(p.EffectiveTotalUSD, p.Date),
-                AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveTotalUSD, p.Date),
+                Amount = FormatCurrencyFromUSD(p.EffectiveSubtotalUSD, p.Date),
+                AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveSubtotalUSD, p.Date),
                 Date = p.Date,
                 DateFormatted = FormatDate(p.Date),
                 Status = string.Empty,

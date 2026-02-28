@@ -168,8 +168,8 @@ public class InsightsService : IInsightsService
             .ToList();
 
         // Revenue trend
-        var currentRevenue = currentSales.Sum(s => s.EffectiveTotalUSD);
-        var previousRevenue = previousSales.Sum(s => s.EffectiveTotalUSD);
+        var currentRevenue = currentSales.Sum(s => s.EffectiveSubtotalUSD);
+        var previousRevenue = previousSales.Sum(s => s.EffectiveSubtotalUSD);
 
         if (previousRevenue > 0)
         {
@@ -194,8 +194,8 @@ public class InsightsService : IInsightsService
         }
 
         // Expense trend
-        var currentExpenses = currentPurchases.Sum(p => p.EffectiveTotalUSD);
-        var previousExpenses = previousPurchases.Sum(p => p.EffectiveTotalUSD);
+        var currentExpenses = currentPurchases.Sum(p => p.EffectiveSubtotalUSD);
+        var previousExpenses = previousPurchases.Sum(p => p.EffectiveSubtotalUSD);
 
         if (previousExpenses > 0)
         {
@@ -249,7 +249,7 @@ public class InsightsService : IInsightsService
 
         var salesByDay = sales
             .GroupBy(s => s.Date.DayOfWeek)
-            .Select(g => new { Day = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD), Count = g.Count() })
+            .Select(g => new { Day = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD), Count = g.Count() })
             .OrderByDescending(x => x.Total)
             .ToList();
 
@@ -284,7 +284,7 @@ public class InsightsService : IInsightsService
             .GroupBy(s => new { s.Date.Year, s.Date.Month })
             .OrderBy(g => g.Key.Year)
             .ThenBy(g => g.Key.Month)
-            .Select(g => g.Sum(s => s.EffectiveTotalUSD))
+            .Select(g => g.Sum(s => s.EffectiveSubtotalUSD))
             .ToList();
 
         if (monthlyData.Count < 6) return null;
@@ -333,7 +333,7 @@ public class InsightsService : IInsightsService
         var monthlyByMonth = allSales
             .Where(s => s.Date >= DateTime.Now.AddMonths(-12))
             .GroupBy(s => s.Date.Month)
-            .Select(g => new { Month = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
+            .Select(g => new { Month = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD) })
             .OrderByDescending(x => x.Total)
             .ToList();
 
@@ -432,14 +432,14 @@ public class InsightsService : IInsightsService
         var weeklyExpenses = companyData.Expenses
             .Where(p => p.Date >= twelveWeeksAgo && p.Date <= dateRange.EndDate)
             .GroupBy(p => GetWeekNumber(p.Date))
-            .Select(g => g.Sum(p => p.EffectiveTotalUSD))
+            .Select(g => g.Sum(p => p.EffectiveSubtotalUSD))
             .ToList();
 
         if (weeklyExpenses.Count < 4) return null;
 
         var currentWeekExpenses = companyData.Expenses
             .Where(p => p.Date >= dateRange.EndDate.AddDays(-7) && p.Date <= dateRange.EndDate)
-            .Sum(p => p.EffectiveTotalUSD);
+            .Sum(p => p.EffectiveSubtotalUSD);
 
         var stats = CalculateStatistics(weeklyExpenses.Select(x => (double)x).ToList());
 
@@ -541,7 +541,7 @@ public class InsightsService : IInsightsService
         var historicalData = companyData.Revenues
             .Where(s => s.Date >= historicalStart && s.Date < dateRange.StartDate)
             .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
-            .Select(g => g.Sum(s => s.EffectiveTotalUSD))
+            .Select(g => g.Sum(s => s.EffectiveSubtotalUSD))
             .ToList();
 
         if (historicalData.Count < 5) return anomalies;
@@ -552,7 +552,7 @@ public class InsightsService : IInsightsService
         var currentData = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
-            .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
+            .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD) })
             .ToList();
 
         foreach (var period in currentData)
@@ -590,13 +590,13 @@ public class InsightsService : IInsightsService
 
         if (currentSales.Count < 5) return null;
 
-        var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveTotalUSD).ToList());
+        var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveSubtotalUSD).ToList());
 
-        var largestRevenue = currentSales.OrderByDescending(s => s.EffectiveTotalUSD).First();
+        var largestRevenue = currentSales.OrderByDescending(s => s.EffectiveSubtotalUSD).First();
 
         if (stats.StandardDeviation > 0)
         {
-            var zScore = ((double)largestRevenue.EffectiveTotalUSD - stats.Mean) / stats.StandardDeviation;
+            var zScore = ((double)largestRevenue.EffectiveSubtotalUSD - stats.Mean) / stats.StandardDeviation;
 
             if (zScore > 3.0) // Very unusual
             {
@@ -606,11 +606,11 @@ public class InsightsService : IInsightsService
                 return new InsightItem
                 {
                     Title = "Unusually Large Transaction",
-                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveTotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
+                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveSubtotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
                     Recommendation = "Verify this transaction is correct and consider nurturing this high-value customer relationship.",
                     Severity = InsightSeverity.Info,
                     Category = InsightCategory.Anomaly,
-                    MetricValue = largestRevenue.EffectiveTotalUSD
+                    MetricValue = largestRevenue.EffectiveSubtotalUSD
                 };
             }
         }
@@ -631,8 +631,8 @@ public class InsightsService : IInsightsService
         forecast.PeriodMonths = periodMonths;
 
         // Get monthly data for forecasting
-        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveTotalUSD);
-        var monthlyExpenses = GetMonthlyTotals(companyData.Expenses, p => p.EffectiveTotalUSD);
+        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveSubtotalUSD);
+        var monthlyExpenses = GetMonthlyTotals(companyData.Expenses, p => p.EffectiveSubtotalUSD);
 
         forecast.DataMonthsUsed = Math.Max(monthlyRevenue.Count, monthlyExpenses.Count);
 
@@ -917,7 +917,7 @@ public class InsightsService : IInsightsService
             .Select(g => new
             {
                 ProductId = g.Key,
-                Revenue = g.Sum(li => li.Amount),
+                Revenue = g.Sum(li => li.Subtotal),
                 Cost = g.Sum(li => li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0)),
                 Quantity = g.Sum(li => li.Quantity)
             })
@@ -1017,9 +1017,9 @@ public class InsightsService : IInsightsService
             .Select(g => new
             {
                 SupplierId = g.Key,
-                TotalSpent = g.Sum(p => p.EffectiveTotalUSD),
+                TotalSpent = g.Sum(p => p.EffectiveSubtotalUSD),
                 Count = g.Count(),
-                AvgPerPurchase = g.Average(p => p.EffectiveTotalUSD)
+                AvgPerPurchase = g.Average(p => p.EffectiveSubtotalUSD)
             })
             .OrderByDescending(s => s.TotalSpent)
             .ToList();
@@ -1056,7 +1056,7 @@ public class InsightsService : IInsightsService
         var customerRevenue = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .GroupBy(s => s.CustomerId)
-            .Select(g => new { CustomerId = g.Key, Revenue = g.Sum(s => s.EffectiveTotalUSD) })
+            .Select(g => new { CustomerId = g.Key, Revenue = g.Sum(s => s.EffectiveSubtotalUSD) })
             .OrderByDescending(c => c.Revenue)
             .ToList();
 

@@ -58,7 +58,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM dd"),
-                Value = (double)g.Sum(s => s.EffectiveTotalUSD),
+                Value = (double)g.Sum(s => s.EffectiveSubtotalUSD),
                 Date = g.Key
             })
             .ToList();
@@ -90,7 +90,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return new ChartDataPoint
                 {
                     Label = categoryName,
-                    Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+                    Value = (double)g.Sum(s => s.EffectiveSubtotalUSD)
                 };
             })
             .OrderByDescending(p => p.Value)
@@ -110,7 +110,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .Sum(s => s.EffectiveTotalUSD);
+            .Sum(s => s.EffectiveSubtotalUSD);
     }
 
     #endregion
@@ -134,7 +134,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM dd"),
-                Value = (double)g.Sum(p => p.EffectiveTotalUSD),
+                Value = (double)g.Sum(p => p.EffectiveSubtotalUSD),
                 Date = g.Key
             })
             .ToList();
@@ -164,7 +164,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return new ChartDataPoint
                 {
                     Label = categoryName,
-                    Value = (double)g.Sum(p => p.EffectiveTotalUSD)
+                    Value = (double)g.Sum(p => p.EffectiveSubtotalUSD)
                 };
             })
             .OrderByDescending(p => p.Value)
@@ -184,7 +184,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .Sum(p => p.EffectiveTotalUSD);
+            .Sum(p => p.EffectiveSubtotalUSD);
     }
 
     #endregion
@@ -204,12 +204,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var revenueByDate = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveSubtotalUSD));
 
         var expensesByDate = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveSubtotalUSD));
 
         var allDates = revenueByDate.Keys.Union(expensesByDate.Keys).OrderBy(d => d);
 
@@ -256,7 +256,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
                     .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                    .Sum(s => s.EffectiveTotalUSD),
+                    .Sum(s => s.EffectiveSubtotalUSD),
                 Date = month
             };
         }).ToList();
@@ -271,7 +271,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
                     .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                    .Sum(p => p.EffectiveTotalUSD),
+                    .Sum(p => p.EffectiveSubtotalUSD),
                 Date = month
             };
         }).ToList();
@@ -297,12 +297,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var salesByDate = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
-            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveSubtotalUSD));
 
         var purchasesByDate = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
-            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.EffectiveSubtotalUSD));
 
         // Combine all dates
         var allDates = salesByDate.Keys.Union(purchasesByDate.Keys).OrderBy(d => d).ToList();
@@ -369,7 +369,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             var transactions = companyData.Revenues
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Select(s => s.EffectiveTotalUSD)
+                .Select(s => s.EffectiveSubtotalUSD)
                 .ToList();
 
             return new ChartDataPoint
@@ -387,7 +387,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             var transactions = companyData.Expenses
                 .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.EffectiveTotalUSD)
+                .Select(p => p.EffectiveSubtotalUSD)
                 .ToList();
 
             return new ChartDataPoint
@@ -483,7 +483,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var date = revenue.Date.Date;
             if (!revenueValuesByDate.ContainsKey(date))
                 revenueValuesByDate[date] = [];
-            revenueValuesByDate[date].Add(revenue.EffectiveTotalUSD);
+            revenueValuesByDate[date].Add(revenue.EffectiveSubtotalUSD);
         }
 
         foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
@@ -491,7 +491,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var date = expense.Date.Date;
             if (!expenseValuesByDate.ContainsKey(date))
                 expenseValuesByDate[date] = [];
-            expenseValuesByDate[date].Add(expense.EffectiveTotalUSD);
+            expenseValuesByDate[date].Add(expense.EffectiveSubtotalUSD);
         }
 
         // Combine all dates
@@ -606,7 +606,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+                Value = (double)g.Sum(s => s.EffectiveSubtotalUSD)
             })
             // Filter out "Unknown" entries with zero or negligible value
             .Where(p => p.Label != "Unknown" || p.Value > 0.01)
@@ -634,7 +634,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return customer?.Address.Country;
             })
             .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.EffectiveSubtotalUSD));
     }
 
     /// <summary>
@@ -656,7 +656,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return supplier?.Address.Country;
             })
             .Where(g => g.Key != null && !string.IsNullOrEmpty(g.Key))
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(p => p.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(p => p.EffectiveSubtotalUSD));
     }
 
     /// <summary>
@@ -679,7 +679,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(p => p.EffectiveTotalUSD)
+                Value = (double)g.Sum(p => p.EffectiveSubtotalUSD)
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -703,7 +703,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(p => p.EffectiveTotalUSD)
+                Value = (double)g.Sum(p => p.EffectiveSubtotalUSD)
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -726,7 +726,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+                Value = (double)g.Sum(s => s.EffectiveSubtotalUSD)
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -752,7 +752,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key!,
-                Value = (double)g.Sum(x => x.Revenue.EffectiveTotalUSD)
+                Value = (double)g.Sum(x => x.Revenue.EffectiveSubtotalUSD)
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -908,7 +908,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return new ChartDataPoint
                 {
                     Label = customerName,
-                    Value = (double)g.Sum(s => s.Total)
+                    Value = (double)g.Sum(s => s.EffectiveSubtotalUSD)
                 };
             })
             .OrderByDescending(p => p.Value)
@@ -991,7 +991,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new
             {
                 CustomerId = g.Key,
-                TotalRevenue = g.Sum(s => s.Total)
+                TotalRevenue = g.Sum(s => s.EffectiveSubtotalUSD)
             })
             .ToList();
 
