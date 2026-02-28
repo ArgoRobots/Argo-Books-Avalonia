@@ -182,6 +182,13 @@ public abstract class Transaction
     public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : Total;
 
     /// <summary>
+    /// Gets the effective pre-tax subtotal in USD (excludes tax).
+    /// Tax is a liability, not revenue/expense, so this matches Income Statement treatment.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveSubtotalUSD => EffectiveTotalUSD - (TaxAmountUSD > 0 ? TaxAmountUSD : TaxAmount);
+
+    /// <summary>
     /// Gets the effective unit price in USD, falling back to UnitPrice for legacy data.
     /// </summary>
     [JsonIgnore]

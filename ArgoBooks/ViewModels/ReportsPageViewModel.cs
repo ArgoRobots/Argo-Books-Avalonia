@@ -58,28 +58,28 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<ReportTemplateOption> AccountingTemplateOptions { get; } =
     [
-        new(ReportTemplateFactory.TemplateNames.IncomeStatement, "Income Statement", "Profit & Loss report",
+        new(ReportTemplateFactory.TemplateNames.IncomeStatement, "Income Statement", "Shows if your business made or lost money",
             "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM7 17h5v-1H7v1zm0-2h10v-1H7v1zm0-2h10v-1H7v1z",
             "#27AE60", "#E8F8F5"),
-        new(ReportTemplateFactory.TemplateNames.BalanceSheet, "Balance Sheet", "Assets, liabilities & equity",
+        new(ReportTemplateFactory.TemplateNames.BalanceSheet, "Balance Sheet", "Snapshot of what you own and owe",
             "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM10 9h8v1.5h-8V9zm0 3h4v1.5h-4V12zm0-6h8v1.5h-8V6z",
             "#2980B9", "#EBF5FB"),
-        new(ReportTemplateFactory.TemplateNames.CashFlowStatement, "Cash Flow", "Track money in and out",
+        new(ReportTemplateFactory.TemplateNames.CashFlowStatement, "Cash Flow", "Where your cash came from and went",
             "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
             "#8E44AD", "#F5EEF8"),
-        new(ReportTemplateFactory.TemplateNames.TrialBalance, "Trial Balance", "Verify debit/credit balances",
+        new(ReportTemplateFactory.TemplateNames.TrialBalance, "Trial Balance", "Checks that all your books add up",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM12 6v2h5v2h-5v2l-4-3 4-3zm-1 6v2H6v-2h5v-2l4 3-4 3v-2H6v-2h5z",
             "#E67E22", "#FDF2E9"),
-        new(ReportTemplateFactory.TemplateNames.GeneralLedger, "General Ledger", "Complete transaction record",
+        new(ReportTemplateFactory.TemplateNames.GeneralLedger, "General Ledger", "Full list of every transaction",
             "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z",
             "#2C3E50", "#EBEDEF"),
-        new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Receivables by age",
+        new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Who owes you and for how long",
             "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.96-3.12 3.19z",
             "#16A085", "#E8F6F3"),
-        new(ReportTemplateFactory.TemplateNames.APaging, "AP Aging", "Payables by age",
+        new(ReportTemplateFactory.TemplateNames.APaging, "AP Aging", "What you owe and when it's due",
             "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H11.5v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.65c.09 1.71 1.37 2.66 2.85 2.97V19h1.72v-1.67c1.52-.29 2.72-1.16 2.72-2.74 0-2.22-1.9-2.97-3.63-3.45z",
             "#C0392B", "#FDEDEC"),
-        new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax collected & owed",
+        new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax you collected vs. tax you paid",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
             "#D35400", "#FBEEE6")
     ];
@@ -273,6 +273,19 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _reportName = "Untitled Report";
+
+    partial void OnReportNameChanged(string value)
+    {
+        // Keep export file path in sync with report name so switching templates
+        // doesn't overwrite a previously exported file.
+        if (!string.IsNullOrEmpty(ExportFilePath))
+        {
+            var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+            var ext = Path.GetExtension(ExportFilePath);
+            var newName = string.IsNullOrWhiteSpace(value) ? "Report" : value;
+            ExportFilePath = Path.Combine(dir, $"{newName}{ext}");
+        }
+    }
 
     /// <summary>
     /// Chart types to preserve during template reload (when going back from step 2).
@@ -1487,6 +1500,37 @@ public partial class ReportsPageViewModel : ViewModelBase
     private string _exportFilePath = string.Empty;
 
     [ObservableProperty]
+    private string _exportFileName = "Report";
+
+    partial void OnExportFilePathChanged(string value)
+    {
+        // Sync file name from file path (without triggering a loop)
+        var nameFromPath = Path.GetFileNameWithoutExtension(value);
+        if (!string.IsNullOrEmpty(nameFromPath) && nameFromPath != _exportFileName)
+        {
+            _exportFileName = nameFromPath;
+            OnPropertyChanged(nameof(ExportFileName));
+        }
+    }
+
+    partial void OnExportFileNameChanged(string value)
+    {
+        // Sync file path from file name (without triggering a loop)
+        if (!string.IsNullOrEmpty(ExportFilePath))
+        {
+            var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+            var ext = Path.GetExtension(ExportFilePath);
+            var newName = string.IsNullOrWhiteSpace(value) ? "Report" : value;
+            var newPath = Path.Combine(dir, $"{newName}{ext}");
+            if (newPath != _exportFilePath)
+            {
+                _exportFilePath = newPath;
+                OnPropertyChanged(nameof(ExportFilePath));
+            }
+        }
+    }
+
+    [ObservableProperty]
     private bool _openAfterExport = true;
 
     [ObservableProperty]
@@ -1726,59 +1770,39 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private async Task BrowseExportPathAsync()
     {
-        var defaultName = string.IsNullOrWhiteSpace(ReportName) ? "Report" : ReportName;
-        var extension = SelectedExportFormat switch
-        {
-            ExportFormat.PDF => ".pdf",
-            ExportFormat.PNG => ".png",
-            ExportFormat.JPEG => ".jpg",
-            _ => ".pdf"
-        };
-
         // Use last export directory, or default to Desktop
         var lastDir = App.SettingsService?.GlobalSettings.ReportExport.LastExportDirectory;
         var defaultPath = !string.IsNullOrEmpty(lastDir) && Directory.Exists(lastDir)
             ? lastDir
             : Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
-        // Try to use the storage provider for a native save dialog
         var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
             ? desktop.MainWindow
             : null;
 
         if (topLevel?.StorageProvider != null)
         {
-            var filters = SelectedExportFormat switch
+            var startFolder = await topLevel.StorageProvider.TryGetFolderFromPathAsync(defaultPath);
+            var result = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                ExportFormat.PDF => new[] { new FilePickerFileType("PDF Document") { Patterns =
-                    ["*.pdf"]
-                } },
-                ExportFormat.PNG => new[] { new FilePickerFileType("PNG Image") { Patterns =
-                    ["*.png"]
-                } },
-                ExportFormat.JPEG => new[] { new FilePickerFileType("JPEG Image") { Patterns =
-                    ["*.jpg", "*.jpeg"]
-                } },
-                _ => new[] { new FilePickerFileType("PDF Document") { Patterns = ["*.pdf"] } }
-            };
-
-            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-            {
-                Title = "Save Report As",
-                SuggestedFileName = $"{defaultName}{extension}",
-                FileTypeChoices = filters,
-                DefaultExtension = extension.TrimStart('.')
+                Title = "Select Export Folder",
+                SuggestedStartLocation = startFolder,
+                AllowMultiple = false
             });
 
-            if (result != null)
+            if (result is { Count: > 0 })
             {
-                ExportFilePath = result.Path.LocalPath;
+                var selectedDir = result[0].Path.LocalPath;
+                var fileName = string.IsNullOrWhiteSpace(ExportFileName) ? "Report" : ExportFileName;
+                var extension = SelectedExportFormat switch
+                {
+                    ExportFormat.PDF => ".pdf",
+                    ExportFormat.PNG => ".png",
+                    ExportFormat.JPEG => ".jpg",
+                    _ => ".pdf"
+                };
+                ExportFilePath = Path.Combine(selectedDir, $"{fileName}{extension}");
             }
-        }
-        else
-        {
-            // Fallback to default path
-            ExportFilePath = Path.Combine(defaultPath, $"{defaultName}{extension}");
         }
     }
 
@@ -2378,7 +2402,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             ExportFormat.JPEG => ".jpg",
             _ => ".pdf"
         };
-        ExportFilePath = Path.Combine(desktopPath, $"Report{extension}");
+        var defaultName = string.IsNullOrWhiteSpace(ReportName) ? "Report" : ReportName;
+        ExportFilePath = Path.Combine(desktopPath, $"{defaultName}{extension}");
     }
 
     private void InitializeCollections()

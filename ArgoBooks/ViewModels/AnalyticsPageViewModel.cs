@@ -1050,7 +1050,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     #region Chart Titles
 
     // Dashboard Tab Chart Titles
-    public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalProfits.GetDisplayName());
+    private string _profitOverTimeTitleText = ChartDataType.TotalProfits.GetDisplayName();
+    public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle(_profitOverTimeTitleText);
     public LabelVisual RevenueVsExpensesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueVsExpenses.GetDisplayName());
     public LabelVisual RevenueTrendsTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TotalRevenue.GetDisplayName());
     public LabelVisual RevenueDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueDistribution.GetDisplayName());
@@ -1611,11 +1612,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadProfitTrendsChart(CompanyData data)
     {
-        var (series, labels, dates, _) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
+        var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
         ProfitTrendsSeries = series;
         _chartLoaderService.RegisterDateChart(dates, axes => ProfitTrendsXAxes = axes);
         ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasProfitTrendsData = series.Count > 0;
+
+        // Update chart title to include the total profit amount (matches dashboard format)
+        _profitOverTimeTitleText = $"Total profits: {CurrencyService.FormatFromUSD(totalProfit, DateTime.Now)}";
+        OnPropertyChanged(nameof(ProfitOverTimeTitle));
     }
 
     private void LoadRevenueVsExpensesChart(CompanyData data)
@@ -1881,47 +1886,47 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var purchases = data.Expenses.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList();
         var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
 
-        // Calculate totals
-        var totalPurchasesAmount = purchases.Sum(p => p.Total);
-        var totalRevenueAmount = sales.Sum(s => s.Total);
-        var netProfit = totalRevenueAmount - totalPurchasesAmount;
-        var margin = totalRevenueAmount > 0 ? (netProfit / totalRevenueAmount) * 100 : 0;
+        // Calculate totals (pre-tax, USD-normalized to match dashboard)
+        var totalPurchasesUSD = purchases.Sum(p => p.EffectiveSubtotalUSD);
+        var totalRevenueUSD = sales.Sum(s => s.EffectiveSubtotalUSD);
+        var netProfitUSD = totalRevenueUSD - totalPurchasesUSD;
+        var margin = totalRevenueUSD > 0 ? (netProfitUSD / totalRevenueUSD) * 100 : 0;
 
         // Calculate previous period for comparison
         var periodLength = EndDate - StartDate;
         var prevStartDate = StartDate - periodLength;
         var prevEndDate = StartDate.AddDays(-1);
 
-        var prevPurchases = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).Sum(p => p.Total);
-        var prevSales = data.Revenues.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).Sum(s => s.Total);
-        var prevNetProfit = prevSales - prevPurchases;
-        var prevMargin = prevSales > 0 ? (prevNetProfit / prevSales) * 100 : 0;
+        var prevPurchasesUSD = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).Sum(p => p.EffectiveSubtotalUSD);
+        var prevSalesUSD = data.Revenues.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).Sum(s => s.EffectiveSubtotalUSD);
+        var prevNetProfit = prevSalesUSD - prevPurchasesUSD;
+        var prevMargin = prevSalesUSD > 0 ? (prevNetProfit / prevSalesUSD) * 100 : 0;
 
         // Check if there's any previous period data to compare against
-        var hasPrevPeriodData = prevPurchases > 0 || prevSales > 0;
+        var hasPrevPeriodData = prevPurchasesUSD > 0 || prevSalesUSD > 0;
 
         // Calculate change percentages (only meaningful if there's previous data)
-        var purchasesChange = prevPurchases > 0 ? ((totalPurchasesAmount - prevPurchases) / prevPurchases) * 100 : 0;
-        var revenueChange = prevSales > 0 ? ((totalRevenueAmount - prevSales) / prevSales) * 100 : 0;
-        var profitChange = prevNetProfit != 0 ? ((netProfit - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
+        var purchasesChange = prevPurchasesUSD > 0 ? ((totalPurchasesUSD - prevPurchasesUSD) / prevPurchasesUSD) * 100 : 0;
+        var revenueChange = prevSalesUSD > 0 ? ((totalRevenueUSD - prevSalesUSD) / prevSalesUSD) * 100 : 0;
+        var profitChange = prevNetProfit != 0 ? ((netProfitUSD - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
         var marginChange = margin - prevMargin;
 
-        // Update properties
-        TotalPurchases = CurrencyService.FormatWholeNumber(totalPurchasesAmount);
-        PurchasesChangeValue = hasPrevPeriodData && prevPurchases > 0 ? (double)purchasesChange : null;
-        PurchasesChangeText = hasPrevPeriodData && prevPurchases > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
+        // Update properties (convert from USD to display currency)
+        TotalPurchases = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(totalPurchasesUSD, DateTime.Now));
+        PurchasesChangeValue = hasPrevPeriodData && prevPurchasesUSD > 0 ? (double)purchasesChange : null;
+        PurchasesChangeText = hasPrevPeriodData && prevPurchasesUSD > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
 
-        TotalRevenue = CurrencyService.FormatWholeNumber(totalRevenueAmount);
-        RevenueChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)revenueChange : null;
-        RevenueChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(revenueChange):F1}%" : null;
+        TotalRevenue = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(totalRevenueUSD, DateTime.Now));
+        RevenueChangeValue = hasPrevPeriodData && prevSalesUSD > 0 ? (double)revenueChange : null;
+        RevenueChangeText = hasPrevPeriodData && prevSalesUSD > 0 ? $"{Math.Abs(revenueChange):F1}%" : null;
 
-        NetProfit = CurrencyService.FormatWholeNumber(netProfit);
+        NetProfit = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(netProfitUSD, DateTime.Now));
         ProfitChangeValue = hasPrevPeriodData && prevNetProfit != 0 ? (double)profitChange : null;
         ProfitChangeText = hasPrevPeriodData && prevNetProfit != 0 ? $"{Math.Abs(profitChange):F1}%" : null;
 
         ProfitMargin = $"{margin:F1}%";
-        ProfitMarginChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)marginChange : null;
-        ProfitMarginChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(marginChange):F1}%" : null;
+        ProfitMarginChangeValue = hasPrevPeriodData && prevSalesUSD > 0 ? (double)marginChange : null;
+        ProfitMarginChangeText = hasPrevPeriodData && prevSalesUSD > 0 ? $"{Math.Abs(marginChange):F1}%" : null;
     }
 
     private void LoadOperationalStatistics(CompanyData data)
@@ -1968,7 +1973,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var purchases = data.Expenses.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList();
 
         var totalTransactionsCount = sales.Count + purchases.Count;
-        var allTransactionValues = sales.Select(s => s.Total).Concat(purchases.Select(p => p.Total)).ToList();
+        var allTransactionValues = sales.Select(s => s.EffectiveSubtotalUSD).Concat(purchases.Select(p => p.EffectiveSubtotalUSD)).ToList();
         var avgTransactionValue = allTransactionValues.Count > 0 ? allTransactionValues.Average() : 0;
 
         // Shipping costs from purchases
@@ -1983,7 +1988,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var prevPurchases = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).ToList();
 
         var prevTotalTransactionsCount = prevSales.Count + prevPurchases.Count;
-        var prevAllTransactionValues = prevSales.Select(s => s.Total).Concat(prevPurchases.Select(p => p.Total)).ToList();
+        var prevAllTransactionValues = prevSales.Select(s => s.EffectiveSubtotalUSD).Concat(prevPurchases.Select(p => p.EffectiveSubtotalUSD)).ToList();
         var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
         var prevAvgShipping = prevPurchases.Count > 0 ? prevPurchases.Average(p => p.ShippingCost) : 0;
 
@@ -1991,8 +1996,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var hasPrevPeriodData = prevTotalTransactionsCount > 0;
 
         // Revenue growth (period over period)
-        var currentRevenueTotal = sales.Sum(s => s.Total);
-        var prevRevenueTotal = prevSales.Sum(s => s.Total);
+        var currentRevenueTotal = sales.Sum(s => s.EffectiveSubtotalUSD);
+        var prevRevenueTotal = prevSales.Sum(s => s.EffectiveSubtotalUSD);
         var revenueGrowthValue = prevRevenueTotal > 0 ? ((currentRevenueTotal - prevRevenueTotal) / prevRevenueTotal) * 100 : 0;
 
         var transactionsChange = prevTotalTransactionsCount > 0 ? ((double)(totalTransactionsCount - prevTotalTransactionsCount) / prevTotalTransactionsCount) * 100 : 0;
@@ -2007,7 +2012,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         TotalTransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
         TotalTransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
-        AvgTransactionValue = CurrencyService.FormatWholeNumber(avgTransactionValue);
+        AvgTransactionValue = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(avgTransactionValue, DateTime.Now));
         AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
         AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
@@ -2046,13 +2051,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // For now, calculate avg customer value based on revenue per customer
         var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
         var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
-        var avgValue = customerIds.Count > 0 ? sales.Sum(s => s.Total) / customerIds.Count : 0;
+        var avgValueUSD = customerIds.Count > 0 ? sales.Sum(s => s.EffectiveSubtotalUSD) / customerIds.Count : 0;
 
         RetentionRate = "N/A";
         RetentionChangeValue = null;
         RetentionChangeText = null;
 
-        AvgCustomerValue = CurrencyService.FormatWholeNumber(avgValue);
+        AvgCustomerValue = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(avgValueUSD, DateTime.Now));
         AvgCustomerValueChangeValue = null;
         AvgCustomerValueChangeText = null;
     }

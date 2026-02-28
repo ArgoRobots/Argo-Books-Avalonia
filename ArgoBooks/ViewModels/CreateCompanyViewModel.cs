@@ -130,7 +130,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     #region Validation
 
-    public bool IsStep1Valid => !string.IsNullOrWhiteSpace(CompanyName);
+    public bool IsStep1Valid => !string.IsNullOrWhiteSpace(CompanyName) && !string.IsNullOrWhiteSpace(Country);
 
     public bool IsStep2Valid => !EnablePassword || (PasswordsMatch && !string.IsNullOrWhiteSpace(Password));
 
@@ -303,6 +303,12 @@ public partial class CreateCompanyViewModel : ViewModelBase
         OnPropertyChanged(nameof(PasswordsMatch));
         OnPropertyChanged(nameof(ShowPasswordError));
         OnPropertyChanged(nameof(IsStep2Valid));
+        OnPropertyChanged(nameof(CanCreate));
+    }
+
+    partial void OnCountryChanged(string? value)
+    {
+        OnPropertyChanged(nameof(IsStep1Valid));
         OnPropertyChanged(nameof(CanCreate));
     }
 

@@ -65,11 +65,11 @@ public class ForecastAccuracyService : IForecastAccuracyService
             // Calculate actual values for the forecast period
             var actualRevenue = companyData.Revenues
                 .Where(s => s.Date >= record.PeriodStartDate && s.Date <= record.PeriodEndDate)
-                .Sum(s => s.EffectiveTotalUSD);
+                .Sum(s => s.EffectiveSubtotalUSD);
 
             var actualExpenses = companyData.Expenses
                 .Where(p => p.Date >= record.PeriodStartDate && p.Date <= record.PeriodEndDate)
-                .Sum(p => p.EffectiveTotalUSD);
+                .Sum(p => p.EffectiveSubtotalUSD);
 
             var actualProfit = actualRevenue - actualExpenses;
 
@@ -326,12 +326,12 @@ public class ForecastAccuracyService : IForecastAccuracyService
         // Aggregate sales by month
         var salesByMonth = companyData.Revenues
             .GroupBy(s => new DateTime(s.Date.Year, s.Date.Month, 1))
-            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveSubtotalUSD));
 
         // Aggregate purchases by month
         var purchasesByMonth = companyData.Expenses
             .GroupBy(p => new DateTime(p.Date.Year, p.Date.Month, 1))
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveTotalUSD));
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveSubtotalUSD));
 
         // Get all months with any data
         var allMonths = salesByMonth.Keys

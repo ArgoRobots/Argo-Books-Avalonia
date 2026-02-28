@@ -34,21 +34,21 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         var query = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate);
 
-        // Apply data selection
+        // Apply data selection (pre-tax to match statistics)
         query = tableConfig.DataSelection switch
         {
-            TableDataSelection.TopByAmount => query.OrderByDescending(s => s.Total),
-            TableDataSelection.BottomByAmount => query.OrderBy(s => s.Total),
+            TableDataSelection.TopByAmount => query.OrderByDescending(s => s.Subtotal),
+            TableDataSelection.BottomByAmount => query.OrderBy(s => s.Subtotal),
             _ => query.OrderByDescending(s => s.Date)
         };
 
-        // Apply sort order
+        // Apply sort order (pre-tax to match statistics)
         query = tableConfig.SortOrder switch
         {
             TableSortOrder.DateAscending => query.OrderBy(s => s.Date),
             TableSortOrder.DateDescending => query.OrderByDescending(s => s.Date),
-            TableSortOrder.AmountAscending => query.OrderBy(s => s.Total),
-            TableSortOrder.AmountDescending => query.OrderByDescending(s => s.Total),
+            TableSortOrder.AmountAscending => query.OrderBy(s => s.Subtotal),
+            TableSortOrder.AmountDescending => query.OrderByDescending(s => s.Subtotal),
             _ => query
         };
 
@@ -78,7 +78,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             ProductName = product?.Description ?? (revenue.LineItems.Count > 1 ? $"Multiple ({revenue.LineItems.Count} items)" : revenue.Description),
             Quantity = (int)(revenue.LineItems.Sum(i => i.Quantity)),
             UnitPrice = primaryItem?.UnitPrice ?? revenue.UnitPrice,
-            Total = revenue.Total,
+            Total = revenue.Subtotal,
             Status = revenue.PaymentStatus,
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = revenue.ShippingCost,
@@ -104,21 +104,21 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         var query = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate);
 
-        // Apply data selection
+        // Apply data selection (pre-tax to match statistics)
         query = tableConfig.DataSelection switch
         {
-            TableDataSelection.TopByAmount => query.OrderByDescending(p => p.Total),
-            TableDataSelection.BottomByAmount => query.OrderBy(p => p.Total),
+            TableDataSelection.TopByAmount => query.OrderByDescending(p => p.Total - p.TaxAmount),
+            TableDataSelection.BottomByAmount => query.OrderBy(p => p.Total - p.TaxAmount),
             _ => query.OrderByDescending(p => p.Date)
         };
 
-        // Apply sort order
+        // Apply sort order (pre-tax to match statistics)
         query = tableConfig.SortOrder switch
         {
             TableSortOrder.DateAscending => query.OrderBy(p => p.Date),
             TableSortOrder.DateDescending => query.OrderByDescending(p => p.Date),
-            TableSortOrder.AmountAscending => query.OrderBy(p => p.Total),
-            TableSortOrder.AmountDescending => query.OrderByDescending(p => p.Total),
+            TableSortOrder.AmountAscending => query.OrderBy(p => p.Total - p.TaxAmount),
+            TableSortOrder.AmountDescending => query.OrderByDescending(p => p.Total - p.TaxAmount),
             _ => query
         };
 
@@ -146,7 +146,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             ProductName = expense.Description,
             Quantity = (int)expense.Quantity,
             UnitPrice = expense.UnitPrice,
-            Total = expense.Total,
+            Total = expense.Total - expense.TaxAmount,
             Status = "Completed",
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = expense.ShippingCost,
@@ -916,11 +916,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             filters.TransactionType is TransactionType.Revenue)
         {
             var sales = companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate).ToList();
-            stats.TotalRevenue = sales.Sum(s => s.Total);
+            stats.TotalRevenue = sales.Sum(s => s.Subtotal);
             stats.RevenueTransactionCount = sales.Count;
             stats.AverageRevenueTransaction = sales.Count > 0 ? stats.TotalRevenue / sales.Count : 0;
-            stats.LargestRevenue = sales.Count > 0 ? sales.Max(s => s.Total) : 0;
-            stats.SmallestRevenue = sales.Count > 0 ? sales.Min(s => s.Total) : 0;
+            stats.LargestRevenue = sales.Count > 0 ? sales.Max(s => s.Subtotal) : 0;
+            stats.SmallestRevenue = sales.Count > 0 ? sales.Min(s => s.Subtotal) : 0;
         }
 
         // Calculate expense statistics
@@ -928,11 +928,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             filters.TransactionType is TransactionType.Expenses)
         {
             var purchases = companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
-            stats.TotalExpenses = purchases.Sum(p => p.Total);
+            stats.TotalExpenses = purchases.Sum(p => p.Total - p.TaxAmount);
             stats.ExpenseTransactionCount = purchases.Count;
             stats.AverageExpenseTransaction = purchases.Count > 0 ? stats.TotalExpenses / purchases.Count : 0;
-            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.Total) : 0;
-            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.Total) : 0;
+            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.Total - p.TaxAmount) : 0;
+            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.Total - p.TaxAmount) : 0;
         }
 
         // Calculate profit
@@ -992,11 +992,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         var currentRevenue = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .Sum(s => s.Total);
+            .Sum(s => s.Subtotal);
 
         var previousRevenue = companyData.Revenues
             .Where(s => s.Date >= previousStartDate && s.Date <= previousEndDate)
-            .Sum(s => s.Total);
+            .Sum(s => s.Subtotal);
 
         if (previousRevenue == 0)
             return currentRevenue > 0 ? 100 : 0;
@@ -1033,7 +1033,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                     ProductName = product?.Name ?? "Unknown",
                     CategoryName = category?.Name ?? "Unknown",
                     TotalQuantity = (int)g.Sum(i => i.Quantity),
-                    TotalRevenue = g.Sum(i => i.Amount),
+                    TotalRevenue = g.Sum(i => i.Subtotal),
                     TransactionCount = g.Count(),
                     AveragePrice = g.Average(i => i.UnitPrice)
                 };
@@ -1067,9 +1067,9 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                     CustomerId = g.Key ?? "",
                     CustomerName = customer?.Name ?? "Unknown",
                     Country = customer?.Address.Country ?? "",
-                    TotalRevenue = g.Sum(s => s.Total),
+                    TotalRevenue = g.Sum(s => s.Subtotal),
                     TransactionCount = g.Count(),
-                    AverageTransaction = g.Average(s => s.Total),
+                    AverageTransaction = g.Average(s => s.Subtotal),
                     FirstPurchase = g.Min(s => s.Date),
                     LastPurchase = g.Max(s => s.Date)
                 };
@@ -1103,9 +1103,9 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                     SupplierId = g.Key ?? "",
                     SupplierName = supplier?.Name ?? "Unknown",
                     Country = supplier?.Address.Country ?? "",
-                    TotalPurchases = g.Sum(p => p.Total),
+                    TotalPurchases = g.Sum(p => p.Total - p.TaxAmount),
                     TransactionCount = g.Count(),
-                    AverageTransaction = g.Average(p => p.Total),
+                    AverageTransaction = g.Average(p => p.Total - p.TaxAmount),
                     FirstPurchase = g.Min(p => p.Date),
                     LastPurchase = g.Max(p => p.Date)
                 };
@@ -1136,7 +1136,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 accountantData[accountantId] = (0, 0, 0);
 
             var current = accountantData[accountantId];
-            accountantData[accountantId] = (current.Revenues + revenue.Total, current.Expenses, current.Count + 1);
+            accountantData[accountantId] = (current.Revenues + revenue.Subtotal, current.Expenses, current.Count + 1);
         }
 
         foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
@@ -1146,7 +1146,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 accountantData[accountantId] = (0, 0, 0);
 
             var current = accountantData[accountantId];
-            accountantData[accountantId] = (current.Revenues, current.Expenses + expense.Total, current.Count + 1);
+            accountantData[accountantId] = (current.Revenues, current.Expenses + (expense.Total - expense.TaxAmount), current.Count + 1);
         }
 
         return accountantData
