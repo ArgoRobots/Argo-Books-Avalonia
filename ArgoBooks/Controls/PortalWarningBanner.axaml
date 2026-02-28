@@ -15,7 +15,7 @@
             BorderThickness="1"
             CornerRadius="8"
             Padding="14,8"
-            Margin="0,0,0,12">
+            Margin="0,0,0,4">
         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
             <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
                       Foreground="{DynamicResource WarningBrush}"
