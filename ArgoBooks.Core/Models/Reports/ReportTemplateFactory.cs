@@ -824,15 +824,23 @@ public static class ReportTemplateFactory
 
         var context = new LayoutContext(config);
 
-        // Date range element at the top
-        var dateRangeBounds = GetDateRangeBounds(context);
-        config.AddElement(new DateRangeReportElement
+        // Skip period date range for point-in-time reports (aging reports) since
+        // they show "As of [date]" in the table subtitle and don't filter by period.
+        var isPointInTime = reportType == AccountingReportType.AccountsReceivableAging
+                            || reportType == AccountingReportType.AccountsPayableAging;
+
+        if (!isPointInTime)
         {
-            X = dateRangeBounds.X,
-            Y = dateRangeBounds.Y,
-            Width = dateRangeBounds.Width,
-            Height = dateRangeBounds.Height
-        });
+            // Date range element at the top
+            var dateRangeBounds = GetDateRangeBounds(context);
+            config.AddElement(new DateRangeReportElement
+            {
+                X = dateRangeBounds.X,
+                Y = dateRangeBounds.Y,
+                Width = dateRangeBounds.Width,
+                Height = dateRangeBounds.Height
+            });
+        }
 
         // Accounting table filling the content area
         config.AddElement(new AccountingTableReportElement

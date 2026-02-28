@@ -158,10 +158,11 @@
 
                                 <!-- Country -->
                                 <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="{loc:Loc Country}"
-                                               FontSize="13"
+                                    <TextBlock FontSize="13"
                                                FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc Country}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
                                     <controls:CountryInput SelectedCountryName="{Binding Country, Mode=TwoWay}" />
                                 </StackPanel>
 

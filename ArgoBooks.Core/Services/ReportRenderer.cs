@@ -742,7 +742,7 @@ public class ReportRenderer : IDisposable
 
                 if (element is AccountingTableReportElement accounting
                     && _continuationPlan?.FirstPageRowCounts.TryGetValue(accounting.Id, out var firstPageRowCount) == true
-                    && _continuationPlan.CachedTableData.TryGetValue(accounting.Id, out var tableData))
+                    && _continuationPlan?.CachedTableData.TryGetValue(accounting.Id, out var tableData) == true)
                 {
                     // This table overflows — render only the first page's rows
                     RenderAccountingTableSlice(canvas, accounting, tableData,
@@ -3112,11 +3112,25 @@ public class ReportRenderer : IDisposable
             {
                 case AccountingRowType.SectionHeader:
                 {
-                    var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
+                    // Extend fill 1px upward to cover any grid line from the previous row
+                    var fillTop = currentY > rect.Top + 1 * _renderScale ? currentY - 1 * _renderScale : currentY;
+                    var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + headerRowHeight);
                     canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.SectionHeaderBackgroundColor), Style = SKPaintStyle.Fill });
 
                     using var sectionPaint = new SKPaint { Color = ParseColor(element.SectionHeaderTextColor), IsAntialias = true };
                     canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + headerRowHeight * 0.65f, SKTextAlign.Left, sectionFont, sectionPaint);
+
+                    // Draw value columns (right-aligned) — e.g., "Amount" on the first section header
+                    var valX = contentLeft + columnWidths[0];
+                    for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
+                    {
+                        if (!string.IsNullOrEmpty(row.Values[i]))
+                        {
+                            canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + headerRowHeight * 0.65f, SKTextAlign.Right, sectionFont, sectionPaint);
+                        }
+                        valX += columnWidths[i + 1];
+                    }
+
                     currentY += headerRowHeight;
                     break;
                 }
@@ -3156,12 +3170,14 @@ public class ReportRenderer : IDisposable
 
                 case AccountingRowType.SubtotalRow:
                 {
-                    // Top border line
+                    // Fill first (extending up to cover any grid line from the previous row)
+                    var fillTop = currentY > rect.Top + 1 * _renderScale ? currentY - 1 * _renderScale : currentY;
+                    var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + dataRowHeight);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.SubtotalBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    // Top border line — drawn after fill
                     canvas.DrawLine(rect.Left + cellPadding, currentY, rect.Right - cellPadding, currentY,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
-
-                    var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + dataRowHeight);
-                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.SubtotalBackgroundColor), Style = SKPaintStyle.Fill });
 
                     using var subtotalPaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
                     var indent = row.IndentLevel * indentWidth;
@@ -3180,12 +3196,14 @@ public class ReportRenderer : IDisposable
 
                 case AccountingRowType.TotalRow:
                 {
-                    // Top border (thicker)
+                    // Fill first (extending up to cover any grid line from the previous row), then draw border on top
+                    var fillTop = currentY > rect.Top + 1 * _renderScale ? currentY - 1 * _renderScale : currentY;
+                    var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + dataRowHeight * 1.1f);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    // Top border (thicker) — drawn after fill so it's visible on the background
                     canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1.5f * _renderScale, Style = SKPaintStyle.Stroke });
-
-                    var rowRect = new SKRect(rect.Left, currentY + 1 * _renderScale, rect.Right, currentY + dataRowHeight * 1.1f);
-                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
 
                     using var totalPaint = new SKPaint { Color = ParseColor(element.TotalTextColor), IsAntialias = true };
                     canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + dataRowHeight * 0.75f, SKTextAlign.Left, boldDataFont, totalPaint);
@@ -3203,15 +3221,18 @@ public class ReportRenderer : IDisposable
 
                 case AccountingRowType.GrandTotalRow:
                 {
-                    // Double top border
+                    var grandRowHeight = dataRowHeight * 1.3f;
+
+                    // Fill first (extending up to cover any grid/separator lines from previous rows)
+                    var fillTop = currentY > rect.Top + 1 * _renderScale ? currentY - 1 * _renderScale : currentY;
+                    var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + grandRowHeight);
+                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
+
+                    // Double top border — drawn after fill so it's visible on the background
                     canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
                     canvas.DrawLine(rect.Left, currentY + 3 * _renderScale, rect.Right, currentY + 3 * _renderScale,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
-
-                    var grandRowHeight = dataRowHeight * 1.3f;
-                    var rowRect = new SKRect(rect.Left, currentY + 4 * _renderScale, rect.Right, currentY + grandRowHeight);
-                    canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
 
                     using var grandPaint = new SKPaint { Color = ParseColor(element.TotalTextColor), IsAntialias = true };
                     canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + grandRowHeight * 0.65f, SKTextAlign.Left, grandTotalFont, grandPaint);
@@ -3607,7 +3628,18 @@ public class ReportRenderer : IDisposable
 
         if (start.HasValue && end.HasValue)
         {
-            return $"{Tr("Period")}: {start.Value.ToString(dateFormat)} {Tr("to")} {end.Value.ToString(dateFormat)}";
+            // Replace "All Time" sentinel (year 2000) with actual earliest data date
+            var effectiveStart = start.Value;
+            if (effectiveStart.Year <= 2000 && _companyData != null)
+            {
+                var dates = new List<DateTime>();
+                if (_companyData.Revenues.Count > 0) dates.Add(_companyData.Revenues.Min(r => r.Date));
+                if (_companyData.Expenses.Count > 0) dates.Add(_companyData.Expenses.Min(e => e.Date));
+                if (_companyData.Payments.Count > 0) dates.Add(_companyData.Payments.Min(p => p.Date));
+                if (dates.Count > 0) effectiveStart = dates.Min();
+            }
+
+            return $"{Tr("Period")}: {effectiveStart.ToString(dateFormat)} {Tr("to")} {end.Value.ToString(dateFormat)}";
         }
 
         return $"{Tr("Period")}: {Tr("All Time")}";

@@ -111,7 +111,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// <summary>
     /// Whether the form is valid for saving.
     /// </summary>
-    public bool CanSave => !string.IsNullOrWhiteSpace(CompanyName);
+    public bool CanSave => !string.IsNullOrWhiteSpace(CompanyName) && !string.IsNullOrWhiteSpace(Country);
 
     /// <summary>
     /// Default constructor.
@@ -344,7 +344,11 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     partial void OnIndustryChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnPhoneNumberChanged(string value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnSelectedPhoneCountryChanged(CountryDialCode? value) => OnPropertyChanged(nameof(HasChanges));
-    partial void OnCountryChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnCountryChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanSave));
+        OnPropertyChanged(nameof(HasChanges));
+    }
     partial void OnCityChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(HasChanges));
