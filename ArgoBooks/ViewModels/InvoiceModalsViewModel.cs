@@ -841,6 +841,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
+        // Clean up linked records: unlink rentals, and remove/unlink revenues
+        UnlinkInvoiceFromRentals(invoice, companyData!);
+        RemoveAutoCreatedRevenue(invoice, companyData!);
+
         companyData?.Invoices.Remove(invoice);
         InvoiceDeleted?.Invoke(this, EventArgs.Empty);
 
@@ -1282,6 +1286,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 {
                     ProductId = i.SelectedProduct?.Id,
                     RentalRecordId = i.RentalRecordId,
+                    RevenueRecordId = i.RevenueRecordId,
                     Description = i.Description,
                     Quantity = i.Quantity ?? 0,
                     UnitPrice = i.UnitPrice ?? 0,
@@ -1394,10 +1399,25 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (!isContinuingDraft)
         {
-            // Add the new invoice to the collection and link to rentals
+            // Add the new invoice to the collection and link to rentals/revenue
             companyData.Invoices.Add(invoice);
             LinkInvoiceToRentals(invoice, companyData);
             LinkInvoiceToRevenue(invoice, companyData);
+        }
+        else
+        {
+            // Draft is being sent - link to any revenue/rental records referenced by line items
+            LinkInvoiceToRentals(invoice, companyData);
+            LinkInvoiceToRevenue(invoice, companyData);
+        }
+
+        // Auto-create a Revenue transaction if this invoice isn't already linked to one.
+        // Path A (Revenue → Invoice): revenue already exists, LinkInvoiceToRevenue linked it above.
+        // Path B (Invoice → Revenue): no revenue exists yet, so create one automatically.
+        var hasLinkedRevenue = companyData.Revenues.Any(r => r.InvoiceId == invoice.Id);
+        if (!hasLinkedRevenue)
+        {
+            CreateRevenueFromInvoice(invoice, companyData);
         }
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
@@ -1641,6 +1661,108 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
             if (revenue != null && revenue.InvoiceId == invoice.Id)
                 revenue.InvoiceId = null;
+        }
+    }
+
+    /// <summary>
+    /// Creates a Revenue transaction automatically from a sent invoice.
+    /// This handles the "Invoice → Revenue" path so the revenue table stays
+    /// the single source of truth for all financial data.
+    /// </summary>
+    private static void CreateRevenueFromInvoice(Invoice invoice, CompanyData companyData)
+    {
+        companyData.IdCounters.Revenue++;
+        var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
+
+        // Build a description from the line items
+        var description = invoice.LineItems.Count switch
+        {
+            0 => $"Invoice {invoice.InvoiceNumber}",
+            1 => invoice.LineItems[0].Description,
+            _ => $"{invoice.LineItems[0].Description} (+{invoice.LineItems.Count - 1} more)"
+        };
+
+        var totalQuantity = invoice.LineItems.Sum(li => li.Quantity);
+        if (totalQuantity == 0) totalQuantity = 1;
+
+        // Calculate the effective fee and discount as flat amounts
+        var feeAmount = invoice.CustomFeeIsPercent
+            ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m)
+            : invoice.CustomFeeAmount;
+        var discountAmount = invoice.DiscountIsPercent
+            ? invoice.Subtotal * (invoice.DiscountAmount / 100m)
+            : invoice.DiscountAmount;
+
+        var revenue = new Revenue
+        {
+            Id = revenueId,
+            Date = invoice.IssueDate,
+            CustomerId = invoice.CustomerId,
+            Description = description,
+            LineItems = invoice.LineItems.Select(li => new LineItem
+            {
+                ProductId = li.ProductId,
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitPrice = li.UnitPrice,
+                TaxRate = li.TaxRate,
+                Discount = li.Discount
+            }).ToList(),
+            Quantity = totalQuantity,
+            UnitPrice = totalQuantity > 0 ? Math.Round(invoice.Subtotal / totalQuantity, 2) : 0,
+            Subtotal = invoice.Subtotal,
+            Amount = invoice.Subtotal,
+            TaxRate = invoice.TaxRate,
+            TaxAmount = invoice.TaxAmount,
+            Fee = feeAmount + invoice.SecurityDeposit,
+            Discount = discountAmount,
+            Total = invoice.Total,
+            PaymentMethod = PaymentMethod.Other,
+            PaymentStatus = "Unpaid",
+            Notes = $"Auto-created from invoice {invoice.InvoiceNumber}",
+            InvoiceId = invoice.Id,
+            ReferenceNumber = invoice.InvoiceNumber,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            // Currency fields
+            OriginalCurrency = invoice.OriginalCurrency,
+            TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
+        };
+
+        companyData.Revenues.Add(revenue);
+    }
+
+    /// <summary>
+    /// Removes the auto-created Revenue for an invoice (if any).
+    /// Only removes revenues that were auto-generated (i.e., not referenced by line items).
+    /// User-created revenues that were linked via "Generate Invoice" are only unlinked, not deleted.
+    /// </summary>
+    private static void RemoveAutoCreatedRevenue(Invoice invoice, CompanyData companyData)
+    {
+        // Find revenues linked to this invoice
+        var linkedRevenues = companyData.Revenues
+            .Where(r => r.InvoiceId == invoice.Id)
+            .ToList();
+
+        // Revenue IDs that came from the user (referenced by line items) — just unlink these
+        var userCreatedRevenueIds = invoice.LineItems
+            .Where(li => !string.IsNullOrEmpty(li.RevenueRecordId))
+            .Select(li => li.RevenueRecordId!)
+            .ToHashSet();
+
+        foreach (var revenue in linkedRevenues)
+        {
+            if (userCreatedRevenueIds.Contains(revenue.Id))
+            {
+                // User created this revenue first, then generated the invoice → just unlink
+                revenue.InvoiceId = null;
+            }
+            else
+            {
+                // Auto-created from the invoice → remove entirely
+                companyData.Revenues.Remove(revenue);
+                companyData.IdCounters.Revenue = Math.Max(0, companyData.IdCounters.Revenue - 1);
+            }
         }
     }
 

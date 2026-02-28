@@ -1,7 +1,9 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
@@ -101,6 +103,10 @@ public class SampleCompanyService
             // Patch rental records with financial data from rental items
             // (the XLSX may not include rate/deposit columns)
             PatchRentalRecordFinancials(context.CompanyData);
+
+            // Link invoices to revenue records so both paths are consistent.
+            // For each finalized invoice, either match an existing revenue or create one.
+            LinkInvoicesToRevenues(context.CompanyData);
 
             // Add additional active rental records for richer sample data
             // Use the data's max date as the reference point (not DateTime.Today)
@@ -303,6 +309,130 @@ public class SampleCompanyService
                 {
                     record.DepositRefunded = record.SecurityDeposit;
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Links sample invoices to revenue records. For each finalized invoice (Sent, Paid, Partial),
+    /// tries to match an existing unlinked revenue (same customer and total). If no match is found,
+    /// creates a new revenue from the invoice. This ensures the revenue table is the single source
+    /// of truth for all financial data, matching what happens when users create invoices in the UI.
+    /// </summary>
+    private static void LinkInvoicesToRevenues(CompanyData data)
+    {
+        // Only process finalized invoices (not drafts or cancelled)
+        var finalizedStatuses = new[]
+        {
+            InvoiceStatus.Sent, InvoiceStatus.Paid, InvoiceStatus.Partial, InvoiceStatus.Pending
+        };
+
+        // Track which revenues have already been matched so we don't double-link
+        var matchedRevenueIds = new HashSet<string>();
+
+        foreach (var invoice in data.Invoices.Where(i => finalizedStatuses.Contains(i.Status)))
+        {
+            // Skip if this invoice already has a linked revenue
+            if (data.Revenues.Any(r => r.InvoiceId == invoice.Id))
+                continue;
+
+            // Try to find a matching unlinked revenue (same customer + same total)
+            var matchingRevenue = data.Revenues.FirstOrDefault(r =>
+                r.InvoiceId == null &&
+                !matchedRevenueIds.Contains(r.Id) &&
+                r.CustomerId == invoice.CustomerId &&
+                Math.Abs(r.Total - invoice.Total) < 0.01m);
+
+            if (matchingRevenue != null)
+            {
+                // Link existing revenue to this invoice
+                matchingRevenue.InvoiceId = invoice.Id;
+                matchedRevenueIds.Add(matchingRevenue.Id);
+            }
+            else
+            {
+                // Create a new revenue from the invoice
+                data.IdCounters.Revenue++;
+                var revenueId = $"REV-{invoice.IssueDate:yyyy}-{data.IdCounters.Revenue:D5}";
+
+                // If the invoice has no line items (common for sample data imported from Excel),
+                // build a line item and try to resolve a product from the customer's other revenues
+                // so the revenue gets properly categorized (avoids "Uncategorized" in reports).
+                List<LineItem> lineItems;
+                string description;
+
+                if (invoice.LineItems.Count > 0)
+                {
+                    description = invoice.LineItems.Count == 1
+                        ? invoice.LineItems[0].Description
+                        : $"{invoice.LineItems[0].Description} (+{invoice.LineItems.Count - 1} more)";
+                    lineItems = invoice.LineItems.Select(li => new LineItem
+                    {
+                        ProductId = li.ProductId,
+                        Description = li.Description,
+                        Quantity = li.Quantity,
+                        UnitPrice = li.UnitPrice,
+                        TaxRate = li.TaxRate,
+                        Discount = li.Discount
+                    }).ToList();
+                }
+                else
+                {
+                    // Find a product from the customer's existing revenues for proper categorization
+                    var customerRevenue = data.Revenues.FirstOrDefault(r =>
+                        r.CustomerId == invoice.CustomerId &&
+                        r.LineItems.Count > 0 &&
+                        !string.IsNullOrEmpty(r.LineItems[0].ProductId));
+
+                    var productId = customerRevenue?.LineItems[0].ProductId;
+                    var productDescription = customerRevenue?.Description ?? $"Invoice {invoice.InvoiceNumber}";
+                    description = productDescription;
+
+                    lineItems =
+                    [
+                        new LineItem
+                        {
+                            ProductId = productId,
+                            Description = productDescription,
+                            Quantity = 1,
+                            UnitPrice = invoice.Subtotal > 0 ? invoice.Subtotal : invoice.Total,
+                            TaxRate = invoice.Subtotal > 0 ? invoice.TaxAmount / invoice.Subtotal : 0
+                        }
+                    ];
+                }
+
+                var totalQuantity = lineItems.Sum(li => li.Quantity);
+                if (totalQuantity == 0) totalQuantity = 1;
+
+                var paymentStatus = invoice.Status == InvoiceStatus.Paid ? "Paid" : "Unpaid";
+
+                var revenue = new Revenue
+                {
+                    Id = revenueId,
+                    Date = invoice.IssueDate,
+                    CustomerId = invoice.CustomerId,
+                    Description = description,
+                    LineItems = lineItems,
+                    Quantity = totalQuantity,
+                    UnitPrice = totalQuantity > 0 ? Math.Round(invoice.Subtotal / totalQuantity, 2) : 0,
+                    Subtotal = invoice.Subtotal,
+                    Amount = invoice.Subtotal,
+                    TaxRate = invoice.Subtotal > 0 ? invoice.TaxAmount / invoice.Subtotal * 100 : 0,
+                    TaxAmount = invoice.TaxAmount,
+                    Total = invoice.Total,
+                    PaymentMethod = PaymentMethod.Other,
+                    PaymentStatus = paymentStatus,
+                    InvoiceId = invoice.Id,
+                    ReferenceNumber = invoice.InvoiceNumber,
+                    CreatedAt = invoice.CreatedAt,
+                    UpdatedAt = invoice.UpdatedAt,
+                    OriginalCurrency = invoice.OriginalCurrency,
+                    TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total,
+                    TaxAmountUSD = invoice.TaxAmount
+                };
+
+                data.Revenues.Add(revenue);
+                matchedRevenueIds.Add(revenueId);
             }
         }
     }
