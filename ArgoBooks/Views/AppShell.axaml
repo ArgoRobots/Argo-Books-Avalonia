@@ -237,5 +237,8 @@
 
         <!-- Quick Actions Settings Modal -->
         <modals:QuickActionsSettingsModal DataContext="{Binding QuickActionsSettingsModalViewModel}" />
+
+        <!-- Custom Date Range Modal -->
+        <modals:CustomDateRangeModal DataContext="{Binding CustomDateRangeModalViewModel}" />
     </Panel>
 </UserControl>
