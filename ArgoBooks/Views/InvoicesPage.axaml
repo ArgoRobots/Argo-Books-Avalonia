@@ -92,7 +92,7 @@
                 <table:ArgoTable.InfoBannerContent>
                     <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConfigured}"
                                                   ConfigureCommand="{Binding OpenPortalSettingsCommand}"
-                                                  Margin="0,8,0,0" />
+                                                  Margin="0,2,0,0" />
                 </table:ArgoTable.InfoBannerContent>
 
                 <!-- Extra Buttons Content (Template Designer) -->

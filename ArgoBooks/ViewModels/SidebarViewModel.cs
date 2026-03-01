@@ -134,6 +134,13 @@ public partial class SidebarViewModel : ViewModelBase
         _navigationService = navigationService;
 
         InitializeNavigationItems();
+
+        // Restore persisted collapsed state from settings
+        var savedCollapsed = App.SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
+        if (savedCollapsed)
+        {
+            IsCollapsed = true;
+        }
     }
 
     /// <summary>
@@ -217,6 +224,14 @@ public partial class SidebarViewModel : ViewModelBase
 
         // Update all items with collapsed state
         UpdateItemsCollapsedState(value);
+
+        // Persist collapsed state to settings
+        var settings = App.SettingsService?.GlobalSettings;
+        if (settings != null)
+        {
+            settings.Ui.SidebarCollapsed = value;
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
+        }
     }
 
     /// <summary>
