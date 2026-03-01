@@ -372,13 +372,13 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
 
     /// <summary>
     /// Calculates the required width for an Actions column based on the number of icon buttons.
-    /// Based on: 8px left margin + (n × 32px button) + ((n-1) × 4px spacing) + 4px right margin
+    /// Based on: 8px left margin + (n × 32px button) + ((n-1) × 4px spacing) + 8px right margin
     /// </summary>
     /// <param name="buttonCount">The number of 32x32 icon buttons in the Actions column.</param>
     /// <returns>The calculated width in pixels.</returns>
     public static double ActionsWidth(int buttonCount)
     {
-        if (buttonCount <= 0) return 44;
-        return 12 + (buttonCount * 32) + ((buttonCount - 1) * 4);
+        if (buttonCount <= 0) return 48;
+        return 16 + (buttonCount * 32) + ((buttonCount - 1) * 4);
     }
 }

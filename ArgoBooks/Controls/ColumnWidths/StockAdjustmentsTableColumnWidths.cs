@@ -4,7 +4,7 @@ namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Manages column widths for the Stock Adjustments table.
-/// Columns: Date | Reference | Product | Location | Type | Quantity | Previous | New | Reason | Actions
+/// Columns: Date | Reference | Product | Location | Quantity | Previous | New | Reason | Actions
 /// </summary>
 public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
 {
@@ -21,9 +21,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
 
     [ObservableProperty]
     private double _locationColumnWidth = 120;
-
-    [ObservableProperty]
-    private double _typeColumnWidth = 80;
 
     [ObservableProperty]
     private double _quantityColumnWidth = 80;
@@ -44,7 +41,7 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
 
     public StockAdjustmentsTableColumnWidths()
     {
-        ColumnOrder = ["Date", "Reference", "Product", "Location", "Type", "Quantity", "Previous", "New", "Reason", "Actions"
+        ColumnOrder = ["Date", "Reference", "Product", "Location", "Quantity", "Previous", "New", "Reason", "Actions"
         ];
 
         // Date column
@@ -78,14 +75,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
             MinWidth = 84,
             PreferredWidth = 120
         }, w => LocationColumnWidth = w);
-
-        // Type column (narrow)
-        RegisterColumn("Type", new ColumnDef
-        {
-            StarValue = 0.6,
-            MinWidth = 70,
-            PreferredWidth = 80
-        }, w => TypeColumnWidth = w);
 
         // Quantity column (numeric, narrow)
         RegisterColumn("Quantity", new ColumnDef

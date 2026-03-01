@@ -38,7 +38,7 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
     private double _statusColumnWidth = 100;
 
     [ObservableProperty]
-    private double _actionsColumnWidth = 48;
+    private double _actionsColumnWidth = 68;
 
     #endregion
 
@@ -119,12 +119,12 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 100
         }, w => StatusColumnWidth = w);
 
-        // Actions column (fixed width - 1 button)
+        // Actions column (fixed width - 1 button, min 68px to fit header text)
         RegisterColumn("Actions", new ColumnDef
         {
             IsFixed = true,
-            FixedWidth = ActionsWidth(1),
-            MinWidth = ActionsWidth(1)
+            FixedWidth = 68,
+            MinWidth = 68
         }, w => ActionsColumnWidth = w);
 
         // Initial calculation
