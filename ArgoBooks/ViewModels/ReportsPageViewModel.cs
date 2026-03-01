@@ -2337,6 +2337,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Subscribe to language changes to refresh preview with updated translations
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+
+        // Subscribe to currency changes to regenerate any open report
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
     }
 
     /// <summary>
@@ -2358,6 +2361,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Called when the currency changes. Regenerates the preview and refreshes the canvas
+    /// so any currently open report reflects the new currency.
+    /// </summary>
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        GeneratePreview();
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Refreshes the report design canvas (e.g. after company logo changes).
     /// </summary>
     public void RefreshCanvas()
@@ -2371,6 +2384,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public void Cleanup()
     {
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
 
         foreach (var bmp in PreviewPageImages)
             bmp.Dispose();
