@@ -17,28 +17,29 @@
 
     <Panel>
         <!-- ======================= PAGE SETTINGS MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}"
-                               ClosingCommand="{Binding ReportsPageViewModel.ClosePageSettingsCommand}">
+        <controls:ModalOverlay DataContext="{Binding ReportsPageViewModel}" x:CompileBindings="False"
+                               IsOpen="{Binding $parent[UserControl].DataContext.IsPageSettingsOpen}"
+                               ClosingCommand="{Binding ClosePageSettingsCommand}">
             <controls:ModalOverlay.ModalContent>
-                <modals:ReportPageSettingsModal DataContext="{Binding ReportsPageViewModel}"
-                                             HorizontalAlignment="Center"
+                <modals:ReportPageSettingsModal HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 
         <!-- ======================= SAVE TEMPLATE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsSaveTemplateOpen}"
-                               ClosingCommand="{Binding ReportsPageViewModel.CloseSaveTemplateCommand}">
+        <controls:ModalOverlay DataContext="{Binding ReportsPageViewModel}" x:CompileBindings="False"
+                               IsOpen="{Binding $parent[UserControl].DataContext.IsSaveTemplateOpen}"
+                               ClosingCommand="{Binding CloseSaveTemplateCommand}">
             <controls:ModalOverlay.ModalContent>
-                <modals:ReportSaveTemplateModal DataContext="{Binding ReportsPageViewModel}"
-                                             HorizontalAlignment="Center"
+                <modals:ReportSaveTemplateModal HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 
         <!-- ======================= DELETE TEMPLATE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsDeleteTemplateOpen}"
-                               ClosingCommand="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}">
+        <controls:ModalOverlay DataContext="{Binding ReportsPageViewModel}" x:CompileBindings="False"
+                               IsOpen="{Binding $parent[UserControl].DataContext.IsDeleteTemplateOpen}"
+                               ClosingCommand="{Binding CloseDeleteTemplateCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -61,7 +62,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1"
                                     Classes="icon-button"
-                                    Command="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}">
+                                    Command="{Binding CloseDeleteTemplateCommand}">
                                 <PathIcon Data="{x:Static icons:Icons.Close}"
                                           Width="16" Height="16" />
                             </Button>
@@ -74,7 +75,7 @@
                                    FontSize="14"
                                    Foreground="{DynamicResource TextSecondaryBrush}">
                             <Run Text="{loc:Loc 'Are you sure you want to delete the template'}" />
-                            <Run Text="{Binding ReportsPageViewModel.TemplateToDelete}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Run Text="{Binding TemplateToDelete}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Run Text="{loc:Loc '? This action cannot be undone.'}" />
                         </TextBlock>
                     </StackPanel>
@@ -91,10 +92,10 @@
                                     Spacing="12">
                             <Button Classes="secondary-button"
                                     Content="{loc:Loc 'Cancel'}"
-                                    Command="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}" />
+                                    Command="{Binding CloseDeleteTemplateCommand}" />
                             <Button Classes="danger-button"
                                     Content="{loc:Loc 'Delete'}"
-                                    Command="{Binding ReportsPageViewModel.ConfirmDeleteTemplateCommand}" />
+                                    Command="{Binding ConfirmDeleteTemplateCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -103,8 +104,9 @@
         </controls:ModalOverlay>
 
         <!-- ======================= RENAME TEMPLATE MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsRenameTemplateOpen}"
-                               ClosingCommand="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}">
+        <controls:ModalOverlay DataContext="{Binding ReportsPageViewModel}" x:CompileBindings="False"
+                               IsOpen="{Binding $parent[UserControl].DataContext.IsRenameTemplateOpen}"
+                               ClosingCommand="{Binding CloseRenameTemplateCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -127,7 +129,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1"
                                     Classes="icon-button"
-                                    Command="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}">
+                                    Command="{Binding CloseRenameTemplateCommand}">
                                 <PathIcon Data="{x:Static icons:Icons.Close}"
                                           Width="16" Height="16" />
                             </Button>
@@ -139,7 +141,7 @@
                         <TextBlock Text="{loc:Loc 'Enter a new name for the template:'}"
                                    FontSize="14"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBox Text="{Binding ReportsPageViewModel.RenameTemplateNewName}"
+                        <TextBox Text="{Binding RenameTemplateNewName}"
                                  Watermark="{loc:Loc 'Template name...'}"
                                  Padding="12,10"
                                  x:Name="RenameTemplateTextBox"
@@ -159,10 +161,10 @@
                                     Spacing="12">
                             <Button Classes="secondary-button"
                                     Content="{loc:Loc 'Cancel'}"
-                                    Command="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}" />
+                                    Command="{Binding CloseRenameTemplateCommand}" />
                             <Button Classes="primary-button"
                                     Content="{loc:Loc 'Rename'}"
-                                    Command="{Binding ReportsPageViewModel.ConfirmRenameTemplateCommand}" />
+                                    Command="{Binding ConfirmRenameTemplateCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>

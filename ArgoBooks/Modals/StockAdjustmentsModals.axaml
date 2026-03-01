@@ -169,7 +169,8 @@
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="500"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    DataContext="{Binding ViewingAdjustment}" x:CompileBindings="False">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -178,12 +179,12 @@
                                 <TextBlock Text="{loc:Loc 'Adjustment Details'}"
                                            FontSize="18" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.Id}"
+                                <TextBlock Text="{Binding Id}"
                                            FontSize="13"
                                            FontFamily="Consolas, monospace"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
-                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseViewModalCommand}">
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding $parent[UserControl].DataContext.CloseViewModalCommand}">
                                 <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
                             </Button>
                         </Grid>
@@ -193,29 +194,29 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Type Badge -->
-                            <Border Background="{Binding ViewingAdjustment.TypeBackground}"
+                            <Border Background="{Binding TypeBackground}"
                                     CornerRadius="6"
                                     Padding="12,8"
                                     HorizontalAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{Binding ViewingAdjustment.TypeDisplay}"
+                                    <TextBlock Text="{Binding TypeDisplay}"
                                                FontSize="14"
                                                FontWeight="SemiBold"
-                                               Foreground="{Binding ViewingAdjustment.TypeColor}" />
-                                    <TextBlock Text="{Binding ViewingAdjustment.QuantityDisplay}"
+                                               Foreground="{Binding TypeColor}" />
+                                    <TextBlock Text="{Binding QuantityDisplay}"
                                                FontSize="14"
                                                FontWeight="Bold"
-                                               Foreground="{Binding ViewingAdjustment.QuantityColor}" />
+                                               Foreground="{Binding QuantityColor}" />
                                 </StackPanel>
                             </Border>
 
                             <!-- Product Info -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{loc:Loc Product}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.ProductName}"
+                                <TextBlock Text="{Binding ProductName}"
                                            FontSize="16" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.ProductSku}"
+                                <TextBlock Text="{Binding ProductSku}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
@@ -223,7 +224,7 @@
                             <!-- Location -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{loc:Loc Location}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.LocationName}"
+                                <TextBlock Text="{Binding LocationName}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                             </StackPanel>
@@ -232,7 +233,7 @@
                             <Grid ColumnDefinitions="*,Auto,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Previous Stock'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewingAdjustment.PreviousStock}"
+                                    <TextBlock Text="{Binding PreviousStock}"
                                                FontSize="20" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -243,7 +244,7 @@
                                           Margin="16,0" />
                                 <StackPanel Grid.Column="2" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'New Stock'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewingAdjustment.NewStock}"
+                                    <TextBlock Text="{Binding NewStock}"
                                                FontSize="20" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </StackPanel>
@@ -253,10 +254,10 @@
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{loc:Loc 'Date &amp; Time'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{Binding ViewingAdjustment.DateDisplay}"
+                                    <TextBlock Text="{Binding DateDisplay}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{Binding ViewingAdjustment.TimeDisplay}"
+                                    <TextBlock Text="{Binding TimeDisplay}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -265,7 +266,7 @@
                             <!-- Reason -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{loc:Loc Reason}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingAdjustment.Reason}"
+                                <TextBlock Text="{Binding Reason}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            TextWrapping="Wrap" />
@@ -275,7 +276,7 @@
 
                     <!-- Modal Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                        <Button Classes="secondary-button" Content="{loc:Loc Close}" Command="{Binding CloseViewModalCommand}" HorizontalAlignment="Right" />
+                        <Button Classes="secondary-button" Content="{loc:Loc Close}" Command="{Binding $parent[UserControl].DataContext.CloseViewModalCommand}" HorizontalAlignment="Right" />
                     </Border>
                 </Grid>
                 </Border>

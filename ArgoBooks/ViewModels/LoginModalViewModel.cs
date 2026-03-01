@@ -83,7 +83,7 @@ public partial class LoginModalViewModel : ViewModelBase
         AccountName = account.Name;
         AccountDescription = account.Description;
         AccountInitials = account.Initials;
-        AccountColor = Color.Parse(account.Color);
+        AccountColor = account.Color;
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;
