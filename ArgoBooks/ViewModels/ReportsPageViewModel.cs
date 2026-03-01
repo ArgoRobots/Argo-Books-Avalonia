@@ -520,6 +520,11 @@ public partial class ReportsPageViewModel : ViewModelBase
             if (e.PropertyName is "ZOrder" or "Bounds")
                 return;
 
+            // Skip no-op changes (can happen during binding round-trips, e.g. when
+            // NumericUpDown writes back the same value it just received)
+            if (Equals(e.OldValue, e.NewValue))
+                return;
+
             // For position/size changes, create a coalescing move/resize action.
             // Rapid changes (e.g., scrolling spinner controls) will be merged into
             // a single undo entry by the undo manager's coalescing logic.
@@ -563,18 +568,28 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
     }
 
-    // Typed accessors for element-specific properties
-    public ChartReportElement? SelectedChartElement => SelectedElement as ChartReportElement;
-    public LabelReportElement? SelectedLabelElement => SelectedElement as LabelReportElement;
-    public ImageReportElement? SelectedImageElement => SelectedElement as ImageReportElement;
+    // Static empty instances to prevent null-traversal binding errors when no element is selected.
+    // These are never added to Configuration, so PropertyChanging subscriptions won't fire on them.
+    private static readonly ChartReportElement EmptyChart = new();
+    private static readonly LabelReportElement EmptyLabel = new();
+    private static readonly ImageReportElement EmptyImage = new();
+    private static readonly TableReportElement EmptyTable = new();
+    private static readonly DateRangeReportElement EmptyDateRange = new();
+    private static readonly SummaryReportElement EmptySummary = new();
+    private static readonly AccountingTableReportElement EmptyAccountingTable = new();
+
+    // Typed accessors for element-specific properties (never null to avoid binding errors)
+    public ChartReportElement SelectedChartElement => (SelectedElement as ChartReportElement) ?? EmptyChart;
+    public LabelReportElement SelectedLabelElement => (SelectedElement as LabelReportElement) ?? EmptyLabel;
+    public ImageReportElement SelectedImageElement => (SelectedElement as ImageReportElement) ?? EmptyImage;
     public string SelectedImageFileName => string.IsNullOrEmpty(SelectedImageElement?.ImagePath)
         ? string.Empty
         : Path.GetFileName(SelectedImageElement.ImagePath);
     public bool HasSelectedImage => !string.IsNullOrEmpty(SelectedImageElement?.ImagePath);
-    public TableReportElement? SelectedTableElement => SelectedElement as TableReportElement;
-    public DateRangeReportElement? SelectedDateRangeElement => SelectedElement as DateRangeReportElement;
-    public SummaryReportElement? SelectedSummaryElement => SelectedElement as SummaryReportElement;
-    public AccountingTableReportElement? SelectedAccountingTableElement => SelectedElement as AccountingTableReportElement;
+    public TableReportElement SelectedTableElement => (SelectedElement as TableReportElement) ?? EmptyTable;
+    public DateRangeReportElement SelectedDateRangeElement => (SelectedElement as DateRangeReportElement) ?? EmptyDateRange;
+    public SummaryReportElement SelectedSummaryElement => (SelectedElement as SummaryReportElement) ?? EmptySummary;
+    public AccountingTableReportElement SelectedAccountingTableElement => (SelectedElement as AccountingTableReportElement) ?? EmptyAccountingTable;
 
     /// <summary>
     /// Gets or sets the selected chart style as a ChartStyleOption for the ComboBox binding.
@@ -1042,11 +1057,23 @@ public partial class ReportsPageViewModel : ViewModelBase
         element.PageNumber = pageNumber;
         Configuration.AddElement(element);
         UndoRedoManager.RecordAction(new AddElementAction(Configuration, element));
-        SelectedElement = element;
-        SelectedElements.Clear();
-        SelectedElements.Add(element);
-        NotifySelectionChanged();
-        OnPropertyChanged(nameof(Configuration));
+
+        // Suppress recording while setting up selection — binding updates from the
+        // properties panel can write back rounded values (e.g. the NumericUpDown
+        // integer display format) which would create a spurious "Move element" action.
+        UndoRedoManager.SuppressRecording = true;
+        try
+        {
+            SelectedElement = element;
+            SelectedElements.Clear();
+            SelectedElements.Add(element);
+            NotifySelectionChanged();
+            OnPropertyChanged(nameof(Configuration));
+        }
+        finally
+        {
+            UndoRedoManager.SuppressRecording = false;
+        }
     }
 
     [RelayCommand]
@@ -1086,15 +1113,24 @@ public partial class ReportsPageViewModel : ViewModelBase
             newElements.Add(clone);
         }
 
-        // Select the duplicated elements
-        SelectedElements.Clear();
-        foreach (var element in newElements)
+        // Select the duplicated elements — suppress recording to avoid spurious
+        // undo entries from binding write-backs during selection setup.
+        UndoRedoManager.SuppressRecording = true;
+        try
         {
-            SelectedElements.Add(element);
+            SelectedElements.Clear();
+            foreach (var element in newElements)
+            {
+                SelectedElements.Add(element);
+            }
+            SelectedElement = newElements.FirstOrDefault();
+            NotifySelectionChanged();
+            OnPropertyChanged(nameof(Configuration));
         }
-        SelectedElement = newElements.FirstOrDefault();
-        NotifySelectionChanged();
-        OnPropertyChanged(nameof(Configuration));
+        finally
+        {
+            UndoRedoManager.SuppressRecording = false;
+        }
     }
 
     [RelayCommand]

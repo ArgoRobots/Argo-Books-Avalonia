@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Services;
 using Xunit;
 
@@ -366,6 +367,63 @@ public class ReportUndoRedoManagerTests
         manager.RecordAction(new MockAction("Test"));
 
         Assert.Contains(nameof(ReportUndoRedoManager.CanUndo), changedProps);
+    }
+
+    #endregion
+
+    #region Add/Remove Element Action Integration Tests
+
+    [Fact]
+    public void AddThenDelete_UndoBoth_ElementIsRemoved()
+    {
+        // Regression test: add element, delete it, undo both → element should be gone
+        var config = new ReportConfiguration();
+        var manager = new ReportUndoRedoManager();
+
+        // Step 1: Add element
+        var element = new LabelReportElement { X = 10, Y = 20, Width = 100, Height = 50 };
+        config.AddElement(element);
+        manager.RecordAction(new AddElementAction(config, element));
+        Assert.Single(config.Elements);
+
+        // Step 2: Delete element
+        manager.RecordAction(new RemoveElementAction(config, element));
+        config.RemoveElement(element.Id);
+        Assert.Empty(config.Elements);
+
+        // Step 3: Undo delete → element should reappear
+        manager.Undo();
+        Assert.Single(config.Elements);
+
+        // Step 4: Undo add → element should be gone
+        manager.Undo();
+        Assert.Empty(config.Elements);
+    }
+
+    [Fact]
+    public void AddThenDelete_UndoBoth_RedoBoth_ElementIsRemoved()
+    {
+        // Full round-trip: add, delete, undo×2, redo×2
+        var config = new ReportConfiguration();
+        var manager = new ReportUndoRedoManager();
+
+        var element = new LabelReportElement { X = 10, Y = 20, Width = 100, Height = 50 };
+        config.AddElement(element);
+        manager.RecordAction(new AddElementAction(config, element));
+
+        manager.RecordAction(new RemoveElementAction(config, element));
+        config.RemoveElement(element.Id);
+
+        // Undo both
+        manager.Undo(); // undo delete
+        manager.Undo(); // undo add
+        Assert.Empty(config.Elements);
+
+        // Redo both
+        manager.Redo(); // redo add
+        Assert.Single(config.Elements);
+        manager.Redo(); // redo delete
+        Assert.Empty(config.Elements);
     }
 
     #endregion

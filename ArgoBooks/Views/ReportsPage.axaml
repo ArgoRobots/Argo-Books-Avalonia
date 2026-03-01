@@ -16,6 +16,7 @@
 
     <UserControl.Resources>
         <converters:EqualConverter x:Key="EqualConverter" />
+        <converters:EqualityConverter x:Key="EqualityConverter" />
         <converters:EnumDisplayNameConverter x:Key="EnumDisplayNameConverter" />
         <converters:TransactionTypeSupportsReturnsConverter x:Key="TransactionTypeSupportsReturnsConverter" />
     </UserControl.Resources>
@@ -1032,22 +1033,23 @@
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto">
+                                <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto"
+                                      DataContext="{Binding SelectedElement}" x:CompileBindings="False">
                                     <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'X'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.X}" Minimum="0" />
+                                        <controls:ArgoNumericUpDown Value="{Binding X}" Minimum="0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Y'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Y}" Minimum="0" />
+                                        <controls:ArgoNumericUpDown Value="{Binding Y}" Minimum="0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Width'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Width}" Minimum="20" />
+                                        <controls:ArgoNumericUpDown Value="{Binding Width}" Minimum="20" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Height'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Height}" Minimum="20" />
+                                        <controls:ArgoNumericUpDown Value="{Binding Height}" Minimum="20" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -1069,43 +1071,43 @@
                                               SelectedItem="{Binding SelectedChartStyleOption}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
-                                <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" IsVisible="{Binding IsDistributionChartSelected}" />
+                                <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend, FallbackValue=False}" IsVisible="{Binding IsDistributionChartSelected}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Title Font'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
-                                              SelectedItem="{Binding SelectedChartElement.TitleFontFamily}"
+                                              SelectedItem="{Binding SelectedChartElement.TitleFontFamily, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4" IsVisible="{Binding !IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Axis Font'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
-                                              SelectedItem="{Binding SelectedChartElement.FontFamily}"
+                                              SelectedItem="{Binding SelectedChartElement.FontFamily, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Title Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize, FallbackValue=0}" Minimum="6" Maximum="36" />
                                 </StackPanel>
                                 <StackPanel Spacing="4" IsVisible="{Binding !IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Axis Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.AxisFontSize}" Minimum="6" Maximum="24" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.AxisFontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                 </StackPanel>
                                 <StackPanel Spacing="4" IsVisible="{Binding IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Legend Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                 </StackPanel>
                                 <StackPanel Spacing="4" IsVisible="{Binding IsDistributionChartSelected}">
                                     <TextBlock Text="{loc:Loc 'Legend Max Characters'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendMaxCharacters}" Minimum="5" Maximum="50" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendMaxCharacters, FallbackValue=0}" Minimum="5" Maximum="50" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedChartElement.BorderColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedChartElement.BorderColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Thickness'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.BorderThickness}" Minimum="0" Maximum="10" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.BorderThickness, FallbackValue=0}" Minimum="0" Maximum="10" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1117,38 +1119,38 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedLabelElement.Text}" />
+                                    <TextBox Text="{Binding SelectedLabelElement.Text, FallbackValue=''}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
-                                              SelectedItem="{Binding SelectedLabelElement.FontFamily}"
+                                              SelectedItem="{Binding SelectedLabelElement.FontFamily, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedLabelElement.FontSize}" Minimum="6" Maximum="72" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedLabelElement.FontSize, FallbackValue=0}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Text Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedLabelElement.TextColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedLabelElement.TextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="16">
-                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedLabelElement.IsBold}" />
-                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
-                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedLabelElement.IsUnderline}" />
+                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedLabelElement.IsBold, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedLabelElement.IsItalic, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedLabelElement.IsUnderline, FallbackValue=False}" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'H Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding HorizontalAlignments}"
-                                                  SelectedItem="{Binding SelectedLabelElement.HorizontalAlignment}"
+                                                  SelectedItem="{Binding SelectedLabelElement.HorizontalAlignment, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'V Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding VerticalAlignments}"
-                                                  SelectedItem="{Binding SelectedLabelElement.VerticalAlignment}"
+                                                  SelectedItem="{Binding SelectedLabelElement.VerticalAlignment, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                 </Grid>
@@ -1189,7 +1191,7 @@
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis"
                                                    VerticalAlignment="Center"
-                                                   ToolTip.Tip="{Binding SelectedImageElement.ImagePath}" />
+                                                   ToolTip.Tip="{Binding SelectedImageElement.ImagePath, FallbackValue=''}" />
                                     </Grid>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button Classes="secondary-button"
@@ -1205,18 +1207,18 @@
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Scale Mode'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ImageScaleModes}"
-                                              SelectedItem="{Binding SelectedImageElement.ScaleMode}"
+                                              SelectedItem="{Binding SelectedImageElement.ScaleMode, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Opacity (%)'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
                                         <Slider Grid.Column="0"
-                                                Value="{Binding SelectedImageElement.Opacity}"
+                                                Value="{Binding SelectedImageElement.Opacity, FallbackValue=0}"
                                                 Minimum="0" Maximum="100"
                                                 VerticalAlignment="Center" />
                                         <TextBox Grid.Column="1"
-                                                 Text="{Binding SelectedImageElement.Opacity}"
+                                                 Text="{Binding SelectedImageElement.Opacity, FallbackValue=''}"
                                                  Width="50"
                                                  Margin="8,0,0,0"
                                                  VerticalAlignment="Center" />
@@ -1224,19 +1226,19 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Corner Radius (%)'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.CornerRadiusPercent}" Minimum="0" Maximum="50" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.CornerRadiusPercent, FallbackValue=0}" Minimum="0" Maximum="50" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Background Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BackgroundColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BorderColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BorderColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Thickness'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.BorderThickness}" Minimum="0" Maximum="20" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.BorderThickness, FallbackValue=0}" Minimum="0" Maximum="20" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1249,39 +1251,39 @@
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Date Format'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding DateFormats}"
-                                              SelectedItem="{Binding SelectedDateRangeElement.DateFormat}"
+                                              SelectedItem="{Binding SelectedDateRangeElement.DateFormat, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
-                                              SelectedItem="{Binding SelectedDateRangeElement.FontFamily}"
+                                              SelectedItem="{Binding SelectedDateRangeElement.FontFamily, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedDateRangeElement.FontSize}" Minimum="6" Maximum="72" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedDateRangeElement.FontSize, FallbackValue=0}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Text Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedDateRangeElement.TextColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedDateRangeElement.TextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="16">
-                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
-                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
-                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
+                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedDateRangeElement.IsBold, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedDateRangeElement.IsItalic, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedDateRangeElement.IsUnderline, FallbackValue=False}" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'H Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding HorizontalAlignments}"
-                                                  SelectedItem="{Binding SelectedDateRangeElement.HorizontalAlignment}"
+                                                  SelectedItem="{Binding SelectedDateRangeElement.HorizontalAlignment, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'V Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding VerticalAlignments}"
-                                                  SelectedItem="{Binding SelectedDateRangeElement.VerticalAlignment}"
+                                                  SelectedItem="{Binding SelectedDateRangeElement.VerticalAlignment, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                 </Grid>
@@ -1296,7 +1298,7 @@
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding TransactionTypes}"
-                                              SelectedItem="{Binding SelectedSummaryElement.TransactionType}"
+                                              SelectedItem="{Binding SelectedSummaryElement.TransactionType, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
@@ -1305,14 +1307,14 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
                                 </StackPanel>
-                                <CheckBox Content="{loc:Loc 'Show Total Revenue'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalRevenue}" />
-                                <CheckBox Content="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
-                                <CheckBox Content="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
-                                <CheckBox Content="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
-                                <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}"
-                                          IsVisible="{Binding SelectedSummaryElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
-                                <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}"
-                                          IsVisible="{Binding SelectedSummaryElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Revenue'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalRevenue, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns, FallbackValue=False}"
+                                          IsVisible="{Binding SelectedSummaryElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses, FallbackValue=False}"
+                                          IsVisible="{Binding SelectedSummaryElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}, FallbackValue=False}" />
 
                                 <TextBlock Text="{loc:Loc 'Formatting'}"
                                            FontSize="12"
@@ -1322,36 +1324,36 @@
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
-                                              SelectedItem="{Binding SelectedSummaryElement.FontFamily}"
+                                              SelectedItem="{Binding SelectedSummaryElement.FontFamily, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.FontSize}" Minimum="6" Maximum="24" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.FontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Background Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BackgroundColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BorderColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BorderColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Border Thickness'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.BorderThickness}" Minimum="0" Maximum="10" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.BorderThickness, FallbackValue=0}" Minimum="0" Maximum="10" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'H Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding HorizontalAlignments}"
-                                                  SelectedItem="{Binding SelectedSummaryElement.HorizontalAlignment}"
+                                                  SelectedItem="{Binding SelectedSummaryElement.HorizontalAlignment, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'V Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding VerticalAlignments}"
-                                                  SelectedItem="{Binding SelectedSummaryElement.VerticalAlignment}"
+                                                  SelectedItem="{Binding SelectedSummaryElement.VerticalAlignment, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                 </Grid>
@@ -1394,7 +1396,7 @@
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TransactionTypes}"
-                                                  SelectedItem="{Binding SelectedTableElement.TransactionType}"
+                                                  SelectedItem="{Binding SelectedTableElement.TransactionType, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate>
@@ -1403,14 +1405,14 @@
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
                                     </StackPanel>
-                                    <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns}"
-                                              IsVisible="{Binding SelectedTableElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
-                                    <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses}"
-                                              IsVisible="{Binding SelectedTableElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}}" />
+                                    <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns, FallbackValue=False}"
+                                              IsVisible="{Binding SelectedTableElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses, FallbackValue=False}"
+                                              IsVisible="{Binding SelectedTableElement.TransactionType, Converter={StaticResource TransactionTypeSupportsReturnsConverter}, FallbackValue=False}" />
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Sort Order'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TableSortOrders}"
-                                                  SelectedItem="{Binding SelectedTableElement.SortOrder}"
+                                                  SelectedItem="{Binding SelectedTableElement.SortOrder, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch">
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate>
@@ -1421,7 +1423,7 @@
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max Rows'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows, FallbackValue=0}" Minimum="1" Maximum="50" />
                                     </StackPanel>
                                 </StackPanel>
 
@@ -1431,12 +1433,12 @@
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedTableElement.ShowTitle}" />
-                                    <CheckBox Content="{loc:Loc 'Show Headers'}" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
-                                    <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
-                                    <CheckBox Content="{loc:Loc 'Show Totals Row'}" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
-                                    <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
-                                    <CheckBox Content="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+                                    <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedTableElement.ShowTitle, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Show Headers'}" IsChecked="{Binding SelectedTableElement.ShowHeaders, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedTableElement.ShowGridLines, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Show Totals Row'}" IsChecked="{Binding SelectedTableElement.ShowTotalsRow, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns, FallbackValue=False}" />
 
                                     <TextBlock Text="{loc:Loc 'Text Alignment'}"
                                                FontSize="11"
@@ -1444,7 +1446,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                Margin="0,8,0,0" />
                                     <ComboBox ItemsSource="{Binding HorizontalAlignments}"
-                                              SelectedItem="{Binding SelectedTableElement.TextAlignment}"
+                                              SelectedItem="{Binding SelectedTableElement.TextAlignment, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch" />
 
                                     <TextBlock Text="{loc:Loc 'Title'}"
@@ -1455,12 +1457,12 @@
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.TitleFontSize}" Minimum="6" Maximum="24" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.TitleFontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <ComboBox ItemsSource="{Binding FontFamilies}"
-                                                      SelectedItem="{Binding SelectedTableElement.TitleFontFamily}"
+                                                      SelectedItem="{Binding SelectedTableElement.TitleFontFamily, FallbackValue={x:Null}}"
                                                       HorizontalAlignment="Stretch" />
                                         </StackPanel>
                                     </Grid>
@@ -1473,12 +1475,12 @@
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderFontSize}" Minimum="6" Maximum="24" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderFontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <ComboBox ItemsSource="{Binding FontFamilies}"
-                                                      SelectedItem="{Binding SelectedTableElement.HeaderFontFamily}"
+                                                      SelectedItem="{Binding SelectedTableElement.HeaderFontFamily, FallbackValue={x:Null}}"
                                                       HorizontalAlignment="Stretch" />
                                         </StackPanel>
                                     </Grid>
@@ -1491,12 +1493,12 @@
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.FontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <ComboBox ItemsSource="{Binding FontFamilies}"
-                                                      SelectedItem="{Binding SelectedTableElement.FontFamily}"
+                                                      SelectedItem="{Binding SelectedTableElement.FontFamily, FallbackValue={x:Null}}"
                                                       HorizontalAlignment="Stretch" />
                                         </StackPanel>
                                     </Grid>
@@ -1509,16 +1511,16 @@
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Header'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight, FallbackValue=0}" Minimum="16" Maximum="50" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
                                             <TextBlock Text="{loc:Loc 'Data'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.DataRowHeight, FallbackValue=0}" Minimum="16" Maximum="50" />
                                         </StackPanel>
                                     </Grid>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Cell Padding'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.CellPadding, FallbackValue=0}" Minimum="0" Maximum="20" />
                                     </StackPanel>
 
                                     <TextBlock Text="{loc:Loc 'Colors'}"
@@ -1528,47 +1530,47 @@
                                                Margin="0,8,0,0" />
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Title BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleBackgroundColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Title Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleTextColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.TitleTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Row Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Grid Lines'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Base Row'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Alt Row'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay}" />
+                                        <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                     </StackPanel>
                                 </StackPanel>
 
                                 <!-- Columns Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}">
-                                    <CheckBox Content="{loc:Loc 'Date'}" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Transaction ID'}" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Company'}" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Product'}" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Quantity'}" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Total'}" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
-                                    <CheckBox Content="{loc:Loc 'Status'}" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Date'}" IsChecked="{Binding SelectedTableElement.ShowDateColumn, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Transaction ID'}" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Company'}" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Product'}" IsChecked="{Binding SelectedTableElement.ShowProductColumn, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Quantity'}" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Total'}" IsChecked="{Binding SelectedTableElement.ShowTotalColumn, FallbackValue=False}" />
+                                    <CheckBox Content="{loc:Loc 'Status'}" IsChecked="{Binding SelectedTableElement.ShowStatusColumn, FallbackValue=False}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1582,7 +1584,7 @@
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Report Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding AccountingReportTypes}"
-                                              SelectedItem="{Binding SelectedAccountingTableElement.ReportType}"
+                                              SelectedItem="{Binding SelectedAccountingTableElement.ReportType, FallbackValue={x:Null}}"
                                               HorizontalAlignment="Stretch">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
@@ -1592,9 +1594,9 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <CheckBox Content="{loc:Loc 'Show Company Header'}" IsChecked="{Binding SelectedAccountingTableElement.ShowCompanyHeader}" />
-                                <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedAccountingTableElement.ShowGridLines}" />
-                                <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedAccountingTableElement.AlternateRowColors}" />
+                                <CheckBox Content="{loc:Loc 'Show Company Header'}" IsChecked="{Binding SelectedAccountingTableElement.ShowCompanyHeader, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedAccountingTableElement.ShowGridLines, FallbackValue=False}" />
+                                <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedAccountingTableElement.AlternateRowColors, FallbackValue=False}" />
 
                                 <TextBlock Text="{loc:Loc 'Font'}"
                                            FontSize="11"
@@ -1604,12 +1606,12 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.FontSize, FallbackValue=0}" Minimum="6" Maximum="24" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding FontFamilies}"
-                                                  SelectedItem="{Binding SelectedAccountingTableElement.FontFamily}"
+                                                  SelectedItem="{Binding SelectedAccountingTableElement.FontFamily, FallbackValue={x:Null}}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                 </Grid>
@@ -1622,11 +1624,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Header'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.HeaderRowHeight, FallbackValue=0}" Minimum="16" Maximum="50" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Data'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedAccountingTableElement.DataRowHeight, FallbackValue=0}" Minimum="16" Maximum="50" />
                                     </StackPanel>
                                 </Grid>
 
@@ -1637,27 +1639,27 @@
                                            Margin="0,8,0,0" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderTextColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Section Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.SectionHeaderBackgroundColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.SectionHeaderBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Total BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalBackgroundColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Total Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalTextColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Grid Lines'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.GridLineColor, Mode=TwoWay}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.GridLineColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1746,7 +1748,7 @@
 
                             <StackPanel Spacing="4">
                                 <RadioButton GroupName="ExportFormat"
-                                             IsChecked="{Binding SelectedExportFormat, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ExportFormat.PDF}}"
+                                             IsChecked="{Binding SelectedExportFormat, Converter={StaticResource EqualityConverter}, ConverterParameter={x:Static enums:ExportFormat.PDF}}"
                                              Command="{Binding SelectExportFormatCommand}"
                                              CommandParameter="{x:Static enums:ExportFormat.PDF}">
                                     <StackPanel>
@@ -1759,7 +1761,7 @@
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton GroupName="ExportFormat"
-                                             IsChecked="{Binding SelectedExportFormat, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ExportFormat.PNG}}"
+                                             IsChecked="{Binding SelectedExportFormat, Converter={StaticResource EqualityConverter}, ConverterParameter={x:Static enums:ExportFormat.PNG}}"
                                              Command="{Binding SelectExportFormatCommand}"
                                              CommandParameter="{x:Static enums:ExportFormat.PNG}">
                                     <StackPanel>
@@ -1772,7 +1774,7 @@
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton GroupName="ExportFormat"
-                                             IsChecked="{Binding SelectedExportFormat, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ExportFormat.JPEG}}"
+                                             IsChecked="{Binding SelectedExportFormat, Converter={StaticResource EqualityConverter}, ConverterParameter={x:Static enums:ExportFormat.JPEG}}"
                                              Command="{Binding SelectExportFormatCommand}"
                                              CommandParameter="{x:Static enums:ExportFormat.JPEG}">
                                     <StackPanel>

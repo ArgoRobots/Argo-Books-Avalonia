@@ -262,7 +262,8 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="600"
                     MaxHeight="650"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    DataContext="{Binding ViewingOrder}" x:CompileBindings="False">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -271,12 +272,12 @@
                                 <TextBlock Text="{loc:Loc 'Order Details'}"
                                            FontSize="18" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{Binding ViewingOrder.PoNumber}"
+                                <TextBlock Text="{Binding PoNumber}"
                                            FontSize="13"
                                            FontFamily="Consolas, monospace"
                                            Foreground="{DynamicResource PrimaryBrush}" />
                             </StackPanel>
-                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseViewModalCommand}">
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding $parent[UserControl].DataContext.CloseViewModalCommand}">
                                 <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
                             </Button>
                         </Grid>
@@ -286,20 +287,20 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Status Badge -->
-                            <Border Background="{Binding ViewingOrder.StatusBackground}"
+                            <Border Background="{Binding StatusBackground}"
                                     CornerRadius="6"
                                     Padding="12,8"
                                     HorizontalAlignment="Left">
-                                <TextBlock Text="{Binding ViewingOrder.StatusDisplay}"
+                                <TextBlock Text="{Binding StatusDisplay}"
                                            FontSize="14"
                                            FontWeight="SemiBold"
-                                           Foreground="{Binding ViewingOrder.StatusColor}" />
+                                           Foreground="{Binding StatusColor}" />
                             </Border>
 
                             <!-- Supplier Info -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{loc:Loc 'Supplier'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingOrder.SupplierName}"
+                                <TextBlock Text="{Binding SupplierName}"
                                            FontSize="16" FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                             </StackPanel>
@@ -308,13 +309,13 @@
                             <Grid ColumnDefinitions="*,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Order Date'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewingOrder.DateDisplay}"
+                                    <TextBlock Text="{Binding DateDisplay}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Expected Delivery'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding ViewingOrder.ExpectedDisplay}"
+                                    <TextBlock Text="{Binding ExpectedDisplay}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </StackPanel>
@@ -334,7 +335,7 @@
                                             <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Cost'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Grid>
-                                        <ItemsControl ItemsSource="{Binding ViewLineItems}">
+                                        <ItemsControl ItemsSource="{Binding $parent[UserControl].DataContext.ViewLineItems}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate DataType="vm:ViewLineItemDisplay">
                                                     <Border Margin="0,4" Padding="8" Background="{DynamicResource SurfaceBrush}" CornerRadius="6">
@@ -361,14 +362,14 @@
                                     Padding="16">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0" Text="{loc:Loc 'Total'}" FontWeight="SemiBold" FontSize="16" />
-                                    <TextBlock Grid.Column="1" Text="{Binding ViewingOrder.TotalDisplay}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalDisplay}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource PrimaryBrush}" />
                                 </Grid>
                             </Border>
 
                             <!-- Notes -->
-                            <StackPanel Spacing="4" IsVisible="{Binding ViewingOrder.Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <StackPanel Spacing="4" IsVisible="{Binding Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                 <TextBlock Text="{loc:Loc 'Notes'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{Binding ViewingOrder.Notes}"
+                                <TextBlock Text="{Binding Notes}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            TextWrapping="Wrap" />
@@ -378,7 +379,7 @@
 
                     <!-- Modal Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                        <Button Classes="secondary-button" Content="{loc:Loc 'Close'}" Command="{Binding CloseViewModalCommand}" HorizontalAlignment="Right" />
+                        <Button Classes="secondary-button" Content="{loc:Loc 'Close'}" Command="{Binding $parent[UserControl].DataContext.CloseViewModalCommand}" HorizontalAlignment="Right" />
                     </Border>
                 </Grid>
                 </Border>
@@ -401,7 +402,8 @@
                                 <TextBlock Text="{loc:Loc 'Receive Items'}"
                                            FontSize="18" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{Binding ReceivingOrder.PoNumber}"
+                                <TextBlock DataContext="{Binding ReceivingOrder}" x:CompileBindings="False"
+                                           Text="{Binding PoNumber}"
                                            FontSize="13"
                                            FontFamily="Consolas, monospace"
                                            Foreground="{DynamicResource PrimaryBrush}" />
