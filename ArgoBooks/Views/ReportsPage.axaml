@@ -393,14 +393,15 @@
                                                             HorizontalContentAlignment="Stretch"
                                                             Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
                                                             CommandParameter="{Binding Name}"
+                                                            Classes="template-card"
                                                             Classes.selected="{Binding IsSelected}">
                                                         <Button.Styles>
-                                                            <Style Selector="Button">
+                                                            <Style Selector="Button.template-card">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                                 <Setter Property="BorderThickness" Value="2" />
                                                                 <Setter Property="BorderBrush" Value="Transparent" />
                                                             </Style>
-                                                            <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Style Selector="Button.template-card /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                                 <Setter Property="Transitions">
                                                                     <Transitions>
@@ -408,21 +409,25 @@
                                                                     </Transitions>
                                                                 </Setter>
                                                             </Style>
-                                                            <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Style Selector="Button.template-card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                                                             </Style>
-                                                            <Style Selector="Button.selected">
+                                                            <Style Selector="Button.template-card.selected">
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                             </Style>
-                                                            <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Style Selector="Button.template-card.selected /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                             </Style>
-                                                            <Style Selector="Button.selected:pointerover">
+                                                            <Style Selector="Button.template-card.selected:pointerover">
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                             </Style>
-                                                            <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Style Selector="Button.template-card.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <!-- Icon button hover uses SurfacePressedBrush since the card hover is already SurfaceHoverBrush -->
+                                                            <Style Selector="Button.template-card:pointerover Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
                                                             </Style>
                                                         </Button.Styles>
                                                         <Grid ColumnDefinitions="*,Auto,Auto">
