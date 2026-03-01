@@ -15,8 +15,10 @@
         <controls:ModalOverlay.ModalContent>
             <Border Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
+                BoxShadow="0 8 32 0 #40000000"
                 Width="480"
                 MaxHeight="600"
+                ClipToBounds="True"
                 Padding="0">
 
             <Grid RowDefinitions="Auto,*,Auto">

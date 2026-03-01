@@ -20,7 +20,7 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
-                CornerRadius="8"
+                CornerRadius="12"
                 Width="420"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
