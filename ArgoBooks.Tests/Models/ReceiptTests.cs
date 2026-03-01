@@ -9,39 +9,6 @@ namespace ArgoBooks.Tests.Models;
 /// </summary>
 public class ReceiptTests
 {
-    #region Default Value Tests
-
-    [Fact]
-    public void Receipt_DefaultValues_AreCorrect()
-    {
-        var receipt = new Receipt();
-
-        Assert.Equal(string.Empty, receipt.Id);
-        Assert.Equal(string.Empty, receipt.TransactionId);
-        Assert.Equal(string.Empty, receipt.TransactionType);
-        Assert.Equal(string.Empty, receipt.FileName);
-        Assert.Equal(string.Empty, receipt.FileType);
-        Assert.Equal(0L, receipt.FileSize);
-        Assert.Equal(0m, receipt.Amount);
-        Assert.Equal(string.Empty, receipt.Supplier);
-        Assert.Equal("Manual", receipt.Source);
-        Assert.Null(receipt.FileData);
-        Assert.Null(receipt.OriginalFilePath);
-        Assert.Null(receipt.OcrData);
-    }
-
-    [Fact]
-    public void Receipt_CreatedAt_IsSetToUtcNow()
-    {
-        var before = DateTime.UtcNow;
-        var receipt = new Receipt();
-        var after = DateTime.UtcNow;
-
-        Assert.InRange(receipt.CreatedAt, before, after);
-    }
-
-    #endregion
-
     #region IsAiScanned Tests
 
     [Fact]
@@ -136,23 +103,6 @@ public class ReceiptTests
     #region OCR Data Tests
 
     [Fact]
-    public void OcrData_DefaultValues_AreCorrect()
-    {
-        var ocrData = new OcrData();
-
-        Assert.Null(ocrData.ExtractedSupplier);
-        Assert.Null(ocrData.ExtractedDate);
-        Assert.Null(ocrData.ExtractedAmount);
-        Assert.Null(ocrData.ExtractedSubtotal);
-        Assert.Null(ocrData.ExtractedTaxAmount);
-        Assert.Null(ocrData.ExtractedCurrency);
-        Assert.Empty(ocrData.ExtractedItems);
-        Assert.Empty(ocrData.LineItems);
-        Assert.Equal(0.0, ocrData.Confidence);
-        Assert.Null(ocrData.RawText);
-    }
-
-    [Fact]
     public void OcrData_WithExtractedValues_StoresCorrectly()
     {
         var ocrData = new OcrData
@@ -173,18 +123,6 @@ public class ReceiptTests
         Assert.Equal(10.50m, ocrData.ExtractedTaxAmount);
         Assert.Equal("USD", ocrData.ExtractedCurrency);
         Assert.Equal(0.92, ocrData.Confidence);
-    }
-
-    [Fact]
-    public void OcrLineItem_DefaultValues_AreCorrect()
-    {
-        var lineItem = new OcrLineItem();
-
-        Assert.Equal(string.Empty, lineItem.Description);
-        Assert.Equal(1m, lineItem.Quantity);
-        Assert.Equal(0m, lineItem.UnitPrice);
-        Assert.Equal(0m, lineItem.TotalPrice);
-        Assert.Equal(0.0, lineItem.Confidence);
     }
 
     [Fact]

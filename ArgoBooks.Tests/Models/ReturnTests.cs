@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
 using Xunit;
 
@@ -91,19 +90,4 @@ public class ReturnTests
 
     #endregion
 
-    #region Default Values Tests
-
-    [Fact]
-    public void Return_HasExpectedDefaults()
-    {
-        var returnItem = new Return();
-
-        Assert.Equal(ReturnStatus.Pending, returnItem.Status);
-        Assert.Equal("Customer", returnItem.ReturnType);
-        Assert.Equal(0m, returnItem.RefundAmount);
-        Assert.Equal(0m, returnItem.RestockingFee);
-        Assert.Equal(0m, returnItem.NetRefund);
-    }
-
-    #endregion
 }

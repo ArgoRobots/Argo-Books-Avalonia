@@ -261,7 +261,7 @@ public class HoltWintersTests
         var data = new List<decimal>();
         for (int year = 0; year < 3; year++)
         {
-            data.AddRange(new decimal[] { 100, 150, 200, 120 }); // Q1, Q2, Q3, Q4
+            data.AddRange([100, 150, 200, 120]); // Q1, Q2, Q3, Q4
         }
 
         var candidates = new[] { 4, 6, 12 };

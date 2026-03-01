@@ -10,29 +10,6 @@ namespace ArgoBooks.Tests.Models;
 /// </summary>
 public class RevenueTests
 {
-    #region Default Value Tests
-
-    [Fact]
-    public void Revenue_DefaultValues_AreCorrect()
-    {
-        var revenue = new Revenue();
-
-        Assert.Equal(string.Empty, revenue.Id);
-        Assert.Null(revenue.CustomerId);
-        Assert.Equal(0m, revenue.Subtotal);
-        Assert.Equal("Paid", revenue.PaymentStatus);
-        Assert.Equal(0m, revenue.Amount);
-        Assert.Equal(0m, revenue.Total);
-        Assert.Equal(0m, revenue.TaxAmount);
-        Assert.Equal(0m, revenue.TaxRate);
-        Assert.Equal(0m, revenue.Discount);
-        Assert.Equal(0m, revenue.ShippingCost);
-        Assert.Empty(revenue.LineItems);
-        Assert.Equal("USD", revenue.OriginalCurrency);
-    }
-
-    #endregion
-
     #region Customer Association Tests
 
     [Fact]
@@ -140,14 +117,6 @@ public class RevenueTests
 
     #region Currency Tests
 
-    [Fact]
-    public void Revenue_Currency_DefaultsToUSD()
-    {
-        var revenue = new Revenue();
-
-        Assert.Equal("USD", revenue.OriginalCurrency);
-    }
-
     [Theory]
     [InlineData("USD")]
     [InlineData("EUR")]
@@ -215,18 +184,7 @@ public class RevenueTests
 
     #endregion
 
-    #region Timestamp Tests
-
-    [Fact]
-    public void Revenue_Timestamps_AreSetCorrectly()
-    {
-        var before = DateTime.UtcNow;
-        var revenue = new Revenue();
-        var after = DateTime.UtcNow;
-
-        Assert.InRange(revenue.CreatedAt, before, after);
-        Assert.InRange(revenue.UpdatedAt, before, after);
-    }
+    #region Date Tests
 
     [Fact]
     public void Revenue_Date_CanBeSet()

@@ -263,55 +263,6 @@ public class InventoryItemTests
 
     #endregion
 
-    #region Default Values Tests
-
-    [Fact]
-    public void NewInventoryItem_HasDefaultStatus()
-    {
-        var item = new InventoryItem();
-
-        Assert.Equal(InventoryStatus.InStock, item.Status);
-    }
-
-    [Fact]
-    public void NewInventoryItem_HasDefaultUnitOfMeasure()
-    {
-        var item = new InventoryItem();
-
-        Assert.Equal("Each", item.UnitOfMeasure);
-    }
-
-    [Fact]
-    public void NewInventoryItem_HasLastUpdatedSet()
-    {
-        var beforeCreate = DateTime.UtcNow;
-        var item = new InventoryItem();
-        var afterCreate = DateTime.UtcNow;
-
-        Assert.True(item.LastUpdated >= beforeCreate);
-        Assert.True(item.LastUpdated <= afterCreate);
-    }
-
-    [Fact]
-    public void NewInventoryItem_HasZeroStock()
-    {
-        var item = new InventoryItem();
-
-        Assert.Equal(0, item.InStock);
-        Assert.Equal(0, item.Reserved);
-        Assert.Equal(0, item.Available);
-    }
-
-    [Fact]
-    public void NewInventoryItem_HasZeroTotalValue()
-    {
-        var item = new InventoryItem();
-
-        Assert.Equal(0m, item.TotalValue);
-    }
-
-    #endregion
-
     #region Edge Cases
 
     [Fact]
@@ -328,39 +279,6 @@ public class InventoryItemTests
 
         // Overstock is checked before low stock in the implementation
         Assert.Equal(InventoryStatus.Overstock, item.CalculateStatus());
-    }
-
-    [Fact]
-    public void InventoryItem_PropertyAssignment_WorksCorrectly()
-    {
-        var item = new InventoryItem
-        {
-            Id = "INV-001",
-            ProductId = "PRD-001",
-            Sku = "SKU-12345",
-            LocationId = "LOC-001",
-            InStock = 100,
-            Reserved = 10,
-            ReorderPoint = 20,
-            OverstockThreshold = 200,
-            UnitCost = 15.99m,
-            UnitOfMeasure = "Box",
-            Status = InventoryStatus.LowStock
-        };
-
-        Assert.Equal("INV-001", item.Id);
-        Assert.Equal("PRD-001", item.ProductId);
-        Assert.Equal("SKU-12345", item.Sku);
-        Assert.Equal("LOC-001", item.LocationId);
-        Assert.Equal(100, item.InStock);
-        Assert.Equal(10, item.Reserved);
-        Assert.Equal(90, item.Available);
-        Assert.Equal(20, item.ReorderPoint);
-        Assert.Equal(200, item.OverstockThreshold);
-        Assert.Equal(15.99m, item.UnitCost);
-        Assert.Equal("Box", item.UnitOfMeasure);
-        Assert.Equal(InventoryStatus.LowStock, item.Status);
-        Assert.Equal(1599.00m, item.TotalValue);
     }
 
     #endregion

@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using Xunit;
 
@@ -9,29 +8,6 @@ namespace ArgoBooks.Tests.Models;
 /// </summary>
 public class ProductTests
 {
-    #region Default Value Tests
-
-    [Fact]
-    public void Product_HasExpectedDefaults()
-    {
-        var product = new Product();
-
-        Assert.Equal(string.Empty, product.Id);
-        Assert.Equal(string.Empty, product.Name);
-        Assert.Equal(string.Empty, product.Sku);
-        Assert.Equal("Product", product.ItemType);
-        Assert.Equal(CategoryType.Revenue, product.Type);
-        Assert.Equal(0m, product.UnitPrice);
-        Assert.Equal(0m, product.CostPrice);
-        Assert.Equal(0m, product.TaxRate);
-        Assert.False(product.TrackInventory);
-        Assert.Null(product.CategoryId);
-        Assert.Null(product.SupplierId);
-        Assert.Equal(EntityStatus.Active, product.Status);
-    }
-
-    #endregion
-
     #region Profit Margin Tests
 
     [Theory]

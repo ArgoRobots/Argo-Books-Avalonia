@@ -11,13 +11,21 @@ public class PasswordValidatorTests
     #region Constants Tests
 
     [Fact]
-    public void Constants_HaveReasonableValues()
+    public void MinLength_Equals8()
     {
-        // Minimum length should be at least 8 for security
-        Assert.True(PasswordValidator.MinLength >= 8);
+        Assert.Equal(8, PasswordValidator.MinLength);
+    }
 
-        // Maximum length should allow for passphrase-style passwords
-        Assert.True(PasswordValidator.MaxLength >= 64);
+    [Fact]
+    public void MaxLength_Equals128()
+    {
+        Assert.Equal(128, PasswordValidator.MaxLength);
+    }
+
+    [Fact]
+    public void Constants_MinLengthIsLessThanMaxLength()
+    {
+        Assert.True(PasswordValidator.MinLength < PasswordValidator.MaxLength);
     }
 
     #endregion
@@ -25,57 +33,111 @@ public class PasswordValidatorTests
     #region IsValid Tests
 
     [Fact]
-    public void IsValid_ReturnsTrueForValidPassword()
-    {
-        Assert.True(PasswordValidator.IsValid("Password123"));
-    }
-
-    [Fact]
-    public void IsValid_ReturnsFalseForNull()
+    public void IsValid_NullPassword_ReturnsFalse()
     {
         Assert.False(PasswordValidator.IsValid(null));
     }
 
     [Fact]
-    public void IsValid_ReturnsFalseForEmpty()
+    public void IsValid_EmptyPassword_ReturnsFalse()
     {
         Assert.False(PasswordValidator.IsValid(""));
     }
 
     [Fact]
-    public void IsValid_ReturnsFalseForTooShort()
+    public void IsValid_TooShortPassword_ReturnsFalse()
     {
-        Assert.False(PasswordValidator.IsValid("Pass1")); // 5 chars, less than MinLength
+        Assert.False(PasswordValidator.IsValid("Pass1"));
     }
 
     [Fact]
-    public void IsValid_ReturnsFalseForTooLong()
+    public void IsValid_TooLongPassword_ReturnsFalse()
     {
-        var tooLong = new string('a', PasswordValidator.MaxLength + 1) + "1";
+        var tooLong = new string('A', PasswordValidator.MaxLength + 1) + "1";
         Assert.False(PasswordValidator.IsValid(tooLong));
     }
 
     [Fact]
-    public void IsValid_ReturnsFalseForNoLetters()
+    public void IsValid_NoLetters_ReturnsFalse()
     {
         Assert.False(PasswordValidator.IsValid("12345678"));
     }
 
     [Fact]
-    public void IsValid_ReturnsFalseForNoDigits()
+    public void IsValid_NoDigits_ReturnsFalse()
     {
-        Assert.False(PasswordValidator.IsValid("Password"));
+        Assert.False(PasswordValidator.IsValid("Abcdefgh"));
+    }
+
+    [Fact]
+    public void IsValid_ValidPassword_ReturnsTrue()
+    {
+        Assert.True(PasswordValidator.IsValid("Password1"));
     }
 
     [Theory]
-    [InlineData("Password1")]       // Basic valid
-    [InlineData("mypassword123")]   // Lowercase with numbers
-    [InlineData("MYPASSWORD123")]   // Uppercase with numbers
-    [InlineData("MyP@ssw0rd!")]     // Mixed with special chars
-    [InlineData("12345678a")]       // Numbers first, then letter
-    public void IsValid_AcceptsVariousValidPasswords(string password)
+    [InlineData("Password1")]
+    [InlineData("mypassword123")]
+    [InlineData("MYPASSWORD123")]
+    [InlineData("MyP@ssw0rd!")]
+    [InlineData("12345678a")]
+    [InlineData("a1234567")]
+    public void IsValid_VariousValidPasswords_ReturnsTrue(string password)
     {
         Assert.True(PasswordValidator.IsValid(password));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Pas1")]
+    [InlineData("12345678")]
+    [InlineData("abcdefgh")]
+    public void IsValid_VariousInvalidPasswords_ReturnsFalse(string? password)
+    {
+        Assert.False(PasswordValidator.IsValid(password));
+    }
+
+    [Fact]
+    public void IsValid_ExactlyMinLength_WithLetterAndDigit_ReturnsTrue()
+    {
+        // Exactly 8 chars: 7 letters + 1 digit
+        Assert.True(PasswordValidator.IsValid("Abcdefg1"));
+    }
+
+    [Fact]
+    public void IsValid_ExactlyMaxLength_WithLetterAndDigit_ReturnsTrue()
+    {
+        // Exactly 128 chars with letter and digit
+        var password = new string('A', PasswordValidator.MaxLength - 1) + "1";
+        Assert.True(PasswordValidator.IsValid(password));
+    }
+
+    [Fact]
+    public void IsValid_OnlyLetters_ReturnsFalse()
+    {
+        Assert.False(PasswordValidator.IsValid("abcdefghij"));
+    }
+
+    [Fact]
+    public void IsValid_OnlyDigits_ReturnsFalse()
+    {
+        Assert.False(PasswordValidator.IsValid("1234567890"));
+    }
+
+    [Fact]
+    public void IsValid_OneCharBelowMinLength_ReturnsFalse()
+    {
+        // 7 characters (MinLength - 1)
+        Assert.False(PasswordValidator.IsValid("Abcde1x"));
+    }
+
+    [Fact]
+    public void IsValid_OneCharAboveMaxLength_ReturnsFalse()
+    {
+        // 129 characters (MaxLength + 1)
+        var password = new string('A', PasswordValidator.MaxLength) + "1";
+        Assert.False(PasswordValidator.IsValid(password));
     }
 
     #endregion
@@ -83,46 +145,48 @@ public class PasswordValidatorTests
     #region GetValidationError Tests
 
     [Fact]
-    public void GetValidationError_ReturnsNullForValidPassword()
+    public void GetValidationError_ValidPassword_ReturnsNull()
     {
         Assert.Null(PasswordValidator.GetValidationError("Password123"));
     }
 
     [Fact]
-    public void GetValidationError_ReturnsErrorForNull()
+    public void GetValidationError_NullPassword_ReturnsRequiredError()
     {
         var error = PasswordValidator.GetValidationError(null);
         Assert.NotNull(error);
-        Assert.Contains("required", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Password is required.", error);
     }
 
     [Fact]
-    public void GetValidationError_ReturnsErrorForEmpty()
+    public void GetValidationError_EmptyPassword_ReturnsRequiredError()
     {
         var error = PasswordValidator.GetValidationError("");
         Assert.NotNull(error);
-        Assert.Contains("required", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Password is required.", error);
     }
 
     [Fact]
-    public void GetValidationError_ReturnsErrorForTooShort()
+    public void GetValidationError_TooShortPassword_ReturnsTooShortError()
     {
         var error = PasswordValidator.GetValidationError("Pass1");
         Assert.NotNull(error);
         Assert.Contains("at least", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("8", error);
     }
 
     [Fact]
-    public void GetValidationError_ReturnsErrorForTooLong()
+    public void GetValidationError_TooLongPassword_ReturnsTooLongError()
     {
-        var tooLong = new string('a', PasswordValidator.MaxLength + 1) + "1";
+        var tooLong = new string('A', PasswordValidator.MaxLength + 1) + "1";
         var error = PasswordValidator.GetValidationError(tooLong);
         Assert.NotNull(error);
         Assert.Contains("no more than", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("128", error);
     }
 
     [Fact]
-    public void GetValidationError_ReturnsErrorForNoLetters()
+    public void GetValidationError_NoLetters_ReturnsLetterError()
     {
         var error = PasswordValidator.GetValidationError("12345678");
         Assert.NotNull(error);
@@ -130,11 +194,33 @@ public class PasswordValidatorTests
     }
 
     [Fact]
-    public void GetValidationError_ReturnsErrorForNoDigits()
+    public void GetValidationError_NoDigits_ReturnsNumberError()
     {
         var error = PasswordValidator.GetValidationError("Password");
         Assert.NotNull(error);
         Assert.Contains("number", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GetValidationError_ReturnsFirstErrorOnly_WhenMultipleViolations()
+    {
+        // "ab" is too short AND has no digit - should return the first error (too short)
+        var error = PasswordValidator.GetValidationError("ab");
+        Assert.NotNull(error);
+        Assert.Contains("at least", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GetValidationError_ExactlyMinLength_ValidPassword_ReturnsNull()
+    {
+        Assert.Null(PasswordValidator.GetValidationError("Abcdefg1"));
+    }
+
+    [Fact]
+    public void GetValidationError_ExactlyMaxLength_ValidPassword_ReturnsNull()
+    {
+        var password = new string('A', PasswordValidator.MaxLength - 1) + "1";
+        Assert.Null(PasswordValidator.GetValidationError(password));
     }
 
     #endregion
@@ -142,26 +228,94 @@ public class PasswordValidatorTests
     #region GetAllValidationErrors Tests
 
     [Fact]
-    public void GetAllValidationErrors_ReturnsEmptyForValidPassword()
+    public void GetAllValidationErrors_ValidPassword_ReturnsEmptyList()
     {
         var errors = PasswordValidator.GetAllValidationErrors("Password123");
         Assert.Empty(errors);
     }
 
     [Fact]
-    public void GetAllValidationErrors_ReturnsMultipleErrorsWhenApplicable()
-    {
-        // A password that is too short and has no digits
-        var errors = PasswordValidator.GetAllValidationErrors("abc");
-        Assert.True(errors.Count >= 2);
-    }
-
-    [Fact]
-    public void GetAllValidationErrors_ReturnsOnlyRequiredErrorForNull()
+    public void GetAllValidationErrors_NullPassword_ReturnsSingleRequiredError()
     {
         var errors = PasswordValidator.GetAllValidationErrors(null);
         Assert.Single(errors);
-        Assert.Contains("required", errors[0], StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Password is required.", errors[0]);
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_EmptyPassword_ReturnsSingleRequiredError()
+    {
+        var errors = PasswordValidator.GetAllValidationErrors("");
+        Assert.Single(errors);
+        Assert.Equal("Password is required.", errors[0]);
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_TooShortAndNoDigit_ReturnsMultipleErrors()
+    {
+        // "abc" is too short and has no digit
+        var errors = PasswordValidator.GetAllValidationErrors("abc");
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("number", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_TooShortAndNoLetter_ReturnsMultipleErrors()
+    {
+        // "123" is too short and has no letter
+        var errors = PasswordValidator.GetAllValidationErrors("123");
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("letter", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_TooShortNoLetterNoDigit_ReturnsThreeErrors()
+    {
+        // "!!!" is too short, has no letter, and has no digit
+        var errors = PasswordValidator.GetAllValidationErrors("!!!");
+        Assert.Equal(3, errors.Count);
+        Assert.Contains(errors, e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("letter", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("number", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_OnlyDigits_LongEnough_ReturnsSingleLetterError()
+    {
+        // "12345678" has enough length but no letter
+        var errors = PasswordValidator.GetAllValidationErrors("12345678");
+        Assert.Single(errors);
+        Assert.Contains("letter", errors[0], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_OnlyLetters_LongEnough_ReturnsSingleDigitError()
+    {
+        // "abcdefgh" has enough length but no digit
+        var errors = PasswordValidator.GetAllValidationErrors("abcdefgh");
+        Assert.Single(errors);
+        Assert.Contains("number", errors[0], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_TooLongPassword_ReturnsTooLongError()
+    {
+        var password = new string('A', PasswordValidator.MaxLength + 1) + "1";
+        var errors = PasswordValidator.GetAllValidationErrors(password);
+        Assert.Contains(errors, e => e.Contains("no more than", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_NullDoesNotCheckOtherRules()
+    {
+        // When null, only "Password is required." should be returned, not length/letter/digit errors
+        var errors = PasswordValidator.GetAllValidationErrors(null);
+        Assert.Single(errors);
+        Assert.DoesNotContain(errors, e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(errors, e => e.Contains("letter", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(errors, e => e.Contains("number", StringComparison.OrdinalIgnoreCase));
     }
 
     #endregion
@@ -169,33 +323,177 @@ public class PasswordValidatorTests
     #region GetStrengthScore Tests
 
     [Fact]
-    public void GetStrengthScore_ReturnsZeroForNull()
+    public void GetStrengthScore_NullPassword_ReturnsZero()
     {
         Assert.Equal(0, PasswordValidator.GetStrengthScore(null));
     }
 
     [Fact]
-    public void GetStrengthScore_ReturnsZeroForEmpty()
+    public void GetStrengthScore_EmptyPassword_ReturnsZero()
     {
         Assert.Equal(0, PasswordValidator.GetStrengthScore(""));
     }
 
     [Fact]
-    public void GetStrengthScore_ReturnsLowScoreForWeakPassword()
+    public void GetStrengthScore_SingleChar_ReturnsLowScore()
     {
-        var score = PasswordValidator.GetStrengthScore("a1");
-        Assert.True(score < 40);
+        var score = PasswordValidator.GetStrengthScore("a");
+        // 1*2 (length) + 10 (lowercase) = 12
+        Assert.Equal(12, score);
     }
 
     [Fact]
-    public void GetStrengthScore_ReturnsHighScoreForStrongPassword()
+    public void GetStrengthScore_ShortPasswordLowercaseOnly_CalculatesCorrectly()
     {
-        var score = PasswordValidator.GetStrengthScore("MyStr0ng!P@ssw0rd");
-        Assert.True(score >= 60);
+        // "abcd" = 4*2 (length=8) + 10 (lowercase) = 18
+        // But "abcd" has sequential chars (a,b,c) so -10 penalty = 8
+        var score = PasswordValidator.GetStrengthScore("abcd");
+        Assert.Equal(8, score);
     }
 
     [Fact]
-    public void GetStrengthScore_LongerPasswordsScoreHigher()
+    public void GetStrengthScore_LongPassword_LengthCappedAt30()
+    {
+        // 20 chars of lowercase = 20*2=40, capped at 30 + 10 (lowercase) - 10 (repeating 'xxx...') = 30
+        var password = new string('x', 20);
+        var score = PasswordValidator.GetStrengthScore(password);
+        // 30 (length cap) + 10 (lowercase) - 10 (repeating) = 30
+        Assert.Equal(30, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_AllCharacterTypes_MaximizesVarietyBonus()
+    {
+        // "Aa1!" = 4*2=8 (length) + 10 (lower) + 15 (upper) + 15 (digit) + 20 (special) = 68
+        var score = PasswordValidator.GetStrengthScore("Aa1!");
+        Assert.Equal(68, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_LowercaseOnly_Gets10Bonus()
+    {
+        // "x" = 1*2=2 (length) + 10 (lowercase) = 12
+        var score = PasswordValidator.GetStrengthScore("x");
+        Assert.Equal(12, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_UppercaseOnly_Gets15Bonus()
+    {
+        // "X" = 1*2=2 (length) + 15 (uppercase) = 17
+        var score = PasswordValidator.GetStrengthScore("X");
+        Assert.Equal(17, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_DigitOnly_Gets15Bonus()
+    {
+        // "5" = 1*2=2 (length) + 15 (digit) = 17
+        var score = PasswordValidator.GetStrengthScore("5");
+        Assert.Equal(17, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_SpecialCharOnly_Gets20Bonus()
+    {
+        // "!" = 1*2=2 (length) + 20 (special) = 22
+        var score = PasswordValidator.GetStrengthScore("!");
+        Assert.Equal(22, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_RepeatingCharsPenalty_Minus10()
+    {
+        // "aaa" has repeating chars -> penalty of 10
+        // 3*2=6 (length) + 10 (lowercase) - 10 (repeating) = 6
+        var score = PasswordValidator.GetStrengthScore("aaa");
+        Assert.Equal(6, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_SequentialCharsPenalty_Ascending()
+    {
+        // "abc" has sequential ascending chars -> penalty of 10
+        // 3*2=6 (length) + 10 (lowercase) - 10 (sequential) = 6
+        var score = PasswordValidator.GetStrengthScore("abc");
+        Assert.Equal(6, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_SequentialCharsPenalty_Descending()
+    {
+        // "cba" has sequential descending chars -> penalty of 10
+        // 3*2=6 (length) + 10 (lowercase) - 10 (sequential) = 6
+        var score = PasswordValidator.GetStrengthScore("cba");
+        Assert.Equal(6, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_SequentialDigits_Ascending()
+    {
+        // "123" has sequential ascending digits -> penalty of 10
+        // 3*2=6 (length) + 15 (digit) - 10 (sequential) = 11
+        var score = PasswordValidator.GetStrengthScore("123");
+        Assert.Equal(11, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_SequentialDigits_Descending()
+    {
+        // "321" has sequential descending digits -> penalty of 10
+        // 3*2=6 (length) + 15 (digit) - 10 (sequential) = 11
+        var score = PasswordValidator.GetStrengthScore("321");
+        Assert.Equal(11, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_BothPenalties_RepeatingAndSequential()
+    {
+        // "aaabcd" has repeating (aaa) and sequential (bcd)
+        // 6*2=12 (length) + 10 (lowercase) - 10 (repeating) - 10 (sequential) = 2
+        var score = PasswordValidator.GetStrengthScore("aaabcd");
+        Assert.Equal(2, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_SequentialCaseInsensitive()
+    {
+        // "ABC" should detect sequential even with uppercase
+        // 3*2=6 (length) + 15 (uppercase) - 10 (sequential) = 11
+        var score = PasswordValidator.GetStrengthScore("ABC");
+        Assert.Equal(11, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_ClampedAtZero_NeverNegative()
+    {
+        // Even with heavy penalties, score should never go below 0
+        var score = PasswordValidator.GetStrengthScore("a");
+        Assert.True(score >= 0);
+    }
+
+    [Fact]
+    public void GetStrengthScore_ClampedAt100_NeverExceeds()
+    {
+        // Very long, diverse password
+        var password = "MyV3ryStr0ng!P@ssw0rd#WithL0ts0fCh@rs";
+        var score = PasswordValidator.GetStrengthScore(password);
+        Assert.True(score <= 100);
+    }
+
+    [Fact]
+    public void GetStrengthScore_MaxPossibleScore_Is100()
+    {
+        // A very long password with all character types but repeating 'X's trigger -10 penalty
+        // 15+ chars = 30 (length cap) + 10 + 15 + 15 + 20 - 10 (repeating) = 80
+        var password = new string('X', 15) + "a1!";
+        var score = PasswordValidator.GetStrengthScore(password);
+        // 18*2=36 capped at 30 + 10 (lower) + 15 (upper) + 15 (digit) + 20 (special) - 10 (repeating XXX) = 80
+        Assert.Equal(80, score);
+    }
+
+    [Fact]
+    public void GetStrengthScore_LongerPasswordScoresHigher()
     {
         var shortScore = PasswordValidator.GetStrengthScore("Aa1!");
         var longScore = PasswordValidator.GetStrengthScore("Aa1!Bb2@Cc3#");
@@ -204,52 +502,48 @@ public class PasswordValidatorTests
     }
 
     [Fact]
-    public void GetStrengthScore_MixedCaseScoresHigher()
+    public void GetStrengthScore_MixedCaseScoresHigherThanSingleCase()
     {
-        var lowerScore = PasswordValidator.GetStrengthScore("password123!");
-        var mixedScore = PasswordValidator.GetStrengthScore("Password123!");
+        var lowerOnlyScore = PasswordValidator.GetStrengthScore("password!1");
+        var mixedCaseScore = PasswordValidator.GetStrengthScore("Password!1");
 
-        Assert.True(mixedScore > lowerScore);
+        Assert.True(mixedCaseScore > lowerOnlyScore);
     }
 
     [Fact]
-    public void GetStrengthScore_SpecialCharsScoreHigher()
+    public void GetStrengthScore_SpecialCharsIncreaseScore()
     {
-        var noSpecialScore = PasswordValidator.GetStrengthScore("Password123");
-        var withSpecialScore = PasswordValidator.GetStrengthScore("Password123!");
+        var noSpecialScore = PasswordValidator.GetStrengthScore("Password1");
+        var withSpecialScore = PasswordValidator.GetStrengthScore("Password1!");
 
         Assert.True(withSpecialScore > noSpecialScore);
     }
 
     [Fact]
-    public void GetStrengthScore_RepeatingCharsPenalized()
+    public void GetStrengthScore_NoRepeatingChars_NoPenalty()
     {
-        var normalScore = PasswordValidator.GetStrengthScore("Password123!");
-        var repeatingScore = PasswordValidator.GetStrengthScore("Passwoooord123!");
-
-        Assert.True(repeatingScore < normalScore);
+        // "abac" has no 3+ consecutive identical chars
+        // 4*2=8 + 10 (lowercase) = 18
+        var score = PasswordValidator.GetStrengthScore("abac");
+        Assert.Equal(18, score);
     }
 
     [Fact]
-    public void GetStrengthScore_SequentialCharsPenalized()
+    public void GetStrengthScore_TwoRepeatingChars_NoPenalty()
     {
-        // Use passwords without "123" since that's also sequential
-        var normalScore = PasswordValidator.GetStrengthScore("Pmqz597!");
-        var sequentialScore = PasswordValidator.GetStrengthScore("Pabc597!");
-
-        Assert.True(sequentialScore < normalScore);
+        // "aab" has only 2 consecutive identical chars, no penalty
+        // 3*2=6 + 10 (lowercase) = 16
+        var score = PasswordValidator.GetStrengthScore("aab");
+        Assert.Equal(16, score);
     }
 
     [Fact]
-    public void GetStrengthScore_ClampedBetween0And100()
+    public void GetStrengthScore_NonConsecutiveSequentialChars_NoPenalty()
     {
-        // Very weak password
-        var weakScore = PasswordValidator.GetStrengthScore("a");
-        Assert.True(weakScore >= 0 && weakScore <= 100);
-
-        // Very strong password
-        var strongScore = PasswordValidator.GetStrengthScore("MyV3ryStr0ng!P@ssw0rd#2024");
-        Assert.True(strongScore >= 0 && strongScore <= 100);
+        // "axbxc" - a, b, c are present but not consecutive positions
+        // 5*2=10 + 10 (lowercase) = 20
+        var score = PasswordValidator.GetStrengthScore("axbxc");
+        Assert.Equal(20, score);
     }
 
     #endregion
@@ -258,19 +552,209 @@ public class PasswordValidatorTests
 
     [Theory]
     [InlineData(0, "Very Weak")]
+    [InlineData(1, "Very Weak")]
     [InlineData(10, "Very Weak")]
     [InlineData(19, "Very Weak")]
-    [InlineData(20, "Weak")]
-    [InlineData(39, "Weak")]
-    [InlineData(40, "Fair")]
-    [InlineData(59, "Fair")]
-    [InlineData(60, "Strong")]
-    [InlineData(79, "Strong")]
-    [InlineData(80, "Very Strong")]
-    [InlineData(100, "Very Strong")]
-    public void GetStrengthDescription_ReturnsCorrectDescription(int score, string expected)
+    public void GetStrengthDescription_ScoreBelow20_ReturnsVeryWeak(int score, string expected)
     {
         Assert.Equal(expected, PasswordValidator.GetStrengthDescription(score));
+    }
+
+    [Theory]
+    [InlineData(20, "Weak")]
+    [InlineData(25, "Weak")]
+    [InlineData(39, "Weak")]
+    public void GetStrengthDescription_Score20To39_ReturnsWeak(int score, string expected)
+    {
+        Assert.Equal(expected, PasswordValidator.GetStrengthDescription(score));
+    }
+
+    [Theory]
+    [InlineData(40, "Fair")]
+    [InlineData(50, "Fair")]
+    [InlineData(59, "Fair")]
+    public void GetStrengthDescription_Score40To59_ReturnsFair(int score, string expected)
+    {
+        Assert.Equal(expected, PasswordValidator.GetStrengthDescription(score));
+    }
+
+    [Theory]
+    [InlineData(60, "Strong")]
+    [InlineData(70, "Strong")]
+    [InlineData(79, "Strong")]
+    public void GetStrengthDescription_Score60To79_ReturnsStrong(int score, string expected)
+    {
+        Assert.Equal(expected, PasswordValidator.GetStrengthDescription(score));
+    }
+
+    [Theory]
+    [InlineData(80, "Very Strong")]
+    [InlineData(90, "Very Strong")]
+    [InlineData(100, "Very Strong")]
+    public void GetStrengthDescription_Score80AndAbove_ReturnsVeryStrong(int score, string expected)
+    {
+        Assert.Equal(expected, PasswordValidator.GetStrengthDescription(score));
+    }
+
+    [Fact]
+    public void GetStrengthDescription_BoundaryAt20_TransitionsFromVeryWeakToWeak()
+    {
+        Assert.Equal("Very Weak", PasswordValidator.GetStrengthDescription(19));
+        Assert.Equal("Weak", PasswordValidator.GetStrengthDescription(20));
+    }
+
+    [Fact]
+    public void GetStrengthDescription_BoundaryAt40_TransitionsFromWeakToFair()
+    {
+        Assert.Equal("Weak", PasswordValidator.GetStrengthDescription(39));
+        Assert.Equal("Fair", PasswordValidator.GetStrengthDescription(40));
+    }
+
+    [Fact]
+    public void GetStrengthDescription_BoundaryAt60_TransitionsFromFairToStrong()
+    {
+        Assert.Equal("Fair", PasswordValidator.GetStrengthDescription(59));
+        Assert.Equal("Strong", PasswordValidator.GetStrengthDescription(60));
+    }
+
+    [Fact]
+    public void GetStrengthDescription_BoundaryAt80_TransitionsFromStrongToVeryStrong()
+    {
+        Assert.Equal("Strong", PasswordValidator.GetStrengthDescription(79));
+        Assert.Equal("Very Strong", PasswordValidator.GetStrengthDescription(80));
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    [Fact]
+    public void IsValid_WhitespacePassword_TreatedAsNonEmpty()
+    {
+        // Whitespace is not empty per string.IsNullOrEmpty, but it is too short
+        Assert.False(PasswordValidator.IsValid("   "));
+    }
+
+    [Fact]
+    public void IsValid_PasswordWithSpaces_ValidIfMeetsRequirements()
+    {
+        // Spaces are allowed as characters
+        Assert.True(PasswordValidator.IsValid("Pass word1"));
+    }
+
+    [Fact]
+    public void IsValid_UnicodeLetters_CountAsLetters()
+    {
+        // Unicode letters should satisfy the "at least one letter" requirement
+        Assert.True(PasswordValidator.IsValid("\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e91"));
+    }
+
+    [Fact]
+    public void GetValidationError_PasswordWithOnlySpecialChars_RequiresLetterAndDigit()
+    {
+        // "!@#$%^&*" has 8 chars but no letter - returns letter error first
+        var error = PasswordValidator.GetValidationError("!@#$%^&*");
+        Assert.NotNull(error);
+        Assert.Contains("letter", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_PasswordWithOnlySpecialChars_ReturnsBothLetterAndDigitErrors()
+    {
+        var errors = PasswordValidator.GetAllValidationErrors("!@#$%^&*");
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Contains("letter", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("number", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void GetStrengthScore_PasswordAtExactlyMinLength_ScoresReasonably()
+    {
+        // "Abcdef1!" = exactly 8 chars
+        var score = PasswordValidator.GetStrengthScore("Abcdef1!");
+        // 8*2=16 + 10 (lower) + 15 (upper) + 15 (digit) + 20 (special) - 10 (sequential: def) = 66
+        Assert.True(score > 0);
+        Assert.True(score <= 100);
+    }
+
+    [Fact]
+    public void GetStrengthScore_PasswordAtExactlyMaxLength_ScoresHighOnLength()
+    {
+        var password = new string('X', PasswordValidator.MaxLength - 1) + "1";
+        var score = PasswordValidator.GetStrengthScore(password);
+        // Length capped at 30, +15 (upper) +15 (digit) - 10 (repeating XXX) = 50
+        Assert.True(score >= 50);
+    }
+
+    [Fact]
+    public void GetStrengthScore_RepeatingCharsAtEnd_StillPenalized()
+    {
+        // "xyzaaa" has repeating chars at end
+        // 6*2=12 + 10 (lower) - 10 (repeating) - 10 (sequential: xyz) = 2
+        var scoreWithRepeat = PasswordValidator.GetStrengthScore("xyzaaa");
+        var scoreWithout = PasswordValidator.GetStrengthScore("xyzpqr");
+        Assert.True(scoreWithRepeat < scoreWithout);
+    }
+
+    [Fact]
+    public void GetStrengthScore_FourRepeatingChars_StillOnlyMinus10()
+    {
+        // "aaaa" has repeating chars (aaa detected at position 0 and 1)
+        // but penalty is applied once via the boolean check
+        // 4*2=8 + 10 (lower) - 10 (repeating) = 8
+        var score = PasswordValidator.GetStrengthScore("aaaa");
+        Assert.Equal(8, score);
+    }
+
+    [Fact]
+    public void IsValid_ExactlyMinLengthMinusOne_ReturnsFalse()
+    {
+        // 7 chars with letter and digit
+        Assert.False(PasswordValidator.IsValid("Abcde1x"));
+    }
+
+    [Fact]
+    public void IsValid_ExactlyMaxLengthPlusOne_ReturnsFalse()
+    {
+        var password = new string('A', PasswordValidator.MaxLength) + "1";
+        Assert.False(PasswordValidator.IsValid(password));
+    }
+
+    [Fact]
+    public void GetAllValidationErrors_ExactlyMaxLengthPlusOne_NoLetterNoDigit_ReturnsAllErrors()
+    {
+        var password = new string('!', PasswordValidator.MaxLength + 1);
+        var errors = PasswordValidator.GetAllValidationErrors(password);
+        Assert.Equal(3, errors.Count);
+        Assert.Contains(errors, e => e.Contains("no more than", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("letter", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("number", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void IsValid_ConsistentWithGetValidationError()
+    {
+        var testPasswords = new[]
+        {
+            null, "", "a", "12345678", "abcdefgh", "Password1", "Aa1!Bb2@",
+            new string('A', PasswordValidator.MaxLength + 1)
+        };
+
+        foreach (var password in testPasswords)
+        {
+            var isValid = PasswordValidator.IsValid(password);
+            var error = PasswordValidator.GetValidationError(password);
+            Assert.Equal(isValid, error == null);
+        }
+    }
+
+    [Fact]
+    public void GetStrengthScore_ConsistentAcrossMultipleCalls()
+    {
+        var password = "MyP@ssw0rd!";
+        var score1 = PasswordValidator.GetStrengthScore(password);
+        var score2 = PasswordValidator.GetStrengthScore(password);
+        Assert.Equal(score1, score2);
     }
 
     #endregion

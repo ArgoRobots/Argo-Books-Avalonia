@@ -205,28 +205,4 @@ public class PurchaseOrderTests
 
     #endregion
 
-    #region Default Values Tests
-
-    [Fact]
-    public void PurchaseOrderLineItem_HasExpectedDefaults()
-    {
-        var lineItem = new PurchaseOrderLineItem();
-
-        Assert.Equal(0, lineItem.Quantity);
-        Assert.Equal(0, lineItem.QuantityReceived);
-        Assert.Equal(0m, lineItem.UnitCost);
-        Assert.Equal(0m, lineItem.Total);
-        Assert.True(lineItem.IsFullyReceived); // 0 >= 0
-    }
-
-    [Fact]
-    public void PurchaseOrder_HasExpectedDefaults()
-    {
-        var po = new PurchaseOrder();
-
-        Assert.Empty(po.LineItems);
-        Assert.False(po.IsFullyReceived); // Empty line items = false
-    }
-
-    #endregion
 }

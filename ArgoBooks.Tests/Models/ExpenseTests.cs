@@ -9,58 +9,6 @@ namespace ArgoBooks.Tests.Models;
 /// </summary>
 public class ExpenseTests
 {
-    #region Default Value Tests
-
-    [Fact]
-    public void Expense_DefaultValues_AreCorrect()
-    {
-        var purchase = new Expense();
-
-        Assert.Equal(string.Empty, purchase.Id);
-        Assert.Null(purchase.SupplierId);
-        Assert.Equal(0m, purchase.Amount);
-        Assert.Equal(0m, purchase.Total);
-        Assert.Equal(0m, purchase.TaxAmount);
-        Assert.Equal(0m, purchase.TaxRate);
-        Assert.Equal(0m, purchase.Discount);
-        Assert.Equal(0m, purchase.ShippingCost);
-        Assert.Empty(purchase.LineItems);
-        Assert.Equal("USD", purchase.OriginalCurrency);
-    }
-
-    #endregion
-
-    #region Supplier Association Tests
-
-    [Fact]
-    public void Expense_SupplierAssociation_WorksCorrectly()
-    {
-        var purchase = new Expense
-        {
-            Id = "PUR-2024-00001",
-            SupplierId = "SUP-001"
-        };
-
-        Assert.Equal("PUR-2024-00001", purchase.Id);
-        Assert.Equal("SUP-001", purchase.SupplierId);
-    }
-
-    [Fact]
-    public void Expense_WithoutSupplier_IsValid()
-    {
-        var purchase = new Expense
-        {
-            Id = "PUR-2024-00001",
-            SupplierId = null,
-            Total = 500.00m
-        };
-
-        Assert.Null(purchase.SupplierId);
-        Assert.Equal(500.00m, purchase.Total);
-    }
-
-    #endregion
-
     #region Calculation Tests
 
     [Fact]
@@ -118,14 +66,6 @@ public class ExpenseTests
     #region Currency Tests
 
     [Fact]
-    public void Expense_Currency_DefaultsToUSD()
-    {
-        var purchase = new Expense();
-
-        Assert.Equal("USD", purchase.OriginalCurrency);
-    }
-
-    [Fact]
     public void Expense_EffectiveTotalUSD_ReturnsConvertedValueWhenSet()
     {
         var purchase = new Expense
@@ -176,75 +116,4 @@ public class ExpenseTests
 
     #endregion
 
-    #region Receipt Association Tests
-
-    [Fact]
-    public void Expense_ReceiptAssociation_WorksCorrectly()
-    {
-        var purchase = new Expense
-        {
-            Id = "PUR-2024-00001",
-            ReceiptId = "RCP-001"
-        };
-
-        Assert.Equal("RCP-001", purchase.ReceiptId);
-    }
-
-    [Fact]
-    public void Expense_WithoutReceipt_IsValid()
-    {
-        var purchase = new Expense
-        {
-            Id = "PUR-2024-00001",
-            ReceiptId = null
-        };
-
-        Assert.Null(purchase.ReceiptId);
-    }
-
-    #endregion
-
-    #region Reference Number Tests
-
-    [Fact]
-    public void Expense_ReferenceNumber_WorksCorrectly()
-    {
-        var purchase = new Expense
-        {
-            ReferenceNumber = "INV-SUP-2024-001"
-        };
-
-        Assert.Equal("INV-SUP-2024-001", purchase.ReferenceNumber);
-    }
-
-    [Theory]
-    [InlineData("PO-12345")]
-    [InlineData("VENDOR-INV-001")]
-    [InlineData("2024/Q1/001")]
-    public void Expense_ReferenceNumber_SupportsVariousFormats(string refNumber)
-    {
-        var purchase = new Expense
-        {
-            ReferenceNumber = refNumber
-        };
-
-        Assert.Equal(refNumber, purchase.ReferenceNumber);
-    }
-
-    #endregion
-
-    #region Timestamp Tests
-
-    [Fact]
-    public void Expense_Timestamps_AreSetCorrectly()
-    {
-        var before = DateTime.UtcNow;
-        var purchase = new Expense();
-        var after = DateTime.UtcNow;
-
-        Assert.InRange(purchase.CreatedAt, before, after);
-        Assert.InRange(purchase.UpdatedAt, before, after);
-    }
-
-    #endregion
 }

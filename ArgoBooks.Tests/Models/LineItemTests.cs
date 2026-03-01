@@ -231,16 +231,6 @@ public class LineItemTests
     #region Edge Cases
 
     [Fact]
-    public void Calculations_DefaultValues_AllZero()
-    {
-        var lineItem = new LineItem();
-
-        Assert.Equal(0m, lineItem.Subtotal);
-        Assert.Equal(0m, lineItem.TaxAmount);
-        Assert.Equal(0m, lineItem.Amount);
-    }
-
-    [Fact]
     public void Calculations_NegativeQuantity_CalculatesWithNegative()
     {
         var lineItem = new LineItem

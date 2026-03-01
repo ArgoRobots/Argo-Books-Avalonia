@@ -1,0 +1,56 @@
+using System.Text;
+using ArgoBooks.Core.Models;
+using Xunit;
+
+namespace ArgoBooks.Tests.Models;
+
+/// <summary>
+/// Tests for the FileFooter model and FileFormatConstants.
+/// </summary>
+public class FileFooterTests
+{
+    #region Accountants List Tests
+
+    [Fact]
+    public void FileFooter_Accountants_CanBePopulated()
+    {
+        var footer = new FileFooter();
+        footer.Accountants.Add("John Doe");
+        footer.Accountants.Add("Jane Smith");
+
+        Assert.Equal(2, footer.Accountants.Count);
+        Assert.Contains("John Doe", footer.Accountants);
+    }
+
+    #endregion
+
+    #region FileFormatConstants Tests
+
+    [Fact]
+    public void FileFormatConstants_MagicBytes_EqualsArgoBytes()
+    {
+        var expected = Encoding.ASCII.GetBytes("ARGO");
+
+        Assert.Equal(expected, FileFormatConstants.MagicBytes);
+    }
+
+    [Fact]
+    public void FileFormatConstants_FormatVersion_IsOne()
+    {
+        Assert.Equal(1, FileFormatConstants.FormatVersion);
+    }
+
+    [Fact]
+    public void FileFormatConstants_CompanyFileExtension_IsArgo()
+    {
+        Assert.Equal(".argo", FileFormatConstants.CompanyFileExtension);
+    }
+
+    [Fact]
+    public void FileFormatConstants_BackupFileExtension_IsArgobk()
+    {
+        Assert.Equal(".argobk", FileFormatConstants.BackupFileExtension);
+    }
+
+    #endregion
+}

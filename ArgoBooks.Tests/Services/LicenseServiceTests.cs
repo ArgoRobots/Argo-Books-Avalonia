@@ -13,7 +13,6 @@ public class LicenseServiceTests
     private readonly MockEncryptionService _encryptionService;
     private readonly MockGlobalSettingsService _settingsService;
     private readonly MockPlatformService _platformService;
-    private readonly MockConnectivityService _connectivityService;
     private readonly LicenseService _licenseService;
 
     public LicenseServiceTests()
@@ -21,8 +20,8 @@ public class LicenseServiceTests
         _encryptionService = new MockEncryptionService();
         _settingsService = new MockGlobalSettingsService();
         _platformService = new MockPlatformService();
-        _connectivityService = new MockConnectivityService();
-        _licenseService = new LicenseService(_encryptionService, _settingsService, _platformService, _connectivityService);
+        var connectivityService = new MockConnectivityService();
+        _licenseService = new LicenseService(_encryptionService, _settingsService, _platformService, connectivityService);
     }
 
     #region Constructor Tests

@@ -195,12 +195,6 @@ public class QuickActionsViewModelTests
     {
         _viewModel.SearchQuery = "export";
 
-        // Total count should include TopResults
-        var totalCount = _viewModel.TopResults.Count +
-                        _viewModel.QuickActions.Count +
-                        _viewModel.NavigationItems.Count +
-                        _viewModel.ToolsItems.Count;
-
         // Move down should cycle through all items including TopResults
         _viewModel.MoveDownCommand.Execute(null);
         Assert.Equal(0, _viewModel.SelectedIndex);

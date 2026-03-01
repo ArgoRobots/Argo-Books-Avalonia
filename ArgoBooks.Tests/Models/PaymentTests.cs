@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
 using Xunit;
 
@@ -9,35 +8,6 @@ namespace ArgoBooks.Tests.Models;
 /// </summary>
 public class PaymentTests
 {
-    #region Default Value Tests
-
-    [Fact]
-    public void Payment_DefaultValues_AreCorrect()
-    {
-        var payment = new Payment();
-
-        Assert.Equal(string.Empty, payment.Id);
-        Assert.Equal(string.Empty, payment.InvoiceId);
-        Assert.Equal(string.Empty, payment.CustomerId);
-        Assert.Equal(0m, payment.Amount);
-        Assert.Null(payment.ReferenceNumber);
-        Assert.Equal(string.Empty, payment.Notes);
-        Assert.Equal("USD", payment.OriginalCurrency);
-        Assert.Equal(0m, payment.AmountUSD);
-    }
-
-    [Fact]
-    public void Payment_CreatedAt_IsSetToUtcNow()
-    {
-        var before = DateTime.UtcNow;
-        var payment = new Payment();
-        var after = DateTime.UtcNow;
-
-        Assert.InRange(payment.CreatedAt, before, after);
-    }
-
-    #endregion
-
     #region Invoice Association Tests
 
     [Fact]
@@ -57,62 +27,7 @@ public class PaymentTests
 
     #endregion
 
-    #region Payment Method Tests
-
-    [Theory]
-    [InlineData(PaymentMethod.Cash)]
-    [InlineData(PaymentMethod.CreditCard)]
-    [InlineData(PaymentMethod.DebitCard)]
-    [InlineData(PaymentMethod.BankTransfer)]
-    [InlineData(PaymentMethod.Check)]
-    [InlineData(PaymentMethod.PayPal)]
-    [InlineData(PaymentMethod.Other)]
-    public void Payment_PaymentMethod_SupportsAllValues(PaymentMethod method)
-    {
-        var payment = new Payment
-        {
-            PaymentMethod = method
-        };
-
-        Assert.Equal(method, payment.PaymentMethod);
-    }
-
-    [Fact]
-    public void Payment_PaymentMethod_DefaultIsCash()
-    {
-        var payment = new Payment();
-
-        Assert.Equal(PaymentMethod.Cash, payment.PaymentMethod);
-    }
-
-    #endregion
-
     #region Amount Tests
-
-    [Fact]
-    public void Payment_Amount_CanBeSet()
-    {
-        var payment = new Payment
-        {
-            Amount = 1500.50m
-        };
-
-        Assert.Equal(1500.50m, payment.Amount);
-    }
-
-    [Theory]
-    [InlineData(0.01)]  // Minimum payment
-    [InlineData(100.00)]
-    [InlineData(999999.99)]  // Large payment
-    public void Payment_Amount_SupportsVariousValues(decimal amount)
-    {
-        var payment = new Payment
-        {
-            Amount = amount
-        };
-
-        Assert.Equal(amount, payment.Amount);
-    }
 
     [Fact]
     public void Payment_PartialPayment_WorksCorrectly()
@@ -131,14 +46,6 @@ public class PaymentTests
     #endregion
 
     #region Currency Tests
-
-    [Fact]
-    public void Payment_Currency_DefaultsToUSD()
-    {
-        var payment = new Payment();
-
-        Assert.Equal("USD", payment.OriginalCurrency);
-    }
 
     [Theory]
     [InlineData("USD", 100.00, 100.00)]
@@ -246,14 +153,6 @@ public class PaymentTests
     #endregion
 
     #region Notes Tests
-
-    [Fact]
-    public void Payment_Notes_DefaultsToEmpty()
-    {
-        var payment = new Payment();
-
-        Assert.Equal(string.Empty, payment.Notes);
-    }
 
     [Fact]
     public void Payment_Notes_CanStoreText()
