@@ -2240,10 +2240,18 @@ public partial class ReportsPageViewModel : ViewModelBase
         var success = _templateStorage.DeleteTemplate(TemplateToDelete);
         if (success)
         {
-            // If we're deleting the currently selected template, switch to blank
+            // If we're deleting the currently selected template, clear selection state
             if (SelectedTemplateName == TemplateToDelete)
             {
                 SelectedTemplateName = ReportTemplateFactory.TemplateNames.Custom;
+
+                // Clear date range selection since the selected template was deleted
+                foreach (var option in DatePresets)
+                    option.IsSelected = false;
+                SelectedDatePreset = string.Empty;
+                IsCustomDateRange = false;
+                CustomStartDate = null;
+                CustomEndDate = null;
             }
 
             // Refresh custom templates list
