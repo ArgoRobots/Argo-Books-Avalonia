@@ -107,18 +107,11 @@ public class AccountingReportDataService
 
     /// <summary>
     /// Gets the earliest transaction date across all data in the company.
-    /// Used to replace the hardcoded "All Time" sentinel with the actual start of data.
+    /// Delegates to CompanyData.GetEarliestTransactionDate().
     /// </summary>
     private DateTime GetEarliestTransactionDate()
     {
-        if (_companyData == null) return DateTime.Today;
-
-        var dates = new List<DateTime>();
-        if (_companyData.Revenues.Count > 0) dates.Add(_companyData.Revenues.Min(r => r.Date));
-        if (_companyData.Expenses.Count > 0) dates.Add(_companyData.Expenses.Min(e => e.Date));
-        if (_companyData.Payments.Count > 0) dates.Add(_companyData.Payments.Min(p => p.Date));
-
-        return dates.Count > 0 ? dates.Min() : DateTime.Today;
+        return _companyData?.GetEarliestTransactionDate() ?? DateTime.Today;
     }
 
     /// <summary>

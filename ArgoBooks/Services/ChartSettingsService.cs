@@ -69,6 +69,12 @@ public partial class ChartSettingsService : ObservableObject
         : string.Empty;
 
     /// <summary>
+    /// Gets the formatted text showing the currently selected date range span.
+    /// Always returns the date span regardless of selection type.
+    /// </summary>
+    public string DateRangeDisplayText => $"{StartDate:MMM d, yyyy} – {EndDate:MMM d, yyyy}";
+
+    /// <summary>
     /// Gets the label for comparison period based on selected date range.
     /// </summary>
     public string ComparisonPeriodLabel => SelectedDateRange switch
@@ -247,11 +253,13 @@ public partial class ChartSettingsService : ObservableObject
     partial void OnStartDateChanged(DateTime value)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
+        OnPropertyChanged(nameof(DateRangeDisplayText));
     }
 
     partial void OnEndDateChanged(DateTime value)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
+        OnPropertyChanged(nameof(DateRangeDisplayText));
     }
 
     partial void OnHasAppliedCustomRangeChanged(bool value)
@@ -319,7 +327,7 @@ public partial class ChartSettingsService : ObservableObject
                 break;
 
             case "All Time":
-                StartDate = new DateTime(2000, 1, 1);
+                StartDate = App.CompanyManager?.CompanyData?.GetEarliestTransactionDate() ?? DateTime.Today;
                 EndDate = now;
                 break;
 

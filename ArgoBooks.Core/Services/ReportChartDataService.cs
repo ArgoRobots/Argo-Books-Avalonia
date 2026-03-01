@@ -15,7 +15,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets the date range based on filters (delegates to shared ReportFilters.GetDateRange).
     /// </summary>
-    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange();
+    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange(companyData?.GetEarliestTransactionDate());
 
     /// <summary>
     /// Gets the effective date range, constrained by actual sales data.

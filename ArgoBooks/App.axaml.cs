@@ -611,6 +611,11 @@ public class App : Application
     public static ReceiptViewerModalViewModel? ReceiptViewerModal { get; private set; }
 
     /// <summary>
+    /// Gets the custom date range modal ViewModel for date range selection from anywhere.
+    /// </summary>
+    public static CustomDateRangeModalViewModel? CustomDateRangeModal { get; private set; }
+
+    /// <summary>
     /// Checks if the reports page has unsaved changes.
     /// </summary>
     public static bool HasReportsPageUnsavedChanges => _appShellViewModel?.HasReportsPageUnsavedChanges ?? false;
@@ -682,6 +687,7 @@ public class App : Application
 
             // Create app shell with navigation service and optional update service
             _appShellViewModel = new AppShellViewModel(NavigationService, UpdateService);
+            CustomDateRangeModal = _appShellViewModel.CustomDateRangeModalViewModel;
 
             // Ensure no unsaved changes indicator on startup
             _mainWindowViewModel.HasUnsavedChanges = false;

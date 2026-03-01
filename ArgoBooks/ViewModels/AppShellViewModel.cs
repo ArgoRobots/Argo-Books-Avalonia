@@ -260,6 +260,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public QuickActionsSettingsModalViewModel QuickActionsSettingsModalViewModel { get; }
 
+    /// <summary>
+    /// Gets the custom date range modal view model.
+    /// </summary>
+    public CustomDateRangeModalViewModel CustomDateRangeModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -475,6 +480,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create quick actions settings modal
         QuickActionsSettingsModalViewModel = new QuickActionsSettingsModalViewModel();
+
+        // Create custom date range modal
+        CustomDateRangeModalViewModel = new CustomDateRangeModalViewModel();
 
         // Register navigation guard for unsaved changes check
         if (_navigationService is NavigationService navService)

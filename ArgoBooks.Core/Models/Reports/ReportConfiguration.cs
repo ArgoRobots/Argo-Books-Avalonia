@@ -326,7 +326,8 @@ public class ReportFilters
     /// Gets the date range based on filters, with consistent end-date normalization.
     /// Used by both chart and table data services to ensure identical date ranges.
     /// </summary>
-    public (DateTime Start, DateTime End) GetDateRange()
+    /// <param name="earliestDate">Optional earliest transaction date for "All Time". Defaults to today if null.</param>
+    public (DateTime Start, DateTime End) GetDateRange(DateTime? earliestDate = null)
     {
         // For custom ranges, use the explicit start/end dates from filters
         if (string.IsNullOrEmpty(DatePresetName) || IsCustomRange(DatePresetName))
@@ -338,7 +339,7 @@ public class ReportFilters
         }
 
         // For preset names, calculate the date range
-        return DatePresetNames.GetDateRange(DatePresetName);
+        return DatePresetNames.GetDateRange(DatePresetName, earliestDate);
     }
 }
 
@@ -479,7 +480,9 @@ public static class DatePresetNames
     /// Gets the date range for a preset name.
     /// Handles case-insensitive matching to support both constant values and UI display values.
     /// </summary>
-    public static (DateTime Start, DateTime End) GetDateRange(string presetName)
+    /// <param name="presetName">The preset name (e.g., "This Month", "All Time").</param>
+    /// <param name="earliestDate">Optional earliest transaction date for "All Time". Defaults to today if null.</param>
+    public static (DateTime Start, DateTime End) GetDateRange(string presetName, DateTime? earliestDate = null)
     {
         var now = DateTime.Now;
         var today = now.Date;
@@ -505,7 +508,7 @@ public static class DatePresetNames
             "last quarter" => GetLastQuarterRange(now),
             "this year" => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
             "last year" => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
-            "all time" => (new DateTime(2000, 1, 1), today.AddDays(1).AddSeconds(-1)),
+            "all time" => (earliestDate ?? today, today.AddDays(1).AddSeconds(-1)),
 
             // Future date presets for forecasting
             "next month" => GetNextMonthRange(now),

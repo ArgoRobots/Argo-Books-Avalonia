@@ -54,6 +54,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IsCustomDateRange));
                     OnPropertyChanged(nameof(ComparisonPeriodLabel));
+                    OnPropertyChanged(nameof(DateRangeDisplayText));
 
                     if (value == "Custom Range")
                     {
@@ -111,19 +112,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
-    // Temporary date values for the modal (before applying)
-    [ObservableProperty]
-    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
-
-    [ObservableProperty]
-    private DateTime _modalEndDate = DateTime.Now;
-
-    /// <summary>
-    /// Gets or sets whether the custom date range modal is open.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isCustomDateRangeModalOpen;
-
     /// <summary>
     /// Gets or sets whether a custom date range has been applied (delegates to shared service).
     /// </summary>
@@ -145,6 +133,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// Gets the formatted text showing the applied custom date range.
     /// </summary>
     public string AppliedDateRangeText => ChartSettings.AppliedDateRangeText;
+
+    /// <summary>
+    /// Gets the formatted text showing the currently selected date range span.
+    /// </summary>
+    public string DateRangeDisplayText => ChartSettings.DateRangeDisplayText;
 
     /// <summary>
     /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
@@ -179,36 +172,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     /// <summary>
-    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
-    /// </summary>
-    public DateTimeOffset? ModalStartDateOffset
-    {
-        get => new DateTimeOffset(ModalStartDate);
-        set
-        {
-            if (value.HasValue)
-            {
-                ModalStartDate = value.Value.DateTime;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
-    /// </summary>
-    public DateTimeOffset? ModalEndDateOffset
-    {
-        get => new DateTimeOffset(ModalEndDate);
-        set
-        {
-            if (value.HasValue)
-            {
-                ModalEndDate = value.Value.DateTime;
-            }
-        }
-    }
-
-    /// <summary>
     /// Gets whether the custom date range option is selected.
     /// </summary>
     public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
@@ -221,7 +184,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Opens the custom date range modal.
     /// </summary>
-    [RelayCommand]
     private void OpenCustomDateRangeModal()
     {
         // Store the previous selection before opening the modal
@@ -231,67 +193,29 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             _previousDateRange = SelectedDateRange;
         }
 
-        // Initialize modal dates with current values
-        ModalStartDate = StartDate;
-        ModalEndDate = EndDate;
-        OnPropertyChanged(nameof(ModalStartDateOffset));
-        OnPropertyChanged(nameof(ModalEndDateOffset));
-        IsCustomDateRangeModalOpen = true;
-    }
+        var earliestDate = _companyManager?.CompanyData?.GetEarliestTransactionDate() ?? StartDate;
+        var modalStartDate = HasAppliedCustomRange ? StartDate : earliestDate;
 
-    /// <summary>
-    /// Applies the custom date range from the modal.
-    /// </summary>
-    [RelayCommand]
-    private async Task ApplyCustomDateRange()
-    {
-        // Check if start date is after end date
-        if (ModalStartDate > ModalEndDate)
-        {
-            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
+        App.CustomDateRangeModal?.Open(modalStartDate, EndDate,
+            onApply: (start, end) =>
             {
-                Title = "Invalid Date Range",
-                Message = "The start date is after the end date. Would you like to swap the dates?",
-                PrimaryButtonText = "Swap Dates",
-                CancelButtonText = "Cancel"
+                StartDate = start;
+                EndDate = end;
+                HasAppliedCustomRange = true;
+                OnPropertyChanged(nameof(AppliedDateRangeText));
+                OnPropertyChanged(nameof(DateRangeDisplayText));
+                LoadDashboardData();
+            },
+            onCancel: () =>
+            {
+                // If no custom range was previously applied, revert to the previous selection
+                if (!HasAppliedCustomRange)
+                {
+                    ChartSettings.SelectedDateRange = _previousDateRange;
+                    OnPropertyChanged(nameof(SelectedDateRange));
+                    OnPropertyChanged(nameof(DateRangeDisplayText));
+                }
             });
-
-            if (result == ConfirmationResult.Primary)
-            {
-                // Swap the dates
-                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
-                OnPropertyChanged(nameof(ModalStartDateOffset));
-                OnPropertyChanged(nameof(ModalEndDateOffset));
-            }
-            else
-            {
-                // User cancelled, keep modal open
-                return;
-            }
-        }
-
-        StartDate = ModalStartDate;
-        EndDate = ModalEndDate;
-        HasAppliedCustomRange = true;
-        OnPropertyChanged(nameof(AppliedDateRangeText));
-        IsCustomDateRangeModalOpen = false;
-        LoadDashboardData();
-    }
-
-    /// <summary>
-    /// Cancels the custom date range modal.
-    /// </summary>
-    [RelayCommand]
-    private void CancelCustomDateRange()
-    {
-        IsCustomDateRangeModalOpen = false;
-
-        // If no custom range was previously applied, revert to the previous selection
-        if (!HasAppliedCustomRange)
-        {
-            ChartSettings.SelectedDateRange = _previousDateRange;
-            OnPropertyChanged(nameof(SelectedDateRange));
-        }
     }
 
     /// <summary>
@@ -588,6 +512,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             OnPropertyChanged(nameof(EndDate));
             OnPropertyChanged(nameof(HasAppliedCustomRange));
             OnPropertyChanged(nameof(AppliedDateRangeText));
+            OnPropertyChanged(nameof(DateRangeDisplayText));
             OnPropertyChanged(nameof(IsCustomDateRange));
             OnPropertyChanged(nameof(ComparisonPeriodLabel));
             LoadDashboardData();

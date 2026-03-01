@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:modals="using:ArgoBooks.Modals"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:icons="using:ArgoBooks"
@@ -1640,8 +1639,6 @@
                                ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
                                CloseCommand="{Binding HideChartContextMenuCommand}" />
 
-    <!-- Custom Date Range Modal -->
-    <modals:CustomDateRangeModal />
     </Panel>
 
     <UserControl.Styles>

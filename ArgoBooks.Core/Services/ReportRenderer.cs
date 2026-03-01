@@ -3635,11 +3635,7 @@ public class ReportRenderer : IDisposable
             var effectiveStart = start.Value;
             if (effectiveStart.Year <= 2000 && _companyData != null)
             {
-                var dates = new List<DateTime>();
-                if (_companyData.Revenues.Count > 0) dates.Add(_companyData.Revenues.Min(r => r.Date));
-                if (_companyData.Expenses.Count > 0) dates.Add(_companyData.Expenses.Min(e => e.Date));
-                if (_companyData.Payments.Count > 0) dates.Add(_companyData.Payments.Min(p => p.Date));
-                if (dates.Count > 0) effectiveStart = dates.Min();
+                effectiveStart = _companyData.GetEarliestTransactionDate();
             }
 
             return $"{Tr("Period")}: {effectiveStart.ToString(dateFormat)} {Tr("to")} {end.Value.ToString(dateFormat)}";
@@ -3860,7 +3856,7 @@ public class ReportRenderer : IDisposable
         if (!string.IsNullOrEmpty(_config.Filters.DatePresetName) &&
             _config.Filters.DatePresetName != DatePresetNames.Custom)
         {
-            var (start, end) = DatePresetNames.GetDateRange(_config.Filters.DatePresetName);
+            var (start, end) = DatePresetNames.GetDateRange(_config.Filters.DatePresetName, _companyData?.GetEarliestTransactionDate());
             return (start, end);
         }
 
