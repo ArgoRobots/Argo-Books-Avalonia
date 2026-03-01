@@ -22,12 +22,54 @@ public class AccountingReportDataService
     }
 
     /// <summary>
+    /// Gets the company's configured currency code, defaulting to USD.
+    /// </summary>
+    private string GetCurrencyCode()
+    {
+        return _companyData?.Settings.Localization.Currency ?? "USD";
+    }
+
+    /// <summary>
+    /// Converts a USD amount to the company's configured display currency.
+    /// Uses the report's end date for the exchange rate.
+    /// Returns the amount unchanged if the display currency is USD or no rate is available.
+    /// </summary>
+    private decimal ConvertFromUSD(decimal amountUSD)
+    {
+        var currencyCode = GetCurrencyCode();
+        if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return amountUSD;
+
+        var rateDate = _filters.EndDate ?? DateTime.Today;
+        var exchangeService = ExchangeRateService.Instance;
+        if (exchangeService != null)
+        {
+            var rate = exchangeService.GetExchangeRate("USD", currencyCode, rateDate);
+            if (rate > 0)
+                return Math.Round(amountUSD * rate, 2);
+        }
+
+        return amountUSD;
+    }
+
+    /// <summary>
+    /// Gets a subtitle indicating the currency used in the report.
+    /// </summary>
+    private string GetCurrencySubtitle()
+    {
+        var currencyCode = GetCurrencyCode();
+        return $"Amounts in {currencyCode}";
+    }
+
+    /// <summary>
     /// Formats a currency amount using the company's configured currency.
+    /// Converts from USD to the display currency before formatting.
     /// </summary>
     private string FormatCurrency(decimal amount)
     {
-        var currencyCode = _companyData?.Settings.Localization.Currency ?? "USD";
-        return CurrencyInfo.FormatAmount(amount, currencyCode);
+        var currencyCode = GetCurrencyCode();
+        var displayAmount = ConvertFromUSD(amount);
+        return CurrencyInfo.FormatAmount(displayAmount, currencyCode);
     }
 
     /// <summary>
@@ -199,7 +241,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = t.IncomeStatementTitle,
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [],
             ColumnWidthRatios = [0.65, 0.35]
         };
@@ -374,7 +416,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = t.BalanceSheetTitle,
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [],
             ColumnWidthRatios = [0.65, 0.35],
             Footnote = "Cash balance estimated from recorded transactions."
@@ -596,7 +638,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = "Cash Flow Statement",
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [],
             ColumnWidthRatios = [0.65, 0.35]
         };
@@ -747,7 +789,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = "Trial Balance",
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = ["Account", "Debit", "Credit"],
             ColumnWidthRatios = [0.5, 0.25, 0.25]
         };
@@ -915,7 +957,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = "General Ledger",
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = ["Date", "Description", "Ref", "Debit", "Credit", "Balance"],
             ColumnWidthRatios = [0.12, 0.3, 0.1, 0.16, 0.16, 0.16]
         };
@@ -1075,7 +1117,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = t.ARAgingTitle,
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [t.CustomerColumn, "Current", "1-30 Days", "31-60 Days", "61-90 Days", "90+ Days", "Total"],
             ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
         };
@@ -1196,7 +1238,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = t.APAgingTitle,
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [t.SupplierColumn, "Current", "1-30 Days", "31-60 Days", "61-90 Days", "90+ Days", "Total"],
             ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
         };
@@ -1512,7 +1554,7 @@ public class AccountingReportDataService
         var data = new AccountingTableData
         {
             Title = "Tax Summary",
-            Subtitle = "",
+            Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [],
             ColumnWidthRatios = [0.65, 0.35]
         };
