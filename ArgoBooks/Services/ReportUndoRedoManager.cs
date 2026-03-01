@@ -251,22 +251,31 @@ public class AddElementAction(ReportConfiguration config, ReportElementBase elem
 /// <summary>
 /// Action for removing an element.
 /// </summary>
-public class RemoveElementAction(ReportConfiguration config, ReportElementBase element) : IReportUndoableAction
+public class RemoveElementAction : IReportUndoableAction
 {
-    private readonly ReportElementBase _element = element.Clone();
-    private readonly int _originalZOrder = element.ZOrder;
+    private readonly ReportConfiguration _config;
+    private readonly ReportElementBase _element;
+    private readonly int _originalZOrder;
+
+    public RemoveElementAction(ReportConfiguration config, ReportElementBase element)
+    {
+        _config = config;
+        _element = element.Clone();
+        _element.Id = element.Id; // Preserve original ID so undo/redo pairs stay consistent
+        _originalZOrder = element.ZOrder;
+    }
 
     public string Description => "Remove {0}".TranslateFormat(_element.DisplayName);
 
     public void Undo()
     {
         _element.ZOrder = _originalZOrder;
-        config.AddElement(_element);
+        _config.AddElement(_element);
     }
 
     public void Redo()
     {
-        config.RemoveElement(_element.Id);
+        _config.RemoveElement(_element.Id);
     }
 }
 
