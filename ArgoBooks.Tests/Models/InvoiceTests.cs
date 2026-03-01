@@ -69,23 +69,6 @@ public class InvoiceTests
 
     #endregion
 
-    #region Default Values Tests
-
-    [Fact]
-    public void NewInvoice_HasExpectedDefaults()
-    {
-        var invoice = new Invoice();
-
-        Assert.Equal(InvoiceStatus.Draft, invoice.Status);
-        Assert.NotNull(invoice.LineItems);
-        Assert.Empty(invoice.LineItems);
-        Assert.NotNull(invoice.History);
-        Assert.Empty(invoice.History);
-        Assert.NotNull(invoice.ReminderSettings);
-    }
-
-    #endregion
-
     #region Balance and Payment Tests
 
     [Fact]

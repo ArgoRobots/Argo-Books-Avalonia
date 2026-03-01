@@ -191,6 +191,18 @@ public static class DotEnv
     }
 
     /// <summary>
+    /// Removes a key from the in-memory cache and clears the corresponding
+    /// environment variable for the current process. Does not modify the .env file.
+    /// </summary>
+    /// <param name="key">The variable name to remove.</param>
+    public static void Unset(string key)
+    {
+        if (!_isLoaded) Load();
+        EnvVars.Remove(key);
+        Environment.SetEnvironmentVariable(key, null);
+    }
+
+    /// <summary>
     /// Reloads the .env file, clearing any cached values.
     /// </summary>
     public static void Reload()

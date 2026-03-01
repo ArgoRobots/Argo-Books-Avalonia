@@ -15,8 +15,9 @@ public static class InvoicePreviewService
     /// </summary>
     /// <param name="html">The HTML content to preview.</param>
     /// <param name="invoiceId">Optional invoice ID for the filename.</param>
-    /// <returns>True if the browser was opened successfully.</returns>
-    public static async Task<bool> PreviewInBrowserAsync(string html, string? invoiceId = null)
+    /// <param name="openBrowser">Whether to open the file in the default browser. Defaults to true.</param>
+    /// <returns>True if the file was written (and browser opened, if requested) successfully.</returns>
+    public static async Task<bool> PreviewInBrowserAsync(string html, string? invoiceId = null, bool openBrowser = true)
     {
         try
         {
@@ -31,7 +32,8 @@ public static class InvoicePreviewService
             await File.WriteAllTextAsync(filePath, html);
 
             // Open in default browser
-            OpenUrl($"file://{filePath}");
+            if (openBrowser)
+                OpenUrl($"file://{filePath}");
 
             return true;
         }

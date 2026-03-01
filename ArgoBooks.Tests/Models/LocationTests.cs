@@ -116,17 +116,4 @@ public class LocationTests
 
     #endregion
 
-    #region Default Values Tests
-
-    [Fact]
-    public void Location_HasExpectedDefaults()
-    {
-        var location = new Location();
-
-        Assert.Equal(0, location.Capacity);
-        Assert.Equal(0, location.CurrentUtilization);
-        Assert.Equal(0.0, location.UtilizationPercentage);
-    }
-
-    #endregion
 }

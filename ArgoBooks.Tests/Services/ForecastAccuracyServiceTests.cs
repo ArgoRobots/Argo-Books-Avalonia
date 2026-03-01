@@ -1,0 +1,437 @@
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Insights;
+using ArgoBooks.Core.Services;
+using Xunit;
+
+namespace ArgoBooks.Tests.Services;
+
+/// <summary>
+/// Tests for the ForecastAccuracyService class.
+/// </summary>
+public class ForecastAccuracyServiceTests
+{
+    private readonly ForecastAccuracyService _service = new();
+
+    #region SaveForecast Tests
+
+    [Fact]
+    public void SaveForecast_NewForecast_StoresRecord()
+    {
+        var companyData = new CompanyData();
+        var forecast = new ForecastData
+        {
+            ForecastedRevenue = 10000m,
+            ForecastedExpenses = 5000m,
+            ForecastedProfit = 5000m,
+            ExpectedNewCustomers = 10,
+            ConfidenceScore = 75.0
+        };
+        var period = new AnalysisDateRange
+        {
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 1, 31)
+        };
+
+        _service.SaveForecast(companyData, forecast, period);
+
+        Assert.Single(companyData.ForecastRecords);
+        var record = companyData.ForecastRecords[0];
+        Assert.Equal(10000m, record.ForecastedRevenue);
+        Assert.Equal(5000m, record.ForecastedExpenses);
+        Assert.Equal(5000m, record.ForecastedProfit);
+        Assert.Equal(10, record.ForecastedNewCustomers);
+        Assert.Equal(75.0, record.ConfidenceScore);
+        Assert.False(record.IsValidated);
+    }
+
+    [Fact]
+    public void SaveForecast_DuplicatePeriod_UpdatesExistingRecord()
+    {
+        var companyData = new CompanyData();
+        var period = new AnalysisDateRange
+        {
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 1, 31)
+        };
+
+        var forecast1 = new ForecastData
+        {
+            ForecastedRevenue = 10000m,
+            ForecastedExpenses = 5000m,
+            ForecastedProfit = 5000m,
+            ConfidenceScore = 70.0
+        };
+
+        var forecast2 = new ForecastData
+        {
+            ForecastedRevenue = 12000m,
+            ForecastedExpenses = 6000m,
+            ForecastedProfit = 6000m,
+            ConfidenceScore = 80.0
+        };
+
+        _service.SaveForecast(companyData, forecast1, period);
+        _service.SaveForecast(companyData, forecast2, period);
+
+        Assert.Single(companyData.ForecastRecords);
+        Assert.Equal(12000m, companyData.ForecastRecords[0].ForecastedRevenue);
+        Assert.Equal(80.0, companyData.ForecastRecords[0].ConfidenceScore);
+    }
+
+    [Fact]
+    public void SaveForecast_MultiplePeriods_StoresMultipleRecords()
+    {
+        var companyData = new CompanyData();
+        var forecast = new ForecastData
+        {
+            ForecastedRevenue = 10000m,
+            ForecastedExpenses = 5000m,
+            ForecastedProfit = 5000m,
+            ConfidenceScore = 75.0
+        };
+
+        var period1 = new AnalysisDateRange
+        {
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 1, 31)
+        };
+
+        var period2 = new AnalysisDateRange
+        {
+            StartDate = new DateTime(2025, 2, 1),
+            EndDate = new DateTime(2025, 2, 28)
+        };
+
+        _service.SaveForecast(companyData, forecast, period1);
+        _service.SaveForecast(companyData, forecast, period2);
+
+        Assert.Equal(2, companyData.ForecastRecords.Count);
+    }
+
+    [Fact]
+    public void SaveForecast_MarksDataAsModified()
+    {
+        var companyData = new CompanyData();
+        companyData.MarkAsSaved();
+        var forecast = new ForecastData { ForecastedRevenue = 1000m };
+        var period = new AnalysisDateRange
+        {
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 1, 31)
+        };
+
+        _service.SaveForecast(companyData, forecast, period);
+
+        Assert.True(companyData.ChangesMade);
+    }
+
+    #endregion
+
+    #region GetAccuracyData Tests
+
+    [Fact]
+    public void GetAccuracyData_NoRecords_ReturnsEmptyData()
+    {
+        var companyData = new CompanyData();
+
+        var result = _service.GetAccuracyData(companyData);
+
+        Assert.NotNull(result);
+        Assert.Empty(result.HistoricalRecords);
+        Assert.Equal(0, result.ValidatedForecastCount);
+    }
+
+    [Fact]
+    public void GetAccuracyData_WithUnvalidatedRecords_ReturnsAllRecords()
+    {
+        var companyData = new CompanyData();
+        companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+        {
+            PeriodStartDate = DateTime.Today.AddMonths(1),
+            PeriodEndDate = DateTime.Today.AddMonths(2),
+            ForecastedRevenue = 10000m,
+            IsValidated = false
+        });
+
+        var result = _service.GetAccuracyData(companyData);
+
+        Assert.Single(result.HistoricalRecords);
+        Assert.Equal(0, result.ValidatedForecastCount);
+    }
+
+    [Fact]
+    public void GetAccuracyData_ReturnsRecordsOrderedByDate()
+    {
+        var companyData = new CompanyData();
+        companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+        {
+            PeriodStartDate = new DateTime(2025, 1, 1),
+            PeriodEndDate = new DateTime(2025, 7, 1),
+            ForecastedRevenue = 5000m,
+            IsValidated = false
+        });
+        companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+        {
+            PeriodStartDate = new DateTime(2025, 3, 1),
+            PeriodEndDate = new DateTime(2025, 7, 1),
+            ForecastedRevenue = 15000m,
+            IsValidated = false
+        });
+
+        var result = _service.GetAccuracyData(companyData);
+
+        Assert.Equal(2, result.HistoricalRecords.Count);
+        Assert.True(result.HistoricalRecords[0].PeriodStartDate >= result.HistoricalRecords[1].PeriodStartDate);
+    }
+
+    #endregion
+
+    #region CleanupOldRecords Tests
+
+    [Fact]
+    public void CleanupOldRecords_UnderLimit_KeepsAllRecords()
+    {
+        var companyData = new CompanyData();
+        for (int i = 0; i < 5; i++)
+        {
+            companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+            {
+                PeriodStartDate = new DateTime(2025, 1 + i, 1),
+                PeriodEndDate = new DateTime(2025, 1 + i, 28),
+                ForecastedRevenue = 10000m + i * 1000,
+                IsValidated = true
+            });
+        }
+
+        _service.CleanupOldRecords(companyData, maxRecords: 10);
+
+        Assert.Equal(5, companyData.ForecastRecords.Count);
+    }
+
+    [Fact]
+    public void CleanupOldRecords_OverLimit_RemovesExcessRecords()
+    {
+        var companyData = new CompanyData();
+        for (int i = 0; i < 30; i++)
+        {
+            companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+            {
+                PeriodStartDate = new DateTime(2023, 1, 1).AddMonths(i),
+                PeriodEndDate = new DateTime(2023, 1, 28).AddMonths(i),
+                ForecastedRevenue = 10000m + i * 100,
+                IsValidated = i < 20
+            });
+        }
+
+        _service.CleanupOldRecords(companyData, maxRecords: 10);
+
+        Assert.Equal(10, companyData.ForecastRecords.Count);
+    }
+
+    [Fact]
+    public void CleanupOldRecords_PrioritizesValidatedRecords()
+    {
+        var companyData = new CompanyData();
+
+        // Add older validated records
+        for (int i = 0; i < 3; i++)
+        {
+            companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+            {
+                PeriodStartDate = new DateTime(2023, 1 + i, 1),
+                PeriodEndDate = new DateTime(2023, 1 + i, 28),
+                ForecastedRevenue = 10000m,
+                IsValidated = true
+            });
+        }
+
+        // Add newer unvalidated records
+        for (int i = 0; i < 3; i++)
+        {
+            companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+            {
+                PeriodStartDate = new DateTime(2025, 1 + i, 1),
+                PeriodEndDate = new DateTime(2025, 1 + i, 28),
+                ForecastedRevenue = 20000m,
+                IsValidated = false
+            });
+        }
+
+        _service.CleanupOldRecords(companyData, maxRecords: 4);
+
+        Assert.Equal(4, companyData.ForecastRecords.Count);
+        // Validated records should be prioritized
+        Assert.True(companyData.ForecastRecords.Count(r => r.IsValidated) >= 3);
+    }
+
+    [Fact]
+    public void CleanupOldRecords_EmptyList_DoesNotThrow()
+    {
+        var companyData = new CompanyData();
+
+        var exception = Record.Exception(() => _service.CleanupOldRecords(companyData));
+
+        Assert.Null(exception);
+    }
+
+    #endregion
+
+    #region ShouldRunBacktest Tests
+
+    [Fact]
+    public void ShouldRunBacktest_NoRecords_ReturnsFalse()
+    {
+        var companyData = new CompanyData();
+        var settings = new CompanySettings();
+
+        var result = _service.ShouldRunBacktest(companyData, settings);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ShouldRunBacktest_InsufficientMonths_ReturnsFalse()
+    {
+        var companyData = new CompanyData();
+        // Add only 2 months of data (minimum is 4)
+        companyData.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue
+        {
+            Date = new DateTime(2025, 1, 15),
+            Total = 1000m
+        });
+        companyData.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue
+        {
+            Date = new DateTime(2025, 2, 15),
+            Total = 2000m
+        });
+        var settings = new CompanySettings();
+
+        var result = _service.ShouldRunBacktest(companyData, settings);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ShouldRunBacktest_SufficientDataNeverBacktested_ReturnsTrue()
+    {
+        var companyData = new CompanyData();
+        // Add 5 months of data
+        for (int i = 0; i < 5; i++)
+        {
+            companyData.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue
+            {
+                Date = new DateTime(2025, 1 + i, 15),
+                Total = 1000m * (i + 1)
+            });
+        }
+        var settings = new CompanySettings { LastBacktestedMonth = null };
+
+        var result = _service.ShouldRunBacktest(companyData, settings);
+
+        Assert.True(result);
+    }
+
+    #endregion
+
+    #region GetMethodAccuracies Tests
+
+    [Fact]
+    public void GetMethodAccuracies_NoData_ReturnsEmptyResult()
+    {
+        var companyData = new CompanyData();
+
+        var result = _service.GetMethodAccuracies(companyData);
+
+        Assert.NotNull(result);
+        Assert.Equal(0, result.SSACount);
+        Assert.Equal(0, result.HoltWintersCount);
+        Assert.Equal(0, result.CombinedCount);
+        Assert.False(result.HasSufficientData);
+    }
+
+    [Fact]
+    public void GetMethodAccuracies_NoValidatedRecords_ReturnsEmptyResult()
+    {
+        var companyData = new CompanyData();
+        companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+        {
+            ForecastedRevenue = 10000m,
+            IsValidated = false,
+            ForecastMethod = "SSA"
+        });
+
+        var result = _service.GetMethodAccuracies(companyData);
+
+        Assert.Equal(0, result.SSACount);
+    }
+
+    [Fact]
+    public void GetMethodAccuracies_DefaultWeights_AreFiftyFifty()
+    {
+        var result = new MethodAccuracyData();
+
+        Assert.Equal(0.5, result.SSAWeight);
+        Assert.Equal(0.5, result.HoltWintersWeight);
+    }
+
+    [Fact]
+    public void GetMethodAccuracies_WeightingDescription_InsufficientData_ShowsDefault()
+    {
+        var result = new MethodAccuracyData();
+
+        Assert.Contains("Default equal weighting", result.WeightingDescription);
+    }
+
+    #endregion
+
+    #region GetRecentAccuracy Tests
+
+    [Fact]
+    public void GetRecentAccuracy_NoValidatedForecasts_ReturnsNull()
+    {
+        var companyData = new CompanyData();
+
+        var result = _service.GetRecentAccuracy(companyData);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetRecentAccuracy_WithValidatedForecasts_ReturnsTuple()
+    {
+        var companyData = new CompanyData();
+        companyData.ForecastRecords.Add(new ForecastAccuracyRecord
+        {
+            ForecastedRevenue = 10000m,
+            ActualRevenue = 10000m,
+            ForecastedExpenses = 5000m,
+            ActualExpenses = 5000m,
+            PeriodStartDate = new DateTime(2024, 1, 1),
+            PeriodEndDate = new DateTime(2024, 1, 31),
+            IsValidated = true
+        });
+
+        var result = _service.GetRecentAccuracy(companyData);
+
+        Assert.NotNull(result);
+        Assert.Equal(100.0, result.Value.RevenueAccuracy);
+        Assert.Equal(100.0, result.Value.ExpenseAccuracy);
+    }
+
+    #endregion
+
+    #region GetAccuracySummary Tests
+
+    [Fact]
+    public void GetAccuracySummary_NoValidatedForecasts_ReturnsInformativeMessage()
+    {
+        var companyData = new CompanyData();
+
+        var result = _service.GetAccuracySummary(companyData);
+
+        Assert.Contains("No validated forecasts", result);
+    }
+
+    #endregion
+}

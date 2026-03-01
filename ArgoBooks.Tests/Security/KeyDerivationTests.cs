@@ -11,6 +11,42 @@ public class KeyDerivationTests
     #region Constants Tests
 
     [Fact]
+    public void Iterations_HasExpectedValue()
+    {
+        Assert.Equal(100_000, KeyDerivation.Iterations);
+    }
+
+    [Fact]
+    public void SaltSize_HasExpectedValue()
+    {
+        Assert.Equal(32, KeyDerivation.SaltSize);
+    }
+
+    [Fact]
+    public void KeySize_HasExpectedValue()
+    {
+        Assert.Equal(32, KeyDerivation.KeySize);
+    }
+
+    [Fact]
+    public void HashSize_HasExpectedValue()
+    {
+        Assert.Equal(32, KeyDerivation.HashSize);
+    }
+
+    [Fact]
+    public void IvSize_HasExpectedValue()
+    {
+        Assert.Equal(12, KeyDerivation.IvSize);
+    }
+
+    [Fact]
+    public void TagSize_HasExpectedValue()
+    {
+        Assert.Equal(16, KeyDerivation.TagSize);
+    }
+
+    [Fact]
     public void Constants_HaveSecureValues()
     {
         // PBKDF2 iterations should be at least 100,000 for security
@@ -34,10 +70,18 @@ public class KeyDerivationTests
     #region Salt Generation Tests
 
     [Fact]
-    public void GenerateSalt_ReturnsCorrectSize()
+    public void GenerateSalt_ReturnsCorrectLength()
     {
         var salt = KeyDerivation.GenerateSalt();
         Assert.Equal(KeyDerivation.SaltSize, salt.Length);
+    }
+
+    [Fact]
+    public void GenerateSalt_ReturnsNonEmptyArray()
+    {
+        var salt = KeyDerivation.GenerateSalt();
+        Assert.NotNull(salt);
+        Assert.NotEmpty(salt);
     }
 
     [Fact]
@@ -50,15 +94,42 @@ public class KeyDerivationTests
     }
 
     [Fact]
+    public void GenerateSalt_MultipleCalls_AllUnique()
+    {
+        var salts = new List<byte[]>();
+        for (int i = 0; i < 10; i++)
+        {
+            salts.Add(KeyDerivation.GenerateSalt());
+        }
+
+        // Verify all salts are distinct from each other
+        for (int i = 0; i < salts.Count; i++)
+        {
+            for (int j = i + 1; j < salts.Count; j++)
+            {
+                Assert.False(salts[i].SequenceEqual(salts[j]),
+                    $"Salt at index {i} should differ from salt at index {j}");
+            }
+        }
+    }
+
+    [Fact]
     public void GenerateSaltBase64_ReturnsValidBase64()
     {
         var saltBase64 = KeyDerivation.GenerateSaltBase64();
 
         Assert.False(string.IsNullOrEmpty(saltBase64));
 
-        // Should be valid Base64
+        // Should be valid Base64 that decodes to correct length
         var decoded = Convert.FromBase64String(saltBase64);
         Assert.Equal(KeyDerivation.SaltSize, decoded.Length);
+    }
+
+    [Fact]
+    public void GenerateSaltBase64_ReturnsNonEmptyString()
+    {
+        var saltBase64 = KeyDerivation.GenerateSaltBase64();
+        Assert.False(string.IsNullOrWhiteSpace(saltBase64));
     }
 
     [Fact]
@@ -70,15 +141,33 @@ public class KeyDerivationTests
         Assert.NotEqual(salt1, salt2);
     }
 
+    [Fact]
+    public void GenerateSaltBase64_RoundTripsCorrectly()
+    {
+        var saltBase64 = KeyDerivation.GenerateSaltBase64();
+        var decoded = Convert.FromBase64String(saltBase64);
+        var reEncoded = Convert.ToBase64String(decoded);
+
+        Assert.Equal(saltBase64, reEncoded);
+    }
+
     #endregion
 
     #region IV Generation Tests
 
     [Fact]
-    public void GenerateIv_ReturnsCorrectSize()
+    public void GenerateIv_ReturnsCorrectLength()
     {
         var iv = KeyDerivation.GenerateIv();
         Assert.Equal(KeyDerivation.IvSize, iv.Length);
+    }
+
+    [Fact]
+    public void GenerateIv_ReturnsNonEmptyArray()
+    {
+        var iv = KeyDerivation.GenerateIv();
+        Assert.NotNull(iv);
+        Assert.NotEmpty(iv);
     }
 
     [Fact]
@@ -101,12 +190,31 @@ public class KeyDerivationTests
         Assert.Equal(KeyDerivation.IvSize, decoded.Length);
     }
 
-    #endregion
+    [Fact]
+    public void GenerateIvBase64_ReturnsUniqueValues()
+    {
+        var iv1 = KeyDerivation.GenerateIvBase64();
+        var iv2 = KeyDerivation.GenerateIvBase64();
 
-    #region Key Derivation Tests
+        Assert.NotEqual(iv1, iv2);
+    }
 
     [Fact]
-    public void DeriveKey_ReturnsCorrectSize()
+    public void GenerateIvBase64_RoundTripsCorrectly()
+    {
+        var ivBase64 = KeyDerivation.GenerateIvBase64();
+        var decoded = Convert.FromBase64String(ivBase64);
+        var reEncoded = Convert.ToBase64String(decoded);
+
+        Assert.Equal(ivBase64, reEncoded);
+    }
+
+    #endregion
+
+    #region DeriveKey (byte[] salt) Tests
+
+    [Fact]
+    public void DeriveKey_ReturnsCorrectLength()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
@@ -117,7 +225,7 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void DeriveKey_SameInputProducesSameOutput()
+    public void DeriveKey_SameInputs_ProducesConsistentOutput()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
@@ -129,7 +237,7 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void DeriveKey_DifferentPasswordProducesDifferentKey()
+    public void DeriveKey_DifferentPasswords_ProducesDifferentOutput()
     {
         var salt = KeyDerivation.GenerateSalt();
 
@@ -140,7 +248,7 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void DeriveKey_DifferentSaltProducesDifferentKey()
+    public void DeriveKey_DifferentSalts_ProducesDifferentOutput()
     {
         var password = "TestPassword123";
         var salt1 = KeyDerivation.GenerateSalt();
@@ -152,8 +260,60 @@ public class KeyDerivationTests
         Assert.False(key1.SequenceEqual(key2), "Different salts should produce different keys");
     }
 
+    [Theory]
+    [InlineData("short")]
+    [InlineData("a longer password with spaces")]
+    [InlineData("P@$$w0rd!#%^&*()")]
+    [InlineData("unicode-password-\u00e9\u00e8\u00ea")]
+    public void DeriveKey_VariousPasswords_ReturnsCorrectLength(string password)
+    {
+        var salt = KeyDerivation.GenerateSalt();
+
+        var key = KeyDerivation.DeriveKey(password, salt);
+
+        Assert.Equal(KeyDerivation.KeySize, key.Length);
+    }
+
     [Fact]
-    public void DeriveKey_WithBase64Salt_ReturnsCorrectSize()
+    public void DeriveKey_NullPassword_ThrowsArgumentNullException()
+    {
+        var salt = KeyDerivation.GenerateSalt();
+
+        Assert.Throws<ArgumentNullException>(() => KeyDerivation.DeriveKey(null!, salt));
+    }
+
+    [Fact]
+    public void DeriveKey_EmptyPassword_ThrowsArgumentException()
+    {
+        var salt = KeyDerivation.GenerateSalt();
+
+        Assert.Throws<ArgumentException>(() => KeyDerivation.DeriveKey("", salt));
+    }
+
+    [Fact]
+    public void DeriveKey_NullSalt_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => KeyDerivation.DeriveKey("password", (byte[])null!));
+    }
+
+    [Fact]
+    public void DeriveKey_ReturnsNonZeroBytes()
+    {
+        var password = "TestPassword123";
+        var salt = KeyDerivation.GenerateSalt();
+
+        var key = KeyDerivation.DeriveKey(password, salt);
+
+        // The key should not be all zeros (extremely unlikely for a valid derivation)
+        Assert.False(key.All(b => b == 0), "Derived key should not be all zeros");
+    }
+
+    #endregion
+
+    #region DeriveKey (string saltBase64) Tests
+
+    [Fact]
+    public void DeriveKey_Base64Salt_ReturnsCorrectLength()
     {
         var password = "TestPassword123";
         var saltBase64 = KeyDerivation.GenerateSaltBase64();
@@ -164,33 +324,38 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void DeriveKey_ThrowsOnNullPassword()
+    public void DeriveKey_Base64Salt_MatchesByteArrayOverload()
     {
+        var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
+        var saltBase64 = Convert.ToBase64String(salt);
 
-        Assert.Throws<ArgumentNullException>(() => KeyDerivation.DeriveKey(null!, salt));
+        var keyFromBytes = KeyDerivation.DeriveKey(password, salt);
+        var keyFromBase64 = KeyDerivation.DeriveKey(password, saltBase64);
+
+        Assert.True(keyFromBytes.SequenceEqual(keyFromBase64),
+            "Both DeriveKey overloads should produce identical output for the same salt");
     }
 
     [Fact]
-    public void DeriveKey_ThrowsOnEmptyPassword()
+    public void DeriveKey_Base64Salt_SameInputs_ProducesConsistentOutput()
     {
-        var salt = KeyDerivation.GenerateSalt();
+        var password = "TestPassword123";
+        var saltBase64 = KeyDerivation.GenerateSaltBase64();
 
-        Assert.Throws<ArgumentException>(() => KeyDerivation.DeriveKey("", salt));
-    }
+        var key1 = KeyDerivation.DeriveKey(password, saltBase64);
+        var key2 = KeyDerivation.DeriveKey(password, saltBase64);
 
-    [Fact]
-    public void DeriveKey_ThrowsOnNullSalt()
-    {
-        Assert.Throws<ArgumentNullException>(() => KeyDerivation.DeriveKey("password", (byte[])null!));
+        Assert.True(key1.SequenceEqual(key2),
+            "Same password and base64 salt should produce same key");
     }
 
     #endregion
 
-    #region Password Hashing Tests
+    #region ComputePasswordHash Tests
 
     [Fact]
-    public void ComputePasswordHash_ReturnsCorrectSize()
+    public void ComputePasswordHash_ReturnsCorrectLength()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
@@ -201,7 +366,7 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void ComputePasswordHash_SameInputProducesSameOutput()
+    public void ComputePasswordHash_SameInputs_ProducesConsistentOutput()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
@@ -209,8 +374,62 @@ public class KeyDerivationTests
         var hash1 = KeyDerivation.ComputePasswordHash(password, salt);
         var hash2 = KeyDerivation.ComputePasswordHash(password, salt);
 
-        Assert.True(hash1.SequenceEqual(hash2));
+        Assert.True(hash1.SequenceEqual(hash2),
+            "Same password and salt should produce same hash");
     }
+
+    [Fact]
+    public void ComputePasswordHash_DifferentPasswords_ProducesDifferentHash()
+    {
+        var salt = KeyDerivation.GenerateSalt();
+
+        var hash1 = KeyDerivation.ComputePasswordHash("Password1", salt);
+        var hash2 = KeyDerivation.ComputePasswordHash("Password2", salt);
+
+        Assert.False(hash1.SequenceEqual(hash2),
+            "Different passwords should produce different hashes");
+    }
+
+    [Fact]
+    public void ComputePasswordHash_DifferentSalts_ProducesDifferentHash()
+    {
+        var password = "TestPassword123";
+        var salt1 = KeyDerivation.GenerateSalt();
+        var salt2 = KeyDerivation.GenerateSalt();
+
+        var hash1 = KeyDerivation.ComputePasswordHash(password, salt1);
+        var hash2 = KeyDerivation.ComputePasswordHash(password, salt2);
+
+        Assert.False(hash1.SequenceEqual(hash2),
+            "Different salts should produce different hashes");
+    }
+
+    [Fact]
+    public void ComputePasswordHash_NullPassword_ThrowsArgumentNullException()
+    {
+        var salt = KeyDerivation.GenerateSalt();
+
+        Assert.Throws<ArgumentNullException>(() => KeyDerivation.ComputePasswordHash(null!, salt));
+    }
+
+    [Fact]
+    public void ComputePasswordHash_EmptyPassword_ThrowsArgumentException()
+    {
+        var salt = KeyDerivation.GenerateSalt();
+
+        Assert.Throws<ArgumentException>(() => KeyDerivation.ComputePasswordHash("", salt));
+    }
+
+    [Fact]
+    public void ComputePasswordHash_NullSalt_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            KeyDerivation.ComputePasswordHash("password", null!));
+    }
+
+    #endregion
+
+    #region ComputePasswordHashBase64 Tests
 
     [Fact]
     public void ComputePasswordHashBase64_ReturnsValidBase64()
@@ -226,12 +445,38 @@ public class KeyDerivationTests
         Assert.Equal(KeyDerivation.HashSize, decoded.Length);
     }
 
-    #endregion
+    [Fact]
+    public void ComputePasswordHashBase64_MatchesByteArrayOverload()
+    {
+        var password = "TestPassword123";
+        var salt = KeyDerivation.GenerateSalt();
+        var saltBase64 = Convert.ToBase64String(salt);
 
-    #region Password Verification Tests
+        var hashBytes = KeyDerivation.ComputePasswordHash(password, salt);
+        var hashBase64 = KeyDerivation.ComputePasswordHashBase64(password, saltBase64);
+
+        var expectedBase64 = Convert.ToBase64String(hashBytes);
+        Assert.Equal(expectedBase64, hashBase64);
+    }
 
     [Fact]
-    public void VerifyPassword_ReturnsTrueForCorrectPassword()
+    public void ComputePasswordHashBase64_SameInputs_ProducesConsistentOutput()
+    {
+        var password = "TestPassword123";
+        var saltBase64 = KeyDerivation.GenerateSaltBase64();
+
+        var hash1 = KeyDerivation.ComputePasswordHashBase64(password, saltBase64);
+        var hash2 = KeyDerivation.ComputePasswordHashBase64(password, saltBase64);
+
+        Assert.Equal(hash1, hash2);
+    }
+
+    #endregion
+
+    #region VerifyPassword Tests
+
+    [Fact]
+    public void VerifyPassword_CorrectPassword_ReturnsTrue()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
@@ -243,7 +488,7 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void VerifyPassword_ReturnsFalseForIncorrectPassword()
+    public void VerifyPassword_WrongPassword_ReturnsFalse()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
@@ -255,7 +500,67 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void VerifyPasswordBase64_ReturnsTrueForCorrectPassword()
+    public void VerifyPassword_CaseSensitive_ReturnsFalse()
+    {
+        var password = "TestPassword123";
+        var salt = KeyDerivation.GenerateSalt();
+        var hash = KeyDerivation.ComputePasswordHash(password, salt);
+
+        // Test with different case
+        var result = KeyDerivation.VerifyPassword("testpassword123", hash, salt);
+
+        Assert.False(result, "Password verification should be case-sensitive");
+    }
+
+    [Fact]
+    public void VerifyPassword_TamperedHash_ReturnsFalse()
+    {
+        var password = "TestPassword123";
+        var salt = KeyDerivation.GenerateSalt();
+        var hash = KeyDerivation.ComputePasswordHash(password, salt);
+
+        // Tamper with the hash by flipping a single byte
+        var tamperedHash = (byte[])hash.Clone();
+        tamperedHash[0] = (byte)(tamperedHash[0] ^ 0xFF);
+
+        var result = KeyDerivation.VerifyPassword(password, tamperedHash, salt);
+
+        Assert.False(result, "Verification should fail with a tampered hash");
+    }
+
+    [Fact]
+    public void VerifyPassword_WrongSalt_ReturnsFalse()
+    {
+        var password = "TestPassword123";
+        var salt = KeyDerivation.GenerateSalt();
+        var wrongSalt = KeyDerivation.GenerateSalt();
+        var hash = KeyDerivation.ComputePasswordHash(password, salt);
+
+        var result = KeyDerivation.VerifyPassword(password, hash, wrongSalt);
+
+        Assert.False(result, "Verification should fail with wrong salt");
+    }
+
+    [Theory]
+    [InlineData("simple")]
+    [InlineData("P@$$w0rd!#%^&*()")]
+    [InlineData("a very long password with many words in it for testing purposes")]
+    [InlineData("12345678a")]
+    public void VerifyPassword_VariousPasswords_VerifiesCorrectly(string password)
+    {
+        var salt = KeyDerivation.GenerateSalt();
+        var hash = KeyDerivation.ComputePasswordHash(password, salt);
+
+        Assert.True(KeyDerivation.VerifyPassword(password, hash, salt));
+        Assert.False(KeyDerivation.VerifyPassword(password + "x", hash, salt));
+    }
+
+    #endregion
+
+    #region VerifyPasswordBase64 Tests
+
+    [Fact]
+    public void VerifyPasswordBase64_CorrectPassword_ReturnsTrue()
     {
         var password = "TestPassword123";
         var saltBase64 = KeyDerivation.GenerateSaltBase64();
@@ -267,7 +572,7 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void VerifyPasswordBase64_ReturnsFalseForIncorrectPassword()
+    public void VerifyPasswordBase64_WrongPassword_ReturnsFalse()
     {
         var password = "TestPassword123";
         var saltBase64 = KeyDerivation.GenerateSaltBase64();
@@ -279,16 +584,71 @@ public class KeyDerivationTests
     }
 
     [Fact]
-    public void VerifyPassword_CaseSensitive()
+    public void VerifyPasswordBase64_MatchesByteArrayOverload()
     {
         var password = "TestPassword123";
         var salt = KeyDerivation.GenerateSalt();
         var hash = KeyDerivation.ComputePasswordHash(password, salt);
 
-        // Test with different case
-        var result = KeyDerivation.VerifyPassword("testpassword123", hash, salt);
+        var saltBase64 = Convert.ToBase64String(salt);
+        var hashBase64 = Convert.ToBase64String(hash);
 
-        Assert.False(result, "Password verification should be case-sensitive");
+        var byteResult = KeyDerivation.VerifyPassword(password, hash, salt);
+        var base64Result = KeyDerivation.VerifyPasswordBase64(password, hashBase64, saltBase64);
+
+        Assert.Equal(byteResult, base64Result);
+    }
+
+    [Fact]
+    public void VerifyPasswordBase64_CaseSensitive_ReturnsFalse()
+    {
+        var password = "TestPassword123";
+        var saltBase64 = KeyDerivation.GenerateSaltBase64();
+        var hashBase64 = KeyDerivation.ComputePasswordHashBase64(password, saltBase64);
+
+        var result = KeyDerivation.VerifyPasswordBase64("testpassword123", hashBase64, saltBase64);
+
+        Assert.False(result, "Base64 password verification should be case-sensitive");
+    }
+
+    #endregion
+
+    #region End-to-End / Integration Tests
+
+    [Fact]
+    public void EndToEnd_HashAndVerify_RoundTripsSuccessfully()
+    {
+        // Simulate a full password storage and verification workflow
+        var password = "MySecurePassword99!";
+
+        // Step 1: Generate salt and hash for storage
+        var saltBase64 = KeyDerivation.GenerateSaltBase64();
+        var hashBase64 = KeyDerivation.ComputePasswordHashBase64(password, saltBase64);
+
+        // Step 2: Later, verify the password against the stored hash and salt
+        Assert.True(KeyDerivation.VerifyPasswordBase64(password, hashBase64, saltBase64));
+        Assert.False(KeyDerivation.VerifyPasswordBase64("DifferentPassword1", hashBase64, saltBase64));
+    }
+
+    [Fact]
+    public void EndToEnd_DeriveKeyAndVerify_ConsistentAcrossOverloads()
+    {
+        var password = "TestPassword123";
+        var salt = KeyDerivation.GenerateSalt();
+        var saltBase64 = Convert.ToBase64String(salt);
+
+        // Both overloads should produce the same derived key
+        var keyFromBytes = KeyDerivation.DeriveKey(password, salt);
+        var keyFromBase64 = KeyDerivation.DeriveKey(password, saltBase64);
+
+        Assert.True(keyFromBytes.SequenceEqual(keyFromBase64));
+
+        // Both overloads should produce the same hash
+        var hashFromBytes = KeyDerivation.ComputePasswordHash(password, salt);
+        var hashFromBase64String = KeyDerivation.ComputePasswordHashBase64(password, saltBase64);
+        var hashFromBase64Decoded = Convert.FromBase64String(hashFromBase64String);
+
+        Assert.True(hashFromBytes.SequenceEqual(hashFromBase64Decoded));
     }
 
     #endregion
