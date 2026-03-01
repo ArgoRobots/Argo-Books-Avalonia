@@ -170,6 +170,15 @@ public partial class ReportsPageViewModel : ViewModelBase
                 // Clear undo history and reload the template to discard layout changes
                 UndoRedoManager.Clear();
                 LoadTemplate(SelectedTemplateName);
+
+                // Clear radio button selection for point-in-time reports where date range is disabled
+                // (mirrors the logic in OnSelectedTemplateNameChanged, which doesn't fire here
+                // because SelectedTemplateName didn't change)
+                if (!IsDateRangeEnabled)
+                {
+                    foreach (var option in DatePresets)
+                        option.IsSelected = false;
+                }
             }
 
             CurrentStep--;
