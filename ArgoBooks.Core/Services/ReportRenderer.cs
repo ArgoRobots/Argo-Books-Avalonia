@@ -2845,7 +2845,9 @@ public class ReportRenderer : IDisposable
             _ => SKTextAlign.Center
         };
 
-        var text = GetDateRangeText(dateRange.DateFormat);
+        var text = dateRange.IsAsOfDate
+            ? GetAsOfDateText(dateRange.DateFormat)
+            : GetDateRangeText(dateRange.DateFormat);
 
         var x = dateRange.HorizontalAlignment switch
         {
@@ -3287,19 +3289,20 @@ public class ReportRenderer : IDisposable
         var headerHeight = PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) * _renderScale;
         var marginLeft = (float)_config.PageMargins.Left * _renderScale;
         var marginRight = (float)_config.PageMargins.Right * _renderScale;
+        var marginTop = (float)_config.PageMargins.Top * _renderScale;
 
-        // Draw header background
-        var headerRect = new SKRect(0, 0, width, headerHeight);
+        // Draw header background (covers margin area and header)
+        var headerRect = new SKRect(0, 0, width, marginTop + headerHeight);
         canvas.DrawRect(headerRect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
 
         if (_config.ShowCompanyDetails && _companyData != null)
         {
-            RenderCompanyDetailsHeader(canvas, width, headerHeight, marginLeft);
+            RenderCompanyDetailsHeader(canvas, width, headerHeight, marginLeft, marginTop);
         }
         else
         {
-            // Draw title centered in header
-            canvas.DrawText(_config.Title, width / 2f, headerHeight / 2 + 6 * _renderScale, SKTextAlign.Center, _headerFont, _headerPaint);
+            // Draw title centered in header area (offset by top margin)
+            canvas.DrawText(_config.Title, width / 2f, marginTop + headerHeight / 2 + 6 * _renderScale, SKTextAlign.Center, _headerFont, _headerPaint);
         }
 
         // Draw separator line
@@ -3309,10 +3312,10 @@ public class ReportRenderer : IDisposable
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1 * _renderScale
         };
-        canvas.DrawLine(marginLeft, headerHeight - 5 * _renderScale, width - marginRight, headerHeight - 5 * _renderScale, separatorPaint);
+        canvas.DrawLine(marginLeft, marginTop + headerHeight - 5 * _renderScale, width - marginRight, marginTop + headerHeight - 5 * _renderScale, separatorPaint);
     }
 
-    private void RenderCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight, float margin)
+    private void RenderCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight, float margin, float marginTop)
     {
         var companyInfo = _companyData!.Settings.Company;
         var logoPath = _config.CompanyLogoPath;
@@ -3338,8 +3341,8 @@ public class ReportRenderer : IDisposable
         if (hasLogo)
             textStartX = margin + logoSize + logoPadding;
 
-        // Top padding to keep company info away from the page edge
-        var topPadding = 10f * _renderScale;
+        // Top padding includes the page top margin to keep company info within the header area
+        var topPadding = marginTop + 10f * _renderScale;
 
         // --- Draw Logo ---
         if (hasLogo)
@@ -3643,6 +3646,14 @@ public class ReportRenderer : IDisposable
         }
 
         return $"{Tr("Period")}: {Tr("All Time")}";
+    }
+
+    private string GetAsOfDateText(string dateFormat)
+    {
+        var end = _config.Filters.EndDate;
+        if (end.HasValue)
+            return $"{Tr("As of")} {end.Value.ToString(dateFormat)}";
+        return $"{Tr("As of")} {DateTime.Today.ToString(dateFormat)}";
     }
 
     private void DrawPlaceholder(SKCanvas canvas, SKRect rect, string message, bool drawBackground = true)

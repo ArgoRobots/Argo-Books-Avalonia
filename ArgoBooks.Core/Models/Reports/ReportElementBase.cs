@@ -892,6 +892,17 @@ public class DateRangeReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = VerticalTextAlignment.Center;
 
+    /// <summary>
+    /// When true, displays "As of [end date]" instead of "Period: X to Y".
+    /// Used for point-in-time reports like Balance Sheet.
+    /// </summary>
+    [JsonPropertyName("isAsOfDate")]
+    public bool IsAsOfDate
+    {
+        get;
+        set => SetField(ref field, value);
+    }
+
     public override string DisplayName => "Date Range";
     public override ReportElementType GetElementType() => ReportElementType.DateRange;
 
@@ -915,7 +926,8 @@ public class DateRangeReportElement : ReportElementBase
             IsUnderline = IsUnderline,
             FontFamily = FontFamily,
             HorizontalAlignment = HorizontalAlignment,
-            VerticalAlignment = VerticalAlignment
+            VerticalAlignment = VerticalAlignment,
+            IsAsOfDate = IsAsOfDate
         };
     }
 }
