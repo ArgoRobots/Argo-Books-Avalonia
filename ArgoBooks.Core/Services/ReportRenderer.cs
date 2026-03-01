@@ -2845,7 +2845,9 @@ public class ReportRenderer : IDisposable
             _ => SKTextAlign.Center
         };
 
-        var text = GetDateRangeText(dateRange.DateFormat);
+        var text = dateRange.IsAsOfDate
+            ? GetAsOfDateText(dateRange.DateFormat)
+            : GetDateRangeText(dateRange.DateFormat);
 
         var x = dateRange.HorizontalAlignment switch
         {
@@ -3644,6 +3646,14 @@ public class ReportRenderer : IDisposable
         }
 
         return $"{Tr("Period")}: {Tr("All Time")}";
+    }
+
+    private string GetAsOfDateText(string dateFormat)
+    {
+        var end = _config.Filters.EndDate;
+        if (end.HasValue)
+            return $"{Tr("As of")} {end.Value.ToString(dateFormat)}";
+        return $"{Tr("As of")} {DateTime.Today.ToString(dateFormat)}";
     }
 
     private void DrawPlaceholder(SKCanvas canvas, SKRect rect, string message, bool drawBackground = true)

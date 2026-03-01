@@ -824,21 +824,21 @@ public static class ReportTemplateFactory
 
         var context = new LayoutContext(config);
 
-        // Skip period date range for point-in-time reports (aging reports) since
-        // they show "As of [date]" in the table subtitle and don't filter by period.
-        var isPointInTime = reportType == AccountingReportType.AccountsReceivableAging
+        // Skip period date range for aging reports (they show "As of [date]" in the table subtitle).
+        // Balance Sheet gets an "As of [date]" label instead of "Period: X to Y".
+        var isAgingReport = reportType == AccountingReportType.AccountsReceivableAging
                             || reportType == AccountingReportType.AccountsPayableAging;
 
-        if (!isPointInTime)
+        if (!isAgingReport)
         {
-            // Date range element at the top
             var dateRangeBounds = GetDateRangeBounds(context);
             config.AddElement(new DateRangeReportElement
             {
                 X = dateRangeBounds.X,
                 Y = dateRangeBounds.Y,
                 Width = dateRangeBounds.Width,
-                Height = dateRangeBounds.Height
+                Height = dateRangeBounds.Height,
+                IsAsOfDate = reportType == AccountingReportType.BalanceSheet
             });
         }
 

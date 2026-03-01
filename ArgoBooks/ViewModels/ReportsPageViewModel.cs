@@ -310,6 +310,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _isCustomDateRange;
 
     [ObservableProperty]
+    private bool _isDateRangeEnabled = true;
+
+    [ObservableProperty]
     private TransactionType _selectedTransactionType = TransactionType.Revenue;
 
     public ObservableCollection<string> TemplateNames { get; } = [];
@@ -326,7 +329,15 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     partial void OnSelectedTemplateNameChanged(string value)
     {
+        IsDateRangeEnabled = value != ReportTemplateFactory.TemplateNames.BalanceSheet;
         LoadTemplate(value);
+
+        // Clear radio button selection for point-in-time reports where date range is disabled
+        if (!IsDateRangeEnabled)
+        {
+            foreach (var option in DatePresets)
+                option.IsSelected = false;
+        }
     }
 
     partial void OnSelectedDatePresetChanged(string value)

@@ -602,8 +602,9 @@
                                          Padding="12,10" />
                             </StackPanel>
 
-                            <!-- Date Range -->
-                            <StackPanel Spacing="8">
+                            <!-- Date Range (disabled for point-in-time reports like Balance Sheet) -->
+                            <StackPanel Spacing="8"
+                                        IsEnabled="{Binding IsDateRangeEnabled}">
                                 <TextBlock Text="{loc:Loc 'Date Range'}"
                                            FontSize="14"
                                            FontWeight="Medium"

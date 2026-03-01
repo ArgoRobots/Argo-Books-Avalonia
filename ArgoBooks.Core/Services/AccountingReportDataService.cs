@@ -386,13 +386,13 @@ public class AccountingReportDataService
             return data;
         }
 
-        // Cash = Revenue (Paid, no invoice) + Payments - Expenses, all filtered by date
-        // Uses pre-tax amounts to match Income Statement (tax is a liability, not revenue/expense)
+        // Cash = Revenue (Paid, no invoice) + Payments - Expenses, all filtered by date.
+        // Uses post-tax (total) amounts because cash includes tax collected/paid.
         var cashFromRevenue = _companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsOnOrBeforeEndDate(r.Date))
-            .Sum(r => r.EffectiveSubtotalUSD);
+            .Sum(r => r.EffectiveTotalUSD);
 
         var cashFromPayments = _companyData.Payments
             .Where(p => IsOnOrBeforeEndDate(p.Date))
@@ -400,13 +400,15 @@ public class AccountingReportDataService
 
         var cashPaidForExpenses = _companyData.Expenses
             .Where(e => IsOnOrBeforeEndDate(e.Date))
-            .Sum(e => e.EffectiveSubtotalUSD);
+            .Sum(e => e.EffectiveTotalUSD);
 
         var cash = cashFromRevenue + cashFromPayments - cashPaidForExpenses;
 
-        // Accounts Receivable = unpaid/uncancelled invoices
+        // Accounts Receivable = unpaid/uncancelled invoices (excluding drafts)
         var accountsReceivable = _companyData.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
+            .Where(i => i.Status != InvoiceStatus.Paid
+                        && i.Status != InvoiceStatus.Cancelled
+                        && i.Status != InvoiceStatus.Draft)
             .Sum(i => i.EffectiveBalanceUSD);
 
         var totalCurrentAssets = cash + accountsReceivable;
@@ -418,7 +420,16 @@ public class AccountingReportDataService
                          && po.Status != PurchaseOrderStatus.Cancelled)
             .Sum(po => po.Total);
 
-        var totalLiabilities = accountsPayable;
+        // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses
+        var taxCollected = _companyData.Revenues
+            .Where(r => IsOnOrBeforeEndDate(r.Date))
+            .Sum(r => r.EffectiveTotalUSD - r.EffectiveSubtotalUSD);
+        var taxPaidOnExpenses = _companyData.Expenses
+            .Where(e => IsOnOrBeforeEndDate(e.Date))
+            .Sum(e => e.EffectiveTotalUSD - e.EffectiveSubtotalUSD);
+        var salesTaxPayable = taxCollected - taxPaidOnExpenses;
+
+        var totalLiabilities = accountsPayable + salesTaxPayable;
 
         // Retained Earnings derived as balancing figure so Assets = Liabilities + Equity.
         // This is standard for simplified bookkeeping systems without full double-entry.
@@ -492,10 +503,21 @@ public class AccountingReportDataService
             RowType = AccountingRowType.DataRow
         });
 
+        if (salesTaxPayable != 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Sales Tax Payable",
+                Values = [FormatCurrencyWithSign(salesTaxPayable)],
+                IndentLevel = 1,
+                RowType = AccountingRowType.DataRow
+            });
+        }
+
         data.Rows.Add(new AccountingRow
         {
             Label = "TOTAL LIABILITIES",
-            Values = [FormatCurrency(totalLiabilities)],
+            Values = [FormatCurrencyWithSign(totalLiabilities)],
             RowType = AccountingRowType.TotalRow
         });
 
@@ -586,13 +608,13 @@ public class AccountingReportDataService
         }
 
         // Operating Activities
-        // Exclude invoice-linked revenue to avoid double counting with Payments
-        // Uses pre-tax amounts to match Income Statement (tax is a liability, not revenue/expense)
+        // Exclude invoice-linked revenue to avoid double counting with Payments.
+        // Uses post-tax (total) amounts because Cash Flow tracks actual cash movements including tax.
         var cashFromSales = _companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
-            .Sum(r => r.EffectiveSubtotalUSD);
+            .Sum(r => r.EffectiveTotalUSD);
 
         var cashFromInvoicePayments = _companyData.Payments
             .Where(p => IsInDateRange(p.Date))
@@ -600,7 +622,7 @@ public class AccountingReportDataService
 
         var cashPaidForExpenses = _companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
-            .Sum(e => e.EffectiveSubtotalUSD);
+            .Sum(e => e.EffectiveTotalUSD);
 
         var totalOperating = cashFromSales + cashFromInvoicePayments - cashPaidForExpenses;
 
@@ -1071,9 +1093,11 @@ public class AccountingReportDataService
 
         var today = DateTime.Today;
 
-        // Filter to unpaid, uncancelled invoices
+        // Filter to unpaid, non-draft, uncancelled invoices (drafts are not real receivables)
         var openInvoices = _companyData.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
+            .Where(i => i.Status != InvoiceStatus.Paid
+                        && i.Status != InvoiceStatus.Cancelled
+                        && i.Status != InvoiceStatus.Draft)
             .ToList();
 
         // Group by customer
@@ -1504,7 +1528,7 @@ public class AccountingReportDataService
             .Where(r => IsInDateRange(r.Date))
             .ToList();
 
-        // Round tax rates to 4 decimal places to consolidate near-identical rates
+        // Round tax rates to 2 decimal places to consolidate near-identical rates
         var taxCollectedByRate = new Dictionary<decimal, decimal>();
         foreach (var rev in filteredRevenues)
         {
@@ -1514,7 +1538,7 @@ public class AccountingReportDataService
                 {
                     if (li.TaxRate > 0)
                     {
-                        var rate = Math.Round(li.TaxRate, 4);
+                        var rate = Math.Round(li.TaxRate, 2);
                         if (!taxCollectedByRate.ContainsKey(rate))
                             taxCollectedByRate[rate] = 0;
                         taxCollectedByRate[rate] += li.TaxAmount;
@@ -1523,7 +1547,7 @@ public class AccountingReportDataService
             }
             else if (rev.TaxRate > 0)
             {
-                var rate = Math.Round(rev.TaxRate, 4);
+                var rate = Math.Round(rev.TaxRate, 2);
                 if (!taxCollectedByRate.ContainsKey(rate))
                     taxCollectedByRate[rate] = 0;
                 taxCollectedByRate[rate] += rev.TaxAmount;
@@ -1544,7 +1568,7 @@ public class AccountingReportDataService
                 {
                     if (li.TaxRate > 0)
                     {
-                        var rate = Math.Round(li.TaxRate, 4);
+                        var rate = Math.Round(li.TaxRate, 2);
                         if (!taxPaidByRate.ContainsKey(rate))
                             taxPaidByRate[rate] = 0;
                         taxPaidByRate[rate] += li.TaxAmount;
@@ -1553,7 +1577,7 @@ public class AccountingReportDataService
             }
             else if (exp.TaxRate > 0)
             {
-                var rate = Math.Round(exp.TaxRate, 4);
+                var rate = Math.Round(exp.TaxRate, 2);
                 if (!taxPaidByRate.ContainsKey(rate))
                     taxPaidByRate[rate] = 0;
                 taxPaidByRate[rate] += exp.TaxAmount;
