@@ -340,7 +340,9 @@ public class AnalysisDateRange
     /// <summary>
     /// Creates a date range from preset name.
     /// </summary>
-    public static AnalysisDateRange FromPreset(string presetName)
+    /// <param name="presetName">The preset name (e.g., "This Month", "All Time").</param>
+    /// <param name="earliestDate">Optional earliest transaction date for "All Time". Defaults to today if null.</param>
+    public static AnalysisDateRange FromPreset(string presetName, DateTime? earliestDate = null)
     {
         var now = DateTime.Now;
         var range = new AnalysisDateRange { PresetName = presetName };
@@ -383,7 +385,7 @@ public class AnalysisDateRange
 
             case "All Time":
             default:
-                range.StartDate = new DateTime(2000, 1, 1);
+                range.StartDate = earliestDate ?? DateTime.Today;
                 range.EndDate = now;
                 break;
         }
