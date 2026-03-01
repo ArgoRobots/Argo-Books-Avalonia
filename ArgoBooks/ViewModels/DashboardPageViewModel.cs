@@ -54,6 +54,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IsCustomDateRange));
                     OnPropertyChanged(nameof(ComparisonPeriodLabel));
+                    OnPropertyChanged(nameof(DateRangeDisplayText));
 
                     if (value == "Custom Range")
                     {
@@ -134,6 +135,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     public string AppliedDateRangeText => ChartSettings.AppliedDateRangeText;
 
     /// <summary>
+    /// Gets the formatted text showing the currently selected date range span.
+    /// </summary>
+    public string DateRangeDisplayText => ChartSettings.DateRangeDisplayText;
+
+    /// <summary>
     /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
     /// </summary>
     public DateTimeOffset? StartDateOffset
@@ -187,13 +193,17 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             _previousDateRange = SelectedDateRange;
         }
 
-        App.CustomDateRangeModal?.Open(StartDate, EndDate,
+        var earliestDate = _companyManager?.CompanyData?.GetEarliestTransactionDate() ?? StartDate;
+        var modalStartDate = HasAppliedCustomRange ? StartDate : earliestDate;
+
+        App.CustomDateRangeModal?.Open(modalStartDate, EndDate,
             onApply: (start, end) =>
             {
                 StartDate = start;
                 EndDate = end;
                 HasAppliedCustomRange = true;
                 OnPropertyChanged(nameof(AppliedDateRangeText));
+                OnPropertyChanged(nameof(DateRangeDisplayText));
                 LoadDashboardData();
             },
             onCancel: () =>
@@ -203,6 +213,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 {
                     ChartSettings.SelectedDateRange = _previousDateRange;
                     OnPropertyChanged(nameof(SelectedDateRange));
+                    OnPropertyChanged(nameof(DateRangeDisplayText));
                 }
             });
     }
@@ -501,6 +512,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             OnPropertyChanged(nameof(EndDate));
             OnPropertyChanged(nameof(HasAppliedCustomRange));
             OnPropertyChanged(nameof(AppliedDateRangeText));
+            OnPropertyChanged(nameof(DateRangeDisplayText));
             OnPropertyChanged(nameof(IsCustomDateRange));
             OnPropertyChanged(nameof(ComparisonPeriodLabel));
             LoadDashboardData();

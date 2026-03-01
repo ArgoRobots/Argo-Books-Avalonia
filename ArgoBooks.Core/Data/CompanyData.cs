@@ -245,6 +245,20 @@ public class CompanyData
     #region Helper Methods
 
     /// <summary>
+    /// Gets the earliest transaction date across all data (revenues, expenses, payments).
+    /// Returns DateTime.Today if no transactions exist.
+    /// </summary>
+    public DateTime GetEarliestTransactionDate()
+    {
+        var dates = new List<DateTime>();
+        if (Revenues.Count > 0) dates.Add(Revenues.Min(r => r.Date));
+        if (Expenses.Count > 0) dates.Add(Expenses.Min(e => e.Date));
+        if (Payments.Count > 0) dates.Add(Payments.Min(p => p.Date));
+
+        return dates.Count > 0 ? dates.Min() : DateTime.Today;
+    }
+
+    /// <summary>
     /// Gets a customer by ID.
     /// </summary>
     public Customer? GetCustomer(string id) => Customers.FirstOrDefault(c => c.Id == id);

@@ -20,6 +20,13 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
+
+        <!-- Date range display label -->
+        <TextBlock Text="{Binding DateRangeDisplayText}"
+                   FontSize="11"
+                   Foreground="{DynamicResource TextTertiaryBrush}"
+                   HorizontalAlignment="Right"
+                   IsVisible="{Binding DateRangeDisplayText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
     </StackPanel>
 
 </UserControl>
