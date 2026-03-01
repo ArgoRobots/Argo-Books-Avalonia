@@ -1054,7 +1054,7 @@ public class AccountingReportDataService
         {
             Title = t.ARAgingTitle,
             Subtitle = "",
-            ColumnHeaders = [t.CustomerColumn, "Current", "1-30", "31-60", "61-90", "90+", "Total"],
+            ColumnHeaders = [t.CustomerColumn, "Current", "1-30 Days", "31-60 Days", "61-90 Days", "90+ Days", "Total"],
             ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
         };
 
@@ -1173,7 +1173,7 @@ public class AccountingReportDataService
         {
             Title = t.APAgingTitle,
             Subtitle = "",
-            ColumnHeaders = [t.SupplierColumn, "Current", "1-30", "31-60", "61-90", "90+", "Total"],
+            ColumnHeaders = [t.SupplierColumn, "Current", "1-30 Days", "31-60 Days", "61-90 Days", "90+ Days", "Total"],
             ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
         };
 

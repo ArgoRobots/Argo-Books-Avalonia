@@ -32,6 +32,11 @@ public static class TemplateLayoutHelper
         public double MarginRight { get; }
 
         /// <summary>
+        /// Top margin from page edge.
+        /// </summary>
+        public double MarginTop { get; }
+
+        /// <summary>
         /// Bottom margin from page edge.
         /// </summary>
         public double MarginBottom { get; }
@@ -64,7 +69,7 @@ public static class TemplateLayoutHelper
         /// <summary>
         /// Y position where the date range element should be placed (just below header).
         /// </summary>
-        public double DateRangeTop => HeaderHeight + 2;
+        public double DateRangeTop => MarginTop + HeaderHeight + 2;
 
         /// <summary>
         /// Y position where content starts (below date range area).
@@ -92,6 +97,7 @@ public static class TemplateLayoutHelper
             HeaderHeight = PageDimensions.GetHeaderHeight(config.ShowCompanyDetails);
             MarginLeft = config.PageMargins.Left;
             MarginRight = config.PageMargins.Right;
+            MarginTop = config.PageMargins.Top;
             MarginBottom = config.PageMargins.Bottom;
         }
 
@@ -105,6 +111,7 @@ public static class TemplateLayoutHelper
             HeaderHeight = PageDimensions.GetHeaderHeight(showCompanyDetails);
             MarginLeft = PageDimensions.Margin;
             MarginRight = PageDimensions.Margin;
+            MarginTop = PageDimensions.Margin;
             MarginBottom = PageDimensions.Margin;
         }
     }
