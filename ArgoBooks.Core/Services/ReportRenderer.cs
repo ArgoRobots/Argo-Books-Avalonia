@@ -19,6 +19,7 @@ public class ReportRenderer : IDisposable
     private readonly ReportChartDataService? _chartDataService;
     private readonly ITranslationProvider _translationProvider;
     private readonly IErrorLogger? _errorLogger;
+    private readonly string _currencyCode;
     private readonly string _currencySymbol;
 
     // Cached paints
@@ -70,6 +71,26 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// Converts a USD amount to the current display currency using cached exchange rates.
+    /// Returns the original amount if the display currency is USD or no rate is available.
+    /// </summary>
+    private double ConvertFromUSD(double amountUSD, DateTime? date = null)
+    {
+        if (string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return amountUSD;
+
+        var exchangeService = ExchangeRateService.Instance;
+        if (exchangeService != null)
+        {
+            var rate = exchangeService.GetExchangeRate("USD", _currencyCode, date ?? DateTime.Today);
+            if (rate > 0)
+                return (double)Math.Round((decimal)amountUSD * rate, 2);
+        }
+
+        return amountUSD;
+    }
+
+    /// <summary>
     /// Resolves the best available default typeface for the current platform.
     /// Tries platform-specific fonts before falling back to SKTypeface.Default.
     /// </summary>
@@ -99,9 +120,9 @@ public class ReportRenderer : IDisposable
         _translationProvider = translationProvider ?? DefaultTranslationProvider.Instance;
         _errorLogger = errorLogger;
 
-        // Resolve currency symbol from company settings
-        var currencyCode = companyData?.Settings.Localization.Currency;
-        _currencySymbol = !string.IsNullOrEmpty(currencyCode) ? CurrencyInfo.GetSymbol(currencyCode) : "$";
+        // Resolve currency code and symbol from company settings
+        _currencyCode = companyData?.Settings.Localization.Currency ?? "USD";
+        _currencySymbol = CurrencyInfo.GetSymbol(_currencyCode);
 
         // Initialize chart data service for rendering actual charts
         if (companyData != null)
@@ -1039,7 +1060,15 @@ public class ReportRenderer : IDisposable
         var data = _chartDataService.GetChartData(chartType);
 
         if (data is List<ChartDataPoint> dataPoints)
+        {
+            // Chart data is computed in USD — convert to display currency for monetary charts
+            if (ShouldShowCurrency(chartType))
+            {
+                foreach (var point in dataPoints)
+                    point.Value = ConvertFromUSD(point.Value, point.Date);
+            }
             return dataPoints;
+        }
 
         return null;
     }
@@ -1055,7 +1084,16 @@ public class ReportRenderer : IDisposable
         var data = _chartDataService.GetChartData(chartType);
 
         if (data is List<ChartSeriesData> seriesData)
+        {
+            // Chart data is computed in USD — convert to display currency for monetary charts
+            if (ShouldShowCurrency(chartType))
+            {
+                foreach (var series in seriesData)
+                    foreach (var point in series.DataPoints)
+                        point.Value = ConvertFromUSD(point.Value, point.Date);
+            }
             return seriesData;
+        }
 
         return null;
     }
@@ -1071,7 +1109,16 @@ public class ReportRenderer : IDisposable
         var data = _chartDataService.GetChartData(ChartDataType.WorldMap);
 
         if (data is Dictionary<string, double> mapData)
+        {
+            // World map data is computed in USD — convert to display currency
+            if (!string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                var keys = mapData.Keys.ToList();
+                foreach (var key in keys)
+                    mapData[key] = ConvertFromUSD(mapData[key]);
+            }
             return mapData;
+        }
 
         return null;
     }
@@ -2935,7 +2982,7 @@ public class ReportRenderer : IDisposable
         {
             var total = CalculateTotalRevenue(summary);
             var label = summary.TransactionType == TransactionType.Expenses ? Tr("Total Expenses") : Tr("Total Revenue");
-            lines.Add($"{label}: ${total:N2}");
+            lines.Add($"{label}: {FormatCurrency(total)}");
         }
 
         if (summary.ShowTotalTransactions)
@@ -2947,7 +2994,7 @@ public class ReportRenderer : IDisposable
         if (summary.ShowAverageValue)
         {
             var avg = CalculateAverageValue(summary);
-            lines.Add($"{Tr("Average Value")}: ${avg:N2}");
+            lines.Add($"{Tr("Average Value")}: {FormatCurrency(avg)}");
         }
 
         if (summary.ShowGrowthRate)
