@@ -10,18 +10,17 @@
              x:Class="ArgoBooks.Modals.ReportPageSettingsModal"
              x:DataType="vm:ReportsPageViewModel">
 
-    <controls:ModalOverlay IsOpen="{Binding IsPageSettingsOpen}"
-                           ClosingCommand="{Binding ClosePageSettingsCommand}">
-        <controls:ModalOverlay.ModalContent>
-            <Border Background="{DynamicResource SurfaceBrush}"
-                CornerRadius="12"
-                BoxShadow="0 8 32 0 #40000000"
-                Width="480"
-                MaxHeight="600"
-                ClipToBounds="True"
-                Padding="0">
+    <Border Background="{DynamicResource SurfaceBrush}"
+            CornerRadius="12"
+            BoxShadow="0 8 32 0 #40000000"
+            Width="480"
+            MaxHeight="600"
+            ClipToBounds="True"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Padding="0">
 
-            <Grid RowDefinitions="Auto,*,Auto">
+        <Grid RowDefinitions="Auto,*,Auto">
             <!-- Header -->
             <Border Grid.Row="0"
                     Background="{DynamicResource SurfaceAltBrush}"
@@ -166,10 +165,8 @@
                             Command="{Binding ApplyPageSettingsCommand}" />
                 </StackPanel>
             </Border>
-            </Grid>
-            </Border>
-        </controls:ModalOverlay.ModalContent>
-    </controls:ModalOverlay>
+        </Grid>
+    </Border>
 
     <UserControl.Styles>
         <!-- NumericUpDown styling to match other controls -->
