@@ -1594,7 +1594,6 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <CheckBox Content="{loc:Loc 'Show Company Header'}" IsChecked="{Binding SelectedAccountingTableElement.ShowCompanyHeader, FallbackValue=False}" />
                                 <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedAccountingTableElement.ShowGridLines, FallbackValue=False}" />
                                 <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedAccountingTableElement.AlternateRowColors, FallbackValue=False}" />
 

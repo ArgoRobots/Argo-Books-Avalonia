@@ -24,7 +24,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<ReportTemplateOption> ReportTemplateOptions { get; } =
     [
-        new(ReportTemplateFactory.TemplateNames.MonthlyRevenue, "Monthly Sales", "Summarize monthly revenue data",
+        new(ReportTemplateFactory.TemplateNames.MonthlyRevenue, "Revenue Overview", "Summarize monthly revenue data",
             "M3 13.125C3 12.504 3.504 12 4.125 12H6.375C6.996 12 7.5 12.504 7.5 13.125V19.875C7.5 20.496 6.996 21 6.375 21H4.125C3.504 21 3 20.496 3 19.875V13.125ZM9.75 8.625C9.75 8.004 10.254 7.5 10.875 7.5H13.125C13.746 7.5 14.25 8.004 14.25 8.625V19.875C14.25 20.496 13.746 21 13.125 21H10.875C10.254 21 9.75 20.496 9.75 19.875V8.625ZM16.5 4.125C16.5 3.504 17.004 3 17.625 3H19.875C20.496 3 21 3.504 21 4.125V19.875C21 20.496 20.496 21 19.875 21H17.625C17.004 21 16.5 20.496 16.5 19.875V4.125Z",
             "#2196F3", "#E3F2FD"),
         new(ReportTemplateFactory.TemplateNames.FinancialOverview, "Financial Overview", "Full financial breakdown",
@@ -67,18 +67,12 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(ReportTemplateFactory.TemplateNames.CashFlowStatement, "Cash Flow", "Where your cash came from and went",
             "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
             "#8E44AD", "#F5EEF8"),
-        new(ReportTemplateFactory.TemplateNames.TrialBalance, "Trial Balance", "Checks that all your books add up",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM12 6v2h5v2h-5v2l-4-3 4-3zm-1 6v2H6v-2h5v-2l4 3-4 3v-2H6v-2h5z",
-            "#E67E22", "#FDF2E9"),
         new(ReportTemplateFactory.TemplateNames.GeneralLedger, "General Ledger", "Full list of every transaction",
             "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z",
             "#2C3E50", "#EBEDEF"),
         new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Who owes you and for how long",
             "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.96-3.12 3.19z",
             "#16A085", "#E8F6F3"),
-        new(ReportTemplateFactory.TemplateNames.APaging, "AP Aging", "What you owe and when it's due",
-            "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H11.5v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.65c.09 1.71 1.37 2.66 2.85 2.97V19h1.72v-1.67c1.52-.29 2.72-1.16 2.72-2.74 0-2.22-1.9-2.97-3.63-3.45z",
-            "#C0392B", "#FDEDEC"),
         new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax you collected vs. tax you paid",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
             "#D35400", "#FBEEE6")
@@ -2746,16 +2740,17 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             _datePresetToPreserve = null;
         }
-        else if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
+        else if (string.IsNullOrEmpty(SelectedDatePreset))
         {
-            // Update date preset and radio button selection from configuration
-            SelectedDatePreset = Configuration.Filters.DatePresetName;
-            PageSettingsDatePreset = Configuration.Filters.DatePresetName;
+            // Only set a date preset if the user hasn't already selected one.
+            // Default to "Last 30 days" when no selection exists.
+            var defaultPreset = DatePresetNames.Last30Days;
+            SelectedDatePreset = defaultPreset;
+            PageSettingsDatePreset = defaultPreset;
 
-            // Update IsSelected on all date preset options
             foreach (var option in DatePresets)
             {
-                option.IsSelected = option.Name == Configuration.Filters.DatePresetName;
+                option.IsSelected = option.Name == defaultPreset;
             }
         }
 

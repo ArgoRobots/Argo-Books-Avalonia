@@ -156,7 +156,6 @@ public enum ChartDataType
     // Financial charts
     TotalProfits,
     RevenueVsExpenses,
-    GrowthRates,
 
     // Transaction charts
     AverageTransactionValue,
@@ -238,10 +237,8 @@ public enum AccountingReportType
     IncomeStatement,
     BalanceSheet,
     CashFlowStatement,
-    TrialBalance,
     GeneralLedger,
     AccountsReceivableAging,
-    AccountsPayableAging,
     TaxSummary
 }
 
@@ -337,7 +334,6 @@ public static class ReportEnumExtensions
             // Financial charts
             ChartDataType.TotalProfits => "Profit Over Time",
             ChartDataType.RevenueVsExpenses => "Expenses vs Revenue",
-            ChartDataType.GrowthRates => "Growth Rates",
 
             // Transaction charts
             ChartDataType.AverageTransactionValue => "Average Transaction Value",
@@ -392,10 +388,8 @@ public static class ReportEnumExtensions
             AccountingReportType.IncomeStatement => "Income Statement",
             AccountingReportType.BalanceSheet => "Balance Sheet",
             AccountingReportType.CashFlowStatement => "Cash Flow Statement",
-            AccountingReportType.TrialBalance => "Trial Balance",
             AccountingReportType.GeneralLedger => "General Ledger",
             AccountingReportType.AccountsReceivableAging => "Accounts Receivable Aging",
-            AccountingReportType.AccountsPayableAging => "Accounts Payable Aging",
             AccountingReportType.TaxSummary => "Tax Summary",
             _ => reportType.ToString()
         };

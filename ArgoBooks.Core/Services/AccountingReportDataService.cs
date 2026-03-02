@@ -115,10 +115,8 @@ public class AccountingReportDataService
             AccountingReportType.IncomeStatement => GetIncomeStatementData(),
             AccountingReportType.BalanceSheet => GetBalanceSheetData(),
             AccountingReportType.CashFlowStatement => GetCashFlowData(),
-            AccountingReportType.TrialBalance => GetTrialBalanceData(),
             AccountingReportType.GeneralLedger => GetGeneralLedgerData(),
             AccountingReportType.AccountsReceivableAging => GetARAgingData(),
-            AccountingReportType.AccountsPayableAging => GetAPAgingData(),
             AccountingReportType.TaxSummary => GetTaxSummaryData(),
             _ => new AccountingTableData { Title = "Unknown Report" }
         };
@@ -172,34 +170,6 @@ public class AccountingReportDataService
         return result;
     }
 
-    /// <summary>
-    /// Checks whether an expense's line items reference products that have inventory records,
-    /// indicating it is a cost of goods sold rather than an operating expense.
-    /// </summary>
-    private bool IsInventoryRelatedExpense(Models.Transactions.Transaction expense)
-    {
-        if (_companyData == null) return false;
-
-        if (expense.LineItems.Count > 0)
-        {
-            foreach (var li in expense.LineItems)
-            {
-                if (!string.IsNullOrEmpty(li.ProductId))
-                {
-                    var product = _companyData.GetProduct(li.ProductId);
-                    if (product != null)
-                    {
-                        // Check if product has inventory records
-                        var hasInventory = _companyData.Inventory.Any(i => i.ProductId == li.ProductId);
-                        if (hasInventory) return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
     #region Income Statement
 
     /// <summary>
@@ -231,20 +201,13 @@ public class AccountingReportDataService
             .Where(e => IsInDateRange(e.Date))
             .ToList();
 
-        // Split expenses into COGS (inventory-related) and operating expenses
-        var cogsExpenses = expenses.Where(IsInventoryRelatedExpense).ToList();
-        var operatingExpenses = expenses.Where(e => !IsInventoryRelatedExpense(e)).ToList();
-
         // Group by category
         var revenueByCategory = GroupTransactionsByCategory(revenues);
-        var cogsByCategory = GroupTransactionsByCategory(cogsExpenses);
-        var opexByCategory = GroupTransactionsByCategory(operatingExpenses);
+        var expenseByCategory = GroupTransactionsByCategory(expenses);
 
         var totalRevenue = revenueByCategory.Values.Sum();
-        var totalCogs = cogsByCategory.Values.Sum();
-        var grossProfit = totalRevenue - totalCogs;
-        var totalOpex = opexByCategory.Values.Sum();
-        var netIncome = grossProfit - totalOpex;
+        var totalExpenses = expenseByCategory.Values.Sum();
+        var netIncome = totalRevenue - totalExpenses;
 
         // Revenue section
         data.Rows.Add(new AccountingRow
@@ -274,48 +237,7 @@ public class AccountingReportDataService
 
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
 
-        // Cost of Goods Sold section
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.CostOfGoodsSold,
-            RowType = AccountingRowType.SectionHeader,
-            Values = [""]
-        });
-
-        if (cogsByCategory.Count > 0)
-        {
-            foreach (var kvp in cogsByCategory.OrderBy(k => k.Key))
-            {
-                data.Rows.Add(new AccountingRow
-                {
-                    Label = kvp.Key,
-                    Values = [FormatCurrency(kvp.Value)],
-                    IndentLevel = 1,
-                    RowType = AccountingRowType.DataRow
-                });
-            }
-        }
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.TotalCostOfGoodsSold,
-            Values = [FormatCurrency(totalCogs)],
-            RowType = AccountingRowType.SubtotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
-        // Gross Profit
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.GrossProfit,
-            Values = [FormatCurrencyWithSign(grossProfit)],
-            RowType = AccountingRowType.TotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
-        // Operating Expenses section
+        // Expenses section
         data.Rows.Add(new AccountingRow
         {
             Label = t.OperatingExpenses,
@@ -323,7 +245,7 @@ public class AccountingReportDataService
             Values = [""]
         });
 
-        foreach (var kvp in opexByCategory.OrderBy(k => k.Key))
+        foreach (var kvp in expenseByCategory.OrderBy(k => k.Key))
         {
             data.Rows.Add(new AccountingRow
             {
@@ -337,7 +259,7 @@ public class AccountingReportDataService
         data.Rows.Add(new AccountingRow
         {
             Label = t.TotalOperatingExpenses,
-            Values = [FormatCurrency(totalOpex)],
+            Values = [FormatCurrency(totalExpenses)],
             RowType = AccountingRowType.SubtotalRow
         });
 
@@ -360,11 +282,6 @@ public class AccountingReportDataService
     {
         data.Rows.Add(new AccountingRow { Label = t.Revenue, RowType = AccountingRowType.SectionHeader, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = t.TotalRevenue, Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = t.CostOfGoodsSold, RowType = AccountingRowType.SectionHeader, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = t.TotalCostOfGoodsSold, Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = t.GrossProfit, Values = [FormatCurrency(0)], RowType = AccountingRowType.TotalRow });
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = t.OperatingExpenses, RowType = AccountingRowType.SectionHeader, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = t.TotalOperatingExpenses, Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
@@ -600,7 +517,7 @@ public class AccountingReportDataService
     #region Cash Flow Statement
 
     /// <summary>
-    /// Generates Cash Flow Statement data showing operating, investing, and financing activities.
+    /// Generates Cash Flow Statement data showing operating activities.
     /// </summary>
     private AccountingTableData GetCashFlowData()
     {
@@ -620,12 +537,12 @@ public class AccountingReportDataService
 
         // Operating Activities
         // Exclude invoice-linked revenue to avoid double counting with Payments.
-        // Uses post-tax (total) amounts because Cash Flow tracks actual cash movements including tax.
+        // Uses pre-tax (subtotal) amounts, consistent with Dashboard and Income Statement.
         var cashFromSales = _companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
-            .Sum(r => r.EffectiveTotalUSD);
+            .Sum(r => r.EffectiveSubtotalUSD);
 
         var cashFromInvoicePayments = _companyData.Payments
             .Where(p => IsInDateRange(p.Date))
@@ -633,7 +550,7 @@ public class AccountingReportDataService
 
         var cashPaidForExpenses = _companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
-            .Sum(e => e.EffectiveTotalUSD);
+            .Sum(e => e.EffectiveSubtotalUSD);
 
         var totalOperating = cashFromSales + cashFromInvoicePayments - cashPaidForExpenses;
 
@@ -680,40 +597,6 @@ public class AccountingReportDataService
 
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
 
-        // Investing section
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "INVESTING ACTIVITIES",
-            RowType = AccountingRowType.SectionHeader,
-            Values = [""]
-        });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "Net Cash from Investing Activities",
-            Values = [FormatCurrency(0)],
-            RowType = AccountingRowType.SubtotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
-        // Financing section
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "FINANCING ACTIVITIES",
-            RowType = AccountingRowType.SectionHeader,
-            Values = [""]
-        });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "Net Cash from Financing Activities",
-            Values = [FormatCurrency(0)],
-            RowType = AccountingRowType.SubtotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
         // Net change
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = [""] });
 
@@ -735,182 +618,8 @@ public class AccountingReportDataService
         data.Rows.Add(new AccountingRow { Label = "Cash Paid for Expenses", Values = [FormatCurrency(0)], IndentLevel = 1, RowType = AccountingRowType.DataRow });
         data.Rows.Add(new AccountingRow { Label = "Net Cash from Operating Activities", Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "INVESTING ACTIVITIES", RowType = AccountingRowType.SectionHeader, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "Net Cash from Investing Activities", Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "FINANCING ACTIVITIES", RowType = AccountingRowType.SectionHeader, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "Net Cash from Financing Activities", Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = "NET CHANGE IN CASH", Values = [FormatCurrency(0)], RowType = AccountingRowType.GrandTotalRow });
-    }
-
-    #endregion
-
-    #region Trial Balance
-
-    /// <summary>
-    /// Generates Trial Balance data showing debit and credit balances for all accounts.
-    /// </summary>
-    private AccountingTableData GetTrialBalanceData()
-    {
-        var t = GetAccountingTerms();
-        var data = new AccountingTableData
-        {
-            Title = "Trial Balance",
-            Subtitle = GetCurrencySubtitle(),
-            ColumnHeaders = ["Account", "Debit", "Credit"],
-            ColumnWidthRatios = [0.5, 0.25, 0.25]
-        };
-
-        if (_companyData == null)
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "TOTALS",
-                Values = [FormatCurrency(0), FormatCurrency(0)],
-                RowType = AccountingRowType.GrandTotalRow
-            });
-            return data;
-        }
-
-        var totalDebits = 0m;
-        var totalCredits = 0m;
-
-        // Cash (debit) = Revenue paid (no invoice) + Payments - Expenses
-        // Uses pre-tax amounts to match Income Statement (tax is a liability, not revenue/expense)
-        var cashFromRevenue = _companyData.Revenues
-            .Where(r => r.PaymentStatus == "Paid"
-                        && string.IsNullOrEmpty(r.InvoiceId)
-                        && IsOnOrBeforeEndDate(r.Date))
-            .Sum(r => r.EffectiveSubtotalUSD);
-
-        var cashFromPayments = _companyData.Payments
-            .Where(p => IsOnOrBeforeEndDate(p.Date))
-            .Sum(p => p.EffectiveAmountUSD);
-
-        var cashPaidExpenses = _companyData.Expenses
-            .Where(e => IsOnOrBeforeEndDate(e.Date))
-            .Sum(e => e.EffectiveSubtotalUSD);
-
-        var cash = cashFromRevenue + cashFromPayments - cashPaidExpenses;
-
-        if (cash >= 0)
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "Cash",
-                Values = [FormatCurrency(cash), ""],
-                RowType = AccountingRowType.DataRow
-            });
-            totalDebits += cash;
-        }
-        else
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "Cash",
-                Values = ["", FormatCurrency(Math.Abs(cash))],
-                RowType = AccountingRowType.DataRow
-            });
-            totalCredits += Math.Abs(cash);
-        }
-
-        // Accounts Receivable (debit)
-        var ar = _companyData.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
-            .Sum(i => i.EffectiveBalanceUSD);
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.AccountsReceivable,
-            Values = [FormatCurrency(ar), ""],
-            RowType = AccountingRowType.DataRow
-        });
-        totalDebits += ar;
-
-        // Accounts Payable (credit)
-        var ap = _companyData.PurchaseOrders
-            .Where(po => po.Status != PurchaseOrderStatus.Received
-                         && po.Status != PurchaseOrderStatus.Cancelled)
-            .Sum(po => po.Total);
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.AccountsPayable,
-            Values = ["", FormatCurrency(ap)],
-            RowType = AccountingRowType.DataRow
-        });
-        totalCredits += ap;
-
-        // Revenue categories (credit)
-        var revenues = _companyData.Revenues
-            .Where(r => IsOnOrBeforeEndDate(r.Date))
-            .ToList();
-        var revenueByCategory = GroupTransactionsByCategory(revenues);
-
-        foreach (var kvp in revenueByCategory.OrderBy(k => k.Key))
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = $"{t.RevenuePrefix} - {kvp.Key}",
-                Values = ["", FormatCurrency(kvp.Value)],
-                RowType = AccountingRowType.DataRow
-            });
-            totalCredits += kvp.Value;
-        }
-
-        // Expense categories (debit)
-        var expenses = _companyData.Expenses
-            .Where(e => IsOnOrBeforeEndDate(e.Date))
-            .ToList();
-        var expenseByCategory = GroupTransactionsByCategory(expenses);
-
-        foreach (var kvp in expenseByCategory.OrderBy(k => k.Key))
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = $"{t.ExpensePrefix} - {kvp.Key}",
-                Values = [FormatCurrency(kvp.Value), ""],
-                RowType = AccountingRowType.DataRow
-            });
-            totalDebits += kvp.Value;
-        }
-
-        // Retained Earnings as balancing entry so debits equal credits
-        var retainedEarnings = totalDebits - totalCredits;
-        if (retainedEarnings >= 0)
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "Retained Earnings",
-                Values = ["", FormatCurrency(retainedEarnings)],
-                RowType = AccountingRowType.DataRow
-            });
-            totalCredits += retainedEarnings;
-        }
-        else
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "Retained Earnings",
-                Values = [FormatCurrency(Math.Abs(retainedEarnings)), ""],
-                RowType = AccountingRowType.DataRow
-            });
-            totalDebits += Math.Abs(retainedEarnings);
-        }
-
-        // Separator and totals
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = ["", ""] });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "TOTALS",
-            Values = [FormatCurrency(totalDebits), FormatCurrency(totalCredits)],
-            RowType = AccountingRowType.GrandTotalRow
-        });
-
-        return data;
     }
 
     #endregion
@@ -1196,126 +905,6 @@ public class AccountingReportDataService
 
     #endregion
 
-    #region Accounts Payable Aging
-
-    /// <summary>
-    /// Generates Accounts Payable Aging data showing outstanding purchase orders grouped by supplier and aging bucket.
-    /// </summary>
-    private AccountingTableData GetAPAgingData()
-    {
-        var t = GetAccountingTerms();
-        var data = new AccountingTableData
-        {
-            Title = t.APAgingTitle,
-            Subtitle = GetCurrencySubtitle(),
-            ColumnHeaders = [t.SupplierColumn, "Current", "1-30 Days", "31-60 Days", "61-90 Days", "90+ Days", "Total"],
-            ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
-        };
-
-        if (_companyData == null)
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "TOTAL",
-                Values = [FormatCurrency(0), FormatCurrency(0), FormatCurrency(0), FormatCurrency(0), FormatCurrency(0), FormatCurrency(0)],
-                RowType = AccountingRowType.TotalRow
-            });
-            return data;
-        }
-
-        var today = DateTime.Today;
-
-        // Filter to open purchase orders (not received, not cancelled)
-        var openPOs = _companyData.PurchaseOrders
-            .Where(po => po.Status != PurchaseOrderStatus.Received
-                         && po.Status != PurchaseOrderStatus.Cancelled)
-            .ToList();
-
-        // Group by supplier
-        var bySupplier = openPOs
-            .GroupBy(po => po.SupplierId)
-            .OrderBy(g => _companyData.GetSupplier(g.Key)?.Name ?? "Unknown");
-
-        var totalCurrent = 0m;
-        var total1to30 = 0m;
-        var total31to60 = 0m;
-        var total61to90 = 0m;
-        var total90Plus = 0m;
-        var grandTotal = 0m;
-
-        foreach (var group in bySupplier)
-        {
-            var supplierName = _companyData.GetSupplier(group.Key)?.Name ?? "Unknown";
-            var current = 0m;
-            var days1to30 = 0m;
-            var days31to60 = 0m;
-            var days61to90 = 0m;
-            var days90Plus = 0m;
-
-            foreach (var po in group)
-            {
-                var daysPastDue = (today - po.ExpectedDeliveryDate.Date).Days;
-                var amount = po.Total;
-
-                if (daysPastDue <= 0)
-                    current += amount;
-                else if (daysPastDue <= 30)
-                    days1to30 += amount;
-                else if (daysPastDue <= 60)
-                    days31to60 += amount;
-                else if (daysPastDue <= 90)
-                    days61to90 += amount;
-                else
-                    days90Plus += amount;
-            }
-
-            var supplierTotal = current + days1to30 + days31to60 + days61to90 + days90Plus;
-
-            data.Rows.Add(new AccountingRow
-            {
-                Label = supplierName,
-                Values =
-                [
-                    FormatCurrency(current),
-                    FormatCurrency(days1to30),
-                    FormatCurrency(days31to60),
-                    FormatCurrency(days61to90),
-                    FormatCurrency(days90Plus),
-                    FormatCurrency(supplierTotal)
-                ],
-                RowType = AccountingRowType.DataRow
-            });
-
-            totalCurrent += current;
-            total1to30 += days1to30;
-            total31to60 += days31to60;
-            total61to90 += days61to90;
-            total90Plus += days90Plus;
-            grandTotal += supplierTotal;
-        }
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = ["", "", "", "", "", ""] });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "TOTAL",
-            Values =
-            [
-                FormatCurrency(totalCurrent),
-                FormatCurrency(total1to30),
-                FormatCurrency(total31to60),
-                FormatCurrency(total61to90),
-                FormatCurrency(total90Plus),
-                FormatCurrency(grandTotal)
-            ],
-            RowType = AccountingRowType.TotalRow
-        });
-
-        return data;
-    }
-
-    #endregion
-
     #region Country-Specific Accounting Terminology
 
     /// <summary>
@@ -1328,9 +917,6 @@ public class AccountingReportDataService
         public string IncomeStatementTitle { get; set; } = "Income Statement";
         public string Revenue { get; set; } = "REVENUE";
         public string TotalRevenue { get; set; } = "Total Revenue";
-        public string CostOfGoodsSold { get; set; } = "COST OF GOODS SOLD";
-        public string TotalCostOfGoodsSold { get; set; } = "Total Cost of Goods Sold";
-        public string GrossProfit { get; set; } = "GROSS PROFIT";
         public string OperatingExpenses { get; set; } = "OPERATING EXPENSES";
         public string TotalOperatingExpenses { get; set; } = "Total Operating Expenses";
         public string NetIncome { get; set; } = "NET INCOME";
@@ -1340,15 +926,9 @@ public class AccountingReportDataService
         public string AccountsReceivable { get; set; } = "Accounts Receivable";
         public string AccountsPayable { get; set; } = "Accounts Payable";
 
-        // Trial Balance
-        public string RevenuePrefix { get; set; } = "Revenue";
-        public string ExpensePrefix { get; set; } = "Expense";
-
-        // AR/AP Aging
+        // AR Aging
         public string ARAgingTitle { get; set; } = "Accounts Receivable Aging";
-        public string APAgingTitle { get; set; } = "Accounts Payable Aging";
         public string CustomerColumn { get; set; } = "Customer";
-        public string SupplierColumn { get; set; } = "Supplier";
 
         // General Ledger
         public string RevenueCategory { get; set; } = "Revenue";
@@ -1433,27 +1013,20 @@ public class AccountingReportDataService
                 terms.IncomeStatementTitle = "Profit & Loss";
                 terms.Revenue = "TURNOVER";
                 terms.TotalRevenue = "Total Turnover";
-                terms.CostOfGoodsSold = "COST OF SALES";
-                terms.TotalCostOfGoodsSold = "Total Cost of Sales";
                 terms.OperatingExpenses = "OVERHEADS";
                 terms.TotalOperatingExpenses = "Total Overheads";
                 terms.NetIncome = "NET PROFIT";
                 terms.AccountsReceivable = "Trade Debtors";
                 terms.AccountsPayable = "Trade Creditors";
-                terms.RevenuePrefix = "Turnover";
                 terms.ARAgingTitle = "Trade Debtors Aging";
-                terms.APAgingTitle = "Trade Creditors Aging";
                 terms.RevenueCategory = "Turnover";
                 break;
 
             case "IFRS":
-                terms.CostOfGoodsSold = "COST OF SALES";
-                terms.TotalCostOfGoodsSold = "Total Cost of Sales";
                 terms.NetIncome = "NET PROFIT";
                 terms.AccountsReceivable = "Trade Receivables";
                 terms.AccountsPayable = "Trade Payables";
                 terms.ARAgingTitle = "Trade Receivables Aging";
-                terms.APAgingTitle = "Trade Payables Aging";
                 break;
         }
 

@@ -1252,7 +1252,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         return
         [
             new ChartSeriesData { Name = "Revenue Returns", Color = "#EF4444", DataPoints = revenueReturns },
-            new ChartSeriesData { Name = "Expense Returns", Color = "#F59E0B", DataPoints = expenseReturns }
+            new ChartSeriesData { Name = "Expense Returns", Color = "#9333EA", DataPoints = expenseReturns }
         ];
     }
 
@@ -1404,7 +1404,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Gets losses by reason type over time.
-    /// Note: Current model tracks inventory losses by reason (Lost, Damaged, Stolen, Expired, Other).
+    /// Note: Current model tracks inventory losses (all are expense-side). No revenue losses exist in the data model.
     /// </summary>
     public List<ChartSeriesData> GetExpenseVsRevenueLosses()
     {
@@ -1426,8 +1426,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         if (monthsWithData.Count == 0)
             return [];
 
-        // Group by reason type - show Damaged vs Lost as the two main categories
-        var damagedLosses = monthsWithData.Select(month =>
+        // All lost/damaged inventory are expense-side losses
+        var expenseLosses = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1436,31 +1436,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = companyData.LostDamaged
-                    .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
-                           l.Reason == LostDamagedReason.Damaged),
+                    .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd),
                 Date = month
             };
         }).ToList();
 
-        var lostLosses = monthsWithData.Select(month =>
+        // No revenue losses in current model - return empty series
+        var revenueLosses = monthsWithData.Select(month => new ChartDataPoint
         {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            return new ChartDataPoint
-            {
-                Label = month.ToString("MMM yyyy"),
-                Value = companyData.LostDamaged
-                    .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
-                           l.Reason == LostDamagedReason.Lost),
-                Date = month
-            };
+            Label = month.ToString("MMM yyyy"),
+            Value = 0,
+            Date = month
         }).ToList();
 
         return
         [
-            new ChartSeriesData { Name = "Damaged", Color = "#DC2626", DataPoints = damagedLosses },
-            new ChartSeriesData { Name = "Lost", Color = "#9333EA", DataPoints = lostLosses }
+            new ChartSeriesData { Name = "Expense Losses", Color = "#DC2626", DataPoints = expenseLosses },
+            new ChartSeriesData { Name = "Revenue Losses", Color = "#9333EA", DataPoints = revenueLosses }
         ];
     }
 

@@ -52,7 +52,6 @@ public class EnumDisplayNameConverterTests
     [InlineData(AccountingReportType.IncomeStatement, "Income Statement")]
     [InlineData(AccountingReportType.BalanceSheet, "Balance Sheet")]
     [InlineData(AccountingReportType.CashFlowStatement, "Cash Flow Statement")]
-    [InlineData(AccountingReportType.TrialBalance, "Trial Balance")]
     [InlineData(AccountingReportType.GeneralLedger, "General Ledger")]
     [InlineData(AccountingReportType.TaxSummary, "Tax Summary")]
     public void Convert_AccountingReportType_ReturnsDisplayName(AccountingReportType type, string expected)

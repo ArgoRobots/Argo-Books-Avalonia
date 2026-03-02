@@ -14,7 +14,7 @@ public static class ReportTemplateFactory
     public static class TemplateNames
     {
         public const string Custom = "Custom Report";
-        public const string MonthlyRevenue = "Monthly Revenue Report";
+        public const string MonthlyRevenue = "Revenue Overview";
         public const string FinancialOverview = "Financial Overview";
         public const string PerformanceAnalysis = "Performance Analysis";
         public const string ReturnsAnalysis = "Returns Analysis";
@@ -25,10 +25,8 @@ public static class ReportTemplateFactory
         public const string IncomeStatement = "Income Statement";
         public const string BalanceSheet = "Balance Sheet";
         public const string CashFlowStatement = "Cash Flow Statement";
-        public const string TrialBalance = "Trial Balance";
         public const string GeneralLedger = "General Ledger";
         public const string ARaging = "Accounts Receivable Aging";
-        public const string APaging = "Accounts Payable Aging";
         public const string TaxSummary = "Tax Summary";
     }
 
@@ -40,10 +38,8 @@ public static class ReportTemplateFactory
         TemplateNames.IncomeStatement,
         TemplateNames.BalanceSheet,
         TemplateNames.CashFlowStatement,
-        TemplateNames.TrialBalance,
         TemplateNames.GeneralLedger,
         TemplateNames.ARaging,
-        TemplateNames.APaging,
         TemplateNames.TaxSummary
     ];
 
@@ -87,10 +83,8 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.IncomeStatement ||
                templateName == TemplateNames.BalanceSheet ||
                templateName == TemplateNames.CashFlowStatement ||
-               templateName == TemplateNames.TrialBalance ||
                templateName == TemplateNames.GeneralLedger ||
                templateName == TemplateNames.ARaging ||
-               templateName == TemplateNames.APaging ||
                templateName == TemplateNames.TaxSummary;
     }
 
@@ -112,10 +106,8 @@ public static class ReportTemplateFactory
             TemplateNames.IncomeStatement => CreateAccountingTemplate(AccountingReportType.IncomeStatement, "Income Statement", DatePresetNames.YearToDate),
             TemplateNames.BalanceSheet => CreateAccountingTemplate(AccountingReportType.BalanceSheet, "Balance Sheet", DatePresetNames.YearToDate),
             TemplateNames.CashFlowStatement => CreateAccountingTemplate(AccountingReportType.CashFlowStatement, "Cash Flow Statement", DatePresetNames.YearToDate),
-            TemplateNames.TrialBalance => CreateAccountingTemplate(AccountingReportType.TrialBalance, "Trial Balance", DatePresetNames.YearToDate),
             TemplateNames.GeneralLedger => CreateAccountingTemplate(AccountingReportType.GeneralLedger, "General Ledger", DatePresetNames.ThisMonth),
             TemplateNames.ARaging => CreateAccountingTemplate(AccountingReportType.AccountsReceivableAging, "Accounts Receivable Aging", DatePresetNames.AllTime),
-            TemplateNames.APaging => CreateAccountingTemplate(AccountingReportType.AccountsPayableAging, "Accounts Payable Aging", DatePresetNames.AllTime),
             TemplateNames.TaxSummary => CreateAccountingTemplate(AccountingReportType.TaxSummary, "Tax Summary", DatePresetNames.YearToDate),
             _ => new ReportConfiguration()
         };
@@ -128,7 +120,7 @@ public static class ReportTemplateFactory
     {
         var config = new ReportConfiguration
         {
-            Title = "Monthly Revenue Report",
+            Title = "Revenue Overview",
             PageSize = PageSize.A4,
             PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
@@ -826,8 +818,7 @@ public static class ReportTemplateFactory
 
         // Skip period date range for aging reports (they show "As of [date]" in the table subtitle).
         // Balance Sheet gets an "As of [date]" label instead of "Period: X to Y".
-        var isAgingReport = reportType == AccountingReportType.AccountsReceivableAging
-                            || reportType == AccountingReportType.AccountsPayableAging;
+        var isAgingReport = reportType == AccountingReportType.AccountsReceivableAging;
 
         if (!isAgingReport)
         {

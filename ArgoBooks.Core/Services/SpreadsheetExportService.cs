@@ -226,7 +226,7 @@ public class SpreadsheetExportService
                 foreach (var h in headers)
                 {
                     header.Cell().Background(Colors.Blue.Lighten4)
-                        .Padding(4).Text(h).SemiBold().FontSize(8);
+                        .Padding(4).Text(h).SemiBold().FontSize(10);
                 }
             });
 
@@ -240,7 +240,7 @@ public class SpreadsheetExportService
                 foreach (var value in row)
                 {
                     table.Cell().Background(bgColor)
-                        .Padding(3).Text(FormatValue(value)).FontSize(8);
+                        .Padding(3).Text(FormatValue(value)).FontSize(10);
                 }
             }
 
@@ -249,7 +249,7 @@ public class SpreadsheetExportService
                 for (int col = 0; col < headers.Length; col++)
                 {
                     table.Cell().Background(Colors.Yellow.Lighten4)
-                        .Padding(3).Text(col == 0 ? $"... and {rows.Count - maxRows} more records" : "").FontSize(8);
+                        .Padding(3).Text(col == 0 ? $"... and {rows.Count - maxRows} more records" : "").FontSize(10);
                 }
             }
         });

@@ -405,7 +405,7 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 8;
+    } = 10;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
@@ -419,7 +419,7 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 8;
+    } = 10;
 
     [JsonPropertyName("headerFontFamily")]
     public string HeaderFontFamily
@@ -1080,26 +1080,12 @@ public class AccountingTableReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = AccountingReportType.IncomeStatement;
 
-    [JsonPropertyName("showCompanyHeader")]
-    public bool ShowCompanyHeader
-    {
-        get;
-        set => SetField(ref field, value);
-    } = true;
-
-    [JsonPropertyName("companyHeaderText")]
-    public string CompanyHeaderText
-    {
-        get;
-        set => SetField(ref field, value);
-    } = string.Empty;
-
     [JsonPropertyName("fontSize")]
     public double FontSize
     {
         get;
         set => SetField(ref field, value);
-    } = 8;
+    } = 10;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
@@ -1113,7 +1099,7 @@ public class AccountingTableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 9;
+    } = 10;
 
     [JsonPropertyName("headerFontFamily")]
     public string HeaderFontFamily
@@ -1265,8 +1251,6 @@ public class AccountingTableReportElement : ReportElementBase
             PageNumber = PageNumber,
             IsVisible = IsVisible,
             ReportType = ReportType,
-            ShowCompanyHeader = ShowCompanyHeader,
-            CompanyHeaderText = CompanyHeaderText,
             FontSize = FontSize,
             FontFamily = FontFamily,
             HeaderFontSize = HeaderFontSize,
