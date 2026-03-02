@@ -118,7 +118,6 @@ public class AccountingReportDataService
             AccountingReportType.TrialBalance => GetTrialBalanceData(),
             AccountingReportType.GeneralLedger => GetGeneralLedgerData(),
             AccountingReportType.AccountsReceivableAging => GetARAgingData(),
-            AccountingReportType.AccountsPayableAging => GetAPAgingData(),
             AccountingReportType.TaxSummary => GetTaxSummaryData(),
             _ => new AccountingTableData { Title = "Unknown Report" }
         };
@@ -1156,124 +1155,6 @@ public class AccountingReportDataService
 
     #endregion
 
-    #region Accounts Payable Aging
-
-    /// <summary>
-    /// Generates Accounts Payable Aging data showing outstanding purchase orders grouped by supplier and aging bucket.
-    /// </summary>
-    private AccountingTableData GetAPAgingData()
-    {
-        var t = GetAccountingTerms();
-        var data = new AccountingTableData
-        {
-            Title = t.APAgingTitle,
-            Subtitle = GetCurrencySubtitle(),
-            ColumnHeaders = [t.SupplierColumn, "Current", "1-30 Days", "31-60 Days", "61-90 Days", "90+ Days", "Total"],
-            ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
-        };
-
-        if (_companyData == null)
-        {
-            data.Rows.Add(new AccountingRow
-            {
-                Label = "TOTAL",
-                Values = [FormatCurrency(0), FormatCurrency(0), FormatCurrency(0), FormatCurrency(0), FormatCurrency(0), FormatCurrency(0)],
-                RowType = AccountingRowType.TotalRow
-            });
-            return data;
-        }
-
-        var today = DateTime.Today;
-
-        // Filter to open purchase orders (not received, not cancelled)
-        var openPOs = _companyData.PurchaseOrders
-            .Where(po => po.Status != PurchaseOrderStatus.Received
-                         && po.Status != PurchaseOrderStatus.Cancelled)
-            .ToList();
-
-        // Group by supplier
-        var bySupplier = openPOs
-            .GroupBy(po => po.SupplierId)
-            .OrderBy(g => _companyData.GetSupplier(g.Key)?.Name ?? "Unknown");
-
-        var totalCurrent = 0m;
-        var total1to30 = 0m;
-        var total31to60 = 0m;
-        var total61to90 = 0m;
-        var total90Plus = 0m;
-        var grandTotal = 0m;
-
-        foreach (var group in bySupplier)
-        {
-            var supplierName = _companyData.GetSupplier(group.Key)?.Name ?? "Unknown";
-            var current = 0m;
-            var days1to30 = 0m;
-            var days31to60 = 0m;
-            var days61to90 = 0m;
-            var days90Plus = 0m;
-
-            foreach (var po in group)
-            {
-                var daysPastDue = (today - po.ExpectedDeliveryDate.Date).Days;
-                var amount = po.Total;
-
-                if (daysPastDue <= 0)
-                    current += amount;
-                else if (daysPastDue <= 30)
-                    days1to30 += amount;
-                else if (daysPastDue <= 60)
-                    days31to60 += amount;
-                else if (daysPastDue <= 90)
-                    days61to90 += amount;
-                else
-                    days90Plus += amount;
-            }
-
-            var supplierTotal = current + days1to30 + days31to60 + days61to90 + days90Plus;
-
-            data.Rows.Add(new AccountingRow
-            {
-                Label = supplierName,
-                Values =
-                [
-                    FormatCurrency(current),
-                    FormatCurrency(days1to30),
-                    FormatCurrency(days31to60),
-                    FormatCurrency(days61to90),
-                    FormatCurrency(days90Plus),
-                    FormatCurrency(supplierTotal)
-                ],
-                RowType = AccountingRowType.DataRow
-            });
-
-            totalCurrent += current;
-            total1to30 += days1to30;
-            total31to60 += days31to60;
-            total61to90 += days61to90;
-            total90Plus += days90Plus;
-            grandTotal += supplierTotal;
-        }
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = ["", "", "", "", "", ""] });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "TOTAL",
-            Values =
-            [
-                FormatCurrency(totalCurrent),
-                FormatCurrency(total1to30),
-                FormatCurrency(total31to60),
-                FormatCurrency(total61to90),
-                FormatCurrency(total90Plus),
-                FormatCurrency(grandTotal)
-            ],
-            RowType = AccountingRowType.TotalRow
-        });
-
-        return data;
-    }
-
     #endregion
 
     #region Country-Specific Accounting Terminology
@@ -1304,11 +1185,9 @@ public class AccountingReportDataService
         public string RevenuePrefix { get; set; } = "Revenue";
         public string ExpensePrefix { get; set; } = "Expense";
 
-        // AR/AP Aging
+        // AR Aging
         public string ARAgingTitle { get; set; } = "Accounts Receivable Aging";
-        public string APAgingTitle { get; set; } = "Accounts Payable Aging";
         public string CustomerColumn { get; set; } = "Customer";
-        public string SupplierColumn { get; set; } = "Supplier";
 
         // General Ledger
         public string RevenueCategory { get; set; } = "Revenue";
@@ -1402,7 +1281,6 @@ public class AccountingReportDataService
                 terms.AccountsPayable = "Trade Creditors";
                 terms.RevenuePrefix = "Turnover";
                 terms.ARAgingTitle = "Trade Debtors Aging";
-                terms.APAgingTitle = "Trade Creditors Aging";
                 terms.RevenueCategory = "Turnover";
                 break;
 
@@ -1413,7 +1291,6 @@ public class AccountingReportDataService
                 terms.AccountsReceivable = "Trade Receivables";
                 terms.AccountsPayable = "Trade Payables";
                 terms.ARAgingTitle = "Trade Receivables Aging";
-                terms.APAgingTitle = "Trade Payables Aging";
                 break;
         }
 

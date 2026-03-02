@@ -131,16 +131,6 @@ public class AccountingReportDataServiceTests
         Assert.NotNull(result);
     }
 
-    [Fact]
-    public void GetReportData_APAging_NullCompanyData_ReturnsValidResult()
-    {
-        var service = new AccountingReportDataService(null, CreateDefaultFilters());
-
-        var result = service.GetReportData(AccountingReportType.AccountsPayableAging);
-
-        Assert.NotNull(result);
-    }
-
     #endregion
 
     #region Tax Summary Tests

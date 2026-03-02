@@ -241,7 +241,6 @@ public enum AccountingReportType
     TrialBalance,
     GeneralLedger,
     AccountsReceivableAging,
-    AccountsPayableAging,
     TaxSummary
 }
 
@@ -395,7 +394,6 @@ public static class ReportEnumExtensions
             AccountingReportType.TrialBalance => "Trial Balance",
             AccountingReportType.GeneralLedger => "General Ledger",
             AccountingReportType.AccountsReceivableAging => "Accounts Receivable Aging",
-            AccountingReportType.AccountsPayableAging => "Accounts Payable Aging",
             AccountingReportType.TaxSummary => "Tax Summary",
             _ => reportType.ToString()
         };
