@@ -93,7 +93,9 @@ public abstract class Transaction
     public decimal Total { get; set; }
 
     /// <summary>
-    /// Reference number (e.g., invoice number, receipt number).
+    /// External reference number imported from spreadsheets or payment portals.
+    /// This is an internal/system field used for data import/export round-tripping
+    /// and should not be displayed to users. Use <see cref="TransactionBase.Id"/> for display purposes.
     /// </summary>
     [JsonPropertyName("referenceNumber")]
     public string ReferenceNumber { get; set; } = string.Empty;

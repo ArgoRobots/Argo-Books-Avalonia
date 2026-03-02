@@ -2440,7 +2440,7 @@ public class ReportRenderer : IDisposable
                         "Company" => r.CustomerName,
                         "Total" => FormatCurrency(r.Amount),
                         "Method" => r.PaymentMethod,
-                        "ID" => r.ReferenceNumber,
+                        "ID" => r.Id,
                         "Invoice" => r.InvoiceId,
                         _ => ""
                     }).ToList());

@@ -973,7 +973,7 @@ public class AccountingReportDataService
                     {
                         Date = rev.Date,
                         Description = li.Description.Length > 0 ? li.Description : rev.Description,
-                        Reference = rev.ReferenceNumber,
+                        Reference = rev.Id,
                         Debit = 0,
                         Credit = li.Subtotal
                     });
@@ -985,7 +985,7 @@ public class AccountingReportDataService
                 {
                     Date = rev.Date,
                     Description = rev.Description,
-                    Reference = rev.ReferenceNumber,
+                    Reference = rev.Id,
                     Debit = 0,
                     Credit = rev.EffectiveSubtotalUSD
                 });
@@ -1004,7 +1004,7 @@ public class AccountingReportDataService
                     {
                         Date = exp.Date,
                         Description = li.Description.Length > 0 ? li.Description : exp.Description,
-                        Reference = exp.ReferenceNumber,
+                        Reference = exp.Id,
                         Debit = li.Subtotal,
                         Credit = 0
                     });
@@ -1016,7 +1016,7 @@ public class AccountingReportDataService
                 {
                     Date = exp.Date,
                     Description = exp.Description,
-                    Reference = exp.ReferenceNumber,
+                    Reference = exp.Id,
                     Debit = exp.EffectiveSubtotalUSD,
                     Credit = 0
                 });
@@ -1031,7 +1031,7 @@ public class AccountingReportDataService
             {
                 Date = pmt.Date,
                 Description = $"Payment from {customerName}",
-                Reference = pmt.ReferenceNumber ?? "",
+                Reference = pmt.Id,
                 Debit = pmt.EffectiveAmountUSD,
                 Credit = 0
             });

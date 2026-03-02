@@ -71,7 +71,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return new TransactionTableRow
         {
             Id = revenue.Id,
-            TransactionId = revenue.ReferenceNumber,
+            TransactionId = revenue.Id,
             Date = revenue.Date,
             TransactionType = "Revenue",
             CompanyName = customer?.Name ?? "Unknown",
@@ -139,7 +139,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return new TransactionTableRow
         {
             Id = expense.Id,
-            TransactionId = expense.ReferenceNumber,
+            TransactionId = expense.Id,
             Date = expense.Date,
             TransactionType = "Expense",
             CompanyName = supplier?.Name ?? "Unknown",
