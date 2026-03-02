@@ -1632,6 +1632,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             const int resolutionMultiplier = 2;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
+            Configuration.MaxPieSlices = ChartSettingsService.GetMaxPieSlices();
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             // Dispose previous page bitmaps
@@ -1713,6 +1714,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             var companyData = App.CompanyManager?.CompanyData;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
+            Configuration.MaxPieSlices = ChartSettingsService.GetMaxPieSlices();
             using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             bool success;

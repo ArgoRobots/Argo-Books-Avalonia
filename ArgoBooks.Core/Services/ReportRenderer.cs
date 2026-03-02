@@ -1452,6 +1452,7 @@ public class ReportRenderer : IDisposable
     /// Renders a pie chart using SkiaSharp.
     /// Styled to match the dashboard/analytics pie charts: pie shifted left,
     /// legend vertically centered with circular color indicators, no slice borders.
+    /// Respects the MaxPieSlices setting by grouping excess slices into "Other".
     /// </summary>
     private void RenderPieChart(SKCanvas canvas, SKRect chartArea, List<ChartDataPoint> dataPoints, ChartReportElement chart)
     {
@@ -1464,47 +1465,55 @@ public class ReportRenderer : IDisposable
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
         if (total == 0) return;
 
-        // Determine pie chart dimensions — fit within the left portion of the chart area
-        // to leave room for the legend on the right
+        // --- Apply max pie slices setting (group excess into "Other") ---
+        var maxSlices = _config.MaxPieSlices;
+        var sorted = dataPoints.OrderByDescending(p => Math.Abs(p.Value)).ToList();
+        var slices = new List<(string Label, double Value, SKColor Color)>();
+        var colors = AppColors.Palette.Select(SKColor.Parse).ToArray();
+        var otherColor = SKColor.Parse(AppColors.Gray);
+
+        var topItems = sorted.Take(maxSlices - 1).ToList();
+        var otherItems = sorted.Skip(maxSlices - 1).ToList();
+
+        // If there's only one "other" item, show it directly instead of grouping
+        if (otherItems.Count == 1)
+        {
+            topItems.Add(otherItems[0]);
+            otherItems.Clear();
+        }
+
+        for (int i = 0; i < topItems.Count; i++)
+            slices.Add((topItems[i].Label, Math.Abs(topItems[i].Value), colors[i % colors.Length]));
+
+        if (otherItems.Count > 0)
+        {
+            var otherValue = otherItems.Sum(p => Math.Abs(p.Value));
+            var itemsText = Tr("items");
+            slices.Add(($"{Tr("Other")} ({otherItems.Count} {itemsText})", otherValue, otherColor));
+        }
+
+        // --- Layout ---
         var pieSize = Math.Min(chartArea.Width * 0.5f, chartArea.Height) * 0.85f;
         var radius = pieSize / 2;
-
-        // Ensure we have a valid radius
         if (radius <= 0) return;
 
-        // Position pie in the left half, vertically centered
         var centerX = chartArea.Left + chartArea.Width * 0.3f;
         var centerY = chartArea.MidY;
 
-        // Color palette for pie slices
-        var colors = AppColors.Palette.Select(SKColor.Parse).ToArray();
-
-        var startAngle = -90f; // Start at top
+        var startAngle = -90f;
 
         using var labelFont = new SKFont(chartTypeface, (float)chart.LegendFontSize * _renderScale);
-        using var labelPaint = new SKPaint();
-        labelPaint.Color = SKColors.Black;
-        labelPaint.IsAntialias = true;
+        using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
 
-        var pieRect = new SKRect(
-            centerX - radius,
-            centerY - radius,
-            centerX + radius,
-            centerY + radius
-        );
+        var pieRect = new SKRect(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
-        // --- Draw all pie slices first (no white borders) ---
-        for (int i = 0; i < dataPoints.Count; i++)
+        // --- Draw all pie slices (no white borders) ---
+        foreach (var slice in slices)
         {
-            var point = dataPoints[i];
-            var percentage = (float)(Math.Abs(point.Value) / total);
+            var percentage = (float)(slice.Value / total);
             var sweepAngle = percentage * 360f;
-            var color = colors[i % colors.Length];
 
-            using var slicePaint = new SKPaint();
-            slicePaint.Color = color;
-            slicePaint.Style = SKPaintStyle.Fill;
-            slicePaint.IsAntialias = true;
+            using var slicePaint = new SKPaint { Color = slice.Color, Style = SKPaintStyle.Fill, IsAntialias = true };
 
             if (sweepAngle >= 359.9f)
             {
@@ -1525,34 +1534,30 @@ public class ReportRenderer : IDisposable
         // --- Draw legend to the right of the pie, vertically centered ---
         if (chart.ShowLegend)
         {
-            // Position legend at ~60% of chart width (matching the dashboard layout)
             var legendX = chartArea.Left + chartArea.Width * 0.58f;
+            var percentRightEdge = chartArea.Right - 5 * _renderScale;
+
             if (legendX < chartArea.Right - 50 * _renderScale)
             {
                 var lineHeight = 18 * _renderScale;
-                var totalLegendHeight = dataPoints.Count * lineHeight;
+                var totalLegendHeight = slices.Count * lineHeight;
                 var legendY = chartArea.MidY - totalLegendHeight / 2;
                 var circleRadius = 5 * _renderScale;
 
-                // Lighter gray for the percentage text (matches TextTertiaryBrush)
-                using var percentPaint = new SKPaint();
-                percentPaint.Color = new SKColor(160, 160, 160);
-                percentPaint.IsAntialias = true;
+                using var percentPaint = new SKPaint { Color = new SKColor(160, 160, 160), IsAntialias = true };
 
-                for (int i = 0; i < dataPoints.Count; i++)
+                foreach (var slice in slices)
                 {
-                    var point = dataPoints[i];
-                    var percentage = (float)(Math.Abs(point.Value) / total);
-                    var color = colors[i % colors.Length];
+                    var percentage = (float)(slice.Value / total);
 
-                    using var dotPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
+                    using var dotPaint = new SKPaint { Color = slice.Color, Style = SKPaintStyle.Fill, IsAntialias = true };
 
                     // Circular color indicator
                     var dotCenterY = legendY + circleRadius;
                     canvas.DrawCircle(legendX + circleRadius, dotCenterY, circleRadius, dotPaint);
 
-                    // Label text (darker)
-                    var legendText = point.Label;
+                    // Label text
+                    var legendText = slice.Label;
                     var maxChars = chart.LegendMaxCharacters;
                     if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
 
@@ -1560,10 +1565,9 @@ public class ReportRenderer : IDisposable
                     var textY = dotCenterY + circleRadius * 0.4f;
                     canvas.DrawText(legendText, textX, textY, SKTextAlign.Left, labelFont, labelPaint);
 
-                    // Percentage text (lighter gray, to the right of the label)
-                    var labelWidth = labelFont.MeasureText(legendText);
+                    // Percentage text (lighter gray, right-aligned to chart edge)
                     var percentText = $"{percentage * 100:F1}%";
-                    canvas.DrawText(percentText, textX + labelWidth + 8 * _renderScale, textY, SKTextAlign.Left, labelFont, percentPaint);
+                    canvas.DrawText(percentText, percentRightEdge, textY, SKTextAlign.Right, labelFont, percentPaint);
 
                     legendY += lineHeight;
                 }

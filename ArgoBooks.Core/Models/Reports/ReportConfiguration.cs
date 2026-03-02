@@ -126,6 +126,13 @@ public class ReportConfiguration
     public string? CompanyLogoPath { get; set; }
 
     /// <summary>
+    /// Maximum number of pie chart slices before grouping into "Other".
+    /// Runtime-only, sourced from global settings.
+    /// </summary>
+    [JsonIgnore]
+    public int MaxPieSlices { get; set; } = 6;
+
+    /// <summary>
     /// Gets elements sorted by Z-order (for rendering).
     /// </summary>
     public List<ReportElementBase> GetElementsByZOrder()
