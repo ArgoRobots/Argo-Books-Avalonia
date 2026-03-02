@@ -586,7 +586,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 {
                     ChartSettingsShared.SelectedChartType = value;
                     OnPropertyChanged();
-                    LoadAllCharts();
+                    LoadAllCharts(styleChangeOnly: true);
                 }
                 finally
                 {
@@ -1556,7 +1556,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         _chartLoaderService.UpdateAllDateAxes(chartWidth);
     }
 
-    public void LoadAllCharts()
+    public void LoadAllCharts(bool styleChangeOnly = false)
     {
         var data = _companyManager?.CompanyData;
         if (data == null) return;
@@ -1576,71 +1576,88 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             _ => ChartStyle.Line
         };
 
-        // Determine if a date range filter is active and data exists beyond it
-        var isFiltered = SelectedDateRange != "All Time";
-        ShowRevenueDateRangeMessage = isFiltered && data.Revenues.Count > 0;
-        ShowExpenseDateRangeMessage = isFiltered && data.Expenses.Count > 0;
-        ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
-        ShowReturnDateRangeMessage = isFiltered && data.Returns.Count > 0;
-        ShowLossDateRangeMessage = isFiltered && data.LostDamaged.Count > 0;
-        ShowRentalDateRangeMessage = isFiltered && data.Rentals.Count > 0;
-        ShowTaxDateRangeMessage = isFiltered && (data.Revenues.Any(r => r.TaxAmount > 0 || r.TaxAmountUSD > 0) ||
-                                                  data.Expenses.Any(e => e.TaxAmount > 0 || e.TaxAmountUSD > 0));
+        if (!styleChangeOnly)
+        {
+            // Determine if a date range filter is active and data exists beyond it
+            var isFiltered = SelectedDateRange != "All Time";
+            ShowRevenueDateRangeMessage = isFiltered && data.Revenues.Count > 0;
+            ShowExpenseDateRangeMessage = isFiltered && data.Expenses.Count > 0;
+            ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
+            ShowReturnDateRangeMessage = isFiltered && data.Returns.Count > 0;
+            ShowLossDateRangeMessage = isFiltered && data.LostDamaged.Count > 0;
+            ShowRentalDateRangeMessage = isFiltered && data.Rentals.Count > 0;
+            ShowTaxDateRangeMessage = isFiltered && (data.Revenues.Any(r => r.TaxAmount > 0 || r.TaxAmountUSD > 0) ||
+                                                      data.Expenses.Any(e => e.TaxAmount > 0 || e.TaxAmountUSD > 0));
 
-        // Load statistics for stat cards
-        LoadAllStatistics(data);
+            // Load statistics for stat cards
+            LoadAllStatistics(data);
+        }
 
-        // Dashboard charts
+        // Dashboard charts (cartesian)
         LoadExpensesTrendsChart(data);
-        LoadExpensesDistributionChart(data);
         LoadRevenueTrendsChart(data);
-        LoadRevenueDistributionChart(data);
         LoadProfitTrendsChart(data);
         LoadRevenueVsExpensesChart(data);
 
-        // Geographic charts
-        LoadCountriesOfOriginChart(data);
-        LoadCompaniesOfOriginChart(data);
-        LoadCountriesOfDestinationChart(data);
-        LoadCompaniesOfDestinationChart(data);
-        LoadGeoMapChart();
-
-        // Operational charts
+        // Operational charts (cartesian)
         LoadAvgTransactionValueChart(data);
         LoadTotalTransactionsChart(data);
         LoadAvgShippingCostsChart(data);
-        LoadAccountantsTransactionsChart(data);
 
-        // Performance charts
+        // Performance charts (cartesian)
         LoadCustomerGrowthChart(data);
 
-        // Customer charts
-        LoadCustomerPaymentStatusChart(data);
-        LoadActiveInactiveCustomersChart(data);
-
-        // Returns charts
+        // Returns charts (cartesian)
         LoadReturnsOverTimeChart(data);
-        LoadReturnReasonsChart(data);
-        LoadReturnsByCategoryChart(data);
         LoadReturnFinancialImpactChart(data);
-        LoadReturnsByProductChart(data);
         LoadExpenseVsRevenueReturnsChart(data);
 
-        // Losses charts
+        // Losses charts (cartesian)
         LoadLossesOverTimeChart(data);
         LoadLossFinancialImpactChart(data);
-        LoadLossReasonsChart(data);
-        LoadLossesByProductChart(data);
-        LoadLossesByCategoryChart(data);
         LoadExpenseVsRevenueLossesChart(data);
 
-        // Taxes charts
+        // Taxes charts (cartesian)
         LoadTaxCollectedVsPaidChart(data);
         LoadTaxLiabilityTrendChart(data);
-        LoadTaxByCategoryChart(data);
         LoadTaxRateDistributionChart(data);
-        LoadTaxByProductChart(data);
         LoadExpenseVsRevenueTaxChart(data);
+
+        // Pie charts and geo map are style-independent — only reload on data/filter changes
+        if (!styleChangeOnly)
+        {
+            // Dashboard pie charts
+            LoadExpensesDistributionChart(data);
+            LoadRevenueDistributionChart(data);
+
+            // Geographic charts
+            LoadCountriesOfOriginChart(data);
+            LoadCompaniesOfOriginChart(data);
+            LoadCountriesOfDestinationChart(data);
+            LoadCompaniesOfDestinationChart(data);
+            LoadGeoMapChart();
+
+            // Operational pie chart
+            LoadAccountantsTransactionsChart(data);
+
+            // Customer pie charts
+            LoadCustomerPaymentStatusChart(data);
+            LoadActiveInactiveCustomersChart(data);
+
+            // Returns pie charts
+            LoadReturnReasonsChart(data);
+            LoadReturnsByCategoryChart(data);
+            LoadReturnsByProductChart(data);
+
+            // Losses pie charts
+            LoadLossReasonsChart(data);
+            LoadLossesByProductChart(data);
+            LoadLossesByCategoryChart(data);
+
+            // Taxes pie charts
+            LoadTaxByCategoryChart(data);
+            LoadTaxByProductChart(data);
+        }
     }
 
     private void LoadExpensesTrendsChart(CompanyData data)
