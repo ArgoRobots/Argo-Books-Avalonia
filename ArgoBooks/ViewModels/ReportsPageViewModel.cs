@@ -2741,7 +2741,8 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             _datePresetToPreserve = null;
         }
-        else if (string.IsNullOrEmpty(SelectedDatePreset))
+        else if (IsDateRangeEnabled &&
+                 (string.IsNullOrEmpty(SelectedDatePreset) || !DatePresets.Any(o => o.IsSelected)))
         {
             // Only set a date preset if the user hasn't already selected one.
             // Default to "Last 30 days" when no selection exists.
@@ -2822,6 +2823,17 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     private void SyncChartElementsWithSelection()
     {
+        // When user is on the Custom (charts) tab, remove summary elements that
+        // may have been added by a previously selected template — this mode is
+        // chart-only so summary cards should not appear.
+        if (IsChartsTabSelected)
+        {
+            foreach (var summary in Configuration.Elements.OfType<SummaryReportElement>().ToList())
+            {
+                Configuration.RemoveElement(summary.Id);
+            }
+        }
+
         var selectedChartTypes = Configuration.Filters.SelectedChartTypes.ToHashSet();
 
         // Get existing chart elements
