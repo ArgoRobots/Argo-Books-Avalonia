@@ -825,6 +825,18 @@ public class App : Application
                 ErrorLogger?.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
             }
 
+            // Apply saved sidebar collapsed state after settings are loaded from disk.
+            // The SidebarViewModel was created before settings were loaded, so its constructor
+            // read the default value. Re-apply the persisted state now.
+            if (_appShellViewModel != null && SettingsService != null)
+            {
+                var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
+                if (savedCollapsed)
+                {
+                    _appShellViewModel.SidebarViewModel.IsCollapsed = true;
+                }
+            }
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = _mainWindowViewModel
