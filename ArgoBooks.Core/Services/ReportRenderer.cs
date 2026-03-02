@@ -1450,6 +1450,8 @@ public class ReportRenderer : IDisposable
 
     /// <summary>
     /// Renders a pie chart using SkiaSharp.
+    /// Styled to match the dashboard/analytics pie charts: pie shifted left,
+    /// legend vertically centered with circular color indicators, no slice borders.
     /// </summary>
     private void RenderPieChart(SKCanvas canvas, SKRect chartArea, List<ChartDataPoint> dataPoints, ChartReportElement chart)
     {
@@ -1462,24 +1464,22 @@ public class ReportRenderer : IDisposable
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
         if (total == 0) return;
 
-        // Determine pie chart dimensions - use smaller of width/height with padding
-        // Center the pie in the chart area, legend will be positioned to the right of the pie
-        var pieSize = Math.Min(chartArea.Width, chartArea.Height) * 0.7f;
-        var centerX = chartArea.MidX;
-        var centerY = chartArea.MidY;
+        // Determine pie chart dimensions — fit within the left portion of the chart area
+        // to leave room for the legend on the right
+        var pieSize = Math.Min(chartArea.Width * 0.5f, chartArea.Height) * 0.85f;
         var radius = pieSize / 2;
 
         // Ensure we have a valid radius
         if (radius <= 0) return;
 
+        // Position pie in the left half, vertically centered
+        var centerX = chartArea.Left + chartArea.Width * 0.3f;
+        var centerY = chartArea.MidY;
+
         // Color palette for pie slices
         var colors = AppColors.Palette.Select(SKColor.Parse).ToArray();
 
         var startAngle = -90f; // Start at top
-
-        // Position legend to the right of the pie
-        var legendX = centerX + radius + 20 * _renderScale;
-        var legendY = chartArea.Top + 10 * _renderScale;
 
         using var labelFont = new SKFont(chartTypeface, (float)chart.LegendFontSize * _renderScale);
         using var labelPaint = new SKPaint();
@@ -1493,6 +1493,7 @@ public class ReportRenderer : IDisposable
             centerY + radius
         );
 
+        // --- Draw all pie slices first (no white borders) ---
         for (int i = 0; i < dataPoints.Count; i++)
         {
             var point = dataPoints[i];
@@ -1500,56 +1501,61 @@ public class ReportRenderer : IDisposable
             var sweepAngle = percentage * 360f;
             var color = colors[i % colors.Length];
 
-            // Draw pie slice
             using var slicePaint = new SKPaint();
             slicePaint.Color = color;
             slicePaint.Style = SKPaintStyle.Fill;
             slicePaint.IsAntialias = true;
 
-            // Handle full circle (360 degrees) - SkiaSharp ArcTo doesn't handle this well
             if (sweepAngle >= 359.9f)
             {
-                // Draw a full circle instead
                 canvas.DrawOval(pieRect, slicePaint);
             }
             else if (sweepAngle > 0)
             {
-                // Draw pie slice using arc
                 using var path = new SKPath();
                 path.MoveTo(centerX, centerY);
                 path.ArcTo(pieRect, startAngle, sweepAngle, false);
                 path.Close();
                 canvas.DrawPath(path, slicePaint);
-
-                // Draw slice border
-                using var borderPaint = new SKPaint();
-                borderPaint.Color = SKColors.White;
-                borderPaint.Style = SKPaintStyle.Stroke;
-                borderPaint.StrokeWidth = 2 * _renderScale;
-                borderPaint.IsAntialias = true;
-                canvas.DrawPath(path, borderPaint);
-            }
-
-            // Draw legend item (if chart has show legend enabled and there's space)
-            if (chart.ShowLegend && legendX < chartArea.Right - 50 * _renderScale)
-            {
-                // Legend color box
-                var legendBoxSize = 10 * _renderScale;
-                var legendBoxRect = new SKRect(legendX, legendY, legendX + legendBoxSize, legendY + legendBoxSize);
-                canvas.DrawRect(legendBoxRect, slicePaint);
-
-                // Legend text
-                var legendText = point.Label;
-                var maxChars = chart.LegendMaxCharacters;
-                if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
-                legendText = $"{legendText} ({percentage:P0})";
-
-                canvas.DrawText(legendText, legendX + legendBoxSize + 5 * _renderScale, legendY + legendBoxSize - 2 * _renderScale, SKTextAlign.Left, labelFont, labelPaint);
-
-                legendY += 18 * _renderScale;
             }
 
             startAngle += sweepAngle;
+        }
+
+        // --- Draw legend to the right of the pie, vertically centered ---
+        if (chart.ShowLegend)
+        {
+            var legendX = centerX + radius + 20 * _renderScale;
+            if (legendX < chartArea.Right - 50 * _renderScale)
+            {
+                var lineHeight = 18 * _renderScale;
+                var totalLegendHeight = dataPoints.Count * lineHeight;
+                var legendY = chartArea.MidY - totalLegendHeight / 2;
+                var circleRadius = 5 * _renderScale;
+
+                for (int i = 0; i < dataPoints.Count; i++)
+                {
+                    var point = dataPoints[i];
+                    var percentage = (float)(Math.Abs(point.Value) / total);
+                    var color = colors[i % colors.Length];
+
+                    using var dotPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
+
+                    // Circular color indicator
+                    var dotCenterY = legendY + circleRadius;
+                    canvas.DrawCircle(legendX + circleRadius, dotCenterY, circleRadius, dotPaint);
+
+                    // Legend text
+                    var legendText = point.Label;
+                    var maxChars = chart.LegendMaxCharacters;
+                    if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
+                    legendText = $"{legendText} ({percentage:P0})";
+
+                    canvas.DrawText(legendText, legendX + circleRadius * 2 + 6 * _renderScale, dotCenterY + circleRadius * 0.4f, SKTextAlign.Left, labelFont, labelPaint);
+
+                    legendY += lineHeight;
+                }
+            }
         }
     }
 
