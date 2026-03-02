@@ -2801,7 +2801,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
         else if (!string.IsNullOrEmpty(SelectedDatePreset))
         {
-            var (start, end) = DatePresetNames.GetDateRange(SelectedDatePreset, App.CompanyManager?.CompanyData?.GetEarliestTransactionDate());
+            var (start, end) = DatePresetNames.GetDateRange(SelectedDatePreset, App.CompanyManager?.CompanyData?.GetEarliestDate());
             Configuration.Filters.StartDate = start;
             Configuration.Filters.EndDate = end;
         }

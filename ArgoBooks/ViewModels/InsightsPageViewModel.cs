@@ -537,7 +537,7 @@ public partial class InsightsPageViewModel : ViewModelBase
             await RunBacktestIfNeededAsync(companyData, companySettings);
 
             // Use the selected historical date range for insights
-            var (insightsStartDate, insightsEndDate) = DatePresetNames.GetDateRange(SelectedInsightsDateRange, companyData.GetEarliestTransactionDate());
+            var (insightsStartDate, insightsEndDate) = DatePresetNames.GetDateRange(SelectedInsightsDateRange, companyData.GetEarliestDate());
             var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
 
             // Update the analysis period description

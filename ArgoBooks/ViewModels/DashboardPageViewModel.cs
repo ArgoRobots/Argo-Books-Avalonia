@@ -193,7 +193,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             _previousDateRange = SelectedDateRange;
         }
 
-        var earliestDate = _companyManager?.CompanyData?.GetEarliestTransactionDate() ?? StartDate;
+        var earliestDate = _companyManager?.CompanyData?.GetEarliestDate() ?? StartDate;
         var modalStartDate = HasAppliedCustomRange ? StartDate : earliestDate;
 
         App.CustomDateRangeModal?.Open(modalStartDate, EndDate,

@@ -17,7 +17,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets the date range based on filters (delegates to shared ReportFilters.GetDateRange).
     /// </summary>
-    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange(companyData?.GetEarliestTransactionDate());
+    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange(companyData?.GetEarliestDate());
 
     #region Sales Data
 
