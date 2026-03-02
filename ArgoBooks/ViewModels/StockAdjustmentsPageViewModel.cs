@@ -191,7 +191,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Adjustments for display in the table.
     /// </summary>
-    public ObservableCollection<StockAdjustmentDisplayItem> Adjustments { get; } = [];
+    public BatchObservableCollection<StockAdjustmentDisplayItem> Adjustments { get; } = [];
 
     /// <summary>
     /// Location options for filter.
@@ -359,8 +359,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterAdjustments()
     {
-        Adjustments.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var inventory = companyData?.Inventory ?? [];
         var products = companyData?.Products ?? [];
@@ -514,10 +512,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedAdjustments)
-        {
-            Adjustments.Add(item);
-        }
+        Adjustments.ReplaceAll(pagedAdjustments);
     }
 
     protected override void UpdatePageNumbers()

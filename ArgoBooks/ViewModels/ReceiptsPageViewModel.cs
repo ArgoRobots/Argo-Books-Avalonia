@@ -152,7 +152,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private readonly List<Receipt> _allReceipts = [];
 
-    public ObservableCollection<ReceiptDisplayItem> Receipts { get; } = [];
+    public BatchObservableCollection<ReceiptDisplayItem> Receipts { get; } = [];
 
     #endregion
 
@@ -465,8 +465,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private void FilterReceipts()
     {
-        Receipts.Clear();
-
         var filtered = _allReceipts.ToList();
 
         // Get filter values from modals view model
@@ -572,7 +570,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         // Apply pagination and add to collection
         var pagedReceipts = displayItems
             .Skip((CurrentPage - 1) * PageSize)
-            .Take(PageSize);
+            .Take(PageSize)
+            .ToList();
 
         foreach (var item in pagedReceipts)
         {
@@ -583,8 +582,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                     UpdateSelectionState();
                 }
             };
-            Receipts.Add(item);
         }
+
+        Receipts.ReplaceAll(pagedReceipts);
     }
 
     private static bool IsImageFile(string fileType)

@@ -102,7 +102,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding CurrentCategories}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding CurrentCategories}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:CategoryDisplayItem">
                                 <Border Padding="24,0"

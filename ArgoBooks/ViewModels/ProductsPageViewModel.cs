@@ -259,17 +259,17 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Expense products (purchased) for display.
     /// </summary>
-    public ObservableCollection<ProductDisplayItem> ExpenseProducts { get; } = [];
+    public BatchObservableCollection<ProductDisplayItem> ExpenseProducts { get; } = [];
 
     /// <summary>
     /// Revenue products (sold) for display.
     /// </summary>
-    public ObservableCollection<ProductDisplayItem> RevenueProducts { get; } = [];
+    public BatchObservableCollection<ProductDisplayItem> RevenueProducts { get; } = [];
 
     /// <summary>
     /// Gets the current tab's products for display.
     /// </summary>
-    public ObservableCollection<ProductDisplayItem> CurrentProducts =>
+    public BatchObservableCollection<ProductDisplayItem> CurrentProducts =>
         IsExpensesTabSelected ? ExpenseProducts : RevenueProducts;
 
     /// <summary>
@@ -621,11 +621,12 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         var targetType = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue;
         var targetCollection = IsExpensesTabSelected ? ExpenseProducts : RevenueProducts;
 
-        targetCollection.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
+        {
+            targetCollection.Clear();
             return;
+        }
 
         // Get categories for the current tab type
         var categoryIds = companyData.Categories
@@ -742,10 +743,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedProducts)
-        {
-            targetCollection.Add(item);
-        }
+        targetCollection.ReplaceAll(pagedProducts);
 
         OnPropertyChanged(nameof(CurrentProducts));
     }

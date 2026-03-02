@@ -170,7 +170,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private readonly List<RentalRecord> _allRecords = [];
 
-    public ObservableCollection<RentalRecordDisplayItem> Records { get; } = [];
+    public BatchObservableCollection<RentalRecordDisplayItem> Records { get; } = [];
 
     public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Returned", "Overdue", "Cancelled"];
 
@@ -333,8 +333,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private void FilterRecords()
     {
-        Records.Clear();
-
         var filtered = _allRecords.ToList();
         var companyData = App.CompanyManager?.CompanyData;
 
@@ -491,10 +489,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var record in pagedRecords)
-        {
-            Records.Add(record);
-        }
+        Records.ReplaceAll(pagedRecords);
     }
 
     protected override void UpdatePageNumbers()

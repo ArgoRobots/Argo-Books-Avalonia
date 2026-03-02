@@ -291,7 +291,7 @@
                         </ItemsControl>
 
                         <!-- List View (Table Rows) - Using ArgoTableCell -->
-                        <ItemsControl ItemsSource="{Binding Receipts}"
+                        <ItemsControl Classes="table-rows" ItemsSource="{Binding Receipts}"
                                       IsVisible="{Binding IsListView}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:ReceiptDisplayItem">

@@ -124,4 +124,22 @@
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
     </Style>
 
+    <!-- Virtualized Table Rows: gives ItemsControl its own ScrollViewer + VirtualizingStackPanel
+         so only visible rows are rendered, drastically reducing control creation for large pages. -->
+    <Style Selector="ItemsControl.table-rows">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsPresenter />
+                </ScrollViewer>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+        </Setter>
+    </Style>
+
 </Styles>

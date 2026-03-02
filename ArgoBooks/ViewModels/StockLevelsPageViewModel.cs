@@ -204,7 +204,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Filtered display items for the current view.
     /// </summary>
-    public ObservableCollection<StockLevelDisplayItem> DisplayItems { get; } = [];
+    public BatchObservableCollection<StockLevelDisplayItem> DisplayItems { get; } = [];
 
     /// <summary>
     /// Available categories for filter dropdown.
@@ -375,8 +375,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterItems()
     {
-        DisplayItems.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
@@ -526,10 +524,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedItems)
-        {
-            DisplayItems.Add(item);
-        }
+        DisplayItems.ReplaceAll(pagedItems);
     }
 
     protected override void UpdatePageNumbers()

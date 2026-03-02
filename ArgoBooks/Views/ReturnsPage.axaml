@@ -132,7 +132,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Returns}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Returns}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:ReturnDisplayItem">
                                 <Border Padding="24,0"

@@ -132,7 +132,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     private readonly List<Return> _allReturns = [];
 
-    public ObservableCollection<ReturnDisplayItem> Returns { get; } = [];
+    public BatchObservableCollection<ReturnDisplayItem> Returns { get; } = [];
 
     #endregion
 
@@ -279,8 +279,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     private void FilterReturns()
     {
-        Returns.Clear();
-
         var filtered = _allReturns.ToList();
 
         // Get filter values from modals view model
@@ -343,10 +341,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedReturns)
-        {
-            Returns.Add(item);
-        }
+        Returns.ReplaceAll(pagedReturns);
     }
 
     private ReturnDisplayItem CreateDisplayItem(Return returnRecord)

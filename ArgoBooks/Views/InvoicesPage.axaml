@@ -158,7 +158,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Invoices}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Invoices}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:InvoiceDisplayItem">
                                 <Border Padding="24,0"

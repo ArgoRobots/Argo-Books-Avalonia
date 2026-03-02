@@ -150,7 +150,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Records}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Records}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:RentalRecordDisplayItem">
                                 <Border Padding="24,0"

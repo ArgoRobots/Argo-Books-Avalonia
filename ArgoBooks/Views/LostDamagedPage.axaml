@@ -111,7 +111,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Items}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:LostDamagedDisplayItem">
                                 <Border Padding="24,0"
