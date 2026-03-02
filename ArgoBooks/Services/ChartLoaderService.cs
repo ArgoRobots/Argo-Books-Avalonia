@@ -1819,7 +1819,7 @@ public class ChartLoaderService
             series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ExpenseColor));
             if (expenseReturnValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", ProfitColor));
+                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse("#F59E0B")));
             }
         }
 
@@ -1894,7 +1894,7 @@ public class ChartLoaderService
             series.Add(CreateDateTimeSeries(dates, damagedValues, "Damaged", ExpenseColor));
             if (lostValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, lostValues, "Lost", ProfitColor));
+                series.Add(CreateDateTimeSeries(dates, lostValues, "Lost", SKColor.Parse("#9333EA")));
             }
         }
 
