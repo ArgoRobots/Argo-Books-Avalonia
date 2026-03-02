@@ -1819,7 +1819,7 @@ public class ChartLoaderService
             series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ExpenseColor));
             if (expenseReturnValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse("#F59E0B")));
+                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse("#9333EA")));
             }
         }
 
@@ -1863,15 +1863,15 @@ public class ChartLoaderService
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
-                SeriesName = "Damaged"
+                SeriesName = "Expense Losses"
             };
             return (series, dates);
         }
 
-        var damagedLosses = seriesData.FirstOrDefault(s => s.Name == "Damaged");
-        var lostLosses = seriesData.FirstOrDefault(s => s.Name == "Lost");
+        var expenseLosses = seriesData.FirstOrDefault(s => s.Name == "Expense Losses");
+        var revenueLosses = seriesData.FirstOrDefault(s => s.Name == "Revenue Losses");
 
-        if (damagedLosses == null || damagedLosses.DataPoints.Count == 0)
+        if (expenseLosses == null || expenseLosses.DataPoints.Count == 0)
         {
             _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
             {
@@ -1879,22 +1879,22 @@ public class ChartLoaderService
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
-                SeriesName = "Damaged"
+                SeriesName = "Expense Losses"
             };
             return (series, dates);
         }
 
-        var labels = damagedLosses.DataPoints.Select(p => p.Label).ToArray();
-        dates = damagedLosses.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
-        var damagedValues = damagedLosses.DataPoints.Select(p => p.Value).ToArray();
-        var lostValues = lostLosses?.DataPoints.Select(p => p.Value).ToArray() ?? [];
+        var labels = expenseLosses.DataPoints.Select(p => p.Label).ToArray();
+        dates = expenseLosses.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var expenseLossValues = expenseLosses.DataPoints.Select(p => p.Value).ToArray();
+        var revenueLossValues = revenueLosses?.DataPoints.Select(p => p.Value).ToArray() ?? [];
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, damagedValues, "Damaged", ExpenseColor));
-            if (lostValues.Length > 0)
+            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ExpenseColor));
+            if (revenueLossValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, lostValues, "Lost", SKColor.Parse("#9333EA")));
+                series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse("#9333EA")));
             }
         }
 
@@ -1904,9 +1904,9 @@ public class ChartLoaderService
             ChartTitle = "Expense vs Revenue Losses",
             ChartType = ChartType.Comparison,
             Labels = labels,
-            Values = damagedValues,
-            SeriesName = "Damaged",
-            AdditionalSeries = lostValues.Length > 0 ? [("Lost", lostValues)] : []
+            Values = expenseLossValues,
+            SeriesName = "Expense Losses",
+            AdditionalSeries = revenueLossValues.Length > 0 ? [("Revenue Losses", revenueLossValues)] : []
         };
 
         return (series, dates);
