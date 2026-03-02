@@ -14,7 +14,7 @@ public static class ReportTemplateFactory
     public static class TemplateNames
     {
         public const string Custom = "Custom Report";
-        public const string MonthlyRevenue = "Monthly Revenue Report";
+        public const string MonthlyRevenue = "Revenue Overview";
         public const string FinancialOverview = "Financial Overview";
         public const string PerformanceAnalysis = "Performance Analysis";
         public const string ReturnsAnalysis = "Returns Analysis";
@@ -120,7 +120,7 @@ public static class ReportTemplateFactory
     {
         var config = new ReportConfiguration
         {
-            Title = "Monthly Revenue Report",
+            Title = "Revenue Overview",
             PageSize = PageSize.A4,
             PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,

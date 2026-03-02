@@ -24,7 +24,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<ReportTemplateOption> ReportTemplateOptions { get; } =
     [
-        new(ReportTemplateFactory.TemplateNames.MonthlyRevenue, "Monthly Sales", "Summarize monthly revenue data",
+        new(ReportTemplateFactory.TemplateNames.MonthlyRevenue, "Revenue Overview", "Summarize monthly revenue data",
             "M3 13.125C3 12.504 3.504 12 4.125 12H6.375C6.996 12 7.5 12.504 7.5 13.125V19.875C7.5 20.496 6.996 21 6.375 21H4.125C3.504 21 3 20.496 3 19.875V13.125ZM9.75 8.625C9.75 8.004 10.254 7.5 10.875 7.5H13.125C13.746 7.5 14.25 8.004 14.25 8.625V19.875C14.25 20.496 13.746 21 13.125 21H10.875C10.254 21 9.75 20.496 9.75 19.875V8.625ZM16.5 4.125C16.5 3.504 17.004 3 17.625 3H19.875C20.496 3 21 3.504 21 4.125V19.875C21 20.496 20.496 21 19.875 21H17.625C17.004 21 16.5 20.496 16.5 19.875V4.125Z",
             "#2196F3", "#E3F2FD"),
         new(ReportTemplateFactory.TemplateNames.FinancialOverview, "Financial Overview", "Full financial breakdown",
@@ -2740,16 +2740,17 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             _datePresetToPreserve = null;
         }
-        else if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
+        else if (string.IsNullOrEmpty(SelectedDatePreset))
         {
-            // Update date preset and radio button selection from configuration
-            SelectedDatePreset = Configuration.Filters.DatePresetName;
-            PageSettingsDatePreset = Configuration.Filters.DatePresetName;
+            // Only set a date preset if the user hasn't already selected one.
+            // Default to "Last 30 days" when no selection exists.
+            var defaultPreset = DatePresetNames.Last30Days;
+            SelectedDatePreset = defaultPreset;
+            PageSettingsDatePreset = defaultPreset;
 
-            // Update IsSelected on all date preset options
             foreach (var option in DatePresets)
             {
-                option.IsSelected = option.Name == Configuration.Filters.DatePresetName;
+                option.IsSelected = option.Name == defaultPreset;
             }
         }
 
