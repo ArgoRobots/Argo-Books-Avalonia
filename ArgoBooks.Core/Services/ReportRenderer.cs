@@ -1525,13 +1525,19 @@ public class ReportRenderer : IDisposable
         // --- Draw legend to the right of the pie, vertically centered ---
         if (chart.ShowLegend)
         {
-            var legendX = centerX + radius + 20 * _renderScale;
+            // Position legend at ~60% of chart width (matching the dashboard layout)
+            var legendX = chartArea.Left + chartArea.Width * 0.58f;
             if (legendX < chartArea.Right - 50 * _renderScale)
             {
                 var lineHeight = 18 * _renderScale;
                 var totalLegendHeight = dataPoints.Count * lineHeight;
                 var legendY = chartArea.MidY - totalLegendHeight / 2;
                 var circleRadius = 5 * _renderScale;
+
+                // Lighter gray for the percentage text (matches TextTertiaryBrush)
+                using var percentPaint = new SKPaint();
+                percentPaint.Color = new SKColor(160, 160, 160);
+                percentPaint.IsAntialias = true;
 
                 for (int i = 0; i < dataPoints.Count; i++)
                 {
@@ -1545,13 +1551,19 @@ public class ReportRenderer : IDisposable
                     var dotCenterY = legendY + circleRadius;
                     canvas.DrawCircle(legendX + circleRadius, dotCenterY, circleRadius, dotPaint);
 
-                    // Legend text
+                    // Label text (darker)
                     var legendText = point.Label;
                     var maxChars = chart.LegendMaxCharacters;
                     if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
-                    legendText = $"{legendText} ({percentage:P0})";
 
-                    canvas.DrawText(legendText, legendX + circleRadius * 2 + 6 * _renderScale, dotCenterY + circleRadius * 0.4f, SKTextAlign.Left, labelFont, labelPaint);
+                    var textX = legendX + circleRadius * 2 + 6 * _renderScale;
+                    var textY = dotCenterY + circleRadius * 0.4f;
+                    canvas.DrawText(legendText, textX, textY, SKTextAlign.Left, labelFont, labelPaint);
+
+                    // Percentage text (lighter gray, to the right of the label)
+                    var labelWidth = labelFont.MeasureText(legendText);
+                    var percentText = $"{percentage * 100:F1}%";
+                    canvas.DrawText(percentText, textX + labelWidth + 8 * _renderScale, textY, SKTextAlign.Left, labelFont, percentPaint);
 
                     legendY += lineHeight;
                 }
