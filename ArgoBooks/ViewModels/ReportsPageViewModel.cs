@@ -261,6 +261,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             IsDateRangeEnabled = true;
             ReportName = ReportTemplateFactory.TemplateNames.Custom;
             Configuration.Title = ReportTemplateFactory.TemplateNames.Custom;
+            PageOrientation = PageOrientation.Landscape;
+            Configuration.PageOrientation = PageOrientation.Landscape;
         }
     }
 
@@ -2917,6 +2919,11 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         var cellWidth = (context.ContentWidth - (spacing * (columns - 1))) / columns;
         var cellHeight = (context.ContentHeight - (spacing * (rows - 1))) / rows;
+
+        // Cap cell height so 1-2 charts don't stretch to fill the full page.
+        // Use the same height as a 2-row layout (like 4 charts in a 2×2 grid).
+        var maxCellHeight = (context.ContentHeight - spacing) / 2;
+        cellHeight = Math.Min(cellHeight, maxCellHeight);
 
         // Position each chart element in the grid below date range area
         for (int i = 0; i < chartElements.Count; i++)
