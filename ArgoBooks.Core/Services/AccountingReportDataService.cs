@@ -905,8 +905,6 @@ public class AccountingReportDataService
 
     #endregion
 
-    #endregion
-
     #region Country-Specific Accounting Terminology
 
     /// <summary>
