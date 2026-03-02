@@ -170,34 +170,6 @@ public class AccountingReportDataService
         return result;
     }
 
-    /// <summary>
-    /// Checks whether an expense's line items reference products that have inventory records,
-    /// indicating it is a cost of goods sold rather than an operating expense.
-    /// </summary>
-    private bool IsInventoryRelatedExpense(Models.Transactions.Transaction expense)
-    {
-        if (_companyData == null) return false;
-
-        if (expense.LineItems.Count > 0)
-        {
-            foreach (var li in expense.LineItems)
-            {
-                if (!string.IsNullOrEmpty(li.ProductId))
-                {
-                    var product = _companyData.GetProduct(li.ProductId);
-                    if (product != null)
-                    {
-                        // Check if product has inventory records
-                        var hasInventory = _companyData.Inventory.Any(i => i.ProductId == li.ProductId);
-                        if (hasInventory) return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
     #region Income Statement
 
     /// <summary>
@@ -229,20 +201,13 @@ public class AccountingReportDataService
             .Where(e => IsInDateRange(e.Date))
             .ToList();
 
-        // Split expenses into COGS (inventory-related) and operating expenses
-        var cogsExpenses = expenses.Where(IsInventoryRelatedExpense).ToList();
-        var operatingExpenses = expenses.Where(e => !IsInventoryRelatedExpense(e)).ToList();
-
         // Group by category
         var revenueByCategory = GroupTransactionsByCategory(revenues);
-        var cogsByCategory = GroupTransactionsByCategory(cogsExpenses);
-        var opexByCategory = GroupTransactionsByCategory(operatingExpenses);
+        var expenseByCategory = GroupTransactionsByCategory(expenses);
 
         var totalRevenue = revenueByCategory.Values.Sum();
-        var totalCogs = cogsByCategory.Values.Sum();
-        var grossProfit = totalRevenue - totalCogs;
-        var totalOpex = opexByCategory.Values.Sum();
-        var netIncome = grossProfit - totalOpex;
+        var totalExpenses = expenseByCategory.Values.Sum();
+        var netIncome = totalRevenue - totalExpenses;
 
         // Revenue section
         data.Rows.Add(new AccountingRow
@@ -272,48 +237,7 @@ public class AccountingReportDataService
 
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
 
-        // Cost of Goods Sold section
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.CostOfGoodsSold,
-            RowType = AccountingRowType.SectionHeader,
-            Values = [""]
-        });
-
-        if (cogsByCategory.Count > 0)
-        {
-            foreach (var kvp in cogsByCategory.OrderBy(k => k.Key))
-            {
-                data.Rows.Add(new AccountingRow
-                {
-                    Label = kvp.Key,
-                    Values = [FormatCurrency(kvp.Value)],
-                    IndentLevel = 1,
-                    RowType = AccountingRowType.DataRow
-                });
-            }
-        }
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.TotalCostOfGoodsSold,
-            Values = [FormatCurrency(totalCogs)],
-            RowType = AccountingRowType.SubtotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
-        // Gross Profit
-        data.Rows.Add(new AccountingRow
-        {
-            Label = t.GrossProfit,
-            Values = [FormatCurrencyWithSign(grossProfit)],
-            RowType = AccountingRowType.TotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
-        // Operating Expenses section
+        // Expenses section
         data.Rows.Add(new AccountingRow
         {
             Label = t.OperatingExpenses,
@@ -321,7 +245,7 @@ public class AccountingReportDataService
             Values = [""]
         });
 
-        foreach (var kvp in opexByCategory.OrderBy(k => k.Key))
+        foreach (var kvp in expenseByCategory.OrderBy(k => k.Key))
         {
             data.Rows.Add(new AccountingRow
             {
@@ -335,7 +259,7 @@ public class AccountingReportDataService
         data.Rows.Add(new AccountingRow
         {
             Label = t.TotalOperatingExpenses,
-            Values = [FormatCurrency(totalOpex)],
+            Values = [FormatCurrency(totalExpenses)],
             RowType = AccountingRowType.SubtotalRow
         });
 
@@ -358,11 +282,6 @@ public class AccountingReportDataService
     {
         data.Rows.Add(new AccountingRow { Label = t.Revenue, RowType = AccountingRowType.SectionHeader, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = t.TotalRevenue, Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = t.CostOfGoodsSold, RowType = AccountingRowType.SectionHeader, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = t.TotalCostOfGoodsSold, Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = t.GrossProfit, Values = [FormatCurrency(0)], RowType = AccountingRowType.TotalRow });
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = t.OperatingExpenses, RowType = AccountingRowType.SectionHeader, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = t.TotalOperatingExpenses, Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
@@ -1000,9 +919,6 @@ public class AccountingReportDataService
         public string IncomeStatementTitle { get; set; } = "Income Statement";
         public string Revenue { get; set; } = "REVENUE";
         public string TotalRevenue { get; set; } = "Total Revenue";
-        public string CostOfGoodsSold { get; set; } = "COST OF GOODS SOLD";
-        public string TotalCostOfGoodsSold { get; set; } = "Total Cost of Goods Sold";
-        public string GrossProfit { get; set; } = "GROSS PROFIT";
         public string OperatingExpenses { get; set; } = "OPERATING EXPENSES";
         public string TotalOperatingExpenses { get; set; } = "Total Operating Expenses";
         public string NetIncome { get; set; } = "NET INCOME";
@@ -1099,8 +1015,6 @@ public class AccountingReportDataService
                 terms.IncomeStatementTitle = "Profit & Loss";
                 terms.Revenue = "TURNOVER";
                 terms.TotalRevenue = "Total Turnover";
-                terms.CostOfGoodsSold = "COST OF SALES";
-                terms.TotalCostOfGoodsSold = "Total Cost of Sales";
                 terms.OperatingExpenses = "OVERHEADS";
                 terms.TotalOperatingExpenses = "Total Overheads";
                 terms.NetIncome = "NET PROFIT";
@@ -1111,8 +1025,6 @@ public class AccountingReportDataService
                 break;
 
             case "IFRS":
-                terms.CostOfGoodsSold = "COST OF SALES";
-                terms.TotalCostOfGoodsSold = "Total Cost of Sales";
                 terms.NetIncome = "NET PROFIT";
                 terms.AccountsReceivable = "Trade Receivables";
                 terms.AccountsPayable = "Trade Payables";
