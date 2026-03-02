@@ -146,7 +146,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Adjustments}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Adjustments}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:StockAdjustmentDisplayItem">
                                 <Border Padding="24,0"

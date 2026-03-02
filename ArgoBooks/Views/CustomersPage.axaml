@@ -115,7 +115,7 @@
 
                 <!-- Table Rows Content - Using ArgoTableCell for reduced boilerplate -->
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Customers}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Customers}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:CustomerDisplayItem">
                                 <Border Padding="24,0"

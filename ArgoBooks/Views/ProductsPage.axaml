@@ -273,7 +273,7 @@
                 <table:ArgoTable.RowsContent>
                     <Panel>
                         <!-- Expenses Tab Products -->
-                        <ItemsControl ItemsSource="{Binding ExpenseProducts}"
+                        <ItemsControl Classes="table-rows" ItemsSource="{Binding ExpenseProducts}"
                                       IsVisible="{Binding IsExpensesTabSelected}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:ProductDisplayItem">
@@ -355,7 +355,7 @@
                         </ItemsControl>
 
                         <!-- Revenue Tab Products -->
-                        <ItemsControl ItemsSource="{Binding RevenueProducts}"
+                        <ItemsControl Classes="table-rows" ItemsSource="{Binding RevenueProducts}"
                                       IsVisible="{Binding IsRevenueTabSelected}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:ProductDisplayItem">
