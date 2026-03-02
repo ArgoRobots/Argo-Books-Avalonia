@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
@@ -15,15 +16,15 @@ public class DepartmentColorToBrushConverter : IValueConverter
 
         return colorName.ToLowerInvariant() switch
         {
-            "blue" => new SolidColorBrush(Color.Parse("#dbeafe")),
-            "green" => new SolidColorBrush(Color.Parse("#dcfce7")),
-            "yellow" => new SolidColorBrush(Color.Parse("#fef3c7")),
-            "purple" => new SolidColorBrush(Color.Parse("#f3e8ff")),
-            "red" => new SolidColorBrush(Color.Parse("#fee2e2")),
-            "cyan" => new SolidColorBrush(Color.Parse("#cffafe")),
-            "orange" => new SolidColorBrush(Color.Parse("#ffedd5")),
-            "pink" => new SolidColorBrush(Color.Parse("#fce7f3")),
-            _ => new SolidColorBrush(Color.Parse("#dbeafe")) // default to blue
+            "blue" => new SolidColorBrush(Color.Parse(AppColors.PrimaryLight)),
+            "green" => new SolidColorBrush(Color.Parse(AppColors.SuccessLight)),
+            "yellow" => new SolidColorBrush(Color.Parse(AppColors.WarningLight)),
+            "purple" => new SolidColorBrush(Color.Parse(AppColors.PurpleLight)),
+            "red" => new SolidColorBrush(Color.Parse(AppColors.ErrorLight)),
+            "cyan" => new SolidColorBrush(Color.Parse(AppColors.CyanLight)),
+            "orange" => new SolidColorBrush(Color.Parse(AppColors.OrangeLight)),
+            "pink" => new SolidColorBrush(Color.Parse(AppColors.PinkLight)),
+            _ => new SolidColorBrush(Color.Parse(AppColors.PrimaryLight)) // default to blue
         };
     }
 

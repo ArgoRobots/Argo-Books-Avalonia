@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;
@@ -519,10 +520,10 @@ public partial class LocationDisplayItem : ObservableObject
     /// <summary>
     /// Gets the status color (green for active).
     /// </summary>
-    public string StatusColor => IsActive ? "#22C55E" : "#6B7280";
+    public string StatusColor => IsActive ? AppColors.Success : AppColors.GrayMedium;
 
     /// <summary>
     /// Gets the status background color.
     /// </summary>
-    public string StatusBackground => IsActive ? "#DCFCE7" : "#F3F4F6";
+    public string StatusBackground => IsActive ? AppColors.SuccessLight : AppColors.GrayLightest;
 }

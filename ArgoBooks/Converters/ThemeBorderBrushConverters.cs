@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -35,8 +36,8 @@ public class ThemeBorderBrushConverter : IValueConverter
 
         // Fallback colors
         return isSelected
-            ? new SolidColorBrush(Color.Parse("#3B82F6"))
-            : new SolidColorBrush(Color.Parse("#E5E7EB"));
+            ? new SolidColorBrush(Color.Parse(AppColors.Primary))
+            : new SolidColorBrush(Color.Parse(AppColors.ChartGrid));
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -76,8 +77,8 @@ public class ThemeBorderBrushMultiConverter : IMultiValueConverter
 
         // Fallback colors
         return isSelected
-            ? new SolidColorBrush(Color.Parse("#3B82F6"))
-            : new SolidColorBrush(Color.Parse("#E5E7EB"));
+            ? new SolidColorBrush(Color.Parse(AppColors.Primary))
+            : new SolidColorBrush(Color.Parse(AppColors.ChartGrid));
     }
 
     private static IBrush GetBorderBrush()
@@ -85,8 +86,8 @@ public class ThemeBorderBrushMultiConverter : IMultiValueConverter
         if (Application.Current?.Resources != null &&
             Application.Current.Resources.TryGetResource("BorderBrush", Application.Current.ActualThemeVariant, out var resource))
         {
-            return resource as IBrush ?? new SolidColorBrush(Color.Parse("#E5E7EB"));
+            return resource as IBrush ?? new SolidColorBrush(Color.Parse(AppColors.ChartGrid));
         }
-        return new SolidColorBrush(Color.Parse("#E5E7EB"));
+        return new SolidColorBrush(Color.Parse(AppColors.ChartGrid));
     }
 }

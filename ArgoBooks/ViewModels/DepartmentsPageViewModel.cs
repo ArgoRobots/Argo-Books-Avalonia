@@ -206,14 +206,14 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     public ObservableCollection<DepartmentColorOption> AvailableColors { get; } =
     [
-        new("blue", "Blue", "#3b82f6"),
-        new("green", "Green", "#22c55e"),
-        new("yellow", "Yellow", "#eab308"),
-        new("purple", "Purple", "#a855f7"),
-        new("red", "Red", "#ef4444"),
-        new("cyan", "Cyan", "#06b6d4"),
-        new("orange", "Orange", "#f97316"),
-        new("pink", "Pink", "#ec4899")
+        new("blue", "Blue", AppColors.Primary),
+        new("green", "Green", AppColors.Success),
+        new("yellow", "Yellow", AppColors.Yellow),
+        new("purple", "Purple", AppColors.Purple),
+        new("red", "Red", AppColors.ExpenseRed),
+        new("cyan", "Cyan", AppColors.Cyan),
+        new("orange", "Orange", AppColors.Orange),
+        new("pink", "Pink", AppColors.Pink)
     ];
 
     #endregion

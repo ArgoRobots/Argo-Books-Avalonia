@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
@@ -677,15 +678,15 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// </summary>
     public string StatusColor => Status switch
     {
-        PurchaseOrderStatus.Draft => "#6B7280",
-        PurchaseOrderStatus.Pending => "#F59E0B",
-        PurchaseOrderStatus.Approved => "#3B82F6",
-        PurchaseOrderStatus.Sent => "#8B5CF6",
-        PurchaseOrderStatus.OnOrder => "#8B5CF6",
-        PurchaseOrderStatus.PartiallyReceived => "#F59E0B",
-        PurchaseOrderStatus.Received => "#22C55E",
-        PurchaseOrderStatus.Cancelled => "#EF4444",
-        _ => "#6B7280"
+        PurchaseOrderStatus.Draft => AppColors.GrayMedium,
+        PurchaseOrderStatus.Pending => AppColors.Warning,
+        PurchaseOrderStatus.Approved => AppColors.Primary,
+        PurchaseOrderStatus.Sent => AppColors.Violet,
+        PurchaseOrderStatus.OnOrder => AppColors.Violet,
+        PurchaseOrderStatus.PartiallyReceived => AppColors.Warning,
+        PurchaseOrderStatus.Received => AppColors.Success,
+        PurchaseOrderStatus.Cancelled => AppColors.ExpenseRed,
+        _ => AppColors.GrayMedium
     };
 
     /// <summary>
@@ -693,15 +694,15 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// </summary>
     public string StatusBackground => Status switch
     {
-        PurchaseOrderStatus.Draft => "#F3F4F6",
-        PurchaseOrderStatus.Pending => "#FEF3C7",
-        PurchaseOrderStatus.Approved => "#DBEAFE",
-        PurchaseOrderStatus.Sent => "#EDE9FE",
-        PurchaseOrderStatus.OnOrder => "#EDE9FE",
-        PurchaseOrderStatus.PartiallyReceived => "#FEF3C7",
-        PurchaseOrderStatus.Received => "#DCFCE7",
-        PurchaseOrderStatus.Cancelled => "#FEE2E2",
-        _ => "#F3F4F6"
+        PurchaseOrderStatus.Draft => AppColors.GrayLightest,
+        PurchaseOrderStatus.Pending => AppColors.WarningLight,
+        PurchaseOrderStatus.Approved => AppColors.PrimaryLight,
+        PurchaseOrderStatus.Sent => AppColors.VioletLight,
+        PurchaseOrderStatus.OnOrder => AppColors.VioletLight,
+        PurchaseOrderStatus.PartiallyReceived => AppColors.WarningLight,
+        PurchaseOrderStatus.Received => AppColors.SuccessLight,
+        PurchaseOrderStatus.Cancelled => AppColors.ErrorLight,
+        _ => AppColors.GrayLightest
     };
 
     /// <summary>

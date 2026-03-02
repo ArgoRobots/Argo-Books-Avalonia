@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
@@ -491,15 +492,15 @@ public partial class LostDamagedDisplayItem : ObservableObject
 
     public string TypeBadgeBackground => ItemType switch
     {
-        "Lost" => "#FEF3C7",
-        "Damaged" => "#FEE2E2",
-        _ => "#F3F4F6"
+        "Lost" => AppColors.WarningLight,
+        "Damaged" => AppColors.ErrorLight,
+        _ => AppColors.GrayLightest
     };
 
     public string TypeBadgeForeground => ItemType switch
     {
-        "Lost" => "#D97706",
-        "Damaged" => "#DC2626",
-        _ => "#6B7280"
+        "Lost" => AppColors.WarningDark,
+        "Damaged" => AppColors.Error,
+        _ => AppColors.GrayMedium
     };
 }

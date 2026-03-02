@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core;
 using ArgoBooks.Utilities;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -24,7 +25,7 @@ public partial class AccountItem : ObservableObject
     private string _initials = string.Empty;
 
     [ObservableProperty]
-    private Color _color = Color.Parse("#3B82F6");
+    private Color _color = Color.Parse(AppColors.Primary);
 
     [ObservableProperty]
     private bool _isSelected;
@@ -66,7 +67,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Name = "Acme Corporation",
             Description = "Main business account",
             Initials = "AC",
-            Color = Color.Parse("#3B82F6"),
+            Color = Color.Parse(AppColors.Primary),
             IsCurrent = true
         });
         _allAccounts.Add(new AccountItem
@@ -75,7 +76,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Name = "Smith Consulting LLC",
             Description = "Consulting services",
             Initials = "SC",
-            Color = Color.Parse("#10B981")
+            Color = Color.Parse(AppColors.Emerald)
         });
         _allAccounts.Add(new AccountItem
         {
@@ -83,7 +84,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Name = "Personal Finances",
             Description = "Personal accounting",
             Initials = "PF",
-            Color = Color.Parse("#8B5CF6")
+            Color = Color.Parse(AppColors.Violet)
         });
         _allAccounts.Add(new AccountItem
         {
@@ -91,7 +92,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Name = "Johnson & Partners",
             Description = "Investment portfolio",
             Initials = "JP",
-            Color = Color.Parse("#F97316")
+            Color = Color.Parse(AppColors.Orange)
         });
 
         RefreshFilteredAccounts();
