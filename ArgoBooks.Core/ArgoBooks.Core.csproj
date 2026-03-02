@@ -27,6 +27,9 @@
         <!-- Graphics (for report rendering) -->
         <PackageReference Include="SkiaSharp" />
 
+        <!-- Charts (headless SKGeoMap rendering for reports) -->
+        <PackageReference Include="LiveChartsCore.SkiaSharpView" />
+
         <!-- PDF -->
         <PackageReference Include="QuestPDF" />
 
