@@ -405,7 +405,7 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 8;
+    } = 10;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
@@ -419,7 +419,7 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 8;
+    } = 10;
 
     [JsonPropertyName("headerFontFamily")]
     public string HeaderFontFamily
@@ -1099,7 +1099,7 @@ public class AccountingTableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 8;
+    } = 10;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
@@ -1113,7 +1113,7 @@ public class AccountingTableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = 9;
+    } = 10;
 
     [JsonPropertyName("headerFontFamily")]
     public string HeaderFontFamily
