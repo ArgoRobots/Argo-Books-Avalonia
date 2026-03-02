@@ -4,6 +4,10 @@ using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
+using LiveChartsCore.Geo;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
+using LiveChartsCore.SkiaSharpView.SKCharts;
 using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
@@ -39,6 +43,62 @@ public class ReportRenderer : IDisposable
     private static readonly SKColor ChartProfitColor = SKColor.Parse(AppColors.Success);
     private static readonly SKColor ChartAxisColor = SKColor.Parse(AppColors.ChartAxis);
     private static readonly SKColor ChartGridColor = SKColor.Parse(AppColors.ChartGrid);
+
+    // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap (mirrors ChartLoaderService)
+    private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "United States", "usa" }, { "USA", "usa" }, { "US", "usa" }, { "America", "usa" },
+        { "United Kingdom", "gbr" }, { "UK", "gbr" }, { "Great Britain", "gbr" }, { "England", "gbr" },
+        { "Canada", "can" }, { "CA", "can" },
+        { "Germany", "deu" }, { "DE", "deu" },
+        { "France", "fra" }, { "FR", "fra" },
+        { "Italy", "ita" }, { "IT", "ita" },
+        { "Spain", "esp" }, { "ES", "esp" },
+        { "Australia", "aus" }, { "AU", "aus" },
+        { "Japan", "jpn" }, { "JP", "jpn" },
+        { "China", "chn" }, { "CN", "chn" },
+        { "India", "ind" }, { "IN", "ind" },
+        { "Brazil", "bra" }, { "BR", "bra" },
+        { "Mexico", "mex" }, { "MX", "mex" },
+        { "Russia", "rus" }, { "RU", "rus" },
+        { "South Korea", "kor" }, { "Korea", "kor" }, { "KR", "kor" },
+        { "Netherlands", "nld" }, { "NL", "nld" },
+        { "Switzerland", "che" }, { "CH", "che" },
+        { "Sweden", "swe" }, { "SE", "swe" },
+        { "Norway", "nor" }, { "NO", "nor" },
+        { "Denmark", "dnk" }, { "DK", "dnk" },
+        { "Finland", "fin" }, { "FI", "fin" },
+        { "Poland", "pol" }, { "PL", "pol" },
+        { "Belgium", "bel" }, { "BE", "bel" },
+        { "Austria", "aut" }, { "AT", "aut" },
+        { "Ireland", "irl" }, { "IE", "irl" },
+        { "Portugal", "prt" }, { "PT", "prt" },
+        { "Greece", "grc" }, { "GR", "grc" },
+        { "New Zealand", "nzl" }, { "NZ", "nzl" },
+        { "Singapore", "sgp" }, { "SG", "sgp" },
+        { "Hong Kong", "hkg" }, { "HK", "hkg" },
+        { "Taiwan", "twn" }, { "TW", "twn" },
+        { "South Africa", "zaf" }, { "ZA", "zaf" },
+        { "Argentina", "arg" }, { "AR", "arg" },
+        { "Chile", "chl" }, { "CL", "chl" },
+        { "Colombia", "col" }, { "CO", "col" },
+        { "Indonesia", "idn" }, { "ID", "idn" },
+        { "Malaysia", "mys" }, { "MY", "mys" },
+        { "Thailand", "tha" }, { "TH", "tha" },
+        { "Vietnam", "vnm" }, { "VN", "vnm" },
+        { "Philippines", "phl" }, { "PH", "phl" },
+        { "Turkey", "tur" }, { "TR", "tur" },
+        { "Saudi Arabia", "sau" }, { "SA", "sau" },
+        { "UAE", "are" }, { "United Arab Emirates", "are" }, { "AE", "are" },
+        { "Israel", "isr" }, { "IL", "isr" },
+        { "Egypt", "egy" }, { "EG", "egy" },
+        { "Nigeria", "nga" }, { "NG", "nga" },
+        { "Kenya", "ken" }, { "KE", "ken" },
+        { "Ukraine", "ukr" }, { "UA", "ukr" },
+        { "Czech Republic", "cze" }, { "Czechia", "cze" }, { "CZ", "cze" },
+        { "Romania", "rou" }, { "RO", "rou" },
+        { "Hungary", "hun" }, { "HU", "hun" }
+    };
 
     /// <summary>
     /// Determines if a chart type should display currency formatting on the Y-axis.
@@ -1450,6 +1510,9 @@ public class ReportRenderer : IDisposable
 
     /// <summary>
     /// Renders a pie chart using SkiaSharp.
+    /// Styled to match the dashboard/analytics pie charts: pie shifted left,
+    /// legend vertically centered with circular color indicators, no slice borders.
+    /// Respects the MaxPieSlices setting by grouping excess slices into "Other".
     /// </summary>
     private void RenderPieChart(SKCanvas canvas, SKRect chartArea, List<ChartDataPoint> dataPoints, ChartReportElement chart)
     {
@@ -1462,94 +1525,113 @@ public class ReportRenderer : IDisposable
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
         if (total == 0) return;
 
-        // Determine pie chart dimensions - use smaller of width/height with padding
-        // Center the pie in the chart area, legend will be positioned to the right of the pie
-        var pieSize = Math.Min(chartArea.Width, chartArea.Height) * 0.7f;
-        var centerX = chartArea.MidX;
-        var centerY = chartArea.MidY;
-        var radius = pieSize / 2;
+        // --- Apply max pie slices setting (group excess into "Other") ---
+        var maxSlices = _config.MaxPieSlices;
+        var sorted = dataPoints.OrderByDescending(p => Math.Abs(p.Value)).ToList();
+        var slices = new List<(string Label, double Value, SKColor Color)>();
+        var colors = AppColors.Palette.Select(SKColor.Parse).ToArray();
+        var otherColor = SKColor.Parse(AppColors.Gray);
 
-        // Ensure we have a valid radius
+        var topItems = sorted.Take(maxSlices - 1).ToList();
+        var otherItems = sorted.Skip(maxSlices - 1).ToList();
+
+        // If there's only one "other" item, show it directly instead of grouping
+        if (otherItems.Count == 1)
+        {
+            topItems.Add(otherItems[0]);
+            otherItems.Clear();
+        }
+
+        for (int i = 0; i < topItems.Count; i++)
+            slices.Add((topItems[i].Label, Math.Abs(topItems[i].Value), colors[i % colors.Length]));
+
+        if (otherItems.Count > 0)
+        {
+            var otherValue = otherItems.Sum(p => Math.Abs(p.Value));
+            var itemsText = Tr("items");
+            slices.Add(($"{Tr("Other")} ({otherItems.Count} {itemsText})", otherValue, otherColor));
+        }
+
+        // --- Layout ---
+        var pieSize = Math.Min(chartArea.Width * 0.5f, chartArea.Height) * 0.85f;
+        var radius = pieSize / 2;
         if (radius <= 0) return;
 
-        // Color palette for pie slices
-        var colors = AppColors.Palette.Select(SKColor.Parse).ToArray();
+        var centerX = chartArea.Left + chartArea.Width * 0.3f;
+        var centerY = chartArea.MidY;
 
-        var startAngle = -90f; // Start at top
-
-        // Position legend to the right of the pie
-        var legendX = centerX + radius + 20 * _renderScale;
-        var legendY = chartArea.Top + 10 * _renderScale;
+        var startAngle = -90f;
 
         using var labelFont = new SKFont(chartTypeface, (float)chart.LegendFontSize * _renderScale);
-        using var labelPaint = new SKPaint();
-        labelPaint.Color = SKColors.Black;
-        labelPaint.IsAntialias = true;
+        using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
 
-        var pieRect = new SKRect(
-            centerX - radius,
-            centerY - radius,
-            centerX + radius,
-            centerY + radius
-        );
+        var pieRect = new SKRect(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
 
-        for (int i = 0; i < dataPoints.Count; i++)
+        // --- Draw all pie slices (no white borders) ---
+        foreach (var slice in slices)
         {
-            var point = dataPoints[i];
-            var percentage = (float)(Math.Abs(point.Value) / total);
+            var percentage = (float)(slice.Value / total);
             var sweepAngle = percentage * 360f;
-            var color = colors[i % colors.Length];
 
-            // Draw pie slice
-            using var slicePaint = new SKPaint();
-            slicePaint.Color = color;
-            slicePaint.Style = SKPaintStyle.Fill;
-            slicePaint.IsAntialias = true;
+            using var slicePaint = new SKPaint { Color = slice.Color, Style = SKPaintStyle.Fill, IsAntialias = true };
 
-            // Handle full circle (360 degrees) - SkiaSharp ArcTo doesn't handle this well
             if (sweepAngle >= 359.9f)
             {
-                // Draw a full circle instead
                 canvas.DrawOval(pieRect, slicePaint);
             }
             else if (sweepAngle > 0)
             {
-                // Draw pie slice using arc
                 using var path = new SKPath();
                 path.MoveTo(centerX, centerY);
                 path.ArcTo(pieRect, startAngle, sweepAngle, false);
                 path.Close();
                 canvas.DrawPath(path, slicePaint);
-
-                // Draw slice border
-                using var borderPaint = new SKPaint();
-                borderPaint.Color = SKColors.White;
-                borderPaint.Style = SKPaintStyle.Stroke;
-                borderPaint.StrokeWidth = 2 * _renderScale;
-                borderPaint.IsAntialias = true;
-                canvas.DrawPath(path, borderPaint);
-            }
-
-            // Draw legend item (if chart has show legend enabled and there's space)
-            if (chart.ShowLegend && legendX < chartArea.Right - 50 * _renderScale)
-            {
-                // Legend color box
-                var legendBoxSize = 10 * _renderScale;
-                var legendBoxRect = new SKRect(legendX, legendY, legendX + legendBoxSize, legendY + legendBoxSize);
-                canvas.DrawRect(legendBoxRect, slicePaint);
-
-                // Legend text
-                var legendText = point.Label;
-                var maxChars = chart.LegendMaxCharacters;
-                if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
-                legendText = $"{legendText} ({percentage:P0})";
-
-                canvas.DrawText(legendText, legendX + legendBoxSize + 5 * _renderScale, legendY + legendBoxSize - 2 * _renderScale, SKTextAlign.Left, labelFont, labelPaint);
-
-                legendY += 18 * _renderScale;
             }
 
             startAngle += sweepAngle;
+        }
+
+        // --- Draw legend to the right of the pie, vertically centered ---
+        if (chart.ShowLegend)
+        {
+            var legendX = chartArea.Left + chartArea.Width * 0.58f;
+            var percentRightEdge = chartArea.Right - 5 * _renderScale;
+
+            if (legendX < chartArea.Right - 50 * _renderScale)
+            {
+                var lineHeight = 18 * _renderScale;
+                var totalLegendHeight = slices.Count * lineHeight;
+                var legendY = chartArea.MidY - totalLegendHeight / 2;
+                var circleRadius = 5 * _renderScale;
+
+                using var percentPaint = new SKPaint { Color = new SKColor(160, 160, 160), IsAntialias = true };
+
+                foreach (var slice in slices)
+                {
+                    var percentage = (float)(slice.Value / total);
+
+                    using var dotPaint = new SKPaint { Color = slice.Color, Style = SKPaintStyle.Fill, IsAntialias = true };
+
+                    // Circular color indicator
+                    var dotCenterY = legendY + circleRadius;
+                    canvas.DrawCircle(legendX + circleRadius, dotCenterY, circleRadius, dotPaint);
+
+                    // Label text
+                    var legendText = slice.Label;
+                    var maxChars = chart.LegendMaxCharacters;
+                    if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
+
+                    var textX = legendX + circleRadius * 2 + 6 * _renderScale;
+                    var textY = dotCenterY + circleRadius * 0.4f;
+                    canvas.DrawText(legendText, textX, textY, SKTextAlign.Left, labelFont, labelPaint);
+
+                    // Percentage text (lighter gray, right-aligned to chart edge)
+                    var percentText = $"{percentage * 100:F1}%";
+                    canvas.DrawText(percentText, percentRightEdge, textY, SKTextAlign.Right, labelFont, percentPaint);
+
+                    legendY += lineHeight;
+                }
+            }
         }
     }
 
@@ -1889,14 +1971,10 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
-    /// Renders a simplified GeoMap chart showing country data.
-    /// Since we can't use LiveChartsCore GeoMap in the Core project, we render a data summary.
+    /// Renders a GeoMap chart using LiveCharts2 SKGeoMap for headless rendering.
     /// </summary>
     private void RenderGeoMap(SKCanvas canvas, SKRect chartArea, ChartReportElement chart)
     {
-        // Get typeface for chart labels
-        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
-
         var mapData = GetWorldMapData();
 
         if (mapData == null || mapData.Count == 0)
@@ -1905,76 +1983,48 @@ public class ReportRenderer : IDisposable
             return;
         }
 
-        // Sort by value descending
-        var sortedData = mapData.OrderByDescending(kvp => kvp.Value).ToList();
-        var maxValue = sortedData.Max(kvp => kvp.Value);
-        if (maxValue == 0) maxValue = 1;
+        // Convert country names to ISO codes for HeatLandSeries
+        var lands = mapData
+            .Select(kvp =>
+            {
+                CountryNameToIsoCode.TryGetValue(kvp.Key, out var isoCode);
+                return isoCode != null ? new HeatLand { Name = isoCode, Value = kvp.Value } : null;
+            })
+            .Where(l => l != null)
+            .Cast<HeatLand>()
+            .ToArray();
 
-        // Draw a horizontal bar chart representation of the world map data
-        var barHeight = Math.Min(25 * _renderScale, (chartArea.Height - 20 * _renderScale) / Math.Min(sortedData.Count, 10));
-        var maxBarWidth = chartArea.Width * 0.6f;
-        var labelWidth = chartArea.Width * 0.25f;
-
-        using var labelFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
-        using var valueFont = new SKFont(chartTypeface, (float)chart.AxisFontSize * _renderScale);
-        using var labelPaint = new SKPaint();
-        labelPaint.Color = SKColors.Black;
-        labelPaint.IsAntialias = true;
-        using var valuePaint = new SKPaint();
-        valuePaint.Color = ChartAxisColor;
-        valuePaint.IsAntialias = true;
-
-        // Color gradient from light to dark blue
-        var startColor = SKColor.Parse(AppColors.PrimaryLighter);
-        var endColor = SKColor.Parse(AppColors.PrimaryDark);
-
-        var currentY = chartArea.Top + 10 * _renderScale;
-        var displayCount = Math.Min(sortedData.Count, 10);
-
-        for (int i = 0; i < displayCount; i++)
+        if (lands.Length == 0)
         {
-            var kvp = sortedData[i];
-            var ratio = (float)(kvp.Value / maxValue);
-
-            // Interpolate color based on value
-            var colorRatio = (float)i / Math.Max(displayCount - 1, 1);
-            var barColor = new SKColor(
-                (byte)(startColor.Red + (endColor.Red - startColor.Red) * colorRatio),
-                (byte)(startColor.Green + (endColor.Green - startColor.Green) * colorRatio),
-                (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * colorRatio)
-            );
-
-            using var barPaint = new SKPaint();
-            barPaint.Color = barColor;
-            barPaint.Style = SKPaintStyle.Fill;
-            barPaint.IsAntialias = true;
-
-            // Draw country name
-            var countryName = kvp.Key;
-            if (countryName.Length > 15) countryName = countryName[..15] + "...";
-            canvas.DrawText(countryName, chartArea.Left, currentY + barHeight * 0.7f, SKTextAlign.Left, labelFont, labelPaint);
-
-            // Draw bar
-            var barStartX = chartArea.Left + labelWidth;
-            var barEndX = barStartX + (maxBarWidth * ratio);
-            var barRect = new SKRect(barStartX, currentY + 2 * _renderScale, barEndX, currentY + barHeight - 2 * _renderScale);
-            canvas.DrawRect(barRect, barPaint);
-
-            // Draw value
-            canvas.DrawText($"${kvp.Value:N0}", chartArea.Right - 5 * _renderScale, currentY + barHeight * 0.7f, SKTextAlign.Right, valueFont, valuePaint);
-
-            currentY += barHeight + 3 * _renderScale;
+            DrawNoDataPlaceholder(canvas, chartArea);
+            return;
         }
 
-        // Show "and X more..." if there are more countries
-        if (sortedData.Count > 10)
+        var width = (int)chartArea.Width;
+        var height = (int)chartArea.Height;
+        if (width <= 0 || height <= 0) return;
+
+        try
         {
-            using var moreFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-            using var morePaint = new SKPaint();
-            morePaint.Color = SKColors.Gray;
-            morePaint.IsAntialias = true;
-            var moreCountriesText = string.Format(Tr("and {0} more countries..."), sortedData.Count - 10);
-            canvas.DrawText(moreCountriesText, chartArea.Left, currentY + 10 * _renderScale, SKTextAlign.Left, moreFont, morePaint);
+            var geoMap = new SKGeoMap
+            {
+                Width = width,
+                Height = height,
+                Series = [new HeatLandSeries { Lands = lands }],
+                MapProjection = LiveChartsCore.Geo.MapProjection.Mercator
+            };
+
+            using var image = geoMap.GetImage();
+            if (image != null)
+            {
+                canvas.DrawImage(image, chartArea.Left, chartArea.Top);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Fallback to placeholder if SKGeoMap rendering fails
+            System.Diagnostics.Debug.WriteLine($"GeoMap render failed: {ex.Message}");
+            DrawNoDataPlaceholder(canvas, chartArea);
         }
     }
 

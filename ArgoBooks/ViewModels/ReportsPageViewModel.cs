@@ -252,6 +252,18 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsTemplatesTabSelected));
         OnPropertyChanged(nameof(IsChartsTabSelected));
+
+        // When switching to the Custom (charts) tab, reset template-specific state
+        // so Balance Sheet's disabled date range doesn't carry over, and the report
+        // name reflects that this is now a custom chart report.
+        if (IsChartsTabSelected)
+        {
+            IsDateRangeEnabled = true;
+            ReportName = ReportTemplateFactory.TemplateNames.Custom;
+            Configuration.Title = ReportTemplateFactory.TemplateNames.Custom;
+            PageOrientation = PageOrientation.Landscape;
+            Configuration.PageOrientation = PageOrientation.Landscape;
+        }
     }
 
     [RelayCommand]
@@ -1620,6 +1632,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             const int resolutionMultiplier = 2;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
+            Configuration.MaxPieSlices = ChartSettingsService.GetMaxPieSlices();
             using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             // Dispose previous page bitmaps
@@ -1701,6 +1714,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             var companyData = App.CompanyManager?.CompanyData;
             Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
             Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
+            Configuration.MaxPieSlices = ChartSettingsService.GetMaxPieSlices();
             using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
 
             bool success;
@@ -2741,7 +2755,8 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             _datePresetToPreserve = null;
         }
-        else if (string.IsNullOrEmpty(SelectedDatePreset))
+        else if (IsDateRangeEnabled &&
+                 (string.IsNullOrEmpty(SelectedDatePreset) || !DatePresets.Any(o => o.IsSelected)))
         {
             // Only set a date preset if the user hasn't already selected one.
             // Default to "Last 30 days" when no selection exists.
@@ -2783,6 +2798,13 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     private void ApplyFiltersToConfiguration()
     {
+        // Custom (charts) tab always uses landscape orientation
+        if (IsChartsTabSelected)
+        {
+            PageOrientation = PageOrientation.Landscape;
+            Configuration.PageOrientation = PageOrientation.Landscape;
+        }
+
         Configuration.Title = ReportName;
         Configuration.Filters.TransactionType = SelectedTransactionType;
         Configuration.Filters.DatePresetName = SelectedDatePreset;
@@ -2822,6 +2844,19 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     private void SyncChartElementsWithSelection()
     {
+        // When user is on the Custom (charts) tab, remove all non-chart elements
+        // that may have been added by a previously selected template (summary cards,
+        // accounting tables, labels, images, etc.) — this mode is chart-only.
+        if (IsChartsTabSelected)
+        {
+            foreach (var element in Configuration.Elements
+                         .Where(e => e is not ChartReportElement && e is not DateRangeReportElement)
+                         .ToList())
+            {
+                Configuration.RemoveElement(element.Id);
+            }
+        }
+
         var selectedChartTypes = Configuration.Filters.SelectedChartTypes.ToHashSet();
 
         // Get existing chart elements
@@ -2893,6 +2928,11 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         var cellWidth = (context.ContentWidth - (spacing * (columns - 1))) / columns;
         var cellHeight = (context.ContentHeight - (spacing * (rows - 1))) / rows;
+
+        // Cap cell height so 1-2 charts don't stretch to fill the full page.
+        // Use the same height as a 2-row layout (like 4 charts in a 2×2 grid).
+        var maxCellHeight = (context.ContentHeight - spacing) / 2;
+        cellHeight = Math.Min(cellHeight, maxCellHeight);
 
         // Position each chart element in the grid below date range area
         for (int i = 0; i < chartElements.Count; i++)
