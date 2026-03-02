@@ -4,6 +4,9 @@ using ArgoBooks.Helpers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+// Note: Page ViewModels use BatchObservableCollection for display collections
+// to enable ReplaceAll() which fires a single UI notification instead of N+1.
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -207,7 +210,7 @@ public abstract partial class TablePageViewModelBase<TDisplayItem> : TablePageVi
     /// <summary>
     /// Display items for the table.
     /// </summary>
-    public ObservableCollection<TDisplayItem> Items { get; } = [];
+    public BatchObservableCollection<TDisplayItem> Items { get; } = [];
 
     /// <summary>
     /// Applies search filtering to a list of items using Levenshtein scoring.

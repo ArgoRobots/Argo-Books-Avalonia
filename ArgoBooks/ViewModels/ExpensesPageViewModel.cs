@@ -189,7 +189,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     private readonly List<Expense> _allExpenses = [];
 
-    public ObservableCollection<ExpenseDisplayItem> Expenses { get; } = [];
+    public BatchObservableCollection<ExpenseDisplayItem> Expenses { get; } = [];
 
     #endregion
 
@@ -359,8 +359,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     private void FilterExpenses()
     {
-        Expenses.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var filtered = _allExpenses.ToList();
 
@@ -524,10 +522,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedExpenses)
-        {
-            Expenses.Add(item);
-        }
+        Expenses.ReplaceAll(pagedExpenses);
     }
 
     private static (string name, string moreText) FormatProductDescription(Expense purchase)

@@ -166,7 +166,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Filtered suppliers for display.
     /// </summary>
-    public ObservableCollection<SupplierDisplayItem> Suppliers { get; } = [];
+    public BatchObservableCollection<SupplierDisplayItem> Suppliers { get; } = [];
 
     /// <summary>
     /// Available countries for filter dropdown.
@@ -428,8 +428,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterSuppliers()
     {
-        Suppliers.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
@@ -543,11 +541,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        // Add paginated items to collection
-        foreach (var item in pagedItems)
-        {
-            Suppliers.Add(item);
-        }
+        // Replace all items in collection
+        Suppliers.ReplaceAll(pagedItems);
     }
 
     private static string GetInitials(string name)

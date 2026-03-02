@@ -179,7 +179,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private readonly List<Revenue> _allRevenue = [];
 
-    public ObservableCollection<RevenueDisplayItem> Revenue { get; } = [];
+    public BatchObservableCollection<RevenueDisplayItem> Revenue { get; } = [];
 
     #endregion
 
@@ -359,8 +359,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void FilterRevenue()
     {
-        Revenue.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var filtered = _allRevenue.ToList();
 
@@ -515,10 +513,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedRevenue)
-        {
-            Revenue.Add(item);
-        }
+        Revenue.ReplaceAll(pagedRevenue);
     }
 
     private static (string name, string moreText) FormatProductDescription(Revenue revenue)

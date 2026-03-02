@@ -143,7 +143,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Customers for display in the table.
     /// </summary>
-    public ObservableCollection<CustomerDisplayItem> Customers { get; } = [];
+    public BatchObservableCollection<CustomerDisplayItem> Customers { get; } = [];
 
     /// <summary>
     /// Customer status options for filter.
@@ -364,8 +364,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterCustomers()
     {
-        Customers.Clear();
-
         var filtered = _allCustomers.ToList();
 
         // Apply search filter
@@ -466,10 +464,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedCustomers)
-        {
-            Customers.Add(item);
-        }
+        Customers.ReplaceAll(pagedCustomers);
     }
 
     protected override void UpdatePageNumbers()

@@ -146,7 +146,7 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
 
     private readonly List<RentalItem> _allItems = [];
 
-    public ObservableCollection<RentalItemDisplayItem> Items { get; } = [];
+    public BatchObservableCollection<RentalItemDisplayItem> Items { get; } = [];
 
     public ObservableCollection<string> StatusOptions { get; } = ["All", "Available", "In Maintenance", "All Rented"];
 
@@ -258,8 +258,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
 
     private void FilterItems()
     {
-        Items.Clear();
-
         var filtered = _allItems.ToList();
 
         // Apply search filter
@@ -382,10 +380,7 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedItems)
-        {
-            Items.Add(item);
-        }
+        Items.ReplaceAll(pagedItems);
     }
 
     protected override void UpdatePageNumbers()

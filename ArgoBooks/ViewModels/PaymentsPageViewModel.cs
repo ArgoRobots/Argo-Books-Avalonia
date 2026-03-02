@@ -323,7 +323,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Payments for display in the table.
     /// </summary>
-    public ObservableCollection<PaymentDisplayItem> Payments { get; } = [];
+    public BatchObservableCollection<PaymentDisplayItem> Payments { get; } = [];
 
     /// <summary>
     /// Payment method options for filter.
@@ -563,8 +563,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterPayments()
     {
-        Payments.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var filtered = _allPayments.ToList();
 
@@ -698,10 +696,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedPayments)
-        {
-            Payments.Add(item);
-        }
+        Payments.ReplaceAll(pagedPayments);
     }
 
     protected override void UpdatePageNumbers()

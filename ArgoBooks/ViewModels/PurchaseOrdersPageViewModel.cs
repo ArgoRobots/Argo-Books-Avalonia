@@ -170,7 +170,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Orders for display in the table.
     /// </summary>
-    public ObservableCollection<PurchaseOrderDisplayItem> Orders { get; } = [];
+    public BatchObservableCollection<PurchaseOrderDisplayItem> Orders { get; } = [];
 
     #endregion
 
@@ -300,8 +300,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterOrders()
     {
-        Orders.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var suppliers = companyData?.Suppliers ?? [];
 
@@ -458,10 +456,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedOrders)
-        {
-            Orders.Add(item);
-        }
+        Orders.ReplaceAll(pagedOrders);
     }
 
     private static string FormatStatus(PurchaseOrderStatus status)

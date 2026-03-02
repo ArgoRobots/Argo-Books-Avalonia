@@ -127,7 +127,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Locations for display in the table.
     /// </summary>
-    public ObservableCollection<LocationDisplayItem> Locations { get; } = [];
+    public BatchObservableCollection<LocationDisplayItem> Locations { get; } = [];
 
     /// <summary>
     /// Location type options for filter.
@@ -273,8 +273,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterLocations()
     {
-        Locations.Clear();
-
         var filtered = _allLocations.ToList();
 
         // Apply search filter
@@ -372,10 +370,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedLocations)
-        {
-            Locations.Add(item);
-        }
+        Locations.ReplaceAll(pagedLocations);
     }
 
     /// <summary>

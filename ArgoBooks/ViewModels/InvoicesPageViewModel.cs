@@ -225,7 +225,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     private readonly List<Invoice> _allInvoices = [];
 
-    public ObservableCollection<InvoiceDisplayItem> Invoices { get; } = [];
+    public BatchObservableCollection<InvoiceDisplayItem> Invoices { get; } = [];
 
     public ObservableCollection<string> StatusOptions { get; } = ["All", "Draft", "Pending", "Sent", "Partial", "Paid", "Overdue", "Cancelled"];
 
@@ -403,8 +403,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     private void FilterInvoices()
     {
-        Invoices.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var filtered = _allInvoices.ToList();
 
@@ -543,10 +541,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedInvoices)
-        {
-            Invoices.Add(item);
-        }
+        Invoices.ReplaceAll(pagedInvoices);
     }
 
     private static string GetStatusDisplay(Invoice invoice)

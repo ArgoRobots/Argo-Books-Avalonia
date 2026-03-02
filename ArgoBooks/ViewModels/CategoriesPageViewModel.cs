@@ -96,17 +96,17 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Expense categories (Purchase type) for display.
     /// </summary>
-    public ObservableCollection<CategoryDisplayItem> ExpenseCategories { get; } = [];
+    public BatchObservableCollection<CategoryDisplayItem> ExpenseCategories { get; } = [];
 
     /// <summary>
     /// Revenue categories (Sales type) for display.
     /// </summary>
-    public ObservableCollection<CategoryDisplayItem> RevenueCategories { get; } = [];
+    public BatchObservableCollection<CategoryDisplayItem> RevenueCategories { get; } = [];
 
     /// <summary>
     /// Gets the current tab's categories for display.
     /// </summary>
-    public ObservableCollection<CategoryDisplayItem> CurrentCategories =>
+    public BatchObservableCollection<CategoryDisplayItem> CurrentCategories =>
         IsExpensesTabSelected ? ExpenseCategories : RevenueCategories;
 
     #endregion
@@ -372,8 +372,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         var targetType = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue;
         var targetCollection = IsExpensesTabSelected ? ExpenseCategories : RevenueCategories;
 
-        targetCollection.Clear();
-
         // Get all categories of the current type
         var categories = _allCategories
             .Where(c => c.Type == targetType)
@@ -456,10 +454,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedItems)
-        {
-            targetCollection.Add(item);
-        }
+        targetCollection.ReplaceAll(pagedItems);
 
         OnPropertyChanged(nameof(CurrentCategories));
     }

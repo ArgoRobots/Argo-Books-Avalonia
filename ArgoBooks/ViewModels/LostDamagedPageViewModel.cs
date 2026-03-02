@@ -123,7 +123,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     private readonly List<LostDamaged> _allItems = [];
 
-    public ObservableCollection<LostDamagedDisplayItem> Items { get; } = [];
+    public BatchObservableCollection<LostDamagedDisplayItem> Items { get; } = [];
 
     #endregion
 
@@ -268,8 +268,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     private void FilterItems()
     {
-        Items.Clear();
-
         var filtered = _allItems.ToList();
 
         // Get filter values from modals view model
@@ -343,10 +341,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        foreach (var item in pagedItems)
-        {
-            Items.Add(item);
-        }
+        Items.ReplaceAll(pagedItems);
     }
 
     private LostDamagedDisplayItem CreateDisplayItem(LostDamaged item)

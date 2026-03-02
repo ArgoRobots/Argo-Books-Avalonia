@@ -132,7 +132,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Departments for display (filtered).
     /// </summary>
-    public ObservableCollection<DepartmentDisplayItem> Departments { get; } = [];
+    public BatchObservableCollection<DepartmentDisplayItem> Departments { get; } = [];
 
     #endregion
 
@@ -315,8 +315,6 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterDepartments()
     {
-        Departments.Clear();
-
         var companyData = App.CompanyManager?.CompanyData;
         var departments = _allDepartments.AsEnumerable();
 
@@ -373,11 +371,8 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize);
 
-        // Add paginated items to collection
-        foreach (var item in pagedItems)
-        {
-            Departments.Add(item);
-        }
+        // Replace all items in collection
+        Departments.ReplaceAll(pagedItems);
     }
 
     /// <summary>
