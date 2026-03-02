@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Services;
 using Avalonia.Media;
@@ -53,13 +54,13 @@ public partial class PastPredictionItemViewModel : ObservableObject
     private bool _isValidated;
 
     [ObservableProperty]
-    private Color _accuracyColor = Color.Parse("#6B7280"); // Default gray
+    private Color _accuracyColor = Color.Parse(AppColors.GrayMedium);
 
     [ObservableProperty]
     private string _typeLabel = "Live";
 
     [ObservableProperty]
-    private Color _typeBadgeColor = Color.Parse("#3B82F6");
+    private Color _typeBadgeColor = Color.Parse(AppColors.Primary);
 
     /// <summary>
     /// Creates a view model from a ForecastAccuracyRecord.
@@ -74,10 +75,10 @@ public partial class PastPredictionItemViewModel : ObservableObject
         // Determine color based on accuracy
         var accuracyColor = revenueAccuracy switch
         {
-            >= 90 => "#22C55E", // Green - Excellent
-            >= 80 => "#3B82F6", // Blue - Good
-            >= 70 => "#F59E0B", // Orange - Moderate
-            _ => "#EF4444" // Red - Low
+            >= 90 => AppColors.Success,
+            >= 80 => AppColors.Primary,
+            >= 70 => AppColors.Warning,
+            _ => AppColors.ExpenseRed
         };
 
         return new PastPredictionItemViewModel
@@ -93,9 +94,9 @@ public partial class PastPredictionItemViewModel : ObservableObject
             ForecastMethod = record.ForecastMethod,
             IsBacktested = isBacktested,
             IsValidated = record.IsValidated,
-            AccuracyColor = Color.Parse(revenueAccuracy.HasValue ? accuracyColor : "#6B7280"),
+            AccuracyColor = Color.Parse(revenueAccuracy.HasValue ? accuracyColor : AppColors.GrayMedium),
             TypeLabel = isBacktested ? "Backtest" : "Live",
-            TypeBadgeColor = Color.Parse(isBacktested ? "#8B5CF6" : "#3B82F6")
+            TypeBadgeColor = Color.Parse(isBacktested ? AppColors.Violet : AppColors.Primary)
         };
     }
 }
@@ -118,7 +119,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
     private string _accuracyTrendIcon = "→";
 
     [ObservableProperty]
-    private Color _accuracyTrendColor = Color.Parse("#6B7280");
+    private Color _accuracyTrendColor = Color.Parse(AppColors.GrayMedium);
 
     [ObservableProperty]
     private string _validatedCount = "0";
@@ -338,19 +339,19 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
                     {
                         AccuracyTrend = "Improving";
                         AccuracyTrendIcon = "↑";
-                        AccuracyTrendColor = Color.Parse("#22C55E");
+                        AccuracyTrendColor = Color.Parse(AppColors.Success);
                     }
                     else if (secondHalf < firstHalf - 5)
                     {
                         AccuracyTrend = "Declining";
                         AccuracyTrendIcon = "↓";
-                        AccuracyTrendColor = Color.Parse("#EF4444");
+                        AccuracyTrendColor = Color.Parse(AppColors.ExpenseRed);
                     }
                     else
                     {
                         AccuracyTrend = "Stable";
                         AccuracyTrendIcon = "→";
-                        AccuracyTrendColor = Color.Parse("#6B7280");
+                        AccuracyTrendColor = Color.Parse(AppColors.GrayMedium);
                     }
                 }
             }
@@ -360,7 +361,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             OverallAccuracy = "—";
             AccuracyTrend = "Stable";
             AccuracyTrendIcon = "→";
-            AccuracyTrendColor = Color.Parse("#6B7280");
+            AccuracyTrendColor = Color.Parse(AppColors.GrayMedium);
         }
 
         // Add records to the collection
@@ -411,8 +412,8 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
 
         // Get theme colors
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
-        var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
-        var gridColor = isDarkTheme ? SKColor.Parse("#374151") : SKColor.Parse("#E5E7EB");
+        var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
+        var gridColor = isDarkTheme ? SKColor.Parse(AppColors.ChartAxis) : SKColor.Parse(AppColors.ChartGrid);
 
         // Create data points for revenue accuracy
         var revenuePoints = orderedRecords
@@ -428,7 +429,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
         var series = new ObservableCollection<ISeries>();
 
         // Revenue accuracy series (blue)
-        var revenueColor = SKColor.Parse("#3B82F6");
+        var revenueColor = SKColor.Parse(AppColors.Primary);
         series.Add(new LineSeries<ObservablePoint>
         {
             Values = revenuePoints,
@@ -444,7 +445,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
         // Expenses accuracy series (purple) - only if we have data
         if (expensePoints.Length >= 2)
         {
-            var expenseColor = SKColor.Parse("#8B5CF6");
+            var expenseColor = SKColor.Parse(AppColors.Violet);
             series.Add(new LineSeries<ObservablePoint>
             {
                 Values = expensePoints,

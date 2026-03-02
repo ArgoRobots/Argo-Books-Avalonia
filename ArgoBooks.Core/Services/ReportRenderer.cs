@@ -35,10 +35,10 @@ public class ReportRenderer : IDisposable
     private readonly SKFont _headerFont;
 
     // Chart colors (matching ChartLoaderService)
-    private static readonly SKColor ChartBarColor = SKColor.Parse("#6495ED"); // Cornflower Blue
-    private static readonly SKColor ChartProfitColor = SKColor.Parse("#22C55E"); // Green
-    private static readonly SKColor ChartAxisColor = SKColor.Parse("#374151"); // Gray
-    private static readonly SKColor ChartGridColor = SKColor.Parse("#E5E7EB"); // Light gray
+    private static readonly SKColor ChartBarColor = SKColor.Parse(AppColors.ChartBar);
+    private static readonly SKColor ChartProfitColor = SKColor.Parse(AppColors.Success);
+    private static readonly SKColor ChartAxisColor = SKColor.Parse(AppColors.ChartAxis);
+    private static readonly SKColor ChartGridColor = SKColor.Parse(AppColors.ChartGrid);
 
     /// <summary>
     /// Determines if a chart type should display currency formatting on the Y-axis.
@@ -1473,17 +1473,7 @@ public class ReportRenderer : IDisposable
         if (radius <= 0) return;
 
         // Color palette for pie slices
-        var colors = new[]
-        {
-            SKColor.Parse("#6495ED"), // Cornflower Blue
-            SKColor.Parse("#EF4444"), // Red
-            SKColor.Parse("#22C55E"), // Green
-            SKColor.Parse("#F59E0B"), // Amber
-            SKColor.Parse("#8B5CF6"), // Purple
-            SKColor.Parse("#EC4899"), // Pink
-            SKColor.Parse("#14B8A6"), // Teal
-            SKColor.Parse("#F97316"), // Orange
-        };
+        var colors = AppColors.Palette.Select(SKColor.Parse).ToArray();
 
         var startAngle = -90f; // Start at top
 
@@ -1935,8 +1925,8 @@ public class ReportRenderer : IDisposable
         valuePaint.IsAntialias = true;
 
         // Color gradient from light to dark blue
-        var startColor = SKColor.Parse("#93C5FD"); // Light blue
-        var endColor = SKColor.Parse("#1D4ED8");   // Dark blue
+        var startColor = SKColor.Parse(AppColors.PrimaryLighter);
+        var endColor = SKColor.Parse(AppColors.PrimaryDark);
 
         var currentY = chartArea.Top + 10 * _renderScale;
         var displayCount = Math.Min(sortedData.Count, 10);
@@ -3377,7 +3367,7 @@ public class ReportRenderer : IDisposable
         using var titleFont = new SKFont(_boldTypeface, titleFontSize);
 
         using var blackPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
-        using var grayPaint = new SKPaint { Color = SKColor.Parse("#555555"), IsAntialias = true };
+        using var grayPaint = new SKPaint { Color = SKColor.Parse(AppColors.GrayDark), IsAntialias = true };
 
         var logoSize = 40f * _renderScale;
         var logoPadding = 10f * _renderScale;

@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
@@ -574,7 +575,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         using var titleFont = new SKFont(SKTypeface.FromFamilyName(SKTypeface.Default.FamilyName, SKFontStyle.Bold) ?? SKTypeface.Default, (float)(Configuration?.TitleFontSize ?? 18));
 
         using var blackPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
-        using var grayPaint = new SKPaint { Color = SKColor.Parse("#555555"), IsAntialias = true };
+        using var grayPaint = new SKPaint { Color = SKColor.Parse(AppColors.GrayDark), IsAntialias = true };
 
         var logoSize = 40f;
         var logoPadding = 10f;
