@@ -25,7 +25,6 @@ public static class ReportTemplateFactory
         public const string IncomeStatement = "Income Statement";
         public const string BalanceSheet = "Balance Sheet";
         public const string CashFlowStatement = "Cash Flow Statement";
-        public const string TrialBalance = "Trial Balance";
         public const string GeneralLedger = "General Ledger";
         public const string ARaging = "Accounts Receivable Aging";
         public const string TaxSummary = "Tax Summary";
@@ -39,7 +38,6 @@ public static class ReportTemplateFactory
         TemplateNames.IncomeStatement,
         TemplateNames.BalanceSheet,
         TemplateNames.CashFlowStatement,
-        TemplateNames.TrialBalance,
         TemplateNames.GeneralLedger,
         TemplateNames.ARaging,
         TemplateNames.TaxSummary
@@ -85,7 +83,6 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.IncomeStatement ||
                templateName == TemplateNames.BalanceSheet ||
                templateName == TemplateNames.CashFlowStatement ||
-               templateName == TemplateNames.TrialBalance ||
                templateName == TemplateNames.GeneralLedger ||
                templateName == TemplateNames.ARaging ||
                templateName == TemplateNames.TaxSummary;
@@ -109,7 +106,6 @@ public static class ReportTemplateFactory
             TemplateNames.IncomeStatement => CreateAccountingTemplate(AccountingReportType.IncomeStatement, "Income Statement", DatePresetNames.YearToDate),
             TemplateNames.BalanceSheet => CreateAccountingTemplate(AccountingReportType.BalanceSheet, "Balance Sheet", DatePresetNames.YearToDate),
             TemplateNames.CashFlowStatement => CreateAccountingTemplate(AccountingReportType.CashFlowStatement, "Cash Flow Statement", DatePresetNames.YearToDate),
-            TemplateNames.TrialBalance => CreateAccountingTemplate(AccountingReportType.TrialBalance, "Trial Balance", DatePresetNames.YearToDate),
             TemplateNames.GeneralLedger => CreateAccountingTemplate(AccountingReportType.GeneralLedger, "General Ledger", DatePresetNames.ThisMonth),
             TemplateNames.ARaging => CreateAccountingTemplate(AccountingReportType.AccountsReceivableAging, "Accounts Receivable Aging", DatePresetNames.AllTime),
             TemplateNames.TaxSummary => CreateAccountingTemplate(AccountingReportType.TaxSummary, "Tax Summary", DatePresetNames.YearToDate),

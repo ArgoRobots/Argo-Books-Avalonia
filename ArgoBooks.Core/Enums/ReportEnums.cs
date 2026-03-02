@@ -238,7 +238,6 @@ public enum AccountingReportType
     IncomeStatement,
     BalanceSheet,
     CashFlowStatement,
-    TrialBalance,
     GeneralLedger,
     AccountsReceivableAging,
     TaxSummary
@@ -391,7 +390,6 @@ public static class ReportEnumExtensions
             AccountingReportType.IncomeStatement => "Income Statement",
             AccountingReportType.BalanceSheet => "Balance Sheet",
             AccountingReportType.CashFlowStatement => "Cash Flow Statement",
-            AccountingReportType.TrialBalance => "Trial Balance",
             AccountingReportType.GeneralLedger => "General Ledger",
             AccountingReportType.AccountsReceivableAging => "Accounts Receivable Aging",
             AccountingReportType.TaxSummary => "Tax Summary",

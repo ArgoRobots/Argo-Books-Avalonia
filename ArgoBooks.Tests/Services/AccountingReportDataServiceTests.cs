@@ -91,20 +91,6 @@ public class AccountingReportDataServiceTests
 
     #endregion
 
-    #region Trial Balance Tests
-
-    [Fact]
-    public void GetReportData_TrialBalance_NullCompanyData_ReturnsValidResult()
-    {
-        var service = new AccountingReportDataService(null, CreateDefaultFilters());
-
-        var result = service.GetReportData(AccountingReportType.TrialBalance);
-
-        Assert.NotNull(result);
-    }
-
-    #endregion
-
     #region General Ledger Tests
 
     [Fact]
