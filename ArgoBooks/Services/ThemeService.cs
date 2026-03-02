@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.Services;
@@ -21,58 +22,58 @@ public class ThemeService : IThemeService
     private static readonly Dictionary<string, AccentColorSet> AccentColors = new()
     {
         ["Blue"] = new AccentColorSet(
-            Primary: Color.Parse("#3B82F6"),
-            Hover: Color.Parse("#2563EB"),
-            Light: Color.Parse("#DBEAFE"),
-            Dark: Color.Parse("#1D4ED8"),
-            Secondary: Color.Parse("#6366F1"),  // Indigo for gradient
-            IconBgLight: Color.Parse("#EFF6FF"),
-            IconBgDark: Color.Parse("#1E3A5F")
+            Primary: Color.Parse(AppColors.Primary),
+            Hover: Color.Parse(AppColors.PrimaryHover),
+            Light: Color.Parse(AppColors.PrimaryLight),
+            Dark: Color.Parse(AppColors.PrimaryDark),
+            Secondary: Color.Parse(AppColors.Indigo),  // Indigo for gradient
+            IconBgLight: Color.Parse(AppColors.PrimaryLightest),
+            IconBgDark: Color.Parse(AppColors.PrimaryDarkBg)
         ),
         ["Green"] = new AccentColorSet(
-            Primary: Color.Parse("#10B981"),
-            Hover: Color.Parse("#059669"),
-            Light: Color.Parse("#D1FAE5"),
-            Dark: Color.Parse("#047857"),
-            Secondary: Color.Parse("#14B8A6"),  // Teal for gradient
-            IconBgLight: Color.Parse("#ECFDF5"),
-            IconBgDark: Color.Parse("#134E4A")
+            Primary: Color.Parse(AppColors.Emerald),
+            Hover: Color.Parse(AppColors.EmeraldHover),
+            Light: Color.Parse(AppColors.EmeraldLight),
+            Dark: Color.Parse(AppColors.EmeraldDark),
+            Secondary: Color.Parse(AppColors.Teal),  // Teal for gradient
+            IconBgLight: Color.Parse(AppColors.EmeraldLightest),
+            IconBgDark: Color.Parse(AppColors.TealDarkest)
         ),
         ["Purple"] = new AccentColorSet(
-            Primary: Color.Parse("#8B5CF6"),
-            Hover: Color.Parse("#7C3AED"),
-            Light: Color.Parse("#EDE9FE"),
-            Dark: Color.Parse("#6D28D9"),
-            Secondary: Color.Parse("#EC4899"),  // Pink for gradient
-            IconBgLight: Color.Parse("#F5F3FF"),
-            IconBgDark: Color.Parse("#3B2066")
+            Primary: Color.Parse(AppColors.Violet),
+            Hover: Color.Parse(AppColors.VioletHover),
+            Light: Color.Parse(AppColors.VioletLight),
+            Dark: Color.Parse(AppColors.VioletDark),
+            Secondary: Color.Parse(AppColors.Pink),  // Pink for gradient
+            IconBgLight: Color.Parse(AppColors.VioletLightest),
+            IconBgDark: Color.Parse(AppColors.PurpleDarkest)
         ),
         ["Pink"] = new AccentColorSet(
-            Primary: Color.Parse("#EC4899"),
-            Hover: Color.Parse("#DB2777"),
-            Light: Color.Parse("#FCE7F3"),
-            Dark: Color.Parse("#BE185D"),
-            Secondary: Color.Parse("#F472B6"),  // Light pink for gradient
-            IconBgLight: Color.Parse("#FDF2F8"),
-            IconBgDark: Color.Parse("#5C1A3D")
+            Primary: Color.Parse(AppColors.Pink),
+            Hover: Color.Parse(AppColors.PinkHover),
+            Light: Color.Parse(AppColors.PinkLight),
+            Dark: Color.Parse(AppColors.PinkDark),
+            Secondary: Color.Parse(AppColors.PinkMedium),  // Light pink for gradient
+            IconBgLight: Color.Parse(AppColors.PinkLightest),
+            IconBgDark: Color.Parse(AppColors.PinkDarkest)
         ),
         ["Orange"] = new AccentColorSet(
-            Primary: Color.Parse("#F97316"),
-            Hover: Color.Parse("#EA580C"),
-            Light: Color.Parse("#FFEDD5"),
-            Dark: Color.Parse("#C2410C"),
-            Secondary: Color.Parse("#FBBF24"),  // Yellow for gradient
-            IconBgLight: Color.Parse("#FFF7ED"),
-            IconBgDark: Color.Parse("#5C2E0A")
+            Primary: Color.Parse(AppColors.Orange),
+            Hover: Color.Parse(AppColors.OrangeHover),
+            Light: Color.Parse(AppColors.OrangeLight),
+            Dark: Color.Parse(AppColors.OrangeDark),
+            Secondary: Color.Parse(AppColors.Amber),  // Yellow for gradient
+            IconBgLight: Color.Parse(AppColors.OrangeLightest),
+            IconBgDark: Color.Parse(AppColors.OrangeDarkest)
         ),
         ["Teal"] = new AccentColorSet(
-            Primary: Color.Parse("#14B8A6"),
-            Hover: Color.Parse("#0D9488"),
-            Light: Color.Parse("#CCFBF1"),
-            Dark: Color.Parse("#0F766E"),
-            Secondary: Color.Parse("#06B6D4"),  // Cyan for gradient
-            IconBgLight: Color.Parse("#F0FDFA"),
-            IconBgDark: Color.Parse("#134E4A")
+            Primary: Color.Parse(AppColors.Teal),
+            Hover: Color.Parse(AppColors.TealHover),
+            Light: Color.Parse(AppColors.TealLight),
+            Dark: Color.Parse(AppColors.TealDark),
+            Secondary: Color.Parse(AppColors.Cyan),  // Cyan for gradient
+            IconBgLight: Color.Parse(AppColors.TealLightest),
+            IconBgDark: Color.Parse(AppColors.TealDarkest)
         )
     };
 

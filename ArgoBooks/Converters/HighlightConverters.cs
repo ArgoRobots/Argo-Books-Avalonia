@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -33,7 +34,7 @@ public class HighlightBrushMultiConverter : IMultiValueConverter
             return resource;
         }
         // Fallback hover color
-        return new SolidColorBrush(Color.Parse("#F3F4F6"));
+        return new SolidColorBrush(Color.Parse(AppColors.GrayLightest));
     }
 }
 
@@ -55,7 +56,7 @@ public class HighlightBorderBrushMultiConverter : IMultiValueConverter
             return resource;
         }
         // Fallback primary color
-        return new SolidColorBrush(Color.Parse("#3B82F6"));
+        return new SolidColorBrush(Color.Parse(AppColors.Primary));
     }
 }
 

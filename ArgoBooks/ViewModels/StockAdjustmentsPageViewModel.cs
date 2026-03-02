@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
@@ -665,10 +666,10 @@ public partial class StockAdjustmentDisplayItem : ObservableObject
     /// </summary>
     public string TypeColor => AdjustmentType switch
     {
-        AdjustmentType.Add => "#22C55E",
-        AdjustmentType.Remove => "#EF4444",
-        AdjustmentType.Set => "#3B82F6",
-        _ => "#6B7280"
+        AdjustmentType.Add => AppColors.Success,
+        AdjustmentType.Remove => AppColors.ExpenseRed,
+        AdjustmentType.Set => AppColors.Primary,
+        _ => AppColors.GrayMedium
     };
 
     /// <summary>
@@ -676,10 +677,10 @@ public partial class StockAdjustmentDisplayItem : ObservableObject
     /// </summary>
     public string TypeBackground => AdjustmentType switch
     {
-        AdjustmentType.Add => "#DCFCE7",
-        AdjustmentType.Remove => "#FEE2E2",
-        AdjustmentType.Set => "#DBEAFE",
-        _ => "#F3F4F6"
+        AdjustmentType.Add => AppColors.SuccessLight,
+        AdjustmentType.Remove => AppColors.ErrorLight,
+        AdjustmentType.Set => AppColors.PrimaryLight,
+        _ => AppColors.GrayLightest
     };
 
     /// <summary>
@@ -697,8 +698,8 @@ public partial class StockAdjustmentDisplayItem : ObservableObject
     /// </summary>
     public string QuantityColor => AdjustmentType switch
     {
-        AdjustmentType.Add => "#22C55E",
-        AdjustmentType.Remove => "#EF4444",
-        _ => "#6B7280"
+        AdjustmentType.Add => AppColors.Success,
+        AdjustmentType.Remove => AppColors.ExpenseRed,
+        _ => AppColors.GrayMedium
     };
 }

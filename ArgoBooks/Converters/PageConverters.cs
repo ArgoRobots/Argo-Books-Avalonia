@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -43,7 +44,7 @@ public class PageActiveBackgroundConverter : IMultiValueConverter
             {
                 return brush;
             }
-            return new SolidColorBrush(Color.Parse("#3B82F6"));
+            return new SolidColorBrush(Color.Parse(AppColors.Primary));
         }
         return Brushes.Transparent;
     }

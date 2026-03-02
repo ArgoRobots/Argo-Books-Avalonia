@@ -255,7 +255,7 @@ public class ChartReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#808080";
+    } = AppColors.ReportGray;
 
     [JsonPropertyName("borderThickness")]
     public int BorderThickness
@@ -269,7 +269,7 @@ public class ChartReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("titleFontFamily")]
     public string TitleFontFamily
@@ -454,42 +454,42 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#5E94FF";
+    } = AppColors.ReportHighlight;
 
     [JsonPropertyName("headerTextColor")]
     public string HeaderTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("dataRowTextColor")]
     public string DataRowTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#000000";
+    } = AppColors.Black;
 
     [JsonPropertyName("gridLineColor")]
     public string GridLineColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#D3D3D3";
+    } = AppColors.ReportBorder;
 
     [JsonPropertyName("baseRowColor")]
     public string BaseRowColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("alternateRowColor")]
     public string AlternateRowColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#F8F8F8";
+    } = AppColors.ReportBackgroundAlt;
 
     [JsonPropertyName("showTitle")]
     public bool ShowTitle
@@ -517,14 +517,14 @@ public class TableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#4A7FD4";
+    } = AppColors.ReportHeaderBg;
 
     [JsonPropertyName("titleTextColor")]
     public string TitleTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("textAlignment")]
     public HorizontalTextAlignment TextAlignment
@@ -700,7 +700,7 @@ public class LabelReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#000000";
+    } = AppColors.Black;
 
     [JsonPropertyName("horizontalAlignment")]
     public HorizontalTextAlignment HorizontalAlignment
@@ -841,7 +841,7 @@ public class DateRangeReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#000000";
+    } = AppColors.Black;
 
     [JsonPropertyName("fontSize")]
     public double FontSize
@@ -991,7 +991,7 @@ public class SummaryReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#F5F5F5";
+    } = AppColors.ReportBackground;
 
     [JsonPropertyName("borderThickness")]
     public int BorderThickness
@@ -1005,7 +1005,7 @@ public class SummaryReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#D3D3D3";
+    } = AppColors.ReportBorder;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
@@ -1120,77 +1120,77 @@ public class AccountingTableReportElement : ReportElementBase
     {
         get;
         set => SetField(ref field, value);
-    } = "#2C3E50";
+    } = AppColors.ReportSlate;
 
     [JsonPropertyName("headerTextColor")]
     public string HeaderTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("sectionHeaderBackgroundColor")]
     public string SectionHeaderBackgroundColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#ECF0F1";
+    } = AppColors.ReportSlateLight;
 
     [JsonPropertyName("sectionHeaderTextColor")]
     public string SectionHeaderTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#2C3E50";
+    } = AppColors.ReportSlate;
 
     [JsonPropertyName("subtotalBackgroundColor")]
     public string SubtotalBackgroundColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#F8F9FA";
+    } = AppColors.NearWhite;
 
     [JsonPropertyName("totalBackgroundColor")]
     public string TotalBackgroundColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#2C3E50";
+    } = AppColors.ReportSlate;
 
     [JsonPropertyName("totalTextColor")]
     public string TotalTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("dataRowTextColor")]
     public string DataRowTextColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#2C3E50";
+    } = AppColors.ReportSlate;
 
     [JsonPropertyName("gridLineColor")]
     public string GridLineColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#D5D8DC";
+    } = AppColors.ReportSilver;
 
     [JsonPropertyName("baseRowColor")]
     public string BaseRowColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#FFFFFF";
+    } = AppColors.White;
 
     [JsonPropertyName("alternateRowColor")]
     public string AlternateRowColor
     {
         get;
         set => SetField(ref field, value);
-    } = "#F8F9FA";
+    } = AppColors.NearWhite;
 
     [JsonPropertyName("dataRowHeight")]
     public double DataRowHeight

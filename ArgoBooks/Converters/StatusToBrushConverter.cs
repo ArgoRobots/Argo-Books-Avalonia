@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
@@ -18,7 +19,7 @@ public class StatusToBrushConverter : IValueConverter
     /// </summary>
     /// <param name="statusColors">Dictionary mapping status strings to hex color codes.</param>
     /// <param name="defaultColor">Default hex color if status is not found.</param>
-    public StatusToBrushConverter(Dictionary<string, string> statusColors, string defaultColor = "#F3F4F6")
+    public StatusToBrushConverter(Dictionary<string, string> statusColors, string defaultColor = AppColors.GrayLightest)
     {
         _statusColors = statusColors;
         _defaultColor = defaultColor;
@@ -45,24 +46,24 @@ public static class StatusConverters
     #region Color Palettes
 
     // Background colors
-    private const string GreenBg = "#DCFCE7";
-    private const string YellowBg = "#FEF3C7";
-    private const string RedBg = "#FEE2E2";
-    private const string BlueBg = "#DBEAFE";
-    private const string PurpleBg = "#F3E8FF";
-    private const string IndigoBg = "#E0E7FF";
-    private const string OrangeBg = "#FFEDD5";
-    private const string GrayBg = "#F3F4F6";
+    private const string GreenBg = AppColors.SuccessLight;
+    private const string YellowBg = AppColors.WarningLight;
+    private const string RedBg = AppColors.ErrorLight;
+    private const string BlueBg = AppColors.PrimaryLight;
+    private const string PurpleBg = AppColors.PurpleLight;
+    private const string IndigoBg = AppColors.IndigoLight;
+    private const string OrangeBg = AppColors.OrangeLight;
+    private const string GrayBg = AppColors.GrayLightest;
 
     // Foreground colors
-    private const string GreenFg = "#166534";
-    private const string YellowFg = "#92400E";
-    private const string RedFg = "#DC2626";
-    private const string BlueFg = "#1E40AF";
-    private const string PurpleFg = "#7C3AED";
-    private const string IndigoFg = "#4F46E5";
-    private const string OrangeFg = "#C2410C";
-    private const string GrayFg = "#4B5563";
+    private const string GreenFg = AppColors.SuccessText;
+    private const string YellowFg = AppColors.WarningText;
+    private const string RedFg = AppColors.Error;
+    private const string BlueFg = AppColors.PrimaryText;
+    private const string PurpleFg = AppColors.VioletHover;
+    private const string IndigoFg = AppColors.IndigoText;
+    private const string OrangeFg = AppColors.OrangeDark;
+    private const string GrayFg = AppColors.GrayText;
 
     #endregion
 

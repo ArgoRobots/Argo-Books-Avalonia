@@ -1,3 +1,4 @@
+using ArgoBooks.Core;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
@@ -235,7 +236,7 @@ public partial class CategoryModalsViewModel : ObservableObject
             ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
-            Color = "#4A90D9",
+            Color = AppColors.CategoryDefault,
             Icon = ModalSelectedIcon
         };
 

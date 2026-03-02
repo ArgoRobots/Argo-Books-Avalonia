@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -51,7 +52,7 @@ public static class BoolConverters
                 {
                     return brush;
                 }
-                return new SolidColorBrush(Color.Parse("#F3F4F6"));
+                return new SolidColorBrush(Color.Parse(AppColors.GrayLightest));
             }
             return Brushes.Transparent;
         });
@@ -62,7 +63,7 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToStatusBackground =
         new FuncValueConverter<bool, IBrush>(value =>
-            new SolidColorBrush(Color.Parse(value ? "#DCFCE7" : "#F3F4F6")));
+            new SolidColorBrush(Color.Parse(value ? AppColors.SuccessLight : AppColors.GrayLightest)));
 
     /// <summary>
     /// Converts bool (hasError) to border brush.
@@ -79,7 +80,7 @@ public static class BoolConverters
                 {
                     return brush;
                 }
-                return new SolidColorBrush(Color.Parse("#dc2626"));
+                return new SolidColorBrush(Color.Parse(AppColors.Error));
             }
             // Return BorderBrush for no error state to preserve the control's default border
             if (Application.Current?.Resources != null &&
@@ -88,7 +89,7 @@ public static class BoolConverters
             {
                 return borderBrush;
             }
-            return new SolidColorBrush(Color.Parse("#e5e7eb"));
+            return new SolidColorBrush(Color.Parse(AppColors.ChartGrid));
         });
 
     /// <summary>
@@ -97,7 +98,7 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToStatusForeground =
         new FuncValueConverter<bool, IBrush>(value =>
-            new SolidColorBrush(Color.Parse(value ? "#166534" : "#4B5563")));
+            new SolidColorBrush(Color.Parse(value ? AppColors.SuccessText : AppColors.GrayText)));
 
     /// <summary>
     /// Converts bool (isPaid) to paid badge background.
@@ -105,7 +106,7 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToPaidBackground =
         new FuncValueConverter<bool, IBrush>(value =>
-            new SolidColorBrush(Color.Parse(value ? "#DCFCE7" : "#FEF2F2")));
+            new SolidColorBrush(Color.Parse(value ? AppColors.SuccessLight : AppColors.ErrorLightest)));
 
     /// <summary>
     /// Converts bool (isPaid) to paid badge foreground.
@@ -113,7 +114,7 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToPaidForeground =
         new FuncValueConverter<bool, IBrush>(value =>
-            new SolidColorBrush(Color.Parse(value ? "#166534" : "#991B1B")));
+            new SolidColorBrush(Color.Parse(value ? AppColors.SuccessText : AppColors.ErrorDarkest)));
 
     /// <summary>
     /// Converts bool (isPaid) to paid badge text.
@@ -286,8 +287,8 @@ public class BoolToStringConverter : IValueConverter
 /// </summary>
 public class BoolToColorConverter : IValueConverter
 {
-    public string TrueColor { get; set; } = "#DC2626";
-    public object? FalseColor { get; set; } = "#374151";
+    public string TrueColor { get; set; } = AppColors.Error;
+    public object? FalseColor { get; set; } = AppColors.ChartAxis;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -322,7 +323,7 @@ public class BoolToColorConverter : IValueConverter
             return textBrush;
         }
 
-        return new SolidColorBrush(Color.Parse("#374151"));
+        return new SolidColorBrush(Color.Parse(AppColors.ChartAxis));
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -348,7 +349,7 @@ public class BoolToTabBackgroundConverter : IValueConverter
             {
                 return brush;
             }
-            return new SolidColorBrush(Color.Parse("#3B82F6"));
+            return new SolidColorBrush(Color.Parse(AppColors.Primary));
         }
         return Brushes.Transparent;
     }
@@ -383,7 +384,7 @@ public class BoolToTabForegroundConverter : IValueConverter
         {
             return brush;
         }
-        return new SolidColorBrush(Color.Parse("#6B7280"));
+        return new SolidColorBrush(Color.Parse(AppColors.GrayMedium));
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

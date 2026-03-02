@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Reports;
@@ -30,15 +31,15 @@ public class ChartLoaderService
     private readonly List<(DateTime[] dates, Action<Axis[]> setter)> _dateAxisRegistrations = new();
     private double _lastChartWidth;
 
-    // Chart colors
-    private static readonly SKColor RevenueColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
-    private static readonly SKColor ExpenseColor = SKColor.Parse("#EF4444"); // Red
-    private static readonly SKColor ProfitColor = SKColor.Parse("#22C55E"); // Green
-    private static readonly SKColor CustomerColor = SKColor.Parse("#3B82F6"); // Blue (matches accent theme)
+    // Chart colors (from AppColors)
+    private static readonly SKColor RevenueColor = SKColor.Parse(AppColors.Primary);
+    private static readonly SKColor ExpenseColor = SKColor.Parse(AppColors.ExpenseRed);
+    private static readonly SKColor ProfitColor = SKColor.Parse(AppColors.Success);
+    private static readonly SKColor CustomerColor = SKColor.Parse(AppColors.Primary);
 
     // Theme colors (will be updated based on current theme)
-    private SKColor _textColor = SKColor.Parse("#F9FAFB"); // Light text for dark theme
-    private SKColor _gridColor = SKColor.Parse("#374151"); // Grid lines
+    private SKColor _textColor = SKColor.Parse(AppColors.TextDark);
+    private SKColor _gridColor = SKColor.Parse(AppColors.ChartAxis);
 
     /// <summary>
     /// Gets the legend text paint based on the current theme.
@@ -46,7 +47,7 @@ public class ChartLoaderService
     public static SolidColorPaint GetLegendTextPaint()
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
-        var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
+        var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
         return new SolidColorPaint(textColor) { FontFamily = "Segoe UI" };
     }
 
@@ -74,7 +75,7 @@ public class ChartLoaderService
     public static LabelVisual CreateChartTitle(string text)
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
-        var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
+        var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
 
         // Handle titles that may already be translated or contain dynamic values
         // If the text contains a colon followed by a value (e.g., "Total profits: $7,246.51"),
@@ -393,13 +394,13 @@ public class ChartLoaderService
     {
         if (isDarkTheme)
         {
-            _textColor = SKColor.Parse("#F9FAFB");
-            _gridColor = SKColor.Parse("#374151");
+            _textColor = SKColor.Parse(AppColors.TextDark);
+            _gridColor = SKColor.Parse(AppColors.ChartAxis);
         }
         else
         {
-            _textColor = SKColor.Parse("#111827");
-            _gridColor = SKColor.Parse("#E5E7EB");
+            _textColor = SKColor.Parse(AppColors.TextLightAlt);
+            _gridColor = SKColor.Parse(AppColors.ChartGrid);
         }
     }
 
@@ -1819,7 +1820,7 @@ public class ChartLoaderService
             series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ExpenseColor));
             if (expenseReturnValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse("#9333EA")));
+                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse(AppColors.PurpleDark)));
             }
         }
 
@@ -1894,7 +1895,7 @@ public class ChartLoaderService
             series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ExpenseColor));
             if (revenueLossValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse("#9333EA")));
+                series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse(AppColors.PurpleDark)));
             }
         }
 
@@ -2153,21 +2154,7 @@ public class ChartLoaderService
     /// <returns>A hex color string for the series.</returns>
     private static string GetColorHexForIndex(int index)
     {
-        string[] colors =
-        [
-            "#3B82F6", // Blue
-            "#EF4444", // Red
-            "#22C55E", // Green
-            "#F59E0B", // Amber
-            "#8B5CF6", // Purple
-            "#EC4899", // Pink
-            "#14B8A6", // Teal
-            "#F97316", // Orange
-            "#6366F1", // Indigo
-            "#84CC16", // Lime
-        ];
-
-        return colors[index % colors.Length];
+        return AppColors.Palette[index % AppColors.Palette.Length];
     }
 
     /// <summary>
@@ -2244,7 +2231,7 @@ public class ChartLoaderService
         {
             var otherValue = Math.Round(otherItems.Sum(p => p.Value), 2);
             var otherPercentage = total > 0 ? (otherValue / total) * 100 : 0;
-            var otherColorHex = "#9CA3AF"; // Gray for "Other"
+            var otherColorHex = AppColors.Gray;
 
             series.Add(new PieSeries<double>
             {

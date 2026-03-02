@@ -47,7 +47,7 @@ public class Category
     /// Color code for UI display (hex format).
     /// </summary>
     [JsonPropertyName("color")]
-    public string Color { get; set; } = "#4A90D9";
+    public string Color { get; set; } = AppColors.CategoryDefault;
 
     /// <summary>
     /// Icon emoji for UI display.

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Services.InvoiceTemplates;
@@ -76,22 +77,22 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     // Colors
     [ObservableProperty]
-    private string _primaryColor = "#2563eb";
+    private string _primaryColor = AppColors.PrimaryHover;
 
     [ObservableProperty]
-    private string _secondaryColor = "#e5e7eb";
+    private string _secondaryColor = AppColors.ChartGrid;
 
     [ObservableProperty]
-    private string _accentColor = "#059669";
+    private string _accentColor = AppColors.EmeraldHover;
 
     [ObservableProperty]
-    private string _headerColor = "#2563eb";
+    private string _headerColor = AppColors.PrimaryHover;
 
     [ObservableProperty]
-    private string _textColor = "#1f2937";
+    private string _textColor = AppColors.TextLight;
 
     [ObservableProperty]
-    private string _backgroundColor = "#ffffff";
+    private string _backgroundColor = AppColors.White;
 
     // Dynamic color labels per template type
     public string PrimaryColorLabel => SelectedBaseTemplate switch

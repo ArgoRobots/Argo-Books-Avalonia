@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -26,31 +27,31 @@ public partial class ReportsPageViewModel : ViewModelBase
     [
         new(ReportTemplateFactory.TemplateNames.MonthlyRevenue, "Revenue Overview", "Summarize monthly revenue data",
             "M3 13.125C3 12.504 3.504 12 4.125 12H6.375C6.996 12 7.5 12.504 7.5 13.125V19.875C7.5 20.496 6.996 21 6.375 21H4.125C3.504 21 3 20.496 3 19.875V13.125ZM9.75 8.625C9.75 8.004 10.254 7.5 10.875 7.5H13.125C13.746 7.5 14.25 8.004 14.25 8.625V19.875C14.25 20.496 13.746 21 13.125 21H10.875C10.254 21 9.75 20.496 9.75 19.875V8.625ZM16.5 4.125C16.5 3.504 17.004 3 17.625 3H19.875C20.496 3 21 3.504 21 4.125V19.875C21 20.496 20.496 21 19.875 21H17.625C17.004 21 16.5 20.496 16.5 19.875V4.125Z",
-            "#2196F3", "#E3F2FD"),
+            AppColors.MdBlue, AppColors.MdBlueLight),
         new(ReportTemplateFactory.TemplateNames.FinancialOverview, "Financial Overview", "Full financial breakdown",
             "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z",
-            "#4CAF50", "#E8F5E9"),
+            AppColors.MdGreen, AppColors.MdGreenLight),
         new(ReportTemplateFactory.TemplateNames.PerformanceAnalysis, "Performance Analysis", "Business performance metrics",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
-            "#FF9800", "#FFF3E0"),
+            AppColors.MdOrange, AppColors.MdOrangeLight),
         new(ReportTemplateFactory.TemplateNames.ReturnsAnalysis, "Returns Analysis", "Analyze product returns",
             "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z",
-            "#F44336", "#FFEBEE"),
+            AppColors.MdRed, AppColors.MdRedLight),
         new(ReportTemplateFactory.TemplateNames.GeographicAnalysis, "Geographic Analysis", "Sales by region",
             "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
-            "#9C27B0", "#F3E5F5"),
+            AppColors.MdPurple, AppColors.MdPurpleLight),
         new(ReportTemplateFactory.TemplateNames.LossesAnalysis, "Losses Analysis", "Analyze losses and damages",
             "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z",
-            "#E91E63", "#FCE4EC"),
+            AppColors.MdPink, AppColors.MdPinkLight),
         new(ReportTemplateFactory.TemplateNames.CustomerAnalysis, "Customer Analysis", "Analyze customer trends",
             "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
-            "#00BCD4", "#E0F7FA"),
+            AppColors.MdCyan, AppColors.MdCyanLight),
         new(ReportTemplateFactory.TemplateNames.ExpenseBreakdown, "Expense Breakdown", "Analyze spending patterns",
             "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
-            "#FF5722", "#FBE9E7"),
+            AppColors.MdDeepOrange, AppColors.MdDeepOrangeLight),
         new(ReportTemplateFactory.TemplateNames.Custom, "Blank Template", "Start from scratch",
             "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
-            "#9E9E9E", "#F5F5F5")
+            AppColors.MdGray, AppColors.ReportBackground)
     ];
 
     /// <summary>
@@ -60,22 +61,22 @@ public partial class ReportsPageViewModel : ViewModelBase
     [
         new(ReportTemplateFactory.TemplateNames.IncomeStatement, "Income Statement", "Shows if your business made or lost money",
             "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM7 17h5v-1H7v1zm0-2h10v-1H7v1zm0-2h10v-1H7v1z",
-            "#27AE60", "#E8F8F5"),
+            AppColors.FlatGreen, AppColors.FlatGreenLight),
         new(ReportTemplateFactory.TemplateNames.BalanceSheet, "Balance Sheet", "Snapshot of what you own and owe",
             "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM10 9h8v1.5h-8V9zm0 3h4v1.5h-4V12zm0-6h8v1.5h-8V6z",
-            "#2980B9", "#EBF5FB"),
+            AppColors.FlatBlue, AppColors.FlatBlueLight),
         new(ReportTemplateFactory.TemplateNames.CashFlowStatement, "Cash Flow", "Where your cash came from and went",
             "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
-            "#8E44AD", "#F5EEF8"),
+            AppColors.FlatPurple, AppColors.FlatPurpleLight),
         new(ReportTemplateFactory.TemplateNames.GeneralLedger, "General Ledger", "Full list of every transaction",
             "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z",
-            "#2C3E50", "#EBEDEF"),
+            AppColors.ReportSlate, AppColors.FlatSlateLight),
         new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Who owes you and for how long",
             "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.96-3.12 3.19z",
-            "#16A085", "#E8F6F3"),
+            AppColors.FlatTeal, AppColors.FlatTealLight),
         new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax you collected vs. tax you paid",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
-            "#D35400", "#FBEEE6")
+            AppColors.FlatOrange, AppColors.FlatOrangeLight)
     ];
 
     #endregion
@@ -1395,7 +1396,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     private PageOrientation _originalPageOrientation;
     private double _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft;
     private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers, _originalShowCompanyDetails;
-    private string _originalBackgroundColor = "#FFFFFF";
+    private string _originalBackgroundColor = AppColors.White;
     private double _originalTitleFontSize = 18;
     private string _originalPageSettingsDatePreset = DatePresetNames.ThisMonth;
 
@@ -1902,7 +1903,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _showCompanyDetails;
 
     [ObservableProperty]
-    private string _backgroundColor = "#FFFFFF";
+    private string _backgroundColor = AppColors.White;
 
     [ObservableProperty]
     private double _titleFontSize = 18;
@@ -2515,24 +2516,24 @@ public partial class ReportsPageViewModel : ViewModelBase
         ChartCategories.Clear();
 
         // Define category colors and icons
-        const string revenueColor = "#2196F3";       // Blue
-        const string revenueLight = "#E3F2FD";
-        const string expenseColor = "#F44336";       // Red
-        const string expenseLight = "#FFEBEE";
-        const string financialColor = "#4CAF50";     // Green
-        const string financialLight = "#E8F5E9";
-        const string transactionColor = "#FF9800";   // Orange
-        const string transactionLight = "#FFF3E0";
-        const string geographicColor = "#9C27B0";    // Purple
-        const string geographicLight = "#F3E5F5";
-        const string accountantColor = "#00BCD4";    // Cyan
-        const string accountantLight = "#E0F7FA";
-        const string returnColor = "#E91E63";        // Pink
-        const string returnLight = "#FCE4EC";
-        const string lossColor = "#795548";          // Brown
-        const string lossLight = "#EFEBE9";
-        const string customerColor = "#3F51B5";      // Indigo
-        const string customerLight = "#E8EAF6";
+        const string revenueColor = AppColors.MdBlue;           // Blue
+        const string revenueLight = AppColors.MdBlueLight;
+        const string expenseColor = AppColors.MdRed;            // Red
+        const string expenseLight = AppColors.MdRedLight;
+        const string financialColor = AppColors.MdGreen;        // Green
+        const string financialLight = AppColors.MdGreenLight;
+        const string transactionColor = AppColors.MdOrange;     // Orange
+        const string transactionLight = AppColors.MdOrangeLight;
+        const string geographicColor = AppColors.MdPurple;      // Purple
+        const string geographicLight = AppColors.MdPurpleLight;
+        const string accountantColor = AppColors.MdCyan;        // Cyan
+        const string accountantLight = AppColors.MdCyanLight;
+        const string returnColor = AppColors.MdPink;            // Pink
+        const string returnLight = AppColors.MdPinkLight;
+        const string lossColor = AppColors.MdBrown;             // Brown
+        const string lossLight = AppColors.MdBrownLight;
+        const string customerColor = AppColors.MdIndigo;        // Indigo
+        const string customerLight = AppColors.MdIndigoLight;
 
         // SVG icons for different chart types
         const string lineChartIcon = "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z";

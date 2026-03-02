@@ -1,3 +1,4 @@
+using ArgoBooks.Core;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -25,7 +26,7 @@ public partial class LoginModalViewModel : ViewModelBase
     private string _accountInitials = string.Empty;
 
     [ObservableProperty]
-    private Color _accountColor = Color.Parse("#3B82F6");
+    private Color _accountColor = Color.Parse(AppColors.Primary);
 
     [ObservableProperty]
     private string _password = string.Empty;

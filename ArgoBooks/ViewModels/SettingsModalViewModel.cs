@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Services;
@@ -261,12 +262,12 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     public ObservableCollection<AccentColorItem> AccentColors { get; } =
     [
-        new("Blue", "#3B82F6"),
-        new("Green", "#10B981"),
-        new("Purple", "#8B5CF6"),
-        new("Pink", "#EC4899"),
-        new("Orange", "#F97316"),
-        new("Teal", "#14B8A6")
+        new("Blue", AppColors.Primary),
+        new("Green", AppColors.Emerald),
+        new("Purple", AppColors.Violet),
+        new("Pink", AppColors.Pink),
+        new("Orange", AppColors.Orange),
+        new("Teal", AppColors.Teal)
     ];
 
     #endregion

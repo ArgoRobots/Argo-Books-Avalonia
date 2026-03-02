@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
@@ -557,20 +558,20 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
     private static string GetStatusColor(InventoryStatus status) => status switch
     {
-        InventoryStatus.InStock => "#22C55E",
-        InventoryStatus.LowStock => "#F59E0B",
-        InventoryStatus.OutOfStock => "#EF4444",
-        InventoryStatus.Overstock => "#8B5CF6",
-        _ => "#6B7280"
+        InventoryStatus.InStock => AppColors.Success,
+        InventoryStatus.LowStock => AppColors.Warning,
+        InventoryStatus.OutOfStock => AppColors.ExpenseRed,
+        InventoryStatus.Overstock => AppColors.Violet,
+        _ => AppColors.GrayMedium
     };
 
     private static string GetStatusBackground(InventoryStatus status) => status switch
     {
-        InventoryStatus.InStock => "#DCFCE7",
-        InventoryStatus.LowStock => "#FEF3C7",
-        InventoryStatus.OutOfStock => "#FEE2E2",
-        InventoryStatus.Overstock => "#EDE9FE",
-        _ => "#F3F4F6"
+        InventoryStatus.InStock => AppColors.SuccessLight,
+        InventoryStatus.LowStock => AppColors.WarningLight,
+        InventoryStatus.OutOfStock => AppColors.ErrorLight,
+        InventoryStatus.Overstock => AppColors.VioletLight,
+        _ => AppColors.GrayLightest
     };
 
     #endregion

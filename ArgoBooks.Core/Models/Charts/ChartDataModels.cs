@@ -42,7 +42,7 @@ public class ChartSeriesData
     /// <summary>
     /// The color for this series in hex format (e.g., "#22C55E").
     /// </summary>
-    public string Color { get; set; } = "#000000";
+    public string Color { get; set; } = AppColors.Black;
 
     /// <summary>
     /// The data points in this series.

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
@@ -754,11 +755,11 @@ public partial class InsightsPageViewModel : ViewModelBase
     {
         return severity switch
         {
-            InsightSeverity.Success => new SolidColorBrush(Color.Parse("#22C55E")),  // Green
-            InsightSeverity.Info => new SolidColorBrush(Color.Parse("#3B82F6")),     // Blue
-            InsightSeverity.Warning => new SolidColorBrush(Color.Parse("#F59E0B")),  // Orange
-            InsightSeverity.Critical => new SolidColorBrush(Color.Parse("#EF4444")), // Red
-            _ => new SolidColorBrush(Color.Parse("#8B5CF6"))                          // Purple (default)
+            InsightSeverity.Success => new SolidColorBrush(Color.Parse(AppColors.Success)),  // Green
+            InsightSeverity.Info => new SolidColorBrush(Color.Parse(AppColors.Primary)),     // Blue
+            InsightSeverity.Warning => new SolidColorBrush(Color.Parse(AppColors.Warning)),  // Orange
+            InsightSeverity.Critical => new SolidColorBrush(Color.Parse(AppColors.ExpenseRed)), // Red
+            _ => new SolidColorBrush(Color.Parse(AppColors.Violet))                          // Purple (default)
         };
     }
 
