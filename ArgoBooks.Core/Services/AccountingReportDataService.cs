@@ -537,12 +537,12 @@ public class AccountingReportDataService
 
         // Operating Activities
         // Exclude invoice-linked revenue to avoid double counting with Payments.
-        // Uses post-tax (total) amounts because Cash Flow tracks actual cash movements including tax.
+        // Uses pre-tax (subtotal) amounts, consistent with Dashboard and Income Statement.
         var cashFromSales = _companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
-            .Sum(r => r.EffectiveTotalUSD);
+            .Sum(r => r.EffectiveSubtotalUSD);
 
         var cashFromInvoicePayments = _companyData.Payments
             .Where(p => IsInDateRange(p.Date))
@@ -550,7 +550,7 @@ public class AccountingReportDataService
 
         var cashPaidForExpenses = _companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
-            .Sum(e => e.EffectiveTotalUSD);
+            .Sum(e => e.EffectiveSubtotalUSD);
 
         var totalOperating = cashFromSales + cashFromInvoicePayments - cashPaidForExpenses;
 
