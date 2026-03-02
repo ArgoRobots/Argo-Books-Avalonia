@@ -2796,6 +2796,13 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     private void ApplyFiltersToConfiguration()
     {
+        // Custom (charts) tab always uses landscape orientation
+        if (IsChartsTabSelected)
+        {
+            PageOrientation = PageOrientation.Landscape;
+            Configuration.PageOrientation = PageOrientation.Landscape;
+        }
+
         Configuration.Title = ReportName;
         Configuration.Filters.TransactionType = SelectedTransactionType;
         Configuration.Filters.DatePresetName = SelectedDatePreset;
