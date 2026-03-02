@@ -106,27 +106,6 @@ public class AccountingReportDataService
     }
 
     /// <summary>
-    /// Gets the earliest transaction date across all data in the company.
-    /// Delegates to CompanyData.GetEarliestTransactionDate().
-    /// </summary>
-    private DateTime GetEarliestTransactionDate()
-    {
-        return _companyData?.GetEarliestTransactionDate() ?? DateTime.Today;
-    }
-
-    /// <summary>
-    /// Gets the effective start date, replacing the "All Time" sentinel (year 2000) with
-    /// the actual earliest transaction date from the company data.
-    /// </summary>
-    private DateTime GetEffectiveStartDate()
-    {
-        if (_filters.StartDate.HasValue && _filters.StartDate.Value.Year <= 2000)
-            return GetEarliestTransactionDate();
-        return _filters.StartDate ?? DateTime.Today;
-    }
-
-
-    /// <summary>
     /// Dispatches to the appropriate report generation method based on report type.
     /// </summary>
     public AccountingTableData GetReportData(AccountingReportType reportType)
