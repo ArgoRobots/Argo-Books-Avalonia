@@ -14,9 +14,6 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     private readonly IPlatformService _platformService;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    private GlobalSettings _globalSettings = new();
-    private CompanySettings? _companySettings;
-
     /// <summary>
     /// Initializes a new instance of the GlobalSettingsService.
     /// </summary>
@@ -41,10 +38,10 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     }
 
     /// <inheritdoc />
-    public GlobalSettings GlobalSettings => _globalSettings;
+    public GlobalSettings GlobalSettings { get; private set; } = new();
 
     /// <inheritdoc />
-    public CompanySettings? CompanySettings => _companySettings;
+    public CompanySettings? CompanySettings { get; private set; }
 
     /// <inheritdoc />
     public async Task LoadGlobalSettingsAsync(CancellationToken cancellationToken = default)
@@ -53,7 +50,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
 
         if (!File.Exists(settingsPath))
         {
-            _globalSettings = new GlobalSettings();
+            GlobalSettings = new GlobalSettings();
             return;
         }
 
@@ -65,12 +62,12 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
                 _jsonOptions,
                 cancellationToken);
 
-            _globalSettings = settings ?? new GlobalSettings();
+            GlobalSettings = settings ?? new GlobalSettings();
         }
         catch (JsonException)
         {
             // Corrupted settings file, use defaults
-            _globalSettings = new GlobalSettings();
+            GlobalSettings = new GlobalSettings();
         }
     }
 
@@ -88,7 +85,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         await using var fileStream = File.Create(settingsPath);
         await JsonSerializer.SerializeAsync(
             fileStream,
-            _globalSettings,
+            GlobalSettings,
             _jsonOptions,
             cancellationToken);
     }
@@ -102,7 +99,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
 
         if (!File.Exists(settingsPath))
         {
-            _companySettings = new CompanySettings();
+            CompanySettings = new CompanySettings();
             return;
         }
 
@@ -114,12 +111,12 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
                 _jsonOptions,
                 cancellationToken);
 
-            _companySettings = settings ?? new CompanySettings();
+            CompanySettings = settings ?? new CompanySettings();
         }
         catch (JsonException)
         {
             // Corrupted settings file, use defaults
-            _companySettings = new CompanySettings();
+            CompanySettings = new CompanySettings();
         }
     }
 
@@ -128,7 +125,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     {
         ArgumentException.ThrowIfNullOrEmpty(tempDirectory);
 
-        if (_companySettings == null)
+        if (CompanySettings == null)
             return;
 
         var settingsPath = Path.Combine(tempDirectory, CompanySettingsFileName);
@@ -137,7 +134,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         await using var fileStream = File.Create(settingsPath);
         await JsonSerializer.SerializeAsync(
             fileStream,
-            _companySettings,
+            CompanySettings,
             _jsonOptions,
             cancellationToken);
     }
@@ -145,7 +142,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     /// <inheritdoc />
     public void ClearCompanySettings()
     {
-        _companySettings = null;
+        CompanySettings = null;
     }
 
     /// <inheritdoc />
@@ -159,7 +156,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
             return;
 
         var normalizedPath = _platformService.NormalizePath(filePath);
-        var recentCompanies = _globalSettings.RecentCompanies;
+        var recentCompanies = GlobalSettings.RecentCompanies;
 
         // Remove existing entry if present (using platform-appropriate comparison)
         var existingIndex = recentCompanies.FindIndex(p =>
@@ -186,7 +183,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         ArgumentException.ThrowIfNullOrEmpty(filePath);
 
         var normalizedPath = _platformService.NormalizePath(filePath);
-        var recentCompanies = _globalSettings.RecentCompanies;
+        var recentCompanies = GlobalSettings.RecentCompanies;
 
         // Remove using platform-appropriate comparison
         var existingIndex = recentCompanies.FindIndex(p =>
@@ -215,7 +212,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         if (!_platformService.SupportsFileSystem)
         {
             // Browser platform - return all without file existence check, but exclude sample company
-            return _globalSettings.RecentCompanies
+            return GlobalSettings.RecentCompanies
                 .Where(p => !string.Equals(p, samplePath, StringComparison.OrdinalIgnoreCase))
                 .ToList()
                 .AsReadOnly();
@@ -223,7 +220,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
 
         // Filter to existing files, exclude sample company, and deduplicate using platform-appropriate comparison
         // (handles case-insensitive duplicates on Windows)
-        return _globalSettings.RecentCompanies
+        return GlobalSettings.RecentCompanies
             .Where(p => File.Exists(p) && !string.Equals(p, samplePath, StringComparison.OrdinalIgnoreCase))
             .Distinct(_platformService.PathComparer)
             .ToList()
@@ -239,7 +236,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         if (!_platformService.SupportsFileSystem)
             return 0;
 
-        var recentCompanies = _globalSettings.RecentCompanies;
+        var recentCompanies = GlobalSettings.RecentCompanies;
         var originalCount = recentCompanies.Count;
 
         // Remove entries where file doesn't exist
@@ -278,14 +275,14 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     /// <returns>The created company settings.</returns>
     public CompanySettings CreateCompanySettings(string companyName)
     {
-        _companySettings = new CompanySettings
+        CompanySettings = new CompanySettings
         {
             Company = new CompanyInfo
             {
                 Name = companyName
             }
         };
-        return _companySettings;
+        return CompanySettings;
     }
 
     /// <summary>
@@ -294,7 +291,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     /// <param name="settings">Company settings to use.</param>
     public void SetCompanySettings(CompanySettings settings)
     {
-        _companySettings = settings ?? throw new ArgumentNullException(nameof(settings));
+        CompanySettings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
 
     private string GetGlobalSettingsPath()
@@ -305,12 +302,12 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     #region IGlobalSettingsService Implementation
 
     /// <inheritdoc />
-    GlobalSettings IGlobalSettingsService.GetSettings() => _globalSettings;
+    GlobalSettings IGlobalSettingsService.GetSettings() => GlobalSettings;
 
     /// <inheritdoc />
     void IGlobalSettingsService.SaveSettings(GlobalSettings settings)
     {
-        _globalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
+        GlobalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
         _ = SaveGlobalSettingsAsync();
     }
 
@@ -318,13 +315,13 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     async Task<GlobalSettings> IGlobalSettingsService.LoadAsync()
     {
         await LoadGlobalSettingsAsync();
-        return _globalSettings;
+        return GlobalSettings;
     }
 
     /// <inheritdoc />
     Task IGlobalSettingsService.SaveAsync(GlobalSettings settings)
     {
-        _globalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
+        GlobalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
         return SaveGlobalSettingsAsync();
     }
 

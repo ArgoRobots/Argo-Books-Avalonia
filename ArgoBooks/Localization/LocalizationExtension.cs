@@ -11,34 +11,28 @@ namespace ArgoBooks.Localization;
 /// </summary>
 public class LocExtension : MarkupExtension
 {
-    private string _key = string.Empty;
-
-    public string Key
-    {
-        get => _key;
-        set => _key = value;
-    }
+    public string Key { get; set; } = string.Empty;
 
     public LocExtension() { }
 
     public LocExtension(string key)
     {
-        _key = key;
+        Key = key;
     }
 
     public LocExtension(string part1, string part2)
     {
-        _key = $"{part1}'{part2}";
+        Key = $"{part1}'{part2}";
     }
 
     public LocExtension(string part1, string part2, string part3)
     {
-        _key = $"{part1}'{part2}'{part3}";
+        Key = $"{part1}'{part2}'{part3}";
     }
 
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
-        if (string.IsNullOrEmpty(_key))
+        if (string.IsNullOrEmpty(Key))
             return string.Empty;
 
         // Get the target object and property
@@ -48,14 +42,14 @@ public class LocExtension : MarkupExtension
             provideTarget.TargetProperty is AvaloniaProperty targetProperty)
         {
             // Register this binding for refresh on language change
-            LocalizationManager.Register(targetObject, targetProperty, _key);
+            LocalizationManager.Register(targetObject, targetProperty, Key);
 
             // Return the current translation
-            return LanguageService.Instance.Translate(_key);
+            return LanguageService.Instance.Translate(Key);
         }
 
         // Fallback: return translated value directly
-        return LanguageService.Instance.Translate(_key);
+        return LanguageService.Instance.Translate(Key);
     }
 }
 

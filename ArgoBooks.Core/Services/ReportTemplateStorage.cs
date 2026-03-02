@@ -14,36 +14,35 @@ public class ReportTemplateStorage
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private readonly string _templatesDirectory;
     private readonly IErrorLogger? _errorLogger;
 
     public ReportTemplateStorage(IErrorLogger? errorLogger = null)
     {
         // Default to AppData/Roaming/ArgoBooks/ReportTemplates
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        _templatesDirectory = Path.Combine(appData, "ArgoBooks", "ReportTemplates");
+        TemplatesDirectory = Path.Combine(appData, "ArgoBooks", "ReportTemplates");
         _errorLogger = errorLogger;
     }
 
     public ReportTemplateStorage(string templatesDirectory, IErrorLogger? errorLogger = null)
     {
-        _templatesDirectory = templatesDirectory;
+        TemplatesDirectory = templatesDirectory;
         _errorLogger = errorLogger;
     }
 
     /// <summary>
     /// Gets the templates directory path.
     /// </summary>
-    public string TemplatesDirectory => _templatesDirectory;
+    public string TemplatesDirectory { get; }
 
     /// <summary>
     /// Ensures the templates directory exists.
     /// </summary>
     private void EnsureDirectoryExists()
     {
-        if (!Directory.Exists(_templatesDirectory))
+        if (!Directory.Exists(TemplatesDirectory))
         {
-            Directory.CreateDirectory(_templatesDirectory);
+            Directory.CreateDirectory(TemplatesDirectory);
         }
     }
 
@@ -57,7 +56,7 @@ public class ReportTemplateStorage
             EnsureDirectoryExists();
 
             var sanitizedName = SanitizeFileName(templateName);
-            var filePath = Path.Combine(_templatesDirectory, $"{sanitizedName}.argotemplate");
+            var filePath = Path.Combine(TemplatesDirectory, $"{sanitizedName}.argotemplate");
 
             var templateData = new SavedTemplate
             {
@@ -87,7 +86,7 @@ public class ReportTemplateStorage
         try
         {
             var sanitizedName = SanitizeFileName(templateName);
-            var filePath = Path.Combine(_templatesDirectory, $"{sanitizedName}.argotemplate");
+            var filePath = Path.Combine(TemplatesDirectory, $"{sanitizedName}.argotemplate");
 
             if (!File.Exists(filePath))
                 return null;
@@ -115,7 +114,7 @@ public class ReportTemplateStorage
         {
             EnsureDirectoryExists();
 
-            var files = Directory.GetFiles(_templatesDirectory, "*.argotemplate");
+            var files = Directory.GetFiles(TemplatesDirectory, "*.argotemplate");
             foreach (var file in files)
             {
                 try
@@ -152,7 +151,7 @@ public class ReportTemplateStorage
         {
             EnsureDirectoryExists();
 
-            var files = Directory.GetFiles(_templatesDirectory, "*.argotemplate");
+            var files = Directory.GetFiles(TemplatesDirectory, "*.argotemplate");
             foreach (var file in files)
             {
                 try
@@ -187,7 +186,7 @@ public class ReportTemplateStorage
         try
         {
             var sanitizedName = SanitizeFileName(templateName);
-            var filePath = Path.Combine(_templatesDirectory, $"{sanitizedName}.argotemplate");
+            var filePath = Path.Combine(TemplatesDirectory, $"{sanitizedName}.argotemplate");
 
             if (File.Exists(filePath))
             {
@@ -213,8 +212,8 @@ public class ReportTemplateStorage
             var oldSanitized = SanitizeFileName(oldName);
             var newSanitized = SanitizeFileName(newName);
 
-            var oldPath = Path.Combine(_templatesDirectory, $"{oldSanitized}.argotemplate");
-            var newPath = Path.Combine(_templatesDirectory, $"{newSanitized}.argotemplate");
+            var oldPath = Path.Combine(TemplatesDirectory, $"{oldSanitized}.argotemplate");
+            var newPath = Path.Combine(TemplatesDirectory, $"{newSanitized}.argotemplate");
 
             if (!File.Exists(oldPath) || File.Exists(newPath))
                 return false;
@@ -249,7 +248,7 @@ public class ReportTemplateStorage
     public bool TemplateExists(string templateName)
     {
         var sanitizedName = SanitizeFileName(templateName);
-        var filePath = Path.Combine(_templatesDirectory, $"{sanitizedName}.argotemplate");
+        var filePath = Path.Combine(TemplatesDirectory, $"{sanitizedName}.argotemplate");
         return File.Exists(filePath);
     }
 
@@ -258,7 +257,7 @@ public class ReportTemplateStorage
     /// </summary>
     public string GetImagesDirectory()
     {
-        var imagesDir = Path.Combine(_templatesDirectory, "Images");
+        var imagesDir = Path.Combine(TemplatesDirectory, "Images");
         if (!Directory.Exists(imagesDir))
         {
             Directory.CreateDirectory(imagesDir);

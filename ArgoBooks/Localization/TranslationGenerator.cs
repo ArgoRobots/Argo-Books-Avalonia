@@ -75,9 +75,6 @@ public partial class TranslationGenerator
     private const decimal PricePerMillionChars = 10m;
 
     // Usage tracking
-    private int _apiCallCount;
-    private long _totalCharactersTranslated;
-    private int _languagesTranslated;
 
     /// <summary>
     /// Event raised to report progress.
@@ -87,22 +84,22 @@ public partial class TranslationGenerator
     /// <summary>
     /// Gets the number of Azure API calls made during translation.
     /// </summary>
-    public int ApiCallCount => _apiCallCount;
+    public int ApiCallCount { get; private set; }
 
     /// <summary>
     /// Gets the total number of source characters sent for translation.
     /// </summary>
-    public long TotalCharactersTranslated => _totalCharactersTranslated;
+    public long TotalCharactersTranslated { get; private set; }
 
     /// <summary>
     /// Gets the number of languages translated.
     /// </summary>
-    public int LanguagesTranslated => _languagesTranslated;
+    public int LanguagesTranslated { get; private set; }
 
     /// <summary>
     /// Gets the estimated cost based on Azure Translator S1 pricing ($10 per 1M characters).
     /// </summary>
-    public decimal EstimatedCost => _totalCharactersTranslated / 1_000_000m * PricePerMillionChars;
+    public decimal EstimatedCost => TotalCharactersTranslated / 1_000_000m * PricePerMillionChars;
 
     /// <summary>
     /// Creates a new TranslationGenerator.
@@ -450,7 +447,7 @@ public partial class TranslationGenerator
             await File.WriteAllTextAsync(filePath, json);
             ReportProgress($"Saved {isoCode}.json ({stringsToTranslate.Count} new, {fullTranslation.Count} total)", currentLanguage, totalLanguages);
 
-            _languagesTranslated++;
+            LanguagesTranslated++;
         }
     }
 
@@ -565,8 +562,8 @@ public partial class TranslationGenerator
         request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
         request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
 
-        _apiCallCount++;
-        _totalCharactersTranslated += texts.Sum(t => (long)t.Length);
+        ApiCallCount++;
+        TotalCharactersTranslated += texts.Sum(t => (long)t.Length);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
@@ -608,7 +605,7 @@ public partial class TranslationGenerator
 
         await TranslateAllAsync(englishStrings, Languages.All, outputDirectory, cancellationToken);
 
-        ReportProgress("Translation generation complete!", _languagesTranslated, _languagesTranslated);
+        ReportProgress("Translation generation complete!", LanguagesTranslated, LanguagesTranslated);
     }
 
     /// <summary>
@@ -634,7 +631,7 @@ public partial class TranslationGenerator
 
         await TranslateAllAsync(englishStrings, languages, outputDirectory, cancellationToken);
 
-        ReportProgress("Translation generation complete!", _languagesTranslated, _languagesTranslated);
+        ReportProgress("Translation generation complete!", LanguagesTranslated, LanguagesTranslated);
     }
 
     /// <summary>

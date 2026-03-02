@@ -15,38 +15,35 @@ public class CompanyManager : IDisposable
     private readonly FooterService _footerService;
     private readonly IErrorLogger? _errorLogger;
 
-    private string? _currentFilePath;
     private string? _currentTempDirectory;
     private string? _currentPassword;
-    private CompanyData? _companyData;
     private FileStream? _fileLock;
     private bool _isDisposed;
-    private string? _pendingRenamePath;
 
     /// <summary>
     /// Gets whether a company is currently open.
     /// </summary>
-    public bool IsCompanyOpen => _companyData != null && _currentTempDirectory != null;
+    public bool IsCompanyOpen => CompanyData != null && _currentTempDirectory != null;
 
     /// <summary>
     /// Gets the current company data.
     /// </summary>
-    public CompanyData? CompanyData => _companyData;
+    public CompanyData? CompanyData { get; private set; }
 
     /// <summary>
     /// Gets the current company file path.
     /// </summary>
-    public string? CurrentFilePath => _currentFilePath;
+    public string? CurrentFilePath { get; private set; }
 
     /// <summary>
     /// Gets the current company name.
     /// </summary>
-    public string? CurrentCompanyName => _companyData?.Settings.Company.Name;
+    public string? CurrentCompanyName => CompanyData?.Settings.Company.Name;
 
     /// <summary>
     /// Gets whether the current company has unsaved changes.
     /// </summary>
-    public bool HasUnsavedChanges => _companyData?.ChangesMade ?? false;
+    public bool HasUnsavedChanges => CompanyData?.ChangesMade ?? false;
 
     /// <summary>
     /// Gets whether the current company file is encrypted.
@@ -57,8 +54,8 @@ public class CompanyManager : IDisposable
     /// Gets whether the currently open company is the sample company.
     /// The sample company should not be modified directly; use Save As instead.
     /// </summary>
-    public bool IsSampleCompany => _currentFilePath != null &&
-        string.Equals(_currentFilePath, SampleCompanyService.GetSampleCompanyPath(), StringComparison.OrdinalIgnoreCase);
+    public bool IsSampleCompany => CurrentFilePath != null &&
+        string.Equals(CurrentFilePath, SampleCompanyService.GetSampleCompanyPath(), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Verifies if the provided password matches the current company's password.
@@ -85,7 +82,7 @@ public class CompanyManager : IDisposable
     /// <summary>
     /// Gets the current company settings.
     /// </summary>
-    public CompanySettings? CurrentCompanySettings => _companyData?.Settings;
+    public CompanySettings? CurrentCompanySettings => CompanyData?.Settings;
 
     /// <summary>
     /// Gets the current company logo file path, if one exists.
@@ -94,10 +91,10 @@ public class CompanyManager : IDisposable
     {
         get
         {
-            if (_companyData?.Settings.Company.LogoFileName == null || _currentTempDirectory == null)
+            if (CompanyData?.Settings.Company.LogoFileName == null || _currentTempDirectory == null)
                 return null;
 
-            var logoPath = Path.Combine(_currentTempDirectory, _companyData.Settings.Company.LogoFileName);
+            var logoPath = Path.Combine(_currentTempDirectory, CompanyData.Settings.Company.LogoFileName);
             return File.Exists(logoPath) ? logoPath : null;
         }
     }
@@ -108,7 +105,7 @@ public class CompanyManager : IDisposable
     /// </summary>
     public void SetPendingRename(string newPath)
     {
-        _pendingRenamePath = newPath;
+        PendingRenamePath = newPath;
     }
 
     /// <summary>
@@ -116,13 +113,13 @@ public class CompanyManager : IDisposable
     /// </summary>
     public void ClearPendingRename()
     {
-        _pendingRenamePath = null;
+        PendingRenamePath = null;
     }
 
     /// <summary>
     /// Gets the path the file will be renamed to on next save, or null if no rename is pending.
     /// </summary>
-    public string? PendingRenamePath => _pendingRenamePath;
+    public string? PendingRenamePath { get; private set; }
 
     /// <summary>
     /// Event raised when a company is opened.
@@ -209,19 +206,19 @@ public class CompanyManager : IDisposable
             Directory.CreateDirectory(companyDir);
 
             // Create default company data
-            _companyData = new CompanyData();
-            _companyData.Settings.Company.Name = companyName;
-            _companyData.Settings.AppVersion = "1.0.0";
+            CompanyData = new CompanyData();
+            CompanyData.Settings.Company.Name = companyName;
+            CompanyData.Settings.AppVersion = "1.0.0";
 
             // Apply company info if provided
             if (companyInfo != null)
             {
-                _companyData.Settings.Company = companyInfo;
+                CompanyData.Settings.Company = companyInfo;
             }
 
             // Save all data to temp directory first (before creating receipts subdirectory,
             // otherwise GetCompanyDirectory will incorrectly find receipts/ as the company dir)
-            await _fileService.SaveCompanyDataAsync(companyDir, _companyData, cancellationToken);
+            await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
 
             // Create receipts subdirectory after saving data files
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
@@ -229,7 +226,7 @@ public class CompanyManager : IDisposable
             // Save to file
             await _fileService.SaveCompanyAsync(filePath, _currentTempDirectory, password, cancellationToken);
 
-            _currentFilePath = filePath;
+            CurrentFilePath = filePath;
             _currentPassword = password;
 
             // Hold a read lock on the file to prevent deletion while the company is open
@@ -251,7 +248,7 @@ public class CompanyManager : IDisposable
                 Directory.Delete(_currentTempDirectory, recursive: true);
             }
             _currentTempDirectory = null;
-            _companyData = null;
+            CompanyData = null;
             throw;
         }
     }
@@ -315,17 +312,17 @@ public class CompanyManager : IDisposable
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
             // Load company data
-            _companyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
+            CompanyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
 
-            _currentFilePath = filePath;
+            CurrentFilePath = filePath;
             _currentPassword = password;
 
             // Sync the company name from the file name so that external renames
             // (e.g., via the OS file explorer) are reflected in the app
             var fileBaseName = Path.GetFileNameWithoutExtension(filePath);
-            if (!string.IsNullOrEmpty(fileBaseName) && _companyData.Settings.Company.Name != fileBaseName)
+            if (!string.IsNullOrEmpty(fileBaseName) && CompanyData.Settings.Company.Name != fileBaseName)
             {
-                _companyData.Settings.Company.Name = fileBaseName;
+                CompanyData.Settings.Company.Name = fileBaseName;
             }
 
             // Hold a read lock on the file to prevent deletion while the company is open
@@ -337,7 +334,7 @@ public class CompanyManager : IDisposable
 
             // Raise event
             CompanyOpened?.Invoke(this, new CompanyOpenedEventArgs(
-                _companyData.Settings.Company.Name,
+                CompanyData.Settings.Company.Name,
                 filePath,
                 isEncrypted));
 
@@ -358,7 +355,7 @@ public class CompanyManager : IDisposable
                 Directory.Delete(_currentTempDirectory, recursive: true);
             }
             _currentTempDirectory = null;
-            _companyData = null;
+            CompanyData = null;
             throw;
         }
     }
@@ -369,7 +366,7 @@ public class CompanyManager : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SaveCompanyAsync(CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || _currentFilePath == null || _currentTempDirectory == null)
+        if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null)
         {
             throw new InvalidOperationException("No company is currently open.");
         }
@@ -379,44 +376,44 @@ public class CompanyManager : IDisposable
 
         // Save data to temp directory
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.SaveCompanyDataAsync(companyDir, _companyData!, cancellationToken);
+        await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
 
         // Apply pending rename before saving so the file is saved at the new path
-        if (_pendingRenamePath != null && _pendingRenamePath != _currentFilePath)
+        if (PendingRenamePath != null && PendingRenamePath != CurrentFilePath)
         {
-            var oldPath = _currentFilePath;
+            var oldPath = CurrentFilePath;
             ReleaseFileLock();
             try
             {
-                if (!File.Exists(_pendingRenamePath))
+                if (!File.Exists(PendingRenamePath))
                 {
-                    File.Move(_currentFilePath, _pendingRenamePath);
-                    _currentFilePath = _pendingRenamePath;
+                    File.Move(CurrentFilePath, PendingRenamePath);
+                    CurrentFilePath = PendingRenamePath;
                 }
             }
             finally
             {
-                AcquireFileLock(_currentFilePath);
+                AcquireFileLock(CurrentFilePath);
             }
 
             // Update the recent companies list so the old path is replaced with the new one
-            if (_currentFilePath != oldPath)
+            if (CurrentFilePath != oldPath)
             {
                 _settingsService.RemoveRecentCompany(oldPath);
-                _settingsService.AddRecentCompany(_currentFilePath);
+                _settingsService.AddRecentCompany(CurrentFilePath);
                 await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
             }
 
-            _pendingRenamePath = null;
+            PendingRenamePath = null;
         }
 
         // Release file lock before saving (save uses exclusive access), then re-acquire
         ReleaseFileLock();
-        await _fileService.SaveCompanyAsync(_currentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
-        AcquireFileLock(_currentFilePath);
+        await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+        AcquireFileLock(CurrentFilePath);
 
         // Mark as saved
-        _companyData!.MarkAsSaved();
+        CompanyData!.MarkAsSaved();
 
         // Raise event
         CompanySaved?.Invoke(this, EventArgs.Empty);
@@ -452,26 +449,26 @@ public class CompanyManager : IDisposable
 
         // Sync company name with the new file name so they stay consistent
         var newName = Path.GetFileNameWithoutExtension(newFilePath);
-        if (!string.IsNullOrEmpty(newName) && _companyData!.Settings.Company.Name != newName)
+        if (!string.IsNullOrEmpty(newName) && CompanyData!.Settings.Company.Name != newName)
         {
-            _companyData.Settings.Company.Name = newName;
+            CompanyData.Settings.Company.Name = newName;
         }
 
         // Save data to temp directory
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.SaveCompanyDataAsync(companyDir, _companyData!, cancellationToken);
+        await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
 
         // Release file lock before saving, then re-acquire on new path
         ReleaseFileLock();
         await _fileService.SaveCompanyAsync(newFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
 
         // Update current file path and password
-        _currentFilePath = newFilePath;
+        CurrentFilePath = newFilePath;
         _currentPassword = passwordToUse;
         AcquireFileLock(newFilePath);
 
         // Mark as saved
-        _companyData!.MarkAsSaved();
+        CompanyData!.MarkAsSaved();
 
         // Add to recent companies
         _settingsService.AddRecentCompany(newFilePath);
@@ -495,10 +492,10 @@ public class CompanyManager : IDisposable
             _currentTempDirectory = null;
         }
 
-        _companyData = null;
-        _currentFilePath = null;
+        CompanyData = null;
+        CurrentFilePath = null;
         _currentPassword = null;
-        _pendingRenamePath = null;
+        PendingRenamePath = null;
 
         // Raise event
         CompanyClosed?.Invoke(this, EventArgs.Empty);
@@ -510,7 +507,7 @@ public class CompanyManager : IDisposable
     /// <param name="logoPath">Path to the logo image file.</param>
     public async Task SetCompanyLogoAsync(string logoPath)
     {
-        if (_companyData == null || _currentTempDirectory == null)
+        if (CompanyData == null || _currentTempDirectory == null)
             throw new InvalidOperationException("No company is currently open.");
 
         if (!File.Exists(logoPath))
@@ -525,8 +522,8 @@ public class CompanyManager : IDisposable
         await Task.Run(() => File.Copy(logoPath, destPath, overwrite: true));
 
         // Update settings
-        _companyData.Settings.Company.LogoFileName = logoFileName;
-        _companyData.ChangesMade = true;
+        CompanyData.Settings.Company.LogoFileName = logoFileName;
+        CompanyData.ChangesMade = true;
 
         CompanyDataChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -536,10 +533,10 @@ public class CompanyManager : IDisposable
     /// </summary>
     public async Task RemoveCompanyLogoAsync()
     {
-        if (_companyData == null || _currentTempDirectory == null)
+        if (CompanyData == null || _currentTempDirectory == null)
             throw new InvalidOperationException("No company is currently open.");
 
-        var logoFileName = _companyData.Settings.Company.LogoFileName;
+        var logoFileName = CompanyData.Settings.Company.LogoFileName;
         if (string.IsNullOrEmpty(logoFileName))
             return;
 
@@ -552,8 +549,8 @@ public class CompanyManager : IDisposable
         }
 
         // Update settings
-        _companyData.Settings.Company.LogoFileName = null;
-        _companyData.ChangesMade = true;
+        CompanyData.Settings.Company.LogoFileName = null;
+        CompanyData.ChangesMade = true;
 
         CompanyDataChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -624,7 +621,7 @@ public class CompanyManager : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ChangePasswordAsync(string? newPassword, CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || _currentFilePath == null || _currentTempDirectory == null)
+        if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null)
         {
             throw new InvalidOperationException("No company is currently open.");
         }
@@ -634,7 +631,7 @@ public class CompanyManager : IDisposable
 
         // Re-encrypt the file with the new password WITHOUT saving data changes
         // This only packages the existing temp directory content with the new encryption
-        await _fileService.SaveCompanyAsync(_currentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+        await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
 
         // Update current password
         _currentPassword = passwordToUse;
@@ -656,7 +653,7 @@ public class CompanyManager : IDisposable
         string backupPath,
         CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || _currentTempDirectory == null || _companyData == null)
+        if (!IsCompanyOpen || _currentTempDirectory == null || CompanyData == null)
         {
             throw new InvalidOperationException("No company is currently open.");
         }
@@ -668,7 +665,7 @@ public class CompanyManager : IDisposable
 
         // Save current data to temp directory
         var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.SaveCompanyDataAsync(companyDir, _companyData, cancellationToken);
+        await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
 
         // Export the entire temp directory as-is (includes receipts/)
         await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
@@ -685,9 +682,9 @@ public class CompanyManager : IDisposable
     /// </summary>
     public void MarkAsChanged()
     {
-        if (_companyData != null)
+        if (CompanyData != null)
         {
-            _companyData.ChangesMade = true;
+            CompanyData.ChangesMade = true;
             CompanyDataChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -706,10 +703,10 @@ public class CompanyManager : IDisposable
     /// </summary>
     public void ShowInFolder()
     {
-        if (string.IsNullOrEmpty(_currentFilePath))
+        if (string.IsNullOrEmpty(CurrentFilePath))
             return;
 
-        var directory = Path.GetDirectoryName(_currentFilePath);
+        var directory = Path.GetDirectoryName(CurrentFilePath);
         if (string.IsNullOrEmpty(directory))
             return;
 
@@ -717,11 +714,11 @@ public class CompanyManager : IDisposable
         {
             if (OperatingSystem.IsWindows())
             {
-                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{_currentFilePath}\"");
+                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{CurrentFilePath}\"");
             }
             else if (OperatingSystem.IsMacOS())
             {
-                System.Diagnostics.Process.Start("open", $"-R \"{_currentFilePath}\"");
+                System.Diagnostics.Process.Start("open", $"-R \"{CurrentFilePath}\"");
             }
             else if (OperatingSystem.IsLinux())
             {

@@ -25,7 +25,6 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
     private readonly SparkleUpdater _sparkle;
     private readonly IErrorLogger? _errorLogger;
-    private string? _installerPath;
 
     /// <inheritdoc />
     public UpdateState State { get; private set; } = UpdateState.Idle;
@@ -37,7 +36,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     public string? LastError { get; private set; }
 
     /// <inheritdoc />
-    public string? InstallerPath => _installerPath;
+    public string? InstallerPath { get; private set; }
 
     /// <inheritdoc />
     public event EventHandler<UpdateState>? StateChanged;
@@ -189,7 +188,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                 }
             }
 
-            _installerPath = filePath;
+            InstallerPath = filePath;
             SetState(UpdateState.ReadyToInstall);
         }
         catch (Exception ex)
@@ -204,23 +203,23 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     /// <inheritdoc />
     public void ApplyUpdateAndRestart()
     {
-        if (State != UpdateState.ReadyToInstall || string.IsNullOrEmpty(_installerPath))
+        if (State != UpdateState.ReadyToInstall || string.IsNullOrEmpty(InstallerPath))
             throw new InvalidOperationException("No update is ready to install.");
 
-        if (!File.Exists(_installerPath))
-            throw new FileNotFoundException("Downloaded installer not found.", _installerPath);
+        if (!File.Exists(InstallerPath))
+            throw new FileNotFoundException("Downloaded installer not found.", InstallerPath);
 
         // Notify subscribers to save their data before we exit
         ApplyingUpdate?.Invoke(this, EventArgs.Empty);
 
         try
         {
-            LaunchInstaller(_installerPath);
+            LaunchInstaller(InstallerPath);
         }
         catch (Exception ex)
         {
             _errorLogger?.LogWarning($"Failed to launch installer: {ex.Message}", "AutoUpdate");
-            LastError = $"Failed to launch installer automatically. Please run the installer manually from:\n{_installerPath}";
+            LastError = $"Failed to launch installer automatically. Please run the installer manually from:\n{InstallerPath}";
             SetState(UpdateState.Error);
             throw;
         }

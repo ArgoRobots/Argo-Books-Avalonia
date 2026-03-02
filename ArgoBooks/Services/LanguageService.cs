@@ -39,8 +39,6 @@ public partial class LanguageService
     private Dictionary<string, Dictionary<string, string>> _translationCache = new();
 
     // Current language
-    private string _currentLanguage = "English";
-    private string _currentIsoCode = "en";
 
     // File paths
     private readonly string _cacheDirectory;
@@ -53,17 +51,17 @@ public partial class LanguageService
     /// <summary>
     /// Gets the current language name (e.g., "English", "French").
     /// </summary>
-    public string CurrentLanguage => _currentLanguage;
+    public string CurrentLanguage { get; private set; } = "English";
 
     /// <summary>
     /// Gets the current ISO language code (e.g., "en", "fr").
     /// </summary>
-    public string CurrentIsoCode => _currentIsoCode;
+    public string CurrentIsoCode { get; private set; } = "en";
 
     /// <summary>
     /// Gets whether the current language is English.
     /// </summary>
-    public bool IsEnglish => _currentIsoCode == "en";
+    public bool IsEnglish => CurrentIsoCode == "en";
 
     /// <summary>
     /// Event raised when the language changes.
@@ -242,8 +240,8 @@ public partial class LanguageService
         }
 
         var isoCode = Languages.GetIsoCode(languageName);
-        var previousLanguage = _currentLanguage;
-        var previousIsoCode = _currentIsoCode;
+        var previousLanguage = CurrentLanguage;
+        var previousIsoCode = CurrentIsoCode;
 
         // Download translations if not already cached
         var downloadSuccess = await DownloadAndCacheLanguageAsync(languageName, false, cancellationToken);
@@ -259,8 +257,8 @@ public partial class LanguageService
         }
 
         // Update current language
-        _currentLanguage = languageName;
-        _currentIsoCode = isoCode;
+        CurrentLanguage = languageName;
+        CurrentIsoCode = isoCode;
 
         // Fire language changed event
         if (previousLanguage != languageName)
@@ -431,7 +429,7 @@ public partial class LanguageService
             return text;
 
         // If English, return original text (or lookup from English cache if needed)
-        if (_currentIsoCode == "en")
+        if (CurrentIsoCode == "en")
         {
             var englishKey = GetStringKey(text);
             if (_englishCache.TryGetValue(englishKey, out var englishValue))
@@ -444,12 +442,12 @@ public partial class LanguageService
 
         // Look up in translation cache
         var key = GetStringKey(text);
-        var result = GetCachedTranslationByKey(_currentIsoCode, key);
+        var result = GetCachedTranslationByKey(CurrentIsoCode, key);
 
         // Log missing translations to console
         if (result == null && text.Length < 100)
         {
-            Console.WriteLine($"[TRANSLATE] Missing: '{DecodeHtmlEntities(text)}' (key: {key}) for {_currentIsoCode}");
+            Console.WriteLine($"[TRANSLATE] Missing: '{DecodeHtmlEntities(text)}' (key: {key}) for {CurrentIsoCode}");
             return DecodeHtmlEntities(text);
         }
 
@@ -567,12 +565,12 @@ public partial class LanguageService
     /// <returns>True if a translation exists.</returns>
     public bool HasTranslation(string text)
     {
-        if (string.IsNullOrEmpty(text) || _currentIsoCode == "en")
+        if (string.IsNullOrEmpty(text) || CurrentIsoCode == "en")
             return true;
 
         var textKey = GetStringKey(text);
 
-        if (_translationCache.TryGetValue(_currentIsoCode, out var languageTranslations))
+        if (_translationCache.TryGetValue(CurrentIsoCode, out var languageTranslations))
         {
             return languageTranslations.ContainsKey(textKey);
         }
@@ -587,10 +585,10 @@ public partial class LanguageService
     {
         get
         {
-            if (_currentIsoCode == "en")
+            if (CurrentIsoCode == "en")
                 return _englishCache.Count;
 
-            if (_translationCache.TryGetValue(_currentIsoCode, out var translations))
+            if (_translationCache.TryGetValue(CurrentIsoCode, out var translations))
                 return translations.Count;
 
             return 0;
