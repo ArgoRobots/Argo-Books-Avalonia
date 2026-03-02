@@ -216,7 +216,7 @@ public class SampleCompanyService
         companyData.Settings.Localization = new LocalizationSettings
         {
             Language = "English",
-            Currency = "USD",
+            Currency = "CAD",
             DateFormat = "MM/DD/YYYY"
         };
 

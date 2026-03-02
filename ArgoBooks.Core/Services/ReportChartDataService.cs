@@ -15,29 +15,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets the date range based on filters (delegates to shared ReportFilters.GetDateRange).
     /// </summary>
-    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange(companyData?.GetEarliestTransactionDate());
-
-    /// <summary>
-    /// Gets the effective date range, constrained by actual sales data.
-    /// For unbounded ranges (like All Time), uses the actual min/max dates from sales.
-    /// </summary>
-    private (DateTime Start, DateTime End) GetEffectiveDateRange()
-    {
-        var (start, end) = GetDateRange();
-
-        if (companyData?.Revenues == null || !companyData.Revenues.Any())
-            return (start, end);
-
-        // If date range is very large (e.g., All Time), constrain to actual data range
-        var minDataDate = companyData.Revenues.Min(s => s.Date).Date;
-        var maxDataDate = companyData.Revenues.Max(s => s.Date).Date;
-
-        // Use the intersection of requested range and actual data range
-        var effectiveStart = start < minDataDate ? minDataDate : start;
-        var effectiveEnd = end > maxDataDate ? maxDataDate : end;
-
-        return (effectiveStart, effectiveEnd);
-    }
+    private (DateTime Start, DateTime End) GetDateRange() => filters.GetDateRange(companyData?.GetEarliestDate());
 
     #region Revenue Charts
 

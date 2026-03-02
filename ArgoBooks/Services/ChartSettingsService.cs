@@ -327,7 +327,7 @@ public partial class ChartSettingsService : ObservableObject
                 break;
 
             case "All Time":
-                StartDate = App.CompanyManager?.CompanyData?.GetEarliestTransactionDate() ?? DateTime.Today;
+                StartDate = App.CompanyManager?.CompanyData?.GetEarliestDate() ?? DateTime.Today;
                 EndDate = now;
                 break;
 

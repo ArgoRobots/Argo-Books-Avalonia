@@ -245,8 +245,9 @@ public class CompanyData
     #region Helper Methods
 
     /// <summary>
-    /// Gets the earliest transaction date across all data (revenues, expenses, payments).
+    /// Gets the earliest transaction date across revenues, expenses, and payments only.
     /// Returns DateTime.Today if no transactions exist.
+    /// Prefer <see cref="GetEarliestDate"/> when you need the earliest date across all data.
     /// </summary>
     public DateTime GetEarliestTransactionDate()
     {
@@ -254,6 +255,25 @@ public class CompanyData
         if (Revenues.Count > 0) dates.Add(Revenues.Min(r => r.Date));
         if (Expenses.Count > 0) dates.Add(Expenses.Min(e => e.Date));
         if (Payments.Count > 0) dates.Add(Payments.Min(p => p.Date));
+
+        return dates.Count > 0 ? dates.Min() : DateTime.Today;
+    }
+
+    /// <summary>
+    /// Gets the earliest date across all dated collections (revenues, expenses, payments,
+    /// invoices, stock adjustments, purchase orders, and rental records).
+    /// Returns DateTime.Today if no dated records exist.
+    /// </summary>
+    public DateTime GetEarliestDate()
+    {
+        var dates = new List<DateTime>();
+        if (Revenues.Count > 0) dates.Add(Revenues.Min(r => r.Date));
+        if (Expenses.Count > 0) dates.Add(Expenses.Min(e => e.Date));
+        if (Payments.Count > 0) dates.Add(Payments.Min(p => p.Date));
+        if (Invoices.Count > 0) dates.Add(Invoices.Min(i => i.IssueDate));
+        if (StockAdjustments.Count > 0) dates.Add(StockAdjustments.Min(s => s.Timestamp));
+        if (PurchaseOrders.Count > 0) dates.Add(PurchaseOrders.Min(p => p.OrderDate));
+        if (Rentals.Count > 0) dates.Add(Rentals.Min(r => r.StartDate));
 
         return dates.Count > 0 ? dates.Min() : DateTime.Today;
     }

@@ -106,27 +106,6 @@ public class AccountingReportDataService
     }
 
     /// <summary>
-    /// Gets the earliest transaction date across all data in the company.
-    /// Delegates to CompanyData.GetEarliestTransactionDate().
-    /// </summary>
-    private DateTime GetEarliestTransactionDate()
-    {
-        return _companyData?.GetEarliestTransactionDate() ?? DateTime.Today;
-    }
-
-    /// <summary>
-    /// Gets the effective start date, replacing the "All Time" sentinel (year 2000) with
-    /// the actual earliest transaction date from the company data.
-    /// </summary>
-    private DateTime GetEffectiveStartDate()
-    {
-        if (_filters.StartDate.HasValue && _filters.StartDate.Value.Year <= 2000)
-            return GetEarliestTransactionDate();
-        return _filters.StartDate ?? DateTime.Today;
-    }
-
-
-    /// <summary>
     /// Dispatches to the appropriate report generation method based on report type.
     /// </summary>
     public AccountingTableData GetReportData(AccountingReportType reportType)
@@ -177,8 +156,7 @@ public class AccountingReportDataService
                 foreach (var lineItem in txn.LineItems)
                 {
                     var categoryName = GetCategoryNameForProduct(lineItem.ProductId);
-                    if (!result.ContainsKey(categoryName))
-                        result[categoryName] = 0;
+                    result.TryAdd(categoryName, 0);
                     result[categoryName] += lineItem.Subtotal;
                 }
             }
@@ -186,8 +164,7 @@ public class AccountingReportDataService
             {
                 // No line items — use the transaction amount (pre-tax) and try to infer category
                 var categoryName = "Uncategorized";
-                if (!result.ContainsKey(categoryName))
-                    result[categoryName] = 0;
+                result.TryAdd(categoryName, 0);
                 result[categoryName] += txn.Amount;
             }
         }
@@ -627,7 +604,6 @@ public class AccountingReportDataService
     /// </summary>
     private AccountingTableData GetCashFlowData()
     {
-        var t = GetAccountingTerms();
         var data = new AccountingTableData
         {
             Title = "Cash Flow Statement",
@@ -638,7 +614,7 @@ public class AccountingReportDataService
 
         if (_companyData == null)
         {
-            AddEmptyCashFlow(data, t);
+            AddEmptyCashFlow(data);
             return data;
         }
 
@@ -751,7 +727,7 @@ public class AccountingReportDataService
         return data;
     }
 
-    private void AddEmptyCashFlow(AccountingTableData data, AccountingTerms t)
+    private void AddEmptyCashFlow(AccountingTableData data)
     {
         data.Rows.Add(new AccountingRow { Label = "OPERATING ACTIVITIES", RowType = AccountingRowType.SectionHeader, Values = ["Amount"] });
         data.Rows.Add(new AccountingRow { Label = "Cash from Sales", Values = [FormatCurrency(0)], IndentLevel = 1, RowType = AccountingRowType.DataRow });
@@ -973,7 +949,7 @@ public class AccountingReportDataService
                     {
                         Date = rev.Date,
                         Description = li.Description.Length > 0 ? li.Description : rev.Description,
-                        Reference = rev.ReferenceNumber,
+                        Reference = rev.Id,
                         Debit = 0,
                         Credit = li.Subtotal
                     });
@@ -985,7 +961,7 @@ public class AccountingReportDataService
                 {
                     Date = rev.Date,
                     Description = rev.Description,
-                    Reference = rev.ReferenceNumber,
+                    Reference = rev.Id,
                     Debit = 0,
                     Credit = rev.EffectiveSubtotalUSD
                 });
@@ -1004,7 +980,7 @@ public class AccountingReportDataService
                     {
                         Date = exp.Date,
                         Description = li.Description.Length > 0 ? li.Description : exp.Description,
-                        Reference = exp.ReferenceNumber,
+                        Reference = exp.Id,
                         Debit = li.Subtotal,
                         Credit = 0
                     });
@@ -1016,7 +992,7 @@ public class AccountingReportDataService
                 {
                     Date = exp.Date,
                     Description = exp.Description,
-                    Reference = exp.ReferenceNumber,
+                    Reference = exp.Id,
                     Debit = exp.EffectiveSubtotalUSD,
                     Credit = 0
                 });
@@ -1031,7 +1007,7 @@ public class AccountingReportDataService
             {
                 Date = pmt.Date,
                 Description = $"Payment from {customerName}",
-                Reference = pmt.ReferenceNumber ?? "",
+                Reference = pmt.Id,
                 Debit = pmt.EffectiveAmountUSD,
                 Credit = 0
             });
@@ -1574,8 +1550,7 @@ public class AccountingReportDataService
                     if (li.TaxRate > 0)
                     {
                         var rate = Math.Round(li.TaxRate, 2);
-                        if (!taxCollectedByRate.ContainsKey(rate))
-                            taxCollectedByRate[rate] = 0;
+                        taxCollectedByRate.TryAdd(rate, 0);
                         taxCollectedByRate[rate] += li.TaxAmount;
                     }
                 }
@@ -1583,8 +1558,7 @@ public class AccountingReportDataService
             else if (rev.TaxRate > 0)
             {
                 var rate = Math.Round(rev.TaxRate, 2);
-                if (!taxCollectedByRate.ContainsKey(rate))
-                    taxCollectedByRate[rate] = 0;
+                taxCollectedByRate.TryAdd(rate, 0);
                 taxCollectedByRate[rate] += rev.TaxAmount;
             }
         }
@@ -1604,8 +1578,7 @@ public class AccountingReportDataService
                     if (li.TaxRate > 0)
                     {
                         var rate = Math.Round(li.TaxRate, 2);
-                        if (!taxPaidByRate.ContainsKey(rate))
-                            taxPaidByRate[rate] = 0;
+                        taxPaidByRate.TryAdd(rate, 0);
                         taxPaidByRate[rate] += li.TaxAmount;
                     }
                 }
@@ -1613,8 +1586,7 @@ public class AccountingReportDataService
             else if (exp.TaxRate > 0)
             {
                 var rate = Math.Round(exp.TaxRate, 2);
-                if (!taxPaidByRate.ContainsKey(rate))
-                    taxPaidByRate[rate] = 0;
+                taxPaidByRate.TryAdd(rate, 0);
                 taxPaidByRate[rate] += exp.TaxAmount;
             }
         }

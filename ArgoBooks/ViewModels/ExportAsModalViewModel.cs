@@ -148,7 +148,7 @@ public partial class ExportAsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Refreshes the record counts from the current company data.
+    /// Refreshes the record counts and start date from the current company data.
     /// </summary>
     public void RefreshRecordCounts(CompanyData? companyData)
     {
@@ -160,6 +160,8 @@ public partial class ExportAsModalViewModel : ViewModelBase
             }
             return;
         }
+
+        StartDate = new DateTimeOffset(companyData.GetEarliestDate());
 
         foreach (var item in DataItems)
         {
@@ -221,8 +223,6 @@ public partial class ExportAsModalViewModel : ViewModelBase
     private void Open()
     {
         SelectedTabIndex = 0;
-        // Reset date range to last month
-        StartDate = DateTimeOffset.Now.AddMonths(-1);
         EndDate = DateTimeOffset.Now;
         // Request record count refresh from the hosting code
         RefreshRecordCountsRequested?.Invoke(this, EventArgs.Empty);

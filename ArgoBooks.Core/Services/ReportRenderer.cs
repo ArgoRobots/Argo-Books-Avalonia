@@ -2440,7 +2440,7 @@ public class ReportRenderer : IDisposable
                         "Company" => r.CustomerName,
                         "Total" => FormatCurrency(r.Amount),
                         "Method" => r.PaymentMethod,
-                        "ID" => r.ReferenceNumber,
+                        "ID" => r.Id,
                         "Invoice" => r.InvoiceId,
                         _ => ""
                     }).ToList());
@@ -3682,7 +3682,7 @@ public class ReportRenderer : IDisposable
             var effectiveStart = start.Value;
             if (effectiveStart.Year <= 2000 && _companyData != null)
             {
-                effectiveStart = _companyData.GetEarliestTransactionDate();
+                effectiveStart = _companyData.GetEarliestDate();
             }
 
             return $"{Tr("Period")}: {effectiveStart.ToString(dateFormat)} {Tr("to")} {end.Value.ToString(dateFormat)}";
@@ -3903,7 +3903,7 @@ public class ReportRenderer : IDisposable
         if (!string.IsNullOrEmpty(_config.Filters.DatePresetName) &&
             _config.Filters.DatePresetName != DatePresetNames.Custom)
         {
-            var (start, end) = DatePresetNames.GetDateRange(_config.Filters.DatePresetName, _companyData?.GetEarliestTransactionDate());
+            var (start, end) = DatePresetNames.GetDateRange(_config.Filters.DatePresetName, _companyData?.GetEarliestDate());
             return (start, end);
         }
 
