@@ -2052,33 +2052,78 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads tax rate distribution pie chart.
+    /// Loads tax rate distribution as a stacked bar chart with Revenue vs Expense series.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadTaxRateDistributionChart(
+    public (ObservableCollection<ISeries> Series, Axis[] XAxes, Axis[] YAxes) LoadTaxRateDistributionChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
+        var series = new ObservableCollection<ISeries>();
+
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetTaxRateDistribution().ToList();
+        var (revenueRates, expenseRates, labels) = dataService.GetTaxRateDistribution();
 
-        if (dataPoints.Count == 0)
-            return ([], []);
+        if (labels.Length == 0)
+        {
+            _chartExportDataByTitle["Tax Rate Distribution"] = new ChartExportData
+            {
+                ChartTitle = "Tax Rate Distribution",
+                ChartType = ChartType.Distribution,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue"
+            };
+            return (series, [], []);
+        }
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var revenueValues = revenueRates.Select(p => p.Value).ToArray();
+        var expenseValues = expenseRates.Select(p => p.Value).ToArray();
+
+        series.Add(new StackedColumnSeries<double>
+        {
+            Values = revenueValues,
+            Name = "Revenue",
+            Fill = new SolidColorPaint(ProfitColor),
+            Stroke = null,
+            MaxBarWidth = 40
+        });
+
+        series.Add(new StackedColumnSeries<double>
+        {
+            Values = expenseValues,
+            Name = "Expense",
+            Fill = new SolidColorPaint(ExpenseColor),
+            Stroke = null,
+            MaxBarWidth = 40
+        });
+
+        var xAxes = new Axis[]
+        {
+            new()
+            {
+                Labels = labels,
+                TextSize = AxisTextSize,
+                LabelsPaint = new SolidColorPaint(_textColor),
+                SeparatorsPaint = new SolidColorPaint(_gridColor) { StrokeThickness = 1 }
+            }
+        };
+
+        var yAxes = CreateNumberYAxes();
 
         _chartExportDataByTitle["Tax Rate Distribution"] = new ChartExportData
         {
             ChartTitle = "Tax Rate Distribution",
-            ChartType = ChartType.Distribution,
-            Labels = dataPoints.Select(p => p.Label).ToArray(),
-            Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Count"
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = revenueValues,
+            SeriesName = "Revenue",
+            AdditionalSeries = [("Expense", expenseValues)]
         };
 
-        return (series, legend);
+        return (series, xAxes, yAxes);
     }
 
     /// <summary>
@@ -2499,7 +2544,7 @@ public class ChartLoaderService
                 Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
+                ToolTipLabelFormatter = point => $"${point.Coordinate.PrimaryValue:N2}"
             });
 
             legendItems.Add(new PieLegendItem
@@ -2524,7 +2569,7 @@ public class ChartLoaderService
                 Name = LanguageService.Instance.Translate("Other"),
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
+                ToolTipLabelFormatter = point => $"${point.Coordinate.PrimaryValue:N2}"
             });
 
             var itemsText = LanguageService.Instance.Translate("items");

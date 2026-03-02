@@ -1627,51 +1627,60 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets transaction count grouped by tax rate bracket.
+    /// Gets transaction count grouped by tax rate bracket, split by Revenue and Expense.
+    /// Returns two series for stacked bar chart.
     /// </summary>
-    public List<ChartDataPoint> GetTaxRateDistribution()
+    public (List<ChartDataPoint> RevenueRates, List<ChartDataPoint> ExpenseRates, string[] Labels) GetTaxRateDistribution()
     {
         if (companyData == null)
-            return [];
+            return ([], [], []);
 
         var (startDate, endDate) = GetDateRange();
 
-        var allRates = new List<decimal>();
-
-        if (companyData.Revenues != null)
+        string GetBracket(decimal rate) => rate switch
         {
-            allRates.AddRange(companyData.Revenues
-                .Where(r => r.Date >= startDate && r.Date <= endDate)
-                .Select(r => r.TaxRate));
-        }
+            0 => "0%",
+            <= 5 => "1-5%",
+            <= 10 => "6-10%",
+            <= 15 => "11-15%",
+            <= 20 => "16-20%",
+            _ => "20%+"
+        };
 
-        if (companyData.Expenses != null)
+        var allBrackets = new[] { "0%", "1-5%", "6-10%", "11-15%", "16-20%", "20%+" };
+
+        var revenueRates = companyData.Revenues?
+            .Where(r => r.Date >= startDate && r.Date <= endDate)
+            .Select(r => r.TaxRate)
+            .ToList() ?? [];
+
+        var expenseRates = companyData.Expenses?
+            .Where(e => e.Date >= startDate && e.Date <= endDate)
+            .Select(e => e.TaxRate)
+            .ToList() ?? [];
+
+        if (revenueRates.Count == 0 && expenseRates.Count == 0)
+            return ([], [], []);
+
+        var revGrouped = revenueRates.GroupBy(GetBracket).ToDictionary(g => g.Key, g => (double)g.Count());
+        var expGrouped = expenseRates.GroupBy(GetBracket).ToDictionary(g => g.Key, g => (double)g.Count());
+
+        // Only include brackets that have data
+        var usedBrackets = allBrackets.Where(b => revGrouped.ContainsKey(b) || expGrouped.ContainsKey(b)).ToArray();
+
+        var revPoints = usedBrackets.Select(b => new ChartDataPoint
         {
-            allRates.AddRange(companyData.Expenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate)
-                .Select(e => e.TaxRate));
-        }
+            Label = b,
+            Value = revGrouped.GetValueOrDefault(b, 0)
+        }).ToList();
 
-        if (allRates.Count == 0)
-            return [];
+        var expPoints = usedBrackets.Select(b => new ChartDataPoint
+        {
+            Label = b,
+            Value = expGrouped.GetValueOrDefault(b, 0)
+        }).ToList();
 
-        return allRates
-            .GroupBy(rate => rate switch
-            {
-                0 => "0%",
-                <= 5 => "1-5%",
-                <= 10 => "6-10%",
-                <= 15 => "11-15%",
-                <= 20 => "16-20%",
-                _ => "20%+"
-            })
-            .Select(g => new ChartDataPoint
-            {
-                Label = g.Key,
-                Value = g.Count()
-            })
-            .OrderBy(p => p.Label)
-            .ToList();
+        return (revPoints, expPoints, usedBrackets);
     }
 
     /// <summary>

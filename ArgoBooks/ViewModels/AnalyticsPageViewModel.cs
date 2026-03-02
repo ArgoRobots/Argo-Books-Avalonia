@@ -71,19 +71,19 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public bool IsCustomersTabSelected => SelectedTabIndex == 4;
 
     /// <summary>
+    /// Gets whether the Taxes tab is selected.
+    /// </summary>
+    public bool IsTaxesTabSelected => SelectedTabIndex == 5;
+
+    /// <summary>
     /// Gets whether the Returns tab is selected.
     /// </summary>
-    public bool IsReturnsTabSelected => SelectedTabIndex == 5;
+    public bool IsReturnsTabSelected => SelectedTabIndex == 6;
 
     /// <summary>
     /// Gets whether the Losses tab is selected.
     /// </summary>
-    public bool IsLossesTabSelected => SelectedTabIndex == 6;
-
-    /// <summary>
-    /// Gets whether the Taxes tab is selected.
-    /// </summary>
-    public bool IsTaxesTabSelected => SelectedTabIndex == 7;
+    public bool IsLossesTabSelected => SelectedTabIndex == 7;
 
     partial void OnSelectedTabIndexChanged(int value)
     {
@@ -1016,7 +1016,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _taxRateDistributionSeries = [];
 
     [ObservableProperty]
-    private ObservableCollection<PieLegendItem> _taxRateDistributionLegend = [];
+    private Axis[] _taxRateDistributionXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _taxRateDistributionYAxes = [];
 
     [ObservableProperty]
     private bool _hasTaxRateDistributionData;
@@ -1955,9 +1958,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadTaxRateDistributionChart(CompanyData data)
     {
-        var (series, legend) = _chartLoaderService.LoadTaxRateDistributionChart(data, StartDate, EndDate);
+        var (series, xAxes, yAxes) = _chartLoaderService.LoadTaxRateDistributionChart(data, StartDate, EndDate);
         TaxRateDistributionSeries = series;
-        TaxRateDistributionLegend = legend;
+        TaxRateDistributionXAxes = xAxes;
+        TaxRateDistributionYAxes = yAxes;
         HasTaxRateDistributionData = series.Count > 0;
     }
 
