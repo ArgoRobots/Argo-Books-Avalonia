@@ -41,7 +41,7 @@ public class ReportConfiguration
     /// Background color for the report (hex format).
     /// </summary>
     [JsonPropertyName("backgroundColor")]
-    public string BackgroundColor { get; set; } = "#FFFFFF";
+    public string BackgroundColor { get; set; } = AppColors.White;
 
     /// <summary>
     /// Number of pages in the report.

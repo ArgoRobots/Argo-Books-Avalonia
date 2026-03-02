@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Controls;
@@ -548,7 +549,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
-            Color = "#4A90D9",
+            Color = AppColors.CategoryDefault,
             Icon = ModalSelectedIconOption?.Icon ?? "📦"
         };
 
@@ -961,7 +962,7 @@ public partial class CategoryDisplayItem : ObservableObject
     private string _itemType = "Product";
 
     [ObservableProperty]
-    private string _color = "#4A90D9";
+    private string _color = AppColors.CategoryDefault;
 
     [ObservableProperty]
     private string _icon = "📦";

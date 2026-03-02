@@ -33,19 +33,19 @@ public class InvoiceTemplate
     /// Primary brand color (header background, accents).
     /// </summary>
     [JsonPropertyName("primaryColor")]
-    public string PrimaryColor { get; set; } = "#2563eb";
+    public string PrimaryColor { get; set; } = AppColors.PrimaryHover;
 
     /// <summary>
     /// Secondary color (borders, subtle backgrounds).
     /// </summary>
     [JsonPropertyName("secondaryColor")]
-    public string SecondaryColor { get; set; } = "#e5e7eb";
+    public string SecondaryColor { get; set; } = AppColors.ChartGrid;
 
     /// <summary>
     /// Accent color for highlights and important text.
     /// </summary>
     [JsonPropertyName("accentColor")]
-    public string AccentColor { get; set; } = "#059669";
+    public string AccentColor { get; set; } = AppColors.EmeraldHover;
 
     /// <summary>
     /// Header/title color. Falls back to PrimaryColor if empty.
@@ -57,13 +57,13 @@ public class InvoiceTemplate
     /// Text color for primary content.
     /// </summary>
     [JsonPropertyName("textColor")]
-    public string TextColor { get; set; } = "#1f2937";
+    public string TextColor { get; set; } = AppColors.TextLight;
 
     /// <summary>
     /// Background color for the invoice.
     /// </summary>
     [JsonPropertyName("backgroundColor")]
-    public string BackgroundColor { get; set; } = "#ffffff";
+    public string BackgroundColor { get; set; } = AppColors.White;
 
     /// <summary>
     /// Font family to use. Must be web-safe for email compatibility.

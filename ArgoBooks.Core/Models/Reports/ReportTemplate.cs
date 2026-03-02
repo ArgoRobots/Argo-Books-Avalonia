@@ -70,7 +70,7 @@ public class ReportTemplate
     /// Background color (hex format).
     /// </summary>
     [JsonPropertyName("backgroundColor")]
-    public string BackgroundColor { get; set; } = "#FFFFFF";
+    public string BackgroundColor { get; set; } = AppColors.White;
 
     /// <summary>
     /// Report elements.

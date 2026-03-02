@@ -1,3 +1,4 @@
+using ArgoBooks.Core;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -19,7 +20,7 @@ public partial class ColorPickerInput : UserControl
     #region Styled Properties
 
     public static readonly StyledProperty<string> ColorValueProperty =
-        AvaloniaProperty.Register<ColorPickerInput, string>(nameof(ColorValue), "#000000");
+        AvaloniaProperty.Register<ColorPickerInput, string>(nameof(ColorValue), AppColors.Black);
 
     public static readonly StyledProperty<bool> IsPickerOpenProperty =
         AvaloniaProperty.Register<ColorPickerInput, bool>(nameof(IsPickerOpen));
@@ -71,7 +72,7 @@ public partial class ColorPickerInput : UserControl
     /// <summary>
     /// Stores the original color value when the picker opens, for cancel functionality.
     /// </summary>
-    private string _originalColorValue = "#000000";
+    private string _originalColorValue = AppColors.Black;
 
     /// <summary>
     /// Tracks if the color was explicitly applied (vs light dismiss cancel).
