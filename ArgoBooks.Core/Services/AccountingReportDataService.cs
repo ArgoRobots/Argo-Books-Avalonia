@@ -156,8 +156,7 @@ public class AccountingReportDataService
                 foreach (var lineItem in txn.LineItems)
                 {
                     var categoryName = GetCategoryNameForProduct(lineItem.ProductId);
-                    if (!result.ContainsKey(categoryName))
-                        result[categoryName] = 0;
+                    result.TryAdd(categoryName, 0);
                     result[categoryName] += lineItem.Subtotal;
                 }
             }
@@ -165,8 +164,7 @@ public class AccountingReportDataService
             {
                 // No line items — use the transaction amount (pre-tax) and try to infer category
                 var categoryName = "Uncategorized";
-                if (!result.ContainsKey(categoryName))
-                    result[categoryName] = 0;
+                result.TryAdd(categoryName, 0);
                 result[categoryName] += txn.Amount;
             }
         }
@@ -606,7 +604,6 @@ public class AccountingReportDataService
     /// </summary>
     private AccountingTableData GetCashFlowData()
     {
-        var t = GetAccountingTerms();
         var data = new AccountingTableData
         {
             Title = "Cash Flow Statement",
@@ -617,7 +614,7 @@ public class AccountingReportDataService
 
         if (_companyData == null)
         {
-            AddEmptyCashFlow(data, t);
+            AddEmptyCashFlow(data);
             return data;
         }
 
@@ -730,7 +727,7 @@ public class AccountingReportDataService
         return data;
     }
 
-    private void AddEmptyCashFlow(AccountingTableData data, AccountingTerms t)
+    private void AddEmptyCashFlow(AccountingTableData data)
     {
         data.Rows.Add(new AccountingRow { Label = "OPERATING ACTIVITIES", RowType = AccountingRowType.SectionHeader, Values = ["Amount"] });
         data.Rows.Add(new AccountingRow { Label = "Cash from Sales", Values = [FormatCurrency(0)], IndentLevel = 1, RowType = AccountingRowType.DataRow });
@@ -1553,8 +1550,7 @@ public class AccountingReportDataService
                     if (li.TaxRate > 0)
                     {
                         var rate = Math.Round(li.TaxRate, 2);
-                        if (!taxCollectedByRate.ContainsKey(rate))
-                            taxCollectedByRate[rate] = 0;
+                        taxCollectedByRate.TryAdd(rate, 0);
                         taxCollectedByRate[rate] += li.TaxAmount;
                     }
                 }
@@ -1562,8 +1558,7 @@ public class AccountingReportDataService
             else if (rev.TaxRate > 0)
             {
                 var rate = Math.Round(rev.TaxRate, 2);
-                if (!taxCollectedByRate.ContainsKey(rate))
-                    taxCollectedByRate[rate] = 0;
+                taxCollectedByRate.TryAdd(rate, 0);
                 taxCollectedByRate[rate] += rev.TaxAmount;
             }
         }
@@ -1583,8 +1578,7 @@ public class AccountingReportDataService
                     if (li.TaxRate > 0)
                     {
                         var rate = Math.Round(li.TaxRate, 2);
-                        if (!taxPaidByRate.ContainsKey(rate))
-                            taxPaidByRate[rate] = 0;
+                        taxPaidByRate.TryAdd(rate, 0);
                         taxPaidByRate[rate] += li.TaxAmount;
                     }
                 }
@@ -1592,8 +1586,7 @@ public class AccountingReportDataService
             else if (exp.TaxRate > 0)
             {
                 var rate = Math.Round(exp.TaxRate, 2);
-                if (!taxPaidByRate.ContainsKey(rate))
-                    taxPaidByRate[rate] = 0;
+                taxPaidByRate.TryAdd(rate, 0);
                 taxPaidByRate[rate] += exp.TaxAmount;
             }
         }
