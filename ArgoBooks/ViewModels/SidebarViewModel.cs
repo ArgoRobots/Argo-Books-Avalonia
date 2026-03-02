@@ -134,13 +134,6 @@ public partial class SidebarViewModel : ViewModelBase
         _navigationService = navigationService;
 
         InitializeNavigationItems();
-
-        // Restore persisted collapsed state from settings
-        var savedCollapsed = App.SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
-        if (savedCollapsed)
-        {
-            IsCollapsed = true;
-        }
     }
 
     /// <summary>
