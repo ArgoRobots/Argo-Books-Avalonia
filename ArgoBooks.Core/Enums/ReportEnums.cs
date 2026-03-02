@@ -156,7 +156,6 @@ public enum ChartDataType
     // Financial charts
     TotalProfits,
     RevenueVsExpenses,
-    GrowthRates,
 
     // Transaction charts
     AverageTransactionValue,
@@ -335,7 +334,6 @@ public static class ReportEnumExtensions
             // Financial charts
             ChartDataType.TotalProfits => "Profit Over Time",
             ChartDataType.RevenueVsExpenses => "Expenses vs Revenue",
-            ChartDataType.GrowthRates => "Growth Rates",
 
             // Transaction charts
             ChartDataType.AverageTransactionValue => "Average Transaction Value",

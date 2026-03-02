@@ -2037,7 +2037,6 @@ public class ChartLoaderService
 
             // Customers tab charts that share data with other charts
             "Top Customers by Revenue" => "Companies of Destination",
-            "Customer Growth" => "Growth Rates",
             "Customer Lifetime Value" => "Average Transaction Value",
             "Rentals per Customer" => "Total Transactions",
 
