@@ -1913,6 +1913,277 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Loads tax collected vs tax paid chart with two series over time.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadTaxCollectedVsPaidChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        var dates = Array.Empty<DateTime>();
+
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var seriesData = dataService.GetTaxCollectedVsPaid();
+
+        if (seriesData.Count == 0)
+        {
+            _chartExportDataByTitle["Tax Collected vs Paid"] = new ChartExportData
+            {
+                ChartTitle = "Tax Collected vs Paid",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Tax Collected"
+            };
+            return (series, dates);
+        }
+
+        var taxCollected = seriesData.FirstOrDefault(s => s.Name == "Tax Collected");
+        var taxPaid = seriesData.FirstOrDefault(s => s.Name == "Tax Paid");
+
+        if (taxCollected == null || taxCollected.DataPoints.Count == 0)
+        {
+            _chartExportDataByTitle["Tax Collected vs Paid"] = new ChartExportData
+            {
+                ChartTitle = "Tax Collected vs Paid",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Tax Collected"
+            };
+            return (series, dates);
+        }
+
+        var labels = taxCollected.DataPoints.Select(p => p.Label).ToArray();
+        dates = taxCollected.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var collectedValues = taxCollected.DataPoints.Select(p => p.Value).ToArray();
+        var paidValues = taxPaid?.DataPoints.Select(p => p.Value).ToArray() ?? [];
+
+        if (dates.Length > 0)
+        {
+            series.Add(CreateDateTimeSeries(dates, collectedValues, "Tax Collected", ProfitColor));
+            if (paidValues.Length > 0)
+            {
+                series.Add(CreateDateTimeSeries(dates, paidValues, "Tax Paid", ExpenseColor));
+            }
+        }
+
+        _chartExportDataByTitle["Tax Collected vs Paid"] = new ChartExportData
+        {
+            ChartTitle = "Tax Collected vs Paid",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = collectedValues,
+            SeriesName = "Tax Collected",
+            AdditionalSeries = paidValues.Length > 0 ? [("Tax Paid", paidValues)] : []
+        };
+
+        return (series, dates);
+    }
+
+    /// <summary>
+    /// Loads net tax liability trend chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadTaxLiabilityTrendChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        var dates = Array.Empty<DateTime>();
+
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetTaxLiabilityOverTime();
+
+        if (dataPoints.Count == 0)
+            return (series, dates);
+
+        var labels = dataPoints.Select(p => p.Label).ToArray();
+        dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
+
+        series.Add(CreateDateTimeSeries(dates, values, "Net Tax Liability", RevenueColor));
+
+        _chartExportDataByTitle["Net Tax Liability"] = new ChartExportData
+        {
+            ChartTitle = "Net Tax Liability",
+            ChartType = ChartType.Revenue,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Net Tax Liability"
+        };
+
+        return (series, dates);
+    }
+
+    /// <summary>
+    /// Loads tax by category pie chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadTaxByCategoryChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetTaxByCategory().ToList();
+
+        if (dataPoints.Count == 0)
+            return ([], []);
+
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+
+        _chartExportDataByTitle["Tax by Category"] = new ChartExportData
+        {
+            ChartTitle = "Tax by Category",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Amount"
+        };
+
+        return (series, legend);
+    }
+
+    /// <summary>
+    /// Loads tax rate distribution pie chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadTaxRateDistributionChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetTaxRateDistribution().ToList();
+
+        if (dataPoints.Count == 0)
+            return ([], []);
+
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+
+        _chartExportDataByTitle["Tax Rate Distribution"] = new ChartExportData
+        {
+            ChartTitle = "Tax Rate Distribution",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Count"
+        };
+
+        return (series, legend);
+    }
+
+    /// <summary>
+    /// Loads tax by product pie chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadTaxByProductChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetTaxByProduct().ToList();
+
+        if (dataPoints.Count == 0)
+            return ([], []);
+
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+
+        _chartExportDataByTitle["Tax by Product"] = new ChartExportData
+        {
+            ChartTitle = "Tax by Product",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Amount"
+        };
+
+        return (series, legend);
+    }
+
+    /// <summary>
+    /// Loads expense vs revenue tax chart with two series over time.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadExpenseVsRevenueTaxChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        var dates = Array.Empty<DateTime>();
+
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var seriesData = dataService.GetExpenseVsRevenueTax();
+
+        if (seriesData.Count == 0)
+        {
+            _chartExportDataByTitle["Expense vs Revenue Tax"] = new ChartExportData
+            {
+                ChartTitle = "Expense vs Revenue Tax",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue Tax"
+            };
+            return (series, dates);
+        }
+
+        var revenueTax = seriesData.FirstOrDefault(s => s.Name == "Revenue Tax");
+        var expenseTax = seriesData.FirstOrDefault(s => s.Name == "Expense Tax");
+
+        if (revenueTax == null || revenueTax.DataPoints.Count == 0)
+        {
+            _chartExportDataByTitle["Expense vs Revenue Tax"] = new ChartExportData
+            {
+                ChartTitle = "Expense vs Revenue Tax",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue Tax"
+            };
+            return (series, dates);
+        }
+
+        var labels = revenueTax.DataPoints.Select(p => p.Label).ToArray();
+        dates = revenueTax.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var revenueValues = revenueTax.DataPoints.Select(p => p.Value).ToArray();
+        var expenseValues = expenseTax?.DataPoints.Select(p => p.Value).ToArray() ?? [];
+
+        if (dates.Length > 0)
+        {
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue Tax", ProfitColor));
+            if (expenseValues.Length > 0)
+            {
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expense Tax", ExpenseColor));
+            }
+        }
+
+        _chartExportDataByTitle["Expense vs Revenue Tax"] = new ChartExportData
+        {
+            ChartTitle = "Expense vs Revenue Tax",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = revenueValues,
+            SeriesName = "Revenue Tax",
+            AdditionalSeries = expenseValues.Length > 0 ? [("Expense Tax", expenseValues)] : []
+        };
+
+        return (series, dates);
+    }
+
+    /// <summary>
     /// Loads world map data for GeoMap chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
