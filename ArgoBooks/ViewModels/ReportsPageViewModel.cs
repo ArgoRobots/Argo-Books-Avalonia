@@ -252,6 +252,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsTemplatesTabSelected));
         OnPropertyChanged(nameof(IsChartsTabSelected));
+
+        // When switching to the Custom (charts) tab, reset template-specific state
+        // so Balance Sheet's disabled date range doesn't carry over, and the report
+        // name reflects that this is now a custom chart report.
+        if (IsChartsTabSelected)
+        {
+            IsDateRangeEnabled = true;
+            ReportName = ReportTemplateFactory.TemplateNames.Custom;
+            Configuration.Title = ReportTemplateFactory.TemplateNames.Custom;
+        }
     }
 
     [RelayCommand]
@@ -2823,14 +2833,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     private void SyncChartElementsWithSelection()
     {
-        // When user is on the Custom (charts) tab, remove summary elements that
-        // may have been added by a previously selected template — this mode is
-        // chart-only so summary cards should not appear.
+        // When user is on the Custom (charts) tab, remove all non-chart elements
+        // that may have been added by a previously selected template (summary cards,
+        // accounting tables, labels, images, etc.) — this mode is chart-only.
         if (IsChartsTabSelected)
         {
-            foreach (var summary in Configuration.Elements.OfType<SummaryReportElement>().ToList())
+            foreach (var element in Configuration.Elements
+                         .Where(e => e is not ChartReportElement && e is not DateRangeReportElement)
+                         .ToList())
             {
-                Configuration.RemoveElement(summary.Id);
+                Configuration.RemoveElement(element.Id);
             }
         }
 
