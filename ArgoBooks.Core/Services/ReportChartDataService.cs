@@ -1458,6 +1458,330 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     #endregion
 
+    #region Tax Charts
+
+    /// <summary>
+    /// Gets tax collected (from revenues) and tax paid (from expenses) over time.
+    /// Returns two series: "Tax Collected" and "Tax Paid".
+    /// </summary>
+    public List<ChartSeriesData> GetTaxCollectedVsPaid()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
+
+        // Filter to only months with tax data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return (companyData.Revenues?.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ?? false) ||
+                   (companyData.Expenses?.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0)) ?? false);
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+            return [];
+
+        var taxCollected = monthsWithData.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = (double)(companyData.Revenues?
+                    .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
+                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0),
+                Date = month
+            };
+        }).ToList();
+
+        var taxPaid = monthsWithData.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = (double)(companyData.Expenses?
+                    .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
+                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0),
+                Date = month
+            };
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Tax Collected", Color = "#22C55E", DataPoints = taxCollected },
+            new ChartSeriesData { Name = "Tax Paid", Color = "#EF4444", DataPoints = taxPaid }
+        ];
+    }
+
+    /// <summary>
+    /// Gets net tax liability (collected - paid) over time as daily data points.
+    /// </summary>
+    public List<ChartDataPoint> GetTaxLiabilityOverTime()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        // Get all dates with any tax data
+        var revenueDates = companyData.Revenues?
+            .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+            .Select(r => r.Date.Date) ?? [];
+        var expenseDates = companyData.Expenses?
+            .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+            .Select(e => e.Date.Date) ?? [];
+
+        var allDates = revenueDates.Concat(expenseDates).Distinct().OrderBy(d => d).ToList();
+
+        if (allDates.Count == 0)
+            return [];
+
+        return allDates.Select(date =>
+        {
+            var collected = companyData.Revenues?
+                .Where(r => r.Date.Date == date)
+                .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0;
+            var paid = companyData.Expenses?
+                .Where(e => e.Date.Date == date)
+                .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0;
+
+            return new ChartDataPoint
+            {
+                Label = date.ToString("MMM dd"),
+                Value = (double)(collected - paid),
+                Date = date
+            };
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Gets tax amounts grouped by product category.
+    /// </summary>
+    public List<ChartDataPoint> GetTaxByCategory()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var allTransactions = new List<(decimal TaxUSD, string? CategoryId)>();
+
+        if (companyData.Revenues != null)
+        {
+            allTransactions.AddRange(companyData.Revenues
+                .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+                .Select(r =>
+                {
+                    var productId = r.LineItems.FirstOrDefault()?.ProductId;
+                    var product = productId != null ? companyData.GetProduct(productId) : null;
+                    return (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, product?.CategoryId);
+                }));
+        }
+
+        if (companyData.Expenses != null)
+        {
+            allTransactions.AddRange(companyData.Expenses
+                .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+                .Select(e =>
+                {
+                    var productId = e.LineItems.FirstOrDefault()?.ProductId;
+                    var product = productId != null ? companyData.GetProduct(productId) : null;
+                    return (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, product?.CategoryId);
+                }));
+        }
+
+        if (allTransactions.Count == 0)
+            return [];
+
+        return allTransactions
+            .GroupBy(t => t.CategoryId ?? "Unknown")
+            .Select(g =>
+            {
+                var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";
+                return new ChartDataPoint
+                {
+                    Label = categoryName,
+                    Value = (double)g.Sum(t => t.TaxUSD)
+                };
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets transaction count grouped by tax rate bracket, split by Revenue and Expense.
+    /// Returns two series for stacked bar chart.
+    /// </summary>
+    public (List<ChartDataPoint> RevenueRates, List<ChartDataPoint> ExpenseRates, string[] Labels) GetTaxRateDistribution()
+    {
+        if (companyData == null)
+            return ([], [], []);
+
+        var (startDate, endDate) = GetDateRange();
+
+        string GetBracket(decimal rate) => rate switch
+        {
+            0 => "0%",
+            <= 5 => "1-5%",
+            <= 10 => "6-10%",
+            <= 15 => "11-15%",
+            <= 20 => "16-20%",
+            _ => "20%+"
+        };
+
+        var allBrackets = new[] { "0%", "1-5%", "6-10%", "11-15%", "16-20%", "20%+" };
+
+        var revenueRates = companyData.Revenues?
+            .Where(r => r.Date >= startDate && r.Date <= endDate)
+            .Select(r => r.TaxRate)
+            .ToList() ?? [];
+
+        var expenseRates = companyData.Expenses?
+            .Where(e => e.Date >= startDate && e.Date <= endDate)
+            .Select(e => e.TaxRate)
+            .ToList() ?? [];
+
+        if (revenueRates.Count == 0 && expenseRates.Count == 0)
+            return ([], [], []);
+
+        var revGrouped = revenueRates.GroupBy(GetBracket).ToDictionary(g => g.Key, g => (double)g.Count());
+        var expGrouped = expenseRates.GroupBy(GetBracket).ToDictionary(g => g.Key, g => (double)g.Count());
+
+        // Only include brackets that have data
+        var usedBrackets = allBrackets.Where(b => revGrouped.ContainsKey(b) || expGrouped.ContainsKey(b)).ToArray();
+
+        var revPoints = usedBrackets.Select(b => new ChartDataPoint
+        {
+            Label = b,
+            Value = revGrouped.GetValueOrDefault(b, 0)
+        }).ToList();
+
+        var expPoints = usedBrackets.Select(b => new ChartDataPoint
+        {
+            Label = b,
+            Value = expGrouped.GetValueOrDefault(b, 0)
+        }).ToList();
+
+        return (revPoints, expPoints, usedBrackets);
+    }
+
+    /// <summary>
+    /// Gets tax amounts grouped by product.
+    /// </summary>
+    public List<ChartDataPoint> GetTaxByProduct()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var allTransactions = new List<(decimal TaxUSD, string? ProductId)>();
+
+        if (companyData.Revenues != null)
+        {
+            allTransactions.AddRange(companyData.Revenues
+                .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+                .Select(r => (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r.LineItems.FirstOrDefault()?.ProductId)));
+        }
+
+        if (companyData.Expenses != null)
+        {
+            allTransactions.AddRange(companyData.Expenses
+                .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+                .Select(e => (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e.LineItems.FirstOrDefault()?.ProductId)));
+        }
+
+        if (allTransactions.Count == 0)
+            return [];
+
+        return allTransactions
+            .GroupBy(t => t.ProductId ?? "Unknown")
+            .Select(g =>
+            {
+                var productName = companyData.GetProduct(g.Key)?.Name ?? "Other";
+                return new ChartDataPoint
+                {
+                    Label = productName,
+                    Value = (double)g.Sum(t => t.TaxUSD)
+                };
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets expense tax vs revenue tax over time as two series.
+    /// </summary>
+    public List<ChartSeriesData> GetExpenseVsRevenueTax()
+    {
+        if (companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
+
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return (companyData.Revenues?.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ?? false) ||
+                   (companyData.Expenses?.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0)) ?? false);
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+            return [];
+
+        var revenueTax = monthsWithData.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = (double)(companyData.Revenues?
+                    .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
+                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0),
+                Date = month
+            };
+        }).ToList();
+
+        var expenseTax = monthsWithData.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = (double)(companyData.Expenses?
+                    .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
+                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0),
+                Date = month
+            };
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Revenue Tax", Color = "#22C55E", DataPoints = revenueTax },
+            new ChartSeriesData { Name = "Expense Tax", Color = "#EF4444", DataPoints = expenseTax }
+        ];
+    }
+
+    #endregion
+
     #region Helper Methods
 
     /// <summary>
@@ -1560,6 +1884,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.LossesByCategory => GetLossesByCategory(),
             ChartDataType.LossesByProduct => GetLossesByProduct(),
             ChartDataType.ExpenseVsRevenueLosses => GetExpenseVsRevenueLosses(),
+
+            // Taxes charts
+            ChartDataType.TaxCollectedVsPaid => GetTaxCollectedVsPaid(),
+            ChartDataType.TaxLiabilityTrend => GetTaxLiabilityOverTime(),
+            ChartDataType.TaxByCategory => GetTaxByCategory(),
+            ChartDataType.TaxRateDistribution => GetTaxRateDistribution(),
+            ChartDataType.TaxByProduct => GetTaxByProduct(),
+            ChartDataType.ExpenseVsRevenueTax => GetExpenseVsRevenueTax(),
 
             _ => new List<ChartDataPoint>()
         };

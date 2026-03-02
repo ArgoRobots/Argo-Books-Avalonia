@@ -71,14 +71,19 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public bool IsCustomersTabSelected => SelectedTabIndex == 4;
 
     /// <summary>
+    /// Gets whether the Taxes tab is selected.
+    /// </summary>
+    public bool IsTaxesTabSelected => SelectedTabIndex == 5;
+
+    /// <summary>
     /// Gets whether the Returns tab is selected.
     /// </summary>
-    public bool IsReturnsTabSelected => SelectedTabIndex == 5;
+    public bool IsReturnsTabSelected => SelectedTabIndex == 6;
 
     /// <summary>
     /// Gets whether the Losses tab is selected.
     /// </summary>
-    public bool IsLossesTabSelected => SelectedTabIndex == 6;
+    public bool IsLossesTabSelected => SelectedTabIndex == 7;
 
     partial void OnSelectedTabIndexChanged(int value)
     {
@@ -89,6 +94,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         OnPropertyChanged(nameof(IsCustomersTabSelected));
         OnPropertyChanged(nameof(IsReturnsTabSelected));
         OnPropertyChanged(nameof(IsLossesTabSelected));
+        OnPropertyChanged(nameof(IsTaxesTabSelected));
     }
 
     #endregion
@@ -518,6 +524,46 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Taxes Tab Statistics
+
+    [ObservableProperty]
+    private string _totalTaxCollected = "$0.00";
+
+    [ObservableProperty]
+    private double? _taxCollectedChangeValue;
+
+    [ObservableProperty]
+    private string? _taxCollectedChangeText;
+
+    [ObservableProperty]
+    private string _totalTaxPaid = "$0.00";
+
+    [ObservableProperty]
+    private double? _taxPaidChangeValue;
+
+    [ObservableProperty]
+    private string? _taxPaidChangeText;
+
+    [ObservableProperty]
+    private string _netTaxLiability = "$0.00";
+
+    [ObservableProperty]
+    private double? _taxLiabilityChangeValue;
+
+    [ObservableProperty]
+    private string? _taxLiabilityChangeText;
+
+    [ObservableProperty]
+    private string _effectiveTaxRate = "0.0%";
+
+    [ObservableProperty]
+    private double? _effectiveTaxRateChangeValue;
+
+    [ObservableProperty]
+    private string? _effectiveTaxRateChangeText;
+
+    #endregion
+
     #region Chart Type Toggle
 
     /// <summary>
@@ -540,7 +586,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 {
                     ChartSettingsShared.SelectedChartType = value;
                     OnPropertyChanged();
-                    LoadAllCharts();
+                    LoadAllCharts(styleChangeOnly: true);
                 }
                 finally
                 {
@@ -931,6 +977,76 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Taxes Charts
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _taxCollectedVsPaidSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _taxCollectedVsPaidXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _taxCollectedVsPaidYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasTaxCollectedVsPaidData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _taxLiabilityTrendSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _taxLiabilityTrendXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _taxLiabilityTrendYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasTaxLiabilityTrendData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _taxByCategorySeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _taxByCategoryLegend = [];
+
+    [ObservableProperty]
+    private bool _hasTaxByCategoryData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _taxRateDistributionSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _taxRateDistributionXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _taxRateDistributionYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasTaxRateDistributionData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _taxByProductSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _taxByProductLegend = [];
+
+    [ObservableProperty]
+    private bool _hasTaxByProductData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _expenseVsRevenueTaxSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _expenseVsRevenueTaxXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _expenseVsRevenueTaxYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasExpenseVsRevenueTaxData;
+
+    #endregion
+
     #region Empty State Date Range Detection
 
     /// <summary>
@@ -968,6 +1084,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     [ObservableProperty]
     private bool _showRentalDateRangeMessage;
+
+    /// <summary>
+    /// True when tax data exists in all time but the current date range filter is excluding it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showTaxDateRangeMessage;
 
     #endregion
 
@@ -1022,6 +1144,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public LabelVisual LossesByProductTitle => ChartLoaderService.CreateChartTitle(ChartDataType.LossesByProduct.GetDisplayName());
     public LabelVisual ExpenseVsRevenueLossesTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpenseVsRevenueLosses.GetDisplayName());
 
+    // Taxes Tab Chart Titles
+    public LabelVisual TaxCollectedVsPaidTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TaxCollectedVsPaid.GetDisplayName());
+    public LabelVisual TaxLiabilityTrendTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TaxLiabilityTrend.GetDisplayName());
+    public LabelVisual TaxByCategoryTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TaxByCategory.GetDisplayName());
+    public LabelVisual TaxRateDistributionTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TaxRateDistribution.GetDisplayName());
+    public LabelVisual TaxByProductTitle => ChartLoaderService.CreateChartTitle(ChartDataType.TaxByProduct.GetDisplayName());
+    public LabelVisual ExpenseVsRevenueTaxTitle => ChartLoaderService.CreateChartTitle(ChartDataType.ExpenseVsRevenueTax.GetDisplayName());
+
     /// <summary>
     /// Chart title property names for batch notification.
     /// </summary>
@@ -1038,7 +1168,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         nameof(ReturnsOverTimeTitle), nameof(ReturnReasonsTitle), nameof(FinancialImpactOfReturnsTitle),
         nameof(ReturnsByCategoryTitle), nameof(ReturnsByProductTitle), nameof(ExpenseVsRevenueReturnsTitle),
         nameof(LossesOverTimeTitle), nameof(LossReasonsTitle), nameof(FinancialImpactOfLossesTitle),
-        nameof(LossesByCategoryTitle), nameof(LossesByProductTitle), nameof(ExpenseVsRevenueLossesTitle)
+        nameof(LossesByCategoryTitle), nameof(LossesByProductTitle), nameof(ExpenseVsRevenueLossesTitle),
+        nameof(TaxCollectedVsPaidTitle), nameof(TaxLiabilityTrendTitle), nameof(TaxByCategoryTitle),
+        nameof(TaxRateDistributionTitle), nameof(TaxByProductTitle), nameof(ExpenseVsRevenueTaxTitle)
     ];
 
     /// <summary>
@@ -1424,7 +1556,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         _chartLoaderService.UpdateAllDateAxes(chartWidth);
     }
 
-    public void LoadAllCharts()
+    public void LoadAllCharts(bool styleChangeOnly = false)
     {
         var data = _companyManager?.CompanyData;
         if (data == null) return;
@@ -1444,61 +1576,88 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             _ => ChartStyle.Line
         };
 
-        // Determine if a date range filter is active and data exists beyond it
-        var isFiltered = SelectedDateRange != "All Time";
-        ShowRevenueDateRangeMessage = isFiltered && data.Revenues.Count > 0;
-        ShowExpenseDateRangeMessage = isFiltered && data.Expenses.Count > 0;
-        ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
-        ShowReturnDateRangeMessage = isFiltered && data.Returns.Count > 0;
-        ShowLossDateRangeMessage = isFiltered && data.LostDamaged.Count > 0;
-        ShowRentalDateRangeMessage = isFiltered && data.Rentals.Count > 0;
+        if (!styleChangeOnly)
+        {
+            // Determine if a date range filter is active and data exists beyond it
+            var isFiltered = SelectedDateRange != "All Time";
+            ShowRevenueDateRangeMessage = isFiltered && data.Revenues.Count > 0;
+            ShowExpenseDateRangeMessage = isFiltered && data.Expenses.Count > 0;
+            ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
+            ShowReturnDateRangeMessage = isFiltered && data.Returns.Count > 0;
+            ShowLossDateRangeMessage = isFiltered && data.LostDamaged.Count > 0;
+            ShowRentalDateRangeMessage = isFiltered && data.Rentals.Count > 0;
+            ShowTaxDateRangeMessage = isFiltered && (data.Revenues.Any(r => r.TaxAmount > 0 || r.TaxAmountUSD > 0) ||
+                                                      data.Expenses.Any(e => e.TaxAmount > 0 || e.TaxAmountUSD > 0));
 
-        // Load statistics for stat cards
-        LoadAllStatistics(data);
+            // Load statistics for stat cards
+            LoadAllStatistics(data);
+        }
 
-        // Dashboard charts
+        // Dashboard charts (cartesian)
         LoadExpensesTrendsChart(data);
-        LoadExpensesDistributionChart(data);
         LoadRevenueTrendsChart(data);
-        LoadRevenueDistributionChart(data);
         LoadProfitTrendsChart(data);
         LoadRevenueVsExpensesChart(data);
 
-        // Geographic charts
-        LoadCountriesOfOriginChart(data);
-        LoadCompaniesOfOriginChart(data);
-        LoadCountriesOfDestinationChart(data);
-        LoadCompaniesOfDestinationChart(data);
-        LoadGeoMapChart();
-
-        // Operational charts
+        // Operational charts (cartesian)
         LoadAvgTransactionValueChart(data);
         LoadTotalTransactionsChart(data);
         LoadAvgShippingCostsChart(data);
-        LoadAccountantsTransactionsChart(data);
 
-        // Performance charts
+        // Performance charts (cartesian)
         LoadCustomerGrowthChart(data);
 
-        // Customer charts
-        LoadCustomerPaymentStatusChart(data);
-        LoadActiveInactiveCustomersChart(data);
-
-        // Returns charts
+        // Returns charts (cartesian)
         LoadReturnsOverTimeChart(data);
-        LoadReturnReasonsChart(data);
-        LoadReturnsByCategoryChart(data);
         LoadReturnFinancialImpactChart(data);
-        LoadReturnsByProductChart(data);
         LoadExpenseVsRevenueReturnsChart(data);
 
-        // Losses charts
+        // Losses charts (cartesian)
         LoadLossesOverTimeChart(data);
         LoadLossFinancialImpactChart(data);
-        LoadLossReasonsChart(data);
-        LoadLossesByProductChart(data);
-        LoadLossesByCategoryChart(data);
         LoadExpenseVsRevenueLossesChart(data);
+
+        // Taxes charts (cartesian)
+        LoadTaxCollectedVsPaidChart(data);
+        LoadTaxLiabilityTrendChart(data);
+        LoadTaxRateDistributionChart(data);
+        LoadExpenseVsRevenueTaxChart(data);
+
+        // Pie charts and geo map are style-independent — only reload on data/filter changes
+        if (!styleChangeOnly)
+        {
+            // Dashboard pie charts
+            LoadExpensesDistributionChart(data);
+            LoadRevenueDistributionChart(data);
+
+            // Geographic charts
+            LoadCountriesOfOriginChart(data);
+            LoadCompaniesOfOriginChart(data);
+            LoadCountriesOfDestinationChart(data);
+            LoadCompaniesOfDestinationChart(data);
+            LoadGeoMapChart();
+
+            // Operational pie chart
+            LoadAccountantsTransactionsChart(data);
+
+            // Customer pie charts
+            LoadCustomerPaymentStatusChart(data);
+            LoadActiveInactiveCustomersChart(data);
+
+            // Returns pie charts
+            LoadReturnReasonsChart(data);
+            LoadReturnsByCategoryChart(data);
+            LoadReturnsByProductChart(data);
+
+            // Losses pie charts
+            LoadLossReasonsChart(data);
+            LoadLossesByProductChart(data);
+            LoadLossesByCategoryChart(data);
+
+            // Taxes pie charts
+            LoadTaxByCategoryChart(data);
+            LoadTaxByProductChart(data);
+        }
     }
 
     private void LoadExpensesTrendsChart(CompanyData data)
@@ -1788,6 +1947,58 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         HasExpenseVsRevenueLossesData = series.Count > 0;
     }
 
+    private void LoadTaxCollectedVsPaidChart(CompanyData data)
+    {
+        var (series, dates) = _chartLoaderService.LoadTaxCollectedVsPaidChart(data, StartDate, EndDate);
+        TaxCollectedVsPaidSeries = series;
+        _chartLoaderService.RegisterDateChart(dates, axes => TaxCollectedVsPaidXAxes = axes);
+        TaxCollectedVsPaidYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        HasTaxCollectedVsPaidData = series.Count > 0;
+    }
+
+    private void LoadTaxLiabilityTrendChart(CompanyData data)
+    {
+        var (series, dates) = _chartLoaderService.LoadTaxLiabilityTrendChart(data, StartDate, EndDate);
+        TaxLiabilityTrendSeries = series;
+        _chartLoaderService.RegisterDateChart(dates, axes => TaxLiabilityTrendXAxes = axes);
+        TaxLiabilityTrendYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        HasTaxLiabilityTrendData = series.Count > 0;
+    }
+
+    private void LoadTaxByCategoryChart(CompanyData data)
+    {
+        var (series, legend) = _chartLoaderService.LoadTaxByCategoryChart(data, StartDate, EndDate);
+        TaxByCategorySeries = series;
+        TaxByCategoryLegend = legend;
+        HasTaxByCategoryData = series.Count > 0;
+    }
+
+    private void LoadTaxRateDistributionChart(CompanyData data)
+    {
+        var (series, xAxes, yAxes) = _chartLoaderService.LoadTaxRateDistributionChart(data, StartDate, EndDate);
+        TaxRateDistributionSeries = series;
+        TaxRateDistributionXAxes = xAxes;
+        TaxRateDistributionYAxes = yAxes;
+        HasTaxRateDistributionData = series.Count > 0;
+    }
+
+    private void LoadTaxByProductChart(CompanyData data)
+    {
+        var (series, legend) = _chartLoaderService.LoadTaxByProductChart(data, StartDate, EndDate);
+        TaxByProductSeries = series;
+        TaxByProductLegend = legend;
+        HasTaxByProductData = series.Count > 0;
+    }
+
+    private void LoadExpenseVsRevenueTaxChart(CompanyData data)
+    {
+        var (series, dates) = _chartLoaderService.LoadExpenseVsRevenueTaxChart(data, StartDate, EndDate);
+        ExpenseVsRevenueTaxSeries = series;
+        _chartLoaderService.RegisterDateChart(dates, axes => ExpenseVsRevenueTaxXAxes = axes);
+        ExpenseVsRevenueTaxYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        HasExpenseVsRevenueTaxData = series.Count > 0;
+    }
+
     #endregion
 
     #region Statistics Loading
@@ -1803,6 +2014,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadCustomerStatistics(data);
         LoadReturnsStatistics(data);
         LoadLossesStatistics(data);
+        LoadTaxesStatistics(data);
     }
 
     private void LoadDashboardStatistics(CompanyData data)
@@ -2087,6 +2299,60 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         InsuranceClaims = insuranceClaimsCount.ToString("N0");
         InsuranceClaimsChangeValue = hasPrevPeriodData && prevInsuranceClaimsCount > 0 ? insuranceChange : null;
         InsuranceClaimsChangeText = hasPrevPeriodData && prevInsuranceClaimsCount > 0 ? $"{(insuranceChange >= 0 ? "+" : "")}{insuranceChange:F1}%" : null;
+    }
+
+    private void LoadTaxesStatistics(CompanyData data)
+    {
+        // Calculate tax collected from revenues and tax paid on expenses
+        var revenues = data.Revenues.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList();
+        var expenses = data.Expenses.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList();
+
+        var taxCollectedUSD = revenues.Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
+        var taxPaidUSD = expenses.Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
+        var netLiability = taxCollectedUSD - taxPaidUSD;
+
+        // Calculate effective tax rate (weighted average across all transactions)
+        var totalPreTax = revenues.Sum(r => r.EffectiveSubtotalUSD) + expenses.Sum(e => e.EffectiveSubtotalUSD);
+        var totalTax = taxCollectedUSD + taxPaidUSD;
+        var effectiveRate = totalPreTax > 0 ? (totalTax / totalPreTax) * 100 : 0;
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        var prevRevenues = data.Revenues.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).ToList();
+        var prevExpenses = data.Expenses.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).ToList();
+
+        var prevTaxCollected = prevRevenues.Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
+        var prevTaxPaid = prevExpenses.Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
+        var prevNetLiability = prevTaxCollected - prevTaxPaid;
+        var prevTotalPreTax = prevRevenues.Sum(r => r.EffectiveSubtotalUSD) + prevExpenses.Sum(e => e.EffectiveSubtotalUSD);
+        var prevTotalTax = prevTaxCollected + prevTaxPaid;
+        var prevEffectiveRate = prevTotalPreTax > 0 ? (prevTotalTax / prevTotalPreTax) * 100 : 0;
+
+        var hasPrevPeriodData = prevTaxCollected > 0 || prevTaxPaid > 0;
+
+        var collectedChange = prevTaxCollected > 0 ? ((taxCollectedUSD - prevTaxCollected) / prevTaxCollected) * 100 : 0;
+        var paidChange = prevTaxPaid > 0 ? ((taxPaidUSD - prevTaxPaid) / prevTaxPaid) * 100 : 0;
+        var liabilityChange = prevNetLiability != 0 ? ((netLiability - prevNetLiability) / Math.Abs(prevNetLiability)) * 100 : 0;
+        var rateChange = effectiveRate - prevEffectiveRate;
+
+        TotalTaxCollected = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(taxCollectedUSD, DateTime.Now));
+        TaxCollectedChangeValue = hasPrevPeriodData && prevTaxCollected > 0 ? (double)collectedChange : null;
+        TaxCollectedChangeText = hasPrevPeriodData && prevTaxCollected > 0 ? $"{Math.Abs(collectedChange):F1}%" : null;
+
+        TotalTaxPaid = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(taxPaidUSD, DateTime.Now));
+        TaxPaidChangeValue = hasPrevPeriodData && prevTaxPaid > 0 ? (double)paidChange : null;
+        TaxPaidChangeText = hasPrevPeriodData && prevTaxPaid > 0 ? $"{Math.Abs(paidChange):F1}%" : null;
+
+        NetTaxLiability = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(netLiability, DateTime.Now));
+        TaxLiabilityChangeValue = hasPrevPeriodData && prevNetLiability != 0 ? (double)liabilityChange : null;
+        TaxLiabilityChangeText = hasPrevPeriodData && prevNetLiability != 0 ? $"{Math.Abs(liabilityChange):F1}%" : null;
+
+        EffectiveTaxRate = $"{effectiveRate:F1}%";
+        EffectiveTaxRateChangeValue = hasPrevPeriodData && prevTotalPreTax > 0 ? (double)rateChange : null;
+        EffectiveTaxRateChangeText = hasPrevPeriodData && prevTotalPreTax > 0 ? $"{Math.Abs(rateChange):F1}%" : null;
     }
 
     #endregion

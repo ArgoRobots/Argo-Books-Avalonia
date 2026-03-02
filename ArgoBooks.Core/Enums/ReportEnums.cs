@@ -194,7 +194,15 @@ public enum ChartDataType
     LossFinancialImpact,
     LossesByCategory,
     LossesByProduct,
-    ExpenseVsRevenueLosses
+    ExpenseVsRevenueLosses,
+
+    // Taxes charts
+    TaxCollectedVsPaid,
+    TaxLiabilityTrend,
+    TaxByCategory,
+    TaxRateDistribution,
+    TaxByProduct,
+    ExpenseVsRevenueTax
 }
 
 /// <summary>
@@ -373,6 +381,14 @@ public static class ReportEnumExtensions
             ChartDataType.LossesByCategory => "Losses by Category",
             ChartDataType.LossesByProduct => "Losses by Product",
             ChartDataType.ExpenseVsRevenueLosses => "Expense vs Revenue Losses",
+
+            // Taxes charts
+            ChartDataType.TaxCollectedVsPaid => "Tax Collected vs Paid",
+            ChartDataType.TaxLiabilityTrend => "Net Tax Liability",
+            ChartDataType.TaxByCategory => "Tax by Category",
+            ChartDataType.TaxRateDistribution => "Tax Rate Distribution",
+            ChartDataType.TaxByProduct => "Tax by Product",
+            ChartDataType.ExpenseVsRevenueTax => "Expense vs Revenue Tax",
 
             _ => chartType.ToString()
         };
