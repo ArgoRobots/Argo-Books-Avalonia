@@ -600,7 +600,7 @@ public class AccountingReportDataService
     #region Cash Flow Statement
 
     /// <summary>
-    /// Generates Cash Flow Statement data showing operating, investing, and financing activities.
+    /// Generates Cash Flow Statement data showing operating activities.
     /// </summary>
     private AccountingTableData GetCashFlowData()
     {
@@ -680,40 +680,6 @@ public class AccountingReportDataService
 
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
 
-        // Investing section
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "INVESTING ACTIVITIES",
-            RowType = AccountingRowType.SectionHeader,
-            Values = [""]
-        });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "Net Cash from Investing Activities",
-            Values = [FormatCurrency(0)],
-            RowType = AccountingRowType.SubtotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
-        // Financing section
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "FINANCING ACTIVITIES",
-            RowType = AccountingRowType.SectionHeader,
-            Values = [""]
-        });
-
-        data.Rows.Add(new AccountingRow
-        {
-            Label = "Net Cash from Financing Activities",
-            Values = [FormatCurrency(0)],
-            RowType = AccountingRowType.SubtotalRow
-        });
-
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-
         // Net change
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = [""] });
 
@@ -734,12 +700,6 @@ public class AccountingReportDataService
         data.Rows.Add(new AccountingRow { Label = "Cash from Invoice Payments", Values = [FormatCurrency(0)], IndentLevel = 1, RowType = AccountingRowType.DataRow });
         data.Rows.Add(new AccountingRow { Label = "Cash Paid for Expenses", Values = [FormatCurrency(0)], IndentLevel = 1, RowType = AccountingRowType.DataRow });
         data.Rows.Add(new AccountingRow { Label = "Net Cash from Operating Activities", Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "INVESTING ACTIVITIES", RowType = AccountingRowType.SectionHeader, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "Net Cash from Investing Activities", Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
-        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "FINANCING ACTIVITIES", RowType = AccountingRowType.SectionHeader, Values = [""] });
-        data.Rows.Add(new AccountingRow { Label = "Net Cash from Financing Activities", Values = [FormatCurrency(0)], RowType = AccountingRowType.SubtotalRow });
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = [""] });
         data.Rows.Add(new AccountingRow { Label = "NET CHANGE IN CASH", Values = [FormatCurrency(0)], RowType = AccountingRowType.GrandTotalRow });
