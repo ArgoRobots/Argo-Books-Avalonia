@@ -1,6 +1,8 @@
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Controls;
 using ArgoBooks.Localization;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
@@ -60,6 +62,7 @@ public static class ChartImageExportService
 
     /// <summary>
     /// Saves a PieChart as an image file with a file picker dialog.
+    /// Includes the sibling PieChartLegend in the exported image when present.
     /// </summary>
     public static async Task<bool> SaveChartAsImageAsync(TopLevel topLevel, PieChart chart, string suggestedFileName)
     {
@@ -69,14 +72,28 @@ public static class ChartImageExportService
         try
         {
             var format = GetImageFormat(filePath);
-            var (width, height) = GetValidDimensions(chart.Bounds);
+            var (chartWidth, chartHeight) = GetValidDimensions(chart.Bounds);
             var skChart = new SKPieChart(chart)
             {
-                Width = width,
-                Height = height,
+                Width = chartWidth,
+                Height = chartHeight,
                 Background = SKColors.Transparent
             };
-            skChart.SaveImage(filePath, format, 100);
+
+            // Include the sibling PieChartLegend when present
+            var legend = FindSiblingLegend(chart);
+            if (legend?.Items is { Count: > 0 } legendItems)
+            {
+                using var chartImage = skChart.GetImage();
+                using var composited = ComposePieChartWithLegend(chartImage, legendItems, chartWidth, chartHeight);
+                using var data = composited.Encode(format, 100);
+                File.WriteAllBytes(filePath, data.ToArray());
+            }
+            else
+            {
+                skChart.SaveImage(filePath, format, 100);
+            }
+
             System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
             return true;
         }
@@ -193,6 +210,99 @@ public static class ChartImageExportService
             ".jpg" or ".jpeg" => SKEncodedImageFormat.Jpeg,
             _ => SKEncodedImageFormat.Png
         };
+    }
+
+    /// <summary>
+    /// Finds the PieChartLegend sibling of a PieChart within their shared parent Grid.
+    /// </summary>
+    private static PieChartLegend? FindSiblingLegend(PieChart chart)
+    {
+        if (chart.Parent is not Grid parentGrid) return null;
+
+        foreach (var child in parentGrid.Children)
+        {
+            if (child is PieChartLegend legend)
+                return legend;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Composites a rendered pie chart image with legend items drawn via SkiaSharp,
+    /// producing a single image with the chart on the left and legend on the right.
+    /// </summary>
+    private static SKImage ComposePieChartWithLegend(
+        SKImage chartImage,
+        ObservableCollection<PieLegendItem> items,
+        int chartWidth,
+        int chartHeight)
+    {
+        const int legendPadding = 16;
+        const int itemHeight = 26;
+        const int circleRadius = 6;
+        const int circleTextGap = 10;
+        const int labelPercentGap = 16;
+        const float fontSize = 13f;
+
+        using var typeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
+        using var font = new SKFont(typeface, fontSize);
+        using var labelPaint = new SKPaint { Color = new SKColor(0x33, 0x33, 0x33), IsAntialias = true };
+        using var percentPaint = new SKPaint { Color = new SKColor(0x88, 0x88, 0x88), IsAntialias = true };
+
+        // Measure text to calculate legend width
+        float maxLabelWidth = 0;
+        float maxPercentWidth = 0;
+        foreach (var item in items)
+        {
+            maxLabelWidth = Math.Max(maxLabelWidth, font.MeasureText(item.Label, labelPaint));
+            maxPercentWidth = Math.Max(maxPercentWidth, font.MeasureText(item.FormattedPercentage, percentPaint));
+        }
+
+        var legendContentWidth = circleRadius * 2 + circleTextGap + maxLabelWidth + labelPercentGap + maxPercentWidth;
+        var legendWidth = (int)(legendContentWidth + legendPadding * 2);
+        var totalWidth = chartWidth + legendWidth;
+        var legendTotalHeight = items.Count * itemHeight;
+        var totalHeight = Math.Max(chartHeight, legendTotalHeight + legendPadding * 2);
+
+        using var surface = SKSurface.Create(new SKImageInfo(totalWidth, totalHeight));
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+
+        // Draw chart on the left, centered vertically
+        var chartY = (totalHeight - chartHeight) / 2f;
+        canvas.DrawImage(chartImage, 0, chartY);
+
+        // Draw legend items on the right, centered vertically
+        var legendX = chartWidth + legendPadding;
+        var itemY = (totalHeight - legendTotalHeight) / 2f;
+
+        foreach (var item in items)
+        {
+            var centerY = itemY + itemHeight / 2f;
+
+            // Colored circle
+            using var circlePaint = new SKPaint
+            {
+                IsAntialias = true,
+                Color = SKColor.TryParse(item.ColorHex, out var color) ? color : SKColors.Gray,
+                Style = SKPaintStyle.Fill
+            };
+            canvas.DrawCircle(legendX + circleRadius, centerY, circleRadius, circlePaint);
+
+            // Label text
+            var textX = legendX + circleRadius * 2 + circleTextGap;
+            var textBaseline = centerY + fontSize / 3f;
+            canvas.DrawText(item.Label, textX, textBaseline, font, labelPaint);
+
+            // Percentage text
+            var percentX = legendX + circleRadius * 2 + circleTextGap + maxLabelWidth + labelPercentGap;
+            canvas.DrawText(item.FormattedPercentage, percentX, textBaseline, font, percentPaint);
+
+            itemY += itemHeight;
+        }
+
+        return surface.Snapshot();
     }
 
     /// <summary>
