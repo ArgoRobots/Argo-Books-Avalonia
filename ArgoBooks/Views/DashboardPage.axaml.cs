@@ -39,19 +39,18 @@ public partial class DashboardPage : UserControl
         // Responsive quick actions padding
         QuickActionsCard.SizeChanged += OnQuickActionsSizeChanged;
 
-        // Recalculate chart date labels when page resizes
-        SizeChanged += OnPageSizeChanged;
+        // Recalculate chart date labels when chart control resizes
+        ProfitsChart.SizeChanged += OnChartSizeChanged;
 
         // Wire up chart scroll handler after control is loaded
         Loaded += OnLoaded;
     }
 
-    private void OnPageSizeChanged(object? sender, SizeChangedEventArgs e)
+    private void OnChartSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         if (DataContext is DashboardPageViewModel viewModel)
         {
-            // Charts are in *,* grids so each is roughly half the page width minus margins/padding
-            var chartWidth = (e.NewSize.Width / 2) - 80;
+            var chartWidth = e.NewSize.Width;
             if (chartWidth > 0)
             {
                 viewModel.UpdateChartWidth(chartWidth);

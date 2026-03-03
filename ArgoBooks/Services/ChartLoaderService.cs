@@ -27,9 +27,16 @@ public class ChartLoaderService
     // Minimum gap between labels (in pixels)
     private const float LabelGap = 30f;
 
+    // Estimated width consumed by Y-axis labels and internal chart padding.
+    // Subtracted from the chart control's Bounds.Width to approximate the actual X-axis drawing area.
+    private const double YAxisReservedWidth = 100;
+
     // Registered date axes for dynamic width recalculation
     private readonly List<(DateTime[] dates, Action<Axis[]> setter)> _dateAxisRegistrations = new();
     private double _lastChartWidth;
+
+    // Debounce timer for resize events
+    private CancellationTokenSource? _resizeDebounce;
 
     // Chart colors (from AppColors)
     private static readonly SKColor RevenueColor = SKColor.Parse(AppColors.Primary);
@@ -440,10 +447,26 @@ public class ChartLoaderService
 
     /// <summary>
     /// Recalculates all registered date axes for a new chart width.
+    /// Debounces rapid resize events to avoid thrashing axis objects.
     /// </summary>
-    public void UpdateAllDateAxes(double chartWidth)
+    public async void UpdateAllDateAxes(double chartWidth)
     {
         _lastChartWidth = chartWidth;
+
+        // Cancel any pending debounce
+        _resizeDebounce?.Cancel();
+        _resizeDebounce = new CancellationTokenSource();
+        var token = _resizeDebounce.Token;
+
+        try
+        {
+            await Task.Delay(100, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
         foreach (var (dates, setter) in _dateAxisRegistrations)
         {
             setter(CreateDateXAxes(dates, chartWidth));
@@ -482,9 +505,13 @@ public class ChartLoaderService
         var axisMax = maxDate + padding;
         var axisRange = axisMax - axisMin;
 
-        if (chartWidth > 0 && axisRange > 0)
+        // chartWidth is the chart control's full width; subtract the space reserved
+        // for Y-axis labels and internal padding to get the actual X-axis drawing area.
+        var plotAreaWidth = Math.Max(0, chartWidth - YAxisReservedWidth);
+
+        if (plotAreaWidth > 0 && axisRange > 0)
         {
-            var pixelsPerUnit = chartWidth / axisRange;
+            var pixelsPerUnit = plotAreaWidth / axisRange;
             var minSpacing = labelWidth + LabelGap;
             var selected = new List<double> { sortedOADates[0] };
             var lastPixel = (sortedOADates[0] - axisMin) * pixelsPerUnit;
@@ -498,6 +525,13 @@ public class ChartLoaderService
                     lastPixel = pixel;
                 }
             }
+
+            // If only 1 label survived and we have more data, ensure first and last are shown
+            if (selected.Count == 1 && sortedOADates.Length > 1)
+            {
+                selected.Add(sortedOADates[^1]);
+            }
+
             separators = selected.ToArray();
         }
         else
