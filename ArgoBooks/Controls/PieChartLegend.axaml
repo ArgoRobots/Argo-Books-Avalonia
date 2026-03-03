@@ -15,11 +15,6 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="controls:PieLegendItem">
                     <Border Padding="4,3" CornerRadius="4">
-                        <Border.Styles>
-                            <Style Selector="Border:pointerover">
-                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-                            </Style>
-                        </Border.Styles>
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <!-- Color indicator -->
                             <Border Grid.Column="0"
