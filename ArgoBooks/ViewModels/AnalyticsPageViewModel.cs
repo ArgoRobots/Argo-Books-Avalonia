@@ -1553,22 +1553,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Loads all chart data.
     /// </summary>
-    /// <summary>
-    /// Recalculates all date axis labels for the given chart width.
-    /// Called by the view when the chart container resizes.
-    /// </summary>
-    public void UpdateChartWidth(double chartWidth)
-    {
-        _chartLoaderService.UpdateAllDateAxes(chartWidth);
-    }
-
     public void LoadAllCharts(bool styleChangeOnly = false)
     {
         var data = _companyManager?.CompanyData;
         if (data == null) return;
-
-        // Clear previous registrations before reloading
-        _chartLoaderService.ClearDateAxisRegistrations();
 
         // Update theme colors and chart style
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
@@ -1670,7 +1658,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
         ExpensesTrendsSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ExpensesTrendsXAxes = axes);
+        ExpensesTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasExpensesTrendsData = series.Count > 0;
     }
@@ -1687,7 +1675,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
         RevenueTrendsSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => RevenueTrendsXAxes = axes);
+        RevenueTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueTrendsData = series.Count > 0;
     }
@@ -1704,7 +1692,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
         ProfitTrendsSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ProfitTrendsXAxes = axes);
+        ProfitTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasProfitTrendsData = series.Count > 0;
 
@@ -1717,7 +1705,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadRevenueVsExpensesChart(data, StartDate, EndDate);
         RevenueVsExpensesSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => RevenueVsExpensesXAxes = axes);
+        RevenueVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueVsExpensesData = series.Count > 0;
     }
@@ -1795,7 +1783,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
         AvgTransactionValueSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => AvgTransactionValueXAxes = axes);
+        AvgTransactionValueXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgTransactionValueYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasAvgTransactionValueData = series.Count > 0;
     }
@@ -1804,7 +1792,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
         TotalTransactionsSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => TotalTransactionsXAxes = axes);
+        TotalTransactionsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         TotalTransactionsYAxes = _chartLoaderService.CreateNumberYAxes();
         HasTotalTransactionsData = series.Count > 0;
     }
@@ -1813,7 +1801,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
         AvgShippingCostsSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => AvgShippingCostsXAxes = axes);
+        AvgShippingCostsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgShippingCostsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasAvgShippingCostsData = series.Count > 0;
     }
@@ -1839,7 +1827,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, labels, dates) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
         ReturnsOverTimeSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ReturnsOverTimeXAxes = axes);
+        ReturnsOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnsOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
         HasReturnsOverTimeData = series.Count > 0;
     }
@@ -1864,7 +1852,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
         ReturnFinancialImpactSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ReturnFinancialImpactXAxes = axes);
+        ReturnFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasReturnFinancialImpactData = series.Count > 0;
     }
@@ -1873,7 +1861,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, labels, dates) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
         LossesOverTimeSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => LossesOverTimeXAxes = axes);
+        LossesOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossesOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
         HasLossesOverTimeData = series.Count > 0;
     }
@@ -1882,7 +1870,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
         LossFinancialImpactSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => LossFinancialImpactXAxes = axes);
+        LossFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasLossFinancialImpactData = series.Count > 0;
     }
@@ -1931,7 +1919,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadExpenseVsRevenueReturnsChart(data, StartDate, EndDate);
         ExpenseVsRevenueReturnsSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ExpenseVsRevenueReturnsXAxes = axes);
+        ExpenseVsRevenueReturnsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpenseVsRevenueReturnsYAxes = _chartLoaderService.CreateNumberYAxes();
         HasExpenseVsRevenueReturnsData = series.Count > 0;
     }
@@ -1948,7 +1936,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadExpenseVsRevenueLossesChart(data, StartDate, EndDate);
         ExpenseVsRevenueLossesSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ExpenseVsRevenueLossesXAxes = axes);
+        ExpenseVsRevenueLossesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpenseVsRevenueLossesYAxes = _chartLoaderService.CreateNumberYAxes();
         HasExpenseVsRevenueLossesData = series.Count > 0;
     }
@@ -1957,7 +1945,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadTaxCollectedVsPaidChart(data, StartDate, EndDate);
         TaxCollectedVsPaidSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => TaxCollectedVsPaidXAxes = axes);
+        TaxCollectedVsPaidXAxes = _chartLoaderService.CreateDateXAxes(dates);
         TaxCollectedVsPaidYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasTaxCollectedVsPaidData = series.Count > 0;
     }
@@ -1966,7 +1954,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadTaxLiabilityTrendChart(data, StartDate, EndDate);
         TaxLiabilityTrendSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => TaxLiabilityTrendXAxes = axes);
+        TaxLiabilityTrendXAxes = _chartLoaderService.CreateDateXAxes(dates);
         TaxLiabilityTrendYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasTaxLiabilityTrendData = series.Count > 0;
     }
@@ -2000,7 +1988,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         var (series, dates) = _chartLoaderService.LoadExpenseVsRevenueTaxChart(data, StartDate, EndDate);
         ExpenseVsRevenueTaxSeries = series;
-        _chartLoaderService.RegisterDateChart(dates, axes => ExpenseVsRevenueTaxXAxes = axes);
+        ExpenseVsRevenueTaxXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpenseVsRevenueTaxYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasExpenseVsRevenueTaxData = series.Count > 0;
     }

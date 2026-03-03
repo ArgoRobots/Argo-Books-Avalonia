@@ -1,0 +1,423 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using ArgoBooks.ViewModels;
+using ArgoBooks.Views;
+using LiveChartsCore.SkiaSharpView.Avalonia;
+using LiveChartsCore.SkiaSharpView.VisualElements;
+
+namespace ArgoBooks.Controls;
+
+/// <summary>
+/// A modal overlay that allows charts to be expanded to fill most of the window.
+/// Automatically discovers chart panels in the current page and adds expand buttons.
+/// </summary>
+public partial class ChartExpandOverlay : UserControl
+{
+    private Panel? _sourcePanel;
+    private Button? _expandButton;
+    private readonly List<Control> _movedChildren = new();
+    private ContentControl? _pageContentControl;
+
+    public ChartExpandOverlay()
+    {
+        InitializeComponent();
+
+        // Intercept right-clicks in tunnel phase to prevent LiveCharts selection box
+        // and show the chart context menu
+        AddHandler(PointerPressedEvent, OnOverlayPointerPressedTunnel,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        Dispatcher.UIThread.Post(Initialize, DispatcherPriority.Loaded);
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_pageContentControl != null)
+            _pageContentControl.PropertyChanged -= OnPageContentPropertyChanged;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>
+    /// Finds the page host ContentControl and subscribes to navigation changes.
+    /// </summary>
+    private void Initialize()
+    {
+        _pageContentControl = FindPageContentControl();
+        if (_pageContentControl != null)
+        {
+            _pageContentControl.PropertyChanged += OnPageContentPropertyChanged;
+            DecorateCurrentPage();
+        }
+    }
+
+    private void OnPageContentPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property != ContentControl.ContentProperty) return;
+
+        // Close any open overlay when navigating away
+        if (IsVisible) CloseOverlay();
+
+        // Re-discover charts after the new page is loaded
+        Dispatcher.UIThread.Post(DecorateCurrentPage, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// Finds the PageContentControl by searching the visual tree from the top level.
+    /// </summary>
+    private ContentControl? FindPageContentControl()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return null;
+
+        return FindVisualDescendant<ContentControl>(topLevel, c => c.Name == "PageContentControl");
+    }
+
+    private static T? FindVisualDescendant<T>(Visual root, Func<T, bool> predicate) where T : Visual
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is T match && predicate(match))
+                return match;
+            if (child is Visual visual)
+            {
+                var result = FindVisualDescendant(visual, predicate);
+                if (result != null) return result;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Discovers chart panels in the current page and adds expand buttons.
+    /// </summary>
+    private void DecorateCurrentPage()
+    {
+        if (_pageContentControl?.Content is not Control pageContent) return;
+
+        var chartPanels = new List<Panel>();
+        FindChartPanels(pageContent, chartPanels);
+
+        foreach (var panel in chartPanels)
+        {
+            AddExpandButton(panel);
+        }
+    }
+
+    /// <summary>
+    /// Recursively finds panels that directly contain chart controls
+    /// (CartesianChart, PieChart, or GeoMap).
+    /// </summary>
+    private void FindChartPanels(Control control, List<Panel> result)
+    {
+        if (control == this) return;
+
+        if (control is Panel panel)
+        {
+            bool hasChart = false;
+            foreach (var child in panel.Children)
+            {
+                if (child is CartesianChart or PieChart or GeoMap)
+                {
+                    hasChart = true;
+                    break;
+                }
+
+                // Check for pie charts inside a Grid (pattern: Grid > Grid > PieChart)
+                if (child is Grid grid && !hasChart)
+                {
+                    hasChart = GridContainsChart(grid);
+                }
+
+                if (hasChart) break;
+            }
+
+            if (hasChart)
+            {
+                result.Add(panel);
+                return; // Don't recurse into chart panels
+            }
+
+            foreach (var child in panel.Children)
+            {
+                FindChartPanels(child, result);
+            }
+        }
+        else if (control is ContentControl cc && cc.Content is Control content)
+        {
+            FindChartPanels(content, result);
+        }
+        else if (control is Decorator decorator && decorator.Child != null)
+        {
+            FindChartPanels(decorator.Child, result);
+        }
+    }
+
+    /// <summary>
+    /// Checks if a Grid (or its child Grids) contains a chart control.
+    /// </summary>
+    private static bool GridContainsChart(Grid grid)
+    {
+        foreach (var child in grid.Children)
+        {
+            if (child is PieChart or PieChartLegend or CartesianChart or GeoMap)
+                return true;
+            if (child is Grid innerGrid && GridContainsChart(innerGrid))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void AddExpandButton(Panel panel)
+    {
+        // Guard against duplicate buttons
+        foreach (var child in panel.Children)
+        {
+            if (child is Button btn && btn.Classes.Contains("chart-expand-btn"))
+                return;
+        }
+
+        var button = new Button
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(4),
+            Content = new PathIcon
+            {
+                Data = Geometry.Parse(Icons.Fullscreen),
+                Width = 12,
+                Height = 12
+            }
+        };
+        button.Classes.Add("chart-expand-btn");
+        button.Click += OnExpandButtonClick;
+        panel.Children.Add(button);
+    }
+
+    private void OnExpandButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button) return;
+        if (button.Parent is not Panel sourcePanel) return;
+
+        var title = FindChartTitle(sourcePanel);
+        ShowChart(sourcePanel, button, title);
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Finds the title of a chart within a panel by examining its children.
+    /// </summary>
+    private static string FindChartTitle(Panel panel)
+    {
+        foreach (var child in panel.Children)
+        {
+            if (child is CartesianChart cc &&
+                cc.Title is LabelVisual cartLabel &&
+                !string.IsNullOrWhiteSpace(cartLabel.Text))
+            {
+                return cartLabel.Text;
+            }
+
+            if (child is Grid grid)
+            {
+                foreach (var gridChild in grid.Children)
+                {
+                    if (gridChild is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text))
+                        return tb.Text;
+                }
+            }
+
+            if (child is GeoMap)
+                return "World Map Overview";
+        }
+
+        return "Chart";
+    }
+
+    /// <summary>
+    /// Shows the chart in the expanded overlay by reparenting its content.
+    /// </summary>
+    private void ShowChart(Panel sourcePanel, Button expandButton, string title)
+    {
+        if (IsVisible) return;
+
+        _sourcePanel = sourcePanel;
+        _expandButton = expandButton;
+        _movedChildren.Clear();
+
+        var titleText = this.FindControl<TextBlock>("TitleText");
+        if (titleText != null)
+            titleText.Text = title;
+
+        var contentPanel = this.FindControl<Panel>("ContentPanel");
+        if (contentPanel == null) return;
+
+        // Preserve the page's DataContext so chart bindings (Series, Axes, etc.) keep working
+        // after reparenting from the page into the AppShell-level overlay.
+        // Set on ChartArea so the ChartContextMenu also inherits it.
+        var chartArea = this.FindControl<Panel>("ChartArea");
+        if (chartArea != null)
+            chartArea.DataContext = sourcePanel.DataContext;
+
+        // Move all children except the expand button to the overlay
+        foreach (var child in sourcePanel.Children.ToList())
+        {
+            if (child != expandButton)
+                _movedChildren.Add(child);
+        }
+
+        foreach (var child in _movedChildren)
+        {
+            sourcePanel.Children.Remove(child);
+            contentPanel.Children.Add(child);
+        }
+
+        // Hide the expand button while overlay is open
+        expandButton.IsVisible = false;
+
+        IsVisible = true;
+        Focus();
+    }
+
+    /// <summary>
+    /// Closes the overlay and returns chart content to its original panel.
+    /// </summary>
+    public void CloseOverlay()
+    {
+        if (!IsVisible || _sourcePanel == null) return;
+
+        var contentPanel = this.FindControl<Panel>("ContentPanel");
+        if (contentPanel == null) return;
+
+        // Close context menu before clearing DataContext
+        var chartArea = this.FindControl<Panel>("ChartArea");
+        if (chartArea?.DataContext is ChartContextMenuViewModelBase vm && vm.IsChartContextMenuOpen)
+            vm.HideChartContextMenuCommand.Execute(null);
+
+        contentPanel.Children.Clear();
+
+        // Re-add children to source panel before the expand button
+        var insertIndex = 0;
+        foreach (var child in _movedChildren)
+        {
+            _sourcePanel.Children.Insert(insertIndex, child);
+            insertIndex++;
+        }
+
+        if (_expandButton != null)
+            _expandButton.IsVisible = true;
+
+        // Clear the borrowed DataContext
+        if (chartArea != null)
+            chartArea.DataContext = null;
+
+        _movedChildren.Clear();
+        _sourcePanel = null;
+        _expandButton = null;
+        IsVisible = false;
+    }
+
+    /// <summary>
+    /// Intercepts right-clicks on chart controls in the overlay to prevent LiveCharts'
+    /// selection box and to show the chart context menu.
+    /// </summary>
+    private void OnOverlayPointerPressedTunnel(object? sender, PointerPressedEventArgs e)
+    {
+        if (!IsVisible) return;
+
+        var source = e.Source as Control;
+        var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+        var pieChart = source?.FindAncestorOfType<PieChart>() ?? source as PieChart;
+        var geoMap = source?.FindAncestorOfType<GeoMap>() ?? source as GeoMap;
+
+        // Handle PieChartLegend: find the associated PieChart sibling
+        if (chart == null && pieChart == null && geoMap == null)
+        {
+            var legend = source?.FindAncestorOfType<PieChartLegend>() ?? source as PieChartLegend;
+            if (legend?.Parent is Grid parentGrid)
+            {
+                foreach (var child in parentGrid.Children)
+                {
+                    if (child is PieChart siblingChart)
+                    {
+                        pieChart = siblingChart;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (chart == null && pieChart == null && geoMap == null) return;
+        if (!e.GetCurrentPoint(this).Properties.IsRightButtonPressed) return;
+
+        // Prevent LiveCharts selection box
+        e.Handled = true;
+
+        var clickedControl = (Control?)chart ?? (Control?)pieChart ?? geoMap;
+        var title = _sourcePanel != null ? FindChartTitle(_sourcePanel) : "Chart";
+
+        // Set clicked chart on the source page for export operations
+        SetPageClickedChart(clickedControl, title);
+
+        // Show context menu via ViewModel
+        var chartArea = this.FindControl<Panel>("ChartArea");
+        if (chartArea?.DataContext is ChartContextMenuViewModelBase vm)
+        {
+            var position = e.GetPosition(chartArea);
+            vm.ShowChartContextMenu(position.X, position.Y,
+                chartId: title,
+                isPieChart: pieChart != null,
+                isGeoMap: geoMap != null,
+                parentWidth: chartArea.Bounds.Width,
+                parentHeight: chartArea.Bounds.Height);
+        }
+    }
+
+    /// <summary>
+    /// Sets the clicked chart reference on the source page so export operations work correctly.
+    /// </summary>
+    private void SetPageClickedChart(Control? chart, string name)
+    {
+        if (_pageContentControl?.Content is DashboardPage dashPage)
+            dashPage.SetClickedChart(chart, name);
+        else if (_pageContentControl?.Content is AnalyticsPage analyticsPage)
+            analyticsPage.SetClickedChart(chart, name);
+    }
+
+    private void OnCloseClick(object? sender, RoutedEventArgs e)
+    {
+        CloseOverlay();
+    }
+
+    private void OnBackdropClick(object? sender, PointerPressedEventArgs e)
+    {
+        CloseOverlay();
+    }
+
+    private void OnModalContentClick(object? sender, PointerPressedEventArgs e)
+    {
+        e.Handled = true;
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && IsVisible)
+        {
+            CloseOverlay();
+            e.Handled = true;
+        }
+
+        base.OnKeyDown(e);
+    }
+}

@@ -24,27 +24,21 @@ public partial class AnalyticsPage : UserControl
     /// </summary>
     private Control? _clickedChart;
 
+    /// <summary>
+    /// Sets the clicked chart reference from an external source (e.g., ChartExpandOverlay).
+    /// </summary>
+    public void SetClickedChart(Control? chart, string name)
+    {
+        _clickedChart = chart;
+        _clickedChartName = name ?? "Chart";
+    }
+
     public AnalyticsPage()
     {
         InitializeComponent();
 
         // Subscribe to ViewModel events when DataContext changes
         DataContextChanged += OnDataContextChanged;
-
-        // Recalculate chart date labels when chart control resizes
-        ProfitTrendsChart.SizeChanged += OnChartSizeChanged;
-    }
-
-    private void OnChartSizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        if (DataContext is AnalyticsPageViewModel viewModel)
-        {
-            var chartWidth = e.NewSize.Width;
-            if (chartWidth > 0)
-            {
-                viewModel.UpdateChartWidth(chartWidth);
-            }
-        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)

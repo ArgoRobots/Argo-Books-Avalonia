@@ -24,19 +24,6 @@ public class ChartLoaderService
     // Chart text size matching WinForms version
     private const float AxisTextSize = 14f;
 
-    // Minimum gap between labels (in pixels)
-    private const float LabelGap = 30f;
-
-    // Estimated width consumed by Y-axis labels and internal chart padding.
-    // Subtracted from the chart control's Bounds.Width to approximate the actual X-axis drawing area.
-    private const double YAxisReservedWidth = 100;
-
-    // Registered date axes for dynamic width recalculation
-    private readonly List<(DateTime[] dates, Action<Axis[]> setter)> _dateAxisRegistrations = new();
-    private double _lastChartWidth;
-
-    // Debounce timer for resize events
-    private CancellationTokenSource? _resizeDebounce;
 
     // Chart colors (from AppColors)
     private static readonly SKColor RevenueColor = SKColor.Parse(AppColors.Primary);
@@ -432,125 +419,19 @@ public class ChartLoaderService
 
     /// <summary>
     /// Creates X-axis configuration for a cartesian chart with proportional date spacing.
-    /// Use this for time-series charts where date spacing should be proportional to actual time differences.
+    /// Uses LiveCharts' native label stepping for smooth resize behavior.
     /// </summary>
-    /// <summary>
-    /// Registers a date chart axis for dynamic width recalculation.
-    /// When UpdateAllDateAxes is called, all registered setters are invoked with recalculated axes.
-    /// </summary>
-    public void RegisterDateChart(DateTime[] dates, Action<Axis[]> setter, double chartWidth = 0)
-    {
-        _dateAxisRegistrations.Add((dates, setter));
-        var width = chartWidth > 0 ? chartWidth : _lastChartWidth;
-        setter(CreateDateXAxes(dates, width));
-    }
-
-    /// <summary>
-    /// Recalculates all registered date axes for a new chart width.
-    /// Debounces rapid resize events to avoid thrashing axis objects.
-    /// </summary>
-    public async void UpdateAllDateAxes(double chartWidth)
-    {
-        _lastChartWidth = chartWidth;
-
-        // Cancel any pending debounce
-        _resizeDebounce?.Cancel();
-        _resizeDebounce = new CancellationTokenSource();
-        var token = _resizeDebounce.Token;
-
-        try
-        {
-            await Task.Delay(100, token);
-        }
-        catch (TaskCanceledException)
-        {
-            return;
-        }
-
-        foreach (var (dates, setter) in _dateAxisRegistrations)
-        {
-            setter(CreateDateXAxes(dates, chartWidth));
-        }
-    }
-
-    /// <summary>
-    /// Clears all date axis registrations (call before reloading chart data).
-    /// </summary>
-    public void ClearDateAxisRegistrations()
-    {
-        _dateAxisRegistrations.Clear();
-    }
-
-    public Axis[] CreateDateXAxes(DateTime[]? dates = null, double chartWidth = 0)
+    public Axis[] CreateDateXAxes(DateTime[]? dates = null)
     {
         if (dates == null || dates.Length == 0)
         {
             return CreateXAxes();
         }
 
-        // Calculate min and max OADate values with padding
         var sortedOADates = dates.Select(d => d.ToOADate()).OrderBy(d => d).ToArray();
         var minDate = sortedOADates[0];
         var maxDate = sortedOADates[^1];
-        var padding = Math.Max(0.5, (maxDate - minDate) * 0.05); // 5% padding or at least 0.5 days
-
-        // Select labels by pixel position so closely-spaced dates don't overlap.
-        // Walk left to right and only include a label if it won't collide with the previous one.
-        double[] separators;
-        using var font = new SKFont(SKTypeface.Default, AxisTextSize);
-        using var paint = new SKPaint();
-        var sampleLabel = DateFormatService.Format(new DateTime(2025, 12, 31));
-        var labelWidth = font.MeasureText(sampleLabel, paint);
-        var axisMin = minDate - padding;
-        var axisMax = maxDate + padding;
-        var axisRange = axisMax - axisMin;
-
-        // chartWidth is the chart control's full width; subtract the space reserved
-        // for Y-axis labels and internal padding to get the actual X-axis drawing area.
-        var plotAreaWidth = Math.Max(0, chartWidth - YAxisReservedWidth);
-
-        if (plotAreaWidth > 0 && axisRange > 0)
-        {
-            var pixelsPerUnit = plotAreaWidth / axisRange;
-            var minSpacing = labelWidth + LabelGap;
-            var selected = new List<double> { sortedOADates[0] };
-            var lastPixel = (sortedOADates[0] - axisMin) * pixelsPerUnit;
-
-            for (var i = 1; i < sortedOADates.Length; i++)
-            {
-                var pixel = (sortedOADates[i] - axisMin) * pixelsPerUnit;
-                if (pixel - lastPixel >= minSpacing)
-                {
-                    selected.Add(sortedOADates[i]);
-                    lastPixel = pixel;
-                }
-            }
-
-            // If only 1 label survived and we have more data, ensure first and last are shown
-            if (selected.Count == 1 && sortedOADates.Length > 1)
-            {
-                selected.Add(sortedOADates[^1]);
-            }
-
-            separators = selected.ToArray();
-        }
-        else
-        {
-            // Fallback when chart width is unknown: pick evenly-spaced indices
-            var maxLabels = 6;
-            if (sortedOADates.Length <= maxLabels)
-            {
-                separators = sortedOADates;
-            }
-            else
-            {
-                var step = (double)(sortedOADates.Length - 1) / (maxLabels - 1);
-                separators = Enumerable.Range(0, maxLabels)
-                    .Select(i => sortedOADates[(int)Math.Round(i * step)])
-                    .Distinct()
-                    .ToArray();
-            }
-        }
+        var padding = Math.Max(0.5, (maxDate - minDate) * 0.05);
 
         // Calculate UnitWidth based on minimum gap between consecutive dates.
         // This tells LiveCharts how wide each data point "slot" is, so column bars
@@ -575,11 +456,9 @@ public class ChartLoaderService
             MinLimit = minDate - padding,
             MaxLimit = maxDate + padding,
             UnitWidth = unitWidth,
-            CustomSeparators = separators,
+            MinStep = unitWidth,
             Labeler = value =>
             {
-                // Validate OADate range to prevent exceptions
-                // Valid OADate range is approximately -657434 (year 100) to 2958466 (year 9999)
                 if (value < -657434 || value > 2958466)
                 {
                     return string.Empty;

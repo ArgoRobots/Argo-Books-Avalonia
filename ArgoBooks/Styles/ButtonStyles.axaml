@@ -301,6 +301,36 @@
         <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
     </Style>
 
+    <!-- Chart Expand Button (small icon button overlaid on charts) -->
+    <Style Selector="Button.chart-expand-btn">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Opacity" Value="0.35" />
+        <Setter Property="ZIndex" Value="10" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.chart-expand-btn /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.chart-expand-btn:pointerover">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Button.chart-expand-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+    </Style>
+    <Style Selector="Button.chart-expand-btn PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+
     <!-- Link Button (looks like a hyperlink, with underline on hover) -->
     <Style Selector="Button.link">
         <Setter Property="Background" Value="Transparent" />

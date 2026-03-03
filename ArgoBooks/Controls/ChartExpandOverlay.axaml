@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             x:Class="ArgoBooks.Controls.ChartExpandOverlay"
+             Focusable="True"
+             IsVisible="False"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+
+    <Panel>
+        <!-- Semi-transparent backdrop -->
+        <Border Background="{DynamicResource OverlayBrush}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                PointerPressed="OnBackdropClick" />
+
+        <!-- Modal Content -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Margin="48"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                BoxShadow="0 8 32 0 #40000000"
+                PointerPressed="OnModalContentClick">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="20,14"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock x:Name="TitleText"
+                                   Text="Chart"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Click="OnCloseClick">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="18" Height="18" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Chart Content Area + Context Menu -->
+                <Panel Grid.Row="1" x:Name="ChartArea" x:DataType="vm:ChartContextMenuViewModelBase">
+                    <Border Padding="16">
+                        <Panel x:Name="ContentPanel" />
+                    </Border>
+
+                    <controls:ChartContextMenu x:Name="OverlayContextMenu"
+                                               IsOpen="{Binding IsChartContextMenuOpen}"
+                                               MenuX="{Binding ChartContextMenuX}"
+                                               MenuY="{Binding ChartContextMenuY}"
+                                               ShowResetZoom="{Binding ShowChartResetZoom}"
+                                               ShowExportOptions="{Binding ShowChartExportOptions}"
+                                               SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
+                                               ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
+                                               ExportToExcelCommand="{Binding ExportToExcelCommand}"
+                                               ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
+                                               CloseCommand="{Binding HideChartContextMenuCommand}" />
+                </Panel>
+            </Grid>
+        </Border>
+    </Panel>
+</UserControl>

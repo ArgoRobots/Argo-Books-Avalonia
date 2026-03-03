@@ -26,6 +26,15 @@ public partial class DashboardPage : UserControl
 
     private const double CompactQuickActionsThreshold = 1050;
 
+    /// <summary>
+    /// Sets the clicked chart reference from an external source (e.g., ChartExpandOverlay).
+    /// </summary>
+    public void SetClickedChart(Control? chart, string name)
+    {
+        _clickedChart = chart;
+        _clickedChartName = name ?? "Chart";
+    }
+
     public DashboardPage()
     {
         InitializeComponent();
@@ -39,23 +48,8 @@ public partial class DashboardPage : UserControl
         // Responsive quick actions padding
         QuickActionsCard.SizeChanged += OnQuickActionsSizeChanged;
 
-        // Recalculate chart date labels when chart control resizes
-        ProfitsChart.SizeChanged += OnChartSizeChanged;
-
         // Wire up chart scroll handler after control is loaded
         Loaded += OnLoaded;
-    }
-
-    private void OnChartSizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        if (DataContext is DashboardPageViewModel viewModel)
-        {
-            var chartWidth = e.NewSize.Width;
-            if (chartWidth > 0)
-            {
-                viewModel.UpdateChartWidth(chartWidth);
-            }
-        }
     }
 
     private void OnQuickActionsSizeChanged(object? sender, SizeChangedEventArgs e)

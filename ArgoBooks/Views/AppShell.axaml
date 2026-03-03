@@ -129,6 +129,9 @@
         <!-- Company Switcher Panel (positioned relative to sidebar) -->
         <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
 
+        <!-- Chart Expand Overlay (full-window modal for expanded chart viewing) -->
+        <controls:ChartExpandOverlay />
+
         <!-- Profile Modal -->
         <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
 
