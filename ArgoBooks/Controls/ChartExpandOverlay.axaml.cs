@@ -305,13 +305,34 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm && vm.IsChartContextMenuOpen)
             vm.HideChartContextMenuCommand.Execute(null);
 
-        contentPanel.Children.Clear();
-
-        // Re-add children to source panel before the expand button
+        // Move children back to the source panel individually rather than calling
+        // contentPanel.Children.Clear(). LiveChartsCore's GeoMapChart.Unload()
+        // throws NullReferenceException when a GeoMap is detached from the visual
+        // tree (an internal LiveChartsCore bug). By catching the exception per
+        // child, the overlay still closes correctly and all children are returned.
         var insertIndex = 0;
         foreach (var child in _movedChildren)
         {
-            _sourcePanel.Children.Insert(insertIndex, child);
+            try
+            {
+                contentPanel.Children.Remove(child);
+            }
+            catch (NullReferenceException)
+            {
+                // GeoMapChart.Unload() may throw on detach; the child is
+                // already removed from the Children collection at this point.
+            }
+
+            try
+            {
+                _sourcePanel.Children.Insert(insertIndex, child);
+            }
+            catch (NullReferenceException)
+            {
+                // Re-attachment may also throw if GeoMap internal state was
+                // left inconsistent by the failed Unload().
+            }
+
             insertIndex++;
         }
 
