@@ -10,6 +10,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
+using OfficeOpenXml.Drawing.Chart;
 using LiveChartsCore.SkiaSharpView.VisualElements;
 
 namespace ArgoBooks.Views;
@@ -188,6 +189,15 @@ public partial class DashboardPage : UserControl
         {
             var filePath = file.Path.LocalPath;
 
+            // Map chart style to Excel chart type
+            var excelChartType = e.ChartStyle switch
+            {
+                ChartStyle.Column => eChartType.ColumnClustered,
+                ChartStyle.Area => eChartType.Area,
+                ChartStyle.Scatter => eChartType.XYScatter,
+                _ => eChartType.Line
+            };
+
             // Export based on chart type
             if (e.IsMultiSeries)
             {
@@ -207,7 +217,8 @@ public partial class DashboardPage : UserControl
                     e.Labels,
                     seriesData,
                     labelHeader: "Date",
-                    isCurrency: true);
+                    isCurrency: true,
+                    excelChartType: excelChartType);
             }
             else if (e.IsDistribution)
             {
@@ -234,7 +245,8 @@ public partial class DashboardPage : UserControl
                     e.Values,
                     column1Header: "Date",
                     column2Header: e.SeriesName,
-                    isCurrency: isCurrency);
+                    isCurrency: isCurrency,
+                    excelChartType: excelChartType);
             }
 
             System.Diagnostics.Debug.WriteLine($"Chart exported to Excel: {filePath}");

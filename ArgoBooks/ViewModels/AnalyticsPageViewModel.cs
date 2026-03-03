@@ -1439,6 +1439,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
             ChartType = exportData.ChartType,
+            ChartStyle = _chartLoaderService.SelectedChartStyle,
             AdditionalSeries = exportData.AdditionalSeries
         });
     }

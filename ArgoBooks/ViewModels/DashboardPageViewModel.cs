@@ -1047,6 +1047,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
             ChartType = exportData.ChartType,
+            ChartStyle = ChartLoaderService.SelectedChartStyle,
             AdditionalSeries = exportData.AdditionalSeries
         });
     }
@@ -1569,6 +1570,11 @@ public class ExcelExportEventArgs : EventArgs
     /// Gets or sets additional series for multi-series charts.
     /// </summary>
     public List<(string Name, double[] Values)> AdditionalSeries { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the visual chart style (Line, Column, Area, etc.).
+    /// </summary>
+    public ChartStyle ChartStyle { get; set; } = ChartStyle.Line;
 
     /// <summary>
     /// Returns true if this is a multi-series chart.

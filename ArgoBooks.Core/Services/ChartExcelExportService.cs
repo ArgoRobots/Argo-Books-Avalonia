@@ -35,7 +35,7 @@ public class ChartExcelExportService
     /// <param name="column1Header">Header for the first column (labels).</param>
     /// <param name="column2Header">Header for the second column (values).</param>
     /// <param name="isCurrency">Whether to format values as currency.</param>
-    /// <param name="useLineChart">Whether to use a line chart (default) or column chart.</param>
+    /// <param name="excelChartType">The Excel chart type to use (default: Line).</param>
     public static async Task ExportChartAsync(
         string filePath,
         string chartTitle,
@@ -44,7 +44,7 @@ public class ChartExcelExportService
         string column1Header = "Date",
         string column2Header = "Value",
         bool isCurrency = true,
-        bool useLineChart = true)
+        eChartType excelChartType = eChartType.Line)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(labels);
@@ -88,8 +88,7 @@ public class ChartExcelExportService
             worksheet.Cells.AutoFitColumns();
 
             // Create embedded chart
-            var chartType = useLineChart ? eChartType.Line : eChartType.ColumnClustered;
-            var chart = worksheet.Drawings.AddChart(chartTitle, chartType);
+            var chart = worksheet.Drawings.AddChart(chartTitle, excelChartType);
             chart.SetPosition(0, 0, 3, 0); // Position to the right of data
             chart.SetSize(ChartWidth, ChartHeight);
             chart.Title.Text = chartTitle;
@@ -101,7 +100,7 @@ public class ChartExcelExportService
             series.Header = column2Header;
 
             // Enable smooth lines for line charts
-            if (useLineChart && chart is ExcelLineChart lineChart)
+            if (chart is ExcelLineChart lineChart)
             {
                 lineChart.Smooth = true;
             }
@@ -120,7 +119,7 @@ public class ChartExcelExportService
     /// <param name="seriesData">Dictionary of series name to values.</param>
     /// <param name="labelHeader">Header for the labels column.</param>
     /// <param name="isCurrency">Whether to format values as currency.</param>
-    /// <param name="useLineChart">Whether to use a line chart (default) or column chart.</param>
+    /// <param name="excelChartType">The Excel chart type to use (default: Line).</param>
     public static async Task ExportMultiSeriesChartAsync(
         string filePath,
         string chartTitle,
@@ -128,7 +127,7 @@ public class ChartExcelExportService
         Dictionary<string, double[]> seriesData,
         string labelHeader = "Date",
         bool isCurrency = true,
-        bool useLineChart = true)
+        eChartType excelChartType = eChartType.Line)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(labels);
@@ -193,8 +192,7 @@ public class ChartExcelExportService
             worksheet.Cells.AutoFitColumns();
 
             // Create embedded chart
-            var chartType = useLineChart ? eChartType.Line : eChartType.ColumnClustered;
-            var chart = worksheet.Drawings.AddChart(chartTitle, chartType);
+            var chart = worksheet.Drawings.AddChart(chartTitle, excelChartType);
             chart.SetPosition(0, 0, columnCount + 1, 0); // Position to the right of data
             chart.SetSize(ChartWidth, ChartHeight);
             chart.Title.Text = chartTitle;
@@ -209,7 +207,7 @@ public class ChartExcelExportService
             }
 
             // Enable smooth lines for line charts
-            if (useLineChart && chart is ExcelLineChart lineChart)
+            if (chart is ExcelLineChart lineChart)
             {
                 lineChart.Smooth = true;
             }
