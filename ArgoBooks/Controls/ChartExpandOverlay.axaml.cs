@@ -1,3 +1,4 @@
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -19,6 +20,14 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ChartExpandOverlay : UserControl
 {
+    // LiveChartsCore's GeoMap stores its core chart engine in a private readonly
+    // field named "_core". Its DetachedFromVisualTree handler calls _core.Unload(),
+    // which throws NullReferenceException after the first unload because there is no
+    // AttachedToVisualTree handler to reinitialize state. We temporarily null this
+    // field during reparenting so the handler short-circuits (it checks for null).
+    private static readonly FieldInfo? s_geoMapCoreField =
+        typeof(GeoMap).GetField("_core", BindingFlags.NonPublic | BindingFlags.Instance);
+
     private Panel? _sourcePanel;
     private Button? _expandButton;
     private readonly List<Control> _movedChildren = new();
@@ -279,8 +288,11 @@ public partial class ChartExpandOverlay : UserControl
 
         foreach (var child in _movedChildren)
         {
-            sourcePanel.Children.Remove(child);
-            contentPanel.Children.Add(child);
+            SuppressGeoMapCoreDuringReparent(child, () =>
+            {
+                sourcePanel.Children.Remove(child);
+                contentPanel.Children.Add(child);
+            });
         }
 
         // Hide the expand button while overlay is open
@@ -305,34 +317,14 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm && vm.IsChartContextMenuOpen)
             vm.HideChartContextMenuCommand.Execute(null);
 
-        // Move children back to the source panel individually rather than calling
-        // contentPanel.Children.Clear(). LiveChartsCore's GeoMapChart.Unload()
-        // throws NullReferenceException when a GeoMap is detached from the visual
-        // tree (an internal LiveChartsCore bug). By catching the exception per
-        // child, the overlay still closes correctly and all children are returned.
         var insertIndex = 0;
         foreach (var child in _movedChildren)
         {
-            try
+            SuppressGeoMapCoreDuringReparent(child, () =>
             {
                 contentPanel.Children.Remove(child);
-            }
-            catch (NullReferenceException)
-            {
-                // GeoMapChart.Unload() may throw on detach; the child is
-                // already removed from the Children collection at this point.
-            }
-
-            try
-            {
-                _sourcePanel.Children.Insert(insertIndex, child);
-            }
-            catch (NullReferenceException)
-            {
-                // Re-attachment may also throw if GeoMap internal state was
-                // left inconsistent by the failed Unload().
-            }
-
+                _sourcePanel!.Children.Insert(insertIndex, child);
+            });
             insertIndex++;
         }
 
@@ -414,6 +406,45 @@ public partial class ChartExpandOverlay : UserControl
             dashPage.SetClickedChart(chart, name);
         else if (_pageContentControl?.Content is AnalyticsPage analyticsPage)
             analyticsPage.SetClickedChart(chart, name);
+    }
+
+    /// <summary>
+    /// Temporarily nulls the GeoMap's internal <c>_core</c> field so that its
+    /// <c>DetachedFromVisualTree</c> handler skips <c>GeoMapChart.Unload()</c>
+    /// during a reparent operation. The field is restored after the action.
+    /// For non-GeoMap controls the action runs directly.
+    /// </summary>
+    private static void SuppressGeoMapCoreDuringReparent(Control child, Action reparent)
+    {
+        if (child is not GeoMap || s_geoMapCoreField == null)
+        {
+            reparent();
+            return;
+        }
+
+        object? savedCore = null;
+        try
+        {
+            savedCore = s_geoMapCoreField.GetValue(child);
+            s_geoMapCoreField.SetValue(child, null);
+        }
+        catch
+        {
+            // Reflection may fail on some runtimes; fall through to direct call.
+        }
+
+        try
+        {
+            reparent();
+        }
+        finally
+        {
+            if (savedCore != null)
+            {
+                try { s_geoMapCoreField.SetValue(child, savedCore); }
+                catch { /* best effort */ }
+            }
+        }
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e)
