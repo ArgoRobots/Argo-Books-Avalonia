@@ -238,8 +238,11 @@ public class ForecastAccuracyService : IForecastAccuracyService
                 .Select(r => r.PeriodStartDate.ToString("yyyy-MM"))
                 .ToHashSet();
 
+            // Only backtest months that have fully completed (exclude current and future months)
+            var currentMonthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             var monthsToTest = monthlyData
                 .Skip(minTrainingMonths)
+                .Where(m => m.Month < currentMonthStart)
                 .Where(m => !existingPeriods.Contains(m.Month.ToString("yyyy-MM")))
                 .ToList();
 

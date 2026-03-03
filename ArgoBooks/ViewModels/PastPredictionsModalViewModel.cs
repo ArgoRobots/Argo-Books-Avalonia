@@ -307,9 +307,10 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             .OrderByDescending(r => r.PeriodStartDate)
             .ToList();
 
-        // Calculate statistics
-        var validatedRecords = records.Where(r => r.IsValidated).ToList();
-        var backtestRecords = records.Where(r => r.ForecastDate.Date == r.PeriodStartDate.Date && r.IsValidated).ToList();
+        // Calculate statistics (only include fully completed periods)
+        var completedCutoff = DateTime.Today;
+        var validatedRecords = records.Where(r => r.IsValidated && r.PeriodEndDate < completedCutoff).ToList();
+        var backtestRecords = records.Where(r => r.ForecastDate.Date == r.PeriodStartDate.Date && r.IsValidated && r.PeriodEndDate < completedCutoff).ToList();
         var realPredictions = validatedRecords.Except(backtestRecords).ToList();
 
         ValidatedCount = realPredictions.Count.ToString();
@@ -364,10 +365,11 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             AccuracyTrendColor = Color.Parse(AppColors.GrayMedium);
         }
 
-        // Add records to the collection
+        // Add records to the collection (only show completed periods)
+        var today = DateTime.Today;
         foreach (var record in records)
         {
-            if (record.IsValidated)
+            if (record.IsValidated && record.PeriodEndDate < today)
             {
                 Predictions.Add(PastPredictionItemViewModel.FromRecord(record));
             }
@@ -381,7 +383,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
         }
 
         // Load the accuracy chart
-        LoadAccuracyChart(records.Where(r => r.IsValidated).ToList());
+        LoadAccuracyChart(records.Where(r => r.IsValidated && r.PeriodEndDate < today).ToList());
     }
 
     /// <summary>
