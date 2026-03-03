@@ -317,7 +317,7 @@ public partial class PastPredictionsModal : UserControl
                 seriesData,
                 labelHeader: "Period",
                 isCurrency: false,
-                useLineChart: true);
+                excelChartType: OfficeOpenXml.Drawing.Chart.eChartType.Line);
 
             System.Diagnostics.Debug.WriteLine($"Chart exported to: {filePath}");
         }

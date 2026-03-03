@@ -34,7 +34,10 @@ public class GoogleSheetsService
         Line,
         Spline,
         Column,
-        Pie
+        Pie,
+        Area,
+        StepLine,
+        Scatter
     }
 
     /// <summary>
@@ -109,7 +112,9 @@ public class GoogleSheetsService
             var valueRange = new ValueRange { Values = values };
 
             var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            // Use RAW to prevent Google Sheets from parsing date strings (e.g. "Jan 2024")
+            // into date serial numbers, which can cause chart rendering artifacts.
+            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
             await updateRequest.ExecuteAsync(cancellationToken);
 
             // Format headers and numbers, add chart
@@ -223,7 +228,9 @@ public class GoogleSheetsService
         var range = $"{sheetName}!A1:{(char)('A' + seriesNames.Count)}{values.Count}";
         var valueRange = new ValueRange { Values = values };
         var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+        // Use RAW to prevent Google Sheets from parsing date strings (e.g. "Jan 2024")
+        // into date serial numbers, which can cause chart rendering artifacts.
+        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
         await updateRequest.ExecuteAsync(cancellationToken);
 
         // Format headers and numbers
@@ -282,7 +289,9 @@ public class GoogleSheetsService
         var range = $"'{sheetName}'!A1:{lastColumn}{values.Count}";
         var valueRange = new ValueRange { Values = values };
         var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+        // Use RAW to prevent Google Sheets from parsing date strings (e.g. "Jan 2024")
+        // into date serial numbers, which can cause chart rendering artifacts.
+        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
         await updateRequest.ExecuteAsync(cancellationToken);
 
         // Format headers and numbers
@@ -485,8 +494,25 @@ public class GoogleSheetsService
                     seriesRanges,
                     startRowIndex,
                     endRowIndex,
-                    "LINE",
-                    chartType == ChartType.Spline
+                    "LINE"
+                );
+                break;
+
+            case ChartType.Area:
+                chartSpec.BasicChart = CreateBasicChartSpec(
+                    seriesRanges,
+                    startRowIndex,
+                    endRowIndex,
+                    "AREA"
+                );
+                break;
+
+            case ChartType.StepLine:
+                chartSpec.BasicChart = CreateBasicChartSpec(
+                    seriesRanges,
+                    startRowIndex,
+                    endRowIndex,
+                    "STEPPED_AREA"
                 );
                 break;
 
@@ -495,8 +521,16 @@ public class GoogleSheetsService
                     seriesRanges,
                     startRowIndex,
                     endRowIndex,
-                    "COLUMN",
-                    false
+                    "COLUMN"
+                );
+                break;
+
+            case ChartType.Scatter:
+                chartSpec.BasicChart = CreateBasicChartSpec(
+                    seriesRanges,
+                    startRowIndex,
+                    endRowIndex,
+                    "SCATTER"
                 );
                 break;
 
@@ -539,8 +573,7 @@ public class GoogleSheetsService
         (string XColumn, string YColumn)[] seriesRanges,
         int startRowIndex,
         int endRowIndex,
-        string chartType,
-        bool isSpline = false)
+        string chartType)
     {
         var series = new List<BasicChartSeries>();
 
@@ -565,15 +598,17 @@ public class GoogleSheetsService
                         ]
                     }
                 },
-                TargetAxis = "LEFT_AXIS"
+                TargetAxis = "LEFT_AXIS",
+                PointStyle = new PointStyle { Size = 7 }
             });
         }
 
-        return new BasicChartSpec
+        var spec = new BasicChartSpec
         {
             ChartType = chartType,
-            LineSmoothing = isSpline,
+            HeaderCount = 1,
             LegendPosition = "TOP_LEGEND",
+            Series = series,
             Domains =
             [
                 new BasicChartDomain
@@ -594,30 +629,14 @@ public class GoogleSheetsService
                                 }
                             ]
                         }
-                    },
-                    Reversed = false
-                }
-            ],
-            Series = series,
-            HeaderCount = 1,
-            Axis =
-            [
-                new BasicChartAxis
-                {
-                    Position = "BOTTOM_AXIS",
-                    Title = "",
-                    Format = new TextFormat
-                    {
-                        FontSize = 10
                     }
-                },
-                new BasicChartAxis
-                {
-                    Position = "LEFT_AXIS",
-                    Title = ""
                 }
             ]
         };
+
+        spec.LineSmoothing = true;
+
+        return spec;
     }
 
     private static PieChartSpec CreatePieChartSpec(

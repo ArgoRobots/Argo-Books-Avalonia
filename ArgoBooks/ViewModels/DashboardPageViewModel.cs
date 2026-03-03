@@ -940,7 +940,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             // Use the UI title (SelectedChartId) for Google Sheets, not the internal stored title
             var chartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : (chartExportData?.ChartTitle ?? "Chart");
 
-            // Use Pie chart type for distribution charts, Line or Column for time-based charts
+            // Use Pie chart type for distribution charts, match chart style for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
             if (chartExportData?.ChartType == ChartType.Distribution)
             {
@@ -948,9 +948,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = ChartLoaderService.SelectedChartStyle == ChartStyle.Line
-                    ? GoogleSheetsService.ChartType.Line
-                    : GoogleSheetsService.ChartType.Column;
+                chartType = ChartLoaderService.SelectedChartStyle switch
+                {
+                    ChartStyle.Line => GoogleSheetsService.ChartType.Line,
+                    ChartStyle.Area => GoogleSheetsService.ChartType.Area,
+                    ChartStyle.StepLine => GoogleSheetsService.ChartType.StepLine,
+                    ChartStyle.Scatter => GoogleSheetsService.ChartType.Scatter,
+                    _ => GoogleSheetsService.ChartType.Column
+                };
             }
 
             var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
@@ -1042,6 +1047,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
             ChartType = exportData.ChartType,
+            ChartStyle = ChartLoaderService.SelectedChartStyle,
             AdditionalSeries = exportData.AdditionalSeries
         });
     }
@@ -1564,6 +1570,11 @@ public class ExcelExportEventArgs : EventArgs
     /// Gets or sets additional series for multi-series charts.
     /// </summary>
     public List<(string Name, double[] Values)> AdditionalSeries { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the visual chart style (Line, Column, Area, etc.).
+    /// </summary>
+    public ChartStyle ChartStyle { get; set; } = ChartStyle.Line;
 
     /// <summary>
     /// Returns true if this is a multi-series chart.

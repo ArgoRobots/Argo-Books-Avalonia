@@ -1332,7 +1332,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             // Use the UI title (SelectedChartId) for Google Sheets, not the internal stored title
             var chartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : (chartExportData?.ChartTitle ?? "Chart");
 
-            // Use Pie chart type for distribution charts, Line or Column for time-based charts
+            // Use Pie chart type for distribution charts, match chart style for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
             if (chartExportData?.ChartType == ChartType.Distribution)
             {
@@ -1340,9 +1340,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
-                    ? GoogleSheetsService.ChartType.Line
-                    : GoogleSheetsService.ChartType.Column;
+                chartType = _chartLoaderService.SelectedChartStyle switch
+                {
+                    ChartStyle.Line => GoogleSheetsService.ChartType.Line,
+                    ChartStyle.Area => GoogleSheetsService.ChartType.Area,
+                    ChartStyle.StepLine => GoogleSheetsService.ChartType.StepLine,
+                    ChartStyle.Scatter => GoogleSheetsService.ChartType.Scatter,
+                    _ => GoogleSheetsService.ChartType.Column
+                };
             }
 
             var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
@@ -1434,6 +1439,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
             ChartType = exportData.ChartType,
+            ChartStyle = _chartLoaderService.SelectedChartStyle,
             AdditionalSeries = exportData.AdditionalSeries
         });
     }
