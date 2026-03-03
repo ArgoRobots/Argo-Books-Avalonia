@@ -630,6 +630,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// Whether the selected chart is a distribution/pie chart that benefits from legend display.
     /// </summary>
     public bool IsDistributionChartSelected => SelectedChartElement?.ChartType is
+        ChartDataType.WorldMap or
         ChartDataType.RevenueDistribution or
         ChartDataType.ExpensesDistribution or
         ChartDataType.ReturnReasons or
