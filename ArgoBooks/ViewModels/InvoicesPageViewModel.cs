@@ -227,7 +227,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     public BatchObservableCollection<InvoiceDisplayItem> Invoices { get; } = [];
 
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Draft", "Pending", "Sent", "Partial", "Paid", "Overdue", "Cancelled"];
+    public ObservableCollection<string> StatusOptions { get; } = new(InvoiceStatusExtensions.GetFilterOptions());
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
 

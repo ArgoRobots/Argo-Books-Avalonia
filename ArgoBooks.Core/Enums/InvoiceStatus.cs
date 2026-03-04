@@ -29,3 +29,43 @@ public enum InvoiceStatus
     /// <summary>Invoice has been cancelled.</summary>
     Cancelled
 }
+
+/// <summary>
+/// Extension methods for InvoiceStatus.
+/// </summary>
+public static class InvoiceStatusExtensions
+{
+    /// <summary>
+    /// Gets the modal status options (statuses selectable when creating/editing).
+    /// </summary>
+    public static string[] GetModalOptions()
+    {
+        return
+        [
+            nameof(InvoiceStatus.Draft),
+            nameof(InvoiceStatus.Pending),
+            nameof(InvoiceStatus.Sent),
+            nameof(InvoiceStatus.Partial),
+            nameof(InvoiceStatus.Paid),
+            nameof(InvoiceStatus.Cancelled)
+        ];
+    }
+
+    /// <summary>
+    /// Gets filter options including "All" as the first entry.
+    /// </summary>
+    public static string[] GetFilterOptions()
+    {
+        return
+        [
+            "All",
+            nameof(InvoiceStatus.Draft),
+            nameof(InvoiceStatus.Pending),
+            nameof(InvoiceStatus.Sent),
+            nameof(InvoiceStatus.Partial),
+            nameof(InvoiceStatus.Paid),
+            nameof(InvoiceStatus.Overdue),
+            nameof(InvoiceStatus.Cancelled)
+        ];
+    }
+}

@@ -135,7 +135,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Tab options for filtering.
     /// </summary>
-    public ObservableCollection<string> TabOptions { get; } = ["All", "Add", "Remove", "Set"];
+    public ObservableCollection<string> TabOptions { get; } = new(AdjustmentTypeExtensions.GetFilterOptions());
 
     partial void OnActiveTabChanged(string value)
     {

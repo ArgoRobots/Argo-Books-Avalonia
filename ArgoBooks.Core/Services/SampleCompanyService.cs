@@ -205,7 +205,7 @@ public class SampleCompanyService
             Name = SampleCompanyName,
             BusinessType = "Retail & Services",
             Industry = "Technology",
-            Email = "info@techflowsolutions.com",
+            Email = "example@samplecompany.com",
             Phone = "+1 5551000000",
             Country = "Canada"
         };

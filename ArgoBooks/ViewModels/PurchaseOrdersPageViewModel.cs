@@ -354,18 +354,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (!string.IsNullOrEmpty(filterStatus) && filterStatus != "All")
         {
-            var statusEnum = filterStatus switch
-            {
-                "Draft" => PurchaseOrderStatus.Draft,
-                "Pending" => PurchaseOrderStatus.Pending,
-                "Approved" => PurchaseOrderStatus.Approved,
-                "Sent" => PurchaseOrderStatus.Sent,
-                "On Order" => PurchaseOrderStatus.OnOrder,
-                "Partially Received" => PurchaseOrderStatus.PartiallyReceived,
-                "Received" => PurchaseOrderStatus.Received,
-                "Cancelled" => PurchaseOrderStatus.Cancelled,
-                _ => (PurchaseOrderStatus?)null
-            };
+            var statusEnum = PurchaseOrderStatusExtensions.ParsePurchaseOrderStatus(filterStatus);
 
             if (statusEnum.HasValue)
             {

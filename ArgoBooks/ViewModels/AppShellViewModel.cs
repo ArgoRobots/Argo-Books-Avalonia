@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reflection;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using Avalonia.Controls;
@@ -602,63 +603,63 @@ public partial class AppShellViewModel : ViewModelBase
         QuickActionsViewModel.ActionRequested += (_, e) =>
         {
             // Handle actions that open modals after navigation
-            switch (e.ActionName)
+            switch (QuickActionNameExtensions.ParseQuickActionName(e.ActionName))
             {
-                case "OpenAddModal":
-                    switch (e.NavigationTarget)
+                case QuickActionName.OpenAddModal:
+                    switch (NavigationTargetExtensions.ParseNavigationTarget(e.NavigationTarget))
                     {
-                        case "RentalInventory":
+                        case NavigationTarget.RentalInventory:
                             RentalInventoryModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "RentalRecords":
+                        case NavigationTarget.RentalRecords:
                             RentalRecordsModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Customers":
+                        case NavigationTarget.Customers:
                             CustomerModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Products":
+                        case NavigationTarget.Products:
                             ProductModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Suppliers":
+                        case NavigationTarget.Suppliers:
                             SupplierModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Invoices":
+                        case NavigationTarget.Invoices:
                             InvoiceModalsViewModel.OpenCreateModal();
                             break;
-                        case "Expenses":
+                        case NavigationTarget.Expenses:
                             ExpenseModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Revenue":
+                        case NavigationTarget.Revenue:
                             RevenueModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Payments":
+                        case NavigationTarget.Payments:
                             PaymentModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
-                        case "Categories":
+                        case NavigationTarget.Categories:
                             CategoryModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
                     }
                     break;
-                case "OpenSettings":
+                case QuickActionName.OpenSettings:
                     SettingsModalViewModel.OpenCommand.Execute(null);
                     break;
-                case "OpenHelp":
+                case QuickActionName.OpenHelp:
                     HelpPanelViewModel.ToggleCommand.Execute(null);
                     break;
-                case "OpenExport":
+                case QuickActionName.OpenExport:
                     ExportAsModalViewModel.OpenCommand.Execute(null);
                     break;
-                case "OpenImport":
+                case QuickActionName.OpenImport:
                     ImportModalViewModel.OpenCommand.Execute(null);
                     break;
-                case "OpenScanModal":
+                case QuickActionName.OpenScanModal:
                     // Request file picker from view - can't open scan modal without a file
                     OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
                     break;
-                case "OpenEditCompany":
+                case QuickActionName.OpenEditCompany:
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);
                     break;
-                case "OpenCheckForUpdates":
+                case QuickActionName.OpenCheckForUpdates:
                     CheckForUpdateModalViewModel.OpenCommand.Execute(null);
                     break;
             }

@@ -958,13 +958,13 @@ public class AccountingReportDataService
         // Determine accounting tradition from country
         var tradition = normalized switch
         {
-            "UNITED STATES" or "CANADA" or "PUERTO RICO" => "US",
+            "UNITED STATES" or "CANADA" or "PUERTO RICO" => AccountingTradition.US,
 
             "UNITED KINGDOM" or "IRELAND" or "AUSTRALIA" or "NEW ZEALAND"
             or "SOUTH AFRICA" or "INDIA" or "SINGAPORE" or "MALAYSIA"
             or "HONG KONG" or "KENYA" or "NIGERIA" or "GHANA" or "PAKISTAN"
             or "BANGLADESH" or "SRI LANKA" or "ZIMBABWE" or "BOTSWANA"
-            or "JAMAICA" or "TRINIDAD AND TOBAGO" => "UK",
+            or "JAMAICA" or "TRINIDAD AND TOBAGO" => AccountingTradition.UK,
 
             "FRANCE" or "GERMANY" or "ITALY" or "SPAIN" or "NETHERLANDS"
             or "BELGIUM" or "AUSTRIA" or "SWEDEN" or "NORWAY" or "DENMARK"
@@ -976,9 +976,9 @@ public class AccountingReportDataService
             or "CHILE" or "COLOMBIA" or "MEXICO" or "PERU"
             or "ISRAEL" or "UNITED ARAB EMIRATES" or "SAUDI ARABIA"
             or "JAPAN" or "SOUTH KOREA" or "CHINA" or "TAIWAN"
-            or "THAILAND" or "VIETNAM" or "INDONESIA" or "PHILIPPINES" => "IFRS",
+            or "THAILAND" or "VIETNAM" or "INDONESIA" or "PHILIPPINES" => AccountingTradition.IFRS,
 
-            _ => "US"
+            _ => AccountingTradition.US
         };
 
         // Determine tax system (orthogonal to accounting tradition)
@@ -994,14 +994,14 @@ public class AccountingReportDataService
             or "ARGENTINA" or "CHILE" or "COLOMBIA" or "MEXICO" or "PERU"
             or "ISRAEL" or "UNITED ARAB EMIRATES" or "SAUDI ARABIA" or "THAILAND"
             or "VIETNAM" or "INDONESIA" or "PHILIPPINES" or "SOUTH KOREA"
-            or "CHINA" or "TAIWAN" or "ICELAND" => "VAT",
+            or "CHINA" or "TAIWAN" or "ICELAND" => TaxSystem.VAT,
 
-            "CANADA" => "GST/HST",
-            "INDIA" or "SINGAPORE" or "MALAYSIA" or "AUSTRALIA" or "NEW ZEALAND" => "GST",
-            "JAPAN" => "JCT",
-            "UNITED STATES" => "SALES_TAX",
+            "CANADA" => TaxSystem.GstHst,
+            "INDIA" or "SINGAPORE" or "MALAYSIA" or "AUSTRALIA" or "NEW ZEALAND" => TaxSystem.GST,
+            "JAPAN" => TaxSystem.JCT,
+            "UNITED STATES" => TaxSystem.SalesTax,
 
-            _ => "TAX"
+            _ => TaxSystem.Tax
         };
 
         var terms = new AccountingTerms();
@@ -1009,7 +1009,7 @@ public class AccountingReportDataService
         // Apply accounting tradition overrides
         switch (tradition)
         {
-            case "UK":
+            case AccountingTradition.UK:
                 terms.IncomeStatementTitle = "Profit & Loss";
                 terms.Revenue = "TURNOVER";
                 terms.TotalRevenue = "Total Turnover";
@@ -1022,7 +1022,7 @@ public class AccountingReportDataService
                 terms.RevenueCategory = "Turnover";
                 break;
 
-            case "IFRS":
+            case AccountingTradition.IFRS:
                 terms.NetIncome = "NET PROFIT";
                 terms.AccountsReceivable = "Trade Receivables";
                 terms.AccountsPayable = "Trade Payables";
@@ -1033,7 +1033,7 @@ public class AccountingReportDataService
         // Apply tax system terminology
         switch (taxSystem)
         {
-            case "VAT":
+            case TaxSystem.VAT:
                 terms.TaxCollectedHeader = "VAT COLLECTED";
                 terms.TaxCollectedLineFormat = "VAT Collected at {0}%";
                 terms.TaxCollectedTotal = "Total VAT Collected";
@@ -1042,7 +1042,7 @@ public class AccountingReportDataService
                 terms.TaxPaidTotal = "Total Input VAT";
                 terms.NetTaxLabel = "NET VAT PAYABLE";
                 break;
-            case "GST/HST":
+            case TaxSystem.GstHst:
                 terms.TaxCollectedHeader = "GST/HST COLLECTED";
                 terms.TaxCollectedLineFormat = "GST/HST Collected at {0}%";
                 terms.TaxCollectedTotal = "Total GST/HST Collected";
@@ -1051,7 +1051,7 @@ public class AccountingReportDataService
                 terms.TaxPaidTotal = "Total Input Tax Credits";
                 terms.NetTaxLabel = "NET GST/HST PAYABLE";
                 break;
-            case "GST":
+            case TaxSystem.GST:
                 terms.TaxCollectedHeader = "GST COLLECTED";
                 terms.TaxCollectedLineFormat = "GST Collected at {0}%";
                 terms.TaxCollectedTotal = "Total GST Collected";
@@ -1060,7 +1060,7 @@ public class AccountingReportDataService
                 terms.TaxPaidTotal = "Total Input Tax Credits";
                 terms.NetTaxLabel = "NET GST PAYABLE";
                 break;
-            case "JCT":
+            case TaxSystem.JCT:
                 terms.TaxCollectedHeader = "CONSUMPTION TAX COLLECTED";
                 terms.TaxCollectedLineFormat = "Consumption Tax at {0}%";
                 terms.TaxCollectedTotal = "Total Consumption Tax Collected";
@@ -1069,7 +1069,7 @@ public class AccountingReportDataService
                 terms.TaxPaidTotal = "Total Consumption Tax Paid";
                 terms.NetTaxLabel = "NET CONSUMPTION TAX LIABILITY";
                 break;
-            case "SALES_TAX":
+            case TaxSystem.SalesTax:
                 terms.TaxCollectedHeader = "SALES TAX COLLECTED";
                 terms.TaxCollectedLineFormat = "Sales Tax Collected at {0}%";
                 terms.TaxCollectedTotal = "Total Sales Tax Collected";

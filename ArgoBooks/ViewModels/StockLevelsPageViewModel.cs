@@ -220,7 +220,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Available status options for filter dropdown.
     /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "In Stock", "Low Stock", "Out of Stock", "Overstock"];
+    public ObservableCollection<string> StatusOptions { get; } = new(InventoryStatusExtensions.GetFilterOptions());
 
     #endregion
 

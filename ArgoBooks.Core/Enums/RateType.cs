@@ -14,3 +14,22 @@ public enum RateType
     /// <summary>Monthly rental rate.</summary>
     Monthly
 }
+
+/// <summary>
+/// Extension methods for RateType.
+/// </summary>
+public static class RateTypeExtensions
+{
+    /// <summary>
+    /// Gets all rate type names for UI options.
+    /// </summary>
+    public static string[] GetAllNames()
+    {
+        return
+        [
+            nameof(RateType.Daily),
+            nameof(RateType.Weekly),
+            nameof(RateType.Monthly)
+        ];
+    }
+}

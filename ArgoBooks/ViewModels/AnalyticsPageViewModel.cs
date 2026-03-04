@@ -1277,7 +1277,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnSaveChartAsImage()
     {
-        SaveChartImageRequested?.Invoke(this, new SaveChartImageEventArgs { ChartId = SelectedChartId });
+        SaveChartImageRequested?.Invoke(this, new SaveChartImageEventArgs { ChartId = SelectedChartDataType?.GetDisplayName() ?? "" });
     }
 
     /// <summary>
@@ -1297,7 +1297,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var exportData = _chartLoaderService.GetGoogleSheetsExportData(SelectedChartId);
+        var exportData = _chartLoaderService.GetGoogleSheetsExportData(SelectedChartDataType);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -1328,9 +1328,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         try
         {
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
-            // Use the UI title (SelectedChartId) for Google Sheets, not the internal stored title
-            var chartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : (chartExportData?.ChartTitle ?? "Chart");
+            var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartDataType);
+            var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";
 
             // Use Pie chart type for distribution charts, match chart style for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
@@ -1423,18 +1422,19 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var exportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+        var exportData = _chartLoaderService.GetExportDataForChart(SelectedChartDataType);
         if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
             return;
         }
 
+        var chartTitle = SelectedChartDataType?.GetDisplayName() ?? exportData.ChartTitle;
+
         // Raise event for View to handle file save dialog
         ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
         {
-            ChartId = SelectedChartId,
-            ChartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : exportData.ChartTitle,
+            ChartTitle = chartTitle,
             Labels = exportData.Labels,
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
@@ -1447,61 +1447,70 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        // Only reset the zoom on the chart that was right-clicked
-        if (string.IsNullOrEmpty(SelectedChartId))
+        if (SelectedChartDataType is not { } chartType)
             return;
 
-        // Map chart titles to their axes and reset the appropriate one
-        switch (SelectedChartId)
+        // Map ChartDataType to the corresponding axes and reset zoom
+        switch (chartType)
         {
-            case "Profit Over Time":
+            case ChartDataType.TotalProfits:
                 ChartLoaderService.ResetZoom(ProfitTrendsXAxes, ProfitTrendsYAxes);
                 break;
-            case "Expenses vs Revenue":
+            case ChartDataType.RevenueVsExpenses:
                 ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
                 break;
-            case "Revenue Trends":
+            case ChartDataType.TotalRevenue:
                 ChartLoaderService.ResetZoom(RevenueTrendsXAxes, RevenueTrendsYAxes);
                 break;
-            case "Expense Trends":
+            case ChartDataType.TotalExpenses:
                 ChartLoaderService.ResetZoom(ExpensesTrendsXAxes, ExpensesTrendsYAxes);
                 break;
-            case "Total Transactions":
+            case ChartDataType.TotalTransactions:
                 ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
                 break;
-            case "Average Transaction Value":
+            case ChartDataType.AverageTransactionValue:
                 ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
                 break;
-            case "Average Shipping Costs":
+            case ChartDataType.AverageShippingCosts:
                 ChartLoaderService.ResetZoom(AvgShippingCostsXAxes, AvgShippingCostsYAxes);
                 break;
-            case "Customer Growth":
+            case ChartDataType.CustomerGrowth:
                 ChartLoaderService.ResetZoom(CustomerGrowthXAxes, CustomerGrowthYAxes);
                 break;
-            case "Customer Lifetime Value":
-                // Uses AvgTransactionValue axes
+            case ChartDataType.CustomerLifetimeValue:
                 ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
                 break;
-            case "Rentals per Customer":
-                // Uses TotalTransactions axes
+            case ChartDataType.RentalsPerCustomer:
                 ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
                 break;
-            case "Returns Over Time":
+            case ChartDataType.TaxCollectedVsPaid:
+                ChartLoaderService.ResetZoom(TaxCollectedVsPaidXAxes, TaxCollectedVsPaidYAxes);
+                break;
+            case ChartDataType.TaxRateDistribution:
+                ChartLoaderService.ResetZoom(TaxRateDistributionXAxes, TaxRateDistributionYAxes);
+                break;
+            case ChartDataType.TaxLiabilityTrend:
+                ChartLoaderService.ResetZoom(TaxLiabilityTrendXAxes, TaxLiabilityTrendYAxes);
+                break;
+            case ChartDataType.ExpenseVsRevenueTax:
+                ChartLoaderService.ResetZoom(ExpenseVsRevenueTaxXAxes, ExpenseVsRevenueTaxYAxes);
+                break;
+            case ChartDataType.ReturnsOverTime:
                 ChartLoaderService.ResetZoom(ReturnsOverTimeXAxes, ReturnsOverTimeYAxes);
                 break;
-            case "Financial Impact of Returns":
+            case ChartDataType.ReturnFinancialImpact:
                 ChartLoaderService.ResetZoom(ReturnFinancialImpactXAxes, ReturnFinancialImpactYAxes);
                 break;
-            case "Expense vs Revenue Returns":
+            case ChartDataType.ExpenseVsRevenueReturns:
                 ChartLoaderService.ResetZoom(ExpenseVsRevenueReturnsXAxes, ExpenseVsRevenueReturnsYAxes);
                 break;
-            case "Losses Over Time":
+            case ChartDataType.LossesOverTime:
                 ChartLoaderService.ResetZoom(LossesOverTimeXAxes, LossesOverTimeYAxes);
                 break;
-            case "Financial Impact of Losses":
+            case ChartDataType.LossFinancialImpact:
                 ChartLoaderService.ResetZoom(LossFinancialImpactXAxes, LossFinancialImpactYAxes);
                 break;
-            case "Expense vs Revenue Losses":
+            case ChartDataType.ExpenseVsRevenueLosses:
                 ChartLoaderService.ResetZoom(ExpenseVsRevenueLossesXAxes, ExpenseVsRevenueLossesYAxes);
                 break;
         }

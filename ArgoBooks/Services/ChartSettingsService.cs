@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -50,7 +51,7 @@ public partial class ChartSettingsService : ObservableObject
     private string _selectedChartType = "Line";
 
     [ObservableProperty]
-    private string _selectedDateRange = "This Month";
+    private string _selectedDateRange = DateRangePreset.ThisMonth.GetDisplayName();
 
     [ObservableProperty]
     private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
@@ -77,21 +78,8 @@ public partial class ChartSettingsService : ObservableObject
     /// <summary>
     /// Gets the label for comparison period based on selected date range.
     /// </summary>
-    public string ComparisonPeriodLabel => SelectedDateRange switch
-    {
-        "This Month" => "from last month",
-        "Last Month" => "from prior month",
-        "Last 30 Days" => "from prior 30 days",
-        "Last 100 Days" => "from prior 100 days",
-        "Last 365 Days" => "from prior 365 days",
-        "This Quarter" => "from last quarter",
-        "Last Quarter" => "from prior quarter",
-        "This Year" => "from last year",
-        "Last Year" => "from prior year",
-        "All Time" => "",
-        "Custom Range" => "from prior period",
-        _ => "from last period"
-    };
+    public string ComparisonPeriodLabel =>
+        DateRangePresetExtensions.ParseDateRange(SelectedDateRange)?.GetComparisonPeriodLabel() ?? "from last period";
 
     private ChartSettingsService()
     {
@@ -127,7 +115,7 @@ public partial class ChartSettingsService : ObservableObject
         {
             // Reset to defaults before loading company-specific settings
             SelectedChartType = "Line";
-            SelectedDateRange = "This Month";
+            SelectedDateRange = DateRangePreset.ThisMonth.GetDisplayName();
             HasAppliedCustomRange = false;
             UpdateDateRangeFromSelection();
 
@@ -177,7 +165,7 @@ public partial class ChartSettingsService : ObservableObject
         // Load date range
         if (!string.IsNullOrEmpty(chartSettings.DateRange))
         {
-            if (chartSettings.DateRange == "Custom Range" &&
+            if (chartSettings.DateRange == DateRangePreset.CustomRange.GetDisplayName() &&
                 chartSettings.CustomStartDate.HasValue &&
                 chartSettings.CustomEndDate.HasValue)
             {
@@ -214,7 +202,7 @@ public partial class ChartSettingsService : ObservableObject
             MaxPieSlices = settings.Ui.Chart.MaxPieSlices
         };
 
-        if (HasAppliedCustomRange && SelectedDateRange == "Custom Range")
+        if (HasAppliedCustomRange && SelectedDateRange == DateRangePreset.CustomRange.GetDisplayName())
         {
             chartData.CustomStartDate = StartDate;
             chartData.CustomEndDate = EndDate;
@@ -240,7 +228,7 @@ public partial class ChartSettingsService : ObservableObject
         OnPropertyChanged(nameof(AppliedDateRangeText));
         OnPropertyChanged(nameof(ComparisonPeriodLabel));
 
-        if (value != "Custom Range")
+        if (value != DateRangePreset.CustomRange.GetDisplayName())
         {
             HasAppliedCustomRange = false;
             UpdateDateRangeFromSelection();
@@ -274,41 +262,42 @@ public partial class ChartSettingsService : ObservableObject
     {
         var now = DateTime.Now;
 
-        switch (SelectedDateRange)
+        var preset = DateRangePresetExtensions.ParseDateRange(SelectedDateRange);
+        switch (preset)
         {
-            case "This Month":
+            case DateRangePreset.ThisMonth:
                 StartDate = new DateTime(now.Year, now.Month, 1);
                 EndDate = now;
                 break;
 
-            case "Last Month":
+            case DateRangePreset.LastMonth:
                 var lastMonth = now.AddMonths(-1);
                 StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
                 EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
                 break;
 
-            case "Last 30 Days":
+            case DateRangePreset.Last30Days:
                 StartDate = now.AddDays(-29).Date;
                 EndDate = now;
                 break;
 
-            case "Last 100 Days":
+            case DateRangePreset.Last100Days:
                 StartDate = now.AddDays(-99).Date;
                 EndDate = now;
                 break;
 
-            case "Last 365 Days":
+            case DateRangePreset.Last365Days:
                 StartDate = now.AddDays(-364).Date;
                 EndDate = now;
                 break;
 
-            case "This Quarter":
+            case DateRangePreset.ThisQuarter:
                 var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
                 StartDate = quarterStart;
                 EndDate = now;
                 break;
 
-            case "Last Quarter":
+            case DateRangePreset.LastQuarter:
                 var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
                 var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
                 lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
@@ -316,22 +305,22 @@ public partial class ChartSettingsService : ObservableObject
                 EndDate = lastQuarterEnd;
                 break;
 
-            case "This Year":
+            case DateRangePreset.ThisYear:
                 StartDate = new DateTime(now.Year, 1, 1);
                 EndDate = now;
                 break;
 
-            case "Last Year":
+            case DateRangePreset.LastYear:
                 StartDate = new DateTime(now.Year - 1, 1, 1);
                 EndDate = new DateTime(now.Year - 1, 12, 31);
                 break;
 
-            case "All Time":
+            case DateRangePreset.AllTime:
                 StartDate = App.CompanyManager?.CompanyData?.GetEarliestDate() ?? DateTime.Today;
                 EndDate = now;
                 break;
 
-            case "Custom Range":
+            case DateRangePreset.CustomRange:
                 // Keep current values
                 break;
         }

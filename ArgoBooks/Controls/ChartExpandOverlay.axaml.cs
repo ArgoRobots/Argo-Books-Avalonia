@@ -1,3 +1,4 @@
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -6,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.ViewModels;
 using ArgoBooks.Views;
 using LiveChartsCore.SkiaSharpView.Avalonia;
@@ -19,6 +21,14 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ChartExpandOverlay : UserControl
 {
+    // LiveChartsCore's GeoMap stores its core chart engine in a private readonly
+    // field named "_core". Its DetachedFromVisualTree handler calls _core.Unload(),
+    // which throws NullReferenceException after the first unload because there is no
+    // AttachedToVisualTree handler to reinitialize state. We temporarily null this
+    // field during reparenting so the handler short-circuits (it checks for null).
+    private static readonly FieldInfo? s_geoMapCoreField =
+        typeof(GeoMap).GetField("_core", BindingFlags.NonPublic | BindingFlags.Instance);
+
     private Panel? _sourcePanel;
     private Button? _expandButton;
     private readonly List<Control> _movedChildren = new();
@@ -279,8 +289,11 @@ public partial class ChartExpandOverlay : UserControl
 
         foreach (var child in _movedChildren)
         {
-            sourcePanel.Children.Remove(child);
-            contentPanel.Children.Add(child);
+            SuppressGeoMapCoreDuringReparent(child, () =>
+            {
+                sourcePanel.Children.Remove(child);
+                contentPanel.Children.Add(child);
+            });
         }
 
         // Hide the expand button while overlay is open
@@ -305,13 +318,14 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm && vm.IsChartContextMenuOpen)
             vm.HideChartContextMenuCommand.Execute(null);
 
-        contentPanel.Children.Clear();
-
-        // Re-add children to source panel before the expand button
         var insertIndex = 0;
         foreach (var child in _movedChildren)
         {
-            _sourcePanel.Children.Insert(insertIndex, child);
+            SuppressGeoMapCoreDuringReparent(child, () =>
+            {
+                contentPanel.Children.Remove(child);
+                _sourcePanel!.Children.Insert(insertIndex, child);
+            });
             insertIndex++;
         }
 
@@ -365,7 +379,7 @@ public partial class ChartExpandOverlay : UserControl
         e.Handled = true;
 
         var clickedControl = (Control?)chart ?? (Control?)pieChart ?? geoMap;
-        var title = _sourcePanel != null ? FindChartTitle(_sourcePanel) : "Chart";
+        var title = GetClickedChartTitle(clickedControl);
 
         // Set clicked chart on the source page for export operations
         SetPageClickedChart(clickedControl, title);
@@ -375,8 +389,9 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm)
         {
             var position = e.GetPosition(chartArea);
+            var chartDataType = clickedControl?.Tag as ChartDataType?;
             vm.ShowChartContextMenu(position.X, position.Y,
-                chartId: title,
+                chartDataType: chartDataType,
                 isPieChart: pieChart != null,
                 isGeoMap: geoMap != null,
                 parentWidth: chartArea.Bounds.Width,
@@ -393,6 +408,89 @@ public partial class ChartExpandOverlay : UserControl
             dashPage.SetClickedChart(chart, name);
         else if (_pageContentControl?.Content is AnalyticsPage analyticsPage)
             analyticsPage.SetClickedChart(chart, name);
+    }
+
+    /// <summary>
+    /// Gets the chart title from a specific clicked chart control.
+    /// Mirrors the page-level GetChartTitle approach so that the chart title
+    /// matches what ChartLoaderService expects for exports.
+    /// </summary>
+    private static string GetClickedChartTitle(Control? control)
+    {
+        if (control is CartesianChart cc &&
+            cc.Title is LabelVisual cartLabel &&
+            !string.IsNullOrWhiteSpace(cartLabel.Text))
+        {
+            return cartLabel.Text;
+        }
+
+        if (control is PieChart pieChart &&
+            pieChart.Title is LabelVisual pieLabel &&
+            !string.IsNullOrWhiteSpace(pieLabel.Text))
+        {
+            return pieLabel.Text;
+        }
+
+        // For PieChart/GeoMap without a Title property, navigate parent Grids to
+        // find the TextBlock title: Grid(Row) > Grid(Column) > PieChart/GeoMap
+        if (control is PieChart or PieChartLegend or GeoMap)
+        {
+            var columnGrid = control?.Parent as Grid;
+            var rowGrid = columnGrid?.Parent as Grid;
+            if (rowGrid != null)
+            {
+                foreach (var child in rowGrid.Children)
+                {
+                    if (child is TextBlock textBlock &&
+                        Grid.GetRow(textBlock) == 0 &&
+                        !string.IsNullOrWhiteSpace(textBlock.Text))
+                    {
+                        return textBlock.Text;
+                    }
+                }
+            }
+        }
+
+        return "Chart";
+    }
+
+    /// <summary>
+    /// Temporarily nulls the GeoMap's internal <c>_core</c> field so that its
+    /// <c>DetachedFromVisualTree</c> handler skips <c>GeoMapChart.Unload()</c>
+    /// during a reparent operation. The field is restored after the action.
+    /// For non-GeoMap controls the action runs directly.
+    /// </summary>
+    private static void SuppressGeoMapCoreDuringReparent(Control child, Action reparent)
+    {
+        if (child is not GeoMap || s_geoMapCoreField == null)
+        {
+            reparent();
+            return;
+        }
+
+        object? savedCore = null;
+        try
+        {
+            savedCore = s_geoMapCoreField.GetValue(child);
+            s_geoMapCoreField.SetValue(child, null);
+        }
+        catch
+        {
+            // Reflection may fail on some runtimes; fall through to direct call.
+        }
+
+        try
+        {
+            reparent();
+        }
+        finally
+        {
+            if (savedCore != null)
+            {
+                try { s_geoMapCoreField.SetValue(child, savedCore); }
+                catch { /* best effort */ }
+            }
+        }
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e)

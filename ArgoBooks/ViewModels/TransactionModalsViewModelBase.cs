@@ -227,7 +227,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public ObservableCollection<CounterpartyOption> CounterpartyOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
-    public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Bank Card", "Bank Transfer", "Check", "PayPal", "Other"];
+    public ObservableCollection<string> PaymentMethodOptions { get; } = new(PaymentMethodExtensions.GetCommonOptions());
     public ObservableCollection<TLineItem> LineItems { get; } = [];
 
     // Original values for change detection in edit mode
@@ -399,7 +399,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private DateTimeOffset? _originalFilterDateFrom;
     private DateTimeOffset? _originalFilterDateTo;
 
-    public ObservableCollection<string> StatusFilterOptions { get; } = ["All", "Completed", "Pending", "Partial Return", "Returned", "Cancelled"];
+    public ObservableCollection<string> StatusFilterOptions { get; } = new(TransactionStatusExtensions.GetFilterOptions());
 
     #endregion
 

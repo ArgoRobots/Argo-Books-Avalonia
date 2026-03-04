@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using ArgoBooks.Controls;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -116,9 +117,9 @@ public partial class DashboardPage : UserControl
 
                 _clickedChart = targetChart;
                 _clickedChartName = GetChartTitle(targetChart) ?? "Chart";
+                var chartDataType = _clickedChart?.Tag as ChartDataType?;
 
-                var chartId = _clickedChartName;
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart,
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartDataType: chartDataType, isPieChart: isPieChart,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
             }
             e.Handled = true;
@@ -279,8 +280,9 @@ public partial class DashboardPage : UserControl
 
                 _clickedChart = sender as Control;
                 _clickedChartName = GetChartTitle(_clickedChart) ?? "Chart";
+                var chartDataType = _clickedChart?.Tag as ChartDataType?;
 
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart,
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartDataType: chartDataType, isPieChart: isPieChart,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
                 e.Handled = true;
             }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -208,41 +209,39 @@ public class AzureReceiptScannerService : IReceiptScannerService
                 var fieldName = field.Key;
                 var fieldValue = field.Value;
 
-                switch (fieldName)
+                switch (ReceiptFieldTypeExtensions.ParseReceiptField(fieldName))
                 {
-                    case "MerchantName":
+                    case ReceiptFieldType.MerchantName:
                         scanResult.SupplierName = fieldValue.Content;
                         break;
 
-                    case "TransactionDate":
+                    case ReceiptFieldType.TransactionDate:
                         if (fieldValue.FieldType == DocumentFieldType.Date && fieldValue.Value.AsDate() is { } date)
                         {
                             scanResult.TransactionDate = date.DateTime;
                         }
                         break;
 
-                    case "Subtotal":
+                    case ReceiptFieldType.Subtotal:
                         scanResult.Subtotal = ExtractDecimalValue(fieldValue, out var subtotalCurrency);
                         scanResult.CurrencyCode ??= subtotalCurrency;
                         break;
 
-                    case "TotalTax":
-                    case "Tax":
+                    case ReceiptFieldType.TotalTax:
+                    case ReceiptFieldType.Tax:
                         scanResult.TaxAmount = ExtractDecimalValue(fieldValue, out _);
                         break;
 
-                    case "Total":
-                    case "Tip":
-                        if (fieldName == "Tip")
-                        {
-                            // Skip tips, we want the actual total
-                            break;
-                        }
+                    case ReceiptFieldType.Total:
                         scanResult.TotalAmount = ExtractDecimalValue(fieldValue, out var totalCurrency);
                         scanResult.CurrencyCode ??= totalCurrency;
                         break;
 
-                    case "Items":
+                    case ReceiptFieldType.Tip:
+                        // Skip tips, we want the actual total
+                        break;
+
+                    case ReceiptFieldType.Items:
                         if (fieldValue.FieldType == DocumentFieldType.List)
                         {
                             foreach (var item in fieldValue.Value.AsList())
@@ -290,16 +289,16 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
         foreach (var field in itemFields)
         {
-            switch (field.Key)
+            switch (ReceiptFieldTypeExtensions.ParseLineItemField(field.Key))
             {
-                case "Description":
+                case ReceiptLineItemFieldType.Description:
                     lineItem.Description = field.Value.Content ?? string.Empty;
                     hasData = true;
                     if (field.Value.Confidence.HasValue)
                         confidenceScores.Add(field.Value.Confidence.Value);
                     break;
 
-                case "Quantity":
+                case ReceiptLineItemFieldType.Quantity:
                     var qtyValue = ExtractDecimalValue(field.Value, out _);
                     if (qtyValue.HasValue)
                     {
@@ -309,8 +308,8 @@ public class AzureReceiptScannerService : IReceiptScannerService
                     }
                     break;
 
-                case "Price":
-                case "UnitPrice":
+                case ReceiptLineItemFieldType.Price:
+                case ReceiptLineItemFieldType.UnitPrice:
                     var priceValue = ExtractDecimalValue(field.Value, out _);
                     if (priceValue.HasValue)
                     {
@@ -321,8 +320,8 @@ public class AzureReceiptScannerService : IReceiptScannerService
                     }
                     break;
 
-                case "TotalPrice":
-                case "Amount":
+                case ReceiptLineItemFieldType.TotalPrice:
+                case ReceiptLineItemFieldType.Amount:
                     var totalPriceValue = ExtractDecimalValue(field.Value, out _);
                     if (totalPriceValue.HasValue)
                     {

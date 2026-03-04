@@ -7,6 +7,7 @@
              xmlns:local="using:ArgoBooks"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:enums="using:ArgoBooks.Core.Enums"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
@@ -398,6 +399,7 @@
                         <!-- Chart with data -->
                         <lvc:CartesianChart
                             x:Name="ProfitsChart"
+                            Tag="{x:Static enums:ChartDataType.TotalProfits}"
                             Title="{Binding ProfitsChartTitleVisual}"
                             Series="{Binding ProfitsChartSeries}"
                             XAxes="{Binding ProfitsChartXAxes}"
@@ -424,6 +426,7 @@
                     <Grid>
                         <lvc:CartesianChart
                             x:Name="ExpensesVsRevenueChart"
+                            Tag="{x:Static enums:ChartDataType.RevenueVsExpenses}"
                             Title="{Binding RevenueVsExpensesChartTitle}"
                             Series="{Binding RevenueVsExpensesSeries}"
                             XAxes="{Binding RevenueVsExpensesXAxes}"

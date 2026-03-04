@@ -252,55 +252,52 @@ public class SpreadsheetImportService
         }
 
         // Validate references based on sheet type
-        switch (sheetName)
+        var sheetType = SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName);
+        switch (sheetType)
         {
-            case "Products":
+            case SpreadsheetSheetType.Products:
                 ValidateProductReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Invoices":
+            case SpreadsheetSheetType.Invoices:
                 ValidateInvoiceReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Expenses":
-            case "Purchases":
+            case SpreadsheetSheetType.Expenses:
                 ValidateExpenseReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Inventory":
+            case SpreadsheetSheetType.Inventory:
                 ValidateInventoryReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Payments":
+            case SpreadsheetSheetType.Payments:
                 ValidatePaymentReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Revenue":
-            case "Sales":
+            case SpreadsheetSheetType.Revenue:
                 ValidateRevenueReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Rental Records":
+            case SpreadsheetSheetType.RentalRecords:
                 ValidateRentalRecordReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Categories":
+            case SpreadsheetSheetType.Categories:
                 ValidateCategoryReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Employees":
+            case SpreadsheetSheetType.Employees:
                 ValidateEmployeeReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Recurring Invoices":
+            case SpreadsheetSheetType.RecurringInvoices:
                 ValidateRecurringInvoiceReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Stock Adjustments":
+            case SpreadsheetSheetType.StockAdjustments:
                 ValidateStockAdjustmentReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Purchase Orders":
+            case SpreadsheetSheetType.PurchaseOrders:
                 ValidateExpenseOrderReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Purchase Order Line Items":
+            case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ValidatePurchaseOrderLineItemReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Returns":
+            case SpreadsheetSheetType.Returns:
                 ValidateReturnsReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case "Lost Damaged":
-            case "Lost / Damaged":
-            case "Lost/Damaged":
+            case SpreadsheetSheetType.LostDamaged:
                 ValidateLostDamagedReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
         }
@@ -308,25 +305,25 @@ public class SpreadsheetImportService
 
     private HashSet<string> GetExistingIds(string sheetName, CompanyData data)
     {
-        return sheetName switch
+        return SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName) switch
         {
-            "Customers" => data.Customers.Select(c => c.Id).ToHashSet(),
-            "Suppliers" => data.Suppliers.Select(s => s.Id).ToHashSet(),
-            "Products" => data.Products.Select(p => p.Id).ToHashSet(),
-            "Categories" => data.Categories.Select(c => c.Id).ToHashSet(),
-            "Locations" => data.Locations.Select(l => l.Id).ToHashSet(),
-            "Departments" => data.Departments.Select(d => d.Id).ToHashSet(),
-            "Invoices" => data.Invoices.Select(i => i.Id).ToHashSet(),
-            "Expenses" or "Purchases" => data.Expenses.Select(p => p.Id).ToHashSet(),
-            "Inventory" => data.Inventory.Select(i => i.Id).ToHashSet(),
-            "Payments" => data.Payments.Select(p => p.Id).ToHashSet(),
-            "Revenue" or "Sales" => data.Revenues.Select(s => s.Id).ToHashSet(),
-            "Rental Inventory" => data.RentalInventory.Select(r => r.Id).ToHashSet(),
-            "Rental Records" => data.Rentals.Select(r => r.Id).ToHashSet(),
-            "Employees" => data.Employees.Select(e => e.Id).ToHashSet(),
-            "Recurring Invoices" => data.RecurringInvoices.Select(r => r.Id).ToHashSet(),
-            "Stock Adjustments" => data.StockAdjustments.Select(s => s.Id).ToHashSet(),
-            "Purchase Orders" => data.PurchaseOrders.Select(p => p.Id).ToHashSet(),
+            SpreadsheetSheetType.Customers => data.Customers.Select(c => c.Id).ToHashSet(),
+            SpreadsheetSheetType.Suppliers => data.Suppliers.Select(s => s.Id).ToHashSet(),
+            SpreadsheetSheetType.Products => data.Products.Select(p => p.Id).ToHashSet(),
+            SpreadsheetSheetType.Categories => data.Categories.Select(c => c.Id).ToHashSet(),
+            SpreadsheetSheetType.Locations => data.Locations.Select(l => l.Id).ToHashSet(),
+            SpreadsheetSheetType.Departments => data.Departments.Select(d => d.Id).ToHashSet(),
+            SpreadsheetSheetType.Invoices => data.Invoices.Select(i => i.Id).ToHashSet(),
+            SpreadsheetSheetType.Expenses => data.Expenses.Select(p => p.Id).ToHashSet(),
+            SpreadsheetSheetType.Inventory => data.Inventory.Select(i => i.Id).ToHashSet(),
+            SpreadsheetSheetType.Payments => data.Payments.Select(p => p.Id).ToHashSet(),
+            SpreadsheetSheetType.Revenue => data.Revenues.Select(s => s.Id).ToHashSet(),
+            SpreadsheetSheetType.RentalInventory => data.RentalInventory.Select(r => r.Id).ToHashSet(),
+            SpreadsheetSheetType.RentalRecords => data.Rentals.Select(r => r.Id).ToHashSet(),
+            SpreadsheetSheetType.Employees => data.Employees.Select(e => e.Id).ToHashSet(),
+            SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Select(r => r.Id).ToHashSet(),
+            SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Select(s => s.Id).ToHashSet(),
+            SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Select(p => p.Id).ToHashSet(),
             _ => []
         };
     }
@@ -931,6 +928,8 @@ public class SpreadsheetImportService
 
     private void CreatePlaceholderEntity(string refType, string id, CompanyData data)
     {
+        // Note: refType values here are reference type labels (e.g., "Categories (parent)", "Products (by name)")
+        // which don't map cleanly to SpreadsheetSheetType since they include qualifier suffixes.
         switch (refType)
         {
             case "Categories":
@@ -1050,71 +1049,67 @@ public class SpreadsheetImportService
         var rows = GetDataRows(worksheet, headers.Count);
         if (rows.Count == 0) return;
 
-        // Import based on sheet name
-        switch (sheetName)
+        // Import based on sheet type
+        switch (SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName))
         {
-            case "Customers":
+            case SpreadsheetSheetType.Customers:
                 ImportCustomers(data, headers, rows);
                 break;
-            case "Invoices":
+            case SpreadsheetSheetType.Invoices:
                 ImportInvoices(data, headers, rows);
                 break;
-            case "Expenses":
-            case "Purchases":
+            case SpreadsheetSheetType.Expenses:
                 ImportPurchases(data, headers, rows);
                 break;
-            case "Products":
+            case SpreadsheetSheetType.Products:
                 ImportProducts(data, headers, rows);
                 break;
-            case "Inventory":
+            case SpreadsheetSheetType.Inventory:
                 ImportInventory(data, headers, rows);
                 break;
-            case "Payments":
+            case SpreadsheetSheetType.Payments:
                 ImportPayments(data, headers, rows);
                 break;
-            case "Suppliers":
+            case SpreadsheetSheetType.Suppliers:
                 ImportSuppliers(data, headers, rows);
                 break;
-            case "Revenue":
-            case "Sales":
+            case SpreadsheetSheetType.Revenue:
                 ImportSales(data, headers, rows);
                 break;
-            case "Rental Inventory":
+            case SpreadsheetSheetType.RentalInventory:
                 ImportRentalInventory(data, headers, rows);
                 break;
-            case "Rental Records":
+            case SpreadsheetSheetType.RentalRecords:
                 ImportRentalRecords(data, headers, rows);
                 break;
-            case "Categories":
+            case SpreadsheetSheetType.Categories:
                 ImportCategories(data, headers, rows);
                 break;
-            case "Departments":
+            case SpreadsheetSheetType.Departments:
                 ImportDepartments(data, headers, rows);
                 break;
-            case "Employees":
+            case SpreadsheetSheetType.Employees:
                 ImportEmployees(data, headers, rows);
                 break;
-            case "Locations":
+            case SpreadsheetSheetType.Locations:
                 ImportLocations(data, headers, rows);
                 break;
-            case "Recurring Invoices":
+            case SpreadsheetSheetType.RecurringInvoices:
                 ImportRecurringInvoices(data, headers, rows);
                 break;
-            case "Stock Adjustments":
+            case SpreadsheetSheetType.StockAdjustments:
                 ImportStockAdjustments(data, headers, rows);
                 break;
-            case "Purchase Orders":
+            case SpreadsheetSheetType.PurchaseOrders:
                 ImportPurchaseOrders(data, headers, rows);
                 break;
-            case "Purchase Order Line Items":
+            case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows);
                 break;
-            case "Returns":
+            case SpreadsheetSheetType.Returns:
                 ImportReturns(data, headers, rows);
                 break;
-            case "Lost Damaged":
-            case "Lost / Damaged":
-            case "Lost/Damaged":
+            case SpreadsheetSheetType.LostDamaged:
                 ImportLostDamaged(data, headers, rows);
                 break;
         }
