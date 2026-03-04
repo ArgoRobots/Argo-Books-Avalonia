@@ -369,10 +369,15 @@
                             <!-- Outstanding Amount Range -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Outstanding Amount'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <Grid ColumnDefinitions="*,Auto,*">
-                                    <TextBox Grid.Column="0" Text="{Binding FilterOutstandingMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Min'}" MaxLength="20" />
-                                    <TextBlock Grid.Column="1" Text="{loc:Loc 'to'}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                    <TextBox Grid.Column="2" Text="{Binding FilterOutstandingMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Max'}" MaxLength="20" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterOutstandingMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" MaxLength="20" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterOutstandingMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" MaxLength="20" />
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
 
@@ -569,10 +574,15 @@
                         <!-- Amount Range -->
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Amount Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <Grid ColumnDefinitions="*,Auto,*">
-                                <TextBox Grid.Column="0" Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Min'}" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
-                                <TextBlock Grid.Column="1" Text="{loc:Loc 'to'}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                <TextBox Grid.Column="2" Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Max'}" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                            <Grid ColumnDefinitions="*,8,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                </StackPanel>
                             </Grid>
                         </StackPanel>
                     </StackPanel>

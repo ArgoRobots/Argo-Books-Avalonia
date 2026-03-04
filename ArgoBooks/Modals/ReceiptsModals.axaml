@@ -89,28 +89,28 @@
                             </Grid>
 
                             <!-- Amount Range -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="{loc:Loc 'Min Amount'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding FilterAmountMin}"
-                                             Watermark="{loc:Loc '$0.00'}"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                             MaxLength="20" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="{loc:Loc 'Max Amount'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding FilterAmountMax}"
-                                             Watermark="{loc:Loc '$0.00'}"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                             MaxLength="20" />
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Amount Range'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterAmountMin}"
+                                                 Watermark="$0.00"
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                 MaxLength="20" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterAmountMax}"
+                                                 Watermark="$0.00"
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                 MaxLength="20" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
 
                             <!-- Source Filter -->
                             <StackPanel Spacing="8">

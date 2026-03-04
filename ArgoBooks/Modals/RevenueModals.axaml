@@ -484,12 +484,12 @@
                                 </Grid>
                             </StackPanel>
 
-                            <!-- Amount Range - Stacked -->
+                            <!-- Amount Range -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                            Text="{loc:Loc 'Amount Range'}" />
-                                <StackPanel Spacing="8">
-                                    <StackPanel Spacing="4">
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}"
                                                  Classes="form-input"
@@ -498,7 +498,7 @@
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="20" />
                                     </StackPanel>
-                                    <StackPanel Spacing="4">
+                                    <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}"
                                                  Classes="form-input"
@@ -507,7 +507,7 @@
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="20" />
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
