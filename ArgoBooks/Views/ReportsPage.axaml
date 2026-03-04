@@ -651,6 +651,7 @@
                                                            FontSize="11"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomStartDate}"
+                                                            MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
                                             <StackPanel Spacing="4">
@@ -658,6 +659,7 @@
                                                            FontSize="11"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomEndDate}"
+                                                            MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
                                         </StackPanel>
@@ -1711,11 +1713,13 @@
                                             <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'Start Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomStartDate}"
+                                                            MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
                                             <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'End Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomEndDate}"
+                                                            MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
                                         </StackPanel>
