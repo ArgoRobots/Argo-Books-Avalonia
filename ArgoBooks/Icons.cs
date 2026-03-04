@@ -30,8 +30,8 @@ public static class Icons
     /// <summary>Up arrow icon for Revenue.</summary>
     public const string Revenue = "M4 12l1 1L11 8V20h2V8l5 5L20 12l-8-8-8 8z";
 
-    /// <summary>Invoice/document icon for Invoices.</summary>
-    public const string Invoices = "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z";
+    /// <summary>Invoice/receipt icon for Invoices.</summary>
+    public const string Invoices = "M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z";
 
     /// <summary>Credit card icon for Payments.</summary>
     public const string Payments = "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z";
