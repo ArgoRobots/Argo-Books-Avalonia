@@ -379,16 +379,16 @@
                             <!-- Last Rental Date Range -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Last Rental Date'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="8">
-                                    <StackPanel Spacing="4">
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'From'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <DatePicker SelectedDate="{Binding FilterLastRentalFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                        <DatePicker SelectedDate="{Binding FilterLastRentalFrom}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                    <StackPanel Spacing="4">
+                                    <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'To'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <DatePicker SelectedDate="{Binding FilterLastRentalTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                        <DatePicker SelectedDate="{Binding FilterLastRentalTo}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -554,16 +554,16 @@
                         <!-- Date Range -->
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <StackPanel Spacing="8">
-                                <StackPanel Spacing="4">
+                            <Grid ColumnDefinitions="*,8,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'From'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding HistoryFilterDateFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                    <DatePicker SelectedDate="{Binding HistoryFilterDateFrom}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
+                                <StackPanel Grid.Column="2" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'To'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding HistoryFilterDateTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                    <DatePicker SelectedDate="{Binding HistoryFilterDateTo}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                            </StackPanel>
+                            </Grid>
                         </StackPanel>
 
                         <!-- Amount Range -->
