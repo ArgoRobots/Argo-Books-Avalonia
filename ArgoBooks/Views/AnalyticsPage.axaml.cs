@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using ArgoBooks.Controls;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -113,8 +114,9 @@ public partial class AnalyticsPage : UserControl
                 var position = e.GetPosition(this);
                 var isPieChart = pieChart != null || legend != null;
                 var isGeoMap = geoMap != null;
+                var chartDataType = _clickedChart?.Tag as ChartDataType?;
 
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart, isGeoMap: isGeoMap,
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartDataType: chartDataType, isPieChart: isPieChart, isGeoMap: isGeoMap,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
             }
             e.Handled = true;
@@ -188,9 +190,9 @@ public partial class AnalyticsPage : UserControl
                 var position = e.GetPosition(this);
                 var isPieChart = sender is PieChart || sender is PieChartLegend;
                 var isGeoMap = sender is GeoMap;
+                var chartDataType = _clickedChart?.Tag as ChartDataType?;
 
-                // Use the chart title as the chart ID for export operations
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart, isGeoMap: isGeoMap,
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartDataType: chartDataType, isPieChart: isPieChart, isGeoMap: isGeoMap,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
                 e.Handled = true;
             }

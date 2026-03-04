@@ -873,7 +873,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnSaveChartAsImage()
     {
-        SaveChartImageRequested?.Invoke(this, new SaveChartImageEventArgs { ChartId = SelectedChartId });
+        SaveChartImageRequested?.Invoke(this, new SaveChartImageEventArgs { ChartId = SelectedChartDataType?.GetDisplayName() ?? "" });
     }
 
     /// <summary>
@@ -893,7 +893,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var exportData = ChartLoaderService.GetGoogleSheetsExportData(SelectedChartId);
+        var selectedChartTitle = SelectedChartDataType?.GetDisplayName() ?? "";
+        var exportData = ChartLoaderService.GetGoogleSheetsExportData(selectedChartTitle);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -924,9 +925,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         try
         {
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartExportData = ChartLoaderService.GetExportDataForChart(SelectedChartId);
-            // Use the UI title (SelectedChartId) for Google Sheets, not the internal stored title
-            var chartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : (chartExportData?.ChartTitle ?? "Chart");
+            var chartExportData = ChartLoaderService.GetExportDataForChart(selectedChartTitle);
+            var chartTitle = !string.IsNullOrEmpty(selectedChartTitle) ? selectedChartTitle : (chartExportData?.ChartTitle ?? "Chart");
 
             // Use Pie chart type for distribution charts, match chart style for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
@@ -1019,7 +1019,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var exportData = ChartLoaderService.GetExportDataForChart(SelectedChartId);
+        var selectedChartTitle = SelectedChartDataType?.GetDisplayName() ?? "";
+        var exportData = ChartLoaderService.GetExportDataForChart(selectedChartTitle);
         if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
@@ -1029,8 +1030,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Raise event for View to handle file save dialog
         ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
         {
-            ChartId = SelectedChartId,
-            ChartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : exportData.ChartTitle,
+            ChartId = selectedChartTitle,
+            ChartTitle = !string.IsNullOrEmpty(selectedChartTitle) ? selectedChartTitle : exportData.ChartTitle,
             Labels = exportData.Labels,
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
@@ -1043,23 +1044,19 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        // Only reset the zoom on the chart that was right-clicked
-        if (string.IsNullOrEmpty(SelectedChartId))
+        switch (SelectedChartDataType)
         {
-            // Fallback: reset all charts if no chart selected
-            ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
-            ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
-            return;
-        }
-
-        // Match by chart title text
-        if (SelectedChartId.StartsWith("Total profit", StringComparison.OrdinalIgnoreCase))
-        {
-            ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
-        }
-        else if (SelectedChartId.Contains("Revenue", StringComparison.OrdinalIgnoreCase))
-        {
-            ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+            case ChartDataType.TotalProfits:
+                ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
+                break;
+            case ChartDataType.RevenueVsExpenses:
+                ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+                break;
+            case null:
+                // Fallback: reset all charts if no chart type set
+                ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
+                ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+                break;
         }
     }
 

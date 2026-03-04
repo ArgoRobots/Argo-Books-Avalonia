@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Enums;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -28,10 +29,10 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     private bool _showChartExportOptions = true;
 
     /// <summary>
-    /// Gets or sets the identifier of the currently selected chart for context menu operations.
+    /// Gets or sets the chart data type of the currently selected chart for context menu operations.
     /// </summary>
     [ObservableProperty]
-    private string _selectedChartId = string.Empty;
+    private ChartDataType? _selectedChartDataType;
 
     #endregion
 
@@ -42,12 +43,12 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     /// </summary>
     /// <param name="x">The X coordinate.</param>
     /// <param name="y">The Y coordinate.</param>
-    /// <param name="chartId">The identifier of the chart that was clicked.</param>
+    /// <param name="chartDataType">The ChartDataType from the control's Tag, if any.</param>
     /// <param name="isPieChart">True if the chart is a pie chart (hides reset zoom).</param>
     /// <param name="isGeoMap">True if the chart is a geo map (only shows save as image).</param>
     /// <param name="parentWidth">The width of the parent container for bounds checking.</param>
     /// <param name="parentHeight">The height of the parent container for bounds checking.</param>
-    public void ShowChartContextMenu(double x, double y, string chartId = "", bool isPieChart = false, bool isGeoMap = false, double parentWidth = 0, double parentHeight = 0)
+    public void ShowChartContextMenu(double x, double y, ChartDataType? chartDataType = null, bool isPieChart = false, bool isGeoMap = false, double parentWidth = 0, double parentHeight = 0)
     {
         // Menu dimensions (approximate)
         const double menuWidth = 220;
@@ -69,7 +70,7 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
 
         ChartContextMenuX = adjustedX;
         ChartContextMenuY = adjustedY;
-        SelectedChartId = chartId;
+        SelectedChartDataType = chartDataType;
         ShowChartResetZoom = !isPieChart && !isGeoMap;
         ShowChartExportOptions = !isGeoMap;
         IsChartContextMenuOpen = true;

@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:enums="using:ArgoBooks.Core.Enums"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.AnalyticsPage"
@@ -121,6 +122,7 @@
                             <Panel>
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart x:Name="ProfitTrendsChart"
+                                                    Tag="{x:Static enums:ChartDataType.TotalProfits}"
                                                     Title="{Binding ProfitOverTimeTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
@@ -147,7 +149,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding RevenueVsExpensesTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.RevenueVsExpenses}"
+                                                    Title="{Binding RevenueVsExpensesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding RevenueVsExpensesSeries}"
@@ -176,7 +179,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding RevenueTrendsTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TotalRevenue}"
+                                                    Title="{Binding RevenueTrendsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding RevenueTrendsSeries}"
@@ -247,7 +251,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding ExpenseTrendsTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TotalExpenses}"
+                                                    Title="{Binding ExpenseTrendsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpensesTrendsSeries}"
@@ -648,7 +653,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding WorkloadDistributionTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TotalTransactions}"
+                                                    Title="{Binding WorkloadDistributionTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TotalTransactionsSeries}"
@@ -713,7 +719,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding AverageTransactionValueTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.AverageTransactionValue}"
+                                                    Title="{Binding AverageTransactionValueTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding AvgTransactionValueSeries}"
@@ -739,7 +746,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding TotalTransactionsTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TotalTransactions}"
+                                                    Title="{Binding TotalTransactionsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TotalTransactionsSeries}"
@@ -767,7 +775,8 @@
                                 Padding="10">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding AverageShippingCostsTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.AverageShippingCosts}"
+                                                    Title="{Binding AverageShippingCostsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding AvgShippingCostsSeries}"
@@ -919,7 +928,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart - using Customer Growth -->
-                                <lvc:CartesianChart Title="{Binding CustomerGrowthTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.CustomerGrowth}"
+                                                    Title="{Binding CustomerGrowthTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding CustomerGrowthSeries}"
@@ -945,7 +955,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart - using Avg Transaction Value -->
-                                <lvc:CartesianChart Title="{Binding CustomerLifetimeValueTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.CustomerLifetimeValue}"
+                                                    Title="{Binding CustomerLifetimeValueTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding AvgTransactionValueSeries}"
@@ -1016,7 +1027,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart - using Total Transactions -->
-                                <lvc:CartesianChart Title="{Binding RentalsPerCustomerTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.RentalsPerCustomer}"
+                                                    Title="{Binding RentalsPerCustomerTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TotalTransactionsSeries}"
@@ -1080,7 +1092,8 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <lvc:CartesianChart Title="{Binding TaxCollectedVsPaidTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TaxCollectedVsPaid}"
+                                                    Title="{Binding TaxCollectedVsPaidTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TaxCollectedVsPaidSeries}"
@@ -1104,7 +1117,8 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <lvc:CartesianChart Title="{Binding TaxRateDistributionTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TaxRateDistribution}"
+                                                    Title="{Binding TaxRateDistributionTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TaxRateDistributionSeries}"
@@ -1131,7 +1145,8 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <lvc:CartesianChart Title="{Binding TaxLiabilityTrendTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.TaxLiabilityTrend}"
+                                                    Title="{Binding TaxLiabilityTrendTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding TaxLiabilityTrendSeries}"
@@ -1238,7 +1253,8 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <lvc:CartesianChart Title="{Binding ExpenseVsRevenueTaxTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ExpenseVsRevenueTax}"
+                                                    Title="{Binding ExpenseVsRevenueTaxTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpenseVsRevenueTaxSeries}"
@@ -1302,7 +1318,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding ReturnsOverTimeTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ReturnsOverTime}"
+                                                    Title="{Binding ReturnsOverTimeTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ReturnsOverTimeSeries}"
@@ -1373,7 +1390,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding FinancialImpactOfReturnsTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ReturnFinancialImpact}"
+                                                    Title="{Binding FinancialImpactOfReturnsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ReturnFinancialImpactSeries}"
@@ -1486,7 +1504,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart - Expense vs Revenue Returns -->
-                                <lvc:CartesianChart Title="{Binding ExpenseVsRevenueReturnsTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ExpenseVsRevenueReturns}"
+                                                    Title="{Binding ExpenseVsRevenueReturnsTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpenseVsRevenueReturnsSeries}"
@@ -1551,7 +1570,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding LossesOverTimeTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.LossesOverTime}"
+                                                    Title="{Binding LossesOverTimeTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding LossesOverTimeSeries}"
@@ -1622,7 +1642,8 @@
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- Chart with data -->
-                                <lvc:CartesianChart Title="{Binding FinancialImpactOfLossesTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.LossFinancialImpact}"
+                                                    Title="{Binding FinancialImpactOfLossesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding LossFinancialImpactSeries}"
@@ -1735,7 +1756,8 @@
                                 Margin="12,0,0,0">
                             <Panel>
                                 <!-- Chart - Expense vs Revenue Losses -->
-                                <lvc:CartesianChart Title="{Binding ExpenseVsRevenueLossesTitle}"
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ExpenseVsRevenueLosses}"
+                                                    Title="{Binding ExpenseVsRevenueLossesTitle}"
                                                     PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                     Series="{Binding ExpenseVsRevenueLossesSeries}"

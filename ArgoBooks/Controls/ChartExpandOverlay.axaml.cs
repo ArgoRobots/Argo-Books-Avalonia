@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.ViewModels;
 using ArgoBooks.Views;
 using LiveChartsCore.SkiaSharpView.Avalonia;
@@ -388,8 +389,9 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm)
         {
             var position = e.GetPosition(chartArea);
+            var chartDataType = clickedControl?.Tag as ChartDataType?;
             vm.ShowChartContextMenu(position.X, position.Y,
-                chartId: title,
+                chartDataType: chartDataType,
                 isPieChart: pieChart != null,
                 isGeoMap: geoMap != null,
                 parentWidth: chartArea.Bounds.Width,
@@ -410,8 +412,8 @@ public partial class ChartExpandOverlay : UserControl
 
     /// <summary>
     /// Gets the chart title from a specific clicked chart control.
-    /// Mirrors the page-level GetChartTitle approach so that SelectedChartId
-    /// matches what ChartLoaderService expects for exports and zoom reset.
+    /// Mirrors the page-level GetChartTitle approach so that the chart title
+    /// matches what ChartLoaderService expects for exports.
     /// </summary>
     private static string GetClickedChartTitle(Control? control)
     {
