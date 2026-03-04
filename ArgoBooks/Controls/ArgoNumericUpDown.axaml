@@ -34,40 +34,15 @@
                      behaviors:NumericInputBehavior.IsDecimalOnly="True"
                      MaxLength="20" />
 
-            <!-- Side-by-Side Up/Down Buttons -->
-            <Grid Grid.Column="1" ColumnDefinitions="*,*">
-                <!-- Down Button -->
-                <RepeatButton x:Name="DownButton"
-                              Grid.Column="0"
-                              Background="Transparent"
-                              BorderThickness="0"
-                              Padding="0"
-                              MinWidth="24"
-                              MinHeight="0"
-                              VerticalAlignment="Stretch"
-                              HorizontalContentAlignment="Center"
-                              VerticalContentAlignment="Center"
-                              Command="{Binding DecrementCommand, RelativeSource={RelativeSource AncestorType=controls:ArgoNumericUpDown}}">
-                    <RepeatButton.Styles>
-                        <Style Selector="RepeatButton:pointerover">
-                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                        </Style>
-                        <Style Selector="RepeatButton:pressed">
-                            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
-                        </Style>
-                    </RepeatButton.Styles>
-                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
-                              Width="10" Height="10"
-                              Foreground="{DynamicResource TextSecondaryBrush}" />
-                </RepeatButton>
-
+            <!-- Vertically Stacked Up/Down Buttons -->
+            <Grid Grid.Column="1" RowDefinitions="*,*" Width="20">
                 <!-- Up Button -->
                 <RepeatButton x:Name="UpButton"
-                              Grid.Column="1"
+                              Grid.Row="0"
                               Background="Transparent"
                               BorderThickness="0"
                               Padding="0"
-                              MinWidth="24"
+                              MinWidth="20"
                               MinHeight="0"
                               VerticalAlignment="Stretch"
                               HorizontalContentAlignment="Center"
@@ -82,6 +57,31 @@
                         </Style>
                     </RepeatButton.Styles>
                     <PathIcon Data="{x:Static icons:Icons.ChevronUpSmall}"
+                              Width="10" Height="10"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                </RepeatButton>
+
+                <!-- Down Button -->
+                <RepeatButton x:Name="DownButton"
+                              Grid.Row="1"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              Padding="0"
+                              MinWidth="20"
+                              MinHeight="0"
+                              VerticalAlignment="Stretch"
+                              HorizontalContentAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              Command="{Binding DecrementCommand, RelativeSource={RelativeSource AncestorType=controls:ArgoNumericUpDown}}">
+                    <RepeatButton.Styles>
+                        <Style Selector="RepeatButton:pointerover">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                        </Style>
+                        <Style Selector="RepeatButton:pressed">
+                            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+                        </Style>
+                    </RepeatButton.Styles>
+                    <PathIcon Data="{x:Static icons:Icons.ChevronDownSmall}"
                               Width="10" Height="10"
                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </RepeatButton>
