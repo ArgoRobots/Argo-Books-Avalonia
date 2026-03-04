@@ -1451,60 +1451,50 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         if (string.IsNullOrEmpty(SelectedChartId))
             return;
 
-        // Map chart titles to their axes and reset the appropriate one
-        switch (SelectedChartId)
-        {
-            case "Profit Over Time":
-                ChartLoaderService.ResetZoom(ProfitTrendsXAxes, ProfitTrendsYAxes);
-                break;
-            case "Expenses vs Revenue":
-                ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
-                break;
-            case "Revenue Trends":
-                ChartLoaderService.ResetZoom(RevenueTrendsXAxes, RevenueTrendsYAxes);
-                break;
-            case "Expense Trends":
-                ChartLoaderService.ResetZoom(ExpensesTrendsXAxes, ExpensesTrendsYAxes);
-                break;
-            case "Total Transactions":
-                ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
-                break;
-            case "Average Transaction Value":
-                ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
-                break;
-            case "Average Shipping Costs":
-                ChartLoaderService.ResetZoom(AvgShippingCostsXAxes, AvgShippingCostsYAxes);
-                break;
-            case "Customer Growth":
-                ChartLoaderService.ResetZoom(CustomerGrowthXAxes, CustomerGrowthYAxes);
-                break;
-            case "Customer Lifetime Value":
-                // Uses AvgTransactionValue axes
-                ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
-                break;
-            case "Rentals per Customer":
-                // Uses TotalTransactions axes
-                ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
-                break;
-            case "Returns Over Time":
-                ChartLoaderService.ResetZoom(ReturnsOverTimeXAxes, ReturnsOverTimeYAxes);
-                break;
-            case "Financial Impact of Returns":
-                ChartLoaderService.ResetZoom(ReturnFinancialImpactXAxes, ReturnFinancialImpactYAxes);
-                break;
-            case "Expense vs Revenue Returns":
-                ChartLoaderService.ResetZoom(ExpenseVsRevenueReturnsXAxes, ExpenseVsRevenueReturnsYAxes);
-                break;
-            case "Losses Over Time":
-                ChartLoaderService.ResetZoom(LossesOverTimeXAxes, LossesOverTimeYAxes);
-                break;
-            case "Financial Impact of Losses":
-                ChartLoaderService.ResetZoom(LossFinancialImpactXAxes, LossFinancialImpactYAxes);
-                break;
-            case "Expense vs Revenue Losses":
-                ChartLoaderService.ResetZoom(ExpenseVsRevenueLossesXAxes, ExpenseVsRevenueLossesYAxes);
-                break;
-        }
+        // Map chart titles to their axes and reset the appropriate one.
+        // Use Contains/StartsWith for titles that change dynamically (e.g. "Total profits: $X,XXX").
+        var id = SelectedChartId;
+
+        if (id is "Profit Over Time" || id.StartsWith("Total profits", StringComparison.OrdinalIgnoreCase))
+            ChartLoaderService.ResetZoom(ProfitTrendsXAxes, ProfitTrendsYAxes);
+        else if (id is "Expenses vs Revenue")
+            ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
+        else if (id is "Revenue Trends")
+            ChartLoaderService.ResetZoom(RevenueTrendsXAxes, RevenueTrendsYAxes);
+        else if (id is "Expense Trends")
+            ChartLoaderService.ResetZoom(ExpensesTrendsXAxes, ExpensesTrendsYAxes);
+        else if (id is "Total Transactions")
+            ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
+        else if (id is "Average Transaction Value")
+            ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
+        else if (id is "Average Shipping Costs")
+            ChartLoaderService.ResetZoom(AvgShippingCostsXAxes, AvgShippingCostsYAxes);
+        else if (id is "Customer Growth")
+            ChartLoaderService.ResetZoom(CustomerGrowthXAxes, CustomerGrowthYAxes);
+        else if (id is "Customer Lifetime Value")
+            ChartLoaderService.ResetZoom(AvgTransactionValueXAxes, AvgTransactionValueYAxes);
+        else if (id is "Rentals per Customer")
+            ChartLoaderService.ResetZoom(TotalTransactionsXAxes, TotalTransactionsYAxes);
+        else if (id is "Tax Collected vs Paid")
+            ChartLoaderService.ResetZoom(TaxCollectedVsPaidXAxes, TaxCollectedVsPaidYAxes);
+        else if (id is "Tax Rate Distribution")
+            ChartLoaderService.ResetZoom(TaxRateDistributionXAxes, TaxRateDistributionYAxes);
+        else if (id is "Net Tax Liability")
+            ChartLoaderService.ResetZoom(TaxLiabilityTrendXAxes, TaxLiabilityTrendYAxes);
+        else if (id is "Expense vs Revenue Tax")
+            ChartLoaderService.ResetZoom(ExpenseVsRevenueTaxXAxes, ExpenseVsRevenueTaxYAxes);
+        else if (id is "Returns Over Time")
+            ChartLoaderService.ResetZoom(ReturnsOverTimeXAxes, ReturnsOverTimeYAxes);
+        else if (id is "Financial Impact of Returns")
+            ChartLoaderService.ResetZoom(ReturnFinancialImpactXAxes, ReturnFinancialImpactYAxes);
+        else if (id is "Expense vs Revenue Returns")
+            ChartLoaderService.ResetZoom(ExpenseVsRevenueReturnsXAxes, ExpenseVsRevenueReturnsYAxes);
+        else if (id is "Losses Over Time")
+            ChartLoaderService.ResetZoom(LossesOverTimeXAxes, LossesOverTimeYAxes);
+        else if (id is "Financial Impact of Losses")
+            ChartLoaderService.ResetZoom(LossFinancialImpactXAxes, LossFinancialImpactYAxes);
+        else if (id is "Expense vs Revenue Losses")
+            ChartLoaderService.ResetZoom(ExpenseVsRevenueLossesXAxes, ExpenseVsRevenueLossesYAxes);
     }
 
     #endregion
