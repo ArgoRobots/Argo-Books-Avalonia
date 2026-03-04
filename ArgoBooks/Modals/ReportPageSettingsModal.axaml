@@ -47,6 +47,17 @@
             <ScrollViewer Grid.Row="1"
                           VerticalScrollBarVisibility="Auto">
                 <StackPanel Spacing="20" Margin="24">
+                    <!-- Report Name -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{loc:Loc 'Report Name'}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBox Text="{Binding PageSettingsReportName}"
+                                 Watermark="{loc:Loc 'Enter report name...'}"
+                                 Padding="12,10" />
+                    </StackPanel>
+
                     <!-- Page Size -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{loc:Loc 'Page Size'}"

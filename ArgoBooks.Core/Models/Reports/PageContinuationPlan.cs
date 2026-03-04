@@ -2,7 +2,7 @@ namespace ArgoBooks.Core.Models.Reports;
 
 /// <summary>
 /// Represents a single page in the effective page sequence.
-/// Can be either an original template page or a continuation page for an overflowing accounting table.
+/// Can be either an original template page or a continuation page for an overflowing table.
 /// </summary>
 public class EffectivePage
 {
@@ -12,7 +12,7 @@ public class EffectivePage
     public int SourcePageNumber { get; set; }
 
     /// <summary>
-    /// Element ID of the overflowing accounting table, or null for original template pages.
+    /// Element ID of the overflowing table (accounting or normal), or null for original template pages.
     /// </summary>
     public string? ContinuationElementId { get; set; }
 
@@ -61,10 +61,20 @@ public class PageContinuationPlan
     public List<EffectivePage> Pages { get; set; } = [];
 
     /// <summary>
-    /// Cached table data fetched during planning, keyed by element ID.
+    /// Cached accounting table data fetched during planning, keyed by element ID.
     /// Prevents re-fetching during rendering.
     /// </summary>
     public Dictionary<string, AccountingTableData> CachedTableData { get; set; } = new();
+
+    /// <summary>
+    /// Cached normal table data (rows) fetched during planning, keyed by element ID.
+    /// </summary>
+    public Dictionary<string, List<List<string>>> CachedNormalTableData { get; set; } = new();
+
+    /// <summary>
+    /// Cached normal table column names, keyed by element ID.
+    /// </summary>
+    public Dictionary<string, List<string>> CachedNormalTableColumns { get; set; } = new();
 
     /// <summary>
     /// For each overflowing element, how many rows fit on the original (first) page.

@@ -1423,7 +1423,12 @@
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max Rows'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows, FallbackValue=0}" Minimum="1" Maximum="50" />
+                                        <CheckBox Content="{loc:Loc 'Unlimited'}"
+                                                  IsChecked="{Binding IsSelectedTableMaxRowsUnlimited}"
+                                                  FontSize="12" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows, FallbackValue=0}"
+                                                                    Minimum="1" Maximum="1000"
+                                                                    IsEnabled="{Binding !IsSelectedTableMaxRowsUnlimited}" />
                                     </StackPanel>
                                 </StackPanel>
 
@@ -1662,20 +1667,69 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <!-- No Selection Message -->
+                            <!-- Report Settings (shown when no element is selected) -->
                             <StackPanel IsVisible="{Binding SelectedElement, Converter={x:Static ObjectConverters.IsNull}}"
-                                        Spacing="8"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"
-                                        Margin="0,40">
-                                <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                          Width="32" Height="32"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'No element selected'}"
+                                        Spacing="12"
+                                        Margin="0,4">
+                                <TextBlock Text="{loc:Loc 'Report Settings'}"
                                            FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center" />
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <!-- Report Name -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Report Name'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding ReportName}"
+                                             Watermark="{loc:Loc 'Enter report name...'}"
+                                             Padding="8,6"
+                                             FontSize="12" />
+                                </StackPanel>
+
+                                <!-- Date Range -->
+                                <StackPanel Spacing="4"
+                                            IsEnabled="{Binding IsDateRangeEnabled}">
+                                    <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ItemsControl ItemsSource="{Binding DatePresets}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:DatePresetOption">
+                                                <RadioButton Content="{Binding Name, Converter={StaticResource TranslateConverter}}"
+                                                             GroupName="DateRangeDesigner"
+                                                             IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                                             Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
+                                                             CommandParameter="{Binding}"
+                                                             Margin="0,2"
+                                                             FontSize="12" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Custom Date Range -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="6"
+                                            Padding="10"
+                                            Margin="0,4,0,0"
+                                            IsVisible="{Binding IsCustomDateRange}">
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'Start Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding CustomStartDate}"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'End Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding CustomEndDate}"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <Separator Margin="0,4" />
                                 <TextBlock Text="{loc:Loc 'Click an element on the canvas to edit its properties'}"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiaryBrush}"

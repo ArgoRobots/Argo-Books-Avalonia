@@ -506,6 +506,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedImageFileName));
         OnPropertyChanged(nameof(HasSelectedImage));
         OnPropertyChanged(nameof(SelectedTableElement));
+        OnPropertyChanged(nameof(IsSelectedTableMaxRowsUnlimited));
         OnPropertyChanged(nameof(SelectedDateRangeElement));
         OnPropertyChanged(nameof(SelectedSummaryElement));
         OnPropertyChanged(nameof(IsChartSelected));
@@ -594,6 +595,18 @@ public partial class ReportsPageViewModel : ViewModelBase
         : Path.GetFileName(SelectedImageElement.ImagePath);
     public bool HasSelectedImage => !string.IsNullOrEmpty(SelectedImageElement?.ImagePath);
     public TableReportElement SelectedTableElement => (SelectedElement as TableReportElement) ?? EmptyTable;
+
+    public bool IsSelectedTableMaxRowsUnlimited
+    {
+        get => SelectedTableElement.MaxRows == 0;
+        set
+        {
+            if (SelectedElement is TableReportElement table)
+                table.MaxRows = value ? 0 : 10;
+            OnPropertyChanged();
+        }
+    }
+
     public DateRangeReportElement SelectedDateRangeElement => (SelectedElement as DateRangeReportElement) ?? EmptyDateRange;
     public SummaryReportElement SelectedSummaryElement => (SelectedElement as SummaryReportElement) ?? EmptySummary;
     public AccountingTableReportElement SelectedAccountingTableElement => (SelectedElement as AccountingTableReportElement) ?? EmptyAccountingTable;
@@ -1412,6 +1425,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     private string _originalBackgroundColor = AppColors.White;
     private double _originalTitleFontSize = 18;
     private string _originalPageSettingsDatePreset = DatePresetNames.ThisMonth;
+    private string _originalPageSettingsReportName = "Untitled Report";
 
     [RelayCommand]
     private void OpenPageSettings()
@@ -1430,6 +1444,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         _originalBackgroundColor = BackgroundColor;
         _originalTitleFontSize = TitleFontSize;
         _originalPageSettingsDatePreset = PageSettingsDatePreset;
+        _originalPageSettingsReportName = PageSettingsReportName;
+
+        // Sync report name from step 1
+        PageSettingsReportName = ReportName;
 
         IsPageSettingsOpen = true;
     }
@@ -1451,6 +1469,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         BackgroundColor = _originalBackgroundColor;
         TitleFontSize = _originalTitleFontSize;
         PageSettingsDatePreset = _originalPageSettingsDatePreset;
+        PageSettingsReportName = _originalPageSettingsReportName;
 
         IsPageSettingsOpen = false;
 
@@ -1924,6 +1943,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _titleFontSize = 18;
 
     [ObservableProperty]
+    private string _pageSettingsReportName = "Untitled Report";
+
+    [ObservableProperty]
     private string _pageSettingsDatePreset = DatePresetNames.ThisMonth;
 
     public ObservableCollection<PageSize> PageSizes { get; } =
@@ -2152,6 +2174,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             option.IsSelected = option.Name == PageSettingsDatePreset;
         }
+
+        // Sync the step-1 report name
+        ReportName = PageSettingsReportName;
+        Configuration.Title = PageSettingsReportName;
 
         if (oldSettings != newSettings)
         {
