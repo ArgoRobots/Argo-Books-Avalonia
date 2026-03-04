@@ -303,7 +303,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     public ObservableCollection<string> StatusOptions { get; } = ["Active", "In Maintenance"];
     public ObservableCollection<string> FilterStatusOptions { get; } = ["All", "Available", "In Maintenance", "All Rented"];
     public ObservableCollection<string> AvailabilityOptions { get; } = ["All", "Available Only", "Unavailable Only"];
-    public ObservableCollection<string> RateTypeOptions { get; } = ["Daily", "Weekly", "Monthly"];
+    public ObservableCollection<string> RateTypeOptions { get; } = new(RateTypeExtensions.GetAllNames());
 
     #endregion
 

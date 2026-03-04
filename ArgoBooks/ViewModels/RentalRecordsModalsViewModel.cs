@@ -316,8 +316,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     public ObservableCollection<RentalItemOption> AvailableItems { get; } = [];
     public ObservableCollection<CustomerOption> AvailableCustomers { get; } = [];
     public ObservableCollection<AccountantOption> AvailableAccountants { get; } = [];
-    public ObservableCollection<string> RateTypeOptions { get; } = ["Daily", "Weekly", "Monthly"];
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Returned", "Overdue", "Cancelled"];
+    public ObservableCollection<string> RateTypeOptions { get; } = new(RateTypeExtensions.GetAllNames());
+    public ObservableCollection<string> StatusOptions { get; } = new(RentalStatusExtensions.GetFilterOptions());
 
     #endregion
 

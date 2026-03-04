@@ -55,7 +55,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// <summary>
     /// Adjustment type options for dropdown.
     /// </summary>
-    public ObservableCollection<string> AdjustmentTypes { get; } = ["Add", "Remove", "Set"];
+    public ObservableCollection<string> AdjustmentTypes { get; } = new(AdjustmentTypeExtensions.GetAllNames());
 
     /// <summary>
     /// Calculated new stock level based on adjustment type and quantity.
