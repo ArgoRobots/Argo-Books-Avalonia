@@ -16,16 +16,6 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- ======================= PAGE SETTINGS MODAL ======================= -->
-        <controls:ModalOverlay DataContext="{Binding ReportsPageViewModel}" x:CompileBindings="False"
-                               IsOpen="{Binding $parent[UserControl].DataContext.IsPageSettingsOpen}"
-                               ClosingCommand="{Binding ClosePageSettingsCommand}">
-            <controls:ModalOverlay.ModalContent>
-                <modals:ReportPageSettingsModal HorizontalAlignment="Center"
-                                             VerticalAlignment="Center" />
-            </controls:ModalOverlay.ModalContent>
-        </controls:ModalOverlay>
-
         <!-- ======================= SAVE TEMPLATE MODAL ======================= -->
         <controls:ModalOverlay DataContext="{Binding ReportsPageViewModel}" x:CompileBindings="False"
                                IsOpen="{Binding $parent[UserControl].DataContext.IsSaveTemplateOpen}"

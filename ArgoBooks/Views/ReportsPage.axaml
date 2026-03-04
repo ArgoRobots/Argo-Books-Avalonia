@@ -651,6 +651,7 @@
                                                            FontSize="11"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomStartDate}"
+                                                            MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
                                             <StackPanel Spacing="4">
@@ -658,6 +659,7 @@
                                                            FontSize="11"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomEndDate}"
+                                                            MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
                                         </StackPanel>
@@ -926,13 +928,6 @@
                                               Width="16" Height="16" />
                                 </ToggleButton>
 
-                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
-
-                                <!-- Page Settings Button -->
-                                <Button Classes="toolbar-button" Command="{Binding OpenPageSettingsCommand}" ToolTip.Tip="{loc:Loc 'Page Settings'}">
-                                    <PathIcon Data="{x:Static icons:Icons.Settings}"
-                                              Width="16" Height="16" />
-                                </Button>
                                 </StackPanel>
                         </ScrollViewer>
                     </Border>
@@ -1423,7 +1418,12 @@
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max Rows'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows, FallbackValue=0}" Minimum="1" Maximum="50" />
+                                        <CheckBox Content="{loc:Loc 'Unlimited'}"
+                                                  IsChecked="{Binding IsSelectedTableMaxRowsUnlimited}"
+                                                  FontSize="12" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows, FallbackValue=0}"
+                                                                    Minimum="1" Maximum="1000"
+                                                                    IsVisible="{Binding !IsSelectedTableMaxRowsUnlimited}" />
                                     </StackPanel>
                                 </StackPanel>
 
@@ -1662,20 +1662,137 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <!-- No Selection Message -->
+                            <!-- Report & Page Settings (shown when no element is selected) -->
                             <StackPanel IsVisible="{Binding SelectedElement, Converter={x:Static ObjectConverters.IsNull}}"
-                                        Spacing="8"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"
-                                        Margin="0,40">
-                                <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                          Width="32" Height="32"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'No element selected'}"
+                                        Spacing="12"
+                                        Margin="0,4">
+                                <TextBlock Text="{loc:Loc 'Report Settings'}"
                                            FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center" />
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <!-- Report Name -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Report Name'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding ReportName}"
+                                             Watermark="{loc:Loc 'Enter report name...'}"
+                                             Padding="8,6"
+                                             FontSize="12" />
+                                </StackPanel>
+
+                                <!-- Date Range -->
+                                <StackPanel Spacing="4"
+                                            IsEnabled="{Binding IsDateRangeEnabled}">
+                                    <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding DatePresets}"
+                                              SelectedItem="{Binding SelectedDatePresetOption}"
+                                              HorizontalAlignment="Stretch"
+                                              FontSize="12">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate DataType="vm:DatePresetOption">
+                                                <TextBlock Text="{Binding Name, Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+
+                                    <!-- Custom Date Range -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="6"
+                                            Padding="10"
+                                            Margin="0,4,0,0"
+                                            IsVisible="{Binding IsCustomDateRange}">
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'Start Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding CustomStartDate}"
+                                                            MinWidth="0"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{loc:Loc 'End Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding CustomEndDate}"
+                                                            MinWidth="0"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <Separator Margin="0,4" />
+
+                                <!-- Page Settings -->
+                                <TextBlock Text="{loc:Loc 'Page Settings'}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <!-- Page Size -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Page Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding PageSizes}"
+                                              SelectedItem="{Binding PageSize}"
+                                              HorizontalAlignment="Stretch"
+                                              FontSize="12" />
+                                </StackPanel>
+
+                                <!-- Orientation -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Orientation'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding Orientations}"
+                                              SelectedItem="{Binding PageOrientation}"
+                                              HorizontalAlignment="Stretch"
+                                              FontSize="12" />
+                                </StackPanel>
+
+                                <!-- Margins -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Margins (px)'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto">
+                                        <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2">
+                                            <TextBlock Text="{loc:Loc 'Top'}" FontSize="10" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ArgoNumericUpDown Value="{Binding MarginTop}" Minimum="0" Maximum="200" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Grid.Row="0" Spacing="2">
+                                            <TextBlock Text="{loc:Loc 'Right'}" FontSize="10" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ArgoNumericUpDown Value="{Binding MarginRight}" Minimum="0" Maximum="200" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="0" Grid.Row="2" Spacing="2">
+                                            <TextBlock Text="{loc:Loc 'Bottom'}" FontSize="10" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ArgoNumericUpDown Value="{Binding MarginBottom}" Minimum="0" Maximum="200" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Grid.Row="2" Spacing="2">
+                                            <TextBlock Text="{loc:Loc 'Left'}" FontSize="10" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ArgoNumericUpDown Value="{Binding MarginLeft}" Minimum="0" Maximum="200" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Background Color -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Background Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding BackgroundColor, Mode=TwoWay}" />
+                                </StackPanel>
+
+                                <!-- Title Font Size -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{loc:Loc 'Title Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ArgoNumericUpDown Value="{Binding TitleFontSize}" Minimum="8" Maximum="48" />
+                                </StackPanel>
+
+                                <Separator Margin="0,4" />
+
+                                <!-- Display Options -->
+                                <TextBlock Text="{loc:Loc 'Display Options'}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <CheckBox Content="{loc:Loc 'Show Header'}" IsChecked="{Binding ShowHeader}" FontSize="12" />
+                                <CheckBox Content="{loc:Loc 'Show Footer'}" IsChecked="{Binding ShowFooter}" FontSize="12" />
+                                <CheckBox Content="{loc:Loc 'Show Page Numbers'}" IsChecked="{Binding ShowPageNumbers}" FontSize="12" />
+                                <CheckBox Content="{loc:Loc 'Show Company Details'}" IsChecked="{Binding ShowCompanyDetails}" FontSize="12" />
+
+                                <Separator Margin="0,4" />
                                 <TextBlock Text="{loc:Loc 'Click an element on the canvas to edit its properties'}"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiaryBrush}"

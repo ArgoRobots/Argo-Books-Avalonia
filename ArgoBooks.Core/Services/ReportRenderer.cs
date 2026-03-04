@@ -764,6 +764,104 @@ public class ReportRenderer : IDisposable
                     currentRowIndex += pageRowCount;
                 }
             }
+
+            // Check each normal table on this page for overflow
+            var tableElements = _config.Elements
+                .OfType<TableReportElement>()
+                .Where(e => e.PageNumber == templatePage && e.IsVisible)
+                .OrderBy(e => e.ZOrder)
+                .ToList();
+
+            foreach (var table in tableElements)
+            {
+                var columns = GetVisibleColumns(table);
+                var normalTableData = GetTableData(table, columns);
+
+                if (normalTableData.Count == 0)
+                    continue;
+
+                plan.CachedNormalTableData[table.Id] = normalTableData;
+                plan.CachedNormalTableColumns[table.Id] = columns;
+
+                var rect = GetScaledRect(table);
+                var headerRowHeight = (float)table.HeaderRowHeight * _renderScale;
+                var dataRowHeight = (float)table.DataRowHeight * _renderScale;
+                var titleRowHeight = headerRowHeight;
+
+                // Calculate available height for data rows on page 1
+                var availableOnPage1 = rect.Height;
+                if (table.ShowTitle)
+                    availableOnPage1 -= titleRowHeight;
+                if (table.ShowHeaders)
+                    availableOnPage1 -= headerRowHeight;
+                if (table.ShowTotalsRow)
+                    availableOnPage1 -= headerRowHeight;
+
+                // Apply MaxRows limit if set
+                var maxRowsSetting = table.MaxRows > 0 ? table.MaxRows : int.MaxValue;
+                var totalDataRows = Math.Min(normalTableData.Count, maxRowsSetting);
+
+                // Walk rows to find how many fit on page 1
+                var firstPageRowCount = Math.Max(0, (int)Math.Floor(availableOnPage1 / dataRowHeight));
+                firstPageRowCount = Math.Min(firstPageRowCount, totalDataRows);
+
+                // If all rows fit, no continuation needed
+                if (firstPageRowCount >= totalDataRows)
+                    continue;
+
+                plan.FirstPageRowCounts[table.Id] = firstPageRowCount;
+
+                // Compute continuation pages
+                var continuationTop = (PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) + (float)_config.PageMargins.Top) * _renderScale;
+                var continuationBottom = pageHeight * _renderScale - (PageDimensions.FooterHeight + (float)_config.PageMargins.Bottom) * _renderScale;
+
+                // Continuation header: "(Continued)" indicator + optional column headers
+                var continuationHeaderHeight = dataRowHeight * 0.8f; // "(Continued)" indicator
+                if (table.ShowHeaders)
+                    continuationHeaderHeight += headerRowHeight;
+
+                var continuationAvailable = continuationBottom - continuationTop - continuationHeaderHeight;
+
+                // Reserve space for totals row on last page
+                var totalsHeight = table.ShowTotalsRow ? headerRowHeight : 0f;
+
+                var currentRowIndex = firstPageRowCount;
+                while (currentRowIndex < totalDataRows)
+                {
+                    var rowsPerPage = Math.Max(0, (int)Math.Floor(continuationAvailable / dataRowHeight));
+                    var remaining = totalDataRows - currentRowIndex;
+                    var isLast = remaining <= rowsPerPage;
+
+                    // If last page needs totals row, recalculate rows that fit
+                    if (isLast && totalsHeight > 0)
+                    {
+                        var availableWithTotals = continuationAvailable - totalsHeight;
+                        var rowsWithTotals = Math.Max(0, (int)Math.Floor(availableWithTotals / dataRowHeight));
+                        if (remaining > rowsWithTotals)
+                        {
+                            // Not enough room for all remaining + totals, use reduced count
+                            isLast = false;
+                            rowsPerPage = rowsWithTotals;
+                        }
+                    }
+
+                    var pageRowCount = Math.Min(remaining, Math.Max(1, rowsPerPage));
+                    isLast = currentRowIndex + pageRowCount >= totalDataRows;
+
+                    plan.Pages.Add(new EffectivePage
+                    {
+                        SourcePageNumber = templatePage,
+                        ContinuationElementId = table.Id,
+                        StartRowIndex = currentRowIndex,
+                        RowCount = pageRowCount,
+                        DataRowStartIndex = currentRowIndex, // For alternating row color continuity
+                        IsLastContinuationPage = isLast,
+                        EffectivePageNumber = 0 // assigned below
+                    });
+
+                    currentRowIndex += pageRowCount;
+                }
+            }
         }
 
         // Assign effective page numbers
@@ -791,26 +889,50 @@ public class ReportRenderer : IDisposable
 
         if (page.IsContinuationPage)
         {
-            // Continuation page: render only the overflowing accounting table
-            var element = _config.Elements
+            // Continuation page: render only the overflowing table
+            var accountingElement = _config.Elements
                 .OfType<AccountingTableReportElement>()
                 .FirstOrDefault(e => e.Id == page.ContinuationElementId);
 
-            if (element != null && _continuationPlan?.CachedTableData.TryGetValue(element.Id, out var tableData) == true)
+            if (accountingElement != null && _continuationPlan?.CachedTableData.TryGetValue(accountingElement.Id, out var tableData) == true)
             {
-                // Position the table in the full content area
-                var marginLeft = (float)_config.PageMargins.Left * _renderScale;
-                var marginRight = (float)_config.PageMargins.Right * _renderScale;
+                // Position the table using the element's X/Width from page 1, with full vertical content area
+                var elementRect = GetScaledRect(accountingElement);
                 var contentTop = (PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) + (float)_config.PageMargins.Top) * _renderScale;
                 var contentBottom = height - (PageDimensions.FooterHeight + (float)_config.PageMargins.Bottom) * _renderScale;
-                var overrideRect = new SKRect(marginLeft, contentTop, width - marginRight, contentBottom);
+                var overrideRect = new SKRect(elementRect.Left, contentTop, elementRect.Right, contentBottom);
 
-                RenderAccountingTableSlice(canvas, element, tableData,
+                RenderAccountingTableSlice(canvas, accountingElement, tableData,
                     page.StartRowIndex, page.RowCount, page.DataRowStartIndex,
                     showTitle: false, showSubtitle: false,
                     showFootnote: page.IsLastContinuationPage,
                     showContinuedIndicator: true,
                     overrideRect: overrideRect);
+            }
+            else
+            {
+                // Check for a normal table continuation
+                var normalTable = _config.Elements
+                    .OfType<TableReportElement>()
+                    .FirstOrDefault(e => e.Id == page.ContinuationElementId);
+
+                if (normalTable != null
+                    && _continuationPlan?.CachedNormalTableData.TryGetValue(normalTable.Id, out var normalData) == true
+                    && _continuationPlan?.CachedNormalTableColumns.TryGetValue(normalTable.Id, out var normalColumns) == true)
+                {
+                    var elementRect = GetScaledRect(normalTable);
+                    var contentTop = (PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) + (float)_config.PageMargins.Top) * _renderScale;
+                    var contentBottom = height - (PageDimensions.FooterHeight + (float)_config.PageMargins.Bottom) * _renderScale;
+                    var overrideRect = new SKRect(elementRect.Left, contentTop, elementRect.Right, contentBottom);
+
+                    RenderTableSlice(canvas, normalTable, normalData, normalColumns,
+                        page.StartRowIndex, page.RowCount, page.DataRowStartIndex,
+                        showTitle: false,
+                        showHeaders: normalTable.ShowHeaders,
+                        showTotalsRow: page.IsLastContinuationPage && normalTable.ShowTotalsRow,
+                        showContinuedIndicator: true,
+                        overrideRect: overrideRect);
+                }
             }
         }
         else
@@ -825,7 +947,7 @@ public class ReportRenderer : IDisposable
                     && _continuationPlan?.FirstPageRowCounts.TryGetValue(accounting.Id, out var firstPageRowCount) == true
                     && _continuationPlan?.CachedTableData.TryGetValue(accounting.Id, out var tableData) == true)
                 {
-                    // This table overflows — render only the first page's rows
+                    // This accounting table overflows — render only the first page's rows
                     RenderAccountingTableSlice(canvas, accounting, tableData,
                         startRowIndex: 0, rowCount: firstPageRowCount, dataRowStartIndex: 0,
                         showTitle: true, showSubtitle: true,
@@ -835,11 +957,24 @@ public class ReportRenderer : IDisposable
                 else if (element is AccountingTableReportElement accounting2
                     && _continuationPlan?.CachedTableData.TryGetValue(accounting2.Id, out var cachedData) == true)
                 {
-                    // This table doesn't overflow but we have cached data — use it
+                    // This accounting table doesn't overflow but we have cached data — use it
                     RenderAccountingTableSlice(canvas, accounting2, cachedData,
                         startRowIndex: 0, rowCount: cachedData.Rows.Count, dataRowStartIndex: 0,
                         showTitle: true, showSubtitle: true,
                         showFootnote: true,
+                        showContinuedIndicator: false);
+                }
+                else if (element is TableReportElement normalTable
+                    && _continuationPlan?.FirstPageRowCounts.TryGetValue(normalTable.Id, out var normalFirstPageRowCount) == true
+                    && _continuationPlan?.CachedNormalTableData.TryGetValue(normalTable.Id, out var normalData) == true
+                    && _continuationPlan?.CachedNormalTableColumns.TryGetValue(normalTable.Id, out var normalColumns) == true)
+                {
+                    // This normal table overflows — render only the first page's rows
+                    RenderTableSlice(canvas, normalTable, normalData, normalColumns,
+                        startRowIndex: 0, rowCount: normalFirstPageRowCount, dataRowStartIndex: 0,
+                        showTitle: normalTable.ShowTitle,
+                        showHeaders: normalTable.ShowHeaders,
+                        showTotalsRow: false,
                         showContinuedIndicator: false);
                 }
                 else
@@ -2234,6 +2369,244 @@ public class ReportRenderer : IDisposable
                 DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, headerFont, totalsTextPaint);
 
                 // Draw vertical grid line
+                if (table.ShowGridLines && i > 0)
+                {
+                    var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                    canvas.DrawLine(colX, totalsRect.Top, colX, totalsRect.Bottom, gridPaint);
+                }
+
+                colX += colWidth;
+            }
+        }
+
+        // Draw outer border
+        _borderPaint.Color = ParseColor(table.GridLineColor);
+        canvas.DrawRect(tableRect, _borderPaint);
+    }
+
+    /// <summary>
+    /// Renders a slice of a normal table (for pagination support).
+    /// Similar to RenderTable but only renders rows from startRowIndex to startRowIndex+rowCount.
+    /// </summary>
+    private void RenderTableSlice(
+        SKCanvas canvas,
+        TableReportElement table,
+        List<List<string>> tableData,
+        List<string> columns,
+        int startRowIndex,
+        int rowCount,
+        int dataRowStartIndex,
+        bool showTitle,
+        bool showHeaders,
+        bool showTotalsRow,
+        bool showContinuedIndicator,
+        SKRect? overrideRect = null)
+    {
+        var rect = overrideRect ?? GetScaledRect(table);
+
+        var headerRowHeight = (float)table.HeaderRowHeight * _renderScale;
+        var dataRowHeight = (float)table.DataRowHeight * _renderScale;
+        var titleRowHeight = headerRowHeight;
+        var continuedIndicatorHeight = dataRowHeight * 0.8f;
+
+        // Create fonts using table's font settings
+        var titleTypeface = SKTypeface.FromFamilyName(table.TitleFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
+        var headerTypeface = SKTypeface.FromFamilyName(table.HeaderFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
+        var dataTypeface = SKTypeface.FromFamilyName(table.FontFamily) ?? _defaultTypeface;
+        using var titleFont = new SKFont(titleTypeface, (float)table.TitleFontSize * _renderScale);
+        using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
+        using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
+
+        var textAlign = table.TextAlignment switch
+        {
+            HorizontalTextAlignment.Left => SKTextAlign.Left,
+            HorizontalTextAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Center
+        };
+        var cellPadding = table.CellPadding * _renderScale;
+
+        // Calculate column widths based on full data set
+        var columnWidths = CalculateColumnWidths(table, columns, tableData, rect.Width, headerFont, dataFont);
+
+        // Calculate actual table height for this slice
+        var actualHeight = (showTitle ? titleRowHeight : 0) +
+                          (showContinuedIndicator ? continuedIndicatorHeight : 0) +
+                          (showHeaders ? headerRowHeight : 0) +
+                          (rowCount * dataRowHeight) +
+                          (showTotalsRow ? headerRowHeight : 0);
+        actualHeight = Math.Min(actualHeight, rect.Height);
+        var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + actualHeight);
+
+        // Draw table background
+        canvas.DrawRect(tableRect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
+
+        var currentY = rect.Top;
+
+        // Draw title row
+        if (showTitle)
+        {
+            var titleRect = new SKRect(rect.Left, currentY, rect.Right, currentY + titleRowHeight);
+            var titleFill = new SKPaint { Color = ParseColor(table.TitleBackgroundColor), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(titleRect, titleFill);
+
+            var titleText = BuildTableTitle(table);
+
+            using var titleTextPaint = new SKPaint();
+            titleTextPaint.Color = ParseColor(table.TitleTextColor);
+            titleTextPaint.IsAntialias = true;
+
+            var x = titleRect.MidX;
+            var y = titleRect.MidY + (float)(table.TitleFontSize * _renderScale) / 3;
+            canvas.DrawText(titleText, x, y, SKTextAlign.Center, titleFont, titleTextPaint);
+
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, titleRect.Bottom, rect.Right, titleRect.Bottom, gridPaint);
+            }
+
+            currentY += titleRowHeight;
+        }
+
+        // Draw "(Continued)" indicator
+        if (showContinuedIndicator)
+        {
+            var continuedRect = new SKRect(rect.Left, currentY, rect.Right, currentY + continuedIndicatorHeight);
+            var continuedFill = new SKPaint { Color = ParseColor(table.TitleBackgroundColor), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(continuedRect, continuedFill);
+
+            using var continuedFont = new SKFont(titleTypeface, (float)table.FontSize * 0.85f * _renderScale);
+            using var continuedPaint = new SKPaint();
+            continuedPaint.Color = ParseColor(table.TitleTextColor);
+            continuedPaint.IsAntialias = true;
+
+            var continuedText = Tr("(Continued)");
+            var y = continuedRect.MidY + (float)(table.FontSize * 0.85f * _renderScale) / 3;
+            canvas.DrawText(continuedText, continuedRect.MidX, y, SKTextAlign.Center, continuedFont, continuedPaint);
+
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, continuedRect.Bottom, rect.Right, continuedRect.Bottom, gridPaint);
+            }
+
+            currentY += continuedIndicatorHeight;
+        }
+
+        // Draw header row
+        if (showHeaders)
+        {
+            var headerRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
+            var headerFill = new SKPaint { Color = ParseColor(table.HeaderBackgroundColor), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(headerRect, headerFill);
+
+            using var headerTextPaint = new SKPaint();
+            headerTextPaint.Color = ParseColor(table.HeaderTextColor);
+            headerTextPaint.IsAntialias = true;
+
+            float colX = rect.Left;
+            for (int i = 0; i < columns.Count; i++)
+            {
+                var colWidth = columnWidths[i];
+                var y = headerRect.MidY + (float)(table.HeaderFontSize * _renderScale) / 3;
+                var truncatedText = TruncateText(columns[i], colWidth - cellPadding * 2, headerFont);
+                DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, headerFont, headerTextPaint);
+
+                if (table.ShowGridLines && i > 0)
+                {
+                    var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                    canvas.DrawLine(colX, headerRect.Top, colX, headerRect.Bottom, gridPaint);
+                }
+
+                colX += colWidth;
+            }
+
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, headerRect.Bottom, rect.Right, headerRect.Bottom, gridPaint);
+            }
+
+            currentY += headerRowHeight;
+        }
+
+        // Draw data rows
+        using var dataTextPaint = new SKPaint();
+        dataTextPaint.Color = ParseColor(table.DataRowTextColor);
+        dataTextPaint.IsAntialias = true;
+
+        for (int i = 0; i < rowCount && (startRowIndex + i) < tableData.Count; i++)
+        {
+            var rowData = tableData[startRowIndex + i];
+            var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + dataRowHeight);
+
+            // Alternate row colors (using dataRowStartIndex for continuity)
+            var isAlternate = (dataRowStartIndex + i) % 2 == 1;
+            var rowBgColor = table.AlternateRowColors && isAlternate
+                ? ParseColor(table.AlternateRowColor)
+                : ParseColor(table.BaseRowColor);
+            canvas.DrawRect(rowRect, new SKPaint { Color = rowBgColor, Style = SKPaintStyle.Fill });
+
+            float colX = rect.Left;
+            for (int colIndex = 0; colIndex < columns.Count; colIndex++)
+            {
+                var colWidth = columnWidths[colIndex];
+                var cellText = colIndex < rowData.Count ? rowData[colIndex] : "";
+                var y = rowRect.MidY + (float)(table.FontSize * _renderScale) / 3;
+                var truncatedText = TruncateText(cellText, colWidth - cellPadding * 2, dataFont);
+                DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, dataFont, dataTextPaint);
+
+                if (table.ShowGridLines && colIndex > 0)
+                {
+                    var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                    canvas.DrawLine(colX, rowRect.Top, colX, rowRect.Bottom, gridPaint);
+                }
+
+                colX += colWidth;
+            }
+
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, rowRect.Bottom, rect.Right, rowRect.Bottom, gridPaint);
+            }
+
+            currentY += dataRowHeight;
+        }
+
+        // Draw totals row
+        if (showTotalsRow)
+        {
+            var totalsRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
+            var totalsFill = new SKPaint { Color = ParseColor(table.HeaderBackgroundColor), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(totalsRect, totalsFill);
+
+            // Apply MaxRows limit for totals calculation
+            var maxRowsSetting = table.MaxRows > 0 ? table.MaxRows : int.MaxValue;
+            var totalDataRows = Math.Min(tableData.Count, maxRowsSetting);
+            var totals = CalculateTableTotals(tableData, columns, totalDataRows);
+
+            using var totalsTextPaint = new SKPaint();
+            totalsTextPaint.Color = ParseColor(table.HeaderTextColor);
+            totalsTextPaint.IsAntialias = true;
+
+            float colX = rect.Left;
+            for (int i = 0; i < columns.Count; i++)
+            {
+                var colWidth = columnWidths[i];
+                var y = totalsRect.MidY + (float)(table.HeaderFontSize * _renderScale) / 3;
+
+                string cellText;
+                if (i == 0)
+                    cellText = Tr("Total");
+                else if (totals.TryGetValue(columns[i], out var total))
+                    cellText = total;
+                else
+                    cellText = "";
+
+                var truncatedText = TruncateText(cellText, colWidth - cellPadding * 2, headerFont);
+                DrawAlignedText(canvas, truncatedText, colX, colWidth, y, cellPadding, textAlign, headerFont, totalsTextPaint);
+
                 if (table.ShowGridLines && i > 0)
                 {
                     var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };

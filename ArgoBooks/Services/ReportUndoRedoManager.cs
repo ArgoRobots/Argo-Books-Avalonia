@@ -648,13 +648,14 @@ public record PageSettingsSnapshot(
 
 /// <summary>
 /// Action for changing page settings. Captures a full snapshot of all settings
-/// so that undo/redo restores the complete state.
+/// so that undo/redo restores the complete state. Supports coalescing so rapid
+/// sequential changes (e.g., margin spinners) merge into a single undo entry.
 /// </summary>
-public class PageSettingsChangeAction : IReportUndoableAction
+public class PageSettingsChangeAction : ICoalescingAction
 {
     private readonly ReportConfiguration _config;
     private readonly PageSettingsSnapshot _oldSettings;
-    private readonly PageSettingsSnapshot _newSettings;
+    private PageSettingsSnapshot _newSettings;
     private readonly Action<PageSettingsSnapshot> _applyToViewModel;
 
     public PageSettingsChangeAction(
@@ -671,6 +672,8 @@ public class PageSettingsChangeAction : IReportUndoableAction
 
     public string Description => "Change page settings".Translate();
 
+    public string CoalescingKey => "page-settings";
+
     public void Undo()
     {
         ApplyToConfig(_oldSettings);
@@ -681,6 +684,14 @@ public class PageSettingsChangeAction : IReportUndoableAction
     {
         ApplyToConfig(_newSettings);
         _applyToViewModel(_newSettings);
+    }
+
+    public void UpdateToNewState(ICoalescingAction newerAction)
+    {
+        if (newerAction is PageSettingsChangeAction newer)
+        {
+            _newSettings = newer._newSettings;
+        }
     }
 
     private void ApplyToConfig(PageSettingsSnapshot s)
