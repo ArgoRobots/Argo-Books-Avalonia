@@ -66,6 +66,15 @@ public partial class PieChartLegend : UserControl
     public static readonly StyledProperty<bool> ShowValueProperty =
         AvaloniaProperty.Register<PieChartLegend, bool>(nameof(ShowValue));
 
+    public static readonly StyledProperty<double> LegendFontSizeProperty =
+        AvaloniaProperty.Register<PieChartLegend, double>(nameof(LegendFontSize), 13);
+
+    public static readonly StyledProperty<double> IndicatorSizeProperty =
+        AvaloniaProperty.Register<PieChartLegend, double>(nameof(IndicatorSize), 12);
+
+    public static readonly StyledProperty<CornerRadius> IndicatorCornerRadiusProperty =
+        AvaloniaProperty.Register<PieChartLegend, CornerRadius>(nameof(IndicatorCornerRadius), new CornerRadius(6));
+
     #endregion
 
     #region Properties
@@ -104,6 +113,33 @@ public partial class PieChartLegend : UserControl
     {
         get => GetValue(ShowValueProperty);
         set => SetValue(ShowValueProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the font size for legend labels and percentages.
+    /// </summary>
+    public double LegendFontSize
+    {
+        get => GetValue(LegendFontSizeProperty);
+        set => SetValue(LegendFontSizeProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the size of the color indicator circle.
+    /// </summary>
+    public double IndicatorSize
+    {
+        get => GetValue(IndicatorSizeProperty);
+        set => SetValue(IndicatorSizeProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the corner radius of the color indicator.
+    /// </summary>
+    public CornerRadius IndicatorCornerRadius
+    {
+        get => GetValue(IndicatorCornerRadiusProperty);
+        set => SetValue(IndicatorCornerRadiusProperty, value);
     }
 
     #endregion

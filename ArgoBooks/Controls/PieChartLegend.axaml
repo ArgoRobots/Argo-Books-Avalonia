@@ -18,9 +18,9 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <!-- Color indicator -->
                             <Border Grid.Column="0"
-                                    Width="12"
-                                    Height="12"
-                                    CornerRadius="6"
+                                    Width="{Binding IndicatorSize, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
+                                    Height="{Binding IndicatorSize, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
+                                    CornerRadius="{Binding IndicatorCornerRadius, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
                                     VerticalAlignment="Center"
                                     Margin="0,0,8,0"
                                     Background="{Binding ColorHex}" />
@@ -28,7 +28,7 @@
                             <!-- Label -->
                             <TextBlock Grid.Column="1"
                                        Text="{Binding Label}"
-                                       FontSize="13"
+                                       FontSize="{Binding LegendFontSize, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
                                        VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -37,7 +37,7 @@
                             <!-- Percentage/Value -->
                             <TextBlock Grid.Column="2"
                                        Text="{Binding FormattedPercentage}"
-                                       FontSize="13"
+                                       FontSize="{Binding LegendFontSize, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
                                        VerticalAlignment="Center"
                                        Margin="8,0,0,0"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />
