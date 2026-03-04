@@ -34,7 +34,7 @@ public partial class ChartExpandOverlay : UserControl
     private readonly List<Control> _movedChildren = new();
     private ContentControl? _pageContentControl;
     private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
-    private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
+    private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, CornerRadius origCornerRadius, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
     private readonly List<(PieChart chart, Thickness origMargin)> _originalPieChartMargins = new();
 
     public ChartExpandOverlay()
@@ -510,9 +510,10 @@ public partial class ChartExpandOverlay : UserControl
         // Enlarge PieChartLegend
         if (control is PieChartLegend legend)
         {
-            _originalLegendSizes.Add((legend, legend.LegendFontSize, legend.IndicatorSize, legend.MaxHeightOverride, legend.Width, legend.Margin));
+            _originalLegendSizes.Add((legend, legend.LegendFontSize, legend.IndicatorSize, legend.IndicatorCornerRadius, legend.MaxHeightOverride, legend.Width, legend.Margin));
             legend.LegendFontSize = 20;
             legend.IndicatorSize = 18;
+            legend.IndicatorCornerRadius = new CornerRadius(9);
             legend.MaxHeightOverride = 600;
             legend.Width = 340;
             legend.Margin = new Thickness(8, 0, 24, 0);
@@ -547,10 +548,11 @@ public partial class ChartExpandOverlay : UserControl
                 tb.FontSize = originalSize;
         }
 
-        foreach (var (legend, origFontSize, origIndicatorSize, origMaxHeight, origWidth, origMargin) in _originalLegendSizes)
+        foreach (var (legend, origFontSize, origIndicatorSize, origCornerRadius, origMaxHeight, origWidth, origMargin) in _originalLegendSizes)
         {
             legend.LegendFontSize = origFontSize;
             legend.IndicatorSize = origIndicatorSize;
+            legend.IndicatorCornerRadius = origCornerRadius;
             legend.MaxHeightOverride = origMaxHeight;
             legend.Width = origWidth;
             legend.Margin = origMargin;

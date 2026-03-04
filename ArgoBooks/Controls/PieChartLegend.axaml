@@ -20,7 +20,7 @@
                             <Border Grid.Column="0"
                                     Width="{Binding IndicatorSize, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
                                     Height="{Binding IndicatorSize, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
-                                    CornerRadius="6"
+                                    CornerRadius="{Binding IndicatorCornerRadius, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}"
                                     VerticalAlignment="Center"
                                     Margin="0,0,8,0"
                                     Background="{Binding ColorHex}" />
