@@ -3,18 +3,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for report-related modals (Page Settings, Save Template, etc.).
+/// ViewModel for report-related modals (Save Template, etc.).
 /// Acts as a bridge to provide access to the ReportsPageViewModel from the AppShell level.
 /// </summary>
 public partial class ReportModalsViewModel : ViewModelBase
 {
     [ObservableProperty]
     private ReportsPageViewModel? _reportsPageViewModel;
-
-    /// <summary>
-    /// Gets whether the page settings modal is open.
-    /// </summary>
-    public bool IsPageSettingsOpen => ReportsPageViewModel?.IsPageSettingsOpen ?? false;
 
     /// <summary>
     /// Gets whether the save template modal is open.
@@ -54,9 +49,6 @@ public partial class ReportModalsViewModel : ViewModelBase
         // Forward relevant property changes
         switch (e.PropertyName)
         {
-            case nameof(ReportsPageViewModel.IsPageSettingsOpen):
-                OnPropertyChanged(nameof(IsPageSettingsOpen));
-                break;
             case nameof(ReportsPageViewModel.IsSaveTemplateOpen):
                 OnPropertyChanged(nameof(IsSaveTemplateOpen));
                 break;
@@ -71,7 +63,6 @@ public partial class ReportModalsViewModel : ViewModelBase
 
     private void NotifyModalVisibilityChanged()
     {
-        OnPropertyChanged(nameof(IsPageSettingsOpen));
         OnPropertyChanged(nameof(IsSaveTemplateOpen));
         OnPropertyChanged(nameof(IsDeleteTemplateOpen));
         OnPropertyChanged(nameof(IsRenameTemplateOpen));

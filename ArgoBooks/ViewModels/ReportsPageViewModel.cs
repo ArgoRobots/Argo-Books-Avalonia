@@ -292,6 +292,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     partial void OnReportNameChanged(string value)
     {
+        // Keep configuration title in sync with the report name
+        Configuration.Title = value;
+
         // Keep export file path in sync with report name so switching templates
         // doesn't overwrite a previously exported file.
         if (!string.IsNullOrEmpty(ExportFilePath))
@@ -301,6 +304,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             var newName = string.IsNullOrWhiteSpace(value) ? "Report" : value;
             ExportFilePath = Path.Combine(dir, $"{newName}{ext}");
         }
+
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -842,9 +847,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     #endregion
-
-    [ObservableProperty]
-    private bool _isPageSettingsOpen;
 
     [ObservableProperty]
     private bool _isSaveTemplateOpen;
@@ -1417,65 +1419,6 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(Configuration));
     }
 
-    // Store original values for cancel
-    private PageSize _originalPageSize;
-    private PageOrientation _originalPageOrientation;
-    private double _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft;
-    private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers, _originalShowCompanyDetails;
-    private string _originalBackgroundColor = AppColors.White;
-    private double _originalTitleFontSize = 18;
-    private string _originalPageSettingsDatePreset = DatePresetNames.ThisMonth;
-    private string _originalPageSettingsReportName = "Untitled Report";
-
-    [RelayCommand]
-    private void OpenPageSettings()
-    {
-        // Store original values
-        _originalPageSize = PageSize;
-        _originalPageOrientation = PageOrientation;
-        _originalMarginTop = MarginTop;
-        _originalMarginRight = MarginRight;
-        _originalMarginBottom = MarginBottom;
-        _originalMarginLeft = MarginLeft;
-        _originalShowHeader = ShowHeader;
-        _originalShowFooter = ShowFooter;
-        _originalShowPageNumbers = ShowPageNumbers;
-        _originalShowCompanyDetails = ShowCompanyDetails;
-        _originalBackgroundColor = BackgroundColor;
-        _originalTitleFontSize = TitleFontSize;
-        _originalPageSettingsDatePreset = PageSettingsDatePreset;
-        _originalPageSettingsReportName = PageSettingsReportName;
-
-        // Sync report name from step 1
-        PageSettingsReportName = ReportName;
-
-        IsPageSettingsOpen = true;
-    }
-
-    [RelayCommand]
-    private void ClosePageSettings()
-    {
-        // Restore original values on cancel
-        PageSize = _originalPageSize;
-        PageOrientation = _originalPageOrientation;
-        MarginTop = _originalMarginTop;
-        MarginRight = _originalMarginRight;
-        MarginBottom = _originalMarginBottom;
-        MarginLeft = _originalMarginLeft;
-        ShowHeader = _originalShowHeader;
-        ShowFooter = _originalShowFooter;
-        ShowPageNumbers = _originalShowPageNumbers;
-        ShowCompanyDetails = _originalShowCompanyDetails;
-        BackgroundColor = _originalBackgroundColor;
-        TitleFontSize = _originalTitleFontSize;
-        PageSettingsDatePreset = _originalPageSettingsDatePreset;
-        PageSettingsReportName = _originalPageSettingsReportName;
-
-        IsPageSettingsOpen = false;
-
-        // Ensure canvas is refreshed after modal closes with original values
-        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-    }
 
     /// <summary>
     /// Returns true if we are editing an existing custom template (not a built-in template).
@@ -1943,9 +1886,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _titleFontSize = 18;
 
     [ObservableProperty]
-    private string _pageSettingsReportName = "Untitled Report";
-
-    [ObservableProperty]
     private string _pageSettingsDatePreset = DatePresetNames.ThisMonth;
 
     public ObservableCollection<PageSize> PageSizes { get; } =
@@ -2017,180 +1957,90 @@ public partial class ReportsPageViewModel : ViewModelBase
     // Partial methods to update Configuration immediately when page settings change
     partial void OnPageSizeChanged(PageSize value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.PageSize = value;
-            UpdateCanvasDimensions();
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.PageSize = value;
+        UpdateCanvasDimensions();
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnPageOrientationChanged(PageOrientation value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.PageOrientation = value;
-            UpdateCanvasDimensions();
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.PageOrientation = value;
+        UpdateCanvasDimensions();
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnMarginTopChanged(double value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.PageMargins = new ReportMargins(MarginLeft, value, MarginRight, MarginBottom);
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.PageMargins = new ReportMargins(MarginLeft, value, MarginRight, MarginBottom);
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnMarginRightChanged(double value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, value, MarginBottom);
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, value, MarginBottom);
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnMarginBottomChanged(double value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, value);
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, value);
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnMarginLeftChanged(double value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.PageMargins = new ReportMargins(value, MarginTop, MarginRight, MarginBottom);
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.PageMargins = new ReportMargins(value, MarginTop, MarginRight, MarginBottom);
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnShowHeaderChanged(bool value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.ShowHeader = value;
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.ShowHeader = value;
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnShowFooterChanged(bool value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.ShowFooter = value;
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.ShowFooter = value;
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnShowPageNumbersChanged(bool value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.ShowPageNumbers = value;
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.ShowPageNumbers = value;
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnShowCompanyDetailsChanged(bool value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.ShowCompanyDetails = value;
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.ShowCompanyDetails = value;
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnBackgroundColorChanged(string value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.BackgroundColor = value;
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.BackgroundColor = value;
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnTitleFontSizeChanged(double value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.TitleFontSize = value;
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
+        Configuration.TitleFontSize = value;
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     partial void OnPageSettingsDatePresetChanged(string value)
     {
-        if (IsPageSettingsOpen)
-        {
-            Configuration.Filters.DatePresetName = value;
+        Configuration.Filters.DatePresetName = value;
 
-            // Sync the step-1 SelectedDatePreset so everything stays consistent
-            SelectedDatePreset = value;
-            foreach (var option in DatePresets)
-            {
-                option.IsSelected = option.Name == value;
-            }
-
-            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    [RelayCommand]
-    private void ApplyPageSettings()
-    {
-        var oldSettings = new PageSettingsSnapshot(
-            _originalPageSize, _originalPageOrientation,
-            _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft,
-            _originalShowHeader, _originalShowFooter, _originalShowPageNumbers, _originalShowCompanyDetails,
-            _originalBackgroundColor, _originalTitleFontSize, _originalPageSettingsDatePreset);
-
-        var newSettings = new PageSettingsSnapshot(
-            PageSize, PageOrientation,
-            MarginTop, MarginRight, MarginBottom, MarginLeft,
-            ShowHeader, ShowFooter, ShowPageNumbers, ShowCompanyDetails,
-            BackgroundColor, TitleFontSize, PageSettingsDatePreset);
-
-        Configuration.PageSize = PageSize;
-        Configuration.PageOrientation = PageOrientation;
-        Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, MarginBottom);
-        Configuration.ShowHeader = ShowHeader;
-        Configuration.ShowFooter = ShowFooter;
-        Configuration.ShowPageNumbers = ShowPageNumbers;
-        Configuration.ShowCompanyDetails = ShowCompanyDetails;
-        Configuration.BackgroundColor = BackgroundColor;
-        Configuration.TitleFontSize = TitleFontSize;
-        Configuration.Filters.DatePresetName = PageSettingsDatePreset;
-
-        // Sync the step-1 date preset
-        SelectedDatePreset = PageSettingsDatePreset;
+        // Sync the step-1 SelectedDatePreset so everything stays consistent
+        SelectedDatePreset = value;
         foreach (var option in DatePresets)
         {
-            option.IsSelected = option.Name == PageSettingsDatePreset;
+            option.IsSelected = option.Name == value;
         }
 
-        // Sync the step-1 report name
-        ReportName = PageSettingsReportName;
-        Configuration.Title = PageSettingsReportName;
-
-        if (oldSettings != newSettings)
-        {
-            UndoRedoManager.RecordAction(new PageSettingsChangeAction(
-                Configuration, oldSettings, newSettings, ApplyPageSettingsSnapshot));
-        }
-
-        UpdateCanvasDimensions();
-        IsPageSettingsOpen = false;
-
-        // Refresh the canvas after modal closes
         PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
-        OnPropertyChanged(nameof(Configuration));
     }
 
     private void ApplyPageSettingsSnapshot(PageSettingsSnapshot s)
