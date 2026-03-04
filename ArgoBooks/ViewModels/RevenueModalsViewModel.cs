@@ -268,22 +268,22 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     public void OpenMarkAsLostDamagedModal(RevenueDisplayItem? item)
     {
-        OpenItemStatusModal(item, "LostDamaged", "Mark as Lost / Damaged", "Mark as Lost / Damaged", false, LostDamagedReasonOptions);
+        OpenItemStatusModal(item, nameof(ArgoBooks.Core.Enums.ItemStatusAction.LostDamaged), "Mark as Lost / Damaged", "Mark as Lost / Damaged", false, LostDamagedReasonOptions);
     }
 
     public void OpenMarkAsReturnedModal(RevenueDisplayItem? item)
     {
-        OpenItemStatusModal(item, "Returned", "Mark as Returned", "Mark as Returned", false, ReturnReasonOptions);
+        OpenItemStatusModal(item, nameof(ArgoBooks.Core.Enums.ItemStatusAction.Returned), "Mark as Returned", "Mark as Returned", false, ReturnReasonOptions);
     }
 
     public void OpenUndoLostDamagedModal(RevenueDisplayItem? item)
     {
-        OpenItemStatusModal(item, "UndoLostDamaged", "Undo Lost / Damaged Status", "Undo Status", true, UndoReasonOptions);
+        OpenItemStatusModal(item, nameof(ArgoBooks.Core.Enums.ItemStatusAction.UndoLostDamaged), "Undo Lost / Damaged Status", "Undo Status", true, UndoReasonOptions);
     }
 
     public void OpenUndoReturnedModal(RevenueDisplayItem? item)
     {
-        OpenItemStatusModal(item, "UndoReturned", "Undo Returned Status", "Undo Status", true, UndoReasonOptions);
+        OpenItemStatusModal(item, nameof(ArgoBooks.Core.Enums.ItemStatusAction.UndoReturned), "Undo Returned Status", "Undo Status", true, UndoReasonOptions);
     }
 
     protected override string GetItemStatusDescription(RevenueDisplayItem item)
@@ -323,9 +323,15 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             return;
         }
 
-        switch (ItemStatusAction)
+        if (!Enum.TryParse<ArgoBooks.Core.Enums.ItemStatusAction>(ItemStatusAction, out var parsedAction))
         {
-            case "LostDamaged":
+            CloseItemStatusModal();
+            return;
+        }
+
+        switch (parsedAction)
+        {
+            case ArgoBooks.Core.Enums.ItemStatusAction.LostDamaged:
             {
                 var record = CreateLostDamagedRecord(companyData, revenue);
                 App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -344,7 +350,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                     }));
                 break;
             }
-            case "Returned":
+            case ArgoBooks.Core.Enums.ItemStatusAction.Returned:
             {
                 var record = CreateReturnRecord(companyData, revenue);
                 App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -363,7 +369,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                     }));
                 break;
             }
-            case "UndoLostDamaged":
+            case ArgoBooks.Core.Enums.ItemStatusAction.UndoLostDamaged:
             {
                 var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == revenue.Id);
                 if (record != null)
@@ -386,7 +392,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 }
                 break;
             }
-            case "UndoReturned":
+            case ArgoBooks.Core.Enums.ItemStatusAction.UndoReturned:
             {
                 var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == revenue.Id);
                 if (record != null)

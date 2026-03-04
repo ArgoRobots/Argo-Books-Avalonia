@@ -922,7 +922,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Status options for filter dropdown.
     /// </summary>
     public ObservableCollection<string> FilterStatusOptions { get; } =
-        ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
+        new(PurchaseOrderStatusExtensions.GetFilterOptions());
 
     // Original filter values for change detection
     private DateTimeOffset? _originalFilterStartDate;

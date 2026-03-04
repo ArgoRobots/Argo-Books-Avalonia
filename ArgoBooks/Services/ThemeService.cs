@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
 using ArgoBooks.Core;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.Services;
@@ -19,9 +20,9 @@ public class ThemeService : IThemeService
     public static ThemeService Instance => field ??= new ThemeService();
 
     // Accent color definitions: (Primary, Hover, Light, Dark, Secondary/Gradient, IconBg)
-    private static readonly Dictionary<string, AccentColorSet> AccentColors = new()
+    private static readonly Dictionary<AccentColor, AccentColorSet> AccentColorSets = new()
     {
-        ["Blue"] = new AccentColorSet(
+        [AccentColor.Blue] = new AccentColorSet(
             Primary: Color.Parse(AppColors.Primary),
             Hover: Color.Parse(AppColors.PrimaryHover),
             Light: Color.Parse(AppColors.PrimaryLight),
@@ -30,7 +31,7 @@ public class ThemeService : IThemeService
             IconBgLight: Color.Parse(AppColors.PrimaryLightest),
             IconBgDark: Color.Parse(AppColors.PrimaryDarkBg)
         ),
-        ["Green"] = new AccentColorSet(
+        [AccentColor.Green] = new AccentColorSet(
             Primary: Color.Parse(AppColors.Emerald),
             Hover: Color.Parse(AppColors.EmeraldHover),
             Light: Color.Parse(AppColors.EmeraldLight),
@@ -39,7 +40,7 @@ public class ThemeService : IThemeService
             IconBgLight: Color.Parse(AppColors.EmeraldLightest),
             IconBgDark: Color.Parse(AppColors.TealDarkest)
         ),
-        ["Purple"] = new AccentColorSet(
+        [AccentColor.Purple] = new AccentColorSet(
             Primary: Color.Parse(AppColors.Violet),
             Hover: Color.Parse(AppColors.VioletHover),
             Light: Color.Parse(AppColors.VioletLight),
@@ -48,7 +49,7 @@ public class ThemeService : IThemeService
             IconBgLight: Color.Parse(AppColors.VioletLightest),
             IconBgDark: Color.Parse(AppColors.PurpleDarkest)
         ),
-        ["Pink"] = new AccentColorSet(
+        [AccentColor.Pink] = new AccentColorSet(
             Primary: Color.Parse(AppColors.Pink),
             Hover: Color.Parse(AppColors.PinkHover),
             Light: Color.Parse(AppColors.PinkLight),
@@ -57,7 +58,7 @@ public class ThemeService : IThemeService
             IconBgLight: Color.Parse(AppColors.PinkLightest),
             IconBgDark: Color.Parse(AppColors.PinkDarkest)
         ),
-        ["Orange"] = new AccentColorSet(
+        [AccentColor.Orange] = new AccentColorSet(
             Primary: Color.Parse(AppColors.Orange),
             Hover: Color.Parse(AppColors.OrangeHover),
             Light: Color.Parse(AppColors.OrangeLight),
@@ -66,7 +67,7 @@ public class ThemeService : IThemeService
             IconBgLight: Color.Parse(AppColors.OrangeLightest),
             IconBgDark: Color.Parse(AppColors.OrangeDarkest)
         ),
-        ["Teal"] = new AccentColorSet(
+        [AccentColor.Teal] = new AccentColorSet(
             Primary: Color.Parse(AppColors.Teal),
             Hover: Color.Parse(AppColors.TealHover),
             Light: Color.Parse(AppColors.TealLight),
@@ -131,13 +132,7 @@ public class ThemeService : IThemeService
     /// <param name="themeName">The theme name.</param>
     public void SetTheme(string themeName)
     {
-        var theme = themeName switch
-        {
-            "Light" => ThemeMode.Light,
-            "Dark" => ThemeMode.Dark,
-            _ => ThemeMode.System
-        };
-        SetTheme(theme);
+        SetTheme(ThemeModeExtensions.ParseThemeMode(themeName));
     }
 
     /// <summary>
@@ -157,16 +152,9 @@ public class ThemeService : IThemeService
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Ui != null)
         {
-            CurrentTheme = settings.Ui.Theme switch
-            {
-                "Light" => ThemeMode.Light,
-                "Dark" => ThemeMode.Dark,
-                "System" => ThemeMode.System,
-                _ => ThemeMode.Dark
-            };
-            CurrentAccentColor = AccentColors.ContainsKey(settings.Ui.AccentColor)
-                ? settings.Ui.AccentColor
-                : "Blue";
+            CurrentTheme = ThemeModeExtensions.ParseThemeMode(settings.Ui.Theme);
+            var parsed = AccentColorExtensions.ParseAccentColor(settings.Ui.AccentColor);
+            CurrentAccentColor = parsed != null ? settings.Ui.AccentColor : nameof(AccentColor.Blue);
         }
     }
 
@@ -187,17 +175,12 @@ public class ThemeService : IThemeService
     /// <summary>
     /// Gets the current theme name.
     /// </summary>
-    public string CurrentThemeName => CurrentTheme switch
-    {
-        ThemeMode.Light => "Light",
-        ThemeMode.Dark => "Dark",
-        _ => "System"
-    };
+    public string CurrentThemeName => CurrentTheme.GetDisplayName();
 
     /// <summary>
     /// Gets or sets the current accent color name.
     /// </summary>
-    public string CurrentAccentColor { get; private set; } = "Blue";
+    public string CurrentAccentColor { get; private set; } = nameof(AccentColor.Blue);
 
     /// <summary>
     /// Sets the accent color by name.
@@ -205,7 +188,7 @@ public class ThemeService : IThemeService
     /// <param name="colorName">The color name (Blue, Green, Purple, Pink, Orange, Teal).</param>
     public void SetAccentColor(string colorName)
     {
-        if (!AccentColors.ContainsKey(colorName))
+        if (AccentColorExtensions.ParseAccentColor(colorName) == null)
             return;
 
         CurrentAccentColor = colorName;
@@ -216,7 +199,8 @@ public class ThemeService : IThemeService
     private void ApplyAccentColor()
     {
         var app = Application.Current;
-        if (app == null || !AccentColors.TryGetValue(CurrentAccentColor, out var colors))
+        var parsedColor = AccentColorExtensions.ParseAccentColor(CurrentAccentColor);
+        if (app == null || parsedColor == null || !AccentColorSets.TryGetValue(parsedColor.Value, out var colors))
             return;
 
         // Update primary colors

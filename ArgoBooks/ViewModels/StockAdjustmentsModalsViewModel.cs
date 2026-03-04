@@ -495,7 +495,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// <summary>
     /// Adjustment type options for filter dropdown.
     /// </summary>
-    public ObservableCollection<string> FilterTypeOptions { get; } = ["All", "Add", "Remove", "Set"];
+    public ObservableCollection<string> FilterTypeOptions { get; } = new(AdjustmentTypeExtensions.GetFilterOptions());
 
     // Original filter values for change detection
     private DateTimeOffset? _originalFilterStartDate;

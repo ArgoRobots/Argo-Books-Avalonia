@@ -253,12 +253,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedAccentColor;
 
-    public ObservableCollection<string> Themes { get; } =
-    [
-        "Light",
-        "Dark",
-        "System"
-    ];
+    public ObservableCollection<string> Themes { get; } = new(ThemeModeExtensions.GetAllDisplayNames());
 
     public ObservableCollection<AccentColorItem> AccentColors { get; } =
     [

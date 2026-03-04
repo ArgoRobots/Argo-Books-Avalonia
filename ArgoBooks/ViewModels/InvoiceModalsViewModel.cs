@@ -279,7 +279,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
 
-    public ObservableCollection<string> StatusOptions { get; } = ["Draft", "Pending", "Sent", "Partial", "Paid", "Cancelled"];
+    public ObservableCollection<string> StatusOptions { get; } = new(InvoiceStatusExtensions.GetModalOptions());
 
     public ObservableCollection<InvoiceTemplate> TemplateOptions { get; } = [];
 
@@ -442,7 +442,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [ObservableProperty]
     private DateTimeOffset? _filterDueDateTo;
 
-    public ObservableCollection<string> StatusFilterOptions { get; } = ["All", "Draft", "Pending", "Sent", "Partial", "Paid", "Overdue", "Cancelled"];
+    public ObservableCollection<string> StatusFilterOptions { get; } = new(InvoiceStatusExtensions.GetFilterOptions());
 
     // Original filter values for change detection (captured when modal opens)
     private string _originalFilterStatus = "All";

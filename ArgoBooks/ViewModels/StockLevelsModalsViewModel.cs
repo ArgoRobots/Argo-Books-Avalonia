@@ -588,7 +588,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// <summary>
     /// Status options for filter dropdown.
     /// </summary>
-    public ObservableCollection<string> FilterStatusOptions { get; } = ["All", "In Stock", "Low Stock", "Out of Stock", "Overstock"];
+    public ObservableCollection<string> FilterStatusOptions { get; } = new(InventoryStatusExtensions.GetFilterOptions());
 
     // Original filter values for change detection
     private string _originalFilterCategory = "All";

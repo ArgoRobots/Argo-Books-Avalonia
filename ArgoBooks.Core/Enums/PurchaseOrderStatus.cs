@@ -32,3 +32,60 @@ public enum PurchaseOrderStatus
     /// <summary>Purchase order has been cancelled.</summary>
     Cancelled
 }
+
+/// <summary>
+/// Extension methods for PurchaseOrderStatus.
+/// </summary>
+public static class PurchaseOrderStatusExtensions
+{
+    /// <summary>
+    /// Gets the display name for a purchase order status.
+    /// </summary>
+    public static string GetDisplayName(this PurchaseOrderStatus status)
+    {
+        return status switch
+        {
+            PurchaseOrderStatus.OnOrder => "On Order",
+            PurchaseOrderStatus.PartiallyReceived => "Partially Received",
+            _ => status.ToString()
+        };
+    }
+
+    /// <summary>
+    /// Parses a display name string to a PurchaseOrderStatus enum value.
+    /// </summary>
+    public static PurchaseOrderStatus? ParsePurchaseOrderStatus(string? name)
+    {
+        return name switch
+        {
+            "Draft" => PurchaseOrderStatus.Draft,
+            "Pending" => PurchaseOrderStatus.Pending,
+            "Approved" => PurchaseOrderStatus.Approved,
+            "Sent" => PurchaseOrderStatus.Sent,
+            "On Order" => PurchaseOrderStatus.OnOrder,
+            "Partially Received" => PurchaseOrderStatus.PartiallyReceived,
+            "Received" => PurchaseOrderStatus.Received,
+            "Cancelled" => PurchaseOrderStatus.Cancelled,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Gets filter options including "All" as the first entry.
+    /// </summary>
+    public static string[] GetFilterOptions()
+    {
+        return
+        [
+            "All",
+            PurchaseOrderStatus.Draft.GetDisplayName(),
+            PurchaseOrderStatus.Pending.GetDisplayName(),
+            PurchaseOrderStatus.Approved.GetDisplayName(),
+            PurchaseOrderStatus.Sent.GetDisplayName(),
+            PurchaseOrderStatus.OnOrder.GetDisplayName(),
+            PurchaseOrderStatus.PartiallyReceived.GetDisplayName(),
+            PurchaseOrderStatus.Received.GetDisplayName(),
+            PurchaseOrderStatus.Cancelled.GetDisplayName()
+        ];
+    }
+}

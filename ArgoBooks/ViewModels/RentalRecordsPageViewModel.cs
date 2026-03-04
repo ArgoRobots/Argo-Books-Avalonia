@@ -172,7 +172,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     public BatchObservableCollection<RentalRecordDisplayItem> Records { get; } = [];
 
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Returned", "Overdue", "Cancelled"];
+    public ObservableCollection<string> StatusOptions { get; } = new(RentalStatusExtensions.GetFilterOptions());
 
     #endregion
 
