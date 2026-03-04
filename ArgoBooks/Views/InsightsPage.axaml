@@ -275,7 +275,7 @@
 
                     <!-- Disclaimer -->
                     <TextBlock IsVisible="{Binding !HasInsufficientData}"
-                               Text="{loc:Loc 'Disclaimer: These forecasts are estimates based on historical data and should not be relied upon as guarantees of future performance. Actual results may vary.'}"
+                               Text="{loc:Loc 'Disclaimer: These forecasts are estimates and should not be relied upon. Actual results often vary.'}"
                                FontSize="11"
                                FontStyle="Italic"
                                Foreground="{DynamicResource TextTertiaryBrush}"
