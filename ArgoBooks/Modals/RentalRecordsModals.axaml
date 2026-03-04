@@ -500,31 +500,31 @@
                             <!-- Start Date Range -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Start Date Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="8">
-                                    <StackPanel Spacing="4">
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc From}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <DatePicker SelectedDate="{Binding FilterStartDateFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                        <DatePicker SelectedDate="{Binding FilterStartDateFrom}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                    <StackPanel Spacing="4">
+                                    <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc To}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <DatePicker SelectedDate="{Binding FilterStartDateTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                        <DatePicker SelectedDate="{Binding FilterStartDateTo}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </StackPanel>
 
                             <!-- Due Date Range -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Due Date Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="8">
-                                    <StackPanel Spacing="4">
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc From}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <DatePicker SelectedDate="{Binding FilterDueDateFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                        <DatePicker SelectedDate="{Binding FilterDueDateFrom}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                    <StackPanel Spacing="4">
+                                    <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc To}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <DatePicker SelectedDate="{Binding FilterDueDateTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                        <DatePicker SelectedDate="{Binding FilterDueDateTo}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

@@ -57,25 +57,27 @@
 
                     <!-- Body -->
                     <StackPanel Grid.Row="1" Spacing="12" Margin="20,16">
-                        <!-- Start Date -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{loc:Loc 'Start Date'}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <DatePicker SelectedDate="{Binding ModalStartDateOffset}"
-                                        Classes="form-datepicker"
-                                        HorizontalAlignment="Stretch" />
-                        </StackPanel>
-
-                        <!-- End Date -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{loc:Loc 'End Date'}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <DatePicker SelectedDate="{Binding ModalEndDateOffset}"
-                                        Classes="form-datepicker"
-                                        HorizontalAlignment="Stretch" />
-                        </StackPanel>
+                        <!-- Date Range -->
+                        <Grid ColumnDefinitions="*,8,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="{loc:Loc 'Start Date'}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <DatePicker SelectedDate="{Binding ModalStartDateOffset}"
+                                            Classes="form-datepicker"
+                                            MinWidth="0"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Text="{loc:Loc 'End Date'}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <DatePicker SelectedDate="{Binding ModalEndDateOffset}"
+                                            Classes="form-datepicker"
+                                            MinWidth="0"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Grid>
                     </StackPanel>
 
                     <!-- Footer -->

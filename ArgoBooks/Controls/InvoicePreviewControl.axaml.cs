@@ -58,6 +58,7 @@ public partial class InvoicePreviewControl : UserControl
     private Microsoft.Web.WebView2.WinForms.WebView2? _webView;
     private WebView2Host? _webViewHost;
     private bool _isWebViewInitialized;
+    private bool _isWebViewDisposed;
     private bool _isHandlingZoom;
     private double _pendingScrollX;
     private double _pendingScrollY;
@@ -173,6 +174,8 @@ public partial class InvoicePreviewControl : UserControl
             _rootPanel.Children.Remove(_webViewHost);
         }
 
+        _isWebViewDisposed = true;
+
         if (_webView != null)
         {
             _webView.Dispose();
@@ -203,6 +206,8 @@ public partial class InvoicePreviewControl : UserControl
         // Don't re-initialize if already exists
         if (_webView != null)
             return;
+
+        _isWebViewDisposed = false;
 
         try
         {
@@ -238,6 +243,9 @@ public partial class InvoicePreviewControl : UserControl
             if (_webView == null) return;
 
             await _webView.EnsureCoreWebView2Async();
+
+            // WebView may have been disposed while awaiting initialization
+            if (_isWebViewDisposed || _webView == null) return;
 
             // Disable context menu and other browser features for clean preview
             if (_webView.CoreWebView2 != null)
@@ -366,7 +374,7 @@ public partial class InvoicePreviewControl : UserControl
 
     private async void OnNavigationCompleted(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
     {
-        if (!_hasPendingScroll || _webView?.CoreWebView2 == null)
+        if (!_hasPendingScroll || _isWebViewDisposed || _webView?.CoreWebView2 == null)
             return;
 
         _hasPendingScroll = false;
@@ -379,7 +387,7 @@ public partial class InvoicePreviewControl : UserControl
         }
         catch (Exception)
         {
-            // Ignore scroll restoration errors
+            // Ignore scroll restoration errors (including disposed WebView)
         }
     }
 
@@ -476,6 +484,9 @@ public partial class InvoicePreviewControl : UserControl
                 // If we can't get scroll position, just don't restore it
                 _hasPendingScroll = false;
             }
+
+            // WebView may have been disposed while awaiting scroll position
+            if (_isWebViewDisposed || _webView?.CoreWebView2 == null) return;
 
             // Inject styles and scripts for zoom and pan handling
             var interactionScript = @"
@@ -623,7 +634,16 @@ public partial class InvoicePreviewControl : UserControl
                 html = html + interactionScript;
             }
 
-            _webView.CoreWebView2.NavigateToString(html);
+            if (_isWebViewDisposed || _webView?.CoreWebView2 == null) return;
+
+            try
+            {
+                _webView.CoreWebView2.NavigateToString(html);
+            }
+            catch (InvalidOperationException)
+            {
+                // WebView2 was disposed between the null check and the call
+            }
         }
 #endif
     }

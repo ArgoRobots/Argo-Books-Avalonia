@@ -2019,7 +2019,7 @@ public class ChartLoaderService
                 Labels = labels,
                 TextSize = AxisTextSize,
                 LabelsPaint = new SolidColorPaint(_textColor),
-                SeparatorsPaint = new SolidColorPaint(_gridColor) { StrokeThickness = 1 }
+                SeparatorsPaint = null
             }
         };
 

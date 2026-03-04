@@ -272,6 +272,14 @@
                                        TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
+
+                    <!-- Disclaimer -->
+                    <TextBlock IsVisible="{Binding !HasInsufficientData}"
+                               Text="{loc:Loc 'Disclaimer: These forecasts are estimates and should not be relied upon. Actual results often vary.'}"
+                               FontSize="11"
+                               FontStyle="Italic"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 
