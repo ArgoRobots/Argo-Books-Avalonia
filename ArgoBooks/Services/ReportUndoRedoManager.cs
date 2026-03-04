@@ -438,9 +438,21 @@ public class ElementPropertyChangeAction(
     string propertyName,
     object? oldValue,
     object? newValue)
-    : IReportUndoableAction
+    : ICoalescingAction
 {
+    private object? _newValue = newValue;
+
     public string Description => "Change {0} {1}".TranslateFormat(elementDisplayName, FormatPropertyName(propertyName));
+
+    public string CoalescingKey => $"prop-change:{elementId}:{propertyName}";
+
+    public void UpdateToNewState(ICoalescingAction newerAction)
+    {
+        if (newerAction is ElementPropertyChangeAction newer)
+        {
+            _newValue = newer._newValue;
+        }
+    }
 
     public void Undo()
     {
@@ -456,7 +468,7 @@ public class ElementPropertyChangeAction(
         var element = config.GetElementById(elementId);
         if (element != null)
         {
-            SetPropertyValue(element, propertyName, newValue);
+            SetPropertyValue(element, propertyName, _newValue);
         }
     }
 
