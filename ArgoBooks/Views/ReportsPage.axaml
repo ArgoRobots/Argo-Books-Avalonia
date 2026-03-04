@@ -1684,24 +1684,16 @@
                                 <StackPanel Spacing="4"
                                             IsEnabled="{Binding IsDateRangeEnabled}">
                                     <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ItemsControl ItemsSource="{Binding DatePresets}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <UniformGrid Columns="2" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
+                                    <ComboBox ItemsSource="{Binding DatePresets}"
+                                              SelectedItem="{Binding SelectedDatePresetOption}"
+                                              HorizontalAlignment="Stretch"
+                                              FontSize="12">
+                                        <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:DatePresetOption">
-                                                <RadioButton Content="{Binding Name, Converter={StaticResource TranslateConverter}}"
-                                                             GroupName="DateRangeDesigner"
-                                                             IsChecked="{Binding IsSelected, Mode=OneWay}"
-                                                             Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
-                                                             CommandParameter="{Binding}"
-                                                             Margin="0,2"
-                                                             FontSize="12" />
+                                                <TextBlock Text="{Binding Name, Converter={StaticResource TranslateConverter}}" />
                                             </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
                                     <!-- Custom Date Range -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"

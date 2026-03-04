@@ -364,6 +364,20 @@ public partial class ReportsPageViewModel : ViewModelBase
     partial void OnSelectedDatePresetChanged(string value)
     {
         IsCustomDateRange = value == DatePresetNames.Custom;
+        OnPropertyChanged(nameof(SelectedDatePresetOption));
+    }
+
+    /// <summary>
+    /// Gets or sets the selected date preset option for ComboBox binding in the properties panel.
+    /// </summary>
+    public DatePresetOption? SelectedDatePresetOption
+    {
+        get => DatePresets.FirstOrDefault(p => p.IsSelected);
+        set
+        {
+            if (value != null)
+                SelectDatePreset(value);
+        }
     }
 
     [RelayCommand]
