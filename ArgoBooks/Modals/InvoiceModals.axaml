@@ -518,7 +518,7 @@
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Width="700"
+                        Width="500"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BoxShadow="0 8 32 0 #40000000">

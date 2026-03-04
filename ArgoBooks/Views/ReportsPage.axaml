@@ -645,8 +645,8 @@
                                                    FontSize="13"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <Grid ColumnDefinitions="*,8,*">
-                                            <StackPanel Grid.Column="0" Spacing="4">
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'Start Date'}"
                                                            FontSize="11"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -654,7 +654,7 @@
                                                             MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
-                                            <StackPanel Grid.Column="2" Spacing="4">
+                                            <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'End Date'}"
                                                            FontSize="11"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -662,7 +662,7 @@
                                                             MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
-                                        </Grid>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -1701,20 +1701,20 @@
                                             Padding="10"
                                             Margin="0,4,0,0"
                                             IsVisible="{Binding IsCustomDateRange}">
-                                        <Grid ColumnDefinitions="*,8,*">
-                                            <StackPanel Grid.Column="0" Spacing="4">
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'Start Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomStartDate}"
                                                             MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
-                                            <StackPanel Grid.Column="2" Spacing="4">
+                                            <StackPanel Spacing="4">
                                                 <TextBlock Text="{loc:Loc 'End Date'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <DatePicker SelectedDate="{Binding CustomEndDate}"
                                                             MinWidth="0"
                                                             HorizontalAlignment="Stretch" />
                                             </StackPanel>
-                                        </Grid>
+                                        </StackPanel>
                                     </Border>
                                 </StackPanel>
 
