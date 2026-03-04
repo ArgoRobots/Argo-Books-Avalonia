@@ -34,7 +34,8 @@ public partial class ChartExpandOverlay : UserControl
     private readonly List<Control> _movedChildren = new();
     private ContentControl? _pageContentControl;
     private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
-    private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, double origMaxHeight)> _originalLegendSizes = new();
+    private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
+    private readonly List<(PieChart chart, Thickness origMargin)> _originalPieChartMargins = new();
 
     public ChartExpandOverlay()
     {
@@ -486,11 +487,17 @@ public partial class ChartExpandOverlay : UserControl
             cartLabel.TextSize = 26;
         }
 
-        // Enlarge PieChart titles
-        if (control is PieChart pc && pc.Title is LabelVisual pieLabel)
+        // Enlarge PieChart titles and add margin to shrink pie slightly
+        if (control is PieChart pc)
         {
-            _originalTitleSizes.Add((pieLabel, pieLabel.TextSize));
-            pieLabel.TextSize = 26;
+            if (pc.Title is LabelVisual pieLabel)
+            {
+                _originalTitleSizes.Add((pieLabel, pieLabel.TextSize));
+                pieLabel.TextSize = 26;
+            }
+
+            _originalPieChartMargins.Add((pc, pc.Margin));
+            pc.Margin = new Thickness(40, 20, 0, 20);
         }
 
         // Enlarge TextBlock titles (used by pie charts and other charts without LabelVisual)
@@ -503,10 +510,12 @@ public partial class ChartExpandOverlay : UserControl
         // Enlarge PieChartLegend
         if (control is PieChartLegend legend)
         {
-            _originalLegendSizes.Add((legend, legend.LegendFontSize, legend.IndicatorSize, legend.MaxHeightOverride));
+            _originalLegendSizes.Add((legend, legend.LegendFontSize, legend.IndicatorSize, legend.MaxHeightOverride, legend.Width, legend.Margin));
             legend.LegendFontSize = 20;
             legend.IndicatorSize = 18;
             legend.MaxHeightOverride = 600;
+            legend.Width = 340;
+            legend.Margin = new Thickness(8, 0, 24, 0);
         }
 
         // Recurse into children
@@ -538,15 +547,23 @@ public partial class ChartExpandOverlay : UserControl
                 tb.FontSize = originalSize;
         }
 
-        foreach (var (legend, origFontSize, origIndicatorSize, origMaxHeight) in _originalLegendSizes)
+        foreach (var (legend, origFontSize, origIndicatorSize, origMaxHeight, origWidth, origMargin) in _originalLegendSizes)
         {
             legend.LegendFontSize = origFontSize;
             legend.IndicatorSize = origIndicatorSize;
             legend.MaxHeightOverride = origMaxHeight;
+            legend.Width = origWidth;
+            legend.Margin = origMargin;
+        }
+
+        foreach (var (chart, origMargin) in _originalPieChartMargins)
+        {
+            chart.Margin = origMargin;
         }
 
         _originalTitleSizes.Clear();
         _originalLegendSizes.Clear();
+        _originalPieChartMargins.Clear();
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e)
