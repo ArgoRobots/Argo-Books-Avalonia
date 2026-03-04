@@ -98,6 +98,7 @@
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMin}"
+                                                 Classes="form-input"
                                                  Watermark="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="20" />
@@ -105,6 +106,7 @@
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMax}"
+                                                 Classes="form-input"
                                                  Watermark="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="20" />
