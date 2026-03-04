@@ -1644,15 +1644,15 @@
                                     <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.HeaderTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding ShowSectionHeaderColors}">
                                     <TextBlock Text="{loc:Loc 'Section Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.SectionHeaderBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding ShowTotalColors}">
                                     <TextBlock Text="{loc:Loc 'Total BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalBackgroundColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding ShowTotalColors}">
                                     <TextBlock Text="{loc:Loc 'Total Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedAccountingTableElement.TotalTextColor, Mode=TwoWay, FallbackValue={x:Null}}" />
                                 </StackPanel>

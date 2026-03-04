@@ -1234,6 +1234,17 @@ public class AccountingTableReportElement : ReportElementBase
         set => SetField(ref field, value);
     } = 20;
 
+    /// <summary>
+    /// Custom column width ratios set by the user via drag-to-resize in the designer.
+    /// When null, the default ratios from the data service are used. Values should sum to 1.0.
+    /// </summary>
+    [JsonPropertyName("columnWidthRatios")]
+    public List<double>? ColumnWidthRatios
+    {
+        get;
+        set => SetField(ref field, value);
+    }
+
     public override double MinimumSize => 200;
     public override string DisplayName => "Accounting Table";
     public override ReportElementType GetElementType() => ReportElementType.AccountingTable;
@@ -1272,7 +1283,8 @@ public class AccountingTableReportElement : ReportElementBase
             CellPadding = CellPadding,
             ShowGridLines = ShowGridLines,
             AlternateRowColors = AlternateRowColors,
-            IndentWidth = IndentWidth
+            IndentWidth = IndentWidth,
+            ColumnWidthRatios = ColumnWidthRatios?.ToList()
         };
     }
 }

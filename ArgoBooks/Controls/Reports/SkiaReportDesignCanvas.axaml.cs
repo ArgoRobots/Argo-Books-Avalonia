@@ -193,7 +193,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     private ReportElementBase? _hoveredElement;
 
     // Interaction state
-    private enum InteractionMode { None, Selecting, Dragging, Resizing, Panning }
+    private enum InteractionMode { None, Selecting, Dragging, Resizing, ColumnResizing, Panning }
     private InteractionMode _interactionMode = InteractionMode.None;
     private Point _interactionStartPoint;
     private Point _elementStartPosition;
@@ -201,6 +201,16 @@ public partial class SkiaReportDesignCanvas : UserControl
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
     private readonly Dictionary<string, (Point Position, Size Size, int PageNumber)> _multiDragStartBounds = new();
     private readonly Dictionary<string, (double X, double Y, double Width, double Height, int PageNumber)> _dragOriginalBounds = new();
+
+    // Column resize state
+    private AccountingTableReportElement? _columnResizeElement;
+    private int _columnResizeIndex; // Border between column i and i+1
+    private double _columnResizeStartX;
+    private List<double>? _columnResizeOriginalRatios;
+
+    // Column border hover state (for visual highlight)
+    private AccountingTableReportElement? _hoveredColumnElement;
+    private int _hoveredColumnBorderIndex = -1;
 
     // Panning state
     private Point _panStartPoint;
@@ -477,6 +487,24 @@ public partial class SkiaReportDesignCanvas : UserControl
             canvas.Save();
             canvas.Translate(0, pageOffset);
             DrawHoverHighlightClipped(canvas, _hoveredElement);
+            canvas.Restore();
+        }
+
+        // Draw column border hover/drag highlight
+        if (_interactionMode == InteractionMode.ColumnResizing && _columnResizeElement != null)
+        {
+            var colPageOffset = GetPageYOffset(_columnResizeElement.PageNumber);
+            canvas.Save();
+            canvas.Translate(0, colPageOffset);
+            DrawColumnBorderHighlight(canvas, _columnResizeElement, _columnResizeIndex, isDragging: true);
+            canvas.Restore();
+        }
+        else if (_hoveredColumnElement != null && _hoveredColumnBorderIndex >= 0)
+        {
+            var colPageOffset = GetPageYOffset(_hoveredColumnElement.PageNumber);
+            canvas.Save();
+            canvas.Translate(0, colPageOffset);
+            DrawColumnBorderHighlight(canvas, _hoveredColumnElement, _hoveredColumnBorderIndex, isDragging: false);
             canvas.Restore();
         }
 
@@ -810,6 +838,47 @@ public partial class SkiaReportDesignCanvas : UserControl
         canvas.Restore();
     }
 
+    private void DrawColumnBorderHighlight(SKCanvas canvas, AccountingTableReportElement element, int borderIndex, bool isDragging)
+    {
+        if (_continuationPlan == null) return;
+
+        // Get effective ratios and table data
+        List<double>? effectiveRatios = element.ColumnWidthRatios;
+        _continuationPlan.CachedTableData.TryGetValue(element.Id, out var tableData);
+        if (effectiveRatios == null && tableData != null)
+            effectiveRatios = tableData.ColumnWidthRatios;
+        if (effectiveRatios == null || borderIndex < 0 || borderIndex >= effectiveRatios.Count - 1) return;
+
+        // Compute column border X position
+        var cellPadding = element.CellPadding;
+        var availableWidth = element.Width - (cellPadding * 2);
+        var borderX = element.X + cellPadding;
+        for (int i = 0; i <= borderIndex; i++)
+            borderX += availableWidth * effectiveRatios[i];
+
+        // Compute the column header row top Y (after title bar + subtitle)
+        var columnHeaderTop = element.Y + element.HeaderRowHeight * 1.4; // after title bar
+        if (tableData != null && !string.IsNullOrEmpty(tableData.Subtitle))
+            columnHeaderTop += element.DataRowHeight * 1.2; // after subtitle
+
+        // Colors match ArgoTable's ColumnResizeGripper: hover=alpha 80, drag=alpha 120
+        var alpha = isDragging ? (byte)120 : (byte)80;
+        using var paint = new SKPaint
+        {
+            Color = new SKColor(59, 130, 246, alpha),
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+
+        var highlightRect = new SKRect(
+            (float)(borderX - 2),
+            (float)columnHeaderTop,
+            (float)(borderX + 2),
+            (float)(element.Y + element.Height)
+        );
+        canvas.DrawRect(highlightRect, paint);
+    }
+
     private Dictionary<ResizeHandle, Point> GetResizeHandlePositions(ReportElementBase element)
     {
         var x = element.X;
@@ -1078,6 +1147,70 @@ public partial class SkiaReportDesignCanvas : UserControl
         return ResizeHandle.None;
     }
 
+    /// <summary>
+    /// Checks if the given canvas point is near a column border in the header area
+    /// of an accounting table element. Returns the element and column border index,
+    /// or null if not near any column border.
+    /// </summary>
+    private (AccountingTableReportElement Element, int BorderIndex)? GetColumnBorderAtPoint(Point canvasPoint)
+    {
+        if (Configuration == null || _continuationPlan == null) return null;
+
+        var (pageNumber, localY) = GetPageAtCanvasY(canvasPoint.Y);
+        if (pageNumber == 0) return null;
+
+        var localPoint = new Point(canvasPoint.X, localY);
+
+        foreach (var element in Configuration.Elements
+            .OfType<AccountingTableReportElement>()
+            .Where(e => e.PageNumber == pageNumber && e.IsVisible)
+            .OrderByDescending(e => e.ZOrder))
+        {
+            var elementRect = new Rect(element.X, element.Y, element.Width, element.Height);
+            if (!elementRect.Contains(localPoint)) continue;
+
+            // Get the table data to know the column count and ratios
+            if (!_continuationPlan.CachedTableData.TryGetValue(element.Id, out var tableData))
+                continue;
+
+            var effectiveRatios = element.ColumnWidthRatios ?? tableData.ColumnWidthRatios;
+            if (effectiveRatios == null || effectiveRatios.Count < 2) continue;
+
+            // Compute the header area Y range (title + subtitle + column headers)
+            var headerAreaTop = element.Y;
+            var headerAreaBottom = element.Y + element.HeaderRowHeight * 1.4; // title bar
+
+            if (!string.IsNullOrEmpty(tableData.Subtitle))
+                headerAreaBottom += element.DataRowHeight * 1.2; // subtitle
+
+            if (tableData.ColumnHeaders.Count > 0)
+                headerAreaBottom += element.HeaderRowHeight; // column headers
+
+            // Only allow column resize in the header area
+            if (localPoint.Y < headerAreaTop || localPoint.Y > headerAreaBottom)
+                continue;
+
+            // Compute column border X positions
+            var cellPadding = element.CellPadding;
+            var availableWidth = element.Width - (cellPadding * 2);
+            var contentLeft = element.X + cellPadding;
+
+            const double hitTolerance = 5.0;
+            var accumulatedX = contentLeft;
+
+            for (int i = 0; i < effectiveRatios.Count - 1; i++)
+            {
+                accumulatedX += availableWidth * effectiveRatios[i];
+                if (Math.Abs(localPoint.X - accumulatedX) <= hitTolerance)
+                {
+                    return (element, i);
+                }
+            }
+        }
+
+        return null;
+    }
+
     private Point GetCanvasPoint(PointerEventArgs e)
     {
         if (_canvasImage == null) return new Point();
@@ -1127,6 +1260,16 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         if (props.IsLeftButtonPressed)
         {
+            // Check if clicking on a column border in an accounting table header
+            var columnBorder = GetColumnBorderAtPoint(point);
+            if (columnBorder != null)
+            {
+                StartColumnResize(columnBorder.Value.Element, columnBorder.Value.BorderIndex, point);
+                e.Pointer.Capture(_canvasImage);
+                e.Handled = true;
+                return;
+            }
+
             // Check if clicking on a resize handle of a selected element
             foreach (var selected in _selectedElements)
             {
@@ -1235,6 +1378,10 @@ public partial class SkiaReportDesignCanvas : UserControl
                 HandleResize(point);
                 break;
 
+            case InteractionMode.ColumnResizing:
+                HandleColumnResize(point);
+                break;
+
             case InteractionMode.Selecting:
                 UpdateSelectionRectangle(point);
                 break;
@@ -1255,6 +1402,16 @@ public partial class SkiaReportDesignCanvas : UserControl
                 else
                 {
                     UpdateCursor(point);
+                }
+                // Track column border hover for visual highlight
+                var colBorder = GetColumnBorderAtPoint(point);
+                var newHoverElement = colBorder?.Element;
+                var newHoverIndex = colBorder?.BorderIndex ?? -1;
+                if (newHoverElement != _hoveredColumnElement || newHoverIndex != _hoveredColumnBorderIndex)
+                {
+                    _hoveredColumnElement = newHoverElement;
+                    _hoveredColumnBorderIndex = newHoverIndex;
+                    InvalidateCanvas();
                 }
                 break;
         }
@@ -1299,6 +1456,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
             case InteractionMode.Resizing:
                 EndResize();
+                break;
+
+            case InteractionMode.ColumnResizing:
+                EndColumnResize();
                 break;
 
             case InteractionMode.Selecting:
@@ -1681,6 +1842,131 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     #endregion
 
+    #region Column Resizing
+
+    private void StartColumnResize(AccountingTableReportElement element, int borderIndex, Point point)
+    {
+        _interactionMode = InteractionMode.ColumnResizing;
+        _columnResizeElement = element;
+        _columnResizeIndex = borderIndex;
+
+        // Clear hover state so drag highlight takes over
+        _hoveredColumnElement = null;
+        _hoveredColumnBorderIndex = -1;
+        _columnResizeStartX = point.X;
+
+        // Capture the original ratios for undo
+        if (element.ColumnWidthRatios != null)
+        {
+            _columnResizeOriginalRatios = element.ColumnWidthRatios.ToList();
+        }
+        else if (_continuationPlan?.CachedTableData.TryGetValue(element.Id, out var tableData) == true)
+        {
+            _columnResizeOriginalRatios = tableData.ColumnWidthRatios.ToList();
+        }
+        else
+        {
+            _columnResizeOriginalRatios = null;
+        }
+
+        // Initialize element's custom ratios from defaults if not yet set
+        if (element.ColumnWidthRatios == null && _columnResizeOriginalRatios != null)
+        {
+            element.ColumnWidthRatios = _columnResizeOriginalRatios.ToList();
+        }
+
+        // Suppress undo recording during drag
+        if (UndoRedoManager != null)
+            UndoRedoManager.SuppressRecording = true;
+
+        Cursor = new Cursor(StandardCursorType.SizeWestEast);
+    }
+
+    private void HandleColumnResize(Point point)
+    {
+        if (_columnResizeElement?.ColumnWidthRatios == null || _columnResizeOriginalRatios == null)
+            return;
+
+        var cellPadding = _columnResizeElement.CellPadding;
+        var availableWidth = _columnResizeElement.Width - (cellPadding * 2);
+        if (availableWidth <= 0) return;
+
+        const double minRatio = 0.03;
+
+        // Start from original ratios each time (delta from drag start, not incremental)
+        var ratios = _columnResizeOriginalRatios.ToList();
+        var leftIndex = _columnResizeIndex;
+
+        // Convert pixel delta to ratio delta
+        var deltaX = point.X - _columnResizeStartX;
+        var deltaRatio = deltaX / availableWidth;
+
+        // Clamp the dragged column to its minimum
+        var newLeftRatio = ratios[leftIndex] + deltaRatio;
+        newLeftRatio = Math.Max(minRatio, newLeftRatio);
+        var actualDelta = newLeftRatio - ratios[leftIndex];
+        ratios[leftIndex] = newLeftRatio;
+
+        // When expanding: cascade-shrink all columns to the right
+        if (actualDelta > 0.0001)
+        {
+            double shrinkNeeded = actualDelta;
+            for (int i = leftIndex + 1; i < ratios.Count; i++)
+            {
+                double availableShrink = ratios[i] - minRatio;
+                if (availableShrink > 0.0001)
+                {
+                    double actualShrink = Math.Min(shrinkNeeded, availableShrink);
+                    ratios[i] -= actualShrink;
+                    shrinkNeeded -= actualShrink;
+                    if (shrinkNeeded < 0.0001) break;
+                }
+            }
+            // If not enough space was found, clamp the left column back
+            if (shrinkNeeded > 0.0001)
+            {
+                ratios[leftIndex] -= shrinkNeeded;
+            }
+        }
+        // When shrinking: only give space to the immediate right neighbor
+        else if (actualDelta < -0.0001)
+        {
+            ratios[leftIndex + 1] -= actualDelta; // actualDelta is negative, so this adds
+        }
+
+        _columnResizeElement.ColumnWidthRatios = ratios;
+        InvalidateCanvas();
+    }
+
+    private void EndColumnResize()
+    {
+        // Re-enable undo recording
+        if (UndoRedoManager != null)
+            UndoRedoManager.SuppressRecording = false;
+
+        // Record undo action
+        if (UndoRedoManager != null && Configuration != null && _columnResizeElement != null)
+        {
+            var oldRatios = _columnResizeOriginalRatios?.ToList();
+            var newRatios = _columnResizeElement.ColumnWidthRatios?.ToList();
+
+            if (oldRatios != null && newRatios != null && !oldRatios.SequenceEqual(newRatios))
+            {
+                var action = new ColumnResizeAction(
+                    Configuration,
+                    _columnResizeElement.Id,
+                    oldRatios,
+                    newRatios);
+                UndoRedoManager.RecordAction(action);
+            }
+        }
+
+        _columnResizeElement = null;
+        _columnResizeOriginalRatios = null;
+    }
+
+    #endregion
+
     #region Cursor
 
     private void UpdateCursor(Point point)
@@ -1694,6 +1980,14 @@ public partial class SkiaReportDesignCanvas : UserControl
                 Cursor = GetResizeCursor(handle);
                 return;
             }
+        }
+
+        // Check if over a column border in an accounting table header
+        var columnBorder = GetColumnBorderAtPoint(point);
+        if (columnBorder != null)
+        {
+            Cursor = new Cursor(StandardCursorType.SizeWestEast);
+            return;
         }
 
         // Check if over an element

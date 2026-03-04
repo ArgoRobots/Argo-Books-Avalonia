@@ -3115,11 +3115,13 @@ public class ReportRenderer : IDisposable
         using var italicFont = new SKFont(italicTypeface, dataFontSize * 0.9f);
         using var grandTotalFont = new SKFont(boldTypeface, dataFontSize * 1.1f);
 
-        // Calculate column widths from ratios
+        // Calculate column widths from ratios (prefer element's custom ratios if set and matching column count)
         var availableWidth = rect.Width - (cellPadding * 2);
-        var columnWidths = new float[tableData.ColumnWidthRatios.Count];
-        for (int i = 0; i < tableData.ColumnWidthRatios.Count; i++)
-            columnWidths[i] = availableWidth * (float)tableData.ColumnWidthRatios[i];
+        var effectiveRatios = (element.ColumnWidthRatios?.Count == tableData.ColumnWidthRatios.Count)
+            ? element.ColumnWidthRatios : tableData.ColumnWidthRatios;
+        var columnWidths = new float[effectiveRatios.Count];
+        for (int i = 0; i < effectiveRatios.Count; i++)
+            columnWidths[i] = availableWidth * (float)effectiveRatios[i];
 
         // If no ratios defined, use default 2-column split
         if (columnWidths.Length == 0)
@@ -3174,11 +3176,26 @@ public class ReportRenderer : IDisposable
             var colX = contentLeft;
             for (int i = 0; i < tableData.ColumnHeaders.Count && i < columnWidths.Length; i++)
             {
-                var textAlign = i == 0 ? SKTextAlign.Left : SKTextAlign.Right;
-                var textX = i == 0 ? colX + cellPadding : colX + columnWidths[i] - cellPadding;
-                canvas.DrawText(tableData.ColumnHeaders[i], textX, currentY + headerRowHeight * 0.65f, textAlign, headerFont, colHeaderPaint);
+                var textX = colX + columnWidths[i] / 2;
+                var cellClip = new SKRect(colX, currentY, colX + columnWidths[i], currentY + headerRowHeight);
+                DrawClippedText(canvas, tableData.ColumnHeaders[i], textX, currentY + headerRowHeight * 0.65f, SKTextAlign.Center, headerFont, colHeaderPaint, cellClip);
                 colX += columnWidths[i];
             }
+            // Draw vertical column separator lines in header
+            using var separatorPaint = new SKPaint
+            {
+                Color = new SKColor(180, 180, 180, 128),
+                StrokeWidth = 1 * _renderScale,
+                Style = SKPaintStyle.Stroke,
+                IsAntialias = true
+            };
+            var sepX = contentLeft;
+            for (int i = 0; i < effectiveRatios.Count - 1; i++)
+            {
+                sepX += columnWidths[i];
+                canvas.DrawLine(sepX, colHeaderRect.Top + 4 * _renderScale, sepX, colHeaderRect.Bottom - 4 * _renderScale, separatorPaint);
+            }
+
             currentY += headerRowHeight;
 
             // Header bottom border
@@ -3215,7 +3232,8 @@ public class ReportRenderer : IDisposable
                     {
                         if (!string.IsNullOrEmpty(row.Values[i]))
                         {
-                            canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + headerRowHeight * 0.65f, SKTextAlign.Right, sectionFont, sectionPaint);
+                            var cellClip = new SKRect(valX, currentY, valX + columnWidths[i + 1], currentY + headerRowHeight);
+                            DrawClippedText(canvas, row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + headerRowHeight * 0.65f, SKTextAlign.Right, sectionFont, sectionPaint, cellClip);
                         }
                         valX += columnWidths[i + 1];
                     }
@@ -3235,13 +3253,15 @@ public class ReportRenderer : IDisposable
 
                     using var dataPaint = new SKPaint { Color = ParseColor(element.DataRowTextColor), IsAntialias = true };
                     var indent = row.IndentLevel * indentWidth;
-                    canvas.DrawText(row.Label, contentLeft + cellPadding + indent, currentY + dataRowHeight * 0.7f, SKTextAlign.Left, dataFont, dataPaint);
+                    var labelClip = new SKRect(contentLeft, currentY, contentLeft + columnWidths[0], currentY + dataRowHeight);
+                    DrawClippedText(canvas, row.Label, contentLeft + cellPadding + indent, currentY + dataRowHeight * 0.7f, SKTextAlign.Left, dataFont, dataPaint, labelClip);
 
                     // Draw value columns (right-aligned)
                     var valX = contentLeft + columnWidths[0];
                     for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
                     {
-                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.7f, SKTextAlign.Right, dataFont, dataPaint);
+                        var cellClip = new SKRect(valX, currentY, valX + columnWidths[i + 1], currentY + dataRowHeight);
+                        DrawClippedText(canvas, row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.7f, SKTextAlign.Right, dataFont, dataPaint, cellClip);
                         valX += columnWidths[i + 1];
                     }
 
@@ -3275,7 +3295,8 @@ public class ReportRenderer : IDisposable
                     var valX = contentLeft + columnWidths[0];
                     for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
                     {
-                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.7f, SKTextAlign.Right, boldDataFont, subtotalPaint);
+                        var cellClip = new SKRect(valX, currentY, valX + columnWidths[i + 1], currentY + dataRowHeight);
+                        DrawClippedText(canvas, row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.7f, SKTextAlign.Right, boldDataFont, subtotalPaint, cellClip);
                         valX += columnWidths[i + 1];
                     }
 
@@ -3300,7 +3321,8 @@ public class ReportRenderer : IDisposable
                     var valX = contentLeft + columnWidths[0];
                     for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
                     {
-                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.75f, SKTextAlign.Right, boldDataFont, totalPaint);
+                        var cellClip = new SKRect(valX, currentY, valX + columnWidths[i + 1], currentY + dataRowHeight * 1.1f);
+                        DrawClippedText(canvas, row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + dataRowHeight * 0.75f, SKTextAlign.Right, boldDataFont, totalPaint, cellClip);
                         valX += columnWidths[i + 1];
                     }
 
@@ -3329,7 +3351,8 @@ public class ReportRenderer : IDisposable
                     var valX = contentLeft + columnWidths[0];
                     for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
                     {
-                        canvas.DrawText(row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + grandRowHeight * 0.65f, SKTextAlign.Right, grandTotalFont, grandPaint);
+                        var cellClip = new SKRect(valX, currentY, valX + columnWidths[i + 1], currentY + grandRowHeight);
+                        DrawClippedText(canvas, row.Values[i], valX + columnWidths[i + 1] - cellPadding, currentY + grandRowHeight * 0.65f, SKTextAlign.Right, grandTotalFont, grandPaint, cellClip);
                         valX += columnWidths[i + 1];
                     }
 
@@ -3643,6 +3666,19 @@ public class ReportRenderer : IDisposable
             canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, font, paint);
             prevLabelRightEdge = labelX + halfWidth;
         }
+    }
+
+    /// <summary>
+    /// Draws text clipped to the given rectangle so it cannot overflow into adjacent cells.
+    /// </summary>
+    private static void DrawClippedText(SKCanvas canvas, string text, float x, float y,
+        SKTextAlign align, SKFont font, SKPaint paint, SKRect clipRect)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        canvas.Save();
+        canvas.ClipRect(clipRect);
+        canvas.DrawText(text, x, y, align, font, paint);
+        canvas.Restore();
     }
 
     private static SKColor ParseColor(string colorString)

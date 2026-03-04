@@ -516,6 +516,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsSummarySelected));
         OnPropertyChanged(nameof(SelectedAccountingTableElement));
         OnPropertyChanged(nameof(IsAccountingTableSelected));
+        OnPropertyChanged(nameof(ShowSectionHeaderColors));
+        OnPropertyChanged(nameof(ShowTotalColors));
         OnPropertyChanged(nameof(IsDistributionChartSelected));
     }
 
@@ -572,6 +574,13 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             // Raise event to notify view to refresh element content
             ElementPropertyChanged?.Invoke(this, element);
+
+            // When the accounting table report type changes, update color property visibility
+            if (e.PropertyName == nameof(AccountingTableReportElement.ReportType))
+            {
+                OnPropertyChanged(nameof(ShowSectionHeaderColors));
+                OnPropertyChanged(nameof(ShowTotalColors));
+            }
         }
     }
 
@@ -597,6 +606,18 @@ public partial class ReportsPageViewModel : ViewModelBase
     public DateRangeReportElement SelectedDateRangeElement => (SelectedElement as DateRangeReportElement) ?? EmptyDateRange;
     public SummaryReportElement SelectedSummaryElement => (SelectedElement as SummaryReportElement) ?? EmptySummary;
     public AccountingTableReportElement SelectedAccountingTableElement => (SelectedElement as AccountingTableReportElement) ?? EmptyAccountingTable;
+
+    /// <summary>
+    /// Whether the selected accounting table's report type produces section header rows.
+    /// </summary>
+    public bool ShowSectionHeaderColors => SelectedAccountingTableElement.ReportType
+        is not AccountingReportType.AccountsReceivableAging;
+
+    /// <summary>
+    /// Whether the selected accounting table's report type produces total/grand total rows.
+    /// </summary>
+    public bool ShowTotalColors => SelectedAccountingTableElement.ReportType
+        is AccountingReportType.BalanceSheet or AccountingReportType.AccountsReceivableAging;
 
     /// <summary>
     /// Gets or sets the selected chart style as a ChartStyleOption for the ComboBox binding.

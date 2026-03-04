@@ -637,7 +637,7 @@ public class AccountingReportDataService
             Title = "General Ledger",
             Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = ["Date", "Description", "Ref", "Debit", "Credit", "Balance"],
-            ColumnWidthRatios = [0.12, 0.3, 0.1, 0.16, 0.16, 0.16]
+            ColumnWidthRatios = [0.12, 0.3, 0.14, 0.14, 0.14, 0.16]
         };
 
         if (_companyData == null)
