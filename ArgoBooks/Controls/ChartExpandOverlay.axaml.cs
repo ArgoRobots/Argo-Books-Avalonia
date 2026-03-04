@@ -33,6 +33,8 @@ public partial class ChartExpandOverlay : UserControl
     private Button? _expandButton;
     private readonly List<Control> _movedChildren = new();
     private ContentControl? _pageContentControl;
+    private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
+    private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, double origMaxHeight)> _originalLegendSizes = new();
 
     public ChartExpandOverlay()
     {
@@ -220,55 +222,20 @@ public partial class ChartExpandOverlay : UserControl
         if (sender is not Button button) return;
         if (button.Parent is not Panel sourcePanel) return;
 
-        var title = FindChartTitle(sourcePanel);
-        ShowChart(sourcePanel, button, title);
+        ShowChart(sourcePanel, button);
         e.Handled = true;
-    }
-
-    /// <summary>
-    /// Finds the title of a chart within a panel by examining its children.
-    /// </summary>
-    private static string FindChartTitle(Panel panel)
-    {
-        foreach (var child in panel.Children)
-        {
-            if (child is CartesianChart cc &&
-                cc.Title is LabelVisual cartLabel &&
-                !string.IsNullOrWhiteSpace(cartLabel.Text))
-            {
-                return cartLabel.Text;
-            }
-
-            if (child is Grid grid)
-            {
-                foreach (var gridChild in grid.Children)
-                {
-                    if (gridChild is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text))
-                        return tb.Text;
-                }
-            }
-
-            if (child is GeoMap)
-                return "World Map Overview";
-        }
-
-        return "Chart";
     }
 
     /// <summary>
     /// Shows the chart in the expanded overlay by reparenting its content.
     /// </summary>
-    private void ShowChart(Panel sourcePanel, Button expandButton, string title)
+    private void ShowChart(Panel sourcePanel, Button expandButton)
     {
         if (IsVisible) return;
 
         _sourcePanel = sourcePanel;
         _expandButton = expandButton;
         _movedChildren.Clear();
-
-        var titleText = this.FindControl<TextBlock>("TitleText");
-        if (titleText != null)
-            titleText.Text = title;
 
         var contentPanel = this.FindControl<Panel>("ContentPanel");
         if (contentPanel == null) return;
@@ -299,6 +266,9 @@ public partial class ChartExpandOverlay : UserControl
         // Hide the expand button while overlay is open
         expandButton.IsVisible = false;
 
+        // Enlarge chart titles and legends for the fullscreen view
+        EnlargeChartElements(contentPanel);
+
         IsVisible = true;
         Focus();
     }
@@ -317,6 +287,9 @@ public partial class ChartExpandOverlay : UserControl
         var chartArea = this.FindControl<Panel>("ChartArea");
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm && vm.IsChartContextMenuOpen)
             vm.HideChartContextMenuCommand.Execute(null);
+
+        // Restore original sizes before reparenting back
+        RestoreChartElements();
 
         var insertIndex = 0;
         foreach (var child in _movedChildren)
@@ -491,6 +464,89 @@ public partial class ChartExpandOverlay : UserControl
                 catch { /* best effort */ }
             }
         }
+    }
+
+    /// <summary>
+    /// Enlarges chart titles and pie chart legends for the fullscreen modal view.
+    /// </summary>
+    private void EnlargeChartElements(Panel contentPanel)
+    {
+        _originalTitleSizes.Clear();
+        _originalLegendSizes.Clear();
+
+        EnlargeChartElementsRecursive(contentPanel);
+    }
+
+    private void EnlargeChartElementsRecursive(Control control)
+    {
+        // Enlarge CartesianChart titles
+        if (control is CartesianChart cc && cc.Title is LabelVisual cartLabel)
+        {
+            _originalTitleSizes.Add((cartLabel, cartLabel.TextSize));
+            cartLabel.TextSize = 26;
+        }
+
+        // Enlarge PieChart titles
+        if (control is PieChart pc && pc.Title is LabelVisual pieLabel)
+        {
+            _originalTitleSizes.Add((pieLabel, pieLabel.TextSize));
+            pieLabel.TextSize = 26;
+        }
+
+        // Enlarge TextBlock titles (used by pie charts and other charts without LabelVisual)
+        if (control is TextBlock tb && tb.FontWeight == FontWeight.SemiBold && tb.FontSize < 20)
+        {
+            _originalTitleSizes.Add((tb, tb.FontSize));
+            tb.FontSize = 24;
+        }
+
+        // Enlarge PieChartLegend
+        if (control is PieChartLegend legend)
+        {
+            _originalLegendSizes.Add((legend, legend.LegendFontSize, legend.IndicatorSize, legend.MaxHeightOverride));
+            legend.LegendFontSize = 20;
+            legend.IndicatorSize = 18;
+            legend.MaxHeightOverride = 600;
+        }
+
+        // Recurse into children
+        if (control is Panel panel)
+        {
+            foreach (var child in panel.Children)
+                EnlargeChartElementsRecursive(child);
+        }
+        else if (control is ContentControl contentControl && contentControl.Content is Control content)
+        {
+            EnlargeChartElementsRecursive(content);
+        }
+        else if (control is Decorator decorator && decorator.Child != null)
+        {
+            EnlargeChartElementsRecursive(decorator.Child);
+        }
+    }
+
+    /// <summary>
+    /// Restores chart titles and legends to their original sizes.
+    /// </summary>
+    private void RestoreChartElements()
+    {
+        foreach (var (element, originalSize) in _originalTitleSizes)
+        {
+            if (element is LabelVisual label)
+                label.TextSize = originalSize;
+            else if (element is TextBlock tb)
+                tb.FontSize = originalSize;
+        }
+
+        foreach (var (legend, origFontSize, origIndicatorSize, origMaxHeight) in _originalLegendSizes)
+        {
+            legend.LegendFontSize = origFontSize;
+            legend.IndicatorSize = origIndicatorSize;
+            legend.MaxHeightOverride = origMaxHeight;
+        }
+
+        _originalTitleSizes.Clear();
+        _originalLegendSizes.Clear();
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e)
