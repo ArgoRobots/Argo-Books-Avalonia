@@ -623,6 +623,7 @@ public partial class InvoicePreviewControl : UserControl
                 html = html + interactionScript;
             }
 
+            if (_webView?.CoreWebView2 == null) return;
             _webView.CoreWebView2.NavigateToString(html);
         }
 #endif
