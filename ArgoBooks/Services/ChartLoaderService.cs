@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -191,9 +192,9 @@ public class ChartLoaderService
     private ChartExportData? PieChartExportData { get; set; }
 
     /// <summary>
-    /// Dictionary storing export data for each chart by its title.
+    /// Dictionary storing export data for each chart by its ChartDataType enum.
     /// </summary>
-    private readonly Dictionary<string, ChartExportData> _chartExportDataByTitle = new();
+    private readonly Dictionary<ChartDataType, ChartExportData> _chartExportDataByType = new();
 
     /// <summary>
     /// Gets or sets the chart style for rendering series.
@@ -577,7 +578,7 @@ public class ChartLoaderService
 
         if (dataPoints.Count == 0)
         {
-            StoreExportData(new ChartExportData
+            StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
             {
                 ChartTitle = "Expenses Overview",
                 ChartType = ChartType.Expense,
@@ -594,7 +595,7 @@ public class ChartLoaderService
 
         series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
 
-        StoreExportData(new ChartExportData
+        StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
             ChartTitle = "Expenses Overview",
             ChartType = ChartType.Expense,
@@ -625,7 +626,7 @@ public class ChartLoaderService
 
         if (dataPoints.Count == 0)
         {
-            StoreExportData(new ChartExportData
+            StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
             {
                 ChartTitle = "Revenue Overview",
                 ChartType = ChartType.Revenue,
@@ -642,7 +643,7 @@ public class ChartLoaderService
 
         series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
 
-        StoreExportData(new ChartExportData
+        StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
         {
             ChartTitle = "Revenue Overview",
             ChartType = ChartType.Revenue,
@@ -675,7 +676,7 @@ public class ChartLoaderService
 
         if (dataPoints.Count == 0)
         {
-            StoreExportData(new ChartExportData
+            StoreExportData(ChartDataType.TotalProfits, new ChartExportData
             {
                 ChartTitle = "Profits Overview",
                 ChartType = ChartType.Profit,
@@ -697,7 +698,7 @@ public class ChartLoaderService
             series.Add(s);
         }
 
-        StoreExportData(new ChartExportData
+        StoreExportData(ChartDataType.TotalProfits, new ChartExportData
         {
             ChartTitle = "Profits Overview",
             ChartType = ChartType.Profit,
@@ -728,7 +729,7 @@ public class ChartLoaderService
 
         if (seriesData.Count < 2)
         {
-            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
                 ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
@@ -744,7 +745,7 @@ public class ChartLoaderService
 
         if (revenueData == null || expenseData == null || revenueData.DataPoints.Count == 0)
         {
-            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
                 ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
@@ -767,7 +768,7 @@ public class ChartLoaderService
 
         if (indicesWithData.Count == 0)
         {
-            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
                 ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
@@ -791,7 +792,7 @@ public class ChartLoaderService
         }
 
         // Store export data for multi-series chart
-        _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
         {
             ChartTitle = "Expenses vs Revenue",
             ChartType = ChartType.Comparison,
@@ -830,7 +831,7 @@ public class ChartLoaderService
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount"        };
-        _chartExportDataByTitle["Revenue Distribution"] = exportData;
+        _chartExportDataByType[ChartDataType.RevenueDistribution] = exportData;
 
         return (series, legend);
     }
@@ -866,10 +867,8 @@ public class ChartLoaderService
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount"        };
 
-        // Also store by title for chart-specific retrieval (various UI titles)
-        _chartExportDataByTitle["Expense Distribution"] = PieChartExportData;
-        _chartExportDataByTitle["Purchase Distribution"] = PieChartExportData;
-        _chartExportDataByTitle["Distribution of expenses"] = PieChartExportData;
+        // Store by type for chart-specific retrieval
+        _chartExportDataByType[ChartDataType.ExpensesDistribution] = PieChartExportData;
 
         return (series, legend);
     }
@@ -910,7 +909,7 @@ public class ChartLoaderService
         }
 
         // Store export data
-        _chartExportDataByTitle["Customer Growth"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.CustomerGrowth] = new ChartExportData
         {
             ChartTitle = "Customer Growth",
             ChartType = ChartType.Comparison,
@@ -971,7 +970,7 @@ public class ChartLoaderService
 
         // Store export data
         var labels = revenueSeriesData.DataPoints.Select(p => p.Label).ToArray();
-        _chartExportDataByTitle["Average Transaction Value"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.AverageTransactionValue] = new ChartExportData
         {
             ChartTitle = "Average Transaction Value",
             ChartType = ChartType.Comparison,
@@ -1034,7 +1033,7 @@ public class ChartLoaderService
             .Zip(expenseSeriesData?.DataPoints ?? [], (r, e) => r.Value + e.Value)
             .ToArray();
 
-        _chartExportDataByTitle["Total Transactions"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.TotalTransactions] = new ChartExportData
         {
             ChartTitle = "Total Transactions",
             ChartType = ChartType.Comparison,
@@ -1079,7 +1078,7 @@ public class ChartLoaderService
         }
 
         // Store export data
-        _chartExportDataByTitle["Average Shipping Costs"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.AverageShippingCosts] = new ChartExportData
         {
             ChartTitle = "Average Shipping Costs",
             ChartType = ChartType.Comparison,
@@ -1110,7 +1109,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Countries of Origin"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.CountriesOfOrigin] = new ChartExportData
         {
             ChartTitle = "Countries of Origin",
             ChartType = ChartType.Distribution,
@@ -1142,7 +1141,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Countries of Destination"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.CountriesOfDestination] = new ChartExportData
         {
             ChartTitle = "Countries of Destination",
             ChartType = ChartType.Distribution,
@@ -1173,7 +1172,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Companies of Origin"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.CompaniesOfOrigin] = new ChartExportData
         {
             ChartTitle = "Companies of Origin",
             ChartType = ChartType.Distribution,
@@ -1204,7 +1203,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Companies of Destination"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.CompaniesOfDestination] = new ChartExportData
         {
             ChartTitle = "Companies of Destination",
             ChartType = ChartType.Distribution,
@@ -1242,8 +1241,7 @@ public class ChartLoaderService
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count"        };
-        _chartExportDataByTitle["Transactions by Accountant"] = exportData;
-        _chartExportDataByTitle["Workload Distribution"] = exportData;
+        _chartExportDataByType[ChartDataType.AccountantsTransactions] = exportData;
 
         return (series, legend);
     }
@@ -1268,7 +1266,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Customer Payment Status"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.CustomerPaymentStatus] = new ChartExportData
         {
             ChartTitle = "Customer Payment Status",
             ChartType = ChartType.Distribution,
@@ -1299,7 +1297,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Active vs Inactive Customers"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ActiveVsInactiveCustomers] = new ChartExportData
         {
             ChartTitle = "Active vs Inactive Customers",
             ChartType = ChartType.Distribution,
@@ -1331,7 +1329,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Loss Reasons"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.LossReasons] = new ChartExportData
         {
             ChartTitle = "Loss Reasons",
             ChartType = ChartType.Distribution,
@@ -1363,7 +1361,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Losses by Product"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.LossesByProduct] = new ChartExportData
         {
             ChartTitle = "Losses by Product",
             ChartType = ChartType.Distribution,
@@ -1403,7 +1401,7 @@ public class ChartLoaderService
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
         // Store export data
-        _chartExportDataByTitle["Returns Over Time"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ReturnsOverTime] = new ChartExportData
         {
             ChartTitle = "Returns Over Time",
             ChartType = ChartType.Expense,
@@ -1442,7 +1440,7 @@ public class ChartLoaderService
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count"        };
-        _chartExportDataByTitle["Return Reasons"] = exportData;
+        _chartExportDataByType[ChartDataType.ReturnReasons] = exportData;
 
         return (series, legend);
     }
@@ -1468,7 +1466,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Returns by Category"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ReturnsByCategory] = new ChartExportData
         {
             ChartTitle = "Returns by Category",
             ChartType = ChartType.Distribution,
@@ -1514,7 +1512,7 @@ public class ChartLoaderService
         }
 
         // Store export data
-        _chartExportDataByTitle["Financial Impact of Returns"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ReturnFinancialImpact] = new ChartExportData
         {
             ChartTitle = "Financial Impact of Returns",
             ChartType = ChartType.Expense,
@@ -1554,7 +1552,7 @@ public class ChartLoaderService
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
 
         // Store export data
-        _chartExportDataByTitle["Losses Over Time"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.LossesOverTime] = new ChartExportData
         {
             ChartTitle = "Losses Over Time",
             ChartType = ChartType.Expense,
@@ -1599,7 +1597,7 @@ public class ChartLoaderService
         }
 
         // Store export data
-        _chartExportDataByTitle["Financial Impact of Losses"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.LossFinancialImpact] = new ChartExportData
         {
             ChartTitle = "Financial Impact of Losses",
             ChartType = ChartType.Expense,
@@ -1631,7 +1629,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Returns by Product"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ReturnsByProduct] = new ChartExportData
         {
             ChartTitle = "Returns by Product",
             ChartType = ChartType.Distribution,
@@ -1664,7 +1662,7 @@ public class ChartLoaderService
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
-        _chartExportDataByTitle["Losses by Category"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.LossesByCategory] = new ChartExportData
         {
             ChartTitle = "Losses by Category",
             ChartType = ChartType.Distribution,
@@ -1696,7 +1694,7 @@ public class ChartLoaderService
 
         if (seriesData.Count == 0)
         {
-            _chartExportDataByTitle["Expense vs Revenue Returns"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
             {
                 ChartTitle = "Expense vs Revenue Returns",
                 ChartType = ChartType.Comparison,
@@ -1712,7 +1710,7 @@ public class ChartLoaderService
 
         if (revenueReturns == null || revenueReturns.DataPoints.Count == 0)
         {
-            _chartExportDataByTitle["Expense vs Revenue Returns"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
             {
                 ChartTitle = "Expense vs Revenue Returns",
                 ChartType = ChartType.Comparison,
@@ -1738,7 +1736,7 @@ public class ChartLoaderService
         }
 
         // Store export data
-        _chartExportDataByTitle["Expense vs Revenue Returns"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
         {
             ChartTitle = "Expense vs Revenue Returns",
             ChartType = ChartType.Comparison,
@@ -1771,7 +1769,7 @@ public class ChartLoaderService
 
         if (seriesData.Count == 0)
         {
-            _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
             {
                 ChartTitle = "Expense vs Revenue Losses",
                 ChartType = ChartType.Comparison,
@@ -1787,7 +1785,7 @@ public class ChartLoaderService
 
         if (expenseLosses == null || expenseLosses.DataPoints.Count == 0)
         {
-            _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
             {
                 ChartTitle = "Expense vs Revenue Losses",
                 ChartType = ChartType.Comparison,
@@ -1813,7 +1811,7 @@ public class ChartLoaderService
         }
 
         // Store export data
-        _chartExportDataByTitle["Expense vs Revenue Losses"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
         {
             ChartTitle = "Expense vs Revenue Losses",
             ChartType = ChartType.Comparison,
@@ -1844,7 +1842,7 @@ public class ChartLoaderService
 
         if (seriesData.Count == 0)
         {
-            _chartExportDataByTitle["Tax Collected vs Paid"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
             {
                 ChartTitle = "Tax Collected vs Paid",
                 ChartType = ChartType.Comparison,
@@ -1860,7 +1858,7 @@ public class ChartLoaderService
 
         if (taxCollected == null || taxCollected.DataPoints.Count == 0)
         {
-            _chartExportDataByTitle["Tax Collected vs Paid"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
             {
                 ChartTitle = "Tax Collected vs Paid",
                 ChartType = ChartType.Comparison,
@@ -1885,7 +1883,7 @@ public class ChartLoaderService
             }
         }
 
-        _chartExportDataByTitle["Tax Collected vs Paid"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
         {
             ChartTitle = "Tax Collected vs Paid",
             ChartType = ChartType.Comparison,
@@ -1923,7 +1921,7 @@ public class ChartLoaderService
 
         series.Add(CreateDateTimeSeries(dates, values, "Net Tax Liability", RevenueColor));
 
-        _chartExportDataByTitle["Net Tax Liability"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.TaxLiabilityTrend] = new ChartExportData
         {
             ChartTitle = "Net Tax Liability",
             ChartType = ChartType.Revenue,
@@ -1953,7 +1951,7 @@ public class ChartLoaderService
 
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
-        _chartExportDataByTitle["Tax by Category"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.TaxByCategory] = new ChartExportData
         {
             ChartTitle = "Tax by Category",
             ChartType = ChartType.Distribution,
@@ -1982,7 +1980,7 @@ public class ChartLoaderService
 
         if (labels.Length == 0)
         {
-            _chartExportDataByTitle["Tax Rate Distribution"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.TaxRateDistribution] = new ChartExportData
             {
                 ChartTitle = "Tax Rate Distribution",
                 ChartType = ChartType.Distribution,
@@ -2027,7 +2025,7 @@ public class ChartLoaderService
 
         var yAxes = CreateNumberYAxes();
 
-        _chartExportDataByTitle["Tax Rate Distribution"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.TaxRateDistribution] = new ChartExportData
         {
             ChartTitle = "Tax Rate Distribution",
             ChartType = ChartType.Comparison,
@@ -2058,7 +2056,7 @@ public class ChartLoaderService
 
         var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
-        _chartExportDataByTitle["Tax by Product"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.TaxByProduct] = new ChartExportData
         {
             ChartTitle = "Tax by Product",
             ChartType = ChartType.Distribution,
@@ -2088,7 +2086,7 @@ public class ChartLoaderService
 
         if (seriesData.Count == 0)
         {
-            _chartExportDataByTitle["Expense vs Revenue Tax"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
             {
                 ChartTitle = "Expense vs Revenue Tax",
                 ChartType = ChartType.Comparison,
@@ -2104,7 +2102,7 @@ public class ChartLoaderService
 
         if (revenueTax == null || revenueTax.DataPoints.Count == 0)
         {
-            _chartExportDataByTitle["Expense vs Revenue Tax"] = new ChartExportData
+            _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
             {
                 ChartTitle = "Expense vs Revenue Tax",
                 ChartType = ChartType.Comparison,
@@ -2129,7 +2127,7 @@ public class ChartLoaderService
             }
         }
 
-        _chartExportDataByTitle["Expense vs Revenue Tax"] = new ChartExportData
+        _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
         {
             ChartTitle = "Expense vs Revenue Tax",
             ChartType = ChartType.Comparison,
@@ -2187,127 +2185,39 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Stores export data for a chart, making it available for later retrieval by title.
-    /// Also stores aliases for titles that differ between ChartLoaderService and UI.
+    /// Stores export data for a chart, making it available for later retrieval by ChartDataType.
     /// </summary>
-    private void StoreExportData(ChartExportData data)
+    private void StoreExportData(ChartDataType chartDataType, ChartExportData data)
     {
         CurrentExportData = data;
-        if (!string.IsNullOrEmpty(data.ChartTitle))
-        {
-            _chartExportDataByTitle[data.ChartTitle] = data;
-
-            // Store aliases for UI titles that differ from internal titles
-            string[] aliases = data.ChartTitle switch
-            {
-                "Expenses Overview" => ["Purchase Trends", "Total Expenses", "Expense Trends"],
-                "Revenue Overview" => ["Sales Trends", "Total Revenue", "Revenue Trends"],
-                "Profits Overview" => ["Profit Over Time", "Profits over Time"],
-                "Total Transactions" => ["Total Transactions Over Time"],
-                _ => []
-            };
-
-            foreach (var alias in aliases)
-            {
-                _chartExportDataByTitle[alias] = data;
-            }
-        }
+        _chartExportDataByType[chartDataType] = data;
     }
 
     /// <summary>
-    /// Gets the export data for a specific chart by its identifier or title.
+    /// Gets the export data for a specific chart by its ChartDataType.
     /// </summary>
-    /// <param name="chartId">The identifier or title of the chart.</param>
+    /// <param name="chartDataType">The ChartDataType of the chart.</param>
     /// <returns>The chart export data, or null if not found.</returns>
-    public ChartExportData? GetExportDataForChart(string chartId)
+    public ChartExportData? GetExportDataForChart(ChartDataType? chartDataType)
     {
-        if (string.IsNullOrEmpty(chartId))
-            return null;
+        if (chartDataType is not { } type)
+            return CurrentExportData;
 
-        // First try to find by exact title match in the dictionary
-        if (_chartExportDataByTitle.TryGetValue(chartId, out var data))
-        {
+        if (_chartExportDataByType.TryGetValue(type, out var data))
             return data;
-        }
 
-        // Handle dynamic titles with patterns (e.g., "Total expenses: $171.00", "Total profits: $5,206.01")
-        if (chartId.StartsWith("Total expenses:", StringComparison.OrdinalIgnoreCase))
-        {
-            return _chartExportDataByTitle.GetValueOrDefault("Expenses Overview") ?? CurrentExportData;
-        }
-
-        if (chartId.StartsWith("Total profits:", StringComparison.OrdinalIgnoreCase))
-        {
-            return _chartExportDataByTitle.GetValueOrDefault("Profits Overview") ?? CurrentExportData;
-        }
-
-        if (chartId.StartsWith("Total revenue:", StringComparison.OrdinalIgnoreCase))
-        {
-            return _chartExportDataByTitle.GetValueOrDefault("Revenue Overview") ?? CurrentExportData;
-        }
-
-        if (chartId.StartsWith("Distribution of expenses", StringComparison.OrdinalIgnoreCase))
-        {
-            return PieChartExportData;
-        }
-
-        // Map UI chart titles to their corresponding export data
-        // Many charts share the same underlying data series
-        var mappedTitle = chartId switch
-        {
-            // Analytics page Dashboard tab
-            "Revenue Trends" => "Revenue Overview",
-            "Expense Trends" => "Expenses Overview",
-            "Profit Over Time" => "Profits Overview",
-
-            // Performance tab charts that share data with other charts
-            "Processing Time Trends" => "Average Transaction Value",
-            "Workload Distribution" => "Total Transactions",
-            "Total Transactions Over Time" => "Total Transactions",
-
-            // Customers tab charts that share data with other charts
-            "Top Customers by Revenue" => "Companies of Destination",
-            "Customer Lifetime Value" => "Average Transaction Value",
-            "Rentals per Customer" => "Total Transactions",
-
-            // Returns tab charts that share data with other charts
-            "Returns by Category" => "Return Reasons",
-            "Returns by Product" => "Expense Distribution",
-            "Expense vs Revenue Returns" => "Expenses vs Revenue",
-
-            // Losses tab charts that share data with other charts
-            "Losses by Category" => "Loss Reasons",
-            "Expense vs Revenue Losses" => "Expenses vs Revenue",
-
-            // Dashboard dynamic titles
-            "Total profits" => "Profits Overview",
-
-            _ => null
-        };
-
-        if (mappedTitle != null && _chartExportDataByTitle.TryGetValue(mappedTitle, out var mappedData))
-        {
-            return mappedData;
-        }
-
-        // Return PieChartExportData for distribution-related charts not found above
-        if (chartId.Contains("Distribution", StringComparison.OrdinalIgnoreCase))
-        {
-            return PieChartExportData;
-        }
-
-        return null;
+        return CurrentExportData;
     }
 
     /// <summary>
     /// Gets the data for exporting to Google Sheets.
     /// Does not include total row as it would appear as a category in the chart.
     /// </summary>
-    /// <param name="chartId">The identifier of the chart to export. If empty, defaults to CurrentExportData.</param>
+    /// <param name="chartDataType">The ChartDataType of the chart to export.</param>
     /// <returns>Export data formatted for Google Sheets.</returns>
-    public List<List<object>> GetGoogleSheetsExportData(string chartId = "")
+    public List<List<object>> GetGoogleSheetsExportData(ChartDataType? chartDataType = null)
     {
-        var exportData = GetExportDataForChart(chartId);
+        var exportData = GetExportDataForChart(chartDataType);
 
         if (exportData == null)
             return [];

@@ -1297,8 +1297,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var selectedChartTitle = SelectedChartDataType?.GetDisplayName() ?? "";
-        var exportData = _chartLoaderService.GetGoogleSheetsExportData(selectedChartTitle);
+        var exportData = _chartLoaderService.GetGoogleSheetsExportData(SelectedChartDataType);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -1329,8 +1328,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         try
         {
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartExportData = _chartLoaderService.GetExportDataForChart(selectedChartTitle);
-            var chartTitle = !string.IsNullOrEmpty(selectedChartTitle) ? selectedChartTitle : (chartExportData?.ChartTitle ?? "Chart");
+            var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartDataType);
+            var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";
 
             // Use Pie chart type for distribution charts, match chart style for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
@@ -1423,19 +1422,19 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var selectedChartTitle = SelectedChartDataType?.GetDisplayName() ?? "";
-        var exportData = _chartLoaderService.GetExportDataForChart(selectedChartTitle);
+        var exportData = _chartLoaderService.GetExportDataForChart(SelectedChartDataType);
         if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
             return;
         }
 
+        var chartTitle = SelectedChartDataType?.GetDisplayName() ?? exportData.ChartTitle;
+
         // Raise event for View to handle file save dialog
         ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
         {
-            ChartId = selectedChartTitle,
-            ChartTitle = !string.IsNullOrEmpty(selectedChartTitle) ? selectedChartTitle : exportData.ChartTitle,
+            ChartTitle = chartTitle,
             Labels = exportData.Labels,
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,

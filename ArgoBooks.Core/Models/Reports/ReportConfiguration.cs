@@ -610,20 +610,7 @@ public static class DatePresetNames
     /// <summary>
     /// Standard date range options for UI dropdowns.
     /// </summary>
-    public static readonly string[] StandardDateRangeOptions =
-    [
-        "This Month",
-        "Last Month",
-        "Last 30 Days",
-        "Last 100 Days",
-        "Last 365 Days",
-        "This Quarter",
-        "Last Quarter",
-        "This Year",
-        "Last Year",
-        "All Time",
-        "Custom Range"
-    ];
+    public static readonly string[] StandardDateRangeOptions = DateRangePresetExtensions.GetStandardOptions();
 
     /// <summary>
     /// Future date range options for insights/forecasting UI dropdowns.
