@@ -98,8 +98,8 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="*,60,90,Auto">
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
+                                    <Grid ColumnDefinitions="*,60,90,40">
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,4,0">
                                             <TextBlock Text="{loc:Loc 'Rental Item'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text=" *" FontSize="12" FontWeight="Medium"
@@ -107,13 +107,11 @@
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,0,8,0" />
+                                                   HorizontalAlignment="Left" />
                                         <TextBlock Grid.Column="2" Text="{loc:Loc 'Amount'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Right"
                                                    Margin="0,0,12,0" />
-                                        <TextBlock Grid.Column="3" Width="32" />
                                     </Grid>
                                 </Border>
 
@@ -125,9 +123,9 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <StackPanel Spacing="4">
-                                                    <Grid ColumnDefinitions="*,60,90,Auto">
+                                                    <Grid ColumnDefinitions="*,60,90,40">
                                                         <controls:SearchableDropdown Grid.Column="0"
-                                                                 Margin="0,0,4,0"
+                                                                 Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
                                                                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                                                                  DisplayMemberPath="Name"
@@ -141,11 +139,12 @@
                                                         <TextBox Grid.Column="1"
                                                                  Text="{Binding Quantity, Mode=TwoWay}"
                                                                  Watermark="1"
-                                                                 Classes="form-input"
+                                                                 Classes="form-input-compact"
                                                                  behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                                                  MaxLength="5"
+                                                                 HorizontalContentAlignment="Center"
                                                                  HorizontalAlignment="Stretch"
-                                                                 VerticalAlignment="Top"
+                                                                 VerticalAlignment="Stretch"
                                                                  Margin="0,0,4,0" />
                                                         <TextBlock Grid.Column="2"
                                                                    Text="{Binding AmountFormatted}"
@@ -157,8 +156,8 @@
                                                                    Margin="0,0,12,0" />
                                                         <Button Grid.Column="3"
                                                                 Classes="icon-button danger"
-                                                                VerticalAlignment="Top"
-                                                                Margin="8,0,0,0"
+                                                                VerticalAlignment="Center"
+                                                                HorizontalAlignment="Center"
                                                                 IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsGreaterThanOne}}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
                                                                 CommandParameter="{Binding}"
@@ -314,8 +313,8 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="*,60,90,Auto">
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
+                                    <Grid ColumnDefinitions="*,60,90,40">
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,4,0">
                                             <TextBlock Text="{loc:Loc 'Rental Item'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text=" *" FontSize="12" FontWeight="Medium"
@@ -323,13 +322,11 @@
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,0,8,0" />
+                                                   HorizontalAlignment="Left" />
                                         <TextBlock Grid.Column="2" Text="{loc:Loc 'Amount'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Right"
                                                    Margin="0,0,12,0" />
-                                        <TextBlock Grid.Column="3" Width="32" />
                                     </Grid>
                                 </Border>
 
@@ -341,9 +338,9 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <StackPanel Spacing="4">
-                                                    <Grid ColumnDefinitions="*,60,90,Auto">
+                                                    <Grid ColumnDefinitions="*,60,90,40">
                                                         <controls:SearchableDropdown Grid.Column="0"
-                                                                 Margin="0,0,4,0"
+                                                                 Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
                                                                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                                                                  DisplayMemberPath="Name"
@@ -357,11 +354,12 @@
                                                         <TextBox Grid.Column="1"
                                                                  Text="{Binding Quantity, Mode=TwoWay}"
                                                                  Watermark="1"
-                                                                 Classes="form-input"
+                                                                 Classes="form-input-compact"
                                                                  behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                                                  MaxLength="5"
+                                                                 HorizontalContentAlignment="Center"
                                                                  HorizontalAlignment="Stretch"
-                                                                 VerticalAlignment="Top"
+                                                                 VerticalAlignment="Stretch"
                                                                  Margin="0,0,4,0" />
                                                         <TextBlock Grid.Column="2"
                                                                    Text="{Binding AmountFormatted}"
@@ -373,8 +371,8 @@
                                                                    Margin="0,0,12,0" />
                                                         <Button Grid.Column="3"
                                                                 Classes="icon-button danger"
-                                                                VerticalAlignment="Top"
-                                                                Margin="8,0,0,0"
+                                                                VerticalAlignment="Center"
+                                                                HorizontalAlignment="Center"
                                                                 IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RentalLineItems.Count, Converter={x:Static conv:IntConverters.IsGreaterThanOne}}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).RemoveRentalLineItemCommand}"
                                                                 CommandParameter="{Binding}"

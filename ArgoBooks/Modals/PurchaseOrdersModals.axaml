@@ -104,7 +104,7 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="2*,80,90,100,Auto">
+                                    <Grid ColumnDefinitions="2*,80,90,100,40">
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
                                             <TextBlock Text="{loc:Loc 'Product'}" FontSize="12" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -113,17 +113,14 @@
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,0,8,0" />
+                                                   HorizontalAlignment="Left" />
                                         <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Cost'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,0,8,0" />
+                                                   HorizontalAlignment="Left" />
                                         <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Right"
                                                    Margin="0,0,12,0" />
-                                        <TextBlock Grid.Column="4" Width="32" />
                                     </Grid>
                                 </Border>
 
@@ -134,7 +131,7 @@
                                             <Border Padding="12,8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="2*,80,90,100,Auto">
+                                                <Grid ColumnDefinitions="2*,80,90,100,40">
                                                     <controls:SearchableDropdown Grid.Column="0"
                                                              Margin="0,0,8,0"
                                                              ItemsSource="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).AvailableProducts}"
@@ -166,13 +163,13 @@
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Top"
+                                                               VerticalAlignment="Center"
                                                                HorizontalAlignment="Right"
-                                                               Margin="0,10,12,0" />
+                                                               Margin="0,0,12,0" />
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
-                                                            VerticalAlignment="Top"
-                                                            Margin="8,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            HorizontalAlignment="Center"
                                                             IsVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"

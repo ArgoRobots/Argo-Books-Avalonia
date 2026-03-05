@@ -250,7 +250,9 @@ public static class TemplateLayoutHelper
     /// <returns>A rectangle representing the date range element bounds.</returns>
     public static LayoutRect GetDateRangeBounds(LayoutContext context)
     {
-        return new LayoutRect(context.Margin, context.DateRangeTop, context.ContentWidth, context.DateRangeHeight);
+        const double dateRangeWidth = 200;
+        var centeredX = context.Margin + (context.ContentWidth - dateRangeWidth) / 2;
+        return new LayoutRect(centeredX, context.DateRangeTop, dateRangeWidth, context.DateRangeHeight);
     }
 
     /// <summary>

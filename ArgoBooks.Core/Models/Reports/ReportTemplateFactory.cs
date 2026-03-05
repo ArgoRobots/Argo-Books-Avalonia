@@ -825,9 +825,8 @@ public static class ReportTemplateFactory
             var dateRangeBounds = GetDateRangeBounds(context);
             config.AddElement(new DateRangeReportElement
             {
-                X = dateRangeBounds.X,
+                X = context.Margin + (context.ContentWidth - 200) / 2,
                 Y = dateRangeBounds.Y,
-                Width = dateRangeBounds.Width,
                 Height = dateRangeBounds.Height,
                 IsAsOfDate = reportType == AccountingReportType.BalanceSheet
             });

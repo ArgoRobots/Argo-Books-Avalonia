@@ -2096,9 +2096,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         RecordPageSettingsChange(before, CapturePageSettingsSnapshot());
     }
 
-    partial void OnBackgroundColorChanged(string oldValue, string newValue)
+    partial void OnBackgroundColorChanged(string? oldValue, string newValue)
     {
-        var before = CapturePageSettingsSnapshot() with { BackgroundColor = oldValue };
+        var before = CapturePageSettingsSnapshot() with { BackgroundColor = oldValue! };
         Configuration.BackgroundColor = newValue;
         PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         RecordPageSettingsChange(before, CapturePageSettingsSnapshot());
@@ -2112,9 +2112,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         RecordPageSettingsChange(before, CapturePageSettingsSnapshot());
     }
 
-    partial void OnPageSettingsDatePresetChanged(string oldValue, string newValue)
+    partial void OnPageSettingsDatePresetChanged(string? oldValue, string newValue)
     {
-        var before = CapturePageSettingsSnapshot() with { DatePreset = oldValue };
+        var before = CapturePageSettingsSnapshot() with { DatePreset = oldValue! };
         Configuration.Filters.DatePresetName = newValue;
 
         // Sync the step-1 SelectedDatePreset so everything stays consistent

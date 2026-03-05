@@ -19,6 +19,7 @@
         <converters:DisplayMemberMultiConverter x:Key="DisplayMemberMultiConverter" />
     </UserControl.Resources>
 
+    <Panel>
     <StackPanel Spacing="4">
         <!-- Label -->
         <StackPanel Orientation="Horizontal" Spacing="4"
@@ -107,158 +108,6 @@
             </Grid>
         </Border>
 
-        <!-- Dropdown Popup -->
-        <Popup x:Name="DropdownPopup"
-               IsOpen="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Mode=TwoWay}"
-               PlacementTarget="{Binding #DropdownBorder}"
-               Placement="Bottom"
-               PlacementGravity="BottomLeft"
-               IsLightDismissEnabled="True"
-               WindowManagerAddShadowHint="True">
-
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusMd}"
-                    MinWidth="{Binding #DropdownBorder.Bounds.Width}"
-                    MaxHeight="300"
-                    Margin="0,4,0,0"
-                    BoxShadow="0 4 12 0 #20000000">
-
-                <DockPanel>
-                    <!-- Add New Button - use $parent syntax to traverse across Popup boundary -->
-                    <Button DockPanel.Dock="Bottom"
-                            Classes="ghost"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            Padding="12,10"
-                            IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}"
-                            Command="{Binding $parent[controls:SearchableDropdown].AddNewCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <PathIcon Data="{x:Static local:Icons.Add}"
-                                      Width="16" Height="16"
-                                      Foreground="{DynamicResource PrimaryBrush}" />
-                            <TextBlock Text="{Binding $parent[controls:SearchableDropdown].AddNewText}"
-                                       Foreground="{DynamicResource PrimaryBrush}"
-                                       FontWeight="Medium" />
-                        </StackPanel>
-                    </Button>
-
-                    <!-- Separator when Add New is visible -->
-                    <Border DockPanel.Dock="Bottom"
-                            Height="1"
-                            Background="{DynamicResource BorderLightBrush}"
-                            IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}" />
-
-                    <!-- Items List -->
-                    <ScrollViewer x:Name="ItemsScrollViewer"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <!-- No Results Message -->
-                            <TextBlock Text="{loc:Loc 'No results found'}"
-                                       FontSize="{StaticResource FontSizeSm}"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       Padding="12,16"
-                                       HorizontalAlignment="Center"
-                                       IsVisible="{Binding !$parent[controls:SearchableDropdown].HasAnyFilteredItems}" />
-
-                            <!-- Priority Items -->
-                            <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredPriorityItems}"
-                                          IsVisible="{Binding $parent[controls:SearchableDropdown].HasFilteredPriorityItems}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Classes="ghost"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left"
-                                                Padding="12,10"
-                                                Tag="{Binding}"
-                                                Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
-                                                CommandParameter="{Binding}">
-                                            <Button.Background>
-                                                <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
-                                                    <Binding Path="." />
-                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
-                                                </MultiBinding>
-                                            </Button.Background>
-                                            <Button.BorderBrush>
-                                                <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
-                                                    <Binding Path="." />
-                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
-                                                </MultiBinding>
-                                            </Button.BorderBrush>
-                                            <Button.BorderThickness>
-                                                <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
-                                                    <Binding Path="." />
-                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
-                                                </MultiBinding>
-                                            </Button.BorderThickness>
-                                            <TextBlock>
-                                                <TextBlock.Text>
-                                                    <MultiBinding Converter="{StaticResource DisplayMemberMultiConverter}">
-                                                        <Binding Path="." />
-                                                        <Binding Path="$parent[controls:SearchableDropdown].DisplayMemberPath" />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                            </TextBlock>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- Separator between priority and regular items -->
-                            <Border Height="1"
-                                    Background="{DynamicResource BorderLightBrush}"
-                                    Margin="12,4"
-                                    IsVisible="{Binding $parent[controls:SearchableDropdown].ShowPrioritySeparator}" />
-
-                            <!-- Filtered Items -->
-                            <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredItems}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Classes="ghost"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Left"
-                                                Padding="12,10"
-                                                Tag="{Binding}"
-                                                Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
-                                                CommandParameter="{Binding}">
-                                            <Button.Background>
-                                                <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
-                                                    <Binding Path="." />
-                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
-                                                </MultiBinding>
-                                            </Button.Background>
-                                            <Button.BorderBrush>
-                                                <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
-                                                    <Binding Path="." />
-                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
-                                                </MultiBinding>
-                                            </Button.BorderBrush>
-                                            <Button.BorderThickness>
-                                                <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
-                                                    <Binding Path="." />
-                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
-                                                </MultiBinding>
-                                            </Button.BorderThickness>
-                                            <TextBlock>
-                                                <TextBlock.Text>
-                                                    <MultiBinding Converter="{StaticResource DisplayMemberMultiConverter}">
-                                                        <Binding Path="." />
-                                                        <Binding Path="$parent[controls:SearchableDropdown].DisplayMemberPath" />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                            </TextBlock>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ScrollViewer>
-                </DockPanel>
-            </Border>
-        </Popup>
-
         <!-- Helper Text / Error Message -->
         <TextBlock FontSize="12"
                    Margin="0,2,0,0"
@@ -272,5 +121,158 @@
                    Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                    IsVisible="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
     </StackPanel>
+
+    <!-- Dropdown Popup (outside StackPanel to avoid phantom spacing) -->
+    <Popup x:Name="DropdownPopup"
+           IsOpen="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Mode=TwoWay}"
+           PlacementTarget="{Binding #DropdownBorder}"
+           Placement="Bottom"
+           PlacementGravity="BottomLeft"
+           IsLightDismissEnabled="True"
+           WindowManagerAddShadowHint="True">
+
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusMd}"
+                MinWidth="{Binding #DropdownBorder.Bounds.Width}"
+                MaxHeight="300"
+                Margin="0,4,0,0"
+                BoxShadow="0 4 12 0 #20000000">
+
+            <DockPanel>
+                <!-- Add New Button - use $parent syntax to traverse across Popup boundary -->
+                <Button DockPanel.Dock="Bottom"
+                        Classes="ghost"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="12,10"
+                        IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}"
+                        Command="{Binding $parent[controls:SearchableDropdown].AddNewCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{x:Static local:Icons.Add}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource PrimaryBrush}" />
+                        <TextBlock Text="{Binding $parent[controls:SearchableDropdown].AddNewText}"
+                                   Foreground="{DynamicResource PrimaryBrush}"
+                                   FontWeight="Medium" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Separator when Add New is visible -->
+                <Border DockPanel.Dock="Bottom"
+                        Height="1"
+                        Background="{DynamicResource BorderLightBrush}"
+                        IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}" />
+
+                <!-- Items List -->
+                <ScrollViewer x:Name="ItemsScrollViewer"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- No Results Message -->
+                        <TextBlock Text="{loc:Loc 'No results found'}"
+                                   FontSize="{StaticResource FontSizeSm}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   Padding="12,16"
+                                   HorizontalAlignment="Center"
+                                   IsVisible="{Binding !$parent[controls:SearchableDropdown].HasAnyFilteredItems}" />
+
+                        <!-- Priority Items -->
+                        <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredPriorityItems}"
+                                      IsVisible="{Binding $parent[controls:SearchableDropdown].HasFilteredPriorityItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Classes="ghost"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="12,10"
+                                            Tag="{Binding}"
+                                            Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Background>
+                                            <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                            </MultiBinding>
+                                        </Button.Background>
+                                        <Button.BorderBrush>
+                                            <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                            </MultiBinding>
+                                        </Button.BorderBrush>
+                                        <Button.BorderThickness>
+                                            <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                            </MultiBinding>
+                                        </Button.BorderThickness>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource DisplayMemberMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].DisplayMemberPath" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Separator between priority and regular items -->
+                        <Border Height="1"
+                                Background="{DynamicResource BorderLightBrush}"
+                                Margin="12,4"
+                                IsVisible="{Binding $parent[controls:SearchableDropdown].ShowPrioritySeparator}" />
+
+                        <!-- Filtered Items -->
+                        <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Classes="ghost"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="12,10"
+                                            Tag="{Binding}"
+                                            Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Background>
+                                            <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                            </MultiBinding>
+                                        </Button.Background>
+                                        <Button.BorderBrush>
+                                            <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                            </MultiBinding>
+                                        </Button.BorderBrush>
+                                        <Button.BorderThickness>
+                                            <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                            </MultiBinding>
+                                        </Button.BorderThickness>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource DisplayMemberMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].DisplayMemberPath" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Popup>
+    </Panel>
 
 </UserControl>
