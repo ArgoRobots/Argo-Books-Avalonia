@@ -100,7 +100,7 @@
                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                    Margin="0,12,0,4" />
 
-                        <!-- Excel -->
+                        <!-- Spreadsheet (Excel / CSV) -->
                         <Button Classes="import-option"
                                 Command="{Binding SelectFormatCommand}"
                                 CommandParameter="Excel">
@@ -115,11 +115,11 @@
                                               Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="{loc:Loc 'Excel (XLSX)'}"
+                                    <TextBlock Text="{loc:Loc 'Excel or CSV'}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Import data from Microsoft Excel workbooks'}"
+                                    <TextBlock Text="{loc:Loc 'Import data from Excel workbooks or CSV files'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
@@ -128,39 +128,6 @@
                                           Width="16" Height="16"
                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                           VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <!-- Other Software -->
-                        <TextBlock Text="{loc:Loc 'Other Software'}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Margin="0,12,0,4" />
-
-                        <!-- QuickBooks -->
-                        <Button Classes="import-option"
-                                IsEnabled="False">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource PrimaryIconBgBrush}"
-                                        Opacity="0.5"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="{x:Static local:Icons.CircleCheck}"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="{loc:Loc 'QuickBooks (IIF)'}"
-                                               FontSize="14"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Coming Soon'}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
                             </Grid>
                         </Button>
                     </StackPanel>
