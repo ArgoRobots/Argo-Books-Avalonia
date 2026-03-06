@@ -2890,6 +2890,10 @@ public class App : Application
                     importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
                 }
 
+                // Yield to let any pending Progress<T> callbacks (dispatched via
+                // SynchronizationContext.Post) execute before hiding the loading
+                // overlay, otherwise the last callback can re-show it after HideLoading.
+                await Task.Yield();
                 _mainWindowViewModel?.HideLoading();
             }
 
