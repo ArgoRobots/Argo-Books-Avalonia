@@ -1988,7 +1988,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Revenue"
             };
-            return (series, [], []);
+            return (series, CreateXAxes(), CreateNumberYAxes());
         }
 
         var revenueValues = revenueRates.Select(p => p.Value).ToArray();
