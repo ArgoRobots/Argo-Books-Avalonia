@@ -632,10 +632,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _expensesTrendsSeries = [];
 
     [ObservableProperty]
-    private Axis[] _expensesTrendsXAxes = [];
+    private Axis[] _expensesTrendsXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _expensesTrendsYAxes = [];
+    private Axis[] _expensesTrendsYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasExpensesTrendsData;
@@ -657,10 +657,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _revenueTrendsSeries = [];
 
     [ObservableProperty]
-    private Axis[] _revenueTrendsXAxes = [];
+    private Axis[] _revenueTrendsXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _revenueTrendsYAxes = [];
+    private Axis[] _revenueTrendsYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasRevenueTrendsData;
@@ -682,10 +682,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _profitTrendsSeries = [];
 
     [ObservableProperty]
-    private Axis[] _profitTrendsXAxes = [];
+    private Axis[] _profitTrendsXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _profitTrendsYAxes = [];
+    private Axis[] _profitTrendsYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasProfitTrendsData;
@@ -694,10 +694,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _revenueVsExpensesSeries = [];
 
     [ObservableProperty]
-    private Axis[] _revenueVsExpensesXAxes = [];
+    private Axis[] _revenueVsExpensesXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _revenueVsExpensesYAxes = [];
+    private Axis[] _revenueVsExpensesYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasRevenueVsExpensesData;
@@ -762,10 +762,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _avgTransactionValueSeries = [];
 
     [ObservableProperty]
-    private Axis[] _avgTransactionValueXAxes = [];
+    private Axis[] _avgTransactionValueXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _avgTransactionValueYAxes = [];
+    private Axis[] _avgTransactionValueYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasAvgTransactionValueData;
@@ -774,10 +774,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _totalTransactionsSeries = [];
 
     [ObservableProperty]
-    private Axis[] _totalTransactionsXAxes = [];
+    private Axis[] _totalTransactionsXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _totalTransactionsYAxes = [];
+    private Axis[] _totalTransactionsYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasTotalTransactionsData;
@@ -786,10 +786,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _avgShippingCostsSeries = [];
 
     [ObservableProperty]
-    private Axis[] _avgShippingCostsXAxes = [];
+    private Axis[] _avgShippingCostsXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _avgShippingCostsYAxes = [];
+    private Axis[] _avgShippingCostsYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasAvgShippingCostsData;
@@ -811,10 +811,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _customerGrowthSeries = [];
 
     [ObservableProperty]
-    private Axis[] _customerGrowthXAxes = [];
+    private Axis[] _customerGrowthXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _customerGrowthYAxes = [];
+    private Axis[] _customerGrowthYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasCustomerGrowthData;
@@ -827,10 +827,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _returnsOverTimeSeries = [];
 
     [ObservableProperty]
-    private Axis[] _returnsOverTimeXAxes = [];
+    private Axis[] _returnsOverTimeXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _returnsOverTimeYAxes = [];
+    private Axis[] _returnsOverTimeYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasReturnsOverTimeData;
@@ -857,10 +857,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _returnFinancialImpactSeries = [];
 
     [ObservableProperty]
-    private Axis[] _returnFinancialImpactXAxes = [];
+    private Axis[] _returnFinancialImpactXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _returnFinancialImpactYAxes = [];
+    private Axis[] _returnFinancialImpactYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasReturnFinancialImpactData;
@@ -878,10 +878,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _expenseVsRevenueReturnsSeries = [];
 
     [ObservableProperty]
-    private Axis[] _expenseVsRevenueReturnsXAxes = [];
+    private Axis[] _expenseVsRevenueReturnsXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _expenseVsRevenueReturnsYAxes = [];
+    private Axis[] _expenseVsRevenueReturnsYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasExpenseVsRevenueReturnsData;
@@ -916,10 +916,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _lossesOverTimeSeries = [];
 
     [ObservableProperty]
-    private Axis[] _lossesOverTimeXAxes = [];
+    private Axis[] _lossesOverTimeXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _lossesOverTimeYAxes = [];
+    private Axis[] _lossesOverTimeYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasLossesOverTimeData;
@@ -928,10 +928,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _lossFinancialImpactSeries = [];
 
     [ObservableProperty]
-    private Axis[] _lossFinancialImpactXAxes = [];
+    private Axis[] _lossFinancialImpactXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _lossFinancialImpactYAxes = [];
+    private Axis[] _lossFinancialImpactYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasLossFinancialImpactData;
@@ -967,10 +967,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _expenseVsRevenueLossesSeries = [];
 
     [ObservableProperty]
-    private Axis[] _expenseVsRevenueLossesXAxes = [];
+    private Axis[] _expenseVsRevenueLossesXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _expenseVsRevenueLossesYAxes = [];
+    private Axis[] _expenseVsRevenueLossesYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasExpenseVsRevenueLossesData;
@@ -983,10 +983,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _taxCollectedVsPaidSeries = [];
 
     [ObservableProperty]
-    private Axis[] _taxCollectedVsPaidXAxes = [];
+    private Axis[] _taxCollectedVsPaidXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _taxCollectedVsPaidYAxes = [];
+    private Axis[] _taxCollectedVsPaidYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasTaxCollectedVsPaidData;
@@ -995,10 +995,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _taxLiabilityTrendSeries = [];
 
     [ObservableProperty]
-    private Axis[] _taxLiabilityTrendXAxes = [];
+    private Axis[] _taxLiabilityTrendXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _taxLiabilityTrendYAxes = [];
+    private Axis[] _taxLiabilityTrendYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasTaxLiabilityTrendData;
@@ -1016,10 +1016,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _taxRateDistributionSeries = [];
 
     [ObservableProperty]
-    private Axis[] _taxRateDistributionXAxes = [];
+    private Axis[] _taxRateDistributionXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _taxRateDistributionYAxes = [];
+    private Axis[] _taxRateDistributionYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasTaxRateDistributionData;
@@ -1037,10 +1037,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _expenseVsRevenueTaxSeries = [];
 
     [ObservableProperty]
-    private Axis[] _expenseVsRevenueTaxXAxes = [];
+    private Axis[] _expenseVsRevenueTaxXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _expenseVsRevenueTaxYAxes = [];
+    private Axis[] _expenseVsRevenueTaxYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasExpenseVsRevenueTaxData;

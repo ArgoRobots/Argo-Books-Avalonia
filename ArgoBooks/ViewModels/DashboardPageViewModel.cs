@@ -384,10 +384,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _profitsChartSeries = [];
 
     [ObservableProperty]
-    private Axis[] _profitsChartXAxes = [];
+    private Axis[] _profitsChartXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _profitsChartYAxes = [];
+    private Axis[] _profitsChartYAxes = [new Axis()];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ProfitsChartTitleVisual))]
@@ -409,10 +409,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _revenueVsExpensesSeries = [];
 
     [ObservableProperty]
-    private Axis[] _revenueVsExpensesXAxes = [];
+    private Axis[] _revenueVsExpensesXAxes = [new Axis()];
 
     [ObservableProperty]
-    private Axis[] _revenueVsExpensesYAxes = [];
+    private Axis[] _revenueVsExpensesYAxes = [new Axis()];
 
     [ObservableProperty]
     private bool _hasRevenueVsExpensesData;
