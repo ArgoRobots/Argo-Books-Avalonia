@@ -283,7 +283,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCustomersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", "State", "Zip Code", "Country", "Notes", "Status", "Total Purchases" };
+        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", "State", "Postal Code", "Country", "Notes", "Status", "Total Purchases" };
         var rows = data.Customers.Select(c => new object[]
         {
             c.Id,
@@ -409,7 +409,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetSuppliersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Email", "Phone", "Website", "Street", "City", "State", "Zip Code", "Country", "Notes" };
+        var headers = new[] { "ID", "Name", "Email", "Phone", "Website", "Street", "City", "State", "Postal Code", "Country", "Notes" };
         var rows = data.Suppliers.Select(s => new object[]
         {
             s.Id,
@@ -558,7 +558,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetLocationsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Contact Person", "Phone", "Street", "City", "State", "Zip Code", "Country", "Capacity", "Utilization" };
+        var headers = new[] { "ID", "Name", "Contact Person", "Phone", "Street", "City", "State", "Postal Code", "Country", "Capacity", "Utilization" };
         var rows = data.Locations.Select(l => new object[]
         {
             l.Id,

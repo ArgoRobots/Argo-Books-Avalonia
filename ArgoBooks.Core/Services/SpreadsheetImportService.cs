@@ -1716,7 +1716,7 @@ public class SpreadsheetImportService
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
                 State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Zip Code"),
+                ZipCode = GetString(row, headers, "Postal Code"),
                 Country = GetString(row, headers, "Country")
             };
             customer.Notes = GetString(row, headers, "Notes");
@@ -1968,7 +1968,7 @@ public class SpreadsheetImportService
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
                 State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Zip Code"),
+                ZipCode = GetString(row, headers, "Postal Code"),
                 Country = GetString(row, headers, "Country")
             };
             supplier.Notes = GetString(row, headers, "Notes");
@@ -2248,7 +2248,7 @@ public class SpreadsheetImportService
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
                 State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Zip Code"),
+                ZipCode = GetString(row, headers, "Postal Code"),
                 Country = GetString(row, headers, "Country")
             };
             location.Capacity = GetInt(row, headers, "Capacity");
