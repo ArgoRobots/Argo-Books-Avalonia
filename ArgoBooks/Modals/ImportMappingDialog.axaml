@@ -1,0 +1,501 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
+             xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.ImportMappingDialog"
+             x:DataType="vm:ImportMappingDialogViewModel">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    MaxWidth="1100"
+                    MaxHeight="750"
+                    MinWidth="750"
+                    Margin="40"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <!-- Icon -->
+                            <Border Grid.Column="0"
+                                    Width="40" Height="40"
+                                    CornerRadius="20"
+                                    Margin="0,0,16,0"
+                                    VerticalAlignment="Center">
+                                <Border.Background>
+                                    <SolidColorBrush Color="#7C3AED" Opacity="0.15" />
+                                </Border.Background>
+                                <PathIcon Data="{x:Static icons:Icons.Lightning}"
+                                          Width="20" Height="20"
+                                          Foreground="#7C3AED" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="AI Import Analysis"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <!-- Rate limit badge -->
+                                    <Border CornerRadius="10"
+                                            Padding="8,2"
+                                            VerticalAlignment="Center"
+                                            IsVisible="{Binding ShowRateLimit}">
+                                        <Border.Background>
+                                            <SolidColorBrush Color="#7C3AED" Opacity="0.12" />
+                                        </Border.Background>
+                                        <TextBlock Text="{Binding RateLimitDisplay}"
+                                                   FontSize="11"
+                                                   FontWeight="Medium"
+                                                   Foreground="#7C3AED" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="Analyzed {0} — detected {1} sheet(s) with {2:N0} total rows">
+                                            <Binding Path="FileName" />
+                                            <Binding Path="TotalSheets" />
+                                            <Binding Path="TotalRows" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </StackPanel>
+                            <Button Grid.Column="2"
+                                    Classes="icon-button"
+                                    Width="32" Height="32"
+                                    VerticalAlignment="Top"
+                                    Command="{Binding CancelCommand}">
+                                <PathIcon Data="{x:Static local:Icons.Close}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="16" Margin="24">
+                            <!-- Summary Stats -->
+                            <Grid ColumnDefinitions="*,*,*,*">
+                                <!-- Sheets -->
+                                <Border Grid.Column="0"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,0,6,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="Sheets"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding TotalSheets}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Total Rows -->
+                                <Border Grid.Column="1"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="3,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="Total Rows"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding TotalRows, StringFormat='{}{0:N0}'}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Direct Mapping -->
+                                <Border Grid.Column="2"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="3,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="Direct Mapping"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Tier1SheetCount}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="#22C55E"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- AI Processing -->
+                                <Border Grid.Column="3"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="6,0,0,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="AI Processing"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Tier2SheetCount}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="#7C3AED"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Warnings -->
+                            <Border Background="#1AF59E0B"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    IsVisible="{Binding HasWarnings}">
+                                <StackPanel Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                                                  Width="16" Height="16"
+                                                  Foreground="{DynamicResource WarningBrush}" />
+                                        <TextBlock Text="Warnings"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource WarningBrush}" />
+                                    </StackPanel>
+                                    <ItemsControl ItemsSource="{Binding Warnings}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap"
+                                                           Margin="24,2,0,0" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Sheet Analysis Cards -->
+                            <ItemsControl ItemsSource="{Binding Sheets}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:SheetAnalysisViewModel">
+                                        <Border Background="{DynamicResource SurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="8"
+                                                Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <!-- Sheet Header -->
+                                                <Border Padding="16,12"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="8,8,0,0">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                                                        <!-- Include checkbox -->
+                                                        <CheckBox Grid.Column="0"
+                                                                  IsChecked="{Binding IsIncluded}"
+                                                                  Margin="0,0,12,0"
+                                                                  VerticalAlignment="Center" />
+
+                                                        <!-- Sheet name + detected type -->
+                                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <TextBlock Text="{Binding SourceSheetName}"
+                                                                           FontSize="14"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                <PathIcon Data="{x:Static icons:Icons.ArrowForward}"
+                                                                          Width="12" Height="12"
+                                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                          VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding DetectedType}"
+                                                                           FontSize="14"
+                                                                           FontWeight="Medium"
+                                                                           Foreground="#7C3AED" />
+                                                            </StackPanel>
+                                                            <TextBlock FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}">
+                                                                <TextBlock.Text>
+                                                                    <MultiBinding StringFormat="{}{0} — {1} columns mapped">
+                                                                        <Binding Path="RowCountDisplay" />
+                                                                        <Binding Path="MappedColumnCount" />
+                                                                    </MultiBinding>
+                                                                </TextBlock.Text>
+                                                            </TextBlock>
+                                                        </StackPanel>
+
+                                                        <!-- Tier badge -->
+                                                        <Border Grid.Column="2"
+                                                                CornerRadius="10"
+                                                                Padding="8,3"
+                                                                Margin="8,0"
+                                                                VerticalAlignment="Center">
+                                                            <Border.Background>
+                                                                <SolidColorBrush Color="{Binding Tier, Converter={x:Static converters:Converters.TierToColor}}" Opacity="0.12" />
+                                                            </Border.Background>
+                                                            <TextBlock Text="{Binding TierDisplay}"
+                                                                       FontSize="11"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="{Binding Tier, Converter={x:Static converters:Converters.TierToColor}}" />
+                                                        </Border>
+
+                                                        <!-- Confidence badge -->
+                                                        <Border Grid.Column="3"
+                                                                CornerRadius="10"
+                                                                Padding="8,3"
+                                                                Margin="0,0,8,0"
+                                                                VerticalAlignment="Center">
+                                                            <Border.Background>
+                                                                <SolidColorBrush Color="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" Opacity="0.12" />
+                                                            </Border.Background>
+                                                            <TextBlock Text="{Binding ConfidenceDisplay}"
+                                                                       FontSize="11"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" />
+                                                        </Border>
+
+                                                        <!-- Expand toggle -->
+                                                        <ToggleButton Grid.Column="4"
+                                                                      IsChecked="{Binding IsExpanded}"
+                                                                      Classes="icon-button"
+                                                                      Width="28" Height="28"
+                                                                      VerticalAlignment="Center">
+                                                            <PathIcon Data="{x:Static icons:Icons.ArrowDown}"
+                                                                      Width="14" Height="14"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        </ToggleButton>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Expandable mapping details -->
+                                                <StackPanel IsVisible="{Binding IsExpanded}">
+                                                    <!-- Column Mapping Table Header -->
+                                                    <Border Padding="16,8"
+                                                            Background="{DynamicResource BackgroundBrush}"
+                                                            IsVisible="{Binding !IsTier2}">
+                                                        <Grid ColumnDefinitions="*,30,*,70">
+                                                            <TextBlock Grid.Column="0" Text="Source Column" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                            <TextBlock Grid.Column="2" Text="Target Column" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                            <TextBlock Grid.Column="3" Text="Confidence" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" />
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <!-- Column Mapping Rows -->
+                                                    <ItemsControl ItemsSource="{Binding ColumnMappings}"
+                                                                  IsVisible="{Binding !IsTier2}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate DataType="vm:ColumnMappingViewModel">
+                                                                <Border Padding="16,8"
+                                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                                        BorderThickness="0,1,0,0">
+                                                                    <Grid ColumnDefinitions="*,30,*,70">
+                                                                        <!-- Source column -->
+                                                                        <Border Grid.Column="0"
+                                                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                                                CornerRadius="4"
+                                                                                Padding="8,4"
+                                                                                HorizontalAlignment="Left">
+                                                                            <TextBlock Text="{Binding SourceColumn}"
+                                                                                       FontSize="12"
+                                                                                       FontFamily="JetBrains Mono, Consolas, monospace"
+                                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                        </Border>
+
+                                                                        <!-- Arrow -->
+                                                                        <PathIcon Grid.Column="1"
+                                                                                  Data="{x:Static icons:Icons.ArrowForward}"
+                                                                                  Width="12" Height="12"
+                                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                  HorizontalAlignment="Center"
+                                                                                  VerticalAlignment="Center" />
+
+                                                                        <!-- Target column -->
+                                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                                                                            <Border Background="#1A7C3AED"
+                                                                                    CornerRadius="4"
+                                                                                    Padding="8,4"
+                                                                                    HorizontalAlignment="Left">
+                                                                                <TextBlock Text="{Binding TargetColumn}"
+                                                                                           FontSize="12"
+                                                                                           FontFamily="JetBrains Mono, Consolas, monospace"
+                                                                                           Foreground="#7C3AED" />
+                                                                            </Border>
+                                                                            <!-- Transform hint -->
+                                                                            <TextBlock Text="{Binding TransformHint}"
+                                                                                       FontSize="10"
+                                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                       IsVisible="{Binding HasTransformHint}"
+                                                                                       VerticalAlignment="Center"
+                                                                                       FontStyle="Italic" />
+                                                                        </StackPanel>
+
+                                                                        <!-- Confidence -->
+                                                                        <Border Grid.Column="3"
+                                                                                CornerRadius="3"
+                                                                                Padding="4,1"
+                                                                                HorizontalAlignment="Right"
+                                                                                VerticalAlignment="Center">
+                                                                            <Border.Background>
+                                                                                <SolidColorBrush Color="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" Opacity="0.12" />
+                                                                            </Border.Background>
+                                                                            <TextBlock Text="{Binding ConfidenceDisplay}"
+                                                                                       FontSize="10"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" />
+                                                                        </Border>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+
+                                                    <!-- Tier 2 info -->
+                                                    <Border Padding="16,12"
+                                                            IsVisible="{Binding IsTier2}">
+                                                        <StackPanel Spacing="8">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                                                          Width="14" Height="14"
+                                                                          Foreground="#7C3AED" />
+                                                                <TextBlock Text="This sheet requires AI row processing"
+                                                                           FontSize="12"
+                                                                           FontWeight="Medium"
+                                                                           Foreground="#7C3AED" />
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding TierReason}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       TextWrapping="Wrap"
+                                                                       Margin="22,0,0,0" />
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Unmapped source columns -->
+                                                    <Border Padding="16,8"
+                                                            IsVisible="{Binding HasUnmappedSource}">
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="Unmapped source columns (will be ignored):"
+                                                                       FontSize="11"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                            <WrapPanel>
+                                                                <ItemsControl ItemsSource="{Binding UnmappedSourceColumns}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <WrapPanel />
+                                                                        </ItemsPanelTemplate>
+                                                                    </ItemsControl.ItemsPanel>
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                                                    CornerRadius="4"
+                                                                                    Padding="6,2"
+                                                                                    Margin="0,2,6,2"
+                                                                                    Opacity="0.6">
+                                                                                <TextBlock Text="{Binding}"
+                                                                                           FontSize="11"
+                                                                                           FontFamily="JetBrains Mono, Consolas, monospace"
+                                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                            </Border>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </WrapPanel>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Unmapped target columns -->
+                                                    <Border Padding="16,8,16,12"
+                                                            IsVisible="{Binding HasUnmappedTarget}">
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="Missing target columns (will use defaults):"
+                                                                       FontSize="11"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                            <WrapPanel>
+                                                                <ItemsControl ItemsSource="{Binding UnmappedTargetColumns}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <WrapPanel />
+                                                                        </ItemsPanelTemplate>
+                                                                    </ItemsControl.ItemsPanel>
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Border Background="#1AF59E0B"
+                                                                                    CornerRadius="4"
+                                                                                    Padding="6,2"
+                                                                                    Margin="0,2,6,2">
+                                                                                <TextBlock Text="{Binding}"
+                                                                                           FontSize="11"
+                                                                                           FontFamily="JetBrains Mono, Consolas, monospace"
+                                                                                           Foreground="{DynamicResource WarningBrush}"
+                                                                                           Opacity="0.8" />
+                                                                            </Border>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </WrapPanel>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Review the detected mappings above, then click Accept to proceed with import."
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="12">
+                                <Button Classes="secondary-button"
+                                        Content="Cancel"
+                                        Command="{Binding CancelCommand}" />
+                                <Button Classes="primary-button"
+                                        Content="Accept &amp; Import"
+                                        Command="{Binding AcceptCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

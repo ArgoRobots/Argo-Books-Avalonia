@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -140,6 +142,417 @@ public class SpreadsheetImportService
             throw;
         }
     }
+
+    #region AI-Mapped Import
+
+    /// <summary>
+    /// Imports data from an Excel file using AI-generated column mappings (Tier 1).
+    /// Headers are renamed according to the analysis result before standard import logic runs.
+    /// </summary>
+    public async Task ImportWithMappingsAsync(
+        string filePath,
+        CompanyData companyData,
+        SpreadsheetAnalysisResult analysis,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+        ArgumentNullException.ThrowIfNull(analysis);
+
+        options ??= new ImportOptions();
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var workbook = new XLWorkbook(fileStream);
+
+                if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
+                {
+                    CreateMissingReferences(workbook, companyData, options);
+                }
+
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ImportWorksheetWithMapping(worksheet, companyData, analysis);
+                }
+
+                UpdateIdCounters(companyData);
+                companyData.MarkAsModified();
+            }, cancellationToken);
+
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-xlsx", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed AI-mapped import from: {Path.GetFileName(filePath)}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Imports data from a CSV file using AI-generated column mappings (Tier 1).
+    /// </summary>
+    public async Task ImportCsvWithMappingsAsync(
+        string filePath,
+        CompanyData companyData,
+        SpreadsheetAnalysisResult analysis,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+        ArgumentNullException.ThrowIfNull(analysis);
+
+        options ??= new ImportOptions();
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                var lines = File.ReadAllLines(filePath);
+                if (lines.Length < 2) return;
+
+                var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
+                var headers = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
+                if (headers.Count == 0) return;
+
+                var rows = new List<List<object?>>();
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                    var fields = SpreadsheetAnalysisService.ParseCsvLine(lines[i], delimiter);
+                    rows.Add(fields.Cast<object?>().ToList());
+                }
+
+                if (rows.Count == 0) return;
+
+                // Find matching sheet analysis (CSV has one "sheet" named after the file)
+                var sheetName = Path.GetFileNameWithoutExtension(filePath);
+                var sheetAnalysis = analysis.Sheets.FirstOrDefault();
+
+                if (sheetAnalysis != null)
+                {
+                    ApplyColumnMapping(headers, sheetAnalysis);
+                    var sheetType = sheetAnalysis.DetectedType;
+                    ImportBySheetType(sheetType, companyData, headers, rows);
+                }
+
+                UpdateIdCounters(companyData);
+                companyData.MarkAsModified();
+            }, cancellationToken);
+
+            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed AI-mapped CSV import from: {Path.GetFileName(filePath)}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Validates an Excel file using AI-generated column mappings.
+    /// </summary>
+    public async Task<ImportValidationResult> ValidateWithMappingsAsync(
+        string filePath,
+        CompanyData companyData,
+        SpreadsheetAnalysisResult analysis,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+
+        return await Task.Run(() =>
+        {
+            var result = new ImportValidationResult();
+
+            try
+            {
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var workbook = new XLWorkbook(fileStream);
+
+                var importedIds = CollectImportedIds(workbook);
+
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Apply column mapping before validation
+                    var headers = GetHeaders(worksheet);
+                    if (headers.Count == 0) continue;
+
+                    var sheetAnalysis = analysis.Sheets.FirstOrDefault(
+                        s => s.SourceSheetName == worksheet.Name);
+                    if (sheetAnalysis != null)
+                        ApplyColumnMapping(headers, sheetAnalysis);
+
+                    // Validation uses the renamed headers
+                    ValidateWorksheet(worksheet, companyData, importedIds, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to validate AI-mapped import file: {Path.GetFileName(filePath)}");
+                result.Errors.Add($"Failed to read file: {ex.Message}");
+            }
+
+            return result;
+        }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Imports pre-processed entities from LLM Tier 2 processing.
+    /// </summary>
+    public void ImportProcessedEntities(
+        CompanyData companyData,
+        List<LlmProcessedData> processedData,
+        ImportOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(companyData);
+        ArgumentNullException.ThrowIfNull(processedData);
+
+        foreach (var chunk in processedData)
+        {
+            foreach (var entityJson in chunk.Entities)
+            {
+                try
+                {
+                    ImportSingleEntity(companyData, chunk.EntityType, entityJson);
+                }
+                catch (Exception ex)
+                {
+                    _errorLogger?.LogError(ex, ErrorCategory.Import,
+                        $"Failed to import {chunk.EntityType} entity from AI processing");
+                }
+            }
+        }
+
+        UpdateIdCounters(companyData);
+        companyData.MarkAsModified();
+    }
+
+    private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis)
+    {
+        var headers = GetHeaders(worksheet);
+        if (headers.Count == 0) return;
+
+        var rows = GetDataRows(worksheet, headers.Count);
+        if (rows.Count == 0) return;
+
+        var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == worksheet.Name);
+        if (sheetAnalysis == null || !sheetAnalysis.IsIncluded) return;
+
+        // Only process Tier 1 sheets here (Tier 2 is handled separately via ProcessedEntities)
+        if (sheetAnalysis.Tier == ProcessingTier.Tier2_LlmProcessing) return;
+
+        ApplyColumnMapping(headers, sheetAnalysis);
+        var sheetType = sheetAnalysis.DetectedType;
+        ImportBySheetType(sheetType, data, headers, rows);
+    }
+
+    private void ImportBySheetType(SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        switch (sheetType)
+        {
+            case SpreadsheetSheetType.Customers:
+                ImportCustomers(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Invoices:
+                ImportInvoices(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Expenses:
+                ImportPurchases(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Products:
+                ImportProducts(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Inventory:
+                ImportInventory(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Payments:
+                ImportPayments(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Suppliers:
+                ImportSuppliers(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Revenue:
+                ImportSales(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.RentalInventory:
+                ImportRentalInventory(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.RentalRecords:
+                ImportRentalRecords(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Categories:
+                ImportCategories(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Departments:
+                ImportDepartments(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Employees:
+                ImportEmployees(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Locations:
+                ImportLocations(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.RecurringInvoices:
+                ImportRecurringInvoices(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.StockAdjustments:
+                ImportStockAdjustments(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.PurchaseOrders:
+                ImportPurchaseOrders(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.PurchaseOrderLineItems:
+                ImportPurchaseOrderLineItems(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Returns:
+                ImportReturns(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.LostDamaged:
+                ImportLostDamaged(data, headers, rows);
+                break;
+        }
+    }
+
+    internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
+    {
+        foreach (var mapping in sheetAnalysis.ColumnMappings)
+        {
+            var idx = headers.FindIndex(h =>
+                string.Equals(h, mapping.SourceColumn, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0)
+                headers[idx] = mapping.TargetColumn;
+        }
+    }
+
+    private void ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson)
+    {
+        var jsonStr = entityJson.GetRawText();
+        var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        switch (entityType)
+        {
+            case SpreadsheetSheetType.Customers:
+                var customer = JsonSerializer.Deserialize<Customer>(jsonStr, opts);
+                if (customer != null && !string.IsNullOrEmpty(customer.Id))
+                {
+                    var existing = data.Customers.FirstOrDefault(c => c.Id == customer.Id);
+                    if (existing != null) data.Customers.Remove(existing);
+                    data.Customers.Add(customer);
+                }
+                break;
+            case SpreadsheetSheetType.Suppliers:
+                var supplier = JsonSerializer.Deserialize<Supplier>(jsonStr, opts);
+                if (supplier != null && !string.IsNullOrEmpty(supplier.Id))
+                {
+                    var existing = data.Suppliers.FirstOrDefault(s => s.Id == supplier.Id);
+                    if (existing != null) data.Suppliers.Remove(existing);
+                    data.Suppliers.Add(supplier);
+                }
+                break;
+            case SpreadsheetSheetType.Products:
+                var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
+                if (product != null && !string.IsNullOrEmpty(product.Id))
+                {
+                    var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
+                    if (existing != null) data.Products.Remove(existing);
+                    data.Products.Add(product);
+                }
+                break;
+            case SpreadsheetSheetType.Invoices:
+                var invoice = JsonSerializer.Deserialize<Invoice>(jsonStr, opts);
+                if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
+                {
+                    invoice.OriginalCurrency = "USD";
+                    invoice.TotalUSD = invoice.Total;
+                    invoice.BalanceUSD = invoice.Balance;
+                    var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
+                    if (existing != null) data.Invoices.Remove(existing);
+                    data.Invoices.Add(invoice);
+                }
+                break;
+            case SpreadsheetSheetType.Expenses:
+                var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
+                if (expense != null && !string.IsNullOrEmpty(expense.Id))
+                {
+                    expense.OriginalCurrency = "USD";
+                    expense.TotalUSD = expense.Total;
+                    var existing = data.Expenses.FirstOrDefault(e => e.Id == expense.Id);
+                    if (existing != null) data.Expenses.Remove(existing);
+                    data.Expenses.Add(expense);
+                }
+                break;
+            case SpreadsheetSheetType.Revenue:
+                var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
+                if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
+                {
+                    revenue.OriginalCurrency = "USD";
+                    revenue.TotalUSD = revenue.Total;
+                    var existing = data.Revenues.FirstOrDefault(r => r.Id == revenue.Id);
+                    if (existing != null) data.Revenues.Remove(existing);
+                    data.Revenues.Add(revenue);
+                }
+                break;
+            case SpreadsheetSheetType.Payments:
+                var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
+                if (payment != null && !string.IsNullOrEmpty(payment.Id))
+                {
+                    payment.OriginalCurrency = "USD";
+                    payment.AmountUSD = payment.Amount;
+                    var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
+                    if (existing != null) data.Payments.Remove(existing);
+                    data.Payments.Add(payment);
+                }
+                break;
+            case SpreadsheetSheetType.Categories:
+                var category = JsonSerializer.Deserialize<Category>(jsonStr, opts);
+                if (category != null && !string.IsNullOrEmpty(category.Id))
+                {
+                    var existing = data.Categories.FirstOrDefault(c => c.Id == category.Id);
+                    if (existing != null) data.Categories.Remove(existing);
+                    data.Categories.Add(category);
+                }
+                break;
+            case SpreadsheetSheetType.Employees:
+                var employee = JsonSerializer.Deserialize<Employee>(jsonStr, opts);
+                if (employee != null && !string.IsNullOrEmpty(employee.Id))
+                {
+                    var existing = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
+                    if (existing != null) data.Employees.Remove(existing);
+                    data.Employees.Add(employee);
+                }
+                break;
+            case SpreadsheetSheetType.Locations:
+                var location = JsonSerializer.Deserialize<Location>(jsonStr, opts);
+                if (location != null && !string.IsNullOrEmpty(location.Id))
+                {
+                    var existing = data.Locations.FirstOrDefault(l => l.Id == location.Id);
+                    if (existing != null) data.Locations.Remove(existing);
+                    data.Locations.Add(location);
+                }
+                break;
+            case SpreadsheetSheetType.Departments:
+                var dept = JsonSerializer.Deserialize<Department>(jsonStr, opts);
+                if (dept != null && !string.IsNullOrEmpty(dept.Id))
+                {
+                    var existing = data.Departments.FirstOrDefault(d => d.Id == dept.Id);
+                    if (existing != null) data.Departments.Remove(existing);
+                    data.Departments.Add(dept);
+                }
+                break;
+        }
+    }
+
+    #endregion
 
     #region Validation
 

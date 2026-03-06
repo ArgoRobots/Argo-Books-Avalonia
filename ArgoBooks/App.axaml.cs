@@ -7,6 +7,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Rentals;
@@ -2712,23 +2713,31 @@ public class App : Application
                 return;
             }
 
-            // Only Excel import is supported for now
+            // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {
                 _appShellViewModel.AddNotification("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
                 return;
             }
 
-            // Show open file dialog
+            // Show open file dialog — support both .xlsx and .csv
             var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Import Excel File".Translate(),
+                Title = "Import Spreadsheet".Translate(),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
+                    new FilePickerFileType("Spreadsheets")
+                    {
+                        Patterns = ["*.xlsx", "*.csv"]
+                    },
                     new FilePickerFileType("Excel Workbook")
                     {
                         Patterns = ["*.xlsx"]
+                    },
+                    new FilePickerFileType("CSV File")
+                    {
+                        Patterns = ["*.csv"]
                     }
                 ]
             });
@@ -2737,99 +2746,193 @@ public class App : Application
 
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
+            var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
 
-            _mainWindowViewModel?.ShowLoading("Validating import file...".Translate());
+            // Use AI import flow
+            await PerformAiImportAsync(filePath, companyData, isCsv);
+        };
+    }
 
-            try
+    /// <summary>
+    /// Performs the AI-powered import flow: analyze → review → validate → import.
+    /// </summary>
+    private static async Task PerformAiImportAsync(string filePath, CompanyData companyData, bool isCsv)
+    {
+        if (_appShellViewModel == null) return;
+
+        // Check rate limit
+        var appDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ArgoBooks");
+        var rateLimiter = new AiImportRateLimiter(appDataPath);
+
+        if (!rateLimiter.CanImport())
+        {
+            await ShowErrorMessageBoxAsync(
+                "AI Import Limit Reached".Translate(),
+                "You have reached the daily AI import limit (10/day). Please try again tomorrow.".Translate());
+            return;
+        }
+
+        var openAiService = new OpenAiService(ErrorLogger, TelemetryManager);
+        if (!openAiService.IsConfigured)
+        {
+            await ShowErrorMessageBoxAsync(
+                "AI Not Configured".Translate(),
+                "OpenAI API key is not configured. Please set the OPENAI_API_KEY environment variable to use AI-powered import.".Translate());
+            return;
+        }
+
+        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger);
+        var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
+
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
+
+        try
+        {
+            // Step 1: AI Analysis
+            var analysis = isCsv
+                ? await analysisService.AnalyzeCsvAsync(filePath)
+                : await analysisService.AnalyzeAsync(filePath);
+
+            _mainWindowViewModel?.HideLoading();
+
+            if (analysis == null || analysis.Sheets.Count == 0)
             {
-                var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
+                await ShowErrorMessageBoxAsync(
+                    "Analysis Failed".Translate(),
+                    "Could not analyze the file structure. The file may be empty or in an unsupported format.".Translate());
+                return;
+            }
 
-                // First validate the import file
-                var validationResult = await importService.ValidateImportAsync(filePath, companyData);
+            // Step 2: Show mapping review dialog
+            var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
+            var remaining = rateLimiter.GetRemainingImportsToday();
+            var dialogResult = await mappingDialog.ShowAsync(analysis, remaining, rateLimiter.MaxPerDay);
+
+            if (dialogResult == ImportMappingDialogResult.Cancel)
+                return;
+
+            // Get user-updated analysis (they may have changed entity types or excluded sheets)
+            var updatedAnalysis = mappingDialog.GetUpdatedAnalysis();
+            if (updatedAnalysis == null) return;
+
+            // Filter to only included sheets
+            var includedSheets = updatedAnalysis.Sheets.Where(s => s.IsIncluded).ToList();
+            if (includedSheets.Count == 0)
+            {
+                _appShellViewModel.AddNotification("Info".Translate(), "No sheets were selected for import.".Translate());
+                return;
+            }
+
+            // Create snapshot for undo
+            var snapshot = CreateCompanyDataSnapshot(companyData);
+
+            // Step 3: Process Tier 1 sheets (validation + import with mapped headers)
+            var tier1Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
+            var tier2Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
+
+            var importOptions = new ImportOptions();
+
+            // Tier 1: Validate with mappings
+            if (tier1Sheets.Count > 0)
+            {
+                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate());
+
+                var validationResult = isCsv
+                    ? new ImportValidationResult() // CSV validation is simpler
+                    : await importService.ValidateWithMappingsAsync(filePath, companyData, updatedAnalysis);
 
                 _mainWindowViewModel?.HideLoading();
 
-                // Check for any issues (errors, warnings, or missing refs) and show validation dialog
-                var importOptions = new ImportOptions();
-
-                if (validationResult.HasIssues && _appShellViewModel != null)
+                if (validationResult.HasIssues)
                 {
                     var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
-                    var dialogResult = await validationDialog.ShowAsync(validationResult);
+                    var valResult = await validationDialog.ShowAsync(validationResult);
 
-                    if (dialogResult == ImportValidationDialogResult.Cancel)
-                    {
+                    if (valResult == ImportValidationDialogResult.Cancel)
                         return;
-                    }
 
-                    // If user chose to create missing references
-                    if (dialogResult == ImportValidationDialogResult.CreateMissingAndImport)
-                    {
+                    if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
                         importOptions.AutoCreateMissingReferences = true;
-                    }
 
-                    // If there are critical errors, don't allow import
                     if (validationResult.Errors.Count > 0)
-                    {
                         return;
-                    }
                 }
 
-                // Create snapshot of current data for undo
-                var snapshot = CreateCompanyDataSnapshot(companyData);
-
+                // Import Tier 1 data
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
-                await importService.ImportFromExcelAsync(filePath, companyData, importOptions);
+                if (isCsv)
+                    await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
+                else
+                    await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
 
                 _mainWindowViewModel?.HideLoading();
-
-                // Create snapshot of imported data for redo
-                var importedSnapshot = CreateCompanyDataSnapshot(companyData);
-
-                // Record undo action
-                UndoRedoManager.RecordAction(new DelegateAction(
-                    "Import spreadsheet data".Translate(),
-                    () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
-                    () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
-                ));
-
-                // Mark as changed - this will trigger CompanyDataChanged event
-                CompanyManager.MarkAsChanged();
-
-                // Build success message with summary
-                var successMessage = "Data has been imported successfully.".Translate();
-                if (validationResult.ImportSummaries.Count > 0)
-                {
-                    var summaryLines = validationResult.ImportSummaries
-                        .Where(s => s.Value.TotalInFile > 0)
-                        .Select(s => "{0}: {1} new, {2} updated".TranslateFormat(s.Key, s.Value.NewRecords, s.Value.UpdatedRecords));
-                    if (summaryLines.Any())
-                    {
-                        successMessage += $"\n\n{string.Join("\n", summaryLines)}";
-                    }
-                }
-                successMessage += "\n\n" + "Please save to persist changes.".Translate();
-
-                _appShellViewModel?.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
             }
-            catch (Exception ex)
+
+            // Tier 2: LLM row processing
+            if (tier2Sheets.Count > 0)
             {
-                _mainWindowViewModel?.HideLoading();
-                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to import spreadsheet data");
-                var errorDialog = ConfirmationDialog;
-                if (errorDialog != null)
+                foreach (var sheet in tier2Sheets)
                 {
-                    await errorDialog.ShowAsync(new ConfirmationDialogOptions
-                    {
-                        Title = "Import Failed".Translate(),
-                        Message = "Failed to import data:\n\n{0}".TranslateFormat(ex.Message),
-                        PrimaryButtonText = "OK".Translate(),
-                        CancelButtonText = ""
-                    });
+                    _mainWindowViewModel?.ShowLoading($"AI processing {sheet.SourceSheetName}...");
+
+                    var processedChunks = await analysisService.ProcessAllChunksAsync(
+                        filePath, sheet,
+                        new Progress<(int processed, int total)>(p =>
+                        {
+                            _mainWindowViewModel?.ShowLoading(
+                                $"AI processing {sheet.SourceSheetName}... {p.processed}/{p.total} rows");
+                        }));
+
+                    importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
                 }
+
+                _mainWindowViewModel?.HideLoading();
             }
-        };
+
+            // Record rate limit usage
+            rateLimiter.RecordImport(Path.GetFileName(filePath));
+
+            // Create snapshot for redo
+            var importedSnapshot = CreateCompanyDataSnapshot(companyData);
+
+            // Record undo action
+            UndoRedoManager.RecordAction(new DelegateAction(
+                "AI import spreadsheet data".Translate(),
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager?.MarkAsChanged(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager?.MarkAsChanged(); }
+            ));
+
+            CompanyManager?.MarkAsChanged();
+
+            // Build success message
+            var entitySummary = includedSheets
+                .Select(s => $"{s.DetectedType}: {s.RowCount:N0} rows")
+                .ToList();
+            var successMessage = "AI import completed successfully.".Translate()
+                + $"\n\n{string.Join("\n", entitySummary)}"
+                + "\n\n" + "Please save to persist changes.".Translate();
+
+            _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel?.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to perform AI import");
+            var errorDialog = ConfirmationDialog;
+            if (errorDialog != null)
+            {
+                await errorDialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Import Failed".Translate(),
+                    Message = "Failed to import data:\n\n{0}".TranslateFormat(ex.Message),
+                    PrimaryButtonText = "OK".Translate(),
+                    CancelButtonText = ""
+                });
+            }
+        }
     }
 
     /// <summary>
