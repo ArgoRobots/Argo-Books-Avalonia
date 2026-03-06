@@ -1,5 +1,5 @@
 using ArgoBooks.Core;
-using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.AI;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
