@@ -286,9 +286,10 @@
                                                                       Classes="icon-button"
                                                                       Width="28" Height="28"
                                                                       VerticalAlignment="Center">
-                                                            <PathIcon Data="{x:Static icons:Icons.ArrowDown}"
-                                                                      Width="14" Height="14"
-                                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                            <controls:ToggleArrow IconSize="12"
+                                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                  Orientation="Vertical"
+                                                                                  IsCollapsed="{Binding !IsExpanded}" />
                                                         </ToggleButton>
                                                     </Grid>
                                                 </Border>

@@ -308,8 +308,9 @@ public class SpreadsheetImportService
 
     /// <summary>
     /// Imports pre-processed entities from LLM Tier 2 processing.
+    /// Returns (imported count, skipped count) for reporting.
     /// </summary>
-    public void ImportProcessedEntities(
+    public (int Imported, int Skipped) ImportProcessedEntities(
         CompanyData companyData,
         List<LlmProcessedData> processedData,
         ImportOptions? options = null)
@@ -317,16 +318,23 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(processedData);
 
+        var imported = 0;
+        var skipped = 0;
+
         foreach (var chunk in processedData)
         {
             foreach (var entityJson in chunk.Entities)
             {
                 try
                 {
-                    ImportSingleEntity(companyData, chunk.EntityType, entityJson);
+                    if (ImportSingleEntity(companyData, chunk.EntityType, entityJson))
+                        imported++;
+                    else
+                        skipped++;
                 }
                 catch (Exception ex)
                 {
+                    skipped++;
                     _errorLogger?.LogError(ex, ErrorCategory.Import,
                         $"Failed to import {chunk.EntityType} entity from AI processing");
                 }
@@ -335,6 +343,7 @@ public class SpreadsheetImportService
 
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
+        return (imported, skipped);
     }
 
     private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis)
@@ -434,7 +443,7 @@ public class SpreadsheetImportService
         }
     }
 
-    private void ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson)
+    private bool ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson)
     {
         var jsonStr = entityJson.GetRawText();
         var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -448,8 +457,9 @@ public class SpreadsheetImportService
                     var existing = data.Customers.FirstOrDefault(c => c.Id == customer.Id);
                     if (existing != null) data.Customers.Remove(existing);
                     data.Customers.Add(customer);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Suppliers:
                 var supplier = JsonSerializer.Deserialize<Supplier>(jsonStr, opts);
                 if (supplier != null && !string.IsNullOrEmpty(supplier.Id))
@@ -457,8 +467,9 @@ public class SpreadsheetImportService
                     var existing = data.Suppliers.FirstOrDefault(s => s.Id == supplier.Id);
                     if (existing != null) data.Suppliers.Remove(existing);
                     data.Suppliers.Add(supplier);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Products:
                 var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
                 if (product != null && !string.IsNullOrEmpty(product.Id))
@@ -466,8 +477,9 @@ public class SpreadsheetImportService
                     var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
                     if (existing != null) data.Products.Remove(existing);
                     data.Products.Add(product);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Invoices:
                 var invoice = JsonSerializer.Deserialize<Invoice>(jsonStr, opts);
                 if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
@@ -478,8 +490,9 @@ public class SpreadsheetImportService
                     var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
                     if (existing != null) data.Invoices.Remove(existing);
                     data.Invoices.Add(invoice);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Expenses:
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
@@ -489,8 +502,9 @@ public class SpreadsheetImportService
                     var existing = data.Expenses.FirstOrDefault(e => e.Id == expense.Id);
                     if (existing != null) data.Expenses.Remove(existing);
                     data.Expenses.Add(expense);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Revenue:
                 var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
@@ -500,8 +514,9 @@ public class SpreadsheetImportService
                     var existing = data.Revenues.FirstOrDefault(r => r.Id == revenue.Id);
                     if (existing != null) data.Revenues.Remove(existing);
                     data.Revenues.Add(revenue);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Payments:
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
@@ -511,8 +526,9 @@ public class SpreadsheetImportService
                     var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
                     if (existing != null) data.Payments.Remove(existing);
                     data.Payments.Add(payment);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Categories:
                 var category = JsonSerializer.Deserialize<Category>(jsonStr, opts);
                 if (category != null && !string.IsNullOrEmpty(category.Id))
@@ -520,8 +536,9 @@ public class SpreadsheetImportService
                     var existing = data.Categories.FirstOrDefault(c => c.Id == category.Id);
                     if (existing != null) data.Categories.Remove(existing);
                     data.Categories.Add(category);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Employees:
                 var employee = JsonSerializer.Deserialize<Employee>(jsonStr, opts);
                 if (employee != null && !string.IsNullOrEmpty(employee.Id))
@@ -529,8 +546,9 @@ public class SpreadsheetImportService
                     var existing = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
                     if (existing != null) data.Employees.Remove(existing);
                     data.Employees.Add(employee);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Locations:
                 var location = JsonSerializer.Deserialize<Location>(jsonStr, opts);
                 if (location != null && !string.IsNullOrEmpty(location.Id))
@@ -538,8 +556,9 @@ public class SpreadsheetImportService
                     var existing = data.Locations.FirstOrDefault(l => l.Id == location.Id);
                     if (existing != null) data.Locations.Remove(existing);
                     data.Locations.Add(location);
+                    return true;
                 }
-                break;
+                return false;
             case SpreadsheetSheetType.Departments:
                 var dept = JsonSerializer.Deserialize<Department>(jsonStr, opts);
                 if (dept != null && !string.IsNullOrEmpty(dept.Id))
@@ -547,8 +566,11 @@ public class SpreadsheetImportService
                     var existing = data.Departments.FirstOrDefault(d => d.Id == dept.Id);
                     if (existing != null) data.Departments.Remove(existing);
                     data.Departments.Add(dept);
+                    return true;
                 }
-                break;
+                return false;
+            default:
+                return false;
         }
     }
 

@@ -2873,6 +2873,8 @@ public class App : Application
             }
 
             // Tier 2: LLM row processing
+            var totalImported = 0;
+            var totalSkipped = 0;
             if (tier2Sheets.Count > 0)
             {
                 foreach (var sheet in tier2Sheets)
@@ -2887,7 +2889,9 @@ public class App : Application
                                 $"AI processing {sheet.SourceSheetName}... {p.processed}/{p.total} rows");
                         }));
 
-                    importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
+                    var (imported, skipped) = importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
+                    totalImported += imported;
+                    totalSkipped += skipped;
                 }
 
                 // Yield to let any pending Progress<T> callbacks (dispatched via
@@ -2917,10 +2921,18 @@ public class App : Application
                 .Select(s => $"{s.DetectedType}: {s.RowCount:N0} rows")
                 .ToList();
             var successMessage = "AI import completed successfully.".Translate()
-                + $"\n\n{string.Join("\n", entitySummary)}"
-                + "\n\n" + "Please save to persist changes.".Translate();
+                + $"\n\n{string.Join("\n", entitySummary)}";
 
-            _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
+            if (totalImported > 0 || totalSkipped > 0)
+                successMessage += $"\n\n{"Imported:".Translate()} {totalImported:N0}"
+                    + (totalSkipped > 0 ? $" — {"Skipped:".Translate()} {totalSkipped:N0}" : "");
+
+            successMessage += "\n\n" + "Please save to persist changes.".Translate();
+
+            var notifType = totalSkipped > 0 && totalImported == 0
+                ? NotificationType.Warning
+                : NotificationType.Success;
+            _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, notifType);
         }
         catch (Exception ex)
         {

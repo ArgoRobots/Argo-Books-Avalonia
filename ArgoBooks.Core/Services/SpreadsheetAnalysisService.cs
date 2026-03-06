@@ -319,15 +319,30 @@ IMPORTANT:
         var sb = new StringBuilder();
         sb.AppendLine($"You are converting raw spreadsheet data into normalized {entityType} records for Argo Books.");
         sb.AppendLine();
-        sb.AppendLine("Target schema:");
+        sb.AppendLine("Target JSON schema (use these exact property names as JSON keys):");
+
+        // Collect columns with JsonName, deduplicating by JsonName (some columns map to the same property)
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var col in schema)
         {
+            var jsonName = col.JsonName ?? col.Name;
+            if (!seen.Add(jsonName)) continue;
+
             var req = col.Required ? " (REQUIRED)" : "";
-            sb.AppendLine($"- {col.Name} ({col.Type}): {col.Description}{req}");
+            sb.AppendLine($"- {jsonName} ({col.Type}): {col.Description}{req}");
         }
+
+        // If any columns use dotted names (e.g., address.street), explain nesting
+        if (schema.Any(c => c.JsonName?.Contains('.') == true))
+        {
+            sb.AppendLine();
+            sb.AppendLine("For dotted property names like 'address.street', nest them as JSON objects:");
+            sb.AppendLine("  { \"address\": { \"street\": \"value\", \"city\": \"value\" } }");
+        }
+
         sb.AppendLine();
         sb.AppendLine("Rules:");
-        sb.AppendLine("- Output a JSON array of objects matching the target schema column names exactly");
+        sb.AppendLine("- Output a JSON array of objects using the exact JSON property names listed above");
         sb.AppendLine("- Generate reasonable IDs if none exist (e.g., CUS-001, INV-2024-001)");
         sb.AppendLine("- Parse dates to ISO 8601 format (yyyy-MM-dd or yyyy-MM-ddTHH:mm:ss)");
         sb.AppendLine("- Parse decimal amounts (remove currency symbols, handle comma/dot separators)");

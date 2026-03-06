@@ -46,7 +46,7 @@ public partial class SheetAnalysisViewModel : ObservableObject
     public int MappedColumnCount => ColumnMappings.Count;
     public bool IsTier2 => Tier == ProcessingTier.Tier2_LlmProcessing;
 
-    public string ConfidenceDisplay => $"{Confidence:P0}";
+    public string ConfidenceDisplay => $"Match: {Confidence:P0}";
     public string RowCountDisplay => $"{RowCount:N0} rows";
 
     public string TierDisplay => Tier == ProcessingTier.Tier1_Mapping
@@ -117,7 +117,7 @@ public partial class ColumnMappingViewModel : ObservableObject
     public double Confidence { get; }
     public string? TransformHint { get; }
 
-    public string ConfidenceDisplay => $"{Confidence:P0}";
+    public string ConfidenceDisplay => $"Match: {Confidence:P0}";
 
     public string ConfidenceLevel => Confidence switch
     {
