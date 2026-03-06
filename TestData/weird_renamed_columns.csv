@@ -1,0 +1,16 @@
+SKU #;Item Description;Merch Type;Kind;Catalog Number;About;Group;Vendor;Min Stock;Max Stock
+PRD-001;Industrial Drill Press;Revenue;Product;CAT-78542;Heavy-duty floor-standing drill press with variable speed;Power Tools;Milwaukee Supply Co;5;50
+PRD-002;Quarterly Tax Filing;Expenses;Service;SVC-10001;End-of-quarter business tax preparation and filing;;Adams & Associates;0;0
+PRD-003;Premium Wood Stain - Oak;Revenue;Product;CAT-33210;Oil-based interior/exterior wood stain, 1 gallon;Finishes;Sherwin Williams;12;100
+PRD-004;Monthly Bookkeeping;Expenses;Service;SVC-10002;Full-service monthly bookkeeping and reconciliation;;Foster Accounting;0;
+PRD-005;LED Panel Light 2x4;Revenue;Product;CAT-55190;Flat panel LED ceiling light, 5000K daylight, 50W;Lighting;Bright Source Ltd;20;200
+PRD-006;Copper Pipe 3/4" x 10ft;Revenue;Product;CAT-22045;Type L copper tubing for plumbing, sold per length;Plumbing;National Pipe Supply;30;300
+PRD-007;Equipment Rental - Excavator;Rental;Product;RNT-40001;CAT 320 Excavator, daily rental rate;Heavy Equipment;United Rentals;;
+PRD-008;Safety Goggles - Anti-Fog;Revenue;Product;CAT-11098;ANSI Z87.1 rated impact-resistant safety goggles;Safety Gear;3M Distribution;50;500
+PRD-009;HVAC Duct Cleaning;Revenue;Service;SVC-20001;Commercial HVAC system duct cleaning and sanitization;Services;CleanAir Pros;0;0
+PRD-010;Stainless Steel Bolts M8x30;Revenue;Product;CAT-44567;A2-70 hex head bolts, box of 100;Fasteners;;100;1000
+PRD-011;Concrete Mix 80lb Bag;Revenue;Product;CAT-66001;High-strength ready-mix concrete, 4000 PSI;Building Materials;Quikrete Dist;25;250
+PRD-012;IT Support Contract;Expenses;Service;SVC-30001;Annual managed IT support and helpdesk;Technology;Cooper IT Solutions;0;0
+PRD-013;Pressure Washer 3000PSI;Revenue;Product;CAT-78900;Gas-powered pressure washer with 5 nozzle tips;Power Tools;Milwaukee Supply Co;3;30
+PRD-014;Landscaping Consultation;Revenue;Service;SVC-20002;On-site landscape design and consultation, per hour;;Morales Landscaping;0;0
+PRD-015;Electrical Wire 12AWG 250ft;Revenue;Product;CAT-22100;Solid copper THHN wire, 250ft roll, black;Electrical;National Wire Co;15;150
