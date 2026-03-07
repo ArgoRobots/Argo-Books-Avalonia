@@ -26,10 +26,10 @@ public static class BoolConverters
         new FuncValueConverter<bool, double>(value => value ? 0 : -90);
 
     /// <summary>
-    /// Converts bool to "Expenses" (true) or "Revenue" (false).
+    /// Converts bool to "Expense Products" (true) or "Revenue Products" (false).
     /// </summary>
     public static readonly IValueConverter ToExpensesOrRevenue =
-        new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
+        new FuncValueConverter<bool, string>(value => value ? "Expense Products" : "Revenue Products");
 
     /// <summary>
     /// Converts bool (isChild) to left margin indent for child rows.

@@ -1554,10 +1554,38 @@ public class SpreadsheetImportService
 
     #region Helper Methods
 
+    /// <summary>
+    /// Finds the header row by scanning for the first row with at least 2 non-empty cells.
+    /// Falls back to row 1 if no such row is found within the first 10 rows.
+    /// </summary>
+    private static int FindHeaderRow(IXLWorksheet worksheet)
+    {
+        var lastRow = Math.Min(worksheet.LastRowUsed()?.RowNumber() ?? 1, 10);
+        var colCount = worksheet.ColumnsUsed().Count();
+
+        for (int rowNum = 1; rowNum <= lastRow; rowNum++)
+        {
+            var row = worksheet.Row(rowNum);
+            int nonEmpty = 0;
+            for (int col = 1; col <= colCount; col++)
+            {
+                if (!row.Cell(col).IsEmpty()) nonEmpty++;
+                if (nonEmpty >= 2) return rowNum;
+            }
+        }
+
+        return 1;
+    }
+
     private static List<string> GetHeaders(IXLWorksheet worksheet)
     {
+        return GetHeaders(worksheet, FindHeaderRow(worksheet));
+    }
+
+    private static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
+    {
         var headers = new List<string>();
-        var row = worksheet.Row(1);
+        var row = worksheet.Row(headerRow);
 
         for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
         {
@@ -1571,10 +1599,11 @@ public class SpreadsheetImportService
 
     private static List<List<object?>> GetDataRows(IXLWorksheet worksheet, int columnCount)
     {
+        var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<object?>>();
         var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 1;
 
-        for (int rowNum = 2; rowNum <= lastRow; rowNum++)
+        for (int rowNum = headerRow + 1; rowNum <= lastRow; rowNum++)
         {
             var row = worksheet.Row(rowNum);
             var rowData = new List<object?>();

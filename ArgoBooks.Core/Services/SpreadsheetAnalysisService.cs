@@ -49,10 +49,11 @@ public class SpreadsheetAnalysisService
             foreach (var worksheet in workbook.Worksheets)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var headers = GetHeaders(worksheet);
+                var headerRow = FindHeaderRow(worksheet);
+                var headers = GetHeaders(worksheet, headerRow);
                 if (headers.Count == 0) continue;
 
-                var totalRows = (worksheet.LastRowUsed()?.RowNumber() ?? 1) - 1; // exclude header
+                var totalRows = (worksheet.LastRowUsed()?.RowNumber() ?? headerRow) - headerRow; // exclude header and rows above it
                 var sampleRows = GetSampleRows(worksheet, headers.Count, totalRows);
                 sheetsData.Add((worksheet.Name, headers, sampleRows, totalRows));
             }
@@ -531,10 +532,38 @@ IMPORTANT:
 
     #region Data Extraction Helpers
 
+    /// <summary>
+    /// Finds the header row by scanning for the first row with at least 2 non-empty cells.
+    /// Falls back to row 1 if no such row is found within the first 10 rows.
+    /// </summary>
+    private static int FindHeaderRow(IXLWorksheet worksheet)
+    {
+        var lastRow = Math.Min(worksheet.LastRowUsed()?.RowNumber() ?? 1, 10);
+        var colCount = worksheet.ColumnsUsed().Count();
+
+        for (int rowNum = 1; rowNum <= lastRow; rowNum++)
+        {
+            var row = worksheet.Row(rowNum);
+            int nonEmpty = 0;
+            for (int col = 1; col <= colCount; col++)
+            {
+                if (!row.Cell(col).IsEmpty()) nonEmpty++;
+                if (nonEmpty >= 2) return rowNum;
+            }
+        }
+
+        return 1;
+    }
+
     private static List<string> GetHeaders(IXLWorksheet worksheet)
     {
+        return GetHeaders(worksheet, FindHeaderRow(worksheet));
+    }
+
+    private static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
+    {
         var headers = new List<string>();
-        var row = worksheet.Row(1);
+        var row = worksheet.Row(headerRow);
         for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
         {
             var cell = row.Cell(col);
@@ -548,12 +577,13 @@ IMPORTANT:
     {
         if (totalRows <= 0) return [];
 
+        var headerRow = FindHeaderRow(worksheet);
         var indices = GetSampleIndices(totalRows);
         var result = new List<List<string>>();
 
         foreach (var rowIdx in indices)
         {
-            var xlRow = worksheet.Row(rowIdx + 2); // +2 because row 1 = header, data starts at row 2
+            var xlRow = worksheet.Row(rowIdx + headerRow + 1); // +headerRow+1: skip header, data starts after
             var rowData = new List<string>();
             for (int col = 1; col <= columnCount; col++)
             {
@@ -568,10 +598,11 @@ IMPORTANT:
 
     private static List<List<string>> GetAllRowsAsStrings(IXLWorksheet worksheet, int columnCount)
     {
+        var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<string>>();
         var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 1;
 
-        for (int rowNum = 2; rowNum <= lastRow; rowNum++)
+        for (int rowNum = headerRow + 1; rowNum <= lastRow; rowNum++)
         {
             var xlRow = worksheet.Row(rowNum);
             var rowData = new List<string>();
