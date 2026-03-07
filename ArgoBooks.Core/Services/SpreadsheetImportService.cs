@@ -359,10 +359,12 @@ public class SpreadsheetImportService
 
         foreach (var chunk in processedData)
         {
+            Debug.WriteLine($"[ImportProcessedEntities] Processing chunk: EntityType={chunk.EntityType}, Entities={chunk.Entities.Count}, SourceRows={chunk.SourceRowsProcessed}, Warnings=[{string.Join(", ", chunk.Warnings)}]");
             foreach (var entityJson in chunk.Entities)
             {
                 try
                 {
+                    Debug.WriteLine($"[ImportProcessedEntities] Importing {chunk.EntityType} entity: {entityJson.GetRawText()[..Math.Min(200, entityJson.GetRawText().Length)]}...");
                     if (ImportSingleEntity(companyData, chunk.EntityType, entityJson))
                         imported++;
                     else
@@ -379,6 +381,21 @@ public class SpreadsheetImportService
 
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
+
+        // Summary log of all categories and products after import
+        Debug.WriteLine($"[ImportProcessedEntities] === IMPORT SUMMARY ===");
+        Debug.WriteLine($"[ImportProcessedEntities] Total imported: {imported}, Total skipped: {skipped}");
+        Debug.WriteLine($"[ImportProcessedEntities] Categories ({companyData.Categories.Count}):");
+        foreach (var cat in companyData.Categories)
+            Debug.WriteLine($"[ImportProcessedEntities]   - {cat.Id}: '{cat.Name}' (Type={cat.Type}, ItemType={cat.ItemType})");
+        Debug.WriteLine($"[ImportProcessedEntities] Products ({companyData.Products.Count}):");
+        foreach (var p in companyData.Products)
+        {
+            var catName = companyData.Categories.FirstOrDefault(c => c.Id == p.CategoryId)?.Name ?? "NONE";
+            Debug.WriteLine($"[ImportProcessedEntities]   - {p.Id}: '{p.Name}' (Type={p.Type}, CategoryId={p.CategoryId ?? "null"}, Category='{catName}')");
+        }
+        Debug.WriteLine($"[ImportProcessedEntities] === END SUMMARY ===");
+
         return (imported, skipped);
     }
 
@@ -402,10 +419,17 @@ public class SpreadsheetImportService
         var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == sheetName);
         if (sheetAnalysis == null || !sheetAnalysis.IsIncluded) return;
 
+        Debug.WriteLine($"[ImportWorksheetWithMapping] Sheet '{sheetName}': DetectedType={sheetAnalysis.DetectedType}, Tier={sheetAnalysis.Tier}, Headers=[{string.Join(", ", headers)}]");
+
         // Only process Tier 1 sheets here (Tier 2 is handled separately via ProcessedEntities)
-        if (sheetAnalysis.Tier == ProcessingTier.Tier2_LlmProcessing) return;
+        if (sheetAnalysis.Tier == ProcessingTier.Tier2_LlmProcessing)
+        {
+            Debug.WriteLine($"[ImportWorksheetWithMapping] Sheet '{sheetName}': Skipping — Tier2 (handled via ProcessedEntities)");
+            return;
+        }
 
         ApplyColumnMapping(headers, sheetAnalysis);
+        Debug.WriteLine($"[ImportWorksheetWithMapping] Sheet '{sheetName}': After column mapping, headers=[{string.Join(", ", headers)}]");
         var sheetType = sheetAnalysis.DetectedType;
         var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
         result.TotalImported += imported;
@@ -559,8 +583,13 @@ public class SpreadsheetImportService
                 var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
                 if (product != null && !string.IsNullOrEmpty(product.Id))
                 {
+                    Debug.WriteLine($"[Import] Product '{product.Name}' (ID={product.Id}): Type={product.Type}, ItemType={product.ItemType}, CategoryId={product.CategoryId ?? "null"}");
+                    Debug.WriteLine($"[Import] Product '{product.Name}' raw JSON: {jsonStr}");
+
                     // Auto-create category if product has a category name but no matching category
                     ResolveProductCategory(data, product, entityJson);
+
+                    Debug.WriteLine($"[Import] Product '{product.Name}' final CategoryId={product.CategoryId ?? "null"}");
 
                     var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
                     if (existing != null) data.Products.Remove(existing);
@@ -1928,20 +1957,29 @@ public class SpreadsheetImportService
     /// </summary>
     private static Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
     {
+        Debug.WriteLine($"[FindOrCreateCategory] Looking for category: name='{categoryName}', type={type}, itemType={itemType}");
+        Debug.WriteLine($"[FindOrCreateCategory] Existing categories ({data.Categories.Count}): [{string.Join(", ", data.Categories.Select(c => $"'{c.Name}'({c.Type})"))}]");
+
         // Try to find existing category by name and type
         var existing = data.Categories.FirstOrDefault(c =>
             string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase) &&
             c.Type == type);
 
         if (existing != null)
+        {
+            Debug.WriteLine($"[FindOrCreateCategory] Found exact match: '{existing.Name}' (ID={existing.Id}, Type={existing.Type})");
             return existing;
+        }
 
         // Also try matching by name only (any type)
         existing = data.Categories.FirstOrDefault(c =>
             string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase));
 
         if (existing != null)
+        {
+            Debug.WriteLine($"[FindOrCreateCategory] Found name-only match: '{existing.Name}' (ID={existing.Id}, Type={existing.Type})");
             return existing;
+        }
 
         // Create new category
         var idGen = new IdGenerator(data);
@@ -1953,6 +1991,7 @@ public class SpreadsheetImportService
             ItemType = itemType
         };
         data.Categories.Add(category);
+        Debug.WriteLine($"[FindOrCreateCategory] CREATED new category: '{category.Name}' (ID={category.Id}, Type={category.Type}, ItemType={category.ItemType})");
         return category;
     }
 
@@ -1962,30 +2001,41 @@ public class SpreadsheetImportService
     /// </summary>
     private static void ResolveProductCategory(CompanyData data, Product product, JsonElement entityJson)
     {
+        Debug.WriteLine($"[ResolveCategory] Starting for product '{product.Name}' (ID={product.Id})");
+
         // Extract categoryName from the raw JSON (not part of the Product model)
         string? categoryName = null;
         if (entityJson.TryGetProperty("categoryName", out var nameElement))
             categoryName = nameElement.GetString();
+
+        Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': categoryId={product.CategoryId ?? "null"}, categoryName from JSON={categoryName ?? "null"}");
 
         // If we have a valid categoryId that matches an existing category, nothing to do
         if (!string.IsNullOrEmpty(product.CategoryId))
         {
             var existingCategory = data.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
             if (existingCategory != null)
+            {
+                Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': categoryId '{product.CategoryId}' matches existing category '{existingCategory.Name}' — no action needed");
                 return;
+            }
+            Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': categoryId '{product.CategoryId}' does NOT match any existing category");
         }
 
         // If we have a category name, find or create the category
         if (!string.IsNullOrEmpty(categoryName))
         {
+            Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': using categoryName '{categoryName}' to find or create category");
             var category = FindOrCreateCategory(data, categoryName, product.Type, product.ItemType);
             product.CategoryId = category.Id;
+            Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': assigned categoryId='{category.Id}' (name='{category.Name}')");
             return;
         }
 
         // If categoryId was set but doesn't exist and no name provided, use the categoryId as the name
         if (!string.IsNullOrEmpty(product.CategoryId))
         {
+            Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': orphan categoryId '{product.CategoryId}', creating category with that as name");
             var category = FindOrCreateCategory(data, product.CategoryId, product.Type, product.ItemType);
             product.CategoryId = category.Id;
             return;
@@ -1994,8 +2044,13 @@ public class SpreadsheetImportService
         // Last resort: use the product name as the category name so no product is left uncategorized
         if (!string.IsNullOrEmpty(product.Name))
         {
+            Debug.WriteLine($"[ResolveCategory] Product '{product.Name}': NO categoryId or categoryName — using product name as category name (last resort)");
             var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
             product.CategoryId = category.Id;
+        }
+        else
+        {
+            Debug.WriteLine($"[ResolveCategory] Product '{product.Id}': NO categoryId, categoryName, or product name — cannot create category");
         }
     }
 
@@ -2200,25 +2255,33 @@ public class SpreadsheetImportService
 
             // Handle Category - prefer ID, fall back to name lookup, auto-create if needed
             var categoryId = GetNullableString(row, headers, "Category ID");
+            var categoryName = GetNullableString(row, headers, "Category Name");
+            Debug.WriteLine($"[ImportProducts] Product '{name}' (ID={id}): Type={productType}, ItemType={itemType}, CategoryID={categoryId ?? "null"}, CategoryName={categoryName ?? "null"}");
+
             if (!string.IsNullOrEmpty(categoryId))
             {
                 // Validate that the categoryId references an existing category
                 var existingCat = data.Categories.FirstOrDefault(c => c.Id == categoryId);
                 if (existingCat == null)
                 {
-                    // categoryId doesn't match any category, create one using the ID as name
+                    Debug.WriteLine($"[ImportProducts] Product '{name}': categoryId '{categoryId}' not found, creating category");
                     var category = FindOrCreateCategory(data, categoryId, productType, itemType);
                     categoryId = category.Id;
                 }
+                else
+                {
+                    Debug.WriteLine($"[ImportProducts] Product '{name}': categoryId '{categoryId}' matched existing category '{existingCat.Name}'");
+                }
+            }
+            else if (!string.IsNullOrEmpty(categoryName))
+            {
+                Debug.WriteLine($"[ImportProducts] Product '{name}': no categoryId, using categoryName '{categoryName}'");
+                var category = FindOrCreateCategory(data, categoryName, productType, itemType);
+                categoryId = category.Id;
             }
             else
             {
-                var categoryName = GetNullableString(row, headers, "Category Name");
-                if (!string.IsNullOrEmpty(categoryName))
-                {
-                    var category = FindOrCreateCategory(data, categoryName, productType, itemType);
-                    categoryId = category.Id;
-                }
+                Debug.WriteLine($"[ImportProducts] Product '{name}': NO category ID or name provided — product will have no category");
             }
             product.CategoryId = categoryId;
 

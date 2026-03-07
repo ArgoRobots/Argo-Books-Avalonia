@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -165,12 +166,19 @@ public class SpreadsheetAnalysisService
         var systemPrompt = BuildTier2SystemPrompt(entityType, schema);
         var userPrompt = BuildTier2UserPrompt(headers, rows);
 
+        Debug.WriteLine($"[ProcessChunkAsync] Sending Tier2 request for {entityType} with {rows.Count} rows");
+        Debug.WriteLine($"[ProcessChunkAsync] User prompt (first 500 chars):\n{userPrompt[..Math.Min(500, userPrompt.Length)]}...");
+
         var response = await _openAiService.SendChatAsync(
             systemPrompt, userPrompt, maxTokens: 8000, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
+        {
+            Debug.WriteLine($"[ProcessChunkAsync] LLM returned empty response for {entityType}!");
             return null;
+        }
 
+        Debug.WriteLine($"[ProcessChunkAsync] LLM response for {entityType} ({response.Length} chars):\n{response}");
         return ParseTier2Response(response, entityType, rows.Count);
     }
 
@@ -363,7 +371,11 @@ IMPORTANT:
             sb.AppendLine("- If no category exists in source data, infer an appropriate category name from the product name and description (e.g., 'Industrial Drill Press' → 'Power Tools', 'Monthly Bookkeeping' → 'Bookkeeping Services', 'Copper Pipe' → 'Plumbing')");
             sb.AppendLine("- Set type to 'Expense' for products/services that are typically purchased or expensed (e.g., office supplies, bookkeeping, equipment rental), and 'Revenue' for items typically sold to customers");
         }
-        return sb.ToString();
+
+        var prompt = sb.ToString();
+        Debug.WriteLine($"[BuildTier2SystemPrompt] Entity type: {entityType}");
+        Debug.WriteLine($"[BuildTier2SystemPrompt] Full prompt:\n{prompt}");
+        return prompt;
     }
 
     private static string BuildTier2UserPrompt(List<string> headers, List<List<string>> rows)
