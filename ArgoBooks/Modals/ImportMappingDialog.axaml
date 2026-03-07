@@ -11,7 +11,8 @@
              x:Class="ArgoBooks.Modals.ImportMappingDialog"
              x:DataType="vm:ImportMappingDialogViewModel">
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding RequestCloseCommand}">
         <controls:ModalOverlay.ModalContent>
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -81,7 +82,7 @@
                                     Classes="icon-button"
                                     Width="32" Height="32"
                                     VerticalAlignment="Top"
-                                    Command="{Binding CancelCommand}">
+                                    Command="{Binding RequestCloseCommand}">
                                 <PathIcon Data="{x:Static local:Icons.Close}"
                                           Width="16" Height="16"
                                           Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -498,7 +499,7 @@
                                         Spacing="12">
                                 <Button Classes="secondary-button"
                                         Content="Cancel"
-                                        Command="{Binding CancelCommand}" />
+                                        Command="{Binding RequestCloseCommand}" />
                                 <Button Classes="primary-button"
                                         Content="Accept &amp; Import"
                                         Command="{Binding AcceptCommand}" />

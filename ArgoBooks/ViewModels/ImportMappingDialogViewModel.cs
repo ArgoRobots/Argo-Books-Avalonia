@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -238,6 +239,29 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
         }
 
         return _analysisResult;
+    }
+
+    [RelayCommand]
+    private async Task RequestCloseAsync()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Cancel Import?".Translate(),
+                Message = "Are you sure you want to cancel? The analysis results will be lost.".Translate(),
+                PrimaryButtonText = "Cancel Import".Translate(),
+                CancelButtonText = "Continue Reviewing".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary)
+                return;
+        }
+
+        IsOpen = false;
+        _completionSource?.TrySetResult(ImportMappingDialogResult.Cancel);
     }
 
     [RelayCommand]
