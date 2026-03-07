@@ -283,7 +283,7 @@
                                                         <!-- Expand toggle -->
                                                         <ToggleButton Grid.Column="4"
                                                                       IsChecked="{Binding IsExpanded}"
-                                                                      Classes="icon-button"
+                                                                      Classes="icon-button sheet-toggle"
                                                                       Width="28" Height="28"
                                                                       VerticalAlignment="Center">
                                                             <controls:ToggleArrow IconSize="12"
@@ -295,7 +295,16 @@
                                                 </Border>
 
                                                 <!-- Expandable mapping details -->
-                                                <StackPanel IsVisible="{Binding IsExpanded}">
+                                                <Border ClipToBounds="True"
+                                                        MaxHeight="{Binding IsExpanded, Converter={x:Static converters:BoolConverters.ToHeight}, ConverterParameter='2000,0'}"
+                                                        Opacity="{Binding IsExpanded, Converter={x:Static converters:BoolConverters.ToHeight}, ConverterParameter='1,0'}">
+                                                    <Border.Transitions>
+                                                        <Transitions>
+                                                            <DoubleTransition Property="MaxHeight" Duration="0:0:0.3" Easing="CubicEaseInOut" />
+                                                            <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                                                        </Transitions>
+                                                    </Border.Transitions>
+                                                <StackPanel>
                                                     <!-- Column Mapping Table Header -->
                                                     <Border Padding="16,8"
                                                             Background="{DynamicResource BackgroundBrush}"
@@ -463,6 +472,7 @@
                                                         </StackPanel>
                                                     </Border>
                                                 </StackPanel>
+                                                </Border>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>

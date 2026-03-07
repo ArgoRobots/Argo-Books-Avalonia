@@ -291,6 +291,10 @@
     <Style Selector="ToggleButton.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
     </Style>
+    <!-- Sheet toggle: sits on SurfaceAltBrush so needs a distinct hover color -->
+    <Style Selector="ToggleButton.sheet-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SecondaryButtonBgBrush}" />
+    </Style>
 
     <!-- Icon Button Small (smaller variant for compact areas) -->
     <Style Selector="Button.icon-button-small">
