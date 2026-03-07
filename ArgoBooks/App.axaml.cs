@@ -2973,6 +2973,10 @@ public class App : Application
 
             CompanyManager?.MarkAsChanged();
 
+            // Auto-switch date range to "All Time" so imported data is visible on dashboard/analytics
+            // (imported data may be from any time period, not necessarily the current month)
+            ChartSettingsService.Instance.SelectedDateRange = "All Time";
+
             // Combine Tier 1 and Tier 2 counts
             if (tier1Result != null)
             {

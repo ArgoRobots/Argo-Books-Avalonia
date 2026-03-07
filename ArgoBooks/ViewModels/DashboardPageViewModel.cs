@@ -647,9 +647,13 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Correct rental statuses before displaying
         CorrectRentalStatuses(data);
 
-        // Determine if a date range filter is active and data exists beyond it
+        // Show date range message only when data exists but the current range has no matching records
         var isFiltered = SelectedDateRange != "All Time";
-        ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);
+        var hasAnyData = data.Revenues.Count > 0 || data.Expenses.Count > 0;
+        var hasDataInRange = hasAnyData && (
+            data.Revenues.Any(s => s.Date >= StartDate && s.Date <= EndDate) ||
+            data.Expenses.Any(p => p.Date >= StartDate && p.Date <= EndDate));
+        ShowFinancialDateRangeMessage = isFiltered && hasAnyData && !hasDataInRange;
 
         LoadStatistics(data);
         LoadRecentTransactions(data);
