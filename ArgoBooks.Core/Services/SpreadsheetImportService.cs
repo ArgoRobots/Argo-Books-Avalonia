@@ -1087,7 +1087,7 @@ public class SpreadsheetImportService
                 !importedInvoices.Contains(invoiceId))
             {
                 result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
-                    $"Invoice '{invoiceId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Invoice '{invoiceId}' not found — reference will be cleared", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(customerId) &&
@@ -2196,7 +2196,9 @@ public class SpreadsheetImportService
 
             var payment = existing ?? new Payment();
             payment.Id = id;
-            payment.InvoiceId = GetString(row, headers, "Invoice ID");
+            var invoiceId = GetString(row, headers, "Invoice ID");
+            payment.InvoiceId = !string.IsNullOrEmpty(invoiceId) && data.Invoices.Any(inv => inv.Id == invoiceId)
+                ? invoiceId : "";
             payment.CustomerId = GetString(row, headers, "Customer ID");
             payment.Date = GetDateTime(row, headers, "Date");
             payment.Amount = GetDecimal(row, headers, "Amount");
