@@ -27,8 +27,8 @@
                         SelectedIndex="{Binding SelectedTabIndex}"
                         Margin="0"
                         Classes="page-tabs">
-                <TabItem Header="{loc:Loc Expenses}" />
-                <TabItem Header="{loc:Loc Revenue}" />
+                <TabItem Header="{loc:Loc 'Expense Categories'}" />
+                <TabItem Header="{loc:Loc 'Revenue Categories'}" />
             </TabControl>
         </Border>
 
