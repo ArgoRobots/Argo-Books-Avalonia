@@ -326,8 +326,10 @@ public class SpreadsheetImportService
                     if (sheetAnalysis != null)
                         ApplyColumnMapping(headers, sheetAnalysis);
 
-                    // Validation uses the renamed headers
-                    ValidateWorksheet(worksheet, companyData, importedIds, result);
+                    // Validation uses the mapped headers
+                    var rows = GetDataRows(worksheet, headers.Count);
+                    if (rows.Count == 0) continue;
+                    ValidateWorksheetData(worksheet.Name, headers, rows, companyData, importedIds, result);
                 }
             }
             catch (Exception ex)
@@ -738,19 +740,27 @@ public class SpreadsheetImportService
         Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
     {
-        var sheetName = worksheet.Name;
         var headers = GetHeaders(worksheet);
         if (headers.Count == 0) return;
 
         var rows = GetDataRows(worksheet, headers.Count);
         if (rows.Count == 0) return;
 
+        ValidateWorksheetData(worksheet.Name, headers, rows, data, importedIds, result);
+    }
+
+    private void ValidateWorksheetData(
+        string sheetName,
+        List<string> headers,
+        List<List<object?>> rows,
+        CompanyData data,
+        Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
         // Count new vs updated records
-        var idColumn = sheetName switch
-        {
-            "Invoices" => "Invoice #",
-            _ => "ID"
-        };
+        var idColumn = SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName) == SpreadsheetSheetType.Invoices
+            ? "Invoice #"
+            : "ID";
 
         if (headers.Contains(idColumn))
         {
@@ -1774,9 +1784,29 @@ public class SpreadsheetImportService
             decimal dec => dec,
             int i => i,
             long l => l,
-            string s when decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var result) => result,
+            string s => ParseDecimalString(s),
             _ => 0m
         };
+    }
+
+    private static decimal ParseDecimalString(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return 0m;
+
+        // Strip common currency symbols and whitespace before parsing
+        var cleaned = s.Trim();
+        foreach (var symbol in new[] { "$", "€", "£", "¥", "₹", "CHF", "CAD", "AUD", "USD", "EUR", "GBP" })
+            cleaned = cleaned.Replace(symbol, "", StringComparison.OrdinalIgnoreCase);
+        cleaned = cleaned.Trim();
+
+        // Handle parentheses as negative: (123.45) → -123.45
+        if (cleaned.StartsWith('(') && cleaned.EndsWith(')'))
+            cleaned = "-" + cleaned[1..^1];
+
+        if (decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+            return result;
+
+        return 0m;
     }
 
     private static int GetInt(List<object?> row, List<string> headers, string columnName)
