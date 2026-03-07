@@ -20,6 +20,22 @@ public class SpreadsheetAnalysisService
     private const int SampleRandomRows = 5;
     private const int Tier2ChunkSize = 100;
 
+    private static readonly string ImportLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "ArgoBooks", "import_log.txt");
+
+    private static void Log(string message)
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(ImportLogPath);
+            if (dir != null) Directory.CreateDirectory(dir);
+            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}\n";
+            File.AppendAllText(ImportLogPath, line);
+        }
+        catch { /* don't let logging break import */ }
+    }
+
     private readonly IOpenAiService _openAiService;
     private readonly IErrorLogger? _errorLogger;
     private readonly string? _country;
@@ -166,19 +182,19 @@ public class SpreadsheetAnalysisService
         var systemPrompt = BuildTier2SystemPrompt(entityType, schema);
         var userPrompt = BuildTier2UserPrompt(headers, rows);
 
-        Debug.WriteLine($"[ProcessChunkAsync] Sending Tier2 request for {entityType} with {rows.Count} rows");
-        Debug.WriteLine($"[ProcessChunkAsync] User prompt (first 500 chars):\n{userPrompt[..Math.Min(500, userPrompt.Length)]}...");
+        Log($"[ProcessChunkAsync] Sending Tier2 request for {entityType} with {rows.Count} rows");
+        Log($"[ProcessChunkAsync] User prompt (first 500 chars):\n{userPrompt[..Math.Min(500, userPrompt.Length)]}...");
 
         var response = await _openAiService.SendChatAsync(
             systemPrompt, userPrompt, maxTokens: 8000, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
         {
-            Debug.WriteLine($"[ProcessChunkAsync] LLM returned empty response for {entityType}!");
+            Log($"[ProcessChunkAsync] LLM returned empty response for {entityType}!");
             return null;
         }
 
-        Debug.WriteLine($"[ProcessChunkAsync] LLM response for {entityType} ({response.Length} chars):\n{response}");
+        Log($"[ProcessChunkAsync] LLM response for {entityType} ({response.Length} chars):\n{response}");
         return ParseTier2Response(response, entityType, rows.Count);
     }
 
@@ -373,8 +389,8 @@ IMPORTANT:
         }
 
         var prompt = sb.ToString();
-        Debug.WriteLine($"[BuildTier2SystemPrompt] Entity type: {entityType}");
-        Debug.WriteLine($"[BuildTier2SystemPrompt] Full prompt:\n{prompt}");
+        Log($"[BuildTier2SystemPrompt] Entity type: {entityType}");
+        Log($"[BuildTier2SystemPrompt] Full prompt:\n{prompt}");
         return prompt;
     }
 
