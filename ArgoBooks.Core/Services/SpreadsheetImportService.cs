@@ -1534,7 +1534,7 @@ public class SpreadsheetImportService
                     data.Categories.Add(new Category
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Type = CategoryType.Revenue,
                         ItemType = "Product",
                         Icon = "📦"
@@ -1548,7 +1548,7 @@ public class SpreadsheetImportService
                     data.Suppliers.Add(new Supplier
                     {
                         Id = id,
-                        Name = $"[Imported] {id}"
+                        Name = id
                     });
                 }
                 break;
@@ -1559,7 +1559,7 @@ public class SpreadsheetImportService
                     data.Customers.Add(new Customer
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Status = EntityStatus.Active
                     });
                 }
@@ -1571,7 +1571,7 @@ public class SpreadsheetImportService
                     data.Products.Add(new Product
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Type = CategoryType.Revenue,
                         ItemType = "Product"
                     });
@@ -1598,7 +1598,7 @@ public class SpreadsheetImportService
                     data.Locations.Add(new Location
                     {
                         Id = id,
-                        Name = $"[Imported] {id}"
+                        Name = id
                     });
                 }
                 break;
@@ -1609,7 +1609,7 @@ public class SpreadsheetImportService
                     data.Departments.Add(new Department
                     {
                         Id = id,
-                        Name = $"[Imported] {id}"
+                        Name = id
                     });
                 }
                 break;
@@ -1620,7 +1620,7 @@ public class SpreadsheetImportService
                     data.RentalInventory.Add(new RentalItem
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Status = EntityStatus.Active
                     });
                 }
@@ -1981,6 +1981,39 @@ public class SpreadsheetImportService
 
             if (existing == null)
                 data.Invoices.Add(invoice);
+
+            // Create a linked Revenue entry for paid/partially paid invoices
+            // so they appear on the dashboard and analytics pages
+            if (invoice.AmountPaid > 0 && !data.Revenues.Any(r => r.InvoiceId == invoice.Id))
+            {
+                data.IdCounters.Revenue++;
+                var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
+                var paidAmount = invoice.AmountPaid;
+                var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
+
+                data.Revenues.Add(new Revenue
+                {
+                    Id = revenueId,
+                    Date = invoice.IssueDate,
+                    CustomerId = invoice.CustomerId,
+                    Description = $"Invoice {invoice.InvoiceNumber}",
+                    Quantity = 1,
+                    UnitPrice = invoice.Subtotal,
+                    Subtotal = invoice.Subtotal,
+                    Amount = invoice.Subtotal,
+                    TaxAmount = invoice.TaxAmount,
+                    Total = invoice.Total,
+                    PaymentMethod = PaymentMethod.Other,
+                    PaymentStatus = isPaid ? "Paid" : "Partial",
+                    Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
+                    InvoiceId = invoice.Id,
+                    ReferenceNumber = invoice.InvoiceNumber,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    OriginalCurrency = invoice.OriginalCurrency,
+                    TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
+                });
+            }
         }
     }
 
@@ -2052,13 +2085,11 @@ public class SpreadsheetImportService
             // Check for existing product by ID first
             var existing = data.Products.FirstOrDefault(p => p.Id == id);
 
-            // Only match by name for auto-created placeholder products (those with "[Imported]" prefix)
-            // This prevents products with duplicate names but different IDs from overwriting each other
-            if (existing == null)
+            // Match by name for auto-created placeholder products (created from foreign key references)
+            if (existing == null && !string.IsNullOrEmpty(name))
             {
                 var placeholder = data.Products.FirstOrDefault(p =>
-                    p.Name.StartsWith("[Imported]", StringComparison.OrdinalIgnoreCase) &&
-                    p.Name.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(p.Name, id, StringComparison.OrdinalIgnoreCase));
                 if (placeholder != null)
                     existing = placeholder;
             }

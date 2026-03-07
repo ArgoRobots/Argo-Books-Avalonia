@@ -2761,12 +2761,15 @@ public class App : Application
     {
         if (_appShellViewModel == null) return;
 
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
+
         // Check rate limit via server-side API
         var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
         var usageCheck = await usageService.CheckUsageAsync();
 
         if (!usageCheck.CanImport)
         {
+            _mainWindowViewModel?.HideLoading();
             if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
             {
                 await ShowErrorMessageBoxAsync(
@@ -2788,6 +2791,7 @@ public class App : Application
         var openAiService = new OpenAiService(ErrorLogger, TelemetryManager);
         if (!openAiService.IsConfigured)
         {
+            _mainWindowViewModel?.HideLoading();
             await ShowErrorMessageBoxAsync(
                 "AI Not Configured".Translate(),
                 "OpenAI API key is not configured. Please set the OPENAI_API_KEY environment variable to use AI-powered import.".Translate());
@@ -2796,8 +2800,6 @@ public class App : Application
 
         var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company?.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
-
-        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
 
         try
         {
