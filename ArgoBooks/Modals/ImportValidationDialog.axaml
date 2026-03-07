@@ -151,7 +151,7 @@
                                 <TextBlock FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            TextWrapping="Wrap"
-                                           Text="Items marked 'Auto-fix' (Suppliers, Customers, Categories, etc.) will create placeholder entries named '[Imported] ID' that you can edit later. For example, a missing supplier 'SUP-001' becomes a new supplier with name '[Imported] SUP-001'. Items marked 'Manual fix' (invalid product names, transaction IDs) require you to correct your spreadsheet." />
+                                           Text="Items marked 'Auto-fix' (Suppliers, Customers, Categories, etc.) will create placeholder entries using the ID as the name that you can edit later. For example, a missing supplier 'SUP-001' becomes a new supplier named 'SUP-001'. Items marked 'Manual fix' (invalid product names, transaction IDs) require you to correct your spreadsheet." />
                             </StackPanel>
                         </Border>
 
