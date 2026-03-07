@@ -2836,6 +2836,7 @@ public class App : Application
             var importOptions = new ImportOptions();
 
             // Tier 1: Validate with mappings
+            SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)
             {
                 _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate());
@@ -2864,10 +2865,9 @@ public class App : Application
                 // Import Tier 1 data
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
-                if (isCsv)
-                    await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
-                else
-                    await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
+                tier1Result = isCsv
+                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions)
+                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
 
                 _mainWindowViewModel?.HideLoading();
             }
@@ -2916,22 +2916,36 @@ public class App : Application
 
             CompanyManager?.MarkAsChanged();
 
+            // Combine Tier 1 and Tier 2 counts
+            if (tier1Result != null)
+            {
+                totalImported += tier1Result.TotalImported;
+                totalSkipped += tier1Result.TotalSkipped;
+            }
+
+            // Collect all warnings
+            var allWarnings = tier1Result?.Warnings ?? [];
+
             // Build success message
-            var entitySummary = includedSheets
-                .Select(s => $"{s.DetectedType}: {s.RowCount:N0} rows")
-                .ToList();
-            var successMessage = "AI import completed successfully.".Translate()
-                + $"\n\n{string.Join("\n", entitySummary)}";
+            var successMessage = totalImported > 0
+                ? "AI import completed successfully.".Translate()
+                : "AI import completed but no records were imported.".Translate();
 
-            if (totalImported > 0 || totalSkipped > 0)
-                successMessage += $"\n\n{"Imported:".Translate()} {totalImported:N0}"
-                    + (totalSkipped > 0 ? $" — {"Skipped:".Translate()} {totalSkipped:N0}" : "");
+            successMessage += $"\n\n{"Imported:".Translate()} {totalImported:N0}";
+            if (totalSkipped > 0)
+                successMessage += $" — {"Skipped:".Translate()} {totalSkipped:N0}";
 
-            successMessage += "\n\n" + "Please save to persist changes.".Translate();
+            if (allWarnings.Count > 0)
+                successMessage += "\n\n" + string.Join("\n", allWarnings);
 
-            var notifType = totalSkipped > 0 && totalImported == 0
+            if (totalImported > 0)
+                successMessage += "\n\n" + "Please save to persist changes.".Translate();
+
+            var notifType = totalImported == 0
                 ? NotificationType.Warning
-                : NotificationType.Success;
+                : totalSkipped > 0 || allWarnings.Count > 0
+                    ? NotificationType.Warning
+                    : NotificationType.Success;
             _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, notifType);
         }
         catch (Exception ex)

@@ -33,6 +33,16 @@ public class ImportOptions
 }
 
 /// <summary>
+/// Result of a spreadsheet import operation, tracking what was imported and any issues.
+/// </summary>
+public class SpreadsheetImportResult
+{
+    public int TotalImported { get; set; }
+    public int TotalSkipped { get; set; }
+    public List<string> Warnings { get; } = [];
+}
+
+/// <summary>
 /// Service for importing company data from spreadsheet formats (xlsx).
 /// </summary>
 public class SpreadsheetImportService
@@ -149,7 +159,7 @@ public class SpreadsheetImportService
     /// Imports data from an Excel file using AI-generated column mappings (Tier 1).
     /// Headers are renamed according to the analysis result before standard import logic runs.
     /// </summary>
-    public async Task ImportWithMappingsAsync(
+    public async Task<SpreadsheetImportResult> ImportWithMappingsAsync(
         string filePath,
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
@@ -162,6 +172,7 @@ public class SpreadsheetImportService
 
         options ??= new ImportOptions();
         var stopwatch = Stopwatch.StartNew();
+        var result = new SpreadsheetImportResult();
 
         try
         {
@@ -178,7 +189,7 @@ public class SpreadsheetImportService
                 foreach (var worksheet in workbook.Worksheets)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ImportWorksheetWithMapping(worksheet, companyData, analysis);
+                    ImportWorksheetWithMapping(worksheet, companyData, analysis, result);
                 }
 
                 UpdateIdCounters(companyData);
@@ -193,12 +204,14 @@ public class SpreadsheetImportService
             _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed AI-mapped import from: {Path.GetFileName(filePath)}");
             throw;
         }
+
+        return result;
     }
 
     /// <summary>
     /// Imports data from a CSV file using AI-generated column mappings (Tier 1).
     /// </summary>
-    public async Task ImportCsvWithMappingsAsync(
+    public async Task<SpreadsheetImportResult> ImportCsvWithMappingsAsync(
         string filePath,
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
@@ -210,17 +223,26 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(analysis);
 
         options ??= new ImportOptions();
+        var result = new SpreadsheetImportResult();
 
         try
         {
             await Task.Run(() =>
             {
                 var lines = File.ReadAllLines(filePath);
-                if (lines.Length < 2) return;
+                if (lines.Length < 2)
+                {
+                    result.Warnings.Add("CSV file has no data rows.");
+                    return;
+                }
 
                 var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
                 var headers = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
-                if (headers.Count == 0) return;
+                if (headers.Count == 0)
+                {
+                    result.Warnings.Add("CSV file has no headers.");
+                    return;
+                }
 
                 var rows = new List<List<object?>>();
                 for (int i = 1; i < lines.Length; i++)
@@ -230,17 +252,27 @@ public class SpreadsheetImportService
                     rows.Add(fields.Cast<object?>().ToList());
                 }
 
-                if (rows.Count == 0) return;
+                if (rows.Count == 0)
+                {
+                    result.Warnings.Add("CSV file has no data rows.");
+                    return;
+                }
 
-                // Find matching sheet analysis (CSV has one "sheet" named after the file)
-                var sheetName = Path.GetFileNameWithoutExtension(filePath);
                 var sheetAnalysis = analysis.Sheets.FirstOrDefault();
 
                 if (sheetAnalysis != null)
                 {
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
-                    ImportBySheetType(sheetType, companyData, headers, rows);
+                    var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows);
+                    result.TotalImported += imported;
+                    result.TotalSkipped += skipped;
+                    if (imported == 0)
+                        result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
+                }
+                else
+                {
+                    result.Warnings.Add("No sheet analysis found for CSV file.");
                 }
 
                 UpdateIdCounters(companyData);
@@ -254,6 +286,8 @@ public class SpreadsheetImportService
             _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed AI-mapped CSV import from: {Path.GetFileName(filePath)}");
             throw;
         }
+
+        return result;
     }
 
     /// <summary>
@@ -346,15 +380,24 @@ public class SpreadsheetImportService
         return (imported, skipped);
     }
 
-    private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis)
+    private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis, SpreadsheetImportResult result)
     {
+        var sheetName = worksheet.Name;
         var headers = GetHeaders(worksheet);
-        if (headers.Count == 0) return;
+        if (headers.Count == 0)
+        {
+            result.Warnings.Add($"Sheet '{sheetName}': no headers found, skipped.");
+            return;
+        }
 
         var rows = GetDataRows(worksheet, headers.Count);
-        if (rows.Count == 0) return;
+        if (rows.Count == 0)
+        {
+            result.Warnings.Add($"Sheet '{sheetName}': no data rows found, skipped.");
+            return;
+        }
 
-        var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == worksheet.Name);
+        var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == sheetName);
         if (sheetAnalysis == null || !sheetAnalysis.IsIncluded) return;
 
         // Only process Tier 1 sheets here (Tier 2 is handled separately via ProcessedEntities)
@@ -362,7 +405,11 @@ public class SpreadsheetImportService
 
         ApplyColumnMapping(headers, sheetAnalysis);
         var sheetType = sheetAnalysis.DetectedType;
-        ImportBySheetType(sheetType, data, headers, rows);
+        var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
+        result.TotalImported += imported;
+        result.TotalSkipped += skipped;
+        if (imported == 0 && rows.Count > 0)
+            result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
     }
 
     private void ImportBySheetType(SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
@@ -430,6 +477,42 @@ public class SpreadsheetImportService
                 ImportLostDamaged(data, headers, rows);
                 break;
         }
+    }
+
+    private static int GetEntityCount(CompanyData data, SpreadsheetSheetType type) => type switch
+    {
+        SpreadsheetSheetType.Customers => data.Customers.Count,
+        SpreadsheetSheetType.Invoices => data.Invoices.Count,
+        SpreadsheetSheetType.Expenses => data.Expenses.Count,
+        SpreadsheetSheetType.Products => data.Products.Count,
+        SpreadsheetSheetType.Inventory => data.InventoryRecords.Count,
+        SpreadsheetSheetType.Payments => data.Payments.Count,
+        SpreadsheetSheetType.Suppliers => data.Suppliers.Count,
+        SpreadsheetSheetType.Revenue => data.Revenue.Count,
+        SpreadsheetSheetType.RentalInventory => data.RentalInventory.Count,
+        SpreadsheetSheetType.RentalRecords => data.RentalRecords.Count,
+        SpreadsheetSheetType.Categories => data.Categories.Count,
+        SpreadsheetSheetType.Departments => data.Departments.Count,
+        SpreadsheetSheetType.Employees => data.Employees.Count,
+        SpreadsheetSheetType.Locations => data.Locations.Count,
+        SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
+        SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Count,
+        SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Count,
+        SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrderLineItems.Count,
+        SpreadsheetSheetType.Returns => data.Returns.Count,
+        SpreadsheetSheetType.LostDamaged => data.LostDamagedItems.Count,
+        _ => 0
+    };
+
+    private (int imported, int skipped) ImportBySheetTypeWithCount(
+        SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        var countBefore = GetEntityCount(data, sheetType);
+        ImportBySheetType(sheetType, data, headers, rows);
+        var countAfter = GetEntityCount(data, sheetType);
+        var imported = countAfter - countBefore;
+        var skipped = rows.Count - imported;
+        return (Math.Max(0, imported), Math.Max(0, skipped));
     }
 
     internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
