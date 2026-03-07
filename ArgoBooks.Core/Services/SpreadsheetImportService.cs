@@ -487,12 +487,12 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.Invoices => data.Invoices.Count,
         SpreadsheetSheetType.Expenses => data.Expenses.Count,
         SpreadsheetSheetType.Products => data.Products.Count,
-        SpreadsheetSheetType.Inventory => data.InventoryRecords.Count,
+        SpreadsheetSheetType.Inventory => data.Inventory.Count,
         SpreadsheetSheetType.Payments => data.Payments.Count,
         SpreadsheetSheetType.Suppliers => data.Suppliers.Count,
-        SpreadsheetSheetType.Revenue => data.Revenue.Count,
+        SpreadsheetSheetType.Revenue => data.Revenues.Count,
         SpreadsheetSheetType.RentalInventory => data.RentalInventory.Count,
-        SpreadsheetSheetType.RentalRecords => data.RentalRecords.Count,
+        SpreadsheetSheetType.RentalRecords => data.Rentals.Count,
         SpreadsheetSheetType.Categories => data.Categories.Count,
         SpreadsheetSheetType.Departments => data.Departments.Count,
         SpreadsheetSheetType.Employees => data.Employees.Count,
@@ -500,9 +500,9 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
         SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Count,
         SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Count,
-        SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrderLineItems.Count,
+        SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrders.SelectMany(po => po.LineItems).Count(),
         SpreadsheetSheetType.Returns => data.Returns.Count,
-        SpreadsheetSheetType.LostDamaged => data.LostDamagedItems.Count,
+        SpreadsheetSheetType.LostDamaged => data.LostDamaged.Count,
         _ => 0
     };
 
