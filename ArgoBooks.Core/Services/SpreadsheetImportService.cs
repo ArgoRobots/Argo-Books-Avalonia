@@ -636,8 +636,8 @@ public class SpreadsheetImportService
                     var productName = revenue.Description;
                     if (!string.IsNullOrEmpty(productName))
                     {
-                        var product = FindProductByName(data, productName, CategoryType.Revenue)
-                                      ?? AutoCreateProduct(data, productName, revenue.Amount, CategoryType.Revenue);
+                        var revenueProduct = FindProductByName(data, productName, CategoryType.Revenue)
+                                             ?? AutoCreateProduct(data, productName, revenue.Amount, CategoryType.Revenue);
 
                         // Ensure line items reference the product
                         if (revenue.LineItems.Count == 0)
@@ -646,7 +646,7 @@ public class SpreadsheetImportService
                             [
                                 new LineItem
                                 {
-                                    ProductId = product.Id,
+                                    ProductId = revenueProduct.Id,
                                     Description = productName,
                                     Quantity = 1,
                                     UnitPrice = revenue.Amount,
@@ -658,7 +658,7 @@ public class SpreadsheetImportService
                         {
                             foreach (var li in revenue.LineItems.Where(li => string.IsNullOrEmpty(li.ProductId)))
                             {
-                                li.ProductId = product.Id;
+                                li.ProductId = revenueProduct.Id;
                             }
                         }
                     }
