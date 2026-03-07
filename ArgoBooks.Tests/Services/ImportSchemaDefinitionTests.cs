@@ -104,4 +104,60 @@ public class ImportSchemaDefinitionTests
             Assert.Equal(names.Count, distinctNames.Count);
         }
     }
+
+    [Theory]
+    [InlineData("United States", "ZIP Code", "State")]
+    [InlineData("US", "ZIP Code", "State")]
+    [InlineData("USA", "ZIP Code", "State")]
+    [InlineData("Canada", "Postal Code", "Province")]
+    [InlineData("CA", "Postal Code", "Province")]
+    [InlineData("United Kingdom", "Postcode", "County")]
+    [InlineData("UK", "Postcode", "County")]
+    [InlineData("GB", "Postcode", "County")]
+    [InlineData("Australia", "Postcode", "State")]
+    [InlineData("India", "PIN Code", "State")]
+    [InlineData("Germany", "Postal Code", "State")]
+    [InlineData(null, "Postal Code", "State/Province")]
+    [InlineData("", "Postal Code", "State/Province")]
+    [InlineData("Unknown Country", "Postal Code", "State/Province")]
+    public void GetAddressLabels_ReturnsCountrySpecificLabels(string? country, string expectedPostalLabel, string expectedStateLabel)
+    {
+        var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(country);
+
+        Assert.Equal(expectedPostalLabel, postalLabel);
+        Assert.Equal(expectedStateLabel, stateLabel);
+    }
+
+    [Fact]
+    public void GetSchema_WithCountry_UsesCountrySpecificLabels()
+    {
+        var usSchema = ImportSchemaDefinition.GetSchema("United States");
+        var customers = usSchema[SpreadsheetSheetType.Customers];
+        var columnNames = customers.Select(c => c.Name).ToList();
+
+        Assert.Contains("ZIP Code", columnNames);
+        Assert.Contains("State", columnNames);
+        Assert.DoesNotContain("Postal Code", columnNames);
+    }
+
+    [Fact]
+    public void GetSchema_WithUK_UsesPostcodeAndCounty()
+    {
+        var ukSchema = ImportSchemaDefinition.GetSchema("United Kingdom");
+        var customers = ukSchema[SpreadsheetSheetType.Customers];
+        var columnNames = customers.Select(c => c.Name).ToList();
+
+        Assert.Contains("Postcode", columnNames);
+        Assert.Contains("County", columnNames);
+    }
+
+    [Fact]
+    public void FormatSchemaForPrompt_WithCountry_UsesCountryLabels()
+    {
+        var prompt = ImportSchemaDefinition.FormatSchemaForPrompt("United States");
+
+        Assert.Contains("ZIP Code", prompt);
+        Assert.Contains("| State |", prompt);
+        Assert.DoesNotContain("Postal Code", prompt);
+    }
 }

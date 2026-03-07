@@ -14,6 +14,8 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class SpreadsheetExportService
 {
+    private string? _country;
+
     /// <summary>
     /// Exports selected data to an Excel file.
     /// </summary>
@@ -28,6 +30,8 @@ public class SpreadsheetExportService
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(selectedDataItems);
+
+        _country = companyData.Settings?.Company?.Country;
 
         using var workbook = new XLWorkbook();
 
@@ -62,6 +66,8 @@ public class SpreadsheetExportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(selectedDataItems);
 
+        _country = companyData.Settings?.Company?.Country;
+
         var sb = new StringBuilder();
 
         foreach (var dataItem in selectedDataItems)
@@ -87,6 +93,8 @@ public class SpreadsheetExportService
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(selectedDataItems);
+
+        _country = companyData.Settings?.Company?.Country;
 
         QuestPDF.Settings.License = LicenseType.Community;
 
@@ -283,7 +291,8 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCustomersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", "State", "Postal Code", "Country", "Notes", "Status", "Total Purchases" };
+        var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(_country);
+        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", stateLabel, postalLabel, "Country", "Notes", "Status", "Total Purchases" };
         var rows = data.Customers.Select(c => new object[]
         {
             c.Id,
@@ -409,7 +418,8 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetSuppliersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Email", "Phone", "Website", "Street", "City", "State", "Postal Code", "Country", "Notes" };
+        var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(_country);
+        var headers = new[] { "ID", "Name", "Email", "Phone", "Website", "Street", "City", stateLabel, postalLabel, "Country", "Notes" };
         var rows = data.Suppliers.Select(s => new object[]
         {
             s.Id,
@@ -558,7 +568,8 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetLocationsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Contact Person", "Phone", "Street", "City", "State", "Postal Code", "Country", "Capacity", "Utilization" };
+        var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(_country);
+        var headers = new[] { "ID", "Name", "Contact Person", "Phone", "Street", "City", stateLabel, postalLabel, "Country", "Capacity", "Utilization" };
         var rows = data.Locations.Select(l => new object[]
         {
             l.Id,

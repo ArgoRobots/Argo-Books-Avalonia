@@ -1627,6 +1627,23 @@ public class SpreadsheetImportService
         return row[index]?.ToString() ?? string.Empty;
     }
 
+    /// <summary>
+    /// Tries multiple column name variants and returns the first match.
+    /// Used for address fields that have country-specific labels.
+    /// </summary>
+    private static string GetStringMulti(List<object?> row, List<string> headers, params string[] columnNames)
+    {
+        foreach (var name in columnNames)
+        {
+            var result = GetString(row, headers, name);
+            if (!string.IsNullOrEmpty(result)) return result;
+        }
+        return string.Empty;
+    }
+
+    private static readonly string[] PostalCodeVariants = ["Postal Code", "ZIP Code", "Postcode", "PIN Code"];
+    private static readonly string[] StateVariants = ["State", "State/Province", "Province", "County", "Prefecture", "Region"];
+
     private static string? GetNullableString(List<object?> row, List<string> headers, string columnName)
     {
         var value = GetString(row, headers, columnName);
@@ -1715,8 +1732,8 @@ public class SpreadsheetImportService
             {
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
-                State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Postal Code"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
                 Country = GetString(row, headers, "Country")
             };
             customer.Notes = GetString(row, headers, "Notes");
@@ -1967,8 +1984,8 @@ public class SpreadsheetImportService
             {
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
-                State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Postal Code"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
                 Country = GetString(row, headers, "Country")
             };
             supplier.Notes = GetString(row, headers, "Notes");
@@ -2247,8 +2264,8 @@ public class SpreadsheetImportService
             {
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
-                State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Postal Code"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
                 Country = GetString(row, headers, "Country")
             };
             location.Capacity = GetInt(row, headers, "Capacity");

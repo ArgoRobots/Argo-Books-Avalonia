@@ -21,11 +21,13 @@ public class SpreadsheetAnalysisService
 
     private readonly IOpenAiService _openAiService;
     private readonly IErrorLogger? _errorLogger;
+    private readonly string? _country;
 
-    public SpreadsheetAnalysisService(IOpenAiService openAiService, IErrorLogger? errorLogger = null)
+    public SpreadsheetAnalysisService(IOpenAiService openAiService, IErrorLogger? errorLogger = null, string? country = null)
     {
         _openAiService = openAiService;
         _errorLogger = errorLogger;
+        _country = country;
     }
 
     #region Analysis Phase
@@ -155,7 +157,7 @@ public class SpreadsheetAnalysisService
         SpreadsheetSheetType entityType,
         CancellationToken cancellationToken = default)
     {
-        var schema = ImportSchemaDefinition.GetSchemaForType(entityType);
+        var schema = ImportSchemaDefinition.GetSchemaForType(entityType, _country);
         if (schema == null)
             return null;
 
@@ -252,7 +254,7 @@ Respond with valid JSON only, no markdown code blocks.";
         var sb = new StringBuilder();
 
         sb.AppendLine("## Target Schema");
-        sb.AppendLine(ImportSchemaDefinition.FormatSchemaForPrompt());
+        sb.AppendLine(ImportSchemaDefinition.FormatSchemaForPrompt(_country));
 
         sb.AppendLine("## Source Data");
         sb.AppendLine();

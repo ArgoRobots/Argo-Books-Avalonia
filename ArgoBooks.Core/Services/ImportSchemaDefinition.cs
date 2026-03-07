@@ -19,31 +19,76 @@ public record SchemaColumn(string Name, string Type, string Description, bool Re
 /// </summary>
 public static class ImportSchemaDefinition
 {
-    private static Dictionary<SpreadsheetSheetType, List<SchemaColumn>>? _schema;
+    // Cache per country key (null key = default)
+    private static readonly Dictionary<string, Dictionary<SpreadsheetSheetType, List<SchemaColumn>>> _schemaCache = new();
+
+    /// <summary>
+    /// Returns country-specific labels for address fields.
+    /// </summary>
+    public static (string StateLabel, string StateDescription, string PostalCodeLabel, string PostalCodeDescription) GetAddressLabels(string? country)
+    {
+        var normalized = (country ?? "").Trim().ToUpperInvariant();
+
+        return normalized switch
+        {
+            "UNITED STATES" or "US" or "USA" =>
+                ("State", "State", "ZIP Code", "ZIP code"),
+            "CANADA" or "CA" =>
+                ("Province", "Province", "Postal Code", "Postal code"),
+            "UNITED KINGDOM" or "UK" or "GB" or "GREAT BRITAIN" =>
+                ("County", "County", "Postcode", "Postcode"),
+            "AUSTRALIA" or "AU" =>
+                ("State", "State/territory", "Postcode", "Postcode"),
+            "GERMANY" or "DE" or "DEUTSCHLAND" =>
+                ("State", "Bundesland", "Postal Code", "Postleitzahl"),
+            "FRANCE" or "FR" =>
+                ("Region", "Région", "Postal Code", "Code postal"),
+            "JAPAN" or "JP" =>
+                ("Prefecture", "Prefecture", "Postal Code", "Postal code"),
+            "CHINA" or "CN" =>
+                ("Province", "Province", "Postal Code", "Postal code"),
+            "ITALY" or "IT" =>
+                ("Province", "Provincia", "Postal Code", "CAP"),
+            "BRAZIL" or "BR" =>
+                ("State", "Estado", "Postal Code", "CEP"),
+            "INDIA" or "IN" =>
+                ("State", "State", "PIN Code", "PIN code"),
+            "MEXICO" or "MX" =>
+                ("State", "Estado", "Postal Code", "Código postal"),
+            _ =>
+                ("State/Province", "State or province", "Postal Code", "Postal code"),
+        };
+    }
 
     /// <summary>
     /// Gets the complete import schema for all entity types.
     /// </summary>
-    public static Dictionary<SpreadsheetSheetType, List<SchemaColumn>> GetSchema()
+    public static Dictionary<SpreadsheetSheetType, List<SchemaColumn>> GetSchema(string? country = null)
     {
-        return _schema ??= BuildSchema();
+        var key = (country ?? "").Trim().ToUpperInvariant();
+        if (!_schemaCache.TryGetValue(key, out var schema))
+        {
+            schema = BuildSchema(country);
+            _schemaCache[key] = schema;
+        }
+        return schema;
     }
 
     /// <summary>
     /// Gets the schema for a specific entity type.
     /// </summary>
-    public static List<SchemaColumn>? GetSchemaForType(SpreadsheetSheetType type)
+    public static List<SchemaColumn>? GetSchemaForType(SpreadsheetSheetType type, string? country = null)
     {
-        return GetSchema().TryGetValue(type, out var columns) ? columns : null;
+        return GetSchema(country).TryGetValue(type, out var columns) ? columns : null;
     }
 
     /// <summary>
     /// Formats the schema as a readable string for LLM prompts.
     /// </summary>
-    public static string FormatSchemaForPrompt()
+    public static string FormatSchemaForPrompt(string? country = null)
     {
         var sb = new System.Text.StringBuilder();
-        foreach (var (type, columns) in GetSchema())
+        foreach (var (type, columns) in GetSchema(country))
         {
             sb.AppendLine($"### {type}");
             sb.AppendLine("| Column | Type | Required | Description |");
@@ -58,8 +103,10 @@ public static class ImportSchemaDefinition
         return sb.ToString();
     }
 
-    private static Dictionary<SpreadsheetSheetType, List<SchemaColumn>> BuildSchema()
+    private static Dictionary<SpreadsheetSheetType, List<SchemaColumn>> BuildSchema(string? country = null)
     {
+        var (stateLabel, stateDesc, postalLabel, postalDesc) = GetAddressLabels(country);
+
         return new Dictionary<SpreadsheetSheetType, List<SchemaColumn>>
         {
             [SpreadsheetSheetType.Customers] =
@@ -71,8 +118,8 @@ public static class ImportSchemaDefinition
                 new("Phone", "string", "Phone number", JsonName: "phone"),
                 new("Street", "string", "Street address", JsonName: "address.street"),
                 new("City", "string", "City", JsonName: "address.city"),
-                new("State", "string", "State or province", JsonName: "address.state"),
-                new("Postal Code", "string", "ZIP or postal code", JsonName: "address.zipCode"),
+                new(stateLabel, "string", stateDesc, JsonName: "address.state"),
+                new(postalLabel, "string", postalDesc, JsonName: "address.zipCode"),
                 new("Country", "string", "Country", JsonName: "address.country"),
                 new("Notes", "string", "Additional notes", JsonName: "notes"),
                 new("Status", "enum:Active,Inactive", "Customer status", JsonName: "status"),
@@ -88,8 +135,8 @@ public static class ImportSchemaDefinition
                 new("Website", "string", "Website URL", JsonName: "website"),
                 new("Street", "string", "Street address", JsonName: "address.street"),
                 new("City", "string", "City", JsonName: "address.city"),
-                new("State", "string", "State or province", JsonName: "address.state"),
-                new("Postal Code", "string", "ZIP or postal code", JsonName: "address.zipCode"),
+                new(stateLabel, "string", stateDesc, JsonName: "address.state"),
+                new(postalLabel, "string", postalDesc, JsonName: "address.zipCode"),
                 new("Country", "string", "Country", JsonName: "address.country"),
                 new("Notes", "string", "Additional notes", JsonName: "notes"),
             ],
@@ -197,8 +244,8 @@ public static class ImportSchemaDefinition
                 new("Phone", "string", "Phone number", JsonName: "phone"),
                 new("Street", "string", "Street address", JsonName: "address.street"),
                 new("City", "string", "City", JsonName: "address.city"),
-                new("State", "string", "State or province", JsonName: "address.state"),
-                new("Postal Code", "string", "ZIP or postal code", JsonName: "address.zipCode"),
+                new(stateLabel, "string", stateDesc, JsonName: "address.state"),
+                new(postalLabel, "string", postalDesc, JsonName: "address.zipCode"),
                 new("Country", "string", "Country", JsonName: "address.country"),
                 new("Capacity", "int", "Storage capacity", JsonName: "capacity"),
                 new("Utilization", "int", "Current utilization", JsonName: "currentUtilization"),
