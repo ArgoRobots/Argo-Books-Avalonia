@@ -584,6 +584,39 @@ public class SpreadsheetImportService
                 {
                     expense.OriginalCurrency = "USD";
                     expense.TotalUSD = expense.Total;
+                    expense.TaxAmountUSD = expense.TaxAmount;
+                    expense.ShippingCostUSD = expense.ShippingCost;
+
+                    // Link product by name and auto-create if missing
+                    var expProductName = expense.Description;
+                    if (!string.IsNullOrEmpty(expProductName))
+                    {
+                        var expProduct = FindProductByName(data, expProductName, CategoryType.Expense)
+                                         ?? AutoCreateProduct(data, expProductName, expense.Amount, CategoryType.Expense);
+
+                        if (expense.LineItems.Count == 0)
+                        {
+                            expense.LineItems =
+                            [
+                                new LineItem
+                                {
+                                    ProductId = expProduct.Id,
+                                    Description = expProductName,
+                                    Quantity = 1,
+                                    UnitPrice = expense.Amount,
+                                    TaxRate = expense.Amount > 0 ? expense.TaxAmount / expense.Amount : 0
+                                }
+                            ];
+                        }
+                        else
+                        {
+                            foreach (var li in expense.LineItems.Where(li => string.IsNullOrEmpty(li.ProductId)))
+                            {
+                                li.ProductId = expProduct.Id;
+                            }
+                        }
+                    }
+
                     var existing = data.Expenses.FirstOrDefault(e => e.Id == expense.Id);
                     if (existing != null) data.Expenses.Remove(existing);
                     data.Expenses.Add(expense);
@@ -596,6 +629,40 @@ public class SpreadsheetImportService
                 {
                     revenue.OriginalCurrency = "USD";
                     revenue.TotalUSD = revenue.Total;
+                    revenue.TaxAmountUSD = revenue.TaxAmount;
+                    revenue.ShippingCostUSD = revenue.ShippingCost;
+
+                    // Link product by name and auto-create if missing
+                    var productName = revenue.Description;
+                    if (!string.IsNullOrEmpty(productName))
+                    {
+                        var product = FindProductByName(data, productName, CategoryType.Revenue)
+                                      ?? AutoCreateProduct(data, productName, revenue.Amount, CategoryType.Revenue);
+
+                        // Ensure line items reference the product
+                        if (revenue.LineItems.Count == 0)
+                        {
+                            revenue.LineItems =
+                            [
+                                new LineItem
+                                {
+                                    ProductId = product.Id,
+                                    Description = productName,
+                                    Quantity = 1,
+                                    UnitPrice = revenue.Amount,
+                                    TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
+                                }
+                            ];
+                        }
+                        else
+                        {
+                            foreach (var li in revenue.LineItems.Where(li => string.IsNullOrEmpty(li.ProductId)))
+                            {
+                                li.ProductId = product.Id;
+                            }
+                        }
+                    }
+
                     var existing = data.Revenues.FirstOrDefault(r => r.Id == revenue.Id);
                     if (existing != null) data.Revenues.Remove(existing);
                     data.Revenues.Add(revenue);
@@ -954,7 +1021,7 @@ public class SpreadsheetImportService
                 !importedProductNames.Contains(productName))
             {
                 result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1068,7 +1135,7 @@ public class SpreadsheetImportService
                 !importedProductNames.Contains(productName))
             {
                 result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1949,13 +2016,19 @@ public class SpreadsheetImportService
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Expense-type categories when there are duplicate names
+            // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
                 var product = FindProductByName(data, description, CategoryType.Expense);
 
+                if (product == null)
+                {
+                    product = AutoCreateProduct(data, description, purchase.Amount, CategoryType.Expense);
+                }
+
                 var lineItem = new LineItem
                 {
-                    ProductId = product?.Id,
+                    ProductId = product.Id,
                     Description = description,
                     Quantity = 1,
                     UnitPrice = purchase.Amount,
@@ -2172,13 +2245,19 @@ public class SpreadsheetImportService
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Revenue-type categories when there are duplicate names
+            // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
                 var product = FindProductByName(data, description, CategoryType.Revenue);
 
+                if (product == null)
+                {
+                    product = AutoCreateProduct(data, description, revenue.Amount, CategoryType.Revenue);
+                }
+
                 var lineItem = new LineItem
                 {
-                    ProductId = product?.Id,
+                    ProductId = product.Id,
                     Description = description,
                     Quantity = 1,
                     UnitPrice = revenue.Amount,
@@ -2211,6 +2290,25 @@ public class SpreadsheetImportService
             fallback ??= p;
         }
         return fallback;
+    }
+
+    /// <summary>
+    /// Auto-creates a product from revenue/expense data when no matching product exists.
+    /// Uses the product name from the transaction description and sets a sensible unit price.
+    /// </summary>
+    private static Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
+    {
+        var newId = $"PRD-IMP-{data.Products.Count + 1:D3}";
+        var product = new Product
+        {
+            Id = newId,
+            Name = name,
+            UnitPrice = unitPrice,
+            Type = type,
+            ItemType = "Product"
+        };
+        data.Products.Add(product);
+        return product;
     }
 
     private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows)
