@@ -66,14 +66,16 @@ public class SpreadsheetImportService
 
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
+    private readonly IOpenAiService? _openAiService;
 
     /// <summary>
     /// Creates a new SpreadsheetImportService.
     /// </summary>
-    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IOpenAiService? openAiService = null)
     {
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
+        _openAiService = openAiService;
     }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
@@ -230,6 +232,9 @@ public class SpreadsheetImportService
                 companyData.MarkAsModified();
             }, cancellationToken);
 
+            // AI-categorize any products that ended up without a category
+            await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
+
             stopwatch.Stop();
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-xlsx", cancellationToken);
         }
@@ -312,6 +317,9 @@ public class SpreadsheetImportService
                 UpdateIdCounters(companyData);
                 companyData.MarkAsModified();
             }, cancellationToken);
+
+            // AI-categorize any products that ended up without a category
+            await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);
         }
@@ -2088,6 +2096,144 @@ public class SpreadsheetImportService
         }
     }
 
+    /// <summary>
+    /// Uses AI to suggest categories for products that have no category assigned.
+    /// Batches all uncategorized products into a single AI call for efficiency.
+    /// Falls back to using the product name as the category name if AI is unavailable.
+    /// </summary>
+    private async Task AiCategorizeMissingProductsAsync(CompanyData data, CancellationToken cancellationToken)
+    {
+        var uncategorized = data.Products
+            .Where(p => string.IsNullOrEmpty(p.CategoryId))
+            .ToList();
+
+        if (uncategorized.Count == 0)
+        {
+            Log("[AiCategorize] No uncategorized products found — skipping.");
+            return;
+        }
+
+        Log($"[AiCategorize] Found {uncategorized.Count} uncategorized product(s): [{string.Join(", ", uncategorized.Select(p => $"'{p.Name}'"))}]");
+
+        // Try AI categorization if the service is available
+        if (_openAiService?.IsConfigured == true)
+        {
+            try
+            {
+                var existingCategories = data.Categories
+                    .Select(c => $"- {c.Name} ({c.Type}, {c.ItemType})")
+                    .ToList();
+
+                var productList = uncategorized
+                    .Select(p => $"- \"{p.Name}\" (Type={p.Type}, ItemType={p.ItemType}, Description=\"{p.Description}\")")
+                    .ToList();
+
+                var prompt = $@"You are categorizing products for a small business bookkeeping application.
+
+## Existing Categories
+{(existingCategories.Count > 0 ? string.Join("\n", existingCategories) : "(none)")}
+
+## Uncategorized Products
+{string.Join("\n", productList)}
+
+For each product, suggest the best category name. Prefer matching an existing category when appropriate.
+If no existing category fits, suggest a short, clear new category name (2-4 words).
+
+Respond with ONLY a JSON array, one entry per product in the same order:
+[
+  {{ ""productName"": ""..."", ""categoryName"": ""..."" }}
+]";
+
+                Log("[AiCategorize] Sending AI categorization request...");
+                var response = await _openAiService.SendChatAsync(
+                    "You are a helpful assistant that categorizes business products. Always respond with valid JSON only, no markdown.",
+                    prompt,
+                    maxTokens: Math.Max(500, uncategorized.Count * 50),
+                    temperature: 0.1,
+                    cancellationToken);
+
+                if (!string.IsNullOrEmpty(response))
+                {
+                    Log($"[AiCategorize] AI response: {response}");
+                    var suggestions = ParseAiCategorySuggestions(response);
+
+                    foreach (var product in uncategorized)
+                    {
+                        var suggestion = suggestions.FirstOrDefault(s =>
+                            string.Equals(s.ProductName, product.Name, StringComparison.OrdinalIgnoreCase));
+
+                        if (suggestion != null && !string.IsNullOrEmpty(suggestion.CategoryName))
+                        {
+                            var category = FindOrCreateCategory(data, suggestion.CategoryName, product.Type, product.ItemType);
+                            product.CategoryId = category.Id;
+                            Log($"[AiCategorize] AI assigned product '{product.Name}' → category '{category.Name}' (ID={category.Id})");
+                        }
+                        else
+                        {
+                            // AI didn't return a match for this product — use product name as fallback
+                            Log($"[AiCategorize] AI had no suggestion for '{product.Name}' — using product name as category");
+                            var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+                            product.CategoryId = category.Id;
+                        }
+                    }
+                    return;
+                }
+
+                Log("[AiCategorize] AI returned empty response — falling back to product name.");
+            }
+            catch (Exception ex)
+            {
+                Log($"[AiCategorize] AI categorization failed: {ex.Message} — falling back to product name.");
+            }
+        }
+        else
+        {
+            Log("[AiCategorize] AI service not available — falling back to product name as category.");
+        }
+
+        // Fallback: use product name as category name (same as Tier 2 last-resort logic)
+        foreach (var product in uncategorized)
+        {
+            if (!string.IsNullOrEmpty(product.Name))
+            {
+                var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+                product.CategoryId = category.Id;
+                Log($"[AiCategorize] Fallback: product '{product.Name}' → category '{category.Name}' (ID={category.Id})");
+            }
+        }
+    }
+
+    private static List<(string ProductName, string CategoryName)> ParseAiCategorySuggestions(string response)
+    {
+        var results = new List<(string ProductName, string CategoryName)>();
+        try
+        {
+            // Strip markdown code fences if present
+            var clean = response.Trim();
+            if (clean.StartsWith("```"))
+            {
+                var firstNewline = clean.IndexOf('\n');
+                if (firstNewline >= 0) clean = clean[(firstNewline + 1)..];
+                if (clean.EndsWith("```")) clean = clean[..^3];
+                clean = clean.Trim();
+            }
+
+            using var doc = JsonDocument.Parse(clean);
+            foreach (var el in doc.RootElement.EnumerateArray())
+            {
+                var productName = el.TryGetProperty("productName", out var pn) ? pn.GetString() ?? "" : "";
+                var categoryName = el.TryGetProperty("categoryName", out var cn) ? cn.GetString() ?? "" : "";
+                if (!string.IsNullOrEmpty(productName) && !string.IsNullOrEmpty(categoryName))
+                    results.Add((productName, categoryName));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"[AiCategorize] Failed to parse AI response: {ex.Message}");
+        }
+        return results;
+    }
+
     #endregion
 
     #region Import Methods (Merge Logic)
@@ -2315,7 +2461,7 @@ public class SpreadsheetImportService
             }
             else
             {
-                Log($"[ImportProducts] Product '{name}': NO category ID or name provided — product will have no category");
+                Log($"[ImportProducts] Product '{name}': NO category ID or name provided — will be categorized by AI post-import");
             }
             product.CategoryId = categoryId;
 

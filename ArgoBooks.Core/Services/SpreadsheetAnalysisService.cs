@@ -139,8 +139,10 @@ public class SpreadsheetAnalysisService
         var systemPrompt = BuildAnalysisSystemPrompt();
         var userPrompt = BuildAnalysisUserPrompt(sheetsData);
 
+        // Scale max tokens based on number of sheets — each sheet needs ~300-500 tokens for mappings
+        var maxTokens = Math.Max(4000, sheetsData.Count * 500);
         var response = await _openAiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: 4000, temperature: 0.1, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
             return null;
