@@ -251,10 +251,12 @@ public class CompanyData
     /// </summary>
     public DateTime GetEarliestTransactionDate()
     {
+        // Use year 1900 as minimum to avoid DateTime arithmetic overflow from default/unset dates
+        var minValid = new DateTime(1900, 1, 1);
         var dates = new List<DateTime>();
-        if (Revenues.Count > 0) dates.Add(Revenues.Min(r => r.Date));
-        if (Expenses.Count > 0) dates.Add(Expenses.Min(e => e.Date));
-        if (Payments.Count > 0) dates.Add(Payments.Min(p => p.Date));
+        if (Revenues.Count > 0) dates.Add(Revenues.Where(r => r.Date >= minValid).Select(r => r.Date).DefaultIfEmpty(DateTime.Today).Min());
+        if (Expenses.Count > 0) dates.Add(Expenses.Where(e => e.Date >= minValid).Select(e => e.Date).DefaultIfEmpty(DateTime.Today).Min());
+        if (Payments.Count > 0) dates.Add(Payments.Where(p => p.Date >= minValid).Select(p => p.Date).DefaultIfEmpty(DateTime.Today).Min());
 
         return dates.Count > 0 ? dates.Min() : DateTime.Today;
     }
@@ -266,14 +268,18 @@ public class CompanyData
     /// </summary>
     public DateTime GetEarliestDate()
     {
+        // Use year 1900 as minimum to avoid DateTime arithmetic overflow from default/unset dates
+        var minValid = new DateTime(1900, 1, 1);
+        DateTime MinDate(IEnumerable<DateTime> source) => source.Where(d => d >= minValid).DefaultIfEmpty(DateTime.Today).Min();
+
         var dates = new List<DateTime>();
-        if (Revenues.Count > 0) dates.Add(Revenues.Min(r => r.Date));
-        if (Expenses.Count > 0) dates.Add(Expenses.Min(e => e.Date));
-        if (Payments.Count > 0) dates.Add(Payments.Min(p => p.Date));
-        if (Invoices.Count > 0) dates.Add(Invoices.Min(i => i.IssueDate));
-        if (StockAdjustments.Count > 0) dates.Add(StockAdjustments.Min(s => s.Timestamp));
-        if (PurchaseOrders.Count > 0) dates.Add(PurchaseOrders.Min(p => p.OrderDate));
-        if (Rentals.Count > 0) dates.Add(Rentals.Min(r => r.StartDate));
+        if (Revenues.Count > 0) dates.Add(MinDate(Revenues.Select(r => r.Date)));
+        if (Expenses.Count > 0) dates.Add(MinDate(Expenses.Select(e => e.Date)));
+        if (Payments.Count > 0) dates.Add(MinDate(Payments.Select(p => p.Date)));
+        if (Invoices.Count > 0) dates.Add(MinDate(Invoices.Select(i => i.IssueDate)));
+        if (StockAdjustments.Count > 0) dates.Add(MinDate(StockAdjustments.Select(s => s.Timestamp)));
+        if (PurchaseOrders.Count > 0) dates.Add(MinDate(PurchaseOrders.Select(p => p.OrderDate)));
+        if (Rentals.Count > 0) dates.Add(MinDate(Rentals.Select(r => r.StartDate)));
 
         return dates.Count > 0 ? dates.Min() : DateTime.Today;
     }
