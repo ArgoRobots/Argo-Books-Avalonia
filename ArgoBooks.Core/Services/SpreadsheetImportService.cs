@@ -202,7 +202,7 @@ public class SpreadsheetImportService
 
         Log($"Analysis sheets: {analysis.Sheets.Count}");
         foreach (var sheet in analysis.Sheets)
-            Log($"  Sheet: '{sheet.SourceSheetName}' → {sheet.DetectedType}, Tier={sheet.Tier}, Included={sheet.IsIncluded}, Columns=[{string.Join(", ", sheet.ColumnMappings.Select(m => $"{m.SourceColumn}→{m.TargetField}"))}]");
+            Log($"  Sheet: '{sheet.SourceSheetName}' → {sheet.DetectedType}, Tier={sheet.Tier}, Included={sheet.IsIncluded}, Columns=[{string.Join(", ", sheet.ColumnMappings.Select(m => $"{m.SourceColumn}→{m.TargetColumn}"))}]");
 
         options ??= new ImportOptions();
         var stopwatch = Stopwatch.StartNew();
