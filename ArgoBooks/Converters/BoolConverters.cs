@@ -32,6 +32,12 @@ public static class BoolConverters
         new FuncValueConverter<bool, string>(value => value ? "Expense Products" : "Revenue Products");
 
     /// <summary>
+    /// Converts bool to "Expense Categories" (true) or "Revenue Categories" (false).
+    /// </summary>
+    public static readonly IValueConverter ToExpenseOrRevenueCategories =
+        new FuncValueConverter<bool, string>(value => value ? "Expense Categories" : "Revenue Categories");
+
+    /// <summary>
     /// Converts bool (isChild) to left margin indent for child rows.
     /// </summary>
     public static readonly IValueConverter ToChildIndent =

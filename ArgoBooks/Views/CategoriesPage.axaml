@@ -36,7 +36,7 @@
         <Grid Grid.Row="1" RowDefinitions="*" Margin="24">
             <!-- Main Content Card using ArgoTable -->
             <table:ArgoTable Grid.Row="0"
-                                Title="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
+                                Title="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpenseOrRevenueCategories}}"
                                 ItemsSource="{Binding CurrentCategories}"
                                 SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
                                 SearchPlaceholder="{loc:Loc 'Search categories...'}"
