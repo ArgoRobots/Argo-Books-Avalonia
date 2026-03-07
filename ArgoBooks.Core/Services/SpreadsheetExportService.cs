@@ -108,7 +108,7 @@ public class SpreadsheetExportService
                     page.Margin(30);
                     page.DefaultTextStyle(x => x.FontSize(9));
 
-                    page.Header().Text($"{companyData.Settings.Company.Name} - Data Export")
+                    page.Header().Text($"{companyData.Settings?.Company?.Name} - Data Export")
                         .SemiBold().FontSize(16).FontColor(Colors.Blue.Darken2);
 
                     page.Content().Column(column =>
