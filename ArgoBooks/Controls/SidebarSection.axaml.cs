@@ -18,7 +18,7 @@ public partial class SidebarSection : UserControl
     private double _startHeight;
     private double _targetHeight;
     private double _animationProgress;
-    private const double AnimationDuration = 200.0; // milliseconds (matches sidebar animation)
+    private const double AnimationDuration = 350.0; // milliseconds (matches sidebar toggle animation)
     private const double FrameInterval = 16.0; // ~60fps
     private double _measuredContentHeight;
     private bool _isFirstLayout = true;

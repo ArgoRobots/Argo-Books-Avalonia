@@ -91,5 +91,11 @@
         <Style Selector="Button.section-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
         </Style>
+        <Style Selector="Button.section-toggle:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+        </Style>
+        <Style Selector="Button.section-toggle:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SidebarActiveBrush}" />
+        </Style>
     </UserControl.Styles>
 </UserControl>
