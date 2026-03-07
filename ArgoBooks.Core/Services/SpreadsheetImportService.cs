@@ -1988,6 +1988,14 @@ public class SpreadsheetImportService
         {
             var category = FindOrCreateCategory(data, product.CategoryId, product.Type, product.ItemType);
             product.CategoryId = category.Id;
+            return;
+        }
+
+        // Last resort: use the product name as the category name so no product is left uncategorized
+        if (!string.IsNullOrEmpty(product.Name))
+        {
+            var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+            product.CategoryId = category.Id;
         }
     }
 
@@ -2192,7 +2200,18 @@ public class SpreadsheetImportService
 
             // Handle Category - prefer ID, fall back to name lookup, auto-create if needed
             var categoryId = GetNullableString(row, headers, "Category ID");
-            if (string.IsNullOrEmpty(categoryId))
+            if (!string.IsNullOrEmpty(categoryId))
+            {
+                // Validate that the categoryId references an existing category
+                var existingCat = data.Categories.FirstOrDefault(c => c.Id == categoryId);
+                if (existingCat == null)
+                {
+                    // categoryId doesn't match any category, create one using the ID as name
+                    var category = FindOrCreateCategory(data, categoryId, productType, itemType);
+                    categoryId = category.Id;
+                }
+            }
+            else
             {
                 var categoryName = GetNullableString(row, headers, "Category Name");
                 if (!string.IsNullOrEmpty(categoryName))

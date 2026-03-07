@@ -352,6 +352,17 @@ IMPORTANT:
         sb.AppendLine("- Skip rows that are clearly subtotals, headers, or empty");
         sb.AppendLine("- If multiple source rows represent one entity, group them");
         sb.AppendLine("- Respond with JSON array only, no markdown");
+
+        // Product-specific instructions for category generation
+        if (entityType == SpreadsheetSheetType.Products)
+        {
+            sb.AppendLine();
+            sb.AppendLine("Product-specific rules:");
+            sb.AppendLine("- ALWAYS provide a categoryName for every product, even if the source data has no category column");
+            sb.AppendLine("- If the source data has a category, use it as categoryName");
+            sb.AppendLine("- If no category exists in source data, infer an appropriate category name from the product name and description (e.g., 'Industrial Drill Press' → 'Power Tools', 'Monthly Bookkeeping' → 'Bookkeeping Services', 'Copper Pipe' → 'Plumbing')");
+            sb.AppendLine("- Set type to 'Expense' for products/services that are typically purchased or expensed (e.g., office supplies, bookkeeping, equipment rental), and 'Revenue' for items typically sold to customers");
+        }
         return sb.ToString();
     }
 
