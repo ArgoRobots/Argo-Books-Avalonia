@@ -2761,17 +2761,27 @@ public class App : Application
     {
         if (_appShellViewModel == null) return;
 
-        // Check rate limit
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ArgoBooks");
-        var rateLimiter = new AiImportRateLimiter(appDataPath);
+        // Check rate limit via server-side API
+        var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
+        var usageCheck = await usageService.CheckUsageAsync();
 
-        if (!rateLimiter.CanImport())
+        if (!usageCheck.CanImport)
         {
-            await ShowErrorMessageBoxAsync(
-                "AI Import Limit Reached".Translate(),
-                "You have reached the daily AI import limit (10/day). Please try again tomorrow.".Translate());
+            if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+            {
+                await ShowErrorMessageBoxAsync(
+                    "AI Import Limit".Translate(),
+                    usageCheck.ErrorMessage);
+            }
+            else
+            {
+                await ShowErrorMessageBoxAsync(
+                    "AI Import Limit Reached".Translate(),
+                    "Monthly AI import limit reached ({0}/{1}).\n\nYour limit resets on {2}.\n\nUpgrade to Premium for more imports.".TranslateFormat(
+                        usageCheck.ImportCount,
+                        usageCheck.MonthlyLimit,
+                        usageCheck.ResetsAt ?? "the 1st of next month"));
+            }
             return;
         }
 
@@ -2808,8 +2818,7 @@ public class App : Application
 
             // Step 2: Show mapping review dialog
             var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
-            var remaining = rateLimiter.GetRemainingImportsToday();
-            var dialogResult = await mappingDialog.ShowAsync(analysis, remaining, rateLimiter.MaxPerDay);
+            var dialogResult = await mappingDialog.ShowAsync(analysis, usageCheck.Remaining, usageCheck.MonthlyLimit);
 
             if (dialogResult == ImportMappingDialogResult.Cancel)
                 return;
@@ -2901,8 +2910,8 @@ public class App : Application
                 _mainWindowViewModel?.HideLoading();
             }
 
-            // Record rate limit usage
-            rateLimiter.RecordImport(Path.GetFileName(filePath));
+            // Record usage on server
+            await usageService.IncrementUsageAsync();
 
             // Create snapshot for redo
             var importedSnapshot = CreateCompanyDataSnapshot(companyData);

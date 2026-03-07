@@ -210,7 +210,7 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
         // Rate limit display
         if (remainingImports >= 0 && maxImports > 0)
         {
-            RateLimitDisplay = $"{remainingImports}/{maxImports} remaining today";
+            RateLimitDisplay = $"{remainingImports}/{maxImports} remaining this month";
             ShowRateLimit = true;
         }
         else
