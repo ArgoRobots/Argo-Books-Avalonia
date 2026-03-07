@@ -31,7 +31,7 @@ public class SpreadsheetExportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(selectedDataItems);
 
-        _country = companyData.Settings?.Company?.Country;
+        _country = companyData.Settings.Company.Country;
 
         using var workbook = new XLWorkbook();
 
@@ -66,7 +66,7 @@ public class SpreadsheetExportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(selectedDataItems);
 
-        _country = companyData.Settings?.Company?.Country;
+        _country = companyData.Settings.Company.Country;
 
         var sb = new StringBuilder();
 
