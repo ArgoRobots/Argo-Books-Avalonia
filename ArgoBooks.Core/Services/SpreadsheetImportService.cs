@@ -2162,7 +2162,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                         var suggestion = suggestions.FirstOrDefault(s =>
                             string.Equals(s.ProductName, product.Name, StringComparison.OrdinalIgnoreCase));
 
-                        if (suggestion != null && !string.IsNullOrEmpty(suggestion.CategoryName))
+                        if (!string.IsNullOrEmpty(suggestion.CategoryName))
                         {
                             var category = FindOrCreateCategory(data, suggestion.CategoryName, product.Type, product.ItemType);
                             product.CategoryId = category.Id;
