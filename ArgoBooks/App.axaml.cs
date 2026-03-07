@@ -2784,7 +2784,7 @@ public class App : Application
             return;
         }
 
-        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager.CurrentCompanySettings?.Company?.Country);
+        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company?.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
 
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
