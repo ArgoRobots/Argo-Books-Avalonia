@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:converters="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
              xmlns:icons="using:ArgoBooks"
@@ -11,7 +12,12 @@
              x:Class="ArgoBooks.Modals.ImportValidationDialog"
              x:DataType="vm:ImportValidationDialogViewModel">
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+    <UserControl.Resources>
+        <converters:BoolToAngleConverter x:Key="BoolToAngleConverter" TrueAngle="90" FalseAngle="0" />
+    </UserControl.Resources>
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding RequestCloseCommand}">
         <controls:ModalOverlay.ModalContent>
             <!-- Modal Container -->
             <Border Background="{DynamicResource SurfaceBrush}"
@@ -60,7 +66,7 @@
                                 Classes="icon-button"
                                 Width="32" Height="32"
                                 VerticalAlignment="Top"
-                                Command="{Binding CancelCommand}">
+                                Command="{Binding RequestCloseCommand}">
                             <PathIcon Data="{x:Static local:Icons.Close}"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -194,39 +200,55 @@
                                             CornerRadius="8"
                                             Margin="0,0,0,12">
                                         <StackPanel>
-                                            <!-- Sheet Header -->
-                                            <Border Padding="16,12"
-                                                    Background="{DynamicResource SurfaceAltBrush}"
-                                                    CornerRadius="8,8,0,0">
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <PathIcon Grid.Column="0"
-                                                              Data="{x:Static icons:Icons.DocumentBlankAlt}"
-                                                              Width="16" Height="16"
-                                                              Foreground="{DynamicResource TextSecondaryBrush}"
-                                                              Margin="0,0,12,0"
-                                                              VerticalAlignment="Center" />
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding SheetName}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center" />
-                                                    <Border Grid.Column="2"
-                                                            Background="{DynamicResource WarningBrush}"
-                                                            CornerRadius="10"
-                                                            Padding="8,2"
-                                                            VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding IssueCount}"
-                                                                   FontSize="11"
+                                            <!-- Sheet Header (clickable to expand/collapse) -->
+                                            <Button Classes="sheet-header"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ImportValidationDialogViewModel)DataContext).ToggleSheetGroupCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <Border Padding="16,12"
+                                                        Background="Transparent"
+                                                        CornerRadius="8,8,0,0">
+                                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                        <!-- Expand/Collapse Arrow -->
+                                                        <PathIcon Grid.Column="0"
+                                                                  Data="{x:Static icons:Icons.ChevronRightStroke}"
+                                                                  Width="12" Height="12"
+                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                  Margin="0,0,8,0"
+                                                                  RenderTransformOrigin="0.5,0.5">
+                                                            <PathIcon.RenderTransform>
+                                                                <RotateTransform Angle="{Binding IsExpanded, Converter={StaticResource BoolToAngleConverter}}" />
+                                                            </PathIcon.RenderTransform>
+                                                        </PathIcon>
+                                                        <PathIcon Grid.Column="1"
+                                                                  Data="{x:Static icons:Icons.DocumentBlankAlt}"
+                                                                  Width="16" Height="16"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                  Margin="0,0,12,0"
+                                                                  VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding SheetName}"
+                                                                   FontSize="14"
                                                                    FontWeight="SemiBold"
-                                                                   Foreground="White" />
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center" />
+                                                        <Border Grid.Column="3"
+                                                                Background="{DynamicResource WarningBrush}"
+                                                                CornerRadius="10"
+                                                                Padding="8,2"
+                                                                VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding IssueCount}"
+                                                                       FontSize="11"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="White" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </Button>
 
-                                            <!-- Table Header -->
+                                            <!-- Table Header (collapsible) -->
                                             <Border Padding="16,8"
-                                                    Background="{DynamicResource BackgroundBrush}">
+                                                    Background="{DynamicResource BackgroundBrush}"
+                                                    IsVisible="{Binding IsExpanded}">
                                                 <Grid ColumnDefinitions="45,150,180,*">
                                                     <TextBlock Grid.Column="0" Text="Row" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
                                                     <TextBlock Grid.Column="1" Text="Column" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -235,8 +257,9 @@
                                                 </Grid>
                                             </Border>
 
-                                            <!-- Issue Rows -->
-                                            <ItemsControl ItemsSource="{Binding Issues}">
+                                            <!-- Issue Rows (collapsible) -->
+                                            <ItemsControl ItemsSource="{Binding Issues}"
+                                                          IsVisible="{Binding IsExpanded}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="vm:ValidationIssueViewModel">
                                                         <Border Padding="16,10"
@@ -339,7 +362,7 @@
                                     Spacing="12">
                             <Button Classes="secondary-button"
                                     Content="Cancel"
-                                    Command="{Binding CancelCommand}" />
+                                    Command="{Binding RequestCloseCommand}" />
                             <Button Classes="primary-button"
                                     Content="Create Missing &amp; Import"
                                     Command="{Binding CreateMissingAndImportCommand}"
@@ -351,4 +374,24 @@
             </Border>
         </controls:ModalOverlay.ModalContent>
     </controls:ModalOverlay>
+
+    <UserControl.Styles>
+        <!-- Sheet Header Button -->
+        <Style Selector="Button.sheet-header">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="CornerRadius" Value="8,8,0,0" />
+        </Style>
+        <Style Selector="Button.sheet-header /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="8,8,0,0" />
+        </Style>
+        <Style Selector="Button.sheet-header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
 </UserControl>
