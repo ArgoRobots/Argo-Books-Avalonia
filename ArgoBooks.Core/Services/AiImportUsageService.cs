@@ -100,10 +100,28 @@ public class AiImportUsageService : IAiImportUsageService
                 };
             }
 
+            // Server error (e.g. database outage) — don't block the user.
+            // Only block if the server explicitly says the user has exceeded their quota.
+            var isQuotaExceeded = response.CanImport == false && response.MonthlyLimit > 0;
+            if (isQuotaExceeded)
+            {
+                return new AiImportCheckResult
+                {
+                    CanImport = false,
+                    ImportCount = response.ImportCount,
+                    MonthlyLimit = response.MonthlyLimit,
+                    Remaining = response.Remaining,
+                    Tier = response.Tier,
+                    ResetsAt = response.ResetsAt
+                };
+            }
+
+            // Server-side error — allow import to proceed gracefully
+            _errorLogger?.LogError(new Exception(response.Error ?? "Unknown API error"), ErrorCategory.Api, "AI import usage check returned server error, allowing import");
             return new AiImportCheckResult
             {
-                CanImport = false,
-                ErrorMessage = response.Error ?? "Failed to check usage"
+                CanImport = true,
+                ErrorMessage = null
             };
         }
         catch (HttpRequestException)
