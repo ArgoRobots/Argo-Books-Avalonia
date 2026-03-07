@@ -29,6 +29,9 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _bannedCustomers;
 
+    [ObservableProperty]
+    private int _newThisMonth;
+
     #endregion
 
     #region Responsive Header
@@ -348,6 +351,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         TotalCustomers = _allCustomers.Count;
         ActiveCustomers = _allCustomers.Count(c => c.Status == EntityStatus.Active);
         BannedCustomers = _allCustomers.Count(c => c.Status == EntityStatus.Archived);
+        var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        NewThisMonth = _allCustomers.Count(c => c.CreatedAt >= monthStart);
     }
 
     /// <summary>
