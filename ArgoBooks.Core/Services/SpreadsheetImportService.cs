@@ -559,6 +559,9 @@ public class SpreadsheetImportService
                 var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
                 if (product != null && !string.IsNullOrEmpty(product.Id))
                 {
+                    // Auto-create category if product has a category name but no matching category
+                    ResolveProductCategory(data, product, entityJson);
+
                     var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
                     if (existing != null) data.Products.Remove(existing);
                     data.Products.Add(product);
@@ -1920,6 +1923,74 @@ public class SpreadsheetImportService
         return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) ? result : defaultValue;
     }
 
+    /// <summary>
+    /// Finds an existing category by name (case-insensitive) or creates a new one.
+    /// </summary>
+    private static Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
+    {
+        // Try to find existing category by name and type
+        var existing = data.Categories.FirstOrDefault(c =>
+            string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase) &&
+            c.Type == type);
+
+        if (existing != null)
+            return existing;
+
+        // Also try matching by name only (any type)
+        existing = data.Categories.FirstOrDefault(c =>
+            string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase));
+
+        if (existing != null)
+            return existing;
+
+        // Create new category
+        var idGen = new IdGenerator(data);
+        var category = new Category
+        {
+            Id = idGen.NextCategoryId(type),
+            Name = categoryName,
+            Type = type,
+            ItemType = itemType
+        };
+        data.Categories.Add(category);
+        return category;
+    }
+
+    /// <summary>
+    /// Resolves the category for an imported product: if the product has a categoryName in the JSON
+    /// (or a categoryId that doesn't match any existing category), auto-creates the category.
+    /// </summary>
+    private static void ResolveProductCategory(CompanyData data, Product product, JsonElement entityJson)
+    {
+        // Extract categoryName from the raw JSON (not part of the Product model)
+        string? categoryName = null;
+        if (entityJson.TryGetProperty("categoryName", out var nameElement))
+            categoryName = nameElement.GetString();
+
+        // If we have a valid categoryId that matches an existing category, nothing to do
+        if (!string.IsNullOrEmpty(product.CategoryId))
+        {
+            var existingCategory = data.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
+            if (existingCategory != null)
+                return;
+        }
+
+        // If we have a category name, find or create the category
+        if (!string.IsNullOrEmpty(categoryName))
+        {
+            var category = FindOrCreateCategory(data, categoryName, product.Type, product.ItemType);
+            product.CategoryId = category.Id;
+            return;
+        }
+
+        // If categoryId was set but doesn't exist and no name provided, use the categoryId as the name
+        if (!string.IsNullOrEmpty(product.CategoryId))
+        {
+            var category = FindOrCreateCategory(data, product.CategoryId, product.Type, product.ItemType);
+            product.CategoryId = category.Id;
+        }
+    }
+
     #endregion
 
     #region Import Methods (Merge Logic)
@@ -2119,16 +2190,15 @@ public class SpreadsheetImportService
             product.Sku = GetString(row, headers, "SKU");
             product.Description = GetString(row, headers, "Description");
 
-            // Handle Category - prefer ID, fall back to name lookup
+            // Handle Category - prefer ID, fall back to name lookup, auto-create if needed
             var categoryId = GetNullableString(row, headers, "Category ID");
             if (string.IsNullOrEmpty(categoryId))
             {
                 var categoryName = GetNullableString(row, headers, "Category Name");
                 if (!string.IsNullOrEmpty(categoryName))
                 {
-                    var category = data.Categories.FirstOrDefault(c =>
-                        string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase));
-                    categoryId = category?.Id;
+                    var category = FindOrCreateCategory(data, categoryName, productType, itemType);
+                    categoryId = category.Id;
                 }
             }
             product.CategoryId = categoryId;
