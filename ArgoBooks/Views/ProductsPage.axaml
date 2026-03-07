@@ -33,94 +33,9 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
-            <!-- Statistics Cards (Row 0) -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                    <Grid.Styles>
-                        <Style Selector="Border.stat-card">
-                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                            <Setter Property="CornerRadius" Value="12" />
-                            <Setter Property="Padding" Value="20" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                        </Style>
-                    </Grid.Styles>
-
-                    <!-- Total Products -->
-                    <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="{DynamicResource PrimaryLightBrush}"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="{x:Static icons:Icons.Products}"
-                                          Width="24" Height="24"
-                                          Foreground="{DynamicResource PrimaryBrush}" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding TotalProducts}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Total Products'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Physical Products -->
-                    <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="{DynamicResource SuccessLightBrush}"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="{x:Static icons:Icons.TableRows}"
-                                          Width="24" Height="24"
-                                          Foreground="{DynamicResource SuccessBrush}" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding PhysicalProducts}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Physical Products'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Services -->
-                    <Border Grid.Column="2" Classes="stat-card" Margin="12,0,0,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="{DynamicResource PurpleLightBrush}"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="{x:Static icons:Icons.Volume}"
-                                          Width="24" Height="24"
-                                          Foreground="{DynamicResource PurpleBrush}" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Services}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{loc:Loc Services}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-            </Grid>
-
+        <Grid Grid.Row="1" RowDefinitions="*" Margin="24">
             <!-- Main Content Card using ArgoTable -->
-            <table:ArgoTable Grid.Row="1"
+            <table:ArgoTable Grid.Row="0"
                                 Title="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
                                 ItemsSource="{Binding CurrentProducts}"
                                 SearchQuery="{Binding SearchQuery, Mode=TwoWay}"

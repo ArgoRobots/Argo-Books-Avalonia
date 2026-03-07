@@ -150,19 +150,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Statistics
-
-    [ObservableProperty]
-    private int _totalProducts;
-
-    [ObservableProperty]
-    private int _physicalProducts;
-
-    [ObservableProperty]
-    private int _services;
-
-    #endregion
-
     #region Plan Status and Product Limits
 
     private const int FreeProductLimit = 10;
@@ -523,27 +510,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
-
-        TotalProducts = _allProducts.Count;
-
-        // Count products vs services based on category ItemType
-        var productCategories = companyData.Categories
-            .Where(c => c.ItemType == "Product")
-            .Select(c => c.Id)
-            .ToHashSet();
-
-        var serviceCategories = companyData.Categories
-            .Where(c => c.ItemType == "Service")
-            .Select(c => c.Id)
-            .ToHashSet();
-
-        PhysicalProducts = _allProducts.Count(p =>
-            string.IsNullOrEmpty(p.CategoryId) ||
-            productCategories.Contains(p.CategoryId));
-
-        Services = _allProducts.Count(p =>
-            !string.IsNullOrEmpty(p.CategoryId) &&
-            serviceCategories.Contains(p.CategoryId));
 
         // Count expense vs revenue products based on category type
         var expenseCategoryIds = companyData.Categories
