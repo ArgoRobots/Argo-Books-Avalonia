@@ -246,6 +246,45 @@ public class App : Application
     }
 
     /// <summary>
+    /// Shows a modal info message box.
+    /// </summary>
+    private static async Task ShowInfoMessageBoxAsync(string title, string message)
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowInfoAsync(title, message);
+        }
+    }
+
+    /// <summary>
+    /// Shows a modal success message box.
+    /// </summary>
+    private static async Task ShowSuccessMessageBoxAsync(string title, string message)
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowSuccessAsync(title, message);
+        }
+    }
+
+    /// <summary>
+    /// Shows a modal warning message box.
+    /// </summary>
+    private static async Task ShowWarningMessageBoxAsync(string title, string message)
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowWarningAsync(title, message);
+        }
+    }
+
+    /// <summary>
     /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
     /// and sends notifications if enabled. Only sends once per day to avoid duplicates.
     /// </summary>
@@ -2717,7 +2756,7 @@ public class App : Application
             // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {
-                _appShellViewModel.AddNotification("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
+                await ShowInfoMessageBoxAsync("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
                 return;
             }
 
@@ -2833,7 +2872,7 @@ public class App : Application
             var includedSheets = updatedAnalysis.Sheets.Where(s => s.IsIncluded).ToList();
             if (includedSheets.Count == 0)
             {
-                _appShellViewModel.AddNotification("Info".Translate(), "No sheets were selected for import.".Translate());
+                await ShowInfoMessageBoxAsync("Info".Translate(), "No sheets were selected for import.".Translate());
                 return;
             }
 
@@ -2841,8 +2880,15 @@ public class App : Application
             var snapshot = CreateCompanyDataSnapshot(companyData);
 
             // Step 3: Process Tier 1 sheets (validation + import with mapped headers)
-            var tier1Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
-            var tier2Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
+            // For CSV files, treat all sheets as Tier 1 — the column-mapping import path
+            // already handles currency symbols, mixed date formats, and other format variations
+            // via ParseDecimalString and DateTime.TryParse, so LLM row processing is unnecessary.
+            var tier1Sheets = isCsv
+                ? includedSheets.ToList()
+                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
+            var tier2Sheets = isCsv
+                ? new List<SheetAnalysis>()
+                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
 
             var importOptions = new ImportOptions();
 
@@ -2952,12 +2998,12 @@ public class App : Application
             if (totalImported > 0)
                 successMessage += "\n\n" + "Please save to persist changes.".Translate();
 
-            var notifType = totalImported == 0
-                ? NotificationType.Warning
-                : totalSkipped > 0 || allWarnings.Count > 0
-                    ? NotificationType.Warning
-                    : NotificationType.Success;
-            _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, notifType);
+            if (totalImported == 0)
+                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
+            else if (totalSkipped > 0 || allWarnings.Count > 0)
+                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
+            else
+                await ShowSuccessMessageBoxAsync("Import Complete".Translate(), successMessage);
         }
         catch (Exception ex)
         {

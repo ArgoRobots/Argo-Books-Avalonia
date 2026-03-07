@@ -89,7 +89,6 @@ public class SpreadsheetAnalysisService
             if (headers.Count == 0)
                 return null;
 
-            var totalRows = lines.Length - 1;
             var allDataRows = new List<List<string>>();
             for (int i = 1; i < lines.Length; i++)
             {
@@ -97,6 +96,7 @@ public class SpreadsheetAnalysisService
                 allDataRows.Add(ParseCsvLine(lines[i], delimiter));
             }
 
+            var totalRows = allDataRows.Count;
             var sampleRows = GetSampleFromList(allDataRows, totalRows);
             var sheetName = Path.GetFileNameWithoutExtension(filePath);
             var sheetsData = new List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>
