@@ -597,6 +597,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Unsubscribe from checklist navigation
         SetupChecklist.NavigationRequested -= OnChecklistNavigationRequested;
+
+        // Unsubscribe all zoom handlers
+        foreach (var unsub in _zoomUnsubscribers.Values)
+            unsub();
+        _zoomUnsubscribers.Clear();
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
@@ -828,6 +833,19 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
     }
 
+    private void SubscribeChartZoom(ChartDataType chartType, Axis[] xAxes,
+        ObservableCollection<ISeries> series, bool isMultiSeries = false)
+    {
+        if (_zoomUnsubscribers.Remove(chartType, out var unsub))
+            unsub();
+
+        if (xAxes.Length > 0 && series.Count > 0)
+        {
+            _zoomUnsubscribers[chartType] = ChartLoaderService.SubscribeToAxisZoom(
+                xAxes, chartType, series, isMultiSeries);
+        }
+    }
+
     private void LoadProfitsChart(CompanyData data)
     {
         // Update theme colors and chart style
@@ -850,6 +868,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         ProfitsChartTitle = $"Total profits: {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
+        SubscribeChartZoom(ChartDataType.TotalProfits, ProfitsChartXAxes, series);
     }
 
     private void LoadRevenueVsExpensesChart(CompanyData data)
@@ -862,6 +881,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         RevenueVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
         RevenueVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueVsExpensesData = series.Count > 0 && dates.Length > 0;
+        SubscribeChartZoom(ChartDataType.RevenueVsExpenses, RevenueVsExpensesXAxes, series, isMultiSeries: true);
     }
 
     #endregion
@@ -1067,6 +1087,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// Gets the chart loader service for external use (e.g., report generation).
     /// </summary>
     public ChartLoaderService ChartLoaderService { get; } = new();
+
+    /// <summary>
+    /// Tracks zoom subscription cleanup actions for each chart.
+    /// </summary>
+    private readonly Dictionary<ChartDataType, Action> _zoomUnsubscribers = new();
 
     #endregion
 

@@ -31,6 +31,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private CompanyManager? _companyManager;
 
     /// <summary>
+    /// Tracks zoom subscription cleanup actions for each chart.
+    /// </summary>
+    private readonly Dictionary<ChartDataType, Action> _zoomUnsubscribers = new();
+
+    /// <summary>
     /// Gets the shared chart settings service.
     /// </summary>
     private ChartSettingsService ChartSettingsShared => ChartSettingsService.Instance;
@@ -1548,6 +1553,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from chart settings events
         ChartSettingsShared.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
         ChartSettingsShared.DateRangeChanged -= OnChartSettingsDateRangeChanged;
+
+        // Unsubscribe all zoom handlers
+        foreach (var unsub in _zoomUnsubscribers.Values)
+            unsub();
+        _zoomUnsubscribers.Clear();
     }
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)
@@ -1663,6 +1673,23 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
+    /// <summary>
+    /// Subscribes a chart's X-axis to zoom-based re-bucketing and tracks the unsubscriber.
+    /// </summary>
+    private void SubscribeChartZoom(ChartDataType chartType, Axis[] xAxes,
+        ObservableCollection<ISeries> series, bool isMultiSeries = false)
+    {
+        // Unsubscribe previous handler if this chart is being reloaded
+        if (_zoomUnsubscribers.Remove(chartType, out var unsub))
+            unsub();
+
+        if (xAxes.Length > 0 && series.Count > 0)
+        {
+            _zoomUnsubscribers[chartType] = _chartLoaderService.SubscribeToAxisZoom(
+                xAxes, chartType, series, isMultiSeries);
+        }
+    }
+
     private void LoadExpensesTrendsChart(CompanyData data)
     {
         var (series, dates) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
@@ -1670,6 +1697,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         ExpensesTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasExpensesTrendsData = series.Count > 0;
+        SubscribeChartZoom(ChartDataType.TotalExpenses, ExpensesTrendsXAxes, series);
     }
 
     private void LoadExpensesDistributionChart(CompanyData data)
@@ -1687,6 +1715,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         RevenueTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueTrendsData = series.Count > 0;
+        SubscribeChartZoom(ChartDataType.TotalRevenue, RevenueTrendsXAxes, series);
     }
 
     private void LoadRevenueDistributionChart(CompanyData data)
@@ -1704,6 +1733,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         ProfitTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasProfitTrendsData = series.Count > 0;
+        SubscribeChartZoom(ChartDataType.TotalProfits, ProfitTrendsXAxes, series);
 
         // Update chart title to include the total profit amount (matches dashboard format)
         _profitOverTimeTitleText = $"Total profits: {CurrencyService.FormatFromUSD(totalProfit, DateTime.Now)}";
@@ -1717,6 +1747,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         RevenueVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueVsExpensesData = series.Count > 0;
+        SubscribeChartZoom(ChartDataType.RevenueVsExpenses, RevenueVsExpensesXAxes, series, isMultiSeries: true);
     }
 
     private void LoadCountriesOfOriginChart(CompanyData data)

@@ -28,15 +28,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return [];
 
         var (startDate, endDate) = GetDateRange();
-        var bucket = GetTimeBucket(startDate, endDate);
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => GetBucketKey(s.Date, bucket))
+            .GroupBy(s => s.Date.Date)
             .OrderBy(g => g.Key)
             .Select(g => new ChartDataPoint
             {
-                Label = GetBucketLabel(g.Key, bucket),
+                Label = g.Key.ToString("MMM dd"),
                 Value = (double)g.Sum(s => s.EffectiveSubtotalUSD),
                 Date = g.Key
             })
@@ -105,15 +104,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return [];
 
         var (startDate, endDate) = GetDateRange();
-        var bucket = GetTimeBucket(startDate, endDate);
 
         return companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .GroupBy(p => GetBucketKey(p.Date, bucket))
+            .GroupBy(p => p.Date.Date)
             .OrderBy(g => g.Key)
             .Select(g => new ChartDataPoint
             {
-                Label = GetBucketLabel(g.Key, bucket),
+                Label = g.Key.ToString("MMM dd"),
                 Value = (double)g.Sum(p => p.EffectiveSubtotalUSD),
                 Date = g.Key
             })
@@ -180,24 +178,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return [];
 
         var (startDate, endDate) = GetDateRange();
-        var bucket = GetTimeBucket(startDate, endDate);
 
-        var revenueByBucket = companyData.Revenues
+        var revenueByDay = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => GetBucketKey(s.Date, bucket))
+            .GroupBy(s => s.Date.Date)
             .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveSubtotalUSD));
 
-        var expensesByBucket = companyData.Expenses
+        var expensesByDay = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .GroupBy(p => GetBucketKey(p.Date, bucket))
+            .GroupBy(p => p.Date.Date)
             .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveSubtotalUSD));
 
-        var allBuckets = revenueByBucket.Keys.Union(expensesByBucket.Keys).OrderBy(d => d);
+        var allDays = revenueByDay.Keys.Union(expensesByDay.Keys).OrderBy(d => d);
 
-        return allBuckets.Select(key => new ChartDataPoint
+        return allDays.Select(key => new ChartDataPoint
         {
-            Label = GetBucketLabel(key, bucket),
-            Value = (double)(revenueByBucket.GetValueOrDefault(key, 0) - expensesByBucket.GetValueOrDefault(key, 0)),
+            Label = key.ToString("MMM dd"),
+            Value = (double)(revenueByDay.GetValueOrDefault(key, 0) - expensesByDay.GetValueOrDefault(key, 0)),
             Date = key
         }).ToList();
     }
@@ -273,34 +270,33 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return [];
 
         var (startDate, endDate) = GetDateRange();
-        var bucket = GetTimeBucket(startDate, endDate);
 
-        var salesByBucket = companyData.Revenues
+        var salesByDay = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => GetBucketKey(s.Date, bucket))
+            .GroupBy(s => s.Date.Date)
             .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveSubtotalUSD));
 
-        var purchasesByBucket = companyData.Expenses
+        var purchasesByDay = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .GroupBy(p => GetBucketKey(p.Date, bucket))
+            .GroupBy(p => p.Date.Date)
             .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.EffectiveSubtotalUSD));
 
-        var allBuckets = salesByBucket.Keys.Union(purchasesByBucket.Keys).OrderBy(d => d).ToList();
+        var allDays = salesByDay.Keys.Union(purchasesByDay.Keys).OrderBy(d => d).ToList();
 
-        if (allBuckets.Count == 0)
+        if (allDays.Count == 0)
             return [];
 
-        var revenueData = allBuckets.Select(key => new ChartDataPoint
+        var revenueData = allDays.Select(key => new ChartDataPoint
         {
-            Label = GetBucketLabel(key, bucket),
-            Value = salesByBucket.GetValueOrDefault(key, 0),
+            Label = key.ToString("MMM dd"),
+            Value = salesByDay.GetValueOrDefault(key, 0),
             Date = key
         }).ToList();
 
-        var expenseData = allBuckets.Select(key => new ChartDataPoint
+        var expenseData = allDays.Select(key => new ChartDataPoint
         {
-            Label = GetBucketLabel(key, bucket),
-            Value = purchasesByBucket.GetValueOrDefault(key, 0),
+            Label = key.ToString("MMM dd"),
+            Value = purchasesByDay.GetValueOrDefault(key, 0),
             Date = key
         }).ToList();
 
@@ -1778,9 +1774,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Determines the appropriate time bucket size based on the span of the date range.
     /// Returns day/week/month to keep chart data points in a readable range.
     /// </summary>
-    private enum TimeBucket { Day, Week, Month }
+    public enum TimeBucket { Day, Week, Month }
 
-    private static TimeBucket GetTimeBucket(DateTime startDate, DateTime endDate)
+    public static TimeBucket GetTimeBucket(DateTime startDate, DateTime endDate)
     {
         var days = (endDate - startDate).TotalDays;
         return days switch
@@ -1794,7 +1790,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Groups a date into the appropriate bucket key based on the chosen time bucket.
     /// </summary>
-    private static DateTime GetBucketKey(DateTime date, TimeBucket bucket)
+    public static DateTime GetBucketKey(DateTime date, TimeBucket bucket)
     {
         return bucket switch
         {
@@ -1808,7 +1804,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Formats a bucket key as a label appropriate for the time bucket.
     /// </summary>
-    private static string GetBucketLabel(DateTime bucketKey, TimeBucket bucket)
+    public static string GetBucketLabel(DateTime bucketKey, TimeBucket bucket)
     {
         return bucket switch
         {
@@ -1817,6 +1813,37 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             TimeBucket.Month => bucketKey.ToString("MMM yyyy"),
             _ => bucketKey.ToString("MMM dd")
         };
+    }
+
+    /// <summary>
+    /// Re-buckets a list of daily ChartDataPoints into the specified bucket size by summing values.
+    /// </summary>
+    public static List<ChartDataPoint> RebucketSum(List<ChartDataPoint> dailyPoints, TimeBucket bucket)
+    {
+        return dailyPoints
+            .Where(p => p.Date.HasValue)
+            .GroupBy(p => GetBucketKey(p.Date!.Value, bucket))
+            .OrderBy(g => g.Key)
+            .Select(g => new ChartDataPoint
+            {
+                Label = GetBucketLabel(g.Key, bucket),
+                Value = g.Sum(p => p.Value),
+                Date = g.Key
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Re-buckets a list of daily ChartSeriesData into the specified bucket size by summing values.
+    /// </summary>
+    public static List<ChartSeriesData> RebucketSeriesSum(List<ChartSeriesData> dailySeries, TimeBucket bucket)
+    {
+        return dailySeries.Select(series => new ChartSeriesData
+        {
+            Name = series.Name,
+            Color = series.Color,
+            DataPoints = RebucketSum(series.DataPoints, bucket)
+        }).ToList();
     }
 
     /// <summary>
