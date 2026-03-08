@@ -2901,16 +2901,11 @@ public class App : Application
             // Create snapshot for undo
             var snapshot = CreateCompanyDataSnapshot(companyData);
 
-            // Step 3: Process Tier 1 sheets (validation + import with mapped headers)
-            // For CSV files, treat all sheets as Tier 1 — the column-mapping import path
-            // already handles currency symbols, mixed date formats, and other format variations
-            // via ParseDecimalString and DateTime.TryParse, so LLM row processing is unnecessary.
-            var tier1Sheets = isCsv
-                ? includedSheets.ToList()
-                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
-            var tier2Sheets = isCsv
-                ? new List<SheetAnalysis>()
-                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
+            // Step 3: Split sheets by processing tier
+            // Respect the AI's tier recommendation for both Excel and CSV files.
+            // Mixed-type CSVs (e.g., expenses + payments in one file) need Tier 2 LLM processing.
+            var tier1Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
+            var tier2Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
 
             var importOptions = new ImportOptions
             {
