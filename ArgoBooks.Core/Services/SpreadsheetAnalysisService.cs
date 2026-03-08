@@ -61,6 +61,7 @@ public class SpreadsheetAnalysisService(
             return await AnalyzeWithLlmAsync(
                 Path.GetFileName(filePath), sheetsData, cancellationToken);
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze spreadsheet with AI");
@@ -109,6 +110,7 @@ public class SpreadsheetAnalysisService(
             return await AnalyzeWithLlmAsync(
                 Path.GetFileName(filePath), sheetsData, cancellationToken);
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze CSV with AI");

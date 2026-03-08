@@ -2793,6 +2793,20 @@ public class App : Application
         };
     }
 
+    private static async Task<bool> ConfirmCancelAsync()
+    {
+        var dialog = ConfirmationDialog;
+        if (dialog == null) return true;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Cancel Operation?".Translate(),
+            Message = "Are you sure you want to cancel?".Translate(),
+            PrimaryButtonText = "Yes".Translate(),
+            CancelButtonText = "No".Translate()
+        });
+        return result == ConfirmationResult.Primary;
+    }
+
     /// <summary>
     /// Performs the AI-powered import flow: analyze → review → validate → import.
     /// </summary>
@@ -2801,7 +2815,7 @@ public class App : Application
         if (_appShellViewModel == null) return;
 
         using var analysisCts = new CancellationTokenSource();
-        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), cts: analysisCts);
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), cts: analysisCts, cancelConfirmation: ConfirmCancelAsync);
 
         // Check rate limit via server-side API
         var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
@@ -2843,7 +2857,7 @@ public class App : Application
 
         var analysisProgress = new Progress<(string detail, double percent)>(p =>
         {
-            _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), p.detail, p.percent, analysisCts);
+            _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync);
         });
 
         try
@@ -2904,7 +2918,7 @@ public class App : Application
             if (tier1Sheets.Count > 0)
             {
                 using var validationCts = new CancellationTokenSource();
-                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate(), cts: validationCts);
+                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate(), cts: validationCts, cancelConfirmation: ConfirmCancelAsync);
 
                 var validationResult = isCsv
                     ? new ImportValidationResult() // CSV validation is simpler
@@ -2929,11 +2943,11 @@ public class App : Application
 
                 // Import Tier 1 data
                 using var importCts = new CancellationTokenSource();
-                _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts);
+                _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts, cancelConfirmation: ConfirmCancelAsync);
 
                 var importProgress = new Progress<(string detail, double percent)>(p =>
                 {
-                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), p.detail, p.percent, importCts);
+                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), p.detail, p.percent, importCts, ConfirmCancelAsync);
                 });
 
                 tier1Result = isCsv
@@ -2958,7 +2972,8 @@ public class App : Application
                     _mainWindowViewModel?.ShowLoading(
                         "AI processing...".Translate(),
                         sheet.SourceSheetName,
-                        cts: tier2Cts);
+                        cts: tier2Cts,
+                        cancelConfirmation: ConfirmCancelAsync);
 
                     var processedChunks = await analysisService.ProcessAllChunksAsync(
                         filePath, sheet,
@@ -2969,7 +2984,8 @@ public class App : Application
                                 "AI processing...".Translate(),
                                 $"{sheet.SourceSheetName} — {p.processed}/{p.total} rows",
                                 pct,
-                                tier2Cts);
+                                tier2Cts,
+                                ConfirmCancelAsync);
                         }),
                         tier2Cts.Token);
 

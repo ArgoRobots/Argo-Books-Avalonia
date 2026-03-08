@@ -63,6 +63,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isLoadingCancellable;
 
     private CancellationTokenSource? _loadingCts;
+    private Func<Task<bool>>? _cancelConfirmation;
 
     public bool IsLoadingIndeterminate => LoadingProgress < 0;
 
@@ -75,8 +76,13 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CancelLoading()
+    private async Task CancelLoadingAsync()
     {
+        if (_cancelConfirmation != null)
+        {
+            var confirmed = await _cancelConfirmation();
+            if (!confirmed) return;
+        }
         _loadingCts?.Cancel();
     }
 
@@ -320,7 +326,8 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="message">Loading message to display.</param>
     /// <param name="detail">Optional secondary detail text.</param>
     /// <param name="progress">Progress value 0-100, or -1 for indeterminate.</param>
-    public void ShowLoading(string? message = null, string? detail = null, double progress = -1, CancellationTokenSource? cts = null)
+    public void ShowLoading(string? message = null, string? detail = null, double progress = -1,
+        CancellationTokenSource? cts = null, Func<Task<bool>>? cancelConfirmation = null)
     {
         LoadingMessage = message ?? "Loading...";
         LoadingDetail = detail;
@@ -328,6 +335,7 @@ public partial class MainWindowViewModel : ViewModelBase
         if (cts != null)
         {
             _loadingCts = cts;
+            _cancelConfirmation = cancelConfirmation;
             IsLoadingCancellable = true;
         }
         IsLoading = true;
@@ -343,6 +351,7 @@ public partial class MainWindowViewModel : ViewModelBase
         LoadingDetail = null;
         LoadingProgress = -1;
         _loadingCts = null;
+        _cancelConfirmation = null;
         IsLoadingCancellable = false;
     }
 
