@@ -84,7 +84,6 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         var (_, pageHeight) = GetPageDimensions();
         var pageCount = GetPageCount();
-        var stride = pageHeight + PageGap;
 
         for (int page = 1; page <= pageCount; page++)
         {

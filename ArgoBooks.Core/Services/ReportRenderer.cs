@@ -4,7 +4,6 @@ using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
-using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.SKCharts;
@@ -622,7 +621,7 @@ public class ReportRenderer : IDisposable
     public void ComputeContinuationPlan()
     {
         var plan = new PageContinuationPlan();
-        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+        var (_, pageHeight) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
 
         // Build effective pages: start with all template pages
         // Then insert continuation pages after each template page as needed

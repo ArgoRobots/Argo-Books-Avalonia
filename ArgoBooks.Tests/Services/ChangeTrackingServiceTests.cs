@@ -43,7 +43,7 @@ public class ChangeTrackingServiceTests
     public void RecordChange_MultipleChanges_AccumulatesCount()
     {
         _service.RecordChange("Added item 1", ChangeType.Added);
-        _service.RecordChange("Modified item 2", ChangeType.Modified);
+        _service.RecordChange("Modified item 2");
         _service.RecordChange("Deleted item 3", ChangeType.Deleted);
 
         Assert.Equal(3, _service.TotalChangeCount);
@@ -75,7 +75,7 @@ public class ChangeTrackingServiceTests
     public void ClearAllChanges_ResetsAllCounts()
     {
         _service.RecordChange("Change 1", ChangeType.Added);
-        _service.RecordChange("Change 2", ChangeType.Modified);
+        _service.RecordChange("Change 2");
         _service.ClearAllChanges();
 
         Assert.Equal(0, _service.TotalChangeCount);

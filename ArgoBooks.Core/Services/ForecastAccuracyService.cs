@@ -278,8 +278,8 @@ public class ForecastAccuracyService : IForecastAccuracyService
                     continue;
 
                 // Generate forecast using ML service
-                var revenueForecast = mlService.GenerateEnhancedForecast(trainingRevenue, 1);
-                var expenseForecast = mlService.GenerateEnhancedForecast(trainingExpenses, 1);
+                var revenueForecast = mlService.GenerateEnhancedForecast(trainingRevenue);
+                var expenseForecast = mlService.GenerateEnhancedForecast(trainingExpenses);
 
                 var forecastedRevenue = revenueForecast.ForecastedValue;
                 var forecastedExpenses = expenseForecast.ForecastedValue;

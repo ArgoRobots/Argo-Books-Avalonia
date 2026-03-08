@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
@@ -146,7 +144,6 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             stopwatch.Stop();
-            var fileSize = new FileInfo(filePath).Length;
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, Path.GetExtension(filePath), cancellationToken);
         }
         catch (Exception ex)
@@ -228,7 +225,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(analysis);
 
-        options ??= new ImportOptions();
         var result = new SpreadsheetImportResult();
 
         try
@@ -966,7 +962,7 @@ public class SpreadsheetImportService
                 !importedCategories.Contains(categoryId))
             {
                 result.AddIssue(sheetName, rowNumber, "Category ID", categoryId, "Categories",
-                    $"Category '{categoryId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Category '{categoryId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(supplierId) &&
@@ -974,7 +970,7 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1000,7 +996,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1031,7 +1027,7 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
 
             // Validate product exists (by name, since Sales/Purchases use product name)
@@ -1040,7 +1036,7 @@ public class SpreadsheetImportService
                 !importedProductNames.Contains(productName))
             {
                 result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Product '{productName}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1069,7 +1065,7 @@ public class SpreadsheetImportService
                 !importedProducts.Contains(productId))
             {
                 result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
-                    $"Product '{productId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(locationId) &&
@@ -1077,7 +1073,7 @@ public class SpreadsheetImportService
                 !importedLocations.Contains(locationId))
             {
                 result.AddIssue(sheetName, rowNumber, "Location ID", locationId, "Locations",
-                    $"Location '{locationId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Location '{locationId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1106,7 +1102,7 @@ public class SpreadsheetImportService
                 !importedInvoices.Contains(invoiceId))
             {
                 result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
-                    $"Invoice '{invoiceId}' not found — reference will be cleared", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Invoice '{invoiceId}' not found — reference will be cleared", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(customerId) &&
@@ -1114,7 +1110,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1145,7 +1141,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
 
             // Validate product exists (by name)
@@ -1154,7 +1150,7 @@ public class SpreadsheetImportService
                 !importedProductNames.Contains(productName))
             {
                 result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Product '{productName}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1183,7 +1179,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(rentalItemId) &&
@@ -1191,7 +1187,7 @@ public class SpreadsheetImportService
                 !importedRentalItems.Contains(rentalItemId))
             {
                 result.AddIssue(sheetName, rowNumber, "Rental Item ID", rentalItemId, "Rental Items",
-                    $"Rental item '{rentalItemId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Rental item '{rentalItemId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -1227,7 +1223,7 @@ public class SpreadsheetImportService
                 !sheetIds.Contains(parentId))
             {
                 result.AddIssue(sheetName, rowNumber, "Parent ID", parentId, "Categories (parent)",
-                    $"Parent category '{parentId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Parent category '{parentId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -1253,7 +1249,7 @@ public class SpreadsheetImportService
                 !importedDepartments.Contains(departmentId))
             {
                 result.AddIssue(sheetName, rowNumber, "Department ID", departmentId, "Departments",
-                    $"Department '{departmentId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Department '{departmentId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1279,7 +1275,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1305,7 +1301,7 @@ public class SpreadsheetImportService
                 !importedInventory.Contains(inventoryItemId))
             {
                 result.AddIssue(sheetName, rowNumber, "Inventory Item ID", inventoryItemId, "Inventory Items",
-                    $"Inventory item '{inventoryItemId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Inventory item '{inventoryItemId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -1331,7 +1327,7 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -1360,7 +1356,7 @@ public class SpreadsheetImportService
                 !importedProducts.Contains(productId))
             {
                 result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
-                    $"Product '{productId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(poId) &&
@@ -1368,7 +1364,7 @@ public class SpreadsheetImportService
                 !importedPurchaseOrders.Contains(poId))
             {
                 result.AddIssue(sheetName, rowNumber, "PO ID", poId, "Purchase Orders",
-                    $"Purchase order '{poId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Purchase order '{poId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -1406,8 +1402,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(supplierId) &&
@@ -1416,8 +1411,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(productName) &&
@@ -1426,8 +1420,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productName}' not found", isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(originalTransactionId) &&
@@ -1438,8 +1431,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Original Transaction ID", originalTransactionId, "Transactions",
-                    $"Transaction '{originalTransactionId}' not found in Expenses or Revenue",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Transaction '{originalTransactionId}' not found in Expenses or Revenue", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -1475,8 +1467,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Product ID", productId, "Products",
-                    $"Product '{productId}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: id);
             }
             // If no product ID, check by name
             else if (string.IsNullOrEmpty(productId) && !string.IsNullOrEmpty(productName))
@@ -1486,8 +1477,7 @@ public class SpreadsheetImportService
                 {
                     result.AddIssue(
                         sheetName, rowNumber, "Product", productName, "Products (by name)",
-                        $"Product '{productName}' not found",
-                        ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                        $"Product '{productName}' not found", isAutoFixable: false, rowId: id);
                 }
             }
             // Warn if neither product ID nor product name is provided
@@ -1495,8 +1485,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Product", "", "Products",
-                    "No Product ID or Product name specified",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    "No Product ID or Product name specified", isAutoFixable: false, rowId: id);
             }
 
             // InventoryItemId references the original expense/revenue transaction
@@ -1508,8 +1497,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Inventory Item ID", inventoryItemId, "Transactions",
-                    $"Transaction '{inventoryItemId}' not found in Expenses or Revenue",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Transaction '{inventoryItemId}' not found in Expenses or Revenue", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -2234,11 +2222,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Create a linked Revenue entry for paid/partially paid invoices
             // so they appear on the dashboard and analytics pages
-            if (invoice.AmountPaid > 0 && !data.Revenues.Any(r => r.InvoiceId == invoice.Id))
+            if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
             {
                 data.IdCounters.Revenue++;
                 var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
-                var paidAmount = invoice.AmountPaid;
                 var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
 
                 data.Revenues.Add(new Revenue

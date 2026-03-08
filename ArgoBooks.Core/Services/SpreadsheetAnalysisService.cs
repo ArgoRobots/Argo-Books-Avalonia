@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Telemetry;

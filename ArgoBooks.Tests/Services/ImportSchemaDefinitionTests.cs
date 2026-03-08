@@ -97,7 +97,7 @@ public class ImportSchemaDefinitionTests
     {
         var schema = ImportSchemaDefinition.GetSchema();
 
-        foreach (var (entityType, columns) in schema)
+        foreach (var (_, columns) in schema)
         {
             var names = columns.Select(c => c.Name).ToList();
             var distinctNames = names.Distinct().ToList();

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Models.AI;

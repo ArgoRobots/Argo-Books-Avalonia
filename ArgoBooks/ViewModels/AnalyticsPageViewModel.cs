@@ -1699,7 +1699,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadProfitTrendsChart(CompanyData data)
     {
-        var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
+        var (series, _, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
         ProfitTrendsSeries = series;
         ProfitTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
@@ -1834,7 +1834,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnsOverTimeChart(CompanyData data)
     {
-        var (series, labels, dates) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
         ReturnsOverTimeSeries = series;
         ReturnsOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnsOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
@@ -1868,7 +1868,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossesOverTimeChart(CompanyData data)
     {
-        var (series, labels, dates) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
         LossesOverTimeSeries = series;
         LossesOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossesOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();

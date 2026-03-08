@@ -274,7 +274,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         if (!string.IsNullOrWhiteSpace(query))
         {
             var topResultItems = new HashSet<QuickActionItem>();
-            foreach (var (item, _, titleScore) in filteredList.Where(x => x.TitleScore >= StrongMatchThreshold).Take(4))
+            foreach (var (item, _, _) in filteredList.Where(x => x.TitleScore >= StrongMatchThreshold).Take(4))
             {
                 TopResults.Add(item);
                 topResultItems.Add(item);

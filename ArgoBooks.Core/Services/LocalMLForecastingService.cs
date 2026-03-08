@@ -95,7 +95,7 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         var seasonLength = _holtWinters.DetectSeasonLength(monthlyData, candidateLengths);
 
         // Use Holt-Winters to extract seasonal pattern
-        var hwResult = _holtWinters.AutoForecast(monthlyData, seasonLength, 1);
+        var hwResult = _holtWinters.AutoForecast(monthlyData, seasonLength);
         return hwResult.SeasonalPattern;
     }
 
@@ -228,7 +228,6 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             // Calculate confidence based on prediction interval width
             var avgValue = result.ForecastedValues.Average();
             var avgWidth = result.UpperBounds.Zip(result.LowerBounds, (u, l) => u - l).Average();
-            var relativeWidth = avgValue > 0 ? (double)(avgWidth / avgValue) : 1;
 
             result.ConfidenceScore = CalculateConfidenceScore(data, null, null);
 

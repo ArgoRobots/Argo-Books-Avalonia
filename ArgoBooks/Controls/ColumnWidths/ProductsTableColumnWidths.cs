@@ -266,7 +266,6 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         if (columnIndex < 0) return 0;
 
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
-        double totalCurrentWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth);
         double maxTotalWidth = _availableWidth - 24;
 
         var newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, col.CurrentWidth + delta));

@@ -256,7 +256,6 @@ public class InsightsService : IInsightsService
         if (!salesByDay.Any()) return null;
 
         var bestDay = salesByDay.First();
-        var worstDay = salesByDay.Last();
         var averageDaily = salesByDay.Average(x => x.Total);
 
         if (bestDay.Total > averageDaily * 1.3m) // 30% above average
@@ -294,14 +293,6 @@ public class InsightsService : IInsightsService
 
         if (seasonalPattern.SeasonalStrength > 0.2) // Significant seasonal pattern detected
         {
-            // Find the best performing period based on seasonal factors
-            var bestPeriodIndex = seasonalPattern.SeasonalFactors.Count > 0
-                ? seasonalPattern.SeasonalFactors
-                    .Select((factor, index) => new { Factor = factor, Index = index })
-                    .OrderByDescending(x => x.Factor)
-                    .First().Index
-                : 0;
-
             var cycleDescription = seasonalPattern.SeasonLength switch
             {
                 12 => "yearly",
