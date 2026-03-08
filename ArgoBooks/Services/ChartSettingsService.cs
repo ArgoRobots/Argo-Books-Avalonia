@@ -132,6 +132,11 @@ public partial class ChartSettingsService : ObservableObject
         // Notify all computed properties after load
         OnPropertyChanged(nameof(AppliedDateRangeText));
         OnPropertyChanged(nameof(ComparisonPeriodLabel));
+        OnPropertyChanged(nameof(DateRangeDisplayText));
+
+        // Notify subscribers so pages reload data with the restored settings
+        DateRangeChanged?.Invoke(this, SelectedDateRange);
+        ChartTypeChanged?.Invoke(this, SelectedChartType);
     }
 
     /// <summary>
