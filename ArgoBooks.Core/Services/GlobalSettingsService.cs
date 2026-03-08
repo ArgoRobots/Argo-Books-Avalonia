@@ -145,7 +145,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         CompanySettings = null;
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="IGlobalSettingsService.AddRecentCompany"/>
     public void AddRecentCompany(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
@@ -177,7 +177,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         }
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="IGlobalSettingsService.RemoveRecentCompany"/>
     public void RemoveRecentCompany(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
