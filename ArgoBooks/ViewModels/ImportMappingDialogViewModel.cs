@@ -189,7 +189,7 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
         // Clear previous state
         Sheets.Clear();
         Warnings.Clear();
-        SkipExistingRecords = false;
+        SkipExistingRecords = true;
 
         FileName = analysis.FileName;
 
