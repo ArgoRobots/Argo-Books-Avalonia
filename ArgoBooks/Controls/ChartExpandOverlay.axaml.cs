@@ -51,6 +51,7 @@ public partial class ChartExpandOverlay : UserControl
     private ObservableCollection<ISeries>? _expandedSeries;
     private Axis[]? _expandedXAxes;
     private bool _expandedIsMultiSeries;
+    private ReportChartDataService.TimeBucket? _preFullscreenBucket;
 
     public ChartExpandOverlay()
     {
@@ -419,9 +420,24 @@ public partial class ChartExpandOverlay : UserControl
             return;
         }
 
-        // Show the granularity toggle with "Day" selected
+        // Remember the current bucket so we can restore it when closing the overlay
+        _preFullscreenBucket = loaderService.GetCurrentBucket(chartType.Value);
+
+        // Show the granularity toggle with the current bucket selected (inherit from normal view)
         GranularityPanel.IsVisible = true;
-        BucketDay.IsChecked = true;
+        var currentBucket = _preFullscreenBucket ?? loaderService.GetDefaultBucket(chartType.Value);
+        switch (currentBucket)
+        {
+            case ReportChartDataService.TimeBucket.Week:
+                BucketWeek.IsChecked = true;
+                break;
+            case ReportChartDataService.TimeBucket.Month:
+                BucketMonth.IsChecked = true;
+                break;
+            default:
+                BucketDay.IsChecked = true;
+                break;
+        }
 
         // Subscribe to zoom re-bucketing (fullscreen only)
         _zoomUnsubscriber = loaderService.SubscribeToAxisZoom(
@@ -437,9 +453,22 @@ public partial class ChartExpandOverlay : UserControl
         _zoomUnsubscriber?.Invoke();
         _zoomUnsubscriber = null;
 
-        // Clear manual bucket override
+        // Clear manual bucket override and restore the pre-fullscreen bucket
+        // so the normal view is not affected by fullscreen bucketing changes
         if (_expandedChartType.HasValue && _expandedChartLoaderService != null)
+        {
             _expandedChartLoaderService.ClearManualBucketOverride(_expandedChartType.Value);
+
+            if (_preFullscreenBucket.HasValue && _expandedSeries != null && _expandedXAxes != null)
+            {
+                _expandedChartLoaderService.RestoreBucket(
+                    _expandedChartType.Value,
+                    _preFullscreenBucket.Value,
+                    _expandedSeries,
+                    _expandedXAxes,
+                    _expandedIsMultiSeries);
+            }
+        }
 
         // Hide granularity toggle
         GranularityPanel.IsVisible = false;
@@ -448,6 +477,7 @@ public partial class ChartExpandOverlay : UserControl
         _expandedChartLoaderService = null;
         _expandedSeries = null;
         _expandedXAxes = null;
+        _preFullscreenBucket = null;
     }
 
     /// <summary>
