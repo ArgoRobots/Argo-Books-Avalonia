@@ -434,6 +434,9 @@ public partial class ChartExpandOverlay : UserControl
             case ReportChartDataService.TimeBucket.Month:
                 BucketMonth.IsChecked = true;
                 break;
+            case ReportChartDataService.TimeBucket.Year:
+                BucketYear.IsChecked = true;
+                break;
             default:
                 BucketDay.IsChecked = true;
                 break;
@@ -496,6 +499,8 @@ public partial class ChartExpandOverlay : UserControl
             selectedBucket = ReportChartDataService.TimeBucket.Week;
         else if (BucketMonth.IsChecked == true)
             selectedBucket = ReportChartDataService.TimeBucket.Month;
+        else if (BucketYear.IsChecked == true)
+            selectedBucket = ReportChartDataService.TimeBucket.Year;
         else
             selectedBucket = ReportChartDataService.TimeBucket.Day;
 

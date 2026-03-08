@@ -1774,7 +1774,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Determines the appropriate time bucket size based on the span of the date range.
     /// Returns day/week/month to keep chart data points in a readable range.
     /// </summary>
-    public enum TimeBucket { Day, Week, Month }
+    public enum TimeBucket { Day, Week, Month, Year }
 
     public static TimeBucket GetTimeBucket(DateTime startDate, DateTime endDate)
     {
@@ -1797,6 +1797,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             TimeBucket.Day => date.Date,
             TimeBucket.Week => date.Date.AddDays(-(int)date.DayOfWeek),
             TimeBucket.Month => new DateTime(date.Year, date.Month, 1),
+            TimeBucket.Year => new DateTime(date.Year, 1, 1),
             _ => date.Date
         };
     }
@@ -1811,6 +1812,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             TimeBucket.Day => bucketKey.ToString("MMM dd"),
             TimeBucket.Week => bucketKey.ToString("MMM dd"),
             TimeBucket.Month => bucketKey.ToString("MMM yyyy"),
+            TimeBucket.Year => bucketKey.ToString("yyyy"),
             _ => bucketKey.ToString("MMM dd")
         };
     }
