@@ -2800,7 +2800,8 @@ public class App : Application
     {
         if (_appShellViewModel == null) return;
 
-        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
+        using var analysisCts = new CancellationTokenSource();
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), cts: analysisCts);
 
         // Check rate limit via server-side API
         var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
@@ -2840,13 +2841,19 @@ public class App : Application
         var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company?.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, openAiService);
 
+        var analysisProgress = new Progress<(string detail, double percent)>(p =>
+        {
+            _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), p.detail, p.percent, analysisCts);
+        });
+
         try
         {
             // Step 1: AI Analysis
             var analysis = isCsv
-                ? await analysisService.AnalyzeCsvAsync(filePath)
-                : await analysisService.AnalyzeAsync(filePath);
+                ? await analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress)
+                : await analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress);
 
+            await Task.Yield();
             _mainWindowViewModel?.HideLoading();
 
             if (analysis == null || analysis.Sheets.Count == 0)
@@ -2896,7 +2903,8 @@ public class App : Application
             SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)
             {
-                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate());
+                using var validationCts = new CancellationTokenSource();
+                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate(), cts: validationCts);
 
                 var validationResult = isCsv
                     ? new ImportValidationResult() // CSV validation is simpler
@@ -2920,16 +2928,17 @@ public class App : Application
                 }
 
                 // Import Tier 1 data
-                _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
+                using var importCts = new CancellationTokenSource();
+                _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts);
 
                 var importProgress = new Progress<(string detail, double percent)>(p =>
                 {
-                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), p.detail, p.percent);
+                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), p.detail, p.percent, importCts);
                 });
 
                 tier1Result = isCsv
-                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, default, importProgress)
-                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, default, importProgress);
+                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, importCts.Token, importProgress)
+                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, importCts.Token, importProgress);
 
                 // Yield to let any pending Progress<T> callbacks (dispatched via
                 // SynchronizationContext.Post) execute before hiding the loading
@@ -2943,11 +2952,13 @@ public class App : Application
             var totalSkipped = 0;
             if (tier2Sheets.Count > 0)
             {
+                using var tier2Cts = new CancellationTokenSource();
                 foreach (var sheet in tier2Sheets)
                 {
                     _mainWindowViewModel?.ShowLoading(
                         "AI processing...".Translate(),
-                        sheet.SourceSheetName);
+                        sheet.SourceSheetName,
+                        cts: tier2Cts);
 
                     var processedChunks = await analysisService.ProcessAllChunksAsync(
                         filePath, sheet,
@@ -2957,8 +2968,10 @@ public class App : Application
                             _mainWindowViewModel?.ShowLoading(
                                 "AI processing...".Translate(),
                                 $"{sheet.SourceSheetName} — {p.processed}/{p.total} rows",
-                                pct);
-                        }));
+                                pct,
+                                tier2Cts);
+                        }),
+                        tier2Cts.Token);
 
                     var (imported, skipped) = importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
                     totalImported += imported;
@@ -3031,6 +3044,10 @@ public class App : Application
                 await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
             else
                 await ShowSuccessMessageBoxAsync("Import Complete".Translate(), successMessage);
+        }
+        catch (OperationCanceledException)
+        {
+            _mainWindowViewModel?.HideLoading();
         }
         catch (Exception ex)
         {

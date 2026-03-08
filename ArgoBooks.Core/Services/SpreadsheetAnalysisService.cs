@@ -29,10 +29,13 @@ public class SpreadsheetAnalysisService(
     /// </summary>
     public async Task<SpreadsheetAnalysisResult?> AnalyzeAsync(
         string filePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         try
         {
+            progress?.Report(("Reading spreadsheet...", 20));
+
             using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var workbook = new XLWorkbook(fileStream);
 
@@ -53,6 +56,8 @@ public class SpreadsheetAnalysisService(
             if (sheetsData.Count == 0)
                 return null;
 
+            progress?.Report(("Analyzing with AI...", 50));
+
             return await AnalyzeWithLlmAsync(
                 Path.GetFileName(filePath), sheetsData, cancellationToken);
         }
@@ -68,10 +73,13 @@ public class SpreadsheetAnalysisService(
     /// </summary>
     public async Task<SpreadsheetAnalysisResult?> AnalyzeCsvAsync(
         string filePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         try
         {
+            progress?.Report(("Reading file...", 20));
+
             var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
             if (lines.Length < 2)
                 return null;
@@ -95,6 +103,8 @@ public class SpreadsheetAnalysisService(
             {
                 (sheetName, headers, sampleRows, totalRows)
             };
+
+            progress?.Report(("Analyzing with AI...", 50));
 
             return await AnalyzeWithLlmAsync(
                 Path.GetFileName(filePath), sheetsData, cancellationToken);

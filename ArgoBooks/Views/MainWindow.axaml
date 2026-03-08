@@ -139,21 +139,21 @@
                 IsHitTestVisible="True">
             <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    Padding="48,32"
-                    MinWidth="340"
+                    Padding="32,24"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
-                <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="12" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding LoadingMessage}"
-                               FontSize="{StaticResource FontSizeLg}"
+                               FontSize="{StaticResource FontSizeMd}"
                                Foreground="{DynamicResource TextPrimaryBrush}"
                                HorizontalAlignment="Center" />
                     <ProgressBar IsIndeterminate="{Binding IsLoadingIndeterminate}"
                                  Value="{Binding LoadingProgress}"
                                  Minimum="0"
                                  Maximum="100"
-                                 Height="6"
+                                 Width="200"
+                                 Height="4"
                                  Foreground="{DynamicResource PrimaryBrush}" />
                     <TextBlock Text="{Binding LoadingProgressText}"
                                IsVisible="{Binding LoadingProgressText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -165,6 +165,12 @@
                                FontSize="{StaticResource FontSizeSm}"
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                HorizontalAlignment="Center" />
+                    <Button Content="{loc:Loc Cancel}"
+                            Classes="secondary"
+                            IsVisible="{Binding IsLoadingCancellable}"
+                            Command="{Binding CancelLoadingCommand}"
+                            HorizontalAlignment="Center"
+                            Margin="0,4,0,0" />
                 </StackPanel>
             </Border>
         </Border>

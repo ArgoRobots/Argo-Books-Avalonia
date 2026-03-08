@@ -2,6 +2,7 @@ using ArgoBooks.Core.Models;
 using Avalonia.Controls;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
 
@@ -58,6 +59,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private double _loadingProgress = -1;
 
+    [ObservableProperty]
+    private bool _isLoadingCancellable;
+
+    private CancellationTokenSource? _loadingCts;
+
     public bool IsLoadingIndeterminate => LoadingProgress < 0;
 
     public string? LoadingProgressText => LoadingProgress >= 0 ? $"{LoadingProgress:0}%" : null;
@@ -66,6 +72,12 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsLoadingIndeterminate));
         OnPropertyChanged(nameof(LoadingProgressText));
+    }
+
+    [RelayCommand]
+    private void CancelLoading()
+    {
+        _loadingCts?.Cancel();
     }
 
     /// <summary>
@@ -308,11 +320,16 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="message">Loading message to display.</param>
     /// <param name="detail">Optional secondary detail text.</param>
     /// <param name="progress">Progress value 0-100, or -1 for indeterminate.</param>
-    public void ShowLoading(string? message = null, string? detail = null, double progress = -1)
+    public void ShowLoading(string? message = null, string? detail = null, double progress = -1, CancellationTokenSource? cts = null)
     {
         LoadingMessage = message ?? "Loading...";
         LoadingDetail = detail;
         LoadingProgress = progress;
+        if (cts != null)
+        {
+            _loadingCts = cts;
+            IsLoadingCancellable = true;
+        }
         IsLoading = true;
     }
 
@@ -325,6 +342,8 @@ public partial class MainWindowViewModel : ViewModelBase
         LoadingMessage = null;
         LoadingDetail = null;
         LoadingProgress = -1;
+        _loadingCts = null;
+        IsLoadingCancellable = false;
     }
 
     /// <summary>
