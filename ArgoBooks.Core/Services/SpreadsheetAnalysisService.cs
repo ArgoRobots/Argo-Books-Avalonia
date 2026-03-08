@@ -19,6 +19,7 @@ public class SpreadsheetAnalysisService
     private const int SampleLastRows = 3;
     private const int SampleRandomRows = 5;
     private const int Tier2ChunkSize = 100;
+    private const int MaxConcurrentChunks = 5;
 
     private readonly IOpenAiService _openAiService;
     private readonly IErrorLogger? _errorLogger;
@@ -219,15 +220,39 @@ public class SpreadsheetAnalysisService
         }
 
         var total = allRows.Count;
-        for (int i = 0; i < total; i += Tier2ChunkSize)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var chunk = allRows.Skip(i).Take(Tier2ChunkSize).ToList();
-            var processed = await ProcessChunkAsync(headers, chunk, sheetAnalysis.DetectedType, cancellationToken);
-            if (processed != null)
-                results.Add(processed);
 
-            progress?.Report((Math.Min(i + Tier2ChunkSize, total), total));
+        // Build all chunks upfront
+        var chunks = new List<(int Index, List<List<string>> Rows)>();
+        for (int i = 0; i < total; i += Tier2ChunkSize)
+            chunks.Add((i, allRows.Skip(i).Take(Tier2ChunkSize).ToList()));
+
+        // Process chunks in parallel with concurrency limit
+        var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
+        var processedCount = 0;
+        var chunkResults = new LlmProcessedData?[chunks.Count];
+
+        var tasks = chunks.Select((chunk, idx) => Task.Run(async () =>
+        {
+            await semaphore.WaitAsync(cancellationToken);
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                chunkResults[idx] = await ProcessChunkAsync(headers, chunk.Rows, sheetAnalysis.DetectedType, cancellationToken);
+            }
+            finally
+            {
+                semaphore.Release();
+                var done = Interlocked.Add(ref processedCount, chunk.Rows.Count);
+                progress?.Report((Math.Min(done, total), total));
+            }
+        }, cancellationToken)).ToArray();
+
+        await Task.WhenAll(tasks);
+
+        foreach (var result in chunkResults)
+        {
+            if (result != null)
+                results.Add(result);
         }
 
         return results;

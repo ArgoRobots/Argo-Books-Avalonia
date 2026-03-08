@@ -1942,25 +1942,47 @@ public class SpreadsheetImportService
     /// <summary>
     /// Finds an existing category by name (case-insensitive) or creates a new one.
     /// </summary>
-    private static Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
+    /// <summary>
+    /// Lazily-built lookup for FindOrCreateCategory to avoid O(N) scans per call.
+    /// Keyed by lowercase category name. Invalidated when new categories are added.
+    /// </summary>
+    private Dictionary<string, Category>? _categoryByNameCache;
+
+    private Dictionary<string, Category> GetCategoryByNameCache(CompanyData data)
     {
+        if (_categoryByNameCache != null)
+            return _categoryByNameCache;
 
-        // Try to find existing category by name and type
-        var existing = data.Categories.FirstOrDefault(c =>
-            string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase) &&
-            c.Type == type);
-
-        if (existing != null)
+        _categoryByNameCache = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
+        // Last-wins: earlier entries are overwritten, so the first match per name is kept
+        // by iterating in reverse
+        for (int i = data.Categories.Count - 1; i >= 0; i--)
         {
-            return existing;
+            var c = data.Categories[i];
+            _categoryByNameCache[c.Name] = c;
         }
+        return _categoryByNameCache;
+    }
 
-        // Also try matching by name only (any type)
-        existing = data.Categories.FirstOrDefault(c =>
-            string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase));
+    private Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
+    {
+        var cache = GetCategoryByNameCache(data);
 
-        if (existing != null)
+        // Try to find existing category by name (cache handles case-insensitivity)
+        if (cache.TryGetValue(categoryName, out var existing))
         {
+            // Prefer exact type match - if this one matches, return it
+            if (existing.Type == type)
+                return existing;
+
+            // Check if there's a type-specific match by scanning (rare path)
+            var typeMatch = data.Categories.FirstOrDefault(c =>
+                string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase) &&
+                c.Type == type);
+            if (typeMatch != null)
+                return typeMatch;
+
+            // Return the name-only match
             return existing;
         }
 
@@ -1974,6 +1996,7 @@ public class SpreadsheetImportService
             ItemType = itemType
         };
         data.Categories.Add(category);
+        cache[categoryName] = category;
         return category;
     }
 
@@ -1981,7 +2004,7 @@ public class SpreadsheetImportService
     /// Resolves the category for an imported product: if the product has a categoryName in the JSON
     /// (or a categoryId that doesn't match any existing category), auto-creates the category.
     /// </summary>
-    private static void ResolveProductCategory(CompanyData data, Product product, JsonElement entityJson)
+    private void ResolveProductCategory(CompanyData data, Product product, JsonElement entityJson)
     {
 
         // Extract categoryName from the raw JSON (not part of the Product model)
@@ -1993,8 +2016,7 @@ public class SpreadsheetImportService
         // If we have a valid categoryId that matches an existing category, nothing to do
         if (!string.IsNullOrEmpty(product.CategoryId))
         {
-            var existingCategory = data.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
-            if (existingCategory != null)
+            if (data.Categories.Any(c => c.Id == product.CategoryId))
             {
                 return;
             }
@@ -2305,19 +2327,28 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
+        // Build lookup dictionaries to avoid O(N) scans per row
+        var productsById = data.Products.ToDictionary(p => p.Id, p => p);
+        var productsByName = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in data.Products)
+            productsByName.TryAdd(p.Name, p);
+        var suppliersByName = new Dictionary<string, Supplier>(StringComparer.OrdinalIgnoreCase);
+        foreach (var s in data.Suppliers)
+            suppliersByName.TryAdd(s.Name, s);
+        var categoriesById = data.Categories.ToDictionary(c => c.Id, c => c);
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var name = GetString(row, headers, "Name");
 
             // Check for existing product by ID first
-            var existing = data.Products.FirstOrDefault(p => p.Id == id);
+            productsById.TryGetValue(id, out var existing);
 
             // Match by name for auto-created placeholder products (created from foreign key references)
             if (existing == null && !string.IsNullOrEmpty(name))
             {
-                var placeholder = data.Products.FirstOrDefault(p =>
-                    string.Equals(p.Name, id, StringComparison.OrdinalIgnoreCase));
+                productsByName.TryGetValue(id, out var placeholder);
                 if (placeholder != null)
                     existing = placeholder;
             }
@@ -2354,7 +2385,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (!string.IsNullOrEmpty(categoryId))
             {
                 // Validate that the categoryId references an existing category
-                var existingCat = data.Categories.FirstOrDefault(c => c.Id == categoryId);
+                categoriesById.TryGetValue(categoryId, out var existingCat);
                 if (existingCat == null)
                 {
                     var category = FindOrCreateCategory(data, categoryId, productType, itemType);
@@ -2379,11 +2410,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (string.IsNullOrEmpty(supplierId))
             {
                 var supplierName = GetNullableString(row, headers, "Supplier Name");
-                if (!string.IsNullOrEmpty(supplierName))
+                if (!string.IsNullOrEmpty(supplierName) && suppliersByName.TryGetValue(supplierName, out var supplier))
                 {
-                    var supplier = data.Suppliers.FirstOrDefault(s =>
-                        string.Equals(s.Name, supplierName, StringComparison.OrdinalIgnoreCase));
-                    supplierId = supplier?.Id;
+                    supplierId = supplier.Id;
                 }
             }
             product.SupplierId = supplierId;
@@ -2399,7 +2428,12 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             }
 
             if (existing == null)
+            {
                 data.Products.Add(product);
+                productsById.TryAdd(product.Id, product);
+                if (!string.IsNullOrEmpty(product.Name))
+                    productsByName.TryAdd(product.Name, product);
+            }
         }
     }
 
@@ -2551,14 +2585,14 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// </summary>
     private static Product? FindProductByName(CompanyData data, string name, CategoryType preferredCategoryType)
     {
+        var categoriesById = data.Categories.ToDictionary(c => c.Id, c => c);
         Product? fallback = null;
         foreach (var p in data.Products)
         {
             if (!string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var category = data.Categories.FirstOrDefault(c => c.Id == p.CategoryId);
-            if (category?.Type == preferredCategoryType)
+            if (!string.IsNullOrEmpty(p.CategoryId) && categoriesById.TryGetValue(p.CategoryId, out var category) && category.Type == preferredCategoryType)
                 return p;
 
             fallback ??= p;
