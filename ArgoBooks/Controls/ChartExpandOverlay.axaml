@@ -91,6 +91,11 @@
                                              GroupName="Granularity"
                                              Classes="granularity-button"
                                              Click="OnGranularityChanged" />
+                                <RadioButton Content="Year"
+                                             x:Name="BucketYear"
+                                             GroupName="Granularity"
+                                             Classes="granularity-button"
+                                             Click="OnGranularityChanged" />
                             </StackPanel>
                         </Border>
 

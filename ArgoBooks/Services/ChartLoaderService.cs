@@ -986,6 +986,53 @@ public class ChartLoaderService
         return _currentBucketByChart.TryGetValue(chartType, out var bucket) ? bucket : null;
     }
 
+    /// <summary>
+    /// Returns the default bucket for a chart based on its full daily data date range.
+    /// This is the bucket that would be auto-selected on initial load.
+    /// </summary>
+    public ReportChartDataService.TimeBucket? GetDefaultBucket(ChartDataType chartType)
+    {
+        if (_dailyDataByChart.TryGetValue(chartType, out var dailyData) && dailyData.Count >= 2
+            && dailyData[0].Date.HasValue && dailyData[^1].Date.HasValue)
+        {
+            return ReportChartDataService.GetTimeBucket(dailyData[0].Date!.Value, dailyData[^1].Date!.Value);
+        }
+
+        if (_dailySeriesDataByChart.TryGetValue(chartType, out var seriesData))
+        {
+            var allDates = seriesData
+                .SelectMany(s => s.DataPoints)
+                .Where(p => p.Date.HasValue)
+                .Select(p => p.Date!.Value)
+                .OrderBy(d => d)
+                .ToList();
+            if (allDates.Count >= 2)
+                return ReportChartDataService.GetTimeBucket(allDates[0], allDates[^1]);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Restores a chart to a specific bucket granularity. Used when closing the fullscreen modal
+    /// to return the chart to its pre-fullscreen state without affecting the normal view.
+    /// </summary>
+    public void RestoreBucket(
+        ChartDataType chartType,
+        ReportChartDataService.TimeBucket bucket,
+        ObservableCollection<ISeries> series,
+        Axis[] xAxes,
+        bool isMultiSeries)
+    {
+        // Force the current bucket to a different value so ApplyBucket doesn't short-circuit
+        _currentBucketByChart.Remove(chartType);
+
+        if (isMultiSeries)
+            ApplyBucketMultiSeries(chartType, bucket, series, xAxes);
+        else
+            ApplyBucket(chartType, bucket, series, xAxes);
+    }
+
     #endregion
 
     #region Shared Data Model Conversion

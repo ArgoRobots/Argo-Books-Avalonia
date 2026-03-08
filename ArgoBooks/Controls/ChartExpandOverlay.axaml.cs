@@ -51,6 +51,7 @@ public partial class ChartExpandOverlay : UserControl
     private ObservableCollection<ISeries>? _expandedSeries;
     private Axis[]? _expandedXAxes;
     private bool _expandedIsMultiSeries;
+    private ReportChartDataService.TimeBucket? _preFullscreenBucket;
 
     public ChartExpandOverlay()
     {
@@ -419,9 +420,27 @@ public partial class ChartExpandOverlay : UserControl
             return;
         }
 
-        // Show the granularity toggle with "Day" selected
+        // Remember the current bucket so we can restore it when closing the overlay
+        _preFullscreenBucket = loaderService.GetCurrentBucket(chartType.Value);
+
+        // Show the granularity toggle with the current bucket selected (inherit from normal view)
         GranularityPanel.IsVisible = true;
-        BucketDay.IsChecked = true;
+        var currentBucket = _preFullscreenBucket ?? loaderService.GetDefaultBucket(chartType.Value);
+        switch (currentBucket)
+        {
+            case ReportChartDataService.TimeBucket.Week:
+                BucketWeek.IsChecked = true;
+                break;
+            case ReportChartDataService.TimeBucket.Month:
+                BucketMonth.IsChecked = true;
+                break;
+            case ReportChartDataService.TimeBucket.Year:
+                BucketYear.IsChecked = true;
+                break;
+            default:
+                BucketDay.IsChecked = true;
+                break;
+        }
 
         // Subscribe to zoom re-bucketing (fullscreen only)
         _zoomUnsubscriber = loaderService.SubscribeToAxisZoom(
@@ -437,9 +456,22 @@ public partial class ChartExpandOverlay : UserControl
         _zoomUnsubscriber?.Invoke();
         _zoomUnsubscriber = null;
 
-        // Clear manual bucket override
+        // Clear manual bucket override and restore the pre-fullscreen bucket
+        // so the normal view is not affected by fullscreen bucketing changes
         if (_expandedChartType.HasValue && _expandedChartLoaderService != null)
+        {
             _expandedChartLoaderService.ClearManualBucketOverride(_expandedChartType.Value);
+
+            if (_preFullscreenBucket.HasValue && _expandedSeries != null && _expandedXAxes != null)
+            {
+                _expandedChartLoaderService.RestoreBucket(
+                    _expandedChartType.Value,
+                    _preFullscreenBucket.Value,
+                    _expandedSeries,
+                    _expandedXAxes,
+                    _expandedIsMultiSeries);
+            }
+        }
 
         // Hide granularity toggle
         GranularityPanel.IsVisible = false;
@@ -448,6 +480,7 @@ public partial class ChartExpandOverlay : UserControl
         _expandedChartLoaderService = null;
         _expandedSeries = null;
         _expandedXAxes = null;
+        _preFullscreenBucket = null;
     }
 
     /// <summary>
@@ -466,11 +499,19 @@ public partial class ChartExpandOverlay : UserControl
             selectedBucket = ReportChartDataService.TimeBucket.Week;
         else if (BucketMonth.IsChecked == true)
             selectedBucket = ReportChartDataService.TimeBucket.Month;
+        else if (BucketYear.IsChecked == true)
+            selectedBucket = ReportChartDataService.TimeBucket.Year;
         else
             selectedBucket = ReportChartDataService.TimeBucket.Day;
 
         // Pin the selected granularity so zoom won't change it
         _expandedChartLoaderService.SetManualBucketOverride(chartType, selectedBucket);
+
+        // Reset zoom before applying new bucket so the chart shows all data points
+        var contentPanel = this.FindControl<Panel>("ContentPanel");
+        var cartesianChart = contentPanel != null ? FindDescendant<CartesianChart>(contentPanel) : null;
+        var yAxes = cartesianChart?.YAxes as Axis[];
+        ChartLoaderService.ResetZoom(_expandedXAxes, yAxes);
 
         if (_expandedIsMultiSeries)
             _expandedChartLoaderService.ApplyBucketMultiSeries(
@@ -705,7 +746,7 @@ public partial class ChartExpandOverlay : UserControl
         if (control is CartesianChart cc && cc.Title is LabelVisual cartLabel)
         {
             _originalTitleSizes.Add((cartLabel, cartLabel.TextSize));
-            cartLabel.TextSize = 26;
+            cartLabel.TextSize = 22;
         }
 
         // Enlarge PieChart titles and add margin to shrink pie slightly
@@ -714,7 +755,7 @@ public partial class ChartExpandOverlay : UserControl
             if (pc.Title is LabelVisual pieLabel)
             {
                 _originalTitleSizes.Add((pieLabel, pieLabel.TextSize));
-                pieLabel.TextSize = 26;
+                pieLabel.TextSize = 22;
             }
 
             _originalPieChartMargins.Add((pc, pc.Margin));
@@ -725,7 +766,7 @@ public partial class ChartExpandOverlay : UserControl
         if (control is TextBlock tb && tb.FontWeight == FontWeight.SemiBold && tb.FontSize < 20)
         {
             _originalTitleSizes.Add((tb, tb.FontSize));
-            tb.FontSize = 24;
+            tb.FontSize = 20;
         }
 
         // Enlarge PieChartLegend

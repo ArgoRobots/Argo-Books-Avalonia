@@ -1317,6 +1317,9 @@ public class App : Application
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 
+            // Load company-specific chart settings (date range, chart type, etc.)
+            ChartSettingsService.Instance.LoadForCompany(args.FilePath);
+
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
         };
