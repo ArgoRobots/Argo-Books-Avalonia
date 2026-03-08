@@ -419,9 +419,9 @@ public partial class ChartExpandOverlay : UserControl
             return;
         }
 
-        // Show the granularity toggle with "Auto" selected
+        // Show the granularity toggle with "Day" selected
         GranularityPanel.IsVisible = true;
-        BucketAuto.IsChecked = true;
+        BucketDay.IsChecked = true;
 
         // Subscribe to zoom re-bucketing (fullscreen only)
         _zoomUnsubscriber = loaderService.SubscribeToAxisZoom(
@@ -460,54 +460,24 @@ public partial class ChartExpandOverlay : UserControl
             return;
 
         var chartType = _expandedChartType.Value;
-        ReportChartDataService.TimeBucket? selectedBucket = null;
+        ReportChartDataService.TimeBucket selectedBucket;
 
-        if (BucketDay.IsChecked == true)
-            selectedBucket = ReportChartDataService.TimeBucket.Day;
-        else if (BucketWeek.IsChecked == true)
+        if (BucketWeek.IsChecked == true)
             selectedBucket = ReportChartDataService.TimeBucket.Week;
         else if (BucketMonth.IsChecked == true)
             selectedBucket = ReportChartDataService.TimeBucket.Month;
-        // else: Auto (null)
+        else
+            selectedBucket = ReportChartDataService.TimeBucket.Day;
 
-        // Set or clear the manual override
+        // Pin the selected granularity so zoom won't change it
         _expandedChartLoaderService.SetManualBucketOverride(chartType, selectedBucket);
 
-        // If a specific bucket is selected, apply it immediately
-        if (selectedBucket.HasValue)
-        {
-            if (_expandedIsMultiSeries)
-                _expandedChartLoaderService.ApplyBucketMultiSeries(
-                    chartType, selectedBucket.Value, _expandedSeries, _expandedXAxes);
-            else
-                _expandedChartLoaderService.ApplyBucket(
-                    chartType, selectedBucket.Value, _expandedSeries, _expandedXAxes);
-        }
+        if (_expandedIsMultiSeries)
+            _expandedChartLoaderService.ApplyBucketMultiSeries(
+                chartType, selectedBucket, _expandedSeries, _expandedXAxes);
         else
-        {
-            // "Auto" — re-apply the auto-detected bucket based on current visible range
-            var axis = _expandedXAxes[0];
-            if (axis.MinLimit.HasValue && axis.MaxLimit.HasValue)
-            {
-                try
-                {
-                    var visibleStart = DateTime.FromOADate(axis.MinLimit.Value);
-                    var visibleEnd = DateTime.FromOADate(axis.MaxLimit.Value);
-                    var autoBucket = ReportChartDataService.GetTimeBucket(visibleStart, visibleEnd);
-
-                    if (_expandedIsMultiSeries)
-                        _expandedChartLoaderService.ApplyBucketMultiSeries(
-                            chartType, autoBucket, _expandedSeries, _expandedXAxes);
-                    else
-                        _expandedChartLoaderService.ApplyBucket(
-                            chartType, autoBucket, _expandedSeries, _expandedXAxes);
-                }
-                catch
-                {
-                    // Invalid OA dates; ignore
-                }
-            }
-        }
+            _expandedChartLoaderService.ApplyBucket(
+                chartType, selectedBucket, _expandedSeries, _expandedXAxes);
     }
 
     /// <summary>

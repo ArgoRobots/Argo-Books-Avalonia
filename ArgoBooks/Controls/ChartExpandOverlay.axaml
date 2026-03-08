@@ -75,15 +75,10 @@
                                 VerticalAlignment="Center"
                                 Margin="4,0,0,0">
                             <StackPanel Orientation="Horizontal" Spacing="2">
-                                <RadioButton Content="Auto"
-                                             x:Name="BucketAuto"
-                                             GroupName="Granularity"
-                                             IsChecked="True"
-                                             Classes="granularity-button"
-                                             Click="OnGranularityChanged" />
                                 <RadioButton Content="Day"
                                              x:Name="BucketDay"
                                              GroupName="Granularity"
+                                             IsChecked="True"
                                              Classes="granularity-button"
                                              Click="OnGranularityChanged" />
                                 <RadioButton Content="Week"
