@@ -2964,6 +2964,7 @@ public class App : Application
             // Tier 2: LLM row processing
             var totalImported = 0;
             var totalSkipped = 0;
+            var allSheetResults = new List<SheetImportResult>();
             if (tier2Sheets.Count > 0)
             {
                 using var tier2Cts = new CancellationTokenSource();
@@ -2990,9 +2991,10 @@ public class App : Application
                         }),
                         tier2Cts.Token);
 
-                    var (imported, skipped) = importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
-                    totalImported += imported;
-                    totalSkipped += skipped;
+                    var tier2Result = importService.ImportProcessedEntities(companyData, processedChunks, sheet.SourceSheetName, importOptions);
+                    totalImported += tier2Result.Inserted;
+                    totalSkipped += tier2Result.Skipped;
+                    allSheetResults.Add(tier2Result);
                 }
 
                 // Yield to let any pending Progress<T> callbacks (dispatched via
@@ -3028,6 +3030,7 @@ public class App : Application
                 totalImported += tier1Result.TotalImported;
                 totalUpdated += tier1Result.TotalUpdated;
                 totalSkipped += tier1Result.TotalSkipped;
+                allSheetResults.AddRange(tier1Result.SheetResults);
             }
 
             var totalProcessed = totalImported + totalUpdated;
@@ -3035,10 +3038,12 @@ public class App : Application
             // Collect all warnings
             var allWarnings = tier1Result?.Warnings ?? [];
 
-            // Build success message
+            // Build success message with filename
+            var fileName = Path.GetFileName(filePath);
             var successMessage = totalProcessed > 0
                 ? "AI import completed successfully.".Translate()
                 : "AI import completed but no records were imported.".Translate();
+            successMessage += $"\n{"File:".Translate()} {fileName}";
 
             if (totalImported > 0)
                 successMessage += $"\n\n{"New:".Translate()} {totalImported:N0}";
@@ -3048,6 +3053,37 @@ public class App : Application
                 successMessage += $"\n\n{"Imported:".Translate()} 0";
             if (totalSkipped > 0)
                 successMessage += $"\n{"Skipped:".Translate()} {totalSkipped:N0}";
+
+            // Per-sheet breakdown
+            if (allSheetResults.Count > 1)
+            {
+                successMessage += "\n";
+                foreach (var sr in allSheetResults)
+                {
+                    var parts = new List<string>();
+                    if (sr.Inserted > 0) parts.Add($"{sr.Inserted:N0} {"new".Translate()}");
+                    if (sr.Updated > 0) parts.Add($"{sr.Updated:N0} {"updated".Translate()}");
+                    if (sr.Skipped > 0) parts.Add($"{sr.Skipped:N0} {"skipped".Translate()}");
+                    if (parts.Count > 0)
+                        successMessage += $"\n{sr.SheetName} ({sr.EntityType}): {string.Join(", ", parts)}";
+                }
+            }
+
+            // Skip reasons summary
+            var allSkipReasons = allSheetResults
+                .SelectMany(sr => sr.SkipReasons)
+                .GroupBy(r => r)
+                .Select(g => g.Count() > 1 ? $"{g.Key} (×{g.Count()})" : g.Key)
+                .ToList();
+            if (allSkipReasons.Count > 0)
+            {
+                var reasonsToShow = allSkipReasons.Take(5).ToList();
+                successMessage += $"\n\n{"Skip reasons:".Translate()}";
+                foreach (var reason in reasonsToShow)
+                    successMessage += $"\n• {reason}";
+                if (allSkipReasons.Count > 5)
+                    successMessage += $"\n• ...{"and {0} more".TranslateFormat(allSkipReasons.Count - 5)}";
+            }
 
             if (allWarnings.Count > 0)
                 successMessage += "\n\n" + string.Join("\n", allWarnings);

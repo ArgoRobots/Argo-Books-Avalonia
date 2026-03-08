@@ -32,6 +32,19 @@ public class ImportOptions
 }
 
 /// <summary>
+/// Per-sheet import result breakdown.
+/// </summary>
+public class SheetImportResult
+{
+    public required string SheetName { get; init; }
+    public required string EntityType { get; init; }
+    public int Inserted { get; set; }
+    public int Updated { get; set; }
+    public int Skipped { get; set; }
+    public List<string> SkipReasons { get; } = [];
+}
+
+/// <summary>
 /// Result of a spreadsheet import operation, tracking what was imported and any issues.
 /// </summary>
 public class SpreadsheetImportResult
@@ -40,6 +53,7 @@ public class SpreadsheetImportResult
     public int TotalUpdated { get; set; }
     public int TotalSkipped { get; set; }
     public List<string> Warnings { get; } = [];
+    public List<SheetImportResult> SheetResults { get; } = [];
 }
 
 /// <summary>
@@ -284,6 +298,15 @@ public class SpreadsheetImportService
                     result.TotalImported += inserted;
                     result.TotalUpdated += updated;
                     result.TotalSkipped += skipped;
+                    var csvSheetName = Path.GetFileNameWithoutExtension(filePath);
+                    result.SheetResults.Add(new SheetImportResult
+                    {
+                        SheetName = csvSheetName,
+                        EntityType = sheetType.ToString(),
+                        Inserted = inserted,
+                        Updated = updated,
+                        Skipped = skipped
+                    });
                     if (inserted == 0 && updated == 0)
                         result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
                 }
@@ -367,16 +390,21 @@ public class SpreadsheetImportService
     /// Imports pre-processed entities from LLM Tier 2 processing.
     /// Returns (imported count, skipped count) for reporting.
     /// </summary>
-    public (int Imported, int Skipped) ImportProcessedEntities(
+    public SheetImportResult ImportProcessedEntities(
         CompanyData companyData,
         List<LlmProcessedData> processedData,
+        string sheetName,
         ImportOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(processedData);
 
-        var imported = 0;
-        var skipped = 0;
+        var entityType = processedData.FirstOrDefault()?.EntityType.ToString() ?? "Unknown";
+        var sheetResult = new SheetImportResult
+        {
+            SheetName = sheetName,
+            EntityType = entityType
+        };
 
         foreach (var chunk in processedData)
         {
@@ -385,13 +413,17 @@ public class SpreadsheetImportService
                 try
                 {
                     if (ImportSingleEntity(companyData, chunk.EntityType, entityJson))
-                        imported++;
+                        sheetResult.Inserted++;
                     else
-                        skipped++;
+                    {
+                        sheetResult.Skipped++;
+                        sheetResult.SkipReasons.Add($"Row had missing or empty ID ({chunk.EntityType})");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    skipped++;
+                    sheetResult.Skipped++;
+                    sheetResult.SkipReasons.Add($"Error importing {chunk.EntityType}: {ex.Message}");
                     _errorLogger?.LogError(ex, ErrorCategory.Import,
                         $"Failed to import {chunk.EntityType} entity from AI processing");
                 }
@@ -401,7 +433,7 @@ public class SpreadsheetImportService
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
 
-        return (imported, skipped);
+        return sheetResult;
     }
 
     private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis, SpreadsheetImportResult result)
@@ -437,6 +469,14 @@ public class SpreadsheetImportService
         result.TotalImported += inserted;
         result.TotalUpdated += updated;
         result.TotalSkipped += skipped;
+        result.SheetResults.Add(new SheetImportResult
+        {
+            SheetName = sheetName,
+            EntityType = sheetType.ToString(),
+            Inserted = inserted,
+            Updated = updated,
+            Skipped = skipped
+        });
         if (inserted == 0 && updated == 0 && rows.Count > 0)
             result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
     }
