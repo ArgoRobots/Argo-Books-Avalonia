@@ -2105,13 +2105,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _errorLogger?.LogError(ex, ErrorCategory.Import, "AI categorization failed, falling back to product name as category");
             }
-        }
-        else
-        {
-        }
 
         // Fallback: use product name as category name (same as Tier 2 last-resort logic)
         foreach (var product in uncategorized)
@@ -2127,30 +2124,26 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     private static List<(string ProductName, string CategoryName)> ParseAiCategorySuggestions(string response)
     {
         var results = new List<(string ProductName, string CategoryName)>();
-        try
-        {
-            // Strip markdown code fences if present
-            var clean = response.Trim();
-            if (clean.StartsWith("```"))
-            {
-                var firstNewline = clean.IndexOf('\n');
-                if (firstNewline >= 0) clean = clean[(firstNewline + 1)..];
-                if (clean.EndsWith("```")) clean = clean[..^3];
-                clean = clean.Trim();
-            }
 
-            using var doc = JsonDocument.Parse(clean);
-            foreach (var el in doc.RootElement.EnumerateArray())
-            {
-                var productName = el.TryGetProperty("productName", out var pn) ? pn.GetString() ?? "" : "";
-                var categoryName = el.TryGetProperty("categoryName", out var cn) ? cn.GetString() ?? "" : "";
-                if (!string.IsNullOrEmpty(productName) && !string.IsNullOrEmpty(categoryName))
-                    results.Add((productName, categoryName));
-            }
-        }
-        catch (Exception)
+        // Strip markdown code fences if present
+        var clean = response.Trim();
+        if (clean.StartsWith("```"))
         {
+            var firstNewline = clean.IndexOf('\n');
+            if (firstNewline >= 0) clean = clean[(firstNewline + 1)..];
+            if (clean.EndsWith("```")) clean = clean[..^3];
+            clean = clean.Trim();
         }
+
+        using var doc = JsonDocument.Parse(clean);
+        foreach (var el in doc.RootElement.EnumerateArray())
+        {
+            var productName = el.TryGetProperty("productName", out var pn) ? pn.GetString() ?? "" : "";
+            var categoryName = el.TryGetProperty("categoryName", out var cn) ? cn.GetString() ?? "" : "";
+            if (!string.IsNullOrEmpty(productName) && !string.IsNullOrEmpty(categoryName))
+                results.Add((productName, categoryName));
+        }
+
         return results;
     }
 
