@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
@@ -633,10 +635,16 @@ public class SpreadsheetImportService
         }
     }
 
+    private static readonly JsonSerializerOptions ImportJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new LenientEnumConverterFactory() }
+    };
+
     private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null)
     {
         var jsonStr = entityJson.GetRawText();
-        var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var opts = ImportJsonOptions;
         var skipExisting = options?.SkipExistingRecords == true;
 
         switch (entityType)
@@ -3186,4 +3194,55 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     }
 
     #endregion
+}
+
+/// <summary>
+/// A JsonConverterFactory that handles enum values leniently — strips spaces,
+/// hyphens, and underscores before attempting case-insensitive enum parsing.
+/// Falls back to the first enum value if parsing fails entirely.
+/// </summary>
+internal class LenientEnumConverterFactory : JsonConverterFactory
+{
+    public override bool CanConvert(Type typeToConvert) =>
+        typeToConvert.IsEnum || (Nullable.GetUnderlyingType(typeToConvert)?.IsEnum == true);
+
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        var enumType = Nullable.GetUnderlyingType(typeToConvert) ?? typeToConvert;
+        var converterType = typeof(LenientEnumConverter<>).MakeGenericType(enumType);
+        return (JsonConverter)Activator.CreateInstance(converterType)!;
+    }
+}
+
+internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Number)
+        {
+            var intValue = reader.GetInt32();
+            if (Enum.IsDefined(typeof(T), intValue))
+                return (T)Enum.ToObject(typeof(T), intValue);
+            return default;
+        }
+
+        var value = reader.GetString();
+        if (string.IsNullOrEmpty(value))
+            return default;
+
+        // Try exact match first
+        if (Enum.TryParse<T>(value, ignoreCase: true, out var result))
+            return result;
+
+        // Strip spaces, hyphens, underscores and try again
+        var normalized = value.Replace(" ", "").Replace("-", "").Replace("_", "");
+        if (Enum.TryParse<T>(normalized, ignoreCase: true, out result))
+            return result;
+
+        // Fall back to default enum value
+        return default;
+    }
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.ToString());
 }
