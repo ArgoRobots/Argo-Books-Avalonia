@@ -2105,7 +2105,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -2148,7 +2148,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     results.Add((productName, categoryName));
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
         return results;
