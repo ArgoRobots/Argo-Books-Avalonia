@@ -52,6 +52,19 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string? _loadingMessage;
 
+    [ObservableProperty]
+    private string? _loadingDetail;
+
+    [ObservableProperty]
+    private double _loadingProgress = -1;
+
+    public bool IsLoadingIndeterminate => LoadingProgress < 0;
+
+    partial void OnLoadingProgressChanged(double value)
+    {
+        OnPropertyChanged(nameof(IsLoadingIndeterminate));
+    }
+
     /// <summary>
     /// Gets or sets the CreateCompanyViewModel for the full-screen wizard.
     /// </summary>
@@ -290,9 +303,13 @@ public partial class MainWindowViewModel : ViewModelBase
     /// Shows a loading overlay with optional message.
     /// </summary>
     /// <param name="message">Loading message to display.</param>
-    public void ShowLoading(string? message = null)
+    /// <param name="detail">Optional secondary detail text.</param>
+    /// <param name="progress">Progress value 0-100, or -1 for indeterminate.</param>
+    public void ShowLoading(string? message = null, string? detail = null, double progress = -1)
     {
         LoadingMessage = message ?? "Loading...";
+        LoadingDetail = detail;
+        LoadingProgress = progress;
         IsLoading = true;
     }
 
@@ -303,6 +320,8 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsLoading = false;
         LoadingMessage = null;
+        LoadingDetail = null;
+        LoadingProgress = -1;
     }
 
     /// <summary>

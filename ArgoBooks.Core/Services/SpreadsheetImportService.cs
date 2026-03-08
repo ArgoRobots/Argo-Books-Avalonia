@@ -37,6 +37,7 @@ public class ImportOptions
 public class SpreadsheetImportResult
 {
     public int TotalImported { get; set; }
+    public int TotalUpdated { get; set; }
     public int TotalSkipped { get; set; }
     public List<string> Warnings { get; } = [];
 }
@@ -164,7 +165,8 @@ public class SpreadsheetImportService
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<string>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -178,18 +180,22 @@ public class SpreadsheetImportService
         {
             await Task.Run(() =>
             {
+                progress?.Report("Reading spreadsheet...");
                 using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var workbook = new XLWorkbook(fileStream);
 
                 if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
                 {
+                    progress?.Report("Creating missing references...");
                     CreateMissingReferences(workbook, companyData, options);
                 }
 
-                foreach (var worksheet in workbook.Worksheets)
+                var worksheets = workbook.Worksheets.ToList();
+                for (int i = 0; i < worksheets.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ImportWorksheetWithMapping(worksheet, companyData, analysis, result);
+                    progress?.Report($"Importing {worksheets[i].Name} ({i + 1}/{worksheets.Count})...");
+                    ImportWorksheetWithMapping(worksheets[i], companyData, analysis, result);
                 }
 
                 UpdateIdCounters(companyData);
@@ -197,6 +203,7 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
+            progress?.Report("Categorizing products...");
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             stopwatch.Stop();
@@ -219,7 +226,8 @@ public class SpreadsheetImportService
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<string>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -231,6 +239,7 @@ public class SpreadsheetImportService
         {
             await Task.Run(() =>
             {
+                progress?.Report("Reading CSV file...");
                 var lines = File.ReadAllLines(filePath);
                 if (lines.Length < 2)
                 {
@@ -246,6 +255,7 @@ public class SpreadsheetImportService
                     return;
                 }
 
+                progress?.Report($"Processing {lines.Length - 1:N0} rows...");
                 var rows = new List<List<object?>>();
                 for (int i = 1; i < lines.Length; i++)
                 {
@@ -264,12 +274,14 @@ public class SpreadsheetImportService
 
                 if (sheetAnalysis != null)
                 {
+                    progress?.Report($"Importing {rows.Count:N0} records...");
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
-                    var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows);
-                    result.TotalImported += imported;
+                    var (inserted, updated, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows);
+                    result.TotalImported += inserted;
+                    result.TotalUpdated += updated;
                     result.TotalSkipped += skipped;
-                    if (imported == 0)
+                    if (inserted == 0 && updated == 0)
                         result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
                 }
                 else
@@ -282,6 +294,7 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
+            progress?.Report("Categorizing products...");
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);
@@ -417,10 +430,11 @@ public class SpreadsheetImportService
 
         ApplyColumnMapping(headers, sheetAnalysis);
         var sheetType = sheetAnalysis.DetectedType;
-        var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
-        result.TotalImported += imported;
+        var (inserted, updated, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
+        result.TotalImported += inserted;
+        result.TotalUpdated += updated;
         result.TotalSkipped += skipped;
-        if (imported == 0 && rows.Count > 0)
+        if (inserted == 0 && updated == 0 && rows.Count > 0)
             result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
     }
 
@@ -516,15 +530,15 @@ public class SpreadsheetImportService
         _ => 0
     };
 
-    private (int imported, int skipped) ImportBySheetTypeWithCount(
+    private (int inserted, int updated, int skipped) ImportBySheetTypeWithCount(
         SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
     {
         var countBefore = GetEntityCount(data, sheetType);
         ImportBySheetType(sheetType, data, headers, rows);
         var countAfter = GetEntityCount(data, sheetType);
-        var imported = countAfter - countBefore;
-        var skipped = rows.Count - imported;
-        return (Math.Max(0, imported), Math.Max(0, skipped));
+        var inserted = Math.Max(0, countAfter - countBefore);
+        var updated = Math.Max(0, rows.Count - inserted);
+        return (inserted, updated, 0);
     }
 
     internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
@@ -2331,7 +2345,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Match by name for auto-created placeholder products (created from foreign key references)
             if (existing == null && !string.IsNullOrEmpty(name))
             {
-                productsByName.TryGetValue(id, out var placeholder);
+                productsByName.TryGetValue(name, out var placeholder);
                 if (placeholder != null)
                     existing = placeholder;
             }

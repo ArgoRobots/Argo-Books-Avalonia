@@ -2922,9 +2922,14 @@ public class App : Application
                 // Import Tier 1 data
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
+                var importProgress = new Progress<string>(detail =>
+                {
+                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), detail);
+                });
+
                 tier1Result = isCsv
-                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions)
-                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
+                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, default, importProgress)
+                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, default, importProgress);
 
                 _mainWindowViewModel?.HideLoading();
             }
@@ -2936,14 +2941,19 @@ public class App : Application
             {
                 foreach (var sheet in tier2Sheets)
                 {
-                    _mainWindowViewModel?.ShowLoading($"AI processing {sheet.SourceSheetName}...");
+                    _mainWindowViewModel?.ShowLoading(
+                        "AI processing...".Translate(),
+                        sheet.SourceSheetName);
 
                     var processedChunks = await analysisService.ProcessAllChunksAsync(
                         filePath, sheet,
                         new Progress<(int processed, int total)>(p =>
                         {
+                            var pct = p.total > 0 ? (double)p.processed / p.total * 100 : -1;
                             _mainWindowViewModel?.ShowLoading(
-                                $"AI processing {sheet.SourceSheetName}... {p.processed}/{p.total} rows");
+                                "AI processing...".Translate(),
+                                $"{sheet.SourceSheetName} — {p.processed}/{p.total} rows",
+                                pct);
                         }));
 
                     var (imported, skipped) = importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
@@ -2978,31 +2988,40 @@ public class App : Application
             ChartSettingsService.Instance.SelectedDateRange = "All Time";
 
             // Combine Tier 1 and Tier 2 counts
+            var totalUpdated = 0;
             if (tier1Result != null)
             {
                 totalImported += tier1Result.TotalImported;
+                totalUpdated += tier1Result.TotalUpdated;
                 totalSkipped += tier1Result.TotalSkipped;
             }
+
+            var totalProcessed = totalImported + totalUpdated;
 
             // Collect all warnings
             var allWarnings = tier1Result?.Warnings ?? [];
 
             // Build success message
-            var successMessage = totalImported > 0
+            var successMessage = totalProcessed > 0
                 ? "AI import completed successfully.".Translate()
                 : "AI import completed but no records were imported.".Translate();
 
-            successMessage += $"\n\n{"Imported:".Translate()} {totalImported:N0}";
+            if (totalImported > 0)
+                successMessage += $"\n\n{"New:".Translate()} {totalImported:N0}";
+            if (totalUpdated > 0)
+                successMessage += $"\n{"Updated:".Translate()} {totalUpdated:N0}";
+            if (totalImported == 0 && totalUpdated == 0)
+                successMessage += $"\n\n{"Imported:".Translate()} 0";
             if (totalSkipped > 0)
-                successMessage += $" — {"Skipped:".Translate()} {totalSkipped:N0}";
+                successMessage += $"\n{"Skipped:".Translate()} {totalSkipped:N0}";
 
             if (allWarnings.Count > 0)
                 successMessage += "\n\n" + string.Join("\n", allWarnings);
 
-            if (totalImported > 0)
+            if (totalProcessed > 0)
                 successMessage += "\n\n" + "Please save to persist changes.".Translate();
 
-            if (totalImported == 0)
+            if (totalProcessed == 0)
                 await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
             else if (totalSkipped > 0 || allWarnings.Count > 0)
                 await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
