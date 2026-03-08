@@ -3036,67 +3036,22 @@ public class App : Application
             var totalProcessed = totalImported + totalUpdated;
 
             // Collect all warnings
-            var allWarnings = tier1Result?.Warnings ?? [];
+            var allWarnings = (tier1Result?.Warnings ?? []).ToList();
 
-            // Build success message with filename
-            var fileName = Path.GetFileName(filePath);
-            var successMessage = totalProcessed > 0
-                ? "AI import completed successfully.".Translate()
-                : "AI import completed but no records were imported.".Translate();
-            successMessage += $"\n{"File:".Translate()} {fileName}";
-
-            if (totalImported > 0)
-                successMessage += $"\n\n{"New:".Translate()} {totalImported:N0}";
-            if (totalUpdated > 0)
-                successMessage += $"\n{"Updated:".Translate()} {totalUpdated:N0}";
-            if (totalImported == 0 && totalUpdated == 0)
-                successMessage += $"\n\n{"Imported:".Translate()} 0";
-            if (totalSkipped > 0)
-                successMessage += $"\n{"Skipped:".Translate()} {totalSkipped:N0}";
-
-            // Per-sheet breakdown
-            if (allSheetResults.Count > 1)
-            {
-                successMessage += "\n";
-                foreach (var sr in allSheetResults)
-                {
-                    var parts = new List<string>();
-                    if (sr.Inserted > 0) parts.Add($"{sr.Inserted:N0} {"new".Translate()}");
-                    if (sr.Updated > 0) parts.Add($"{sr.Updated:N0} {"updated".Translate()}");
-                    if (sr.Skipped > 0) parts.Add($"{sr.Skipped:N0} {"skipped".Translate()}");
-                    if (parts.Count > 0)
-                        successMessage += $"\n{sr.SheetName} ({sr.EntityType}): {string.Join(", ", parts)}";
-                }
-            }
-
-            // Skip reasons summary
+            // Collect skip reasons from all sheets
             var allSkipReasons = allSheetResults
                 .SelectMany(sr => sr.SkipReasons)
                 .GroupBy(r => r)
-                .Select(g => g.Count() > 1 ? $"{g.Key} (×{g.Count()})" : g.Key)
+                .Select(g => g.Count() > 1 ? $"{g.Key} (\u00d7{g.Count()})" : g.Key)
                 .ToList();
-            if (allSkipReasons.Count > 0)
-            {
-                var reasonsToShow = allSkipReasons.Take(5).ToList();
-                successMessage += $"\n\n{"Skip reasons:".Translate()}";
-                foreach (var reason in reasonsToShow)
-                    successMessage += $"\n• {reason}";
-                if (allSkipReasons.Count > 5)
-                    successMessage += $"\n• ...{"and {0} more".TranslateFormat(allSkipReasons.Count - 5)}";
-            }
 
-            if (allWarnings.Count > 0)
-                successMessage += "\n\n" + string.Join("\n", allWarnings);
-
-            if (totalProcessed > 0)
-                successMessage += "\n\n" + "Please save to persist changes.".Translate();
-
-            if (totalProcessed == 0)
-                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
-            else if (totalSkipped > 0 || allWarnings.Count > 0)
-                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
-            else
-                await ShowSuccessMessageBoxAsync("Import Complete".Translate(), successMessage);
+            // Show import result dialog
+            var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
+            await resultDialog.ShowAsync(
+                Path.GetFileName(filePath),
+                allSheetResults,
+                totalImported, totalUpdated, totalSkipped,
+                allSkipReasons, allWarnings, totalProcessed > 0);
         }
         catch (OperationCanceledException)
         {
