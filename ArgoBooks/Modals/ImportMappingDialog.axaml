@@ -357,13 +357,7 @@
                                                                                            FontFamily="JetBrains Mono, Consolas, monospace"
                                                                                            Foreground="#7C3AED" />
                                                                             </Border>
-                                                                            <!-- Transform hint -->
-                                                                            <TextBlock Text="{Binding TransformHint}"
-                                                                                       FontSize="10"
-                                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                                       IsVisible="{Binding HasTransformHint}"
-                                                                                       VerticalAlignment="Center"
-                                                                                       FontStyle="Italic" />
+                                                                            <!-- Transform hint (hidden) -->
                                                                         </StackPanel>
 
                                                                         <!-- Confidence -->
