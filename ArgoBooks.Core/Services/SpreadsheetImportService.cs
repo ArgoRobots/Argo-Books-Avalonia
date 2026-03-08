@@ -48,22 +48,6 @@ public class SpreadsheetImportResult
 /// </summary>
 public class SpreadsheetImportService
 {
-    private static readonly string ImportLogPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ArgoBooks", "import_log.txt");
-
-    private static void Log(string message)
-    {
-        try
-        {
-            var dir = Path.GetDirectoryName(ImportLogPath);
-            if (dir != null) Directory.CreateDirectory(dir);
-            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}\n";
-            File.AppendAllText(ImportLogPath, line);
-        }
-        catch { /* don't let logging break import */ }
-    }
-
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
     private readonly IOpenAiService? _openAiService;
@@ -131,10 +115,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
 
-        // Clear and start import log
-        try { File.WriteAllText(ImportLogPath, $"=== IMPORT STARTED: {Path.GetFileName(filePath)} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===\nLog path: {ImportLogPath}\n\n"); }
-        catch { /* ignore */ }
-
         options ??= new ImportOptions();
         var stopwatch = Stopwatch.StartNew();
 
@@ -192,19 +172,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(analysis);
-
-        // Clear and start import log
-        try
-        {
-            var dir = Path.GetDirectoryName(ImportLogPath);
-            if (dir != null) Directory.CreateDirectory(dir);
-            File.WriteAllText(ImportLogPath, $"=== AI-MAPPED IMPORT STARTED: {Path.GetFileName(filePath)} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===\nLog path: {ImportLogPath}\n\n");
-        }
-        catch { /* ignore */ }
-
-        Log($"Analysis sheets: {analysis.Sheets.Count}");
-        foreach (var sheet in analysis.Sheets)
-            Log($"  Sheet: '{sheet.SourceSheetName}' → {sheet.DetectedType}, Tier={sheet.Tier}, Included={sheet.IsIncluded}, Columns=[{string.Join(", ", sheet.ColumnMappings.Select(m => $"{m.SourceColumn}→{m.TargetColumn}"))}]");
 
         options ??= new ImportOptions();
         var stopwatch = Stopwatch.StartNew();
@@ -401,12 +368,10 @@ public class SpreadsheetImportService
 
         foreach (var chunk in processedData)
         {
-            Log($"[ImportProcessedEntities] Processing chunk: EntityType={chunk.EntityType}, Entities={chunk.Entities.Count}, SourceRows={chunk.SourceRowsProcessed}, Warnings=[{string.Join(", ", chunk.Warnings)}]");
             foreach (var entityJson in chunk.Entities)
             {
                 try
                 {
-                    Log($"[ImportProcessedEntities] Importing {chunk.EntityType} entity: {entityJson.GetRawText()[..Math.Min(200, entityJson.GetRawText().Length)]}...");
                     if (ImportSingleEntity(companyData, chunk.EntityType, entityJson))
                         imported++;
                     else
@@ -423,20 +388,6 @@ public class SpreadsheetImportService
 
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
-
-        // Summary log of all categories and products after import
-        Log($"[ImportProcessedEntities] === IMPORT SUMMARY ===");
-        Log($"[ImportProcessedEntities] Total imported: {imported}, Total skipped: {skipped}");
-        Log($"[ImportProcessedEntities] Categories ({companyData.Categories.Count}):");
-        foreach (var cat in companyData.Categories)
-            Log($"[ImportProcessedEntities]   - {cat.Id}: '{cat.Name}' (Type={cat.Type}, ItemType={cat.ItemType})");
-        Log($"[ImportProcessedEntities] Products ({companyData.Products.Count}):");
-        foreach (var p in companyData.Products)
-        {
-            var catName = companyData.Categories.FirstOrDefault(c => c.Id == p.CategoryId)?.Name ?? "NONE";
-            Log($"[ImportProcessedEntities]   - {p.Id}: '{p.Name}' (Type={p.Type}, CategoryId={p.CategoryId ?? "null"}, Category='{catName}')");
-        }
-        Log($"[ImportProcessedEntities] === END SUMMARY ===");
 
         return (imported, skipped);
     }
@@ -461,17 +412,14 @@ public class SpreadsheetImportService
         var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == sheetName);
         if (sheetAnalysis == null || !sheetAnalysis.IsIncluded) return;
 
-        Log($"[ImportWorksheetWithMapping] Sheet '{sheetName}': DetectedType={sheetAnalysis.DetectedType}, Tier={sheetAnalysis.Tier}, Headers=[{string.Join(", ", headers)}]");
 
         // Only process Tier 1 sheets here (Tier 2 is handled separately via ProcessedEntities)
         if (sheetAnalysis.Tier == ProcessingTier.Tier2_LlmProcessing)
         {
-            Log($"[ImportWorksheetWithMapping] Sheet '{sheetName}': Skipping — Tier2 (handled via ProcessedEntities)");
             return;
         }
 
         ApplyColumnMapping(headers, sheetAnalysis);
-        Log($"[ImportWorksheetWithMapping] Sheet '{sheetName}': After column mapping, headers=[{string.Join(", ", headers)}]");
         var sheetType = sheetAnalysis.DetectedType;
         var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
         result.TotalImported += imported;
@@ -625,13 +573,10 @@ public class SpreadsheetImportService
                 var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
                 if (product != null && !string.IsNullOrEmpty(product.Id))
                 {
-                    Log($"[Import] Product '{product.Name}' (ID={product.Id}): Type={product.Type}, ItemType={product.ItemType}, CategoryId={product.CategoryId ?? "null"}");
-                    Log($"[Import] Product '{product.Name}' raw JSON: {jsonStr}");
 
                     // Auto-create category if product has a category name but no matching category
                     ResolveProductCategory(data, product, entityJson);
 
-                    Log($"[Import] Product '{product.Name}' final CategoryId={product.CategoryId ?? "null"}");
 
                     var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
                     if (existing != null) data.Products.Remove(existing);
@@ -1999,8 +1944,6 @@ public class SpreadsheetImportService
     /// </summary>
     private static Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
     {
-        Log($"[FindOrCreateCategory] Looking for category: name='{categoryName}', type={type}, itemType={itemType}");
-        Log($"[FindOrCreateCategory] Existing categories ({data.Categories.Count}): [{string.Join(", ", data.Categories.Select(c => $"'{c.Name}'({c.Type})"))}]");
 
         // Try to find existing category by name and type
         var existing = data.Categories.FirstOrDefault(c =>
@@ -2009,7 +1952,6 @@ public class SpreadsheetImportService
 
         if (existing != null)
         {
-            Log($"[FindOrCreateCategory] Found exact match: '{existing.Name}' (ID={existing.Id}, Type={existing.Type})");
             return existing;
         }
 
@@ -2019,7 +1961,6 @@ public class SpreadsheetImportService
 
         if (existing != null)
         {
-            Log($"[FindOrCreateCategory] Found name-only match: '{existing.Name}' (ID={existing.Id}, Type={existing.Type})");
             return existing;
         }
 
@@ -2033,7 +1974,6 @@ public class SpreadsheetImportService
             ItemType = itemType
         };
         data.Categories.Add(category);
-        Log($"[FindOrCreateCategory] CREATED new category: '{category.Name}' (ID={category.Id}, Type={category.Type}, ItemType={category.ItemType})");
         return category;
     }
 
@@ -2043,14 +1983,12 @@ public class SpreadsheetImportService
     /// </summary>
     private static void ResolveProductCategory(CompanyData data, Product product, JsonElement entityJson)
     {
-        Log($"[ResolveCategory] Starting for product '{product.Name}' (ID={product.Id})");
 
         // Extract categoryName from the raw JSON (not part of the Product model)
         string? categoryName = null;
         if (entityJson.TryGetProperty("categoryName", out var nameElement))
             categoryName = nameElement.GetString();
 
-        Log($"[ResolveCategory] Product '{product.Name}': categoryId={product.CategoryId ?? "null"}, categoryName from JSON={categoryName ?? "null"}");
 
         // If we have a valid categoryId that matches an existing category, nothing to do
         if (!string.IsNullOrEmpty(product.CategoryId))
@@ -2058,26 +1996,21 @@ public class SpreadsheetImportService
             var existingCategory = data.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
             if (existingCategory != null)
             {
-                Log($"[ResolveCategory] Product '{product.Name}': categoryId '{product.CategoryId}' matches existing category '{existingCategory.Name}' — no action needed");
                 return;
             }
-            Log($"[ResolveCategory] Product '{product.Name}': categoryId '{product.CategoryId}' does NOT match any existing category");
         }
 
         // If we have a category name, find or create the category
         if (!string.IsNullOrEmpty(categoryName))
         {
-            Log($"[ResolveCategory] Product '{product.Name}': using categoryName '{categoryName}' to find or create category");
             var category = FindOrCreateCategory(data, categoryName, product.Type, product.ItemType);
             product.CategoryId = category.Id;
-            Log($"[ResolveCategory] Product '{product.Name}': assigned categoryId='{category.Id}' (name='{category.Name}')");
             return;
         }
 
         // If categoryId was set but doesn't exist and no name provided, use the categoryId as the name
         if (!string.IsNullOrEmpty(product.CategoryId))
         {
-            Log($"[ResolveCategory] Product '{product.Name}': orphan categoryId '{product.CategoryId}', creating category with that as name");
             var category = FindOrCreateCategory(data, product.CategoryId, product.Type, product.ItemType);
             product.CategoryId = category.Id;
             return;
@@ -2086,13 +2019,11 @@ public class SpreadsheetImportService
         // Last resort: use the product name as the category name so no product is left uncategorized
         if (!string.IsNullOrEmpty(product.Name))
         {
-            Log($"[ResolveCategory] Product '{product.Name}': NO categoryId or categoryName — using product name as category name (last resort)");
             var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
             product.CategoryId = category.Id;
         }
         else
         {
-            Log($"[ResolveCategory] Product '{product.Id}': NO categoryId, categoryName, or product name — cannot create category");
         }
     }
 
@@ -2109,11 +2040,9 @@ public class SpreadsheetImportService
 
         if (uncategorized.Count == 0)
         {
-            Log("[AiCategorize] No uncategorized products found — skipping.");
             return;
         }
 
-        Log($"[AiCategorize] Found {uncategorized.Count} uncategorized product(s): [{string.Join(", ", uncategorized.Select(p => $"'{p.Name}'"))}]");
 
         // Try AI categorization if the service is available
         if (_openAiService?.IsConfigured == true)
@@ -2144,7 +2073,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
   {{ ""productName"": ""..."", ""categoryName"": ""..."" }}
 ]";
 
-                Log("[AiCategorize] Sending AI categorization request...");
                 var response = await _openAiService.SendChatAsync(
                     "You are a helpful assistant that categorizes business products. Always respond with valid JSON only, no markdown.",
                     prompt,
@@ -2154,7 +2082,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
                 if (!string.IsNullOrEmpty(response))
                 {
-                    Log($"[AiCategorize] AI response: {response}");
                     var suggestions = ParseAiCategorySuggestions(response);
 
                     foreach (var product in uncategorized)
@@ -2166,12 +2093,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                         {
                             var category = FindOrCreateCategory(data, suggestion.CategoryName, product.Type, product.ItemType);
                             product.CategoryId = category.Id;
-                            Log($"[AiCategorize] AI assigned product '{product.Name}' → category '{category.Name}' (ID={category.Id})");
                         }
                         else
                         {
                             // AI didn't return a match for this product — use product name as fallback
-                            Log($"[AiCategorize] AI had no suggestion for '{product.Name}' — using product name as category");
                             var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
                             product.CategoryId = category.Id;
                         }
@@ -2179,16 +2104,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     return;
                 }
 
-                Log("[AiCategorize] AI returned empty response — falling back to product name.");
             }
             catch (Exception ex)
             {
-                Log($"[AiCategorize] AI categorization failed: {ex.Message} — falling back to product name.");
             }
         }
         else
         {
-            Log("[AiCategorize] AI service not available — falling back to product name as category.");
         }
 
         // Fallback: use product name as category name (same as Tier 2 last-resort logic)
@@ -2198,7 +2120,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             {
                 var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
                 product.CategoryId = category.Id;
-                Log($"[AiCategorize] Fallback: product '{product.Name}' → category '{category.Name}' (ID={category.Id})");
             }
         }
     }
@@ -2229,7 +2150,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
         catch (Exception ex)
         {
-            Log($"[AiCategorize] Failed to parse AI response: {ex.Message}");
         }
         return results;
     }
@@ -2436,7 +2356,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Handle Category - prefer ID, fall back to name lookup, auto-create if needed
             var categoryId = GetNullableString(row, headers, "Category ID");
             var categoryName = GetNullableString(row, headers, "Category Name");
-            Log($"[ImportProducts] Product '{name}' (ID={id}): Type={productType}, ItemType={itemType}, CategoryID={categoryId ?? "null"}, CategoryName={categoryName ?? "null"}");
 
             if (!string.IsNullOrEmpty(categoryId))
             {
@@ -2444,24 +2363,20 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 var existingCat = data.Categories.FirstOrDefault(c => c.Id == categoryId);
                 if (existingCat == null)
                 {
-                    Log($"[ImportProducts] Product '{name}': categoryId '{categoryId}' not found, creating category");
                     var category = FindOrCreateCategory(data, categoryId, productType, itemType);
                     categoryId = category.Id;
                 }
                 else
                 {
-                    Log($"[ImportProducts] Product '{name}': categoryId '{categoryId}' matched existing category '{existingCat.Name}'");
                 }
             }
             else if (!string.IsNullOrEmpty(categoryName))
             {
-                Log($"[ImportProducts] Product '{name}': no categoryId, using categoryName '{categoryName}'");
                 var category = FindOrCreateCategory(data, categoryName, productType, itemType);
                 categoryId = category.Id;
             }
             else
             {
-                Log($"[ImportProducts] Product '{name}': NO category ID or name provided — will be categorized by AI post-import");
             }
             product.CategoryId = categoryId;
 
