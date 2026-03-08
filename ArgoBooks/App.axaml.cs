@@ -2911,7 +2911,10 @@ public class App : Application
                 ? new List<SheetAnalysis>()
                 : includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
 
-            var importOptions = new ImportOptions();
+            var importOptions = new ImportOptions
+            {
+                SkipExistingRecords = mappingDialog.SkipExistingRecords
+            };
 
             // Tier 1: Validate with mappings
             SpreadsheetImportResult? tier1Result = null;

@@ -267,6 +267,7 @@
                                 Classes="primary-button"
                                 Content="OK"
                                 MinWidth="80"
+                                HorizontalContentAlignment="Center"
                                 Command="{Binding CloseCommand}" />
                     </Grid>
                 </Border>

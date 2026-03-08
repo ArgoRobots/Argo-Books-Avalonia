@@ -163,6 +163,9 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showRateLimit;
 
+    [ObservableProperty]
+    private bool _skipExistingRecords;
+
     public ObservableCollection<SheetAnalysisViewModel> Sheets { get; } = [];
 
     public ObservableCollection<string> Warnings { get; } = [];
@@ -186,6 +189,7 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
         // Clear previous state
         Sheets.Clear();
         Warnings.Clear();
+        SkipExistingRecords = false;
 
         FileName = analysis.FileName;
 
