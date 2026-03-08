@@ -139,26 +139,19 @@
                 IsHitTestVisible="True">
             <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    Padding="48,32"
-                    MinWidth="360"
+                    Padding="32,24"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel Spacing="16" HorizontalAlignment="Center">
                     <ProgressBar IsIndeterminate="True"
-                                 Width="260"
+                                 Width="120"
                                  Height="4"
                                  Foreground="{DynamicResource PrimaryBrush}" />
                     <TextBlock Text="{Binding LoadingMessage}"
-                               FontSize="16"
-                               FontWeight="Medium"
-                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               FontSize="{StaticResource FontSizeMd}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="{Binding LoadingSubMessage}"
-                               FontSize="13"
-                               Foreground="{DynamicResource TextTertiaryBrush}"
-                               HorizontalAlignment="Center"
-                               IsVisible="{Binding LoadingSubMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                 </StackPanel>
             </Border>
         </Border>

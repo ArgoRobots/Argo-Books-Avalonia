@@ -52,9 +52,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string? _loadingMessage;
 
-    [ObservableProperty]
-    private string? _loadingSubMessage;
-
     /// <summary>
     /// Gets or sets the CreateCompanyViewModel for the full-screen wizard.
     /// </summary>
@@ -293,10 +290,9 @@ public partial class MainWindowViewModel : ViewModelBase
     /// Shows a loading overlay with optional message.
     /// </summary>
     /// <param name="message">Loading message to display.</param>
-    public void ShowLoading(string? message = null, string? subMessage = null)
+    public void ShowLoading(string? message = null)
     {
         LoadingMessage = message ?? "Loading...";
-        LoadingSubMessage = subMessage;
         IsLoading = true;
     }
 
@@ -307,7 +303,6 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsLoading = false;
         LoadingMessage = null;
-        LoadingSubMessage = null;
     }
 
     /// <summary>

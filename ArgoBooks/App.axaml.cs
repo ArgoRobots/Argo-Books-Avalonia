@@ -2899,7 +2899,7 @@ public class App : Application
             SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)
             {
-                _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), "Validating mapped data...".Translate());
+                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate());
 
                 var validationResult = isCsv
                     ? new ImportValidationResult() // CSV validation is simpler
@@ -2923,16 +2923,11 @@ public class App : Application
                 }
 
                 // Import Tier 1 data
-                _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), "Processing spreadsheet rows...".Translate());
-
-                var importStatusProgress = new Progress<string>(status =>
-                {
-                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), status);
-                });
+                _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
                 tier1Result = isCsv
-                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, statusProgress: importStatusProgress)
-                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, statusProgress: importStatusProgress);
+                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions)
+                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
 
                 _mainWindowViewModel?.HideLoading();
             }
@@ -2944,14 +2939,13 @@ public class App : Application
             {
                 foreach (var sheet in tier2Sheets)
                 {
-                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(),
-                        $"AI processing {sheet.SourceSheetName}...");
+                    _mainWindowViewModel?.ShowLoading($"AI processing {sheet.SourceSheetName}...");
 
                     var processedChunks = await analysisService.ProcessAllChunksAsync(
                         filePath, sheet,
                         new Progress<(int processed, int total)>(p =>
                         {
-                            _mainWindowViewModel?.ShowLoading("Importing data...".Translate(),
+                            _mainWindowViewModel?.ShowLoading(
                                 $"AI processing {sheet.SourceSheetName}... {p.processed}/{p.total} rows");
                         }));
 
