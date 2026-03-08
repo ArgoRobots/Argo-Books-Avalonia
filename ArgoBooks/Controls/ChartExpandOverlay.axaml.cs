@@ -507,6 +507,12 @@ public partial class ChartExpandOverlay : UserControl
         // Pin the selected granularity so zoom won't change it
         _expandedChartLoaderService.SetManualBucketOverride(chartType, selectedBucket);
 
+        // Reset zoom before applying new bucket so the chart shows all data points
+        var contentPanel = this.FindControl<Panel>("ContentPanel");
+        var cartesianChart = contentPanel != null ? FindDescendant<CartesianChart>(contentPanel) : null;
+        var yAxes = cartesianChart?.YAxes as Axis[];
+        ChartLoaderService.ResetZoom(_expandedXAxes, yAxes);
+
         if (_expandedIsMultiSeries)
             _expandedChartLoaderService.ApplyBucketMultiSeries(
                 chartType, selectedBucket, _expandedSeries, _expandedXAxes);
@@ -740,7 +746,7 @@ public partial class ChartExpandOverlay : UserControl
         if (control is CartesianChart cc && cc.Title is LabelVisual cartLabel)
         {
             _originalTitleSizes.Add((cartLabel, cartLabel.TextSize));
-            cartLabel.TextSize = 26;
+            cartLabel.TextSize = 22;
         }
 
         // Enlarge PieChart titles and add margin to shrink pie slightly
@@ -749,7 +755,7 @@ public partial class ChartExpandOverlay : UserControl
             if (pc.Title is LabelVisual pieLabel)
             {
                 _originalTitleSizes.Add((pieLabel, pieLabel.TextSize));
-                pieLabel.TextSize = 26;
+                pieLabel.TextSize = 22;
             }
 
             _originalPieChartMargins.Add((pc, pc.Margin));
@@ -760,7 +766,7 @@ public partial class ChartExpandOverlay : UserControl
         if (control is TextBlock tb && tb.FontWeight == FontWeight.SemiBold && tb.FontSize < 20)
         {
             _originalTitleSizes.Add((tb, tb.FontSize));
-            tb.FontSize = 24;
+            tb.FontSize = 20;
         }
 
         // Enlarge PieChartLegend

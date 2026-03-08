@@ -164,7 +164,8 @@ public class SpreadsheetImportService
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<string>? statusProgress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -176,6 +177,7 @@ public class SpreadsheetImportService
 
         try
         {
+            statusProgress?.Report("Processing spreadsheet rows...");
             await Task.Run(() =>
             {
                 using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -197,6 +199,7 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
+            statusProgress?.Report("Categorizing products...");
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             stopwatch.Stop();
@@ -219,7 +222,8 @@ public class SpreadsheetImportService
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<string>? statusProgress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -229,6 +233,7 @@ public class SpreadsheetImportService
 
         try
         {
+            statusProgress?.Report("Processing CSV rows...");
             await Task.Run(() =>
             {
                 var lines = File.ReadAllLines(filePath);
@@ -282,6 +287,7 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
+            statusProgress?.Report("Categorizing products...");
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);
