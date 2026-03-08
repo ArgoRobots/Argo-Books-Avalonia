@@ -63,7 +63,7 @@ public partial class ToggleArrow : UserControl
     /// Controls whether the arrow animates horizontally (left/right) or vertically (up/down).
     /// </summary>
     public static readonly StyledProperty<ToggleArrowOrientation> OrientationProperty =
-        AvaloniaProperty.Register<ToggleArrow, ToggleArrowOrientation>(nameof(Orientation), ToggleArrowOrientation.Horizontal);
+        AvaloniaProperty.Register<ToggleArrow, ToggleArrowOrientation>(nameof(Orientation));
 
     /// <summary>
     /// Gets or sets whether the arrow is in collapsed state (rotated 180 degrees).

@@ -35,13 +35,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
     }
 
     /// <inheritdoc />
-    public bool IsConfigured
-    {
-        get
-        {
-            return DotEnv.HasValue(EndpointEnvVar) && DotEnv.HasValue(ApiKeyEnvVar);
-        }
-    }
+    public bool IsConfigured => DotEnv.HasValue(EndpointEnvVar) && DotEnv.HasValue(ApiKeyEnvVar);
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)

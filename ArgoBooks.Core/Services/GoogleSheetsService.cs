@@ -631,10 +631,9 @@ public class GoogleSheetsService
                         }
                     }
                 }
-            ]
+            ],
+            LineSmoothing = true
         };
-
-        spec.LineSmoothing = true;
 
         return spec;
     }

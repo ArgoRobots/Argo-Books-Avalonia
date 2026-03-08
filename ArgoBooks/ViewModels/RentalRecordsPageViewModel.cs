@@ -18,7 +18,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 {
     #region Responsive Header
 
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #endregion
 
@@ -416,7 +416,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         // Create display items
         var displayItems = filtered.Select(record =>
         {
-            var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == record.RentalItemId);
             var customer = companyData?.Customers.FirstOrDefault(c => c.Id == record.CustomerId);
             var accountant = !string.IsNullOrEmpty(record.AccountantId)
                 ? companyData?.Accountants.FirstOrDefault(a => a.Id == record.AccountantId)

@@ -39,28 +39,28 @@ public static class SpreadsheetSheetTypeExtensions
     /// </summary>
     public static SpreadsheetSheetType ParseSheetName(string sheetName)
     {
-        return sheetName switch
+        return sheetName.Trim().ToLowerInvariant() switch
         {
-            "Customers" => SpreadsheetSheetType.Customers,
-            "Suppliers" => SpreadsheetSheetType.Suppliers,
-            "Products" => SpreadsheetSheetType.Products,
-            "Categories" => SpreadsheetSheetType.Categories,
-            "Locations" => SpreadsheetSheetType.Locations,
-            "Departments" => SpreadsheetSheetType.Departments,
-            "Invoices" => SpreadsheetSheetType.Invoices,
-            "Expenses" or "Purchases" => SpreadsheetSheetType.Expenses,
-            "Inventory" => SpreadsheetSheetType.Inventory,
-            "Payments" => SpreadsheetSheetType.Payments,
-            "Revenue" or "Sales" => SpreadsheetSheetType.Revenue,
-            "Rental Inventory" => SpreadsheetSheetType.RentalInventory,
-            "Rental Records" => SpreadsheetSheetType.RentalRecords,
-            "Employees" => SpreadsheetSheetType.Employees,
-            "Recurring Invoices" => SpreadsheetSheetType.RecurringInvoices,
-            "Stock Adjustments" => SpreadsheetSheetType.StockAdjustments,
-            "Purchase Orders" => SpreadsheetSheetType.PurchaseOrders,
-            "Purchase Order Line Items" => SpreadsheetSheetType.PurchaseOrderLineItems,
-            "Returns" => SpreadsheetSheetType.Returns,
-            "Lost Damaged" or "Lost / Damaged" or "Lost/Damaged" => SpreadsheetSheetType.LostDamaged,
+            "customers" => SpreadsheetSheetType.Customers,
+            "suppliers" => SpreadsheetSheetType.Suppliers,
+            "products" => SpreadsheetSheetType.Products,
+            "categories" => SpreadsheetSheetType.Categories,
+            "locations" => SpreadsheetSheetType.Locations,
+            "departments" => SpreadsheetSheetType.Departments,
+            "invoices" => SpreadsheetSheetType.Invoices,
+            "expenses" or "purchases" => SpreadsheetSheetType.Expenses,
+            "inventory" => SpreadsheetSheetType.Inventory,
+            "payments" => SpreadsheetSheetType.Payments,
+            "revenue" or "sales" => SpreadsheetSheetType.Revenue,
+            "rental inventory" => SpreadsheetSheetType.RentalInventory,
+            "rental records" => SpreadsheetSheetType.RentalRecords,
+            "employees" => SpreadsheetSheetType.Employees,
+            "recurring invoices" => SpreadsheetSheetType.RecurringInvoices,
+            "stock adjustments" => SpreadsheetSheetType.StockAdjustments,
+            "purchase orders" => SpreadsheetSheetType.PurchaseOrders,
+            "purchase order line items" => SpreadsheetSheetType.PurchaseOrderLineItems,
+            "returns" => SpreadsheetSheetType.Returns,
+            "lost damaged" or "lost / damaged" or "lost/damaged" => SpreadsheetSheetType.LostDamaged,
             _ => SpreadsheetSheetType.Unknown
         };
     }

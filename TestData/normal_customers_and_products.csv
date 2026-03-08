@@ -1,0 +1,21 @@
+Customer ID,Customer Name,Company,Email Address,Phone,Street,City,State,Zip Code,Country,Notes,Status,Total Purchases
+CUST-001,Alice Johnson,Johnson & Co,alice@johnsonco.com,(555) 100-1001,100 Main St,Springfield,IL,62701,US,Preferred customer,Active,12450.00
+CUST-002,Bob Martinez,Martinez Auto Parts,bob@martinezauto.com,(555) 100-1002,202 Oak Ave,Austin,TX,78701,US,Net 30 terms,Active,8320.50
+CUST-003,Carol Chen,Chen Design Studio,carol@chendesign.com,(555) 100-1003,55 Elm Blvd,Portland,OR,97201,US,,Active,3275.00
+CUST-004,David Kim,Kim Electronics,david@kimelec.com,(555) 100-1004,789 Pine Rd,Seattle,WA,98101,US,Bulk buyer,Active,45890.75
+CUST-005,Emily Rodriguez,Rodriguez Consulting,emily@rodcon.com,(555) 100-1005,321 Maple Dr,Denver,CO,80201,US,,Active,1560.25
+CUST-006,Frank Patel,Patel Foods Inc,frank@patelfoods.com,(555) 100-1006,456 Birch Ln,Chicago,IL,60601,US,Restaurant chain,Active,67230.00
+CUST-007,Grace O'Brien,O'Brien Legal,grace@obrienlegal.com,(555) 100-1007,88 Cedar Way,Boston,MA,02101,US,Law firm,Active,4100.00
+CUST-008,Henry Nguyen,Nguyen Construction,henry@nguyencon.com,(555) 100-1008,150 Walnut St,Houston,TX,77001,US,New customer 2025,Active,920.00
+CUST-009,Irene Tanaka,Tanaka Imports,irene@tanakaimports.com,(555) 100-1009,73 Spruce Ave,San Francisco,CA,94101,US,International shipping,Active,28750.00
+CUST-010,James Wilson,Wilson Hardware,james@wilsonhw.com,(555) 100-1010,900 Ash Ct,Nashville,TN,37201,US,,Active,5430.00
+CUST-011,Karen Davis,Davis Marketing,karen@davismktg.com,(555) 100-1011,42 Poplar Rd,Atlanta,GA,30301,US,Agency account,Active,15670.25
+CUST-012,Leo Fischer,Fischer Brewing,leo@fischerbrewing.com,(555) 100-1012,610 Hickory Blvd,Milwaukee,WI,53201,US,Seasonal orders,Active,9870.50
+CUST-013,Mia Thompson,Thompson Textiles,mia@thompsontex.com,(555) 100-1013,25 Sycamore Ln,Charlotte,NC,28201,US,,Active,2340.00
+CUST-014,Nathan Brooks,Brooks Fitness,nathan@brooksfitness.com,(555) 100-1014,480 Chestnut Dr,Miami,FL,33101,US,Gym equipment buyer,Active,31200.00
+CUST-015,Olivia Grant,Grant Photography,olivia@grantphoto.com,(555) 100-1015,112 Willow Way,Santa Fe,NM,87501,US,Small business,Active,780.50
+CUST-016,Paul Morgan,Morgan Plumbing,paul@morganplumb.com,(555) 100-1016,333 Dogwood Ave,Phoenix,AZ,85001,US,,Active,6540.00
+CUST-017,Quinn Foster,Foster Accounting,quinn@fosteracct.com,(555) 100-1017,67 Magnolia St,Minneapolis,MN,55401,US,Referral from CUST-007,Active,1230.00
+CUST-018,Rachel Adams,Adams Bakery,rachel@adamsbakery.com,(555) 100-1018,205 Juniper Ct,San Diego,CA,92101,US,Weekly orders,Active,14500.00
+CUST-019,Sam Cooper,Cooper IT Solutions,sam@cooperit.com,(555) 100-1019,890 Redwood Dr,Raleigh,NC,27601,US,,Inactive,450.00
+CUST-020,Tina Morales,Morales Landscaping,tina@moralesland.com,(555) 100-1020,44 Cypress Ln,Dallas,TX,75201,US,Seasonal account,Active,7890.00

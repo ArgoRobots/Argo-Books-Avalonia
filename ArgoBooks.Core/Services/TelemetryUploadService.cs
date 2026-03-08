@@ -247,7 +247,7 @@ public class TelemetryUploadService : ITelemetryUploadService
         return result;
     }
 
-    private static string? GetApiKey()
+    private static string GetApiKey()
     {
         // Try environment variable first
         var apiKey = Environment.GetEnvironmentVariable("ARGO_TELEMETRY_API_KEY");

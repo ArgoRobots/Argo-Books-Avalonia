@@ -44,9 +44,9 @@ public class GeoLocationService : IGeoLocationService
         var locationData = new GeoLocationData();
 
         // Try each geolocation API in order
-        var success = await TryIpApiAsync(locationData, cancellationToken) ||
-                      await TryIpApiCoAsync(locationData, cancellationToken) ||
-                      await TryIpInfoAsync(locationData, cancellationToken);
+        _ = await TryIpApiAsync(locationData, cancellationToken) ||
+            await TryIpApiCoAsync(locationData, cancellationToken) ||
+            await TryIpInfoAsync(locationData, cancellationToken);
 
         // Get and hash IP address
         var ip = await GetIpAddressAsync(cancellationToken);
@@ -140,7 +140,7 @@ public class GeoLocationService : IGeoLocationService
         try
         {
             var response = await _httpClient.GetStringAsync(IpifyUrl, cancellationToken);
-            return response?.Trim();
+            return response.Trim();
         }
         catch (Exception ex)
         {

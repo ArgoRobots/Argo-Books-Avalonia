@@ -1592,15 +1592,15 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Open folder using platform-specific method
             if (OperatingSystem.IsWindows())
             {
-                System.Diagnostics.Process.Start("explorer.exe", telemetryPath);
+                Process.Start("explorer.exe", telemetryPath);
             }
             else if (OperatingSystem.IsMacOS())
             {
-                System.Diagnostics.Process.Start("open", telemetryPath);
+                Process.Start("open", telemetryPath);
             }
             else if (OperatingSystem.IsLinux())
             {
-                System.Diagnostics.Process.Start("xdg-open", telemetryPath);
+                Process.Start("xdg-open", telemetryPath);
             }
         }
         catch (Exception ex)

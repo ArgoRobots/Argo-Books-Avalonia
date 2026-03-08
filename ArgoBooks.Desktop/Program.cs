@@ -12,7 +12,7 @@ sealed class Program
     public static void Main(string[] args)
     {
         // Create the update service for desktop platforms
-        ArgoBooks.App.UpdateService = new NetSparkleUpdateService();
+        App.UpdateService = new NetSparkleUpdateService();
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);

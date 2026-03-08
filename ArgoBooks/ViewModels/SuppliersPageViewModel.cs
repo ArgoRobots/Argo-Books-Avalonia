@@ -99,7 +99,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Helper for responsive header layout.
     /// </summary>
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #endregion
 

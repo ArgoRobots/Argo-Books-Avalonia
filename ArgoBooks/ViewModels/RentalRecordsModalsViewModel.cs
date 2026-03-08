@@ -1096,7 +1096,6 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         if (rentalRecord == null)
             return;
 
-        var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == rentalRecord.RentalItemId);
         var customer = companyData?.Customers.FirstOrDefault(c => c.Id == rentalRecord.CustomerId);
         var accountant = companyData?.Accountants.FirstOrDefault(a => a.Id == rentalRecord.AccountantId);
 

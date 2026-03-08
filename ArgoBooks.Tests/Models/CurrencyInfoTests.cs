@@ -13,7 +13,7 @@ public class CurrencyInfoTests
     [Fact]
     public void Constructor_SetsAllProperties()
     {
-        var info = new CurrencyInfo("CAD", "$", "Canadian Dollar", 2);
+        var info = new CurrencyInfo("CAD", "$", "Canadian Dollar");
 
         Assert.Equal("CAD", info.Code);
         Assert.Equal("$", info.Symbol);

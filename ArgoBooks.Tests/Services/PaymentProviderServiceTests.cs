@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Services;
 using Xunit;
 

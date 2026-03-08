@@ -19,7 +19,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
     /// <summary>
     /// Helper for responsive header layout calculations.
     /// </summary>
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #endregion
 

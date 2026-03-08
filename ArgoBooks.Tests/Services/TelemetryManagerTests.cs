@@ -1,5 +1,4 @@
 using ArgoBooks.Core.Models.Telemetry;
-using ArgoBooks.Core.Services;
 using Xunit;
 
 namespace ArgoBooks.Tests.Services;

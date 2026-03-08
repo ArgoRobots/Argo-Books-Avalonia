@@ -57,7 +57,6 @@ public class HoltWintersForecasting
         // Smooth through the data
         for (int t = 1; t < n; t++)
         {
-            int seasonIndex = t % seasonLength;
             double prevSeasonal = smoothedSeasonals[t - seasonLength + seasonLength]; // Previous year's seasonal
 
             // Update level: alpha * (Y_t - S_{t-m}) + (1 - alpha) * (L_{t-1} + T_{t-1})

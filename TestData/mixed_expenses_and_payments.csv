@@ -1,0 +1,28 @@
+Exported from QuickBooks Desktop on 2026-01-15 — All Transactions Report
+Record Type,Date,Supplier/Customer,Invoice #,Description,Amount,Tax,Total,Payment Method,Reference,Notes
+Expense,2025-01-05,Milwaukee Supply Co,,Drill bits and accessories,245.00,18.38,263.38,Credit Card,CC-4421,
+Expense,2025-01-08,Sherwin Williams,,Paint and primer order,1120.00,84.00,1204.00,Check,CHK-1055,Bulk order for warehouse
+Payment,2025-01-10,Alice Johnson,INV-1001,,"$1,343.75",,"$1,343.75",Bank Transfer,ACH-90001,Early payment
+Expense,2025-01-12,National Pipe Supply,,Copper pipe and fittings,680.50,51.04,731.54,Credit Card,CC-4422,
+Payment,2025-01-15,Bob Martinez,INV-1005,,344.00,,344.00,Check,CHK-2001,Partial — $100 applied
+Expense,2025-01-18,CleanAir Pros,,HVAC maintenance Q1,450.00,33.75,483.75,Check,CHK-1056,
+Expense,2025-01-20,3M Distribution,,Safety equipment restock,890.00,66.75,956.75,Credit Card,CC-4423,
+Payment,2025-01-22,Carol Chen,INV-1002,,537.50,,537.50,Credit Card,CC-REC-3001,
+Expense,2025-01-25,Cooper IT Solutions,,Monthly IT support Jan,1500.00,0.00,1500.00,Bank Transfer,ACH-5500,Tax exempt service
+Payment,2025-01-28,David Kim,INV-1004,,"$2,257.50",,"$2,257.50",Wire Transfer,WIRE-7001,
+Expense,2025-02-01,Quikrete Dist,,Concrete mix 50 bags,625.00,46.88,671.88,Credit Card,CC-4424,
+Payment,2025-02-03,Frank Patel,INV-1006,,"$4,837.50",,"$4,837.50",Bank Transfer,ACH-90002,
+Expense,2025-02-05,United Rentals,,Excavator rental 3 days,"2,400.00",180.00,"2,580.00",Credit Card,CC-4425,Job site #14
+,2025-02-07,National Wire Co,,Electrical wire and conduit,340.00,25.50,365.50,Check,CHK-1057,Missing record type
+Payment,2025-02-10,Grace O'Brien,INV-1007,,134.91,,134.91,Check,CHK-2002,
+Expense,2025-02-12,Milwaukee Supply Co,,Pressure washer parts,175.00,13.13,188.13,Credit Card,CC-4426,Warranty replacement
+Payment,2025-02-15,Irene Tanaka,INV-1009,,"$3,440.00",,"$3,440.00",Wire Transfer,WIRE-7002,
+Expense,2025-02-18,Adams & Associates,,Q4 2024 tax preparation,"3,200.00",0.00,"3,200.00",Check,CHK-1058,Professional service
+Payment,2025-02-20,James Wilson,INV-1010,,483.75,,483.75,Cash,CASH-001,In-store payment
+Expense,2025-02-22,Bright Source Ltd,,LED panel lights x25,"1,875.00",140.63,"2,015.63",Credit Card,CC-4427,
+Payment,2025-02-25,Karen Davis,INV-1014,,241.88,,241.88,Bank Transfer,ACH-90003,
+Expense,2025-02-28,Morales Landscaping,,Grounds maintenance Feb,350.00,26.25,376.25,Check,CHK-1059,
+Payment,2025-03-01,Nathan Brooks,INV-1017,,"1,074.99",,"1,074.99",Bank Transfer,ACH-90004,
+Refund,2025-03-03,Emily Rodriguez,INV-1015,Credit for returned items,-161.25,,-161.25,Bank Transfer,ACH-90005,See credit memo
+Expense,2025-03-05,Foster Accounting,,Monthly bookkeeping Feb,800.00,0.00,800.00,Bank Transfer,ACH-5501,
+,,,,TOTAL,"$24,183.83","$686.31","$24,870.14",,,

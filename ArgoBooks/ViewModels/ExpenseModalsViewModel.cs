@@ -323,7 +323,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             return;
         }
 
-        if (!Enum.TryParse<ArgoBooks.Core.Enums.ItemStatusAction>(ItemStatusAction, out var parsedAction))
+        if (!Enum.TryParse<ItemStatusAction>(ItemStatusAction, out var parsedAction))
         {
             CloseItemStatusModal();
             return;

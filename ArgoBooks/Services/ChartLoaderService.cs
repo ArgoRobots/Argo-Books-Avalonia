@@ -197,6 +197,32 @@ public class ChartLoaderService
     private readonly Dictionary<ChartDataType, ChartExportData> _chartExportDataByType = new();
 
     /// <summary>
+    /// Stores daily-resolution data for time-series charts to support dynamic re-bucketing on zoom.
+    /// </summary>
+    private readonly Dictionary<ChartDataType, List<ChartDataPoint>> _dailyDataByChart = new();
+
+    /// <summary>
+    /// Stores daily-resolution multi-series data for charts to support dynamic re-bucketing on zoom.
+    /// </summary>
+    private readonly Dictionary<ChartDataType, List<ChartSeriesData>> _dailySeriesDataByChart = new();
+
+    /// <summary>
+    /// Tracks the current bucket granularity for each chart to avoid unnecessary re-bucketing.
+    /// </summary>
+    private readonly Dictionary<ChartDataType, ReportChartDataService.TimeBucket> _currentBucketByChart = new();
+
+    /// <summary>
+    /// When set, zoom re-bucketing uses this fixed bucket instead of auto-detecting from the visible range.
+    /// Null means "Auto" (the default behavior).
+    /// </summary>
+    private readonly Dictionary<ChartDataType, ReportChartDataService.TimeBucket?> _manualBucketOverride = new();
+
+    /// <summary>
+    /// Guard flag to prevent re-entrant zoom updates.
+    /// </summary>
+    private bool _isUpdatingFromZoom;
+
+    /// <summary>
     /// Gets or sets the chart style for rendering series.
     /// </summary>
     public ChartStyle SelectedChartStyle { get; set; } = ChartStyle.Line;
@@ -514,6 +540,454 @@ public class ChartLoaderService
         return [axis];
     }
 
+    #region Dynamic Zoom Re-bucketing
+
+    /// <summary>
+    /// Stores daily data and returns bucketed data for initial display.
+    /// The daily data is preserved for dynamic re-bucketing when the user zooms.
+    /// </summary>
+    private List<ChartDataPoint> StoreDailyAndBucket(ChartDataType chartType, List<ChartDataPoint> dailyPoints)
+    {
+        _dailyDataByChart[chartType] = dailyPoints;
+
+        if (dailyPoints.Count < 2 || !dailyPoints[0].Date.HasValue || !dailyPoints[^1].Date.HasValue)
+            return dailyPoints;
+
+        var bucket = ReportChartDataService.GetTimeBucket(
+            dailyPoints[0].Date!.Value, dailyPoints[^1].Date!.Value);
+        _currentBucketByChart[chartType] = bucket;
+
+        return bucket == ReportChartDataService.TimeBucket.Day
+            ? dailyPoints
+            : ReportChartDataService.RebucketSum(dailyPoints, bucket);
+    }
+
+    /// <summary>
+    /// Stores daily multi-series data and returns bucketed data for initial display.
+    /// </summary>
+    private List<ChartSeriesData> StoreDailySeriesAndBucket(
+        ChartDataType chartType, List<ChartSeriesData> dailySeries)
+    {
+        _dailySeriesDataByChart[chartType] = dailySeries;
+
+        var allDates = dailySeries
+            .SelectMany(s => s.DataPoints)
+            .Where(p => p.Date.HasValue)
+            .Select(p => p.Date!.Value)
+            .OrderBy(d => d)
+            .ToList();
+
+        if (allDates.Count < 2)
+            return dailySeries;
+
+        var bucket = ReportChartDataService.GetTimeBucket(allDates[0], allDates[^1]);
+        _currentBucketByChart[chartType] = bucket;
+
+        return bucket == ReportChartDataService.TimeBucket.Day
+            ? dailySeries
+            : ReportChartDataService.RebucketSeriesSum(dailySeries, bucket);
+    }
+
+    /// <summary>
+    /// Handles zoom-based re-bucketing for a single-series time chart.
+    /// Call this from axis PropertyChanged when MinLimit or MaxLimit changes.
+    /// Returns the updated dates array (for axis reconfiguration) or null if no update was needed.
+    /// </summary>
+    public DateTime[]? HandleZoomRebucket(
+        ChartDataType chartType,
+        ObservableCollection<ISeries> series,
+        Axis[] xAxes,
+        double visibleMinOADate,
+        double visibleMaxOADate)
+    {
+        if (_isUpdatingFromZoom)
+            return null;
+
+        if (!_dailyDataByChart.TryGetValue(chartType, out var dailyData) || dailyData.Count < 2)
+            return null;
+
+        DateTime visibleStart, visibleEnd;
+        try
+        {
+            visibleStart = DateTime.FromOADate(visibleMinOADate);
+            visibleEnd = DateTime.FromOADate(visibleMaxOADate);
+        }
+        catch
+        {
+            return null;
+        }
+
+        // Use manual override if set, otherwise auto-detect from visible range
+        var newBucket = _manualBucketOverride.TryGetValue(chartType, out var manualBucket) && manualBucket.HasValue
+            ? manualBucket.Value
+            : ReportChartDataService.GetTimeBucket(visibleStart, visibleEnd);
+        if (_currentBucketByChart.TryGetValue(chartType, out var currentBucket) && currentBucket == newBucket)
+            return null;
+
+        _currentBucketByChart[chartType] = newBucket;
+
+        var bucketed = ReportChartDataService.RebucketSum(dailyData, newBucket);
+        if (bucketed.Count == 0)
+            return null;
+
+        var dates = bucketed.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = bucketed.Select(p => p.Value).ToArray();
+        var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+
+        _isUpdatingFromZoom = true;
+        try
+        {
+            // Profit chart in column mode splits into positive/negative series
+            if (chartType == ChartDataType.TotalProfits && series.Count > 1)
+            {
+                var posPoints = points.Where(p => p.Y is not null && p.Y >= 0).ToArray();
+                var negPoints = points.Where(p => p.Y is not null && p.Y < 0).ToArray();
+                SetSeriesValues(series[0], posPoints);
+                SetSeriesValues(series[1], negPoints);
+            }
+            else if (series.Count > 0)
+            {
+                SetSeriesValues(series[0], points);
+            }
+
+            // Update axis UnitWidth for proper column sizing without resetting zoom
+            if (xAxes.Length > 0)
+                UpdateAxisUnitWidth(xAxes[0], dates);
+        }
+        finally
+        {
+            _isUpdatingFromZoom = false;
+        }
+
+        return dates;
+    }
+
+    /// <summary>
+    /// Handles zoom-based re-bucketing for a multi-series time chart.
+    /// Returns the updated dates array or null if no update was needed.
+    /// </summary>
+    public DateTime[]? HandleZoomRebucketMultiSeries(
+        ChartDataType chartType,
+        ObservableCollection<ISeries> series,
+        Axis[] xAxes,
+        double visibleMinOADate,
+        double visibleMaxOADate)
+    {
+        if (_isUpdatingFromZoom)
+            return null;
+
+        if (!_dailySeriesDataByChart.TryGetValue(chartType, out var dailySeries) || dailySeries.Count == 0)
+            return null;
+
+        DateTime visibleStart, visibleEnd;
+        try
+        {
+            visibleStart = DateTime.FromOADate(visibleMinOADate);
+            visibleEnd = DateTime.FromOADate(visibleMaxOADate);
+        }
+        catch
+        {
+            return null;
+        }
+
+        // Use manual override if set, otherwise auto-detect from visible range
+        var newBucket = _manualBucketOverride.TryGetValue(chartType, out var manualBucket) && manualBucket.HasValue
+            ? manualBucket.Value
+            : ReportChartDataService.GetTimeBucket(visibleStart, visibleEnd);
+        if (_currentBucketByChart.TryGetValue(chartType, out var currentBucket) && currentBucket == newBucket)
+            return null;
+
+        _currentBucketByChart[chartType] = newBucket;
+
+        var rebucketed = ReportChartDataService.RebucketSeriesSum(dailySeries, newBucket);
+
+        // Build aligned date set from all series
+        var allDates = rebucketed
+            .SelectMany(s => s.DataPoints)
+            .Where(p => p.Date.HasValue)
+            .Select(p => p.Date!.Value)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToArray();
+
+        if (allDates.Length == 0)
+            return null;
+
+        _isUpdatingFromZoom = true;
+        try
+        {
+            for (int i = 0; i < Math.Min(series.Count, rebucketed.Count); i++)
+            {
+                var seriesData = rebucketed[i];
+                var dates = seriesData.DataPoints
+                    .Where(p => p.Date.HasValue)
+                    .Select(p => p.Date!.Value).ToArray();
+                var values = seriesData.DataPoints.Select(p => p.Value).ToArray();
+                var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+                SetSeriesValues(series[i], points);
+            }
+
+            if (xAxes.Length > 0)
+                UpdateAxisUnitWidth(xAxes[0], allDates);
+        }
+        finally
+        {
+            _isUpdatingFromZoom = false;
+        }
+
+        return allDates;
+    }
+
+    /// <summary>
+    /// Updates the Values property on a series regardless of its concrete type.
+    /// </summary>
+    private static void SetSeriesValues(ISeries series, ObservablePoint[] points)
+    {
+        switch (series)
+        {
+            case LineSeries<ObservablePoint> line:
+                line.Values = points;
+                break;
+            case ColumnSeries<ObservablePoint> column:
+                column.Values = points;
+                break;
+            case StepLineSeries<ObservablePoint> stepLine:
+                stepLine.Values = points;
+                break;
+            case ScatterSeries<ObservablePoint> scatter:
+                scatter.Values = points;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Updates axis UnitWidth and MinStep based on new data dates without resetting zoom limits.
+    /// </summary>
+    private static void UpdateAxisUnitWidth(Axis axis, DateTime[] dates)
+    {
+        if (dates.Length < 2)
+            return;
+
+        var sortedOADates = dates.Select(d => d.ToOADate()).OrderBy(d => d).ToArray();
+        var minGap = double.MaxValue;
+        for (var i = 1; i < sortedOADates.Length; i++)
+        {
+            var gap = sortedOADates[i] - sortedOADates[i - 1];
+            if (gap > 0 && gap < minGap) minGap = gap;
+        }
+
+        if (minGap < double.MaxValue)
+        {
+            axis.UnitWidth = minGap;
+            axis.MinStep = minGap;
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to an axis's property changes to detect zoom and trigger re-bucketing.
+    /// Returns an Action that should be called to unsubscribe.
+    /// </summary>
+    public Action SubscribeToAxisZoom(
+        Axis[] xAxes,
+        ChartDataType chartType,
+        ObservableCollection<ISeries> series,
+        bool isMultiSeries = false)
+    {
+        if (xAxes.Length == 0)
+            return () => { };
+
+        var axis = xAxes[0];
+        System.Timers.Timer? debounceTimer = null;
+
+        void handler(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is not ("MinLimit" or "MaxLimit"))
+                return;
+
+            if (_isUpdatingFromZoom)
+                return;
+
+            var min = axis.MinLimit;
+            var max = axis.MaxLimit;
+            if (min == null || max == null)
+                return;
+
+            // Debounce: MinLimit and MaxLimit often change together
+            debounceTimer?.Stop();
+            debounceTimer?.Dispose();
+            debounceTimer = new System.Timers.Timer(150);
+            debounceTimer.AutoReset = false;
+            debounceTimer.Elapsed += (_, _) =>
+            {
+                debounceTimer.Dispose();
+                debounceTimer = null;
+
+                if (isMultiSeries)
+                    HandleZoomRebucketMultiSeries(chartType, series, xAxes, min.Value, max.Value);
+                else
+                    HandleZoomRebucket(chartType, series, xAxes, min.Value, max.Value);
+            };
+            debounceTimer.Start();
+        }
+
+        axis.PropertyChanged += handler;
+        return () =>
+        {
+            axis.PropertyChanged -= handler;
+            debounceTimer?.Stop();
+            debounceTimer?.Dispose();
+        };
+    }
+
+    /// <summary>
+    /// Sets a manual bucket override for a chart. When set, zoom re-bucketing uses this
+    /// fixed bucket instead of auto-detecting from the visible range.
+    /// Pass null for "Auto" (clears the override).
+    /// </summary>
+    public void SetManualBucketOverride(ChartDataType chartType, ReportChartDataService.TimeBucket? bucket)
+    {
+        if (bucket.HasValue)
+            _manualBucketOverride[chartType] = bucket;
+        else
+            _manualBucketOverride.Remove(chartType);
+    }
+
+    /// <summary>
+    /// Clears all manual bucket overrides.
+    /// </summary>
+    public void ClearManualBucketOverride(ChartDataType chartType)
+    {
+        _manualBucketOverride.Remove(chartType);
+    }
+
+    /// <summary>
+    /// Applies a specific bucket granularity to a single-series chart, updating series values and axis.
+    /// Returns the updated dates array, or null if no daily data is stored for this chart.
+    /// </summary>
+    public DateTime[]? ApplyBucket(
+        ChartDataType chartType,
+        ReportChartDataService.TimeBucket bucket,
+        ObservableCollection<ISeries> series,
+        Axis[] xAxes)
+    {
+        if (!_dailyDataByChart.TryGetValue(chartType, out var dailyData) || dailyData.Count < 2)
+            return null;
+
+        if (_currentBucketByChart.TryGetValue(chartType, out var currentBucket) && currentBucket == bucket)
+            return null;
+
+        _currentBucketByChart[chartType] = bucket;
+
+        var bucketed = ReportChartDataService.RebucketSum(dailyData, bucket);
+        if (bucketed.Count == 0)
+            return null;
+
+        var dates = bucketed.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = bucketed.Select(p => p.Value).ToArray();
+        var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+
+        _isUpdatingFromZoom = true;
+        try
+        {
+            if (chartType == ChartDataType.TotalProfits && series.Count > 1)
+            {
+                var posPoints = points.Where(p => p.Y is not null && p.Y >= 0).ToArray();
+                var negPoints = points.Where(p => p.Y is not null && p.Y < 0).ToArray();
+                SetSeriesValues(series[0], posPoints);
+                SetSeriesValues(series[1], negPoints);
+            }
+            else if (series.Count > 0)
+            {
+                SetSeriesValues(series[0], points);
+            }
+
+            if (xAxes.Length > 0)
+                UpdateAxisUnitWidth(xAxes[0], dates);
+        }
+        finally
+        {
+            _isUpdatingFromZoom = false;
+        }
+
+        return dates;
+    }
+
+    /// <summary>
+    /// Applies a specific bucket granularity to a multi-series chart, updating all series values and axis.
+    /// Returns the updated dates array, or null if no daily data is stored for this chart.
+    /// </summary>
+    public DateTime[]? ApplyBucketMultiSeries(
+        ChartDataType chartType,
+        ReportChartDataService.TimeBucket bucket,
+        ObservableCollection<ISeries> series,
+        Axis[] xAxes)
+    {
+        if (!_dailySeriesDataByChart.TryGetValue(chartType, out var dailySeries) || dailySeries.Count == 0)
+            return null;
+
+        if (_currentBucketByChart.TryGetValue(chartType, out var currentBucket) && currentBucket == bucket)
+            return null;
+
+        _currentBucketByChart[chartType] = bucket;
+
+        var rebucketed = ReportChartDataService.RebucketSeriesSum(dailySeries, bucket);
+
+        var allDates = rebucketed
+            .SelectMany(s => s.DataPoints)
+            .Where(p => p.Date.HasValue)
+            .Select(p => p.Date!.Value)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToArray();
+
+        if (allDates.Length == 0)
+            return null;
+
+        _isUpdatingFromZoom = true;
+        try
+        {
+            for (int i = 0; i < Math.Min(series.Count, rebucketed.Count); i++)
+            {
+                var seriesData = rebucketed[i];
+                var dates = seriesData.DataPoints
+                    .Where(p => p.Date.HasValue)
+                    .Select(p => p.Date!.Value).ToArray();
+                var values = seriesData.DataPoints.Select(p => p.Value).ToArray();
+                var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+                SetSeriesValues(series[i], points);
+            }
+
+            if (xAxes.Length > 0)
+                UpdateAxisUnitWidth(xAxes[0], allDates);
+        }
+        finally
+        {
+            _isUpdatingFromZoom = false;
+        }
+
+        return allDates;
+    }
+
+    /// <summary>
+    /// Returns whether daily data is stored for the given chart type (single-series).
+    /// </summary>
+    public bool HasDailyData(ChartDataType chartType) => _dailyDataByChart.ContainsKey(chartType);
+
+    /// <summary>
+    /// Returns whether daily multi-series data is stored for the given chart type.
+    /// </summary>
+    public bool HasDailySeriesData(ChartDataType chartType) => _dailySeriesDataByChart.ContainsKey(chartType);
+
+    /// <summary>
+    /// Gets the current auto-detected bucket for a chart based on its full date range.
+    /// </summary>
+    public ReportChartDataService.TimeBucket? GetCurrentBucket(ChartDataType chartType)
+    {
+        return _currentBucketByChart.TryGetValue(chartType, out var bucket) ? bucket : null;
+    }
+
+    #endregion
+
     #region Shared Data Model Conversion
 
     /// <summary>
@@ -574,9 +1048,9 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetExpensesOverTime();
+        var dailyPoints = dataService.GetExpensesOverTime();
 
-        if (dataPoints.Count == 0)
+        if (dailyPoints.Count == 0)
         {
             StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
             {
@@ -589,6 +1063,7 @@ public class ChartLoaderService
             return (series, dates);
         }
 
+        var dataPoints = StoreDailyAndBucket(ChartDataType.TotalExpenses, dailyPoints);
         var labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
@@ -622,9 +1097,9 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetRevenueOverTime();
+        var dailyPoints = dataService.GetRevenueOverTime();
 
-        if (dataPoints.Count == 0)
+        if (dailyPoints.Count == 0)
         {
             StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
             {
@@ -637,6 +1112,7 @@ public class ChartLoaderService
             return (series, dates);
         }
 
+        var dataPoints = StoreDailyAndBucket(ChartDataType.TotalRevenue, dailyPoints);
         var labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
@@ -672,9 +1148,9 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetProfitOverTime();
+        var dailyPoints = dataService.GetProfitOverTime();
 
-        if (dataPoints.Count == 0)
+        if (dailyPoints.Count == 0)
         {
             StoreExportData(ChartDataType.TotalProfits, new ChartExportData
             {
@@ -687,10 +1163,13 @@ public class ChartLoaderService
             return (series, labels, dates, totalProfit);
         }
 
+        // Always compute total profit from daily data before bucketing
+        totalProfit = (decimal)dailyPoints.Sum(p => p.Value);
+
+        var dataPoints = StoreDailyAndBucket(ChartDataType.TotalProfits, dailyPoints);
         labels = dataPoints.Select(p => p.Label).ToArray();
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
-        totalProfit = (decimal)values.Sum();
 
         // Use profit-specific series that shows negative values in red for column charts
         foreach (var s in CreateProfitDateTimeSeries(dates, values, "Profit"))
@@ -725,9 +1204,9 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var seriesData = dataService.GetRevenueVsExpensesDaily();
+        var dailySeriesData = dataService.GetRevenueVsExpensesDaily();
 
-        if (seriesData.Count < 2)
+        if (dailySeriesData.Count < 2)
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
@@ -740,10 +1219,11 @@ public class ChartLoaderService
             return (series, dates);
         }
 
-        var revenueData = seriesData.FirstOrDefault(s => s.Name == "Revenue");
-        var expenseData = seriesData.FirstOrDefault(s => s.Name == "Expenses");
+        // Filter out zero-data points from daily data before storing
+        var dailyRevenue = dailySeriesData.FirstOrDefault(s => s.Name == "Revenue");
+        var dailyExpense = dailySeriesData.FirstOrDefault(s => s.Name == "Expenses");
 
-        if (revenueData == null || expenseData == null || revenueData.DataPoints.Count == 0)
+        if (dailyRevenue == null || dailyExpense == null || dailyRevenue.DataPoints.Count == 0)
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
@@ -757,16 +1237,14 @@ public class ChartLoaderService
         }
 
         // Filter to only include days with data (at least one non-zero value)
-        var indicesWithData = new List<int>();
-        for (int i = 0; i < revenueData.DataPoints.Count; i++)
+        var datesWithData = new HashSet<DateTime>();
+        foreach (var dp in dailyRevenue.DataPoints.Concat(dailyExpense.DataPoints))
         {
-            if (revenueData.DataPoints[i].Value > 0 || expenseData.DataPoints[i].Value > 0)
-            {
-                indicesWithData.Add(i);
-            }
+            if (dp.Date.HasValue && dp.Value > 0)
+                datesWithData.Add(dp.Date.Value);
         }
 
-        if (indicesWithData.Count == 0)
+        if (datesWithData.Count == 0)
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
@@ -779,10 +1257,26 @@ public class ChartLoaderService
             return (series, dates);
         }
 
-        var labels = indicesWithData.Select(i => revenueData.DataPoints[i].Label).ToArray();
-        dates = indicesWithData.Where(i => revenueData.DataPoints[i].Date.HasValue).Select(i => revenueData.DataPoints[i].Date!.Value).ToArray();
-        var revenueValues = indicesWithData.Select(i => revenueData.DataPoints[i].Value).ToArray();
-        var expenseValues = indicesWithData.Select(i => expenseData.DataPoints[i].Value).ToArray();
+        // Filter daily data to only dates with data
+        var filteredDailySeries = new List<ChartSeriesData>
+        {
+            new() { Name = "Expenses", Color = dailyExpense.Color,
+                DataPoints = dailyExpense.DataPoints.Where(p => p.Date.HasValue && datesWithData.Contains(p.Date.Value)).ToList() },
+            new() { Name = "Revenue", Color = dailyRevenue.Color,
+                DataPoints = dailyRevenue.DataPoints.Where(p => p.Date.HasValue && datesWithData.Contains(p.Date.Value)).ToList() }
+        };
+
+        var bucketedSeries = StoreDailySeriesAndBucket(ChartDataType.RevenueVsExpenses, filteredDailySeries);
+        var revenueData = bucketedSeries.FirstOrDefault(s => s.Name == "Revenue");
+        var expenseData = bucketedSeries.FirstOrDefault(s => s.Name == "Expenses");
+
+        if (revenueData == null || expenseData == null)
+            return (series, dates);
+
+        var labels = revenueData.DataPoints.Select(p => p.Label).ToArray();
+        dates = revenueData.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var revenueValues = revenueData.DataPoints.Select(p => p.Value).ToArray();
+        var expenseValues = expenseData.DataPoints.Select(p => p.Value).ToArray();
 
         // Add series (expenses first, then revenue for consistency)
         if (dates.Length > 0)
@@ -799,7 +1293,8 @@ public class ChartLoaderService
             Labels = labels,
             Values = expenseValues,
             SeriesName = "Expenses",
-            AdditionalSeries = [("Revenue", revenueValues)]        };
+            AdditionalSeries = [("Revenue", revenueValues)]
+        };
 
         return (series, dates);
     }
@@ -1988,7 +2483,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Revenue"
             };
-            return (series, [], []);
+            return (series, CreateXAxes(), CreateNumberYAxes());
         }
 
         var revenueValues = revenueRates.Select(p => p.Value).ToArray();

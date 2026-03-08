@@ -9,6 +9,38 @@
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
 
+    <UserControl.Styles>
+        <!-- Segmented Button style for granularity toggle -->
+        <Style Selector="RadioButton.granularity-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="RadioButton.granularity-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="RadioButton.granularity-button:checked">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
         <!-- Semi-transparent backdrop -->
         <Border Background="{DynamicResource OverlayBrush}"
@@ -27,17 +59,50 @@
                 BoxShadow="0 8 32 0 #40000000"
                 PointerPressed="OnModalContentClick">
             <Grid RowDefinitions="Auto,*">
-                <!-- Header (close button only) -->
+                <!-- Header (granularity toggle + close button) -->
                 <Border Grid.Row="0"
                         Padding="8,6"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,0">
-                    <Button HorizontalAlignment="Right"
-                            Classes="icon-button"
-                            Click="OnCloseClick">
-                        <PathIcon Data="{x:Static icons:Icons.Close}"
-                                  Width="18" Height="18" />
-                    </Button>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Granularity Toggle -->
+                        <Border Grid.Column="0"
+                                x:Name="GranularityPanel"
+                                IsVisible="False"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="6"
+                                Padding="2"
+                                VerticalAlignment="Center"
+                                Margin="4,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <RadioButton Content="Day"
+                                             x:Name="BucketDay"
+                                             GroupName="Granularity"
+                                             IsChecked="True"
+                                             Classes="granularity-button"
+                                             Click="OnGranularityChanged" />
+                                <RadioButton Content="Week"
+                                             x:Name="BucketWeek"
+                                             GroupName="Granularity"
+                                             Classes="granularity-button"
+                                             Click="OnGranularityChanged" />
+                                <RadioButton Content="Month"
+                                             x:Name="BucketMonth"
+                                             GroupName="Granularity"
+                                             Classes="granularity-button"
+                                             Click="OnGranularityChanged" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Close Button -->
+                        <Button Grid.Column="2"
+                                HorizontalAlignment="Right"
+                                Classes="icon-button"
+                                Click="OnCloseClick">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="18" Height="18" />
+                        </Button>
+                    </Grid>
                 </Border>
 
                 <!-- Chart Content Area + Context Menu -->

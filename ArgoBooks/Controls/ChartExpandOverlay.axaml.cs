@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
@@ -8,8 +9,12 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using ArgoBooks.Views;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using LiveChartsCore.SkiaSharpView.VisualElements;
 
@@ -18,6 +23,8 @@ namespace ArgoBooks.Controls;
 /// <summary>
 /// A modal overlay that allows charts to be expanded to fill most of the window.
 /// Automatically discovers chart panels in the current page and adds expand buttons.
+/// In fullscreen mode, provides zoom-based re-bucketing and a granularity toggle
+/// (Auto / Day / Week / Month) for time-series charts.
 /// </summary>
 public partial class ChartExpandOverlay : UserControl
 {
@@ -36,6 +43,14 @@ public partial class ChartExpandOverlay : UserControl
     private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
     private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, CornerRadius origCornerRadius, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
     private readonly List<(PieChart chart, Thickness origMargin)> _originalPieChartMargins = new();
+
+    // Zoom and granularity state for fullscreen mode
+    private Action? _zoomUnsubscriber;
+    private ChartDataType? _expandedChartType;
+    private ChartLoaderService? _expandedChartLoaderService;
+    private ObservableCollection<ISeries>? _expandedSeries;
+    private Axis[]? _expandedXAxes;
+    private bool _expandedIsMultiSeries;
 
     public ChartExpandOverlay()
     {
@@ -75,7 +90,7 @@ public partial class ChartExpandOverlay : UserControl
 
     private void OnPageContentPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property != ContentControl.ContentProperty) return;
+        if (e.Property != ContentProperty) return;
 
         // Close any open overlay when navigating away
         if (IsVisible) CloseOverlay();
@@ -177,6 +192,26 @@ public partial class ChartExpandOverlay : UserControl
     }
 
     /// <summary>
+    /// Finds the first chart control in a panel, searching one level of nested grids.
+    /// </summary>
+    private static Control? FindChartControl(Panel panel)
+    {
+        foreach (var child in panel.Children)
+        {
+            if (child is CartesianChart or PieChart or GeoMap)
+                return child as Control;
+            if (child is Grid innerGrid)
+            {
+                var nested = innerGrid.Children.OfType<Control>()
+                    .FirstOrDefault(c => c is CartesianChart or PieChart or GeoMap);
+                if (nested != null)
+                    return nested;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Checks if a Grid (or its child Grids) contains a chart control.
     /// </summary>
     private static bool GridContainsChart(Grid grid)
@@ -215,6 +250,14 @@ public partial class ChartExpandOverlay : UserControl
         };
         button.Classes.Add("chart-expand-btn");
         button.Click += OnExpandButtonClick;
+
+        // Hide the expand button when the chart has no data (empty state showing)
+        var chartControl = FindChartControl(panel);
+        if (chartControl != null)
+        {
+            button.Bind(IsVisibleProperty, chartControl.GetObservable(IsVisibleProperty));
+        }
+
         panel.Children.Add(button);
     }
 
@@ -270,6 +313,9 @@ public partial class ChartExpandOverlay : UserControl
         // Enlarge chart titles and legends for the fullscreen view
         EnlargeChartElements(contentPanel);
 
+        // Set up zoom re-bucketing and granularity toggle for CartesianCharts
+        SetupFullscreenZoom(contentPanel, sourcePanel.DataContext);
+
         IsVisible = true;
         Focus();
     }
@@ -289,6 +335,9 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea?.DataContext is ChartContextMenuViewModelBase vm && vm.IsChartContextMenuOpen)
             vm.HideChartContextMenuCommand.Execute(null);
 
+        // Tear down zoom subscription and granularity state
+        TeardownFullscreenZoom();
+
         // Restore original sizes before reparenting back
         RestoreChartElements();
 
@@ -304,7 +353,7 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         if (_expandButton != null)
-            _expandButton.IsVisible = true;
+            _expandButton.ClearValue(IsVisibleProperty);
 
         // Clear the borrowed DataContext
         if (chartArea != null)
@@ -315,6 +364,166 @@ public partial class ChartExpandOverlay : UserControl
         _expandButton = null;
         IsVisible = false;
     }
+
+    #region Fullscreen Zoom & Granularity
+
+    /// <summary>
+    /// Sets up zoom re-bucketing and the granularity toggle when a CartesianChart is expanded.
+    /// </summary>
+    private void SetupFullscreenZoom(Panel contentPanel, object? dataContext)
+    {
+        // Find the CartesianChart in the expanded content
+        var cartesianChart = FindDescendant<CartesianChart>(contentPanel);
+        if (cartesianChart == null)
+        {
+            GranularityPanel.IsVisible = false;
+            return;
+        }
+
+        var chartType = cartesianChart.Tag as ChartDataType?;
+        if (!chartType.HasValue)
+        {
+            GranularityPanel.IsVisible = false;
+            return;
+        }
+
+        // Get ChartLoaderService from the ViewModel
+        var loaderService = GetChartLoaderService(dataContext);
+        if (loaderService == null)
+        {
+            GranularityPanel.IsVisible = false;
+            return;
+        }
+
+        // Check if this chart has daily data for re-bucketing
+        bool hasDailyData = loaderService.HasDailyData(chartType.Value);
+        bool hasDailySeriesData = loaderService.HasDailySeriesData(chartType.Value);
+
+        if (!hasDailyData && !hasDailySeriesData)
+        {
+            GranularityPanel.IsVisible = false;
+            return;
+        }
+
+        _expandedChartType = chartType.Value;
+        _expandedChartLoaderService = loaderService;
+        _expandedIsMultiSeries = hasDailySeriesData && !hasDailyData;
+
+        // Get series and axes from the chart control
+        _expandedSeries = cartesianChart.Series as ObservableCollection<ISeries>;
+        _expandedXAxes = cartesianChart.XAxes as Axis[];
+
+        if (_expandedSeries == null || _expandedXAxes == null || _expandedXAxes.Length == 0)
+        {
+            GranularityPanel.IsVisible = false;
+            return;
+        }
+
+        // Show the granularity toggle with "Day" selected
+        GranularityPanel.IsVisible = true;
+        BucketDay.IsChecked = true;
+
+        // Subscribe to zoom re-bucketing (fullscreen only)
+        _zoomUnsubscriber = loaderService.SubscribeToAxisZoom(
+            _expandedXAxes, chartType.Value, _expandedSeries, _expandedIsMultiSeries);
+    }
+
+    /// <summary>
+    /// Tears down zoom subscription and resets granularity state when closing the overlay.
+    /// </summary>
+    private void TeardownFullscreenZoom()
+    {
+        // Unsubscribe from zoom
+        _zoomUnsubscriber?.Invoke();
+        _zoomUnsubscriber = null;
+
+        // Clear manual bucket override
+        if (_expandedChartType.HasValue && _expandedChartLoaderService != null)
+            _expandedChartLoaderService.ClearManualBucketOverride(_expandedChartType.Value);
+
+        // Hide granularity toggle
+        GranularityPanel.IsVisible = false;
+
+        _expandedChartType = null;
+        _expandedChartLoaderService = null;
+        _expandedSeries = null;
+        _expandedXAxes = null;
+    }
+
+    /// <summary>
+    /// Handles granularity toggle button clicks (Auto / Day / Week / Month).
+    /// </summary>
+    private void OnGranularityChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_expandedChartType == null || _expandedChartLoaderService == null ||
+            _expandedSeries == null || _expandedXAxes == null)
+            return;
+
+        var chartType = _expandedChartType.Value;
+        ReportChartDataService.TimeBucket selectedBucket;
+
+        if (BucketWeek.IsChecked == true)
+            selectedBucket = ReportChartDataService.TimeBucket.Week;
+        else if (BucketMonth.IsChecked == true)
+            selectedBucket = ReportChartDataService.TimeBucket.Month;
+        else
+            selectedBucket = ReportChartDataService.TimeBucket.Day;
+
+        // Pin the selected granularity so zoom won't change it
+        _expandedChartLoaderService.SetManualBucketOverride(chartType, selectedBucket);
+
+        if (_expandedIsMultiSeries)
+            _expandedChartLoaderService.ApplyBucketMultiSeries(
+                chartType, selectedBucket, _expandedSeries, _expandedXAxes);
+        else
+            _expandedChartLoaderService.ApplyBucket(
+                chartType, selectedBucket, _expandedSeries, _expandedXAxes);
+    }
+
+    /// <summary>
+    /// Gets the ChartLoaderService from the page ViewModel.
+    /// </summary>
+    private static ChartLoaderService? GetChartLoaderService(object? dataContext)
+    {
+        return dataContext switch
+        {
+            DashboardPageViewModel dashboard => dashboard.ChartLoaderService,
+            AnalyticsPageViewModel analytics => analytics.ChartLoaderService,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Finds the first descendant of type T in the visual tree.
+    /// </summary>
+    private static T? FindDescendant<T>(Control root) where T : Control
+    {
+        if (root is T match)
+            return match;
+
+        if (root is Panel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                var result = FindDescendant<T>(child);
+                if (result != null) return result;
+            }
+        }
+        else if (root is ContentControl cc && cc.Content is Control content)
+        {
+            return FindDescendant<T>(content);
+        }
+        else if (root is Decorator decorator && decorator.Child != null)
+        {
+            return FindDescendant<T>(decorator.Child);
+        }
+
+        return null;
+    }
+
+    #endregion
+
+    #region Right-Click Context Menu
 
     /// <summary>
     /// Intercepts right-clicks on chart controls in the overlay to prevent LiveCharts'
@@ -373,6 +582,10 @@ public partial class ChartExpandOverlay : UserControl
         }
     }
 
+    #endregion
+
+    #region Page Integration
+
     /// <summary>
     /// Sets the clicked chart reference on the source page so export operations work correctly.
     /// </summary>
@@ -428,6 +641,10 @@ public partial class ChartExpandOverlay : UserControl
         return "Chart";
     }
 
+    #endregion
+
+    #region GeoMap Reparenting Workaround
+
     /// <summary>
     /// Temporarily nulls the GeoMap's internal <c>_core</c> field so that its
     /// <c>DetachedFromVisualTree</c> handler skips <c>GeoMapChart.Unload()</c>
@@ -466,6 +683,10 @@ public partial class ChartExpandOverlay : UserControl
             }
         }
     }
+
+    #endregion
+
+    #region Chart Element Sizing
 
     /// <summary>
     /// Enlarges chart titles and pie chart legends for the fullscreen modal view.
@@ -568,6 +789,10 @@ public partial class ChartExpandOverlay : UserControl
         _originalPieChartMargins.Clear();
     }
 
+    #endregion
+
+    #region Event Handlers
+
     private void OnCloseClick(object? sender, RoutedEventArgs e)
     {
         CloseOverlay();
@@ -593,4 +818,6 @@ public partial class ChartExpandOverlay : UserControl
 
         base.OnKeyDown(e);
     }
+
+    #endregion
 }

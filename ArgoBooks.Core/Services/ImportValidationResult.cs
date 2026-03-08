@@ -59,7 +59,7 @@ public class ValidationIssue
     /// True for missing Suppliers, Customers, Categories, Tax Rates, etc.
     /// False for typos, invalid transaction IDs, or other issues requiring manual fix.
     /// </summary>
-    public bool IsAutoFixable { get; set; } = false;
+    public bool IsAutoFixable { get; set; }
 }
 
 /// <summary>

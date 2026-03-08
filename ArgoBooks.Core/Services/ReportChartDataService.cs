@@ -179,23 +179,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        var revenueByDate = companyData.Revenues
+        var revenueByDay = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
             .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveSubtotalUSD));
 
-        var expensesByDate = companyData.Expenses
+        var expensesByDay = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
             .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveSubtotalUSD));
 
-        var allDates = revenueByDate.Keys.Union(expensesByDate.Keys).OrderBy(d => d);
+        var allDays = revenueByDay.Keys.Union(expensesByDay.Keys).OrderBy(d => d);
 
-        return allDates.Select(date => new ChartDataPoint
+        return allDays.Select(key => new ChartDataPoint
         {
-            Label = date.ToString("MMM dd"),
-            Value = (double)((revenueByDate.GetValueOrDefault(date, 0) - expensesByDate.GetValueOrDefault(date, 0))),
-            Date = date
+            Label = key.ToString("MMM dd"),
+            Value = (double)(revenueByDay.GetValueOrDefault(key, 0) - expensesByDay.GetValueOrDefault(key, 0)),
+            Date = key
         }).ToList();
     }
 
@@ -271,35 +271,33 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        // Get all dates with data
-        var salesByDate = companyData.Revenues
+        var salesByDay = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
             .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveSubtotalUSD));
 
-        var purchasesByDate = companyData.Expenses
+        var purchasesByDay = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
             .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.EffectiveSubtotalUSD));
 
-        // Combine all dates
-        var allDates = salesByDate.Keys.Union(purchasesByDate.Keys).OrderBy(d => d).ToList();
+        var allDays = salesByDay.Keys.Union(purchasesByDay.Keys).OrderBy(d => d).ToList();
 
-        if (allDates.Count == 0)
+        if (allDays.Count == 0)
             return [];
 
-        var revenueData = allDates.Select(date => new ChartDataPoint
+        var revenueData = allDays.Select(key => new ChartDataPoint
         {
-            Label = date.ToString("MMM dd"),
-            Value = salesByDate.GetValueOrDefault(date, 0),
-            Date = date
+            Label = key.ToString("MMM dd"),
+            Value = salesByDay.GetValueOrDefault(key, 0),
+            Date = key
         }).ToList();
 
-        var expenseData = allDates.Select(date => new ChartDataPoint
+        var expenseData = allDays.Select(key => new ChartDataPoint
         {
-            Label = date.ToString("MMM dd"),
-            Value = purchasesByDate.GetValueOrDefault(date, 0),
-            Date = date
+            Label = key.ToString("MMM dd"),
+            Value = purchasesByDay.GetValueOrDefault(key, 0),
+            Date = key
         }).ToList();
 
         return
@@ -1478,8 +1476,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (companyData.Revenues?.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ?? false) ||
-                   (companyData.Expenses?.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0)) ?? false);
+            return companyData.Revenues.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
+                   companyData.Expenses.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1493,9 +1491,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Revenues?
+                Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0),
+                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1508,9 +1506,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Expenses?
+                Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0),
+                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1533,12 +1531,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var (startDate, endDate) = GetDateRange();
 
         // Get all dates with any tax data
-        var revenueDates = companyData.Revenues?
+        var revenueDates = companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-            .Select(r => r.Date.Date) ?? [];
-        var expenseDates = companyData.Expenses?
+            .Select(r => r.Date.Date);
+        var expenseDates = companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-            .Select(e => e.Date.Date) ?? [];
+            .Select(e => e.Date.Date);
 
         var allDates = revenueDates.Concat(expenseDates).Distinct().OrderBy(d => d).ToList();
 
@@ -1547,12 +1545,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return allDates.Select(date =>
         {
-            var collected = companyData.Revenues?
+            var collected = companyData.Revenues
                 .Where(r => r.Date.Date == date)
-                .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0;
-            var paid = companyData.Expenses?
+                .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
+            var paid = companyData.Expenses
                 .Where(e => e.Date.Date == date)
-                .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0;
+                .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
 
             return new ChartDataPoint
             {
@@ -1575,29 +1573,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allTransactions = new List<(decimal TaxUSD, string? CategoryId)>();
 
-        if (companyData.Revenues != null)
-        {
-            allTransactions.AddRange(companyData.Revenues
-                .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-                .Select(r =>
-                {
-                    var productId = r.LineItems.FirstOrDefault()?.ProductId;
-                    var product = productId != null ? companyData.GetProduct(productId) : null;
-                    return (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, product?.CategoryId);
-                }));
-        }
+        allTransactions.AddRange(companyData.Revenues
+            .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+            .Select(r =>
+            {
+                var productId = r.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData.GetProduct(productId) : null;
+                return (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, product?.CategoryId);
+            }));
 
-        if (companyData.Expenses != null)
-        {
-            allTransactions.AddRange(companyData.Expenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-                .Select(e =>
-                {
-                    var productId = e.LineItems.FirstOrDefault()?.ProductId;
-                    var product = productId != null ? companyData.GetProduct(productId) : null;
-                    return (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, product?.CategoryId);
-                }));
-        }
+        allTransactions.AddRange(companyData.Expenses
+            .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+            .Select(e =>
+            {
+                var productId = e.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData.GetProduct(productId) : null;
+                return (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, product?.CategoryId);
+            }));
 
         if (allTransactions.Count == 0)
             return [];
@@ -1641,15 +1633,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allBrackets = new[] { "0%", "1-5%", "6-10%", "11-15%", "16-20%", "20%+" };
 
-        var revenueRates = companyData.Revenues?
+        var revenueRates = companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate)
             .Select(r => r.TaxRate)
-            .ToList() ?? [];
+            .ToList();
 
-        var expenseRates = companyData.Expenses?
+        var expenseRates = companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate)
             .Select(e => e.TaxRate)
-            .ToList() ?? [];
+            .ToList();
 
         if (revenueRates.Count == 0 && expenseRates.Count == 0)
             return ([], [], []);
@@ -1687,19 +1679,13 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allTransactions = new List<(decimal TaxUSD, string? ProductId)>();
 
-        if (companyData.Revenues != null)
-        {
-            allTransactions.AddRange(companyData.Revenues
-                .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-                .Select(r => (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r.LineItems.FirstOrDefault()?.ProductId)));
-        }
+        allTransactions.AddRange(companyData.Revenues
+            .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+            .Select(r => (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r.LineItems.FirstOrDefault()?.ProductId)));
 
-        if (companyData.Expenses != null)
-        {
-            allTransactions.AddRange(companyData.Expenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-                .Select(e => (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e.LineItems.FirstOrDefault()?.ProductId)));
-        }
+        allTransactions.AddRange(companyData.Expenses
+            .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+            .Select(e => (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e.LineItems.FirstOrDefault()?.ProductId)));
 
         if (allTransactions.Count == 0)
             return [];
@@ -1736,8 +1722,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (companyData.Revenues?.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ?? false) ||
-                   (companyData.Expenses?.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0)) ?? false);
+            return companyData.Revenues.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
+                   companyData.Expenses.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1751,9 +1737,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Revenues?
+                Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0),
+                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1766,9 +1752,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Expenses?
+                Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0),
+                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1783,6 +1769,82 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Determines the appropriate time bucket size based on the span of the date range.
+    /// Returns day/week/month to keep chart data points in a readable range.
+    /// </summary>
+    public enum TimeBucket { Day, Week, Month }
+
+    public static TimeBucket GetTimeBucket(DateTime startDate, DateTime endDate)
+    {
+        var days = (endDate - startDate).TotalDays;
+        return days switch
+        {
+            < 90 => TimeBucket.Day,
+            < 365 => TimeBucket.Week,
+            _ => TimeBucket.Month
+        };
+    }
+
+    /// <summary>
+    /// Groups a date into the appropriate bucket key based on the chosen time bucket.
+    /// </summary>
+    public static DateTime GetBucketKey(DateTime date, TimeBucket bucket)
+    {
+        return bucket switch
+        {
+            TimeBucket.Day => date.Date,
+            TimeBucket.Week => date.Date.AddDays(-(int)date.DayOfWeek),
+            TimeBucket.Month => new DateTime(date.Year, date.Month, 1),
+            _ => date.Date
+        };
+    }
+
+    /// <summary>
+    /// Formats a bucket key as a label appropriate for the time bucket.
+    /// </summary>
+    public static string GetBucketLabel(DateTime bucketKey, TimeBucket bucket)
+    {
+        return bucket switch
+        {
+            TimeBucket.Day => bucketKey.ToString("MMM dd"),
+            TimeBucket.Week => bucketKey.ToString("MMM dd"),
+            TimeBucket.Month => bucketKey.ToString("MMM yyyy"),
+            _ => bucketKey.ToString("MMM dd")
+        };
+    }
+
+    /// <summary>
+    /// Re-buckets a list of daily ChartDataPoints into the specified bucket size by summing values.
+    /// </summary>
+    public static List<ChartDataPoint> RebucketSum(List<ChartDataPoint> dailyPoints, TimeBucket bucket)
+    {
+        return dailyPoints
+            .Where(p => p.Date.HasValue)
+            .GroupBy(p => GetBucketKey(p.Date!.Value, bucket))
+            .OrderBy(g => g.Key)
+            .Select(g => new ChartDataPoint
+            {
+                Label = GetBucketLabel(g.Key, bucket),
+                Value = g.Sum(p => p.Value),
+                Date = g.Key
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Re-buckets a list of daily ChartSeriesData into the specified bucket size by summing values.
+    /// </summary>
+    public static List<ChartSeriesData> RebucketSeriesSum(List<ChartSeriesData> dailySeries, TimeBucket bucket)
+    {
+        return dailySeries.Select(series => new ChartSeriesData
+        {
+            Name = series.Name,
+            Color = series.Color,
+            DataPoints = RebucketSum(series.DataPoints, bucket)
+        }).ToList();
+    }
 
     /// <summary>
     /// Gets the months between two dates.

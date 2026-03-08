@@ -66,10 +66,10 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     private double _actionsColumnWidth = 84;
 
     [ObservableProperty]
-    private double _minimumTotalWidth = 0;
+    private double _minimumTotalWidth;
 
     [ObservableProperty]
-    private bool _needsHorizontalScroll = false;
+    private bool _needsHorizontalScroll;
 
     [ObservableProperty]
     private double _columnMenuX;
@@ -266,7 +266,6 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         if (columnIndex < 0) return 0;
 
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
-        double totalCurrentWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth);
         double maxTotalWidth = _availableWidth - 24;
 
         var newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, col.CurrentWidth + delta));

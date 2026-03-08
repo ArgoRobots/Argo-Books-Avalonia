@@ -13,7 +13,7 @@ public partial class ErrorLogger : IErrorLogger
 {
     private readonly ConcurrentQueue<ErrorLogEntry> _logEntries = new();
     private readonly int _maxEntries;
-    private readonly object _trimLock = new();
+    private readonly Lock _trimLock = new();
     private readonly JsonSerializerOptions _jsonOptions;
 
     // Patterns for sanitizing PII from error messages and stack traces

@@ -19,7 +19,7 @@ public class ChartExcelExportServiceTests
         try
         {
             await ChartExcelExportService.ExportChartAsync(
-                tempFile, "Test Chart", [], [], "Date", "Value");
+                tempFile, "Test Chart", [], []);
 
             // With empty data, the method should return without creating a file
             // or create an empty workbook depending on implementation

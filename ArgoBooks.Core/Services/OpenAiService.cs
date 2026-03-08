@@ -61,13 +61,66 @@ public class OpenAiService : IOpenAiService
         try
         {
             var prompt = BuildPrompt(request);
-            var response = await SendApiRequestAsync(prompt, cancellationToken);
+            var response = await SendApiRequestAsync(
+                "You are a helpful assistant that categorizes business expenses. Always respond with valid JSON only, no markdown.",
+                prompt,
+                500,
+                0.3,
+                cancellationToken);
 
             if (string.IsNullOrEmpty(response))
                 return null;
 
             success = true;
             return ParseResponse(response, request);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.OpenAI,
+                stopwatch.ElapsedMilliseconds,
+                success,
+                model,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> SendChatAsync(
+        string systemPrompt,
+        string userPrompt,
+        int maxTokens = 4000,
+        double temperature = 0.1,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+            return null;
+
+        // Reconfigure if API key changed
+        var currentApiKey = DotEnv.Get(ApiKeyEnvVar);
+        if (_lastApiKey != currentApiKey)
+        {
+            ConfigureHttpClient();
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        var model = DotEnv.Get(ModelEnvVar);
+        if (string.IsNullOrEmpty(model))
+            model = DefaultModel;
+        var success = false;
+
+        try
+        {
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken);
+            if (!string.IsNullOrEmpty(response))
+                success = true;
+            return response;
         }
         catch (Exception ex)
         {
@@ -156,7 +209,12 @@ public class OpenAiService : IOpenAiService
 Respond with JSON only.";
     }
 
-    private async Task<string?> SendApiRequestAsync(string prompt, CancellationToken cancellationToken)
+    private async Task<string?> SendApiRequestAsync(
+        string systemPrompt,
+        string userPrompt,
+        int maxTokens = 500,
+        double temperature = 0.3,
+        CancellationToken cancellationToken = default)
     {
         var model = DotEnv.Get(ModelEnvVar);
         if (string.IsNullOrEmpty(model))
@@ -167,11 +225,11 @@ Respond with JSON only.";
             model,
             messages = new[]
             {
-                new { role = "system", content = "You are a helpful assistant that categorizes business expenses. Always respond with valid JSON only, no markdown." },
-                new { role = "user", content = prompt }
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = userPrompt }
             },
-            temperature = 0.3,
-            max_tokens = 500
+            temperature,
+            max_tokens = maxTokens
         };
 
         var json = JsonSerializer.Serialize(requestBody);
@@ -182,7 +240,7 @@ Respond with JSON only.";
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            System.Diagnostics.Debug.WriteLine($"OpenAI API error {response.StatusCode}: {errorBody}");
+            Debug.WriteLine($"OpenAI API error {response.StatusCode}: {errorBody}");
             return null;
         }
 
@@ -208,7 +266,7 @@ Respond with JSON only.";
             if (cleanResponse.StartsWith("```"))
             {
                 var startIndex = cleanResponse.IndexOf('\n') + 1;
-                var endIndex = cleanResponse.LastIndexOf("```");
+                var endIndex = cleanResponse.LastIndexOf("```", StringComparison.Ordinal);
                 if (endIndex > startIndex)
                 {
                     cleanResponse = cleanResponse[startIndex..endIndex].Trim();
@@ -315,8 +373,8 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to parse OpenAI response: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Response was: {response}");
+            Debug.WriteLine($"Failed to parse OpenAI response: {ex.Message}");
+            Debug.WriteLine($"Response was: {response}");
             return null;
         }
     }

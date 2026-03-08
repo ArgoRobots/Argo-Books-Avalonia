@@ -21,7 +21,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     /// <summary>
     /// Helper for responsive header layout adjustments.
     /// </summary>
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #endregion
 

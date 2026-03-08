@@ -5,8 +5,10 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Rentals;
@@ -207,7 +209,7 @@ public class App : Application
     /// <summary>
     /// Gets the event log service for version history tracking.
     /// </summary>
-    public static Services.EventLogService? EventLogService { get; private set; }
+    public static EventLogService? EventLogService { get; private set; }
 
     /// <summary>
     /// Gets the categories tutorial view model for first-visit tutorial.
@@ -235,11 +237,50 @@ public class App : Application
     /// </summary>
     private static async Task ShowErrorMessageBoxAsync(string title, string message)
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
             && mainWindow.MessageBoxService is { } messageBoxService)
         {
             await messageBoxService.ShowErrorAsync(title, message);
+        }
+    }
+
+    /// <summary>
+    /// Shows a modal info message box.
+    /// </summary>
+    private static async Task ShowInfoMessageBoxAsync(string title, string message)
+    {
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowInfoAsync(title, message);
+        }
+    }
+
+    /// <summary>
+    /// Shows a modal success message box.
+    /// </summary>
+    private static async Task ShowSuccessMessageBoxAsync(string title, string message)
+    {
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowSuccessAsync(title, message);
+        }
+    }
+
+    /// <summary>
+    /// Shows a modal warning message box.
+    /// </summary>
+    private static async Task ShowWarningMessageBoxAsync(string title, string message)
+    {
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            await messageBoxService.ShowWarningAsync(title, message);
         }
     }
 
@@ -1229,7 +1270,7 @@ public class App : Application
             // Initialize the event log service with persisted events from the company file
             if (EventLogService == null)
             {
-                EventLogService = new Services.EventLogService();
+                EventLogService = new EventLogService();
 
                 // Wire bidirectional sync between UndoRedoManager and EventLogService
                 EventLogService.SetUndoRedoManager(UndoRedoManager);
@@ -1478,7 +1519,7 @@ public class App : Application
         _appShellViewModel.InvoiceTemplateDesignerViewModel.TemplateSaved += MarkUnsavedChanges;
         _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
         {
-            if (Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
                 return;
 
             var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -2712,23 +2753,31 @@ public class App : Application
                 return;
             }
 
-            // Only Excel import is supported for now
+            // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {
-                _appShellViewModel.AddNotification("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
+                await ShowInfoMessageBoxAsync("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
                 return;
             }
 
-            // Show open file dialog
+            // Show open file dialog — support both .xlsx and .csv
             var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Import Excel File".Translate(),
+                Title = "Import Spreadsheet".Translate(),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
+                    new FilePickerFileType("Spreadsheets")
+                    {
+                        Patterns = ["*.xlsx", "*.csv"]
+                    },
                     new FilePickerFileType("Excel Workbook")
                     {
                         Patterns = ["*.xlsx"]
+                    },
+                    new FilePickerFileType("CSV File")
+                    {
+                        Patterns = ["*.csv"]
                     }
                 ]
             });
@@ -2737,99 +2786,245 @@ public class App : Application
 
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
+            var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
 
-            _mainWindowViewModel?.ShowLoading("Validating import file...".Translate());
+            // Use AI import flow
+            await PerformAiImportAsync(filePath, companyData, isCsv);
+        };
+    }
 
-            try
+    /// <summary>
+    /// Performs the AI-powered import flow: analyze → review → validate → import.
+    /// </summary>
+    private static async Task PerformAiImportAsync(string filePath, CompanyData companyData, bool isCsv)
+    {
+        if (_appShellViewModel == null) return;
+
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
+
+        // Check rate limit via server-side API
+        var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
+        var usageCheck = await usageService.CheckUsageAsync();
+
+        if (!usageCheck.CanImport)
+        {
+            _mainWindowViewModel?.HideLoading();
+            if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
             {
-                var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager);
+                await ShowErrorMessageBoxAsync(
+                    "AI Import Limit".Translate(),
+                    usageCheck.ErrorMessage);
+            }
+            else
+            {
+                await ShowErrorMessageBoxAsync(
+                    "AI Import Limit Reached".Translate(),
+                    "Monthly AI import limit reached ({0}/{1}).\n\nYour limit resets on {2}.\n\nUpgrade to Premium for more imports.".TranslateFormat(
+                        usageCheck.ImportCount,
+                        usageCheck.MonthlyLimit,
+                        usageCheck.ResetsAt ?? "the 1st of next month"));
+            }
+            return;
+        }
 
-                // First validate the import file
-                var validationResult = await importService.ValidateImportAsync(filePath, companyData);
+        var openAiService = new OpenAiService(ErrorLogger, TelemetryManager);
+        if (!openAiService.IsConfigured)
+        {
+            _mainWindowViewModel?.HideLoading();
+            await ShowErrorMessageBoxAsync(
+                "AI Not Configured".Translate(),
+                "OpenAI API key is not configured. Please set the OPENAI_API_KEY environment variable to use AI-powered import.".Translate());
+            return;
+        }
+
+        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company?.Country);
+        var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, openAiService);
+
+        try
+        {
+            // Step 1: AI Analysis
+            var analysis = isCsv
+                ? await analysisService.AnalyzeCsvAsync(filePath)
+                : await analysisService.AnalyzeAsync(filePath);
+
+            _mainWindowViewModel?.HideLoading();
+
+            if (analysis == null || analysis.Sheets.Count == 0)
+            {
+                await ShowErrorMessageBoxAsync(
+                    "Analysis Failed".Translate(),
+                    "Could not analyze the file structure. The file may be empty or in an unsupported format.".Translate());
+                return;
+            }
+
+            // Step 2: Show mapping review dialog
+            var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
+            var dialogResult = await mappingDialog.ShowAsync(analysis, usageCheck.Remaining, usageCheck.MonthlyLimit);
+
+            if (dialogResult == ImportMappingDialogResult.Cancel)
+                return;
+
+            // Get user-updated analysis (they may have changed entity types or excluded sheets)
+            var updatedAnalysis = mappingDialog.GetUpdatedAnalysis();
+            if (updatedAnalysis == null) return;
+
+            // Filter to only included sheets
+            var includedSheets = updatedAnalysis.Sheets.Where(s => s.IsIncluded).ToList();
+            if (includedSheets.Count == 0)
+            {
+                await ShowInfoMessageBoxAsync("Info".Translate(), "No sheets were selected for import.".Translate());
+                return;
+            }
+
+            // Create snapshot for undo
+            var snapshot = CreateCompanyDataSnapshot(companyData);
+
+            // Step 3: Process Tier 1 sheets (validation + import with mapped headers)
+            // For CSV files, treat all sheets as Tier 1 — the column-mapping import path
+            // already handles currency symbols, mixed date formats, and other format variations
+            // via ParseDecimalString and DateTime.TryParse, so LLM row processing is unnecessary.
+            var tier1Sheets = isCsv
+                ? includedSheets.ToList()
+                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
+            var tier2Sheets = isCsv
+                ? new List<SheetAnalysis>()
+                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
+
+            var importOptions = new ImportOptions();
+
+            // Tier 1: Validate with mappings
+            SpreadsheetImportResult? tier1Result = null;
+            if (tier1Sheets.Count > 0)
+            {
+                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate());
+
+                var validationResult = isCsv
+                    ? new ImportValidationResult() // CSV validation is simpler
+                    : await importService.ValidateWithMappingsAsync(filePath, companyData, updatedAnalysis);
 
                 _mainWindowViewModel?.HideLoading();
 
-                // Check for any issues (errors, warnings, or missing refs) and show validation dialog
-                var importOptions = new ImportOptions();
-
-                if (validationResult.HasIssues && _appShellViewModel != null)
+                if (validationResult.HasIssues)
                 {
                     var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
-                    var dialogResult = await validationDialog.ShowAsync(validationResult);
+                    var valResult = await validationDialog.ShowAsync(validationResult);
 
-                    if (dialogResult == ImportValidationDialogResult.Cancel)
-                    {
+                    if (valResult == ImportValidationDialogResult.Cancel)
                         return;
-                    }
 
-                    // If user chose to create missing references
-                    if (dialogResult == ImportValidationDialogResult.CreateMissingAndImport)
-                    {
+                    if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
                         importOptions.AutoCreateMissingReferences = true;
-                    }
 
-                    // If there are critical errors, don't allow import
                     if (validationResult.Errors.Count > 0)
-                    {
                         return;
-                    }
                 }
 
-                // Create snapshot of current data for undo
-                var snapshot = CreateCompanyDataSnapshot(companyData);
-
+                // Import Tier 1 data
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
-                await importService.ImportFromExcelAsync(filePath, companyData, importOptions);
+                tier1Result = isCsv
+                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions)
+                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
 
                 _mainWindowViewModel?.HideLoading();
+            }
 
-                // Create snapshot of imported data for redo
-                var importedSnapshot = CreateCompanyDataSnapshot(companyData);
-
-                // Record undo action
-                UndoRedoManager.RecordAction(new DelegateAction(
-                    "Import spreadsheet data".Translate(),
-                    () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
-                    () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
-                ));
-
-                // Mark as changed - this will trigger CompanyDataChanged event
-                CompanyManager.MarkAsChanged();
-
-                // Build success message with summary
-                var successMessage = "Data has been imported successfully.".Translate();
-                if (validationResult.ImportSummaries.Count > 0)
+            // Tier 2: LLM row processing
+            var totalImported = 0;
+            var totalSkipped = 0;
+            if (tier2Sheets.Count > 0)
+            {
+                foreach (var sheet in tier2Sheets)
                 {
-                    var summaryLines = validationResult.ImportSummaries
-                        .Where(s => s.Value.TotalInFile > 0)
-                        .Select(s => "{0}: {1} new, {2} updated".TranslateFormat(s.Key, s.Value.NewRecords, s.Value.UpdatedRecords));
-                    if (summaryLines.Any())
-                    {
-                        successMessage += $"\n\n{string.Join("\n", summaryLines)}";
-                    }
+                    _mainWindowViewModel?.ShowLoading($"AI processing {sheet.SourceSheetName}...");
+
+                    var processedChunks = await analysisService.ProcessAllChunksAsync(
+                        filePath, sheet,
+                        new Progress<(int processed, int total)>(p =>
+                        {
+                            _mainWindowViewModel?.ShowLoading(
+                                $"AI processing {sheet.SourceSheetName}... {p.processed}/{p.total} rows");
+                        }));
+
+                    var (imported, skipped) = importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
+                    totalImported += imported;
+                    totalSkipped += skipped;
                 }
+
+                // Yield to let any pending Progress<T> callbacks (dispatched via
+                // SynchronizationContext.Post) execute before hiding the loading
+                // overlay, otherwise the last callback can re-show it after HideLoading.
+                await Task.Yield();
+                _mainWindowViewModel?.HideLoading();
+            }
+
+            // Record usage on server
+            await usageService.IncrementUsageAsync();
+
+            // Create snapshot for redo
+            var importedSnapshot = CreateCompanyDataSnapshot(companyData);
+
+            // Record undo action
+            UndoRedoManager.RecordAction(new DelegateAction(
+                "AI import spreadsheet data".Translate(),
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager?.MarkAsChanged(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager?.MarkAsChanged(); }
+            ));
+
+            CompanyManager?.MarkAsChanged();
+
+            // Auto-switch date range to "All Time" so imported data is visible on dashboard/analytics
+            // (imported data may be from any time period, not necessarily the current month)
+            ChartSettingsService.Instance.SelectedDateRange = "All Time";
+
+            // Combine Tier 1 and Tier 2 counts
+            if (tier1Result != null)
+            {
+                totalImported += tier1Result.TotalImported;
+                totalSkipped += tier1Result.TotalSkipped;
+            }
+
+            // Collect all warnings
+            var allWarnings = tier1Result?.Warnings ?? [];
+
+            // Build success message
+            var successMessage = totalImported > 0
+                ? "AI import completed successfully.".Translate()
+                : "AI import completed but no records were imported.".Translate();
+
+            successMessage += $"\n\n{"Imported:".Translate()} {totalImported:N0}";
+            if (totalSkipped > 0)
+                successMessage += $" — {"Skipped:".Translate()} {totalSkipped:N0}";
+
+            if (allWarnings.Count > 0)
+                successMessage += "\n\n" + string.Join("\n", allWarnings);
+
+            if (totalImported > 0)
                 successMessage += "\n\n" + "Please save to persist changes.".Translate();
 
-                _appShellViewModel?.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
-            }
-            catch (Exception ex)
+            if (totalImported == 0)
+                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
+            else if (totalSkipped > 0 || allWarnings.Count > 0)
+                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
+            else
+                await ShowSuccessMessageBoxAsync("Import Complete".Translate(), successMessage);
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel?.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to perform AI import");
+            var errorDialog = ConfirmationDialog;
+            if (errorDialog != null)
             {
-                _mainWindowViewModel?.HideLoading();
-                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to import spreadsheet data");
-                var errorDialog = ConfirmationDialog;
-                if (errorDialog != null)
+                await errorDialog.ShowAsync(new ConfirmationDialogOptions
                 {
-                    await errorDialog.ShowAsync(new ConfirmationDialogOptions
-                    {
-                        Title = "Import Failed".Translate(),
-                        Message = "Failed to import data:\n\n{0}".TranslateFormat(ex.Message),
-                        PrimaryButtonText = "OK".Translate(),
-                        CancelButtonText = ""
-                    });
-                }
+                    Title = "Import Failed".Translate(),
+                    Message = "Failed to import data:\n\n{0}".TranslateFormat(ex.Message),
+                    PrimaryButtonText = "OK".Translate(),
+                    CancelButtonText = ""
+                });
             }
-        };
+        }
     }
 
     /// <summary>
@@ -2900,7 +3095,7 @@ public class App : Application
     /// <summary>
     /// Creates a JSON snapshot of the company data collections for undo/redo.
     /// </summary>
-    private static string CreateCompanyDataSnapshot(Core.Data.CompanyData data)
+    private static string CreateCompanyDataSnapshot(CompanyData data)
     {
         var snapshot = new
         {
@@ -2935,7 +3130,7 @@ public class App : Application
     /// <summary>
     /// Restores company data collections from a JSON snapshot.
     /// </summary>
-    private static void RestoreCompanyDataFromSnapshot(Core.Data.CompanyData data, string snapshotJson)
+    private static void RestoreCompanyDataFromSnapshot(CompanyData data, string snapshotJson)
     {
         var options = new System.Text.Json.JsonSerializerOptions
         {
@@ -2960,7 +3155,7 @@ public class App : Application
         // Restore IdCounters
         if (root.TryGetProperty("IdCounters", out var counters))
         {
-            var restoredCounters = System.Text.Json.JsonSerializer.Deserialize<Core.Data.IdCounters>(counters.GetRawText(), options);
+            var restoredCounters = System.Text.Json.JsonSerializer.Deserialize<IdCounters>(counters.GetRawText(), options);
             if (restoredCounters != null)
             {
                 data.IdCounters.Customer = restoredCounters.Customer;
@@ -3315,7 +3510,7 @@ public class App : Application
     /// <returns>True if the file was saved successfully, false if cancelled or failed.</returns>
     public static async Task<bool> SaveCompanyAsFromWindowAsync()
     {
-        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
             return false;
 
         return await SaveCompanyAsDialogAsync(desktop);

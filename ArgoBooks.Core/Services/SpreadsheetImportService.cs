@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -31,20 +32,32 @@ public class ImportOptions
 }
 
 /// <summary>
+/// Result of a spreadsheet import operation, tracking what was imported and any issues.
+/// </summary>
+public class SpreadsheetImportResult
+{
+    public int TotalImported { get; set; }
+    public int TotalSkipped { get; set; }
+    public List<string> Warnings { get; } = [];
+}
+
+/// <summary>
 /// Service for importing company data from spreadsheet formats (xlsx).
 /// </summary>
 public class SpreadsheetImportService
 {
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
+    private readonly IOpenAiService? _openAiService;
 
     /// <summary>
     /// Creates a new SpreadsheetImportService.
     /// </summary>
-    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IOpenAiService? openAiService = null)
     {
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
+        _openAiService = openAiService;
     }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
@@ -131,7 +144,6 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             stopwatch.Stop();
-            var fileSize = new FileInfo(filePath).Length;
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, Path.GetExtension(filePath), cancellationToken);
         }
         catch (Exception ex)
@@ -140,6 +152,596 @@ public class SpreadsheetImportService
             throw;
         }
     }
+
+    #region AI-Mapped Import
+
+    /// <summary>
+    /// Imports data from an Excel file using AI-generated column mappings (Tier 1).
+    /// Headers are renamed according to the analysis result before standard import logic runs.
+    /// </summary>
+    public async Task<SpreadsheetImportResult> ImportWithMappingsAsync(
+        string filePath,
+        CompanyData companyData,
+        SpreadsheetAnalysisResult analysis,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+        ArgumentNullException.ThrowIfNull(analysis);
+
+        options ??= new ImportOptions();
+        var stopwatch = Stopwatch.StartNew();
+        var result = new SpreadsheetImportResult();
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var workbook = new XLWorkbook(fileStream);
+
+                if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
+                {
+                    CreateMissingReferences(workbook, companyData, options);
+                }
+
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ImportWorksheetWithMapping(worksheet, companyData, analysis, result);
+                }
+
+                UpdateIdCounters(companyData);
+                companyData.MarkAsModified();
+            }, cancellationToken);
+
+            // AI-categorize any products that ended up without a category
+            await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
+
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-xlsx", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed AI-mapped import from: {Path.GetFileName(filePath)}");
+            throw;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Imports data from a CSV file using AI-generated column mappings (Tier 1).
+    /// </summary>
+    public async Task<SpreadsheetImportResult> ImportCsvWithMappingsAsync(
+        string filePath,
+        CompanyData companyData,
+        SpreadsheetAnalysisResult analysis,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+        ArgumentNullException.ThrowIfNull(analysis);
+
+        var result = new SpreadsheetImportResult();
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                var lines = File.ReadAllLines(filePath);
+                if (lines.Length < 2)
+                {
+                    result.Warnings.Add("CSV file has no data rows.");
+                    return;
+                }
+
+                var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
+                var headers = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
+                if (headers.Count == 0)
+                {
+                    result.Warnings.Add("CSV file has no headers.");
+                    return;
+                }
+
+                var rows = new List<List<object?>>();
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                    var fields = SpreadsheetAnalysisService.ParseCsvLine(lines[i], delimiter);
+                    rows.Add(fields.Cast<object?>().ToList());
+                }
+
+                if (rows.Count == 0)
+                {
+                    result.Warnings.Add("CSV file has no data rows.");
+                    return;
+                }
+
+                var sheetAnalysis = analysis.Sheets.FirstOrDefault();
+
+                if (sheetAnalysis != null)
+                {
+                    ApplyColumnMapping(headers, sheetAnalysis);
+                    var sheetType = sheetAnalysis.DetectedType;
+                    var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows);
+                    result.TotalImported += imported;
+                    result.TotalSkipped += skipped;
+                    if (imported == 0)
+                        result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
+                }
+                else
+                {
+                    result.Warnings.Add("No sheet analysis found for CSV file.");
+                }
+
+                UpdateIdCounters(companyData);
+                companyData.MarkAsModified();
+            }, cancellationToken);
+
+            // AI-categorize any products that ended up without a category
+            await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
+
+            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed AI-mapped CSV import from: {Path.GetFileName(filePath)}");
+            throw;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Validates an Excel file using AI-generated column mappings.
+    /// </summary>
+    public async Task<ImportValidationResult> ValidateWithMappingsAsync(
+        string filePath,
+        CompanyData companyData,
+        SpreadsheetAnalysisResult analysis,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+
+        return await Task.Run(() =>
+        {
+            var result = new ImportValidationResult();
+
+            try
+            {
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var workbook = new XLWorkbook(fileStream);
+
+                var importedIds = CollectImportedIds(workbook);
+
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Apply column mapping before validation
+                    var headers = GetHeaders(worksheet);
+                    if (headers.Count == 0) continue;
+
+                    var sheetAnalysis = analysis.Sheets.FirstOrDefault(
+                        s => s.SourceSheetName == worksheet.Name);
+                    if (sheetAnalysis != null)
+                        ApplyColumnMapping(headers, sheetAnalysis);
+
+                    // Validation uses the mapped headers
+                    var rows = GetDataRows(worksheet, headers.Count);
+                    if (rows.Count == 0) continue;
+                    ValidateWorksheetData(worksheet.Name, headers, rows, companyData, importedIds, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to validate AI-mapped import file: {Path.GetFileName(filePath)}");
+                result.Errors.Add($"Failed to read file: {ex.Message}");
+            }
+
+            return result;
+        }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Imports pre-processed entities from LLM Tier 2 processing.
+    /// Returns (imported count, skipped count) for reporting.
+    /// </summary>
+    public (int Imported, int Skipped) ImportProcessedEntities(
+        CompanyData companyData,
+        List<LlmProcessedData> processedData,
+        ImportOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(companyData);
+        ArgumentNullException.ThrowIfNull(processedData);
+
+        var imported = 0;
+        var skipped = 0;
+
+        foreach (var chunk in processedData)
+        {
+            foreach (var entityJson in chunk.Entities)
+            {
+                try
+                {
+                    if (ImportSingleEntity(companyData, chunk.EntityType, entityJson))
+                        imported++;
+                    else
+                        skipped++;
+                }
+                catch (Exception ex)
+                {
+                    skipped++;
+                    _errorLogger?.LogError(ex, ErrorCategory.Import,
+                        $"Failed to import {chunk.EntityType} entity from AI processing");
+                }
+            }
+        }
+
+        UpdateIdCounters(companyData);
+        companyData.MarkAsModified();
+
+        return (imported, skipped);
+    }
+
+    private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis, SpreadsheetImportResult result)
+    {
+        var sheetName = worksheet.Name;
+        var headers = GetHeaders(worksheet);
+        if (headers.Count == 0)
+        {
+            result.Warnings.Add($"Sheet '{sheetName}': no headers found, skipped.");
+            return;
+        }
+
+        var rows = GetDataRows(worksheet, headers.Count);
+        if (rows.Count == 0)
+        {
+            result.Warnings.Add($"Sheet '{sheetName}': no data rows found, skipped.");
+            return;
+        }
+
+        var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == sheetName);
+        if (sheetAnalysis == null || !sheetAnalysis.IsIncluded) return;
+
+
+        // Only process Tier 1 sheets here (Tier 2 is handled separately via ProcessedEntities)
+        if (sheetAnalysis.Tier == ProcessingTier.Tier2_LlmProcessing)
+        {
+            return;
+        }
+
+        ApplyColumnMapping(headers, sheetAnalysis);
+        var sheetType = sheetAnalysis.DetectedType;
+        var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
+        result.TotalImported += imported;
+        result.TotalSkipped += skipped;
+        if (imported == 0 && rows.Count > 0)
+            result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
+    }
+
+    private void ImportBySheetType(SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        switch (sheetType)
+        {
+            case SpreadsheetSheetType.Customers:
+                ImportCustomers(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Invoices:
+                ImportInvoices(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Expenses:
+                ImportPurchases(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Products:
+                ImportProducts(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Inventory:
+                ImportInventory(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Payments:
+                ImportPayments(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Suppliers:
+                ImportSuppliers(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Revenue:
+                ImportSales(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.RentalInventory:
+                ImportRentalInventory(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.RentalRecords:
+                ImportRentalRecords(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Categories:
+                ImportCategories(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Departments:
+                ImportDepartments(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Employees:
+                ImportEmployees(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Locations:
+                ImportLocations(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.RecurringInvoices:
+                ImportRecurringInvoices(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.StockAdjustments:
+                ImportStockAdjustments(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.PurchaseOrders:
+                ImportPurchaseOrders(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.PurchaseOrderLineItems:
+                ImportPurchaseOrderLineItems(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.Returns:
+                ImportReturns(data, headers, rows);
+                break;
+            case SpreadsheetSheetType.LostDamaged:
+                ImportLostDamaged(data, headers, rows);
+                break;
+        }
+    }
+
+    private static int GetEntityCount(CompanyData data, SpreadsheetSheetType type) => type switch
+    {
+        SpreadsheetSheetType.Customers => data.Customers.Count,
+        SpreadsheetSheetType.Invoices => data.Invoices.Count,
+        SpreadsheetSheetType.Expenses => data.Expenses.Count,
+        SpreadsheetSheetType.Products => data.Products.Count,
+        SpreadsheetSheetType.Inventory => data.Inventory.Count,
+        SpreadsheetSheetType.Payments => data.Payments.Count,
+        SpreadsheetSheetType.Suppliers => data.Suppliers.Count,
+        SpreadsheetSheetType.Revenue => data.Revenues.Count,
+        SpreadsheetSheetType.RentalInventory => data.RentalInventory.Count,
+        SpreadsheetSheetType.RentalRecords => data.Rentals.Count,
+        SpreadsheetSheetType.Categories => data.Categories.Count,
+        SpreadsheetSheetType.Departments => data.Departments.Count,
+        SpreadsheetSheetType.Employees => data.Employees.Count,
+        SpreadsheetSheetType.Locations => data.Locations.Count,
+        SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
+        SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Count,
+        SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Count,
+        SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrders.SelectMany(po => po.LineItems).Count(),
+        SpreadsheetSheetType.Returns => data.Returns.Count,
+        SpreadsheetSheetType.LostDamaged => data.LostDamaged.Count,
+        _ => 0
+    };
+
+    private (int imported, int skipped) ImportBySheetTypeWithCount(
+        SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
+    {
+        var countBefore = GetEntityCount(data, sheetType);
+        ImportBySheetType(sheetType, data, headers, rows);
+        var countAfter = GetEntityCount(data, sheetType);
+        var imported = countAfter - countBefore;
+        var skipped = rows.Count - imported;
+        return (Math.Max(0, imported), Math.Max(0, skipped));
+    }
+
+    internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
+    {
+        foreach (var mapping in sheetAnalysis.ColumnMappings)
+        {
+            var idx = headers.FindIndex(h =>
+                string.Equals(h, mapping.SourceColumn, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0)
+                headers[idx] = mapping.TargetColumn;
+        }
+    }
+
+    private bool ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson)
+    {
+        var jsonStr = entityJson.GetRawText();
+        var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        switch (entityType)
+        {
+            case SpreadsheetSheetType.Customers:
+                var customer = JsonSerializer.Deserialize<Customer>(jsonStr, opts);
+                if (customer != null && !string.IsNullOrEmpty(customer.Id))
+                {
+                    var existing = data.Customers.FirstOrDefault(c => c.Id == customer.Id);
+                    if (existing != null) data.Customers.Remove(existing);
+                    data.Customers.Add(customer);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Suppliers:
+                var supplier = JsonSerializer.Deserialize<Supplier>(jsonStr, opts);
+                if (supplier != null && !string.IsNullOrEmpty(supplier.Id))
+                {
+                    var existing = data.Suppliers.FirstOrDefault(s => s.Id == supplier.Id);
+                    if (existing != null) data.Suppliers.Remove(existing);
+                    data.Suppliers.Add(supplier);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Products:
+                var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
+                if (product != null && !string.IsNullOrEmpty(product.Id))
+                {
+
+                    // Auto-create category if product has a category name but no matching category
+                    ResolveProductCategory(data, product, entityJson);
+
+
+                    var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
+                    if (existing != null) data.Products.Remove(existing);
+                    data.Products.Add(product);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Invoices:
+                var invoice = JsonSerializer.Deserialize<Invoice>(jsonStr, opts);
+                if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
+                {
+                    invoice.OriginalCurrency = "USD";
+                    invoice.TotalUSD = invoice.Total;
+                    invoice.BalanceUSD = invoice.Balance;
+                    var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
+                    if (existing != null) data.Invoices.Remove(existing);
+                    data.Invoices.Add(invoice);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Expenses:
+                var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
+                if (expense != null && !string.IsNullOrEmpty(expense.Id))
+                {
+                    expense.OriginalCurrency = "USD";
+                    expense.TotalUSD = expense.Total;
+                    expense.TaxAmountUSD = expense.TaxAmount;
+                    expense.ShippingCostUSD = expense.ShippingCost;
+
+                    // Link product by name and auto-create if missing
+                    var expProductName = expense.Description;
+                    if (!string.IsNullOrEmpty(expProductName))
+                    {
+                        var expProduct = FindProductByName(data, expProductName, CategoryType.Expense)
+                                         ?? AutoCreateProduct(data, expProductName, expense.Amount, CategoryType.Expense);
+
+                        if (expense.LineItems.Count == 0)
+                        {
+                            expense.LineItems =
+                            [
+                                new LineItem
+                                {
+                                    ProductId = expProduct.Id,
+                                    Description = expProductName,
+                                    Quantity = 1,
+                                    UnitPrice = expense.Amount,
+                                    TaxRate = expense.Amount > 0 ? expense.TaxAmount / expense.Amount : 0
+                                }
+                            ];
+                        }
+                        else
+                        {
+                            foreach (var li in expense.LineItems.Where(li => string.IsNullOrEmpty(li.ProductId)))
+                            {
+                                li.ProductId = expProduct.Id;
+                            }
+                        }
+                    }
+
+                    var existing = data.Expenses.FirstOrDefault(e => e.Id == expense.Id);
+                    if (existing != null) data.Expenses.Remove(existing);
+                    data.Expenses.Add(expense);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Revenue:
+                var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
+                if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
+                {
+                    revenue.OriginalCurrency = "USD";
+                    revenue.TotalUSD = revenue.Total;
+                    revenue.TaxAmountUSD = revenue.TaxAmount;
+                    revenue.ShippingCostUSD = revenue.ShippingCost;
+
+                    // Link product by name and auto-create if missing
+                    var productName = revenue.Description;
+                    if (!string.IsNullOrEmpty(productName))
+                    {
+                        var revenueProduct = FindProductByName(data, productName, CategoryType.Revenue)
+                                             ?? AutoCreateProduct(data, productName, revenue.Amount, CategoryType.Revenue);
+
+                        // Ensure line items reference the product
+                        if (revenue.LineItems.Count == 0)
+                        {
+                            revenue.LineItems =
+                            [
+                                new LineItem
+                                {
+                                    ProductId = revenueProduct.Id,
+                                    Description = productName,
+                                    Quantity = 1,
+                                    UnitPrice = revenue.Amount,
+                                    TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
+                                }
+                            ];
+                        }
+                        else
+                        {
+                            foreach (var li in revenue.LineItems.Where(li => string.IsNullOrEmpty(li.ProductId)))
+                            {
+                                li.ProductId = revenueProduct.Id;
+                            }
+                        }
+                    }
+
+                    var existing = data.Revenues.FirstOrDefault(r => r.Id == revenue.Id);
+                    if (existing != null) data.Revenues.Remove(existing);
+                    data.Revenues.Add(revenue);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Payments:
+                var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
+                if (payment != null && !string.IsNullOrEmpty(payment.Id))
+                {
+                    payment.OriginalCurrency = "USD";
+                    payment.AmountUSD = payment.Amount;
+                    var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
+                    if (existing != null) data.Payments.Remove(existing);
+                    data.Payments.Add(payment);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Categories:
+                var category = JsonSerializer.Deserialize<Category>(jsonStr, opts);
+                if (category != null && !string.IsNullOrEmpty(category.Id))
+                {
+                    var existing = data.Categories.FirstOrDefault(c => c.Id == category.Id);
+                    if (existing != null) data.Categories.Remove(existing);
+                    data.Categories.Add(category);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Employees:
+                var employee = JsonSerializer.Deserialize<Employee>(jsonStr, opts);
+                if (employee != null && !string.IsNullOrEmpty(employee.Id))
+                {
+                    var existing = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
+                    if (existing != null) data.Employees.Remove(existing);
+                    data.Employees.Add(employee);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Locations:
+                var location = JsonSerializer.Deserialize<Location>(jsonStr, opts);
+                if (location != null && !string.IsNullOrEmpty(location.Id))
+                {
+                    var existing = data.Locations.FirstOrDefault(l => l.Id == location.Id);
+                    if (existing != null) data.Locations.Remove(existing);
+                    data.Locations.Add(location);
+                    return true;
+                }
+                return false;
+            case SpreadsheetSheetType.Departments:
+                var dept = JsonSerializer.Deserialize<Department>(jsonStr, opts);
+                if (dept != null && !string.IsNullOrEmpty(dept.Id))
+                {
+                    var existing = data.Departments.FirstOrDefault(d => d.Id == dept.Id);
+                    if (existing != null) data.Departments.Remove(existing);
+                    data.Departments.Add(dept);
+                    return true;
+                }
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    #endregion
 
     #region Validation
 
@@ -220,19 +822,27 @@ public class SpreadsheetImportService
         Dictionary<string, HashSet<string>> importedIds,
         ImportValidationResult result)
     {
-        var sheetName = worksheet.Name;
         var headers = GetHeaders(worksheet);
         if (headers.Count == 0) return;
 
         var rows = GetDataRows(worksheet, headers.Count);
         if (rows.Count == 0) return;
 
+        ValidateWorksheetData(worksheet.Name, headers, rows, data, importedIds, result);
+    }
+
+    private void ValidateWorksheetData(
+        string sheetName,
+        List<string> headers,
+        List<List<object?>> rows,
+        CompanyData data,
+        Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
         // Count new vs updated records
-        var idColumn = sheetName switch
-        {
-            "Invoices" => "Invoice #",
-            _ => "ID"
-        };
+        var idColumn = SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName) == SpreadsheetSheetType.Invoices
+            ? "Invoice #"
+            : "ID";
 
         if (headers.Contains(idColumn))
         {
@@ -352,7 +962,7 @@ public class SpreadsheetImportService
                 !importedCategories.Contains(categoryId))
             {
                 result.AddIssue(sheetName, rowNumber, "Category ID", categoryId, "Categories",
-                    $"Category '{categoryId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Category '{categoryId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(supplierId) &&
@@ -360,7 +970,7 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -386,7 +996,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -417,7 +1027,7 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
 
             // Validate product exists (by name, since Sales/Purchases use product name)
@@ -426,7 +1036,7 @@ public class SpreadsheetImportService
                 !importedProductNames.Contains(productName))
             {
                 result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productName}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -455,7 +1065,7 @@ public class SpreadsheetImportService
                 !importedProducts.Contains(productId))
             {
                 result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
-                    $"Product '{productId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(locationId) &&
@@ -463,7 +1073,7 @@ public class SpreadsheetImportService
                 !importedLocations.Contains(locationId))
             {
                 result.AddIssue(sheetName, rowNumber, "Location ID", locationId, "Locations",
-                    $"Location '{locationId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Location '{locationId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -492,7 +1102,7 @@ public class SpreadsheetImportService
                 !importedInvoices.Contains(invoiceId))
             {
                 result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
-                    $"Invoice '{invoiceId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Invoice '{invoiceId}' not found — reference will be cleared", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(customerId) &&
@@ -500,7 +1110,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -531,7 +1141,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
 
             // Validate product exists (by name)
@@ -540,7 +1150,7 @@ public class SpreadsheetImportService
                 !importedProductNames.Contains(productName))
             {
                 result.AddIssue(sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productName}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -569,7 +1179,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(rentalItemId) &&
@@ -577,7 +1187,7 @@ public class SpreadsheetImportService
                 !importedRentalItems.Contains(rentalItemId))
             {
                 result.AddIssue(sheetName, rowNumber, "Rental Item ID", rentalItemId, "Rental Items",
-                    $"Rental item '{rentalItemId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Rental item '{rentalItemId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -613,7 +1223,7 @@ public class SpreadsheetImportService
                 !sheetIds.Contains(parentId))
             {
                 result.AddIssue(sheetName, rowNumber, "Parent ID", parentId, "Categories (parent)",
-                    $"Parent category '{parentId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Parent category '{parentId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -639,7 +1249,7 @@ public class SpreadsheetImportService
                 !importedDepartments.Contains(departmentId))
             {
                 result.AddIssue(sheetName, rowNumber, "Department ID", departmentId, "Departments",
-                    $"Department '{departmentId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Department '{departmentId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -665,7 +1275,7 @@ public class SpreadsheetImportService
                 !importedCustomers.Contains(customerId))
             {
                 result.AddIssue(sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -691,7 +1301,7 @@ public class SpreadsheetImportService
                 !importedInventory.Contains(inventoryItemId))
             {
                 result.AddIssue(sheetName, rowNumber, "Inventory Item ID", inventoryItemId, "Inventory Items",
-                    $"Inventory item '{inventoryItemId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Inventory item '{inventoryItemId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -717,7 +1327,7 @@ public class SpreadsheetImportService
                 !importedSuppliers.Contains(supplierId))
             {
                 result.AddIssue(sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -746,7 +1356,7 @@ public class SpreadsheetImportService
                 !importedProducts.Contains(productId))
             {
                 result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
-                    $"Product '{productId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(poId) &&
@@ -754,7 +1364,7 @@ public class SpreadsheetImportService
                 !importedPurchaseOrders.Contains(poId))
             {
                 result.AddIssue(sheetName, rowNumber, "PO ID", poId, "Purchase Orders",
-                    $"Purchase order '{poId}' not found", ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Purchase order '{poId}' not found", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -792,8 +1402,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Customer ID", customerId, "Customers",
-                    $"Customer '{customerId}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Customer '{customerId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(supplierId) &&
@@ -802,8 +1411,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Supplier ID", supplierId, "Suppliers",
-                    $"Supplier '{supplierId}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: true, rowId: id);
+                    $"Supplier '{supplierId}' not found", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(productName) &&
@@ -812,8 +1420,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Product", productName, "Products (by name)",
-                    $"Product '{productName}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productName}' not found", isAutoFixable: false, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(originalTransactionId) &&
@@ -824,8 +1431,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Original Transaction ID", originalTransactionId, "Transactions",
-                    $"Transaction '{originalTransactionId}' not found in Expenses or Revenue",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Transaction '{originalTransactionId}' not found in Expenses or Revenue", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -861,8 +1467,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Product ID", productId, "Products",
-                    $"Product '{productId}' not found",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: id);
             }
             // If no product ID, check by name
             else if (string.IsNullOrEmpty(productId) && !string.IsNullOrEmpty(productName))
@@ -872,8 +1477,7 @@ public class SpreadsheetImportService
                 {
                     result.AddIssue(
                         sheetName, rowNumber, "Product", productName, "Products (by name)",
-                        $"Product '{productName}' not found",
-                        ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                        $"Product '{productName}' not found", isAutoFixable: false, rowId: id);
                 }
             }
             // Warn if neither product ID nor product name is provided
@@ -881,8 +1485,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Product", "", "Products",
-                    "No Product ID or Product name specified",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    "No Product ID or Product name specified", isAutoFixable: false, rowId: id);
             }
 
             // InventoryItemId references the original expense/revenue transaction
@@ -894,8 +1497,7 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(
                     sheetName, rowNumber, "Inventory Item ID", inventoryItemId, "Transactions",
-                    $"Transaction '{inventoryItemId}' not found in Expenses or Revenue",
-                    ValidationIssueSeverity.Warning, isAutoFixable: false, rowId: id);
+                    $"Transaction '{inventoryItemId}' not found in Expenses or Revenue", isAutoFixable: false, rowId: id);
             }
         }
     }
@@ -939,7 +1541,7 @@ public class SpreadsheetImportService
                     data.Categories.Add(new Category
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Type = CategoryType.Revenue,
                         ItemType = "Product",
                         Icon = "📦"
@@ -953,7 +1555,7 @@ public class SpreadsheetImportService
                     data.Suppliers.Add(new Supplier
                     {
                         Id = id,
-                        Name = $"[Imported] {id}"
+                        Name = id
                     });
                 }
                 break;
@@ -964,7 +1566,7 @@ public class SpreadsheetImportService
                     data.Customers.Add(new Customer
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Status = EntityStatus.Active
                     });
                 }
@@ -976,7 +1578,7 @@ public class SpreadsheetImportService
                     data.Products.Add(new Product
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Type = CategoryType.Revenue,
                         ItemType = "Product"
                     });
@@ -1003,7 +1605,7 @@ public class SpreadsheetImportService
                     data.Locations.Add(new Location
                     {
                         Id = id,
-                        Name = $"[Imported] {id}"
+                        Name = id
                     });
                 }
                 break;
@@ -1014,7 +1616,7 @@ public class SpreadsheetImportService
                     data.Departments.Add(new Department
                     {
                         Id = id,
-                        Name = $"[Imported] {id}"
+                        Name = id
                     });
                 }
                 break;
@@ -1025,7 +1627,7 @@ public class SpreadsheetImportService
                     data.RentalInventory.Add(new RentalItem
                     {
                         Id = id,
-                        Name = $"[Imported] {id}",
+                        Name = id,
                         Status = EntityStatus.Active
                     });
                 }
@@ -1119,10 +1721,38 @@ public class SpreadsheetImportService
 
     #region Helper Methods
 
+    /// <summary>
+    /// Finds the header row by scanning for the first row with at least 2 non-empty cells.
+    /// Falls back to row 1 if no such row is found within the first 10 rows.
+    /// </summary>
+    private static int FindHeaderRow(IXLWorksheet worksheet)
+    {
+        var lastRow = Math.Min(worksheet.LastRowUsed()?.RowNumber() ?? 1, 10);
+        var colCount = worksheet.ColumnsUsed().Count();
+
+        for (int rowNum = 1; rowNum <= lastRow; rowNum++)
+        {
+            var row = worksheet.Row(rowNum);
+            int nonEmpty = 0;
+            for (int col = 1; col <= colCount; col++)
+            {
+                if (!row.Cell(col).IsEmpty()) nonEmpty++;
+                if (nonEmpty >= 2) return rowNum;
+            }
+        }
+
+        return 1;
+    }
+
     private static List<string> GetHeaders(IXLWorksheet worksheet)
     {
+        return GetHeaders(worksheet, FindHeaderRow(worksheet));
+    }
+
+    private static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
+    {
         var headers = new List<string>();
-        var row = worksheet.Row(1);
+        var row = worksheet.Row(headerRow);
 
         for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
         {
@@ -1136,10 +1766,11 @@ public class SpreadsheetImportService
 
     private static List<List<object?>> GetDataRows(IXLWorksheet worksheet, int columnCount)
     {
+        var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<object?>>();
         var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 1;
 
-        for (int rowNum = 2; rowNum <= lastRow; rowNum++)
+        for (int rowNum = headerRow + 1; rowNum <= lastRow; rowNum++)
         {
             var row = worksheet.Row(rowNum);
             var rowData = new List<object?>();
@@ -1192,6 +1823,23 @@ public class SpreadsheetImportService
         return row[index]?.ToString() ?? string.Empty;
     }
 
+    /// <summary>
+    /// Tries multiple column name variants and returns the first match.
+    /// Used for address fields that have country-specific labels.
+    /// </summary>
+    private static string GetStringMulti(List<object?> row, List<string> headers, params string[] columnNames)
+    {
+        foreach (var name in columnNames)
+        {
+            var result = GetString(row, headers, name);
+            if (!string.IsNullOrEmpty(result)) return result;
+        }
+        return string.Empty;
+    }
+
+    private static readonly string[] PostalCodeVariants = ["Postal Code", "ZIP Code", "Postcode", "PIN Code"];
+    private static readonly string[] StateVariants = ["State", "State/Province", "Province", "County", "Prefecture", "Region"];
+
     private static string? GetNullableString(List<object?> row, List<string> headers, string columnName)
     {
         var value = GetString(row, headers, columnName);
@@ -1210,9 +1858,29 @@ public class SpreadsheetImportService
             decimal dec => dec,
             int i => i,
             long l => l,
-            string s when decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var result) => result,
+            string s => ParseDecimalString(s),
             _ => 0m
         };
+    }
+
+    private static decimal ParseDecimalString(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return 0m;
+
+        // Strip common currency symbols and whitespace before parsing
+        var cleaned = s.Trim();
+        foreach (var symbol in new[] { "$", "€", "£", "¥", "₹", "CHF", "CAD", "AUD", "USD", "EUR", "GBP" })
+            cleaned = cleaned.Replace(symbol, "", StringComparison.OrdinalIgnoreCase);
+        cleaned = cleaned.Trim();
+
+        // Handle parentheses as negative: (123.45) → -123.45
+        if (cleaned.StartsWith('(') && cleaned.EndsWith(')'))
+            cleaned = "-" + cleaned[1..^1];
+
+        if (decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+            return result;
+
+        return 0m;
     }
 
     private static int GetInt(List<object?> row, List<string> headers, string columnName)
@@ -1259,6 +1927,237 @@ public class SpreadsheetImportService
         return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) ? result : defaultValue;
     }
 
+    /// <summary>
+    /// Finds an existing category by name (case-insensitive) or creates a new one.
+    /// </summary>
+    /// <summary>
+    /// Lazily-built lookup for FindOrCreateCategory to avoid O(N) scans per call.
+    /// Keyed by lowercase category name. Invalidated when new categories are added.
+    /// </summary>
+    private Dictionary<string, Category>? _categoryByNameCache;
+
+    private Dictionary<string, Category> GetCategoryByNameCache(CompanyData data)
+    {
+        if (_categoryByNameCache != null)
+            return _categoryByNameCache;
+
+        _categoryByNameCache = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
+        // Last-wins: earlier entries are overwritten, so the first match per name is kept
+        // by iterating in reverse
+        for (int i = data.Categories.Count - 1; i >= 0; i--)
+        {
+            var c = data.Categories[i];
+            _categoryByNameCache[c.Name] = c;
+        }
+        return _categoryByNameCache;
+    }
+
+    private Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
+    {
+        var cache = GetCategoryByNameCache(data);
+
+        // Try to find existing category by name (cache handles case-insensitivity)
+        if (cache.TryGetValue(categoryName, out var existing))
+        {
+            // Prefer exact type match - if this one matches, return it
+            if (existing.Type == type)
+                return existing;
+
+            // Check if there's a type-specific match by scanning (rare path)
+            var typeMatch = data.Categories.FirstOrDefault(c =>
+                string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase) &&
+                c.Type == type);
+            if (typeMatch != null)
+                return typeMatch;
+
+            // Return the name-only match
+            return existing;
+        }
+
+        // Create new category
+        var idGen = new IdGenerator(data);
+        var category = new Category
+        {
+            Id = idGen.NextCategoryId(type),
+            Name = categoryName,
+            Type = type,
+            ItemType = itemType
+        };
+        data.Categories.Add(category);
+        cache[categoryName] = category;
+        return category;
+    }
+
+    /// <summary>
+    /// Resolves the category for an imported product: if the product has a categoryName in the JSON
+    /// (or a categoryId that doesn't match any existing category), auto-creates the category.
+    /// </summary>
+    private void ResolveProductCategory(CompanyData data, Product product, JsonElement entityJson)
+    {
+
+        // Extract categoryName from the raw JSON (not part of the Product model)
+        string? categoryName = null;
+        if (entityJson.TryGetProperty("categoryName", out var nameElement))
+            categoryName = nameElement.GetString();
+
+
+        // If we have a valid categoryId that matches an existing category, nothing to do
+        if (!string.IsNullOrEmpty(product.CategoryId))
+        {
+            if (data.Categories.Any(c => c.Id == product.CategoryId))
+            {
+                return;
+            }
+        }
+
+        // If we have a category name, find or create the category
+        if (!string.IsNullOrEmpty(categoryName))
+        {
+            var category = FindOrCreateCategory(data, categoryName, product.Type, product.ItemType);
+            product.CategoryId = category.Id;
+            return;
+        }
+
+        // If categoryId was set but doesn't exist and no name provided, use the categoryId as the name
+        if (!string.IsNullOrEmpty(product.CategoryId))
+        {
+            var category = FindOrCreateCategory(data, product.CategoryId, product.Type, product.ItemType);
+            product.CategoryId = category.Id;
+            return;
+        }
+
+        // Last resort: use the product name as the category name so no product is left uncategorized
+        if (!string.IsNullOrEmpty(product.Name))
+        {
+            var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+            product.CategoryId = category.Id;
+        }
+        else
+        {
+        }
+    }
+
+    /// <summary>
+    /// Uses AI to suggest categories for products that have no category assigned.
+    /// Batches all uncategorized products into a single AI call for efficiency.
+    /// Falls back to using the product name as the category name if AI is unavailable.
+    /// </summary>
+    private async Task AiCategorizeMissingProductsAsync(CompanyData data, CancellationToken cancellationToken)
+    {
+        var uncategorized = data.Products
+            .Where(p => string.IsNullOrEmpty(p.CategoryId))
+            .ToList();
+
+        if (uncategorized.Count == 0)
+        {
+            return;
+        }
+
+
+        // Try AI categorization if the service is available
+        if (_openAiService?.IsConfigured == true)
+        {
+            try
+            {
+                var existingCategories = data.Categories
+                    .Select(c => $"- {c.Name} ({c.Type}, {c.ItemType})")
+                    .ToList();
+
+                var productList = uncategorized
+                    .Select(p => $"- \"{p.Name}\" (Type={p.Type}, ItemType={p.ItemType}, Description=\"{p.Description}\")")
+                    .ToList();
+
+                var prompt = $@"You are categorizing products for a small business bookkeeping application.
+
+## Existing Categories
+{(existingCategories.Count > 0 ? string.Join("\n", existingCategories) : "(none)")}
+
+## Uncategorized Products
+{string.Join("\n", productList)}
+
+For each product, suggest the best category name. Prefer matching an existing category when appropriate.
+If no existing category fits, suggest a short, clear new category name (2-4 words).
+
+Respond with ONLY a JSON array, one entry per product in the same order:
+[
+  {{ ""productName"": ""..."", ""categoryName"": ""..."" }}
+]";
+
+                var response = await _openAiService.SendChatAsync(
+                    "You are a helpful assistant that categorizes business products. Always respond with valid JSON only, no markdown.",
+                    prompt,
+                    maxTokens: Math.Max(500, uncategorized.Count * 50),
+                    temperature: 0.1,
+                    cancellationToken);
+
+                if (!string.IsNullOrEmpty(response))
+                {
+                    var suggestions = ParseAiCategorySuggestions(response);
+
+                    foreach (var product in uncategorized)
+                    {
+                        var suggestion = suggestions.FirstOrDefault(s =>
+                            string.Equals(s.ProductName, product.Name, StringComparison.OrdinalIgnoreCase));
+
+                        if (!string.IsNullOrEmpty(suggestion.CategoryName))
+                        {
+                            var category = FindOrCreateCategory(data, suggestion.CategoryName, product.Type, product.ItemType);
+                            product.CategoryId = category.Id;
+                        }
+                        else
+                        {
+                            // AI didn't return a match for this product — use product name as fallback
+                            var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+                            product.CategoryId = category.Id;
+                        }
+                    }
+                    return;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _errorLogger?.LogError(ex, ErrorCategory.Import, "AI categorization failed, falling back to product name as category");
+            }
+        }
+
+        // Fallback: use product name as category name (same as Tier 2 last-resort logic)
+        foreach (var product in uncategorized)
+        {
+            if (!string.IsNullOrEmpty(product.Name))
+            {
+                var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+                product.CategoryId = category.Id;
+            }
+        }
+    }
+
+    private static List<(string ProductName, string CategoryName)> ParseAiCategorySuggestions(string response)
+    {
+        var results = new List<(string ProductName, string CategoryName)>();
+
+        // Strip markdown code fences if present
+        var clean = response.Trim();
+        if (clean.StartsWith("```"))
+        {
+            var firstNewline = clean.IndexOf('\n');
+            if (firstNewline >= 0) clean = clean[(firstNewline + 1)..];
+            if (clean.EndsWith("```")) clean = clean[..^3];
+            clean = clean.Trim();
+        }
+
+        using var doc = JsonDocument.Parse(clean);
+        foreach (var el in doc.RootElement.EnumerateArray())
+        {
+            var productName = el.TryGetProperty("productName", out var pn) ? pn.GetString() ?? "" : "";
+            var categoryName = el.TryGetProperty("categoryName", out var cn) ? cn.GetString() ?? "" : "";
+            if (!string.IsNullOrEmpty(productName) && !string.IsNullOrEmpty(categoryName))
+                results.Add((productName, categoryName));
+        }
+
+        return results;
+    }
+
     #endregion
 
     #region Import Methods (Merge Logic)
@@ -1280,8 +2179,8 @@ public class SpreadsheetImportService
             {
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
-                State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Zip Code"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
                 Country = GetString(row, headers, "Country")
             };
             customer.Notes = GetString(row, headers, "Notes");
@@ -1320,6 +2219,38 @@ public class SpreadsheetImportService
 
             if (existing == null)
                 data.Invoices.Add(invoice);
+
+            // Create a linked Revenue entry for paid/partially paid invoices
+            // so they appear on the dashboard and analytics pages
+            if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
+            {
+                data.IdCounters.Revenue++;
+                var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
+                var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
+
+                data.Revenues.Add(new Revenue
+                {
+                    Id = revenueId,
+                    Date = invoice.IssueDate,
+                    CustomerId = invoice.CustomerId,
+                    Description = $"Invoice {invoice.InvoiceNumber}",
+                    Quantity = 1,
+                    UnitPrice = invoice.Subtotal,
+                    Subtotal = invoice.Subtotal,
+                    Amount = invoice.Subtotal,
+                    TaxAmount = invoice.TaxAmount,
+                    Total = invoice.Total,
+                    PaymentMethod = PaymentMethod.Other,
+                    PaymentStatus = isPaid ? "Paid" : "Partial",
+                    Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
+                    InvoiceId = invoice.Id,
+                    ReferenceNumber = invoice.InvoiceNumber,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    OriginalCurrency = invoice.OriginalCurrency,
+                    TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
+                });
+            }
         }
     }
 
@@ -1355,13 +2286,15 @@ public class SpreadsheetImportService
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Expense-type categories when there are duplicate names
+            // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
-                var product = FindProductByName(data, description, CategoryType.Expense);
+                var product = FindProductByName(data, description, CategoryType.Expense)
+                              ?? AutoCreateProduct(data, description, purchase.Amount, CategoryType.Expense);
 
                 var lineItem = new LineItem
                 {
-                    ProductId = product?.Id,
+                    ProductId = product.Id,
                     Description = description,
                     Quantity = 1,
                     UnitPrice = purchase.Amount,
@@ -1377,21 +2310,28 @@ public class SpreadsheetImportService
 
     private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
+        // Build lookup dictionaries to avoid O(N) scans per row
+        var productsById = data.Products.ToDictionary(p => p.Id, p => p);
+        var productsByName = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in data.Products)
+            productsByName.TryAdd(p.Name, p);
+        var suppliersByName = new Dictionary<string, Supplier>(StringComparer.OrdinalIgnoreCase);
+        foreach (var s in data.Suppliers)
+            suppliersByName.TryAdd(s.Name, s);
+        var categoriesById = data.Categories.ToDictionary(c => c.Id, c => c);
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var name = GetString(row, headers, "Name");
 
             // Check for existing product by ID first
-            var existing = data.Products.FirstOrDefault(p => p.Id == id);
+            productsById.TryGetValue(id, out var existing);
 
-            // Only match by name for auto-created placeholder products (those with "[Imported]" prefix)
-            // This prevents products with duplicate names but different IDs from overwriting each other
-            if (existing == null)
+            // Match by name for auto-created placeholder products (created from foreign key references)
+            if (existing == null && !string.IsNullOrEmpty(name))
             {
-                var placeholder = data.Products.FirstOrDefault(p =>
-                    p.Name.StartsWith("[Imported]", StringComparison.OrdinalIgnoreCase) &&
-                    p.Name.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+                productsByName.TryGetValue(id, out var placeholder);
                 if (placeholder != null)
                     existing = placeholder;
             }
@@ -1421,17 +2361,30 @@ public class SpreadsheetImportService
             product.Sku = GetString(row, headers, "SKU");
             product.Description = GetString(row, headers, "Description");
 
-            // Handle Category - prefer ID, fall back to name lookup
+            // Handle Category - prefer ID, fall back to name lookup, auto-create if needed
             var categoryId = GetNullableString(row, headers, "Category ID");
-            if (string.IsNullOrEmpty(categoryId))
+            var categoryName = GetNullableString(row, headers, "Category Name");
+
+            if (!string.IsNullOrEmpty(categoryId))
             {
-                var categoryName = GetNullableString(row, headers, "Category Name");
-                if (!string.IsNullOrEmpty(categoryName))
+                // Validate that the categoryId references an existing category
+                categoriesById.TryGetValue(categoryId, out var existingCat);
+                if (existingCat == null)
                 {
-                    var category = data.Categories.FirstOrDefault(c =>
-                        string.Equals(c.Name, categoryName, StringComparison.OrdinalIgnoreCase));
-                    categoryId = category?.Id;
+                    var category = FindOrCreateCategory(data, categoryId, productType, itemType);
+                    categoryId = category.Id;
                 }
+                else
+                {
+                }
+            }
+            else if (!string.IsNullOrEmpty(categoryName))
+            {
+                var category = FindOrCreateCategory(data, categoryName, productType, itemType);
+                categoryId = category.Id;
+            }
+            else
+            {
             }
             product.CategoryId = categoryId;
 
@@ -1440,11 +2393,9 @@ public class SpreadsheetImportService
             if (string.IsNullOrEmpty(supplierId))
             {
                 var supplierName = GetNullableString(row, headers, "Supplier Name");
-                if (!string.IsNullOrEmpty(supplierName))
+                if (!string.IsNullOrEmpty(supplierName) && suppliersByName.TryGetValue(supplierName, out var supplier))
                 {
-                    var supplier = data.Suppliers.FirstOrDefault(s =>
-                        string.Equals(s.Name, supplierName, StringComparison.OrdinalIgnoreCase));
-                    supplierId = supplier?.Id;
+                    supplierId = supplier.Id;
                 }
             }
             product.SupplierId = supplierId;
@@ -1460,7 +2411,12 @@ public class SpreadsheetImportService
             }
 
             if (existing == null)
+            {
                 data.Products.Add(product);
+                productsById.TryAdd(product.Id, product);
+                if (!string.IsNullOrEmpty(product.Name))
+                    productsByName.TryAdd(product.Name, product);
+            }
         }
     }
 
@@ -1498,7 +2454,9 @@ public class SpreadsheetImportService
 
             var payment = existing ?? new Payment();
             payment.Id = id;
-            payment.InvoiceId = GetString(row, headers, "Invoice ID");
+            var invoiceId = GetString(row, headers, "Invoice ID");
+            payment.InvoiceId = !string.IsNullOrEmpty(invoiceId) && data.Invoices.Any(inv => inv.Id == invoiceId)
+                ? invoiceId : "";
             payment.CustomerId = GetString(row, headers, "Customer ID");
             payment.Date = GetDateTime(row, headers, "Date");
             payment.Amount = GetDecimal(row, headers, "Amount");
@@ -1532,8 +2490,8 @@ public class SpreadsheetImportService
             {
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
-                State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Zip Code"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
                 Country = GetString(row, headers, "Country")
             };
             supplier.Notes = GetString(row, headers, "Notes");
@@ -1578,13 +2536,15 @@ public class SpreadsheetImportService
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Revenue-type categories when there are duplicate names
+            // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
-                var product = FindProductByName(data, description, CategoryType.Revenue);
+                var product = FindProductByName(data, description, CategoryType.Revenue) 
+                              ?? AutoCreateProduct(data, description, revenue.Amount, CategoryType.Revenue);
 
                 var lineItem = new LineItem
                 {
-                    ProductId = product?.Id,
+                    ProductId = product.Id,
                     Description = description,
                     Quantity = 1,
                     UnitPrice = revenue.Amount,
@@ -1604,19 +2564,38 @@ public class SpreadsheetImportService
     /// </summary>
     private static Product? FindProductByName(CompanyData data, string name, CategoryType preferredCategoryType)
     {
+        var categoriesById = data.Categories.ToDictionary(c => c.Id, c => c);
         Product? fallback = null;
         foreach (var p in data.Products)
         {
             if (!string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var category = data.Categories.FirstOrDefault(c => c.Id == p.CategoryId);
-            if (category?.Type == preferredCategoryType)
+            if (!string.IsNullOrEmpty(p.CategoryId) && categoriesById.TryGetValue(p.CategoryId, out var category) && category.Type == preferredCategoryType)
                 return p;
 
             fallback ??= p;
         }
         return fallback;
+    }
+
+    /// <summary>
+    /// Auto-creates a product from revenue/expense data when no matching product exists.
+    /// Uses the product name from the transaction description and sets a sensible unit price.
+    /// </summary>
+    private static Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
+    {
+        var newId = $"PRD-IMP-{data.Products.Count + 1:D3}";
+        var product = new Product
+        {
+            Id = newId,
+            Name = name,
+            UnitPrice = unitPrice,
+            Type = type,
+            ItemType = "Product"
+        };
+        data.Products.Add(product);
+        return product;
     }
 
     private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows)
@@ -1812,8 +2791,8 @@ public class SpreadsheetImportService
             {
                 Street = GetString(row, headers, "Street"),
                 City = GetString(row, headers, "City"),
-                State = GetString(row, headers, "State"),
-                ZipCode = GetString(row, headers, "Zip Code"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
                 Country = GetString(row, headers, "Country")
             };
             location.Capacity = GetInt(row, headers, "Capacity");

@@ -1670,7 +1670,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to generate report preview");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to generate report preview");
             foreach (var bmp in PreviewPageImages)
                 bmp.Dispose();
             PreviewPageImages.Clear();

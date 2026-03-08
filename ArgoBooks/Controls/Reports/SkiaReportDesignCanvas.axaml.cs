@@ -84,7 +84,6 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         var (_, pageHeight) = GetPageDimensions();
         var pageCount = GetPageCount();
-        var stride = pageHeight + PageGap;
 
         for (int page = 1; page <= pageCount; page++)
         {
@@ -387,7 +386,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         var companyData = App.CompanyManager?.CompanyData;
         Configuration.Use24HourFormat = TimeZoneService.Is24HourFormat;
         Configuration.CompanyLogoPath = App.CompanyManager?.CurrentCompanyLogoPath;
-        Configuration.MaxPieSlices = Services.ChartSettingsService.GetMaxPieSlices();
+        Configuration.MaxPieSlices = ChartSettingsService.GetMaxPieSlices();
         using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance, App.ErrorLogger);
         renderer.ComputeContinuationPlan();
         _continuationPlan = renderer.GetContinuationPlan();

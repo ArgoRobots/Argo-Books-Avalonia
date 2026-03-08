@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -199,6 +201,34 @@ public partial class ImportValidationDialogViewModel : ViewModelBase
     {
         IsOpen = false;
         _completionSource?.TrySetResult(ImportValidationDialogResult.Cancel);
+    }
+
+    [RelayCommand]
+    private async Task RequestCloseAsync()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Close Import Issues?".Translate(),
+                Message = "Are you sure you want to close? The import will be cancelled.".Translate(),
+                PrimaryButtonText = "Close".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary)
+                return;
+        }
+
+        Cancel();
+    }
+
+    [RelayCommand]
+    private void ToggleSheetGroup(SheetIssueGroup group)
+    {
+        group.IsExpanded = !group.IsExpanded;
     }
 
     [RelayCommand]

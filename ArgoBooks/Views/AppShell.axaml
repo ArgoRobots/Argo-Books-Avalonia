@@ -158,6 +158,9 @@
         <!-- Import Validation Dialog -->
         <modals:ImportValidationDialog DataContext="{Binding ImportValidationDialogViewModel}" />
 
+        <!-- Import Mapping Dialog -->
+        <modals:ImportMappingDialog DataContext="{Binding ImportMappingDialogViewModel}" />
+
         <!-- Export As Modal -->
         <modals:ExportAsModal DataContext="{Binding ExportAsModalViewModel}" />
 

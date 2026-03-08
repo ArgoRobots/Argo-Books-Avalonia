@@ -4,7 +4,6 @@ using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
-using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.SKCharts;
@@ -622,7 +621,7 @@ public class ReportRenderer : IDisposable
     public void ComputeContinuationPlan()
     {
         var plan = new PageContinuationPlan();
-        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
+        var (_, pageHeight) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
 
         // Build effective pages: start with all template pages
         // Then insert continuation pages after each template page as needed
@@ -667,14 +666,14 @@ public class ReportRenderer : IDisposable
                 int firstPageRowCount = 0;
                 int dataRowIndex = 0;
 
-                for (int i = 0; i < tableData.Rows.Count; i++)
+                foreach (var row in tableData.Rows)
                 {
-                    var rowHeight = GetAccountingRowHeight(tableData.Rows[i].RowType, dataRowHeight, headerRowHeight);
+                    var rowHeight = GetAccountingRowHeight(row.RowType, dataRowHeight, headerRowHeight);
                     if (accumulatedHeight + rowHeight > firstPageAvailable)
                         break;
                     accumulatedHeight += rowHeight;
                     firstPageRowCount++;
-                    if (tableData.Rows[i].RowType == AccountingRowType.DataRow)
+                    if (row.RowType == AccountingRowType.DataRow)
                         dataRowIndex++;
                 }
 
@@ -738,8 +737,6 @@ public class ReportRenderer : IDisposable
                             if (tableData.Rows[i].RowType == AccountingRowType.DataRow)
                                 dataRowIndex++;
                         }
-
-                        isLast = currentRowIndex + pageRowCount >= tableData.Rows.Count;
                     }
 
                     // Safety: always progress at least 1 row to prevent infinite loop
@@ -784,8 +781,8 @@ public class ReportRenderer : IDisposable
                 plan.CachedNormalTableColumns[table.Id] = columns;
 
                 var rect = GetScaledRect(table);
-                var headerRowHeight = (float)table.HeaderRowHeight * _renderScale;
-                var dataRowHeight = (float)table.DataRowHeight * _renderScale;
+                var headerRowHeight = table.HeaderRowHeight * _renderScale;
+                var dataRowHeight = table.DataRowHeight * _renderScale;
                 var titleRowHeight = headerRowHeight;
 
                 // Calculate available height for data rows on page 1
@@ -840,7 +837,6 @@ public class ReportRenderer : IDisposable
                         if (remaining > rowsWithTotals)
                         {
                             // Not enough room for all remaining + totals, use reduced count
-                            isLast = false;
                             rowsPerPage = rowsWithTotals;
                         }
                     }
@@ -1129,7 +1125,7 @@ public class ReportRenderer : IDisposable
         // Handle different chart types
         if (IsGeoMapChart(chart.ChartType))
         {
-            RenderGeoMap(canvas, pieChartArea, chart);
+            RenderGeoMap(canvas, pieChartArea);
             return;
         }
 
@@ -2108,7 +2104,7 @@ public class ReportRenderer : IDisposable
     /// <summary>
     /// Renders a GeoMap chart using LiveCharts2 SKGeoMap for headless rendering.
     /// </summary>
-    private void RenderGeoMap(SKCanvas canvas, SKRect chartArea, ChartReportElement chart)
+    private void RenderGeoMap(SKCanvas canvas, SKRect chartArea)
     {
         var mapData = GetWorldMapData();
 
@@ -2150,10 +2146,7 @@ public class ReportRenderer : IDisposable
             };
 
             using var image = geoMap.GetImage();
-            if (image != null)
-            {
-                canvas.DrawImage(image, chartArea.Left, chartArea.Top);
-            }
+            canvas.DrawImage(image, chartArea.Left, chartArea.Top);
         }
         catch (Exception ex)
         {
@@ -2404,8 +2397,8 @@ public class ReportRenderer : IDisposable
     {
         var rect = overrideRect ?? GetScaledRect(table);
 
-        var headerRowHeight = (float)table.HeaderRowHeight * _renderScale;
-        var dataRowHeight = (float)table.DataRowHeight * _renderScale;
+        var headerRowHeight = table.HeaderRowHeight * _renderScale;
+        var dataRowHeight = table.DataRowHeight * _renderScale;
         var titleRowHeight = headerRowHeight;
         var continuedIndicatorHeight = dataRowHeight * 0.8f;
 
@@ -3780,7 +3773,7 @@ public class ReportRenderer : IDisposable
 
         if (_config.ShowCompanyDetails && _companyData != null)
         {
-            RenderCompanyDetailsHeader(canvas, width, headerHeight, marginLeft, marginTop);
+            RenderCompanyDetailsHeader(canvas, width, marginLeft, marginTop);
         }
         else
         {
@@ -3798,7 +3791,7 @@ public class ReportRenderer : IDisposable
         canvas.DrawLine(marginLeft, marginTop + headerHeight - 5 * _renderScale, width - marginRight, marginTop + headerHeight - 5 * _renderScale, separatorPaint);
     }
 
-    private void RenderCompanyDetailsHeader(SKCanvas canvas, int width, float headerHeight, float margin, float marginTop)
+    private void RenderCompanyDetailsHeader(SKCanvas canvas, int width, float margin, float marginTop)
     {
         var companyInfo = _companyData!.Settings.Company;
         var logoPath = _config.CompanyLogoPath;

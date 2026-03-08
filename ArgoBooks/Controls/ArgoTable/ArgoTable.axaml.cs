@@ -595,7 +595,7 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
                 // Find the containing Page (UserControl) - skip over ArgoTable itself
                 // This ensures coordinates are relative to the page that contains both
                 // the ArgoTable and the ColumnVisibilityMenu
-                Control? ancestor = this.Parent as Control;
+                Control? ancestor = Parent as Control;
                 while (ancestor != null)
                 {
                     if (ancestor is UserControl && ancestor != this)
@@ -608,7 +608,7 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
                 // Fall back to Panel if no UserControl found
                 if (ancestor == null)
                 {
-                    ancestor = this.Parent as Control;
+                    ancestor = Parent as Control;
                     while (ancestor != null && ancestor is not Panel)
                     {
                         ancestor = ancestor.Parent as Control;

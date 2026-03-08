@@ -278,7 +278,7 @@ public class FileService(
             LostDamaged = await ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken) ?? [],
             Receipts = await ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken) ?? [],
             ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? [],
-            EventLog = await ReadJsonAsync<List<Models.AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? []
+            EventLog = await ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? []
         };
 
         return data;

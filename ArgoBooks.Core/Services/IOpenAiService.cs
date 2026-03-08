@@ -21,4 +21,20 @@ public interface IOpenAiService
     Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
         ReceiptAnalysisRequest request,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a generic chat completion request to the OpenAI API.
+    /// </summary>
+    /// <param name="systemPrompt">The system prompt.</param>
+    /// <param name="userPrompt">The user prompt.</param>
+    /// <param name="maxTokens">Maximum tokens in the response.</param>
+    /// <param name="temperature">Sampling temperature (0.0 = deterministic, 1.0 = creative).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The model's response text, or null on failure.</returns>
+    Task<string?> SendChatAsync(
+        string systemPrompt,
+        string userPrompt,
+        int maxTokens = 4000,
+        double temperature = 0.1,
+        CancellationToken cancellationToken = default);
 }
