@@ -167,9 +167,6 @@
         <!-- Switch Account Modal -->
         <modals:SwitchAccountModal DataContext="{Binding SwitchAccountModalViewModel}" />
 
-        <!-- Login Modal -->
-        <modals:LoginModal DataContext="{Binding LoginModalViewModel}" />
-
         <!-- Note: PasswordPromptModal is now at MainWindow level to appear above WelcomeScreen -->
 
         <!-- Edit Company Modal -->

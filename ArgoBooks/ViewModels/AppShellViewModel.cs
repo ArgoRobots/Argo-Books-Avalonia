@@ -137,11 +137,6 @@ public partial class AppShellViewModel : ViewModelBase
     public SwitchAccountModalViewModel SwitchAccountModalViewModel { get; }
 
     /// <summary>
-    /// Gets the login modal view model.
-    /// </summary>
-    public LoginModalViewModel LoginModalViewModel { get; }
-
-    /// <summary>
     /// Gets the password prompt modal view model.
     /// </summary>
     public PasswordPromptModalViewModel PasswordPromptModalViewModel { get; }
@@ -412,9 +407,6 @@ public partial class AppShellViewModel : ViewModelBase
         // Create switch account modal
         SwitchAccountModalViewModel = new SwitchAccountModalViewModel();
 
-        // Create login modal
-        LoginModalViewModel = new LoginModalViewModel();
-
         // Create password prompt modal
         PasswordPromptModalViewModel = new PasswordPromptModalViewModel();
 
@@ -498,9 +490,6 @@ public partial class AppShellViewModel : ViewModelBase
         {
             navService.RegisterNavigationGuard(CheckUnsavedChangesBeforeNavigation);
         }
-
-        // Wire up switch account modal's account selected to open login modal
-        SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);
 
         // Wire up switch account modal's create account to open company wizard
         SwitchAccountModalViewModel.CreateAccountRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
