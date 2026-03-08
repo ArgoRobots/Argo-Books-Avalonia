@@ -2816,6 +2816,7 @@ public class App : Application
 
         using var analysisCts = new CancellationTokenSource();
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), cts: analysisCts, cancelConfirmation: ConfirmCancelAsync);
+        await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
         // Check rate limit via server-side API
         var usageService = new AiImportUsageService(LicenseService, ErrorLogger);

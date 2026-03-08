@@ -34,6 +34,10 @@ public class SpreadsheetAnalysisService(
     {
         try
         {
+            // Report initial progress so the UI shows the loading overlay immediately
+            progress?.Report(("Reading file...", 0));
+            await Task.Yield();
+
             using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var workbook = new XLWorkbook(fileStream);
 
@@ -75,6 +79,10 @@ public class SpreadsheetAnalysisService(
     {
         try
         {
+            // Report initial progress so the UI shows the loading overlay immediately
+            progress?.Report(("Reading file...", 0));
+            await Task.Yield();
+
             var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
             if (lines.Length < 2)
                 return null;
