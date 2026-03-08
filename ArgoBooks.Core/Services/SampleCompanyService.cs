@@ -148,8 +148,6 @@ public class SampleCompanyService
     /// </summary>
     public static void CleanupValidationContext(SampleCompanyValidationContext context)
     {
-        if (context == null) return;
-
         if (File.Exists(context.TempExcelPath))
         {
             try { File.Delete(context.TempExcelPath); }
@@ -305,10 +303,7 @@ public class SampleCompanyService
             if (record.Status == RentalStatus.Returned)
             {
                 record.Paid = true;
-                if (record.DepositRefunded == null)
-                {
-                    record.DepositRefunded = record.SecurityDeposit;
-                }
+                record.DepositRefunded ??= record.SecurityDeposit;
             }
         }
     }
@@ -455,11 +450,11 @@ public class SampleCompanyService
         var newRentals = new List<RentalRecord>();
 
         // Pick items and customers for new rentals
-        var item0 = items.Count > 0 ? items[0] : items[0];
+        var item0 = items[0];
         var item1 = items.Count > 1 ? items[1] : items[0];
         var item2 = items.Count > 2 ? items[2] : items[0];
 
-        var cust0 = customers.Count > 0 ? customers[0] : customers[0];
+        var cust0 = customers[0];
         var cust1 = customers.Count > 1 ? customers[1] : customers[0];
         var cust2 = customers.Count > 2 ? customers[2] : customers[0];
         var cust3 = customers.Count > 3 ? customers[3] : customers[0];
@@ -469,7 +464,7 @@ public class SampleCompanyService
         {
             Id = $"RNT-{++maxId:D3}",
             RentalItemId = item0.Id,
-            CustomerId = cust0.Id!,
+            CustomerId = cust0.Id,
             Quantity = 1,
             RateType = RateType.Daily,
             RateAmount = item0.DailyRate,
@@ -490,7 +485,7 @@ public class SampleCompanyService
         {
             Id = $"RNT-{++maxId:D3}",
             RentalItemId = item0.Id,
-            CustomerId = cust1.Id!,
+            CustomerId = cust1.Id,
             Quantity = multiQty,
             RateType = RateType.Daily,
             RateAmount = item0.DailyRate,
@@ -513,7 +508,7 @@ public class SampleCompanyService
         {
             Id = $"RNT-{++maxId:D3}",
             RentalItemId = item2.Id,
-            CustomerId = cust2.Id!,
+            CustomerId = cust2.Id,
             Quantity = 1,
             RateType = RateType.Weekly,
             RateAmount = item2.WeeklyRate,
@@ -532,7 +527,7 @@ public class SampleCompanyService
         {
             Id = $"RNT-{++maxId:D3}",
             RentalItemId = item0.Id,
-            CustomerId = cust3.Id!,
+            CustomerId = cust3.Id,
             Quantity = 1,
             RateType = RateType.Weekly,
             RateAmount = item0.WeeklyRate,

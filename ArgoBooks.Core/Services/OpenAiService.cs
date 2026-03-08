@@ -240,7 +240,7 @@ Respond with JSON only.";
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            System.Diagnostics.Debug.WriteLine($"OpenAI API error {response.StatusCode}: {errorBody}");
+            Debug.WriteLine($"OpenAI API error {response.StatusCode}: {errorBody}");
             return null;
         }
 
@@ -266,7 +266,7 @@ Respond with JSON only.";
             if (cleanResponse.StartsWith("```"))
             {
                 var startIndex = cleanResponse.IndexOf('\n') + 1;
-                var endIndex = cleanResponse.LastIndexOf("```");
+                var endIndex = cleanResponse.LastIndexOf("```", StringComparison.Ordinal);
                 if (endIndex > startIndex)
                 {
                     cleanResponse = cleanResponse[startIndex..endIndex].Trim();
@@ -373,8 +373,8 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to parse OpenAI response: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Response was: {response}");
+            Debug.WriteLine($"Failed to parse OpenAI response: {ex.Message}");
+            Debug.WriteLine($"Response was: {response}");
             return null;
         }
     }

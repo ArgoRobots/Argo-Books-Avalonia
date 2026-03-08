@@ -116,7 +116,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.FutureDateRangeOptions);
 
     [ObservableProperty]
-    private int _selectedDateRangeIndex = 0;
+    private int _selectedDateRangeIndex;
 
     [ObservableProperty]
     private DateTime _startDate;

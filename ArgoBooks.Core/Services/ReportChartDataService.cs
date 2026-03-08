@@ -1480,8 +1480,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (companyData.Revenues?.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ?? false) ||
-                   (companyData.Expenses?.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0)) ?? false);
+            return companyData.Revenues.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
+                   companyData.Expenses.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1495,9 +1495,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Revenues?
+                Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0),
+                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1510,9 +1510,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Expenses?
+                Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0),
+                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1535,12 +1535,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var (startDate, endDate) = GetDateRange();
 
         // Get all dates with any tax data
-        var revenueDates = companyData.Revenues?
+        var revenueDates = companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-            .Select(r => r.Date.Date) ?? [];
-        var expenseDates = companyData.Expenses?
+            .Select(r => r.Date.Date);
+        var expenseDates = companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-            .Select(e => e.Date.Date) ?? [];
+            .Select(e => e.Date.Date);
 
         var allDates = revenueDates.Concat(expenseDates).Distinct().OrderBy(d => d).ToList();
 
@@ -1549,12 +1549,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         return allDates.Select(date =>
         {
-            var collected = companyData.Revenues?
+            var collected = companyData.Revenues
                 .Where(r => r.Date.Date == date)
-                .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0;
-            var paid = companyData.Expenses?
+                .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
+            var paid = companyData.Expenses
                 .Where(e => e.Date.Date == date)
-                .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0;
+                .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
 
             return new ChartDataPoint
             {
@@ -1577,29 +1577,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allTransactions = new List<(decimal TaxUSD, string? CategoryId)>();
 
-        if (companyData.Revenues != null)
-        {
-            allTransactions.AddRange(companyData.Revenues
-                .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-                .Select(r =>
-                {
-                    var productId = r.LineItems.FirstOrDefault()?.ProductId;
-                    var product = productId != null ? companyData.GetProduct(productId) : null;
-                    return (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, product?.CategoryId);
-                }));
-        }
+        allTransactions.AddRange(companyData.Revenues
+            .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+            .Select(r =>
+            {
+                var productId = r.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData.GetProduct(productId) : null;
+                return (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, product?.CategoryId);
+            }));
 
-        if (companyData.Expenses != null)
-        {
-            allTransactions.AddRange(companyData.Expenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-                .Select(e =>
-                {
-                    var productId = e.LineItems.FirstOrDefault()?.ProductId;
-                    var product = productId != null ? companyData.GetProduct(productId) : null;
-                    return (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, product?.CategoryId);
-                }));
-        }
+        allTransactions.AddRange(companyData.Expenses
+            .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+            .Select(e =>
+            {
+                var productId = e.LineItems.FirstOrDefault()?.ProductId;
+                var product = productId != null ? companyData.GetProduct(productId) : null;
+                return (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, product?.CategoryId);
+            }));
 
         if (allTransactions.Count == 0)
             return [];
@@ -1643,15 +1637,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allBrackets = new[] { "0%", "1-5%", "6-10%", "11-15%", "16-20%", "20%+" };
 
-        var revenueRates = companyData.Revenues?
+        var revenueRates = companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate)
             .Select(r => r.TaxRate)
-            .ToList() ?? [];
+            .ToList();
 
-        var expenseRates = companyData.Expenses?
+        var expenseRates = companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate)
             .Select(e => e.TaxRate)
-            .ToList() ?? [];
+            .ToList();
 
         if (revenueRates.Count == 0 && expenseRates.Count == 0)
             return ([], [], []);
@@ -1689,19 +1683,13 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allTransactions = new List<(decimal TaxUSD, string? ProductId)>();
 
-        if (companyData.Revenues != null)
-        {
-            allTransactions.AddRange(companyData.Revenues
-                .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-                .Select(r => (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r.LineItems.FirstOrDefault()?.ProductId)));
-        }
+        allTransactions.AddRange(companyData.Revenues
+            .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
+            .Select(r => (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r.LineItems.FirstOrDefault()?.ProductId)));
 
-        if (companyData.Expenses != null)
-        {
-            allTransactions.AddRange(companyData.Expenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-                .Select(e => (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e.LineItems.FirstOrDefault()?.ProductId)));
-        }
+        allTransactions.AddRange(companyData.Expenses
+            .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
+            .Select(e => (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e.LineItems.FirstOrDefault()?.ProductId)));
 
         if (allTransactions.Count == 0)
             return [];
@@ -1738,8 +1726,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (companyData.Revenues?.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ?? false) ||
-                   (companyData.Expenses?.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0)) ?? false);
+            return companyData.Revenues.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
+                   companyData.Expenses.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1753,9 +1741,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Revenues?
+                Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount) ?? 0),
+                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount),
                 Date = month
             };
         }).ToList();
@@ -1768,9 +1756,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(companyData.Expenses?
+                Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount) ?? 0),
+                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount),
                 Date = month
             };
         }).ToList();

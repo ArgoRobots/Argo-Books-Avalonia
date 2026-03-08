@@ -10,20 +10,14 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class LocalMLForecastingService : ILocalMLForecastingService
 {
-    private readonly MLContext _mlContext;
-    private readonly HoltWintersForecasting _holtWinters;
+    private readonly MLContext _mlContext = new(seed: 42);
+    private readonly HoltWintersForecasting _holtWinters = new();
 
     // Minimum data requirements
     private const int MinimumDataPointsForSSA = 24;
     private const int MinimumDataPointsForHoltWinters = 12;
     private const int DefaultWindowSize = 6;
     private const int DefaultSeriesLength = 12;
-
-    public LocalMLForecastingService()
-    {
-        _mlContext = new MLContext(seed: 42);
-        _holtWinters = new HoltWintersForecasting();
-    }
 
     // Stores method accuracy for use in combined forecasts
     private MethodAccuracyData? _currentMethodAccuracy;
@@ -175,7 +169,7 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         try
         {
             // Prepare data for ML.NET
-            var trainingData = data.Select((value, index) => new TimeSeriesInput
+            var trainingData = data.Select((value, _) => new TimeSeriesInput
             {
                 Value = (float)value
             }).ToList();
@@ -226,8 +220,8 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             result.MethodUsed = "ML.NET SSA";
 
             // Calculate confidence based on prediction interval width
-            var avgValue = result.ForecastedValues.Average();
-            var avgWidth = result.UpperBounds.Zip(result.LowerBounds, (u, l) => u - l).Average();
+            result.ForecastedValues.Average();
+            result.UpperBounds.Zip(result.LowerBounds, (u, l) => u - l).Average();
 
             result.ConfidenceScore = CalculateConfidenceScore(data, null, null);
 

@@ -8,29 +8,19 @@ namespace ArgoBooks.Core.Services;
 /// Service for generating business insights using local statistical analysis and ML.
 /// Uses ML.NET SSA and Holt-Winters for forecasting, with accuracy tracking.
 /// </summary>
-public class InsightsService : IInsightsService
+public class InsightsService(
+    ILocalMLForecastingService mlForecastingService,
+    IForecastAccuracyService forecastAccuracyService)
+    : IInsightsService
 {
     // Minimum data requirements
     private const int MinimumTransactionsForInsights = 5;
-    private const int MinimumDaysForTrends = 14;
     private const int MinimumMonthsForForecasting = 2;
 
     // ML forecasting service
-    private readonly ILocalMLForecastingService _mlForecastingService;
-    private readonly IForecastAccuracyService _forecastAccuracyService;
 
-    public InsightsService()
+    public InsightsService() : this(new LocalMLForecastingService(), new ForecastAccuracyService())
     {
-        _mlForecastingService = new LocalMLForecastingService();
-        _forecastAccuracyService = new ForecastAccuracyService();
-    }
-
-    public InsightsService(
-        ILocalMLForecastingService mlForecastingService,
-        IForecastAccuracyService forecastAccuracyService)
-    {
-        _mlForecastingService = mlForecastingService;
-        _forecastAccuracyService = forecastAccuracyService;
     }
 
     // Anomaly detection thresholds
@@ -48,7 +38,7 @@ public class InsightsService : IInsightsService
             };
 
             // Check for sufficient data
-            var dataCheck = CheckDataSufficiency(companyData, dateRange);
+            var dataCheck = CheckDataSufficiency(companyData);
             if (!dataCheck.HasSufficientData)
             {
                 insights.HasSufficientData = false;
@@ -107,7 +97,7 @@ public class InsightsService : IInsightsService
     #region Data Sufficiency Check
 
     private (bool HasSufficientData, string? Message, int MonthsOfData) CheckDataSufficiency(
-        CompanyData companyData, AnalysisDateRange dateRange)
+        CompanyData companyData)
     {
         // For forecasting, we need historical data - not data from the future date range
         // Use all historical data (up to today) for sufficiency checks
@@ -227,7 +217,7 @@ public class InsightsService : IInsightsService
         }
 
         // Seasonal pattern (if we have enough months)
-        var seasonalInsight = AnalyzeSeasonalPattern(companyData.Revenues, dateRange);
+        var seasonalInsight = AnalyzeSeasonalPattern(companyData.Revenues);
         if (seasonalInsight != null)
         {
             insights.Add(seasonalInsight);
@@ -275,7 +265,7 @@ public class InsightsService : IInsightsService
         return null;
     }
 
-    private InsightItem? AnalyzeSeasonalPattern(List<Revenue> allSales, AnalysisDateRange dateRange)
+    private InsightItem? AnalyzeSeasonalPattern(List<Revenue> allSales)
     {
         // Get monthly revenue data for ML analysis
         var monthlyData = allSales
@@ -289,7 +279,7 @@ public class InsightsService : IInsightsService
         if (monthlyData.Count < 6) return null;
 
         // Use ML service to detect seasonal pattern
-        var seasonalPattern = _mlForecastingService.DetectSeasonality(monthlyData);
+        var seasonalPattern = mlForecastingService.DetectSeasonality(monthlyData);
 
         if (seasonalPattern.SeasonalStrength > 0.2) // Significant seasonal pattern detected
         {
@@ -476,12 +466,10 @@ public class InsightsService : IInsightsService
         // Get historical return rate (past 6 months)
         var sixMonthsAgo = dateRange.StartDate.AddMonths(-6);
         var historicalReturns = companyData.Returns
-            .Where(r => r.ReturnDate >= sixMonthsAgo && r.ReturnDate < dateRange.StartDate)
-            .Count();
+            .Count(r => r.ReturnDate >= sixMonthsAgo && r.ReturnDate < dateRange.StartDate);
 
         var historicalSales = companyData.Revenues
-            .Where(s => s.Date >= sixMonthsAgo && s.Date < dateRange.StartDate)
-            .Count();
+            .Count(s => s.Date >= sixMonthsAgo && s.Date < dateRange.StartDate);
 
         if (historicalSales < 10) return null;
 
@@ -628,7 +616,7 @@ public class InsightsService : IInsightsService
         forecast.DataMonthsUsed = Math.Max(monthlyRevenue.Count, monthlyExpenses.Count);
 
         // Validate past forecasts and get accuracy data
-        var accuracyData = _forecastAccuracyService.GetAccuracyData(companyData);
+        var accuracyData = forecastAccuracyService.GetAccuracyData(companyData);
         forecast.ValidatedForecastCount = accuracyData.ValidatedForecastCount;
 
         if (accuracyData.ValidatedForecastCount > 0)
@@ -638,13 +626,13 @@ public class InsightsService : IInsightsService
         }
 
         // Get method accuracy for adaptive weighting
-        var methodAccuracy = _forecastAccuracyService.GetMethodAccuracies(companyData);
+        var methodAccuracy = forecastAccuracyService.GetMethodAccuracies(companyData);
 
         // Revenue forecast using ML methods with adaptive weighting
         if (monthlyRevenue.Count >= MinimumMonthsForForecasting)
         {
             var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
-            var revenueForecast = _mlForecastingService.GenerateEnhancedForecast(
+            var revenueForecast = mlForecastingService.GenerateEnhancedForecast(
                 monthlyRevenue, periodsToForecast, ForecastMethod.Auto, methodAccuracy);
 
             // Scale by period months for partial months
@@ -679,7 +667,7 @@ public class InsightsService : IInsightsService
         if (monthlyExpenses.Count >= MinimumMonthsForForecasting)
         {
             var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
-            var expenseForecast = _mlForecastingService.GenerateEnhancedForecast(
+            var expenseForecast = mlForecastingService.GenerateEnhancedForecast(
                 monthlyExpenses, periodsToForecast, ForecastMethod.Auto, methodAccuracy);
 
             var scaleFactor = periodMonths / periodsToForecast;
@@ -711,7 +699,7 @@ public class InsightsService : IInsightsService
         {
             var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
             var customerData = monthlyNewCustomers.Select(x => (decimal)x).ToList();
-            var customerForecast = _mlForecastingService.GenerateEnhancedForecast(
+            var customerForecast = mlForecastingService.GenerateEnhancedForecast(
                 customerData, periodsToForecast, ForecastMethod.HoltWinters);
 
             var scaleFactor = periodMonths / periodsToForecast;
@@ -725,7 +713,7 @@ public class InsightsService : IInsightsService
         }
 
         // Calculate confidence score using ML service
-        forecast.ConfidenceScore = _mlForecastingService.CalculateConfidenceScore(
+        forecast.ConfidenceScore = mlForecastingService.CalculateConfidenceScore(
             monthlyRevenue,
             forecast.SeasonalInfo != null ? new SeasonalPattern
             {
@@ -743,7 +731,7 @@ public class InsightsService : IInsightsService
 
         // Save this forecast for future accuracy tracking
         var forecastPeriod = CalculateForecastPeriod(dateRange);
-        _forecastAccuracyService.SaveForecast(companyData, forecast, forecastPeriod);
+        forecastAccuracyService.SaveForecast(companyData, forecast, forecastPeriod);
 
         return forecast;
     }

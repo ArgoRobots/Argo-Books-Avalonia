@@ -4,18 +4,13 @@ namespace ArgoBooks.Core.Services;
 /// Tracks AI import usage and enforces a daily rate limit.
 /// Persists usage data to a JSON file in the app's local data directory.
 /// </summary>
-public class AiImportRateLimiter
+public class AiImportRateLimiter(string appDataPath)
 {
     private const int MaxImportsPerDay = 10;
     private const string RateLimitFileName = "ai-import-usage.json";
 
-    private readonly string _filePath;
-    private readonly object _lock = new();
-
-    public AiImportRateLimiter(string appDataPath)
-    {
-        _filePath = Path.Combine(appDataPath, RateLimitFileName);
-    }
+    private readonly string _filePath = Path.Combine(appDataPath, RateLimitFileName);
+    private readonly Lock _lock = new();
 
     /// <summary>
     /// Whether the user can perform an AI import right now.

@@ -75,7 +75,7 @@ public partial class ChartExpandOverlay : UserControl
 
     private void OnPageContentPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property != ContentControl.ContentProperty) return;
+        if (e.Property != ContentProperty) return;
 
         // Close any open overlay when navigating away
         if (IsVisible) CloseOverlay();

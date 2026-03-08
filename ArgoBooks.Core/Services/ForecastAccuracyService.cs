@@ -393,7 +393,7 @@ public class ForecastAccuracyService : IForecastAccuracyService
         {
             result.SSACount = ssaRecords.Count;
             result.SSAAccuracy = ssaRecords
-                .Select(r => CalculateRecordAccuracy(r))
+                .Select(CalculateRecordAccuracy)
                 .Average();
         }
 
@@ -401,7 +401,7 @@ public class ForecastAccuracyService : IForecastAccuracyService
         {
             result.HoltWintersCount = hwRecords.Count;
             result.HoltWintersAccuracy = hwRecords
-                .Select(r => CalculateRecordAccuracy(r))
+                .Select(CalculateRecordAccuracy)
                 .Average();
         }
 
@@ -409,13 +409,13 @@ public class ForecastAccuracyService : IForecastAccuracyService
         {
             result.CombinedCount = combinedRecords.Count;
             result.CombinedAccuracy = combinedRecords
-                .Select(r => CalculateRecordAccuracy(r))
+                .Select(CalculateRecordAccuracy)
                 .Average();
         }
 
         // Calculate overall accuracy
         var allAccuracies = validatedRecords
-            .Select(r => CalculateRecordAccuracy(r))
+            .Select(CalculateRecordAccuracy)
             .ToList();
         result.OverallAccuracy = allAccuracies.Average();
 

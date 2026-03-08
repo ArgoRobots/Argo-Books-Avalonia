@@ -91,7 +91,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                 }
 
                 // Verify the available version is actually newer than what we're running
-                var currentVersion = ArgoBooks.Core.Services.AppInfo.VersionNumber;
+                var currentVersion = AppInfo.VersionNumber;
                 if (!IsNewerVersion(currentVersion, item.Version))
                 {
                     SetState(UpdateState.UpToDate);

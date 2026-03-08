@@ -2289,12 +2289,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
-                var product = FindProductByName(data, description, CategoryType.Expense);
-
-                if (product == null)
-                {
-                    product = AutoCreateProduct(data, description, purchase.Amount, CategoryType.Expense);
-                }
+                var product = FindProductByName(data, description, CategoryType.Expense)
+                              ?? AutoCreateProduct(data, description, purchase.Amount, CategoryType.Expense);
 
                 var lineItem = new LineItem
                 {
@@ -2543,12 +2539,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
-                var product = FindProductByName(data, description, CategoryType.Revenue);
-
-                if (product == null)
-                {
-                    product = AutoCreateProduct(data, description, revenue.Amount, CategoryType.Revenue);
-                }
+                var product = FindProductByName(data, description, CategoryType.Revenue) 
+                              ?? AutoCreateProduct(data, description, revenue.Amount, CategoryType.Revenue);
 
                 var lineItem = new LineItem
                 {

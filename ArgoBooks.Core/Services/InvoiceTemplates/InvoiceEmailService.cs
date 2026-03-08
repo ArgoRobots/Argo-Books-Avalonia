@@ -12,18 +12,12 @@ namespace ArgoBooks.Core.Services.InvoiceTemplates;
 /// </summary>
 public class InvoiceEmailService : IDisposable
 {
-    private readonly HttpClient _httpClient;
-    private readonly InvoiceHtmlRenderer _htmlRenderer;
-    private bool _disposed;
-
-    public InvoiceEmailService()
+    private readonly HttpClient _httpClient = new()
     {
-        _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        _htmlRenderer = new InvoiceHtmlRenderer();
-    }
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+    private readonly InvoiceHtmlRenderer _htmlRenderer = new();
+    private bool _disposed;
 
     /// <summary>
     /// Sends an invoice email to the customer.

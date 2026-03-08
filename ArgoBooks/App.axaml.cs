@@ -209,7 +209,7 @@ public class App : Application
     /// <summary>
     /// Gets the event log service for version history tracking.
     /// </summary>
-    public static Services.EventLogService? EventLogService { get; private set; }
+    public static EventLogService? EventLogService { get; private set; }
 
     /// <summary>
     /// Gets the categories tutorial view model for first-visit tutorial.
@@ -237,7 +237,7 @@ public class App : Application
     /// </summary>
     private static async Task ShowErrorMessageBoxAsync(string title, string message)
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
             && mainWindow.MessageBoxService is { } messageBoxService)
         {
@@ -250,7 +250,7 @@ public class App : Application
     /// </summary>
     private static async Task ShowInfoMessageBoxAsync(string title, string message)
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
             && mainWindow.MessageBoxService is { } messageBoxService)
         {
@@ -263,7 +263,7 @@ public class App : Application
     /// </summary>
     private static async Task ShowSuccessMessageBoxAsync(string title, string message)
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
             && mainWindow.MessageBoxService is { } messageBoxService)
         {
@@ -276,7 +276,7 @@ public class App : Application
     /// </summary>
     private static async Task ShowWarningMessageBoxAsync(string title, string message)
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
             && mainWindow.MessageBoxService is { } messageBoxService)
         {
@@ -1270,7 +1270,7 @@ public class App : Application
             // Initialize the event log service with persisted events from the company file
             if (EventLogService == null)
             {
-                EventLogService = new Services.EventLogService();
+                EventLogService = new EventLogService();
 
                 // Wire bidirectional sync between UndoRedoManager and EventLogService
                 EventLogService.SetUndoRedoManager(UndoRedoManager);
@@ -1519,7 +1519,7 @@ public class App : Application
         _appShellViewModel.InvoiceTemplateDesignerViewModel.TemplateSaved += MarkUnsavedChanges;
         _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
         {
-            if (Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
                 return;
 
             var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -3095,7 +3095,7 @@ public class App : Application
     /// <summary>
     /// Creates a JSON snapshot of the company data collections for undo/redo.
     /// </summary>
-    private static string CreateCompanyDataSnapshot(Core.Data.CompanyData data)
+    private static string CreateCompanyDataSnapshot(CompanyData data)
     {
         var snapshot = new
         {
@@ -3130,7 +3130,7 @@ public class App : Application
     /// <summary>
     /// Restores company data collections from a JSON snapshot.
     /// </summary>
-    private static void RestoreCompanyDataFromSnapshot(Core.Data.CompanyData data, string snapshotJson)
+    private static void RestoreCompanyDataFromSnapshot(CompanyData data, string snapshotJson)
     {
         var options = new System.Text.Json.JsonSerializerOptions
         {
@@ -3155,7 +3155,7 @@ public class App : Application
         // Restore IdCounters
         if (root.TryGetProperty("IdCounters", out var counters))
         {
-            var restoredCounters = System.Text.Json.JsonSerializer.Deserialize<Core.Data.IdCounters>(counters.GetRawText(), options);
+            var restoredCounters = System.Text.Json.JsonSerializer.Deserialize<IdCounters>(counters.GetRawText(), options);
             if (restoredCounters != null)
             {
                 data.IdCounters.Customer = restoredCounters.Customer;
@@ -3510,7 +3510,7 @@ public class App : Application
     /// <returns>True if the file was saved successfully, false if cancelled or failed.</returns>
     public static async Task<bool> SaveCompanyAsFromWindowAsync()
     {
-        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
             return false;
 
         return await SaveCompanyAsDialogAsync(desktop);

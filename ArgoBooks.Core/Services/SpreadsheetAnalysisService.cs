@@ -11,24 +11,16 @@ namespace ArgoBooks.Core.Services;
 /// Service that uses an LLM to analyze spreadsheet/CSV files and produce
 /// column mappings and entity type detection for import.
 /// </summary>
-public class SpreadsheetAnalysisService
+public class SpreadsheetAnalysisService(
+    IOpenAiService openAiService,
+    IErrorLogger? errorLogger = null,
+    string? country = null)
 {
     private const int SampleFirstRows = 5;
     private const int SampleLastRows = 3;
     private const int SampleRandomRows = 5;
     private const int Tier2ChunkSize = 100;
     private const int MaxConcurrentChunks = 5;
-
-    private readonly IOpenAiService _openAiService;
-    private readonly IErrorLogger? _errorLogger;
-    private readonly string? _country;
-
-    public SpreadsheetAnalysisService(IOpenAiService openAiService, IErrorLogger? errorLogger = null, string? country = null)
-    {
-        _openAiService = openAiService;
-        _errorLogger = errorLogger;
-        _country = country;
-    }
 
     #region Analysis Phase
 
@@ -66,7 +58,7 @@ public class SpreadsheetAnalysisService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze spreadsheet with AI");
+            errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze spreadsheet with AI");
             return null;
         }
     }
@@ -109,7 +101,7 @@ public class SpreadsheetAnalysisService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze CSV with AI");
+            errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze CSV with AI");
             return null;
         }
     }
@@ -124,7 +116,7 @@ public class SpreadsheetAnalysisService
 
         // Scale max tokens based on number of sheets — each sheet needs ~300-500 tokens for mappings
         var maxTokens = Math.Max(4000, sheetsData.Count * 500);
-        var response = await _openAiService.SendChatAsync(
+        var response = await openAiService.SendChatAsync(
             systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
@@ -160,7 +152,7 @@ public class SpreadsheetAnalysisService
         SpreadsheetSheetType entityType,
         CancellationToken cancellationToken = default)
     {
-        var schema = ImportSchemaDefinition.GetSchemaForType(entityType, _country);
+        var schema = ImportSchemaDefinition.GetSchemaForType(entityType, country);
         if (schema == null)
             return null;
 
@@ -168,7 +160,7 @@ public class SpreadsheetAnalysisService
         var userPrompt = BuildTier2UserPrompt(headers, rows);
 
 
-        var response = await _openAiService.SendChatAsync(
+        var response = await openAiService.SendChatAsync(
             systemPrompt, userPrompt, maxTokens: 8000, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
@@ -284,7 +276,7 @@ Respond with valid JSON only, no markdown code blocks.";
         var sb = new StringBuilder();
 
         sb.AppendLine("## Target Schema");
-        sb.AppendLine(ImportSchemaDefinition.FormatSchemaForPrompt(_country));
+        sb.AppendLine(ImportSchemaDefinition.FormatSchemaForPrompt(country));
 
         sb.AppendLine("## Source Data");
         sb.AppendLine();
@@ -551,7 +543,7 @@ IMPORTANT:
         if (cleaned.StartsWith("```"))
         {
             var startIndex = cleaned.IndexOf('\n') + 1;
-            var endIndex = cleaned.LastIndexOf("```");
+            var endIndex = cleaned.LastIndexOf("```", StringComparison.Ordinal);
             if (endIndex > startIndex)
                 cleaned = cleaned[startIndex..endIndex].Trim();
         }
@@ -691,7 +683,7 @@ IMPORTANT:
         var indices = new HashSet<int>();
 
         // First rows
-        for (int i = 0; i < SampleFirstRows && i < totalRows; i++)
+        for (int i = 0; i < SampleFirstRows; i++)
             indices.Add(i);
 
         // Last rows
@@ -702,14 +694,11 @@ IMPORTANT:
         var rng = new Random(42); // deterministic seed for reproducibility
         var middleStart = SampleFirstRows;
         var middleEnd = totalRows - SampleLastRows;
-        if (middleEnd > middleStart)
+        var attempts = 0;
+        while (indices.Count < SampleFirstRows + SampleLastRows + SampleRandomRows && attempts < 50)
         {
-            var attempts = 0;
-            while (indices.Count < SampleFirstRows + SampleLastRows + SampleRandomRows && attempts < 50)
-            {
-                indices.Add(rng.Next(middleStart, middleEnd));
-                attempts++;
-            }
+            indices.Add(rng.Next(middleStart, middleEnd));
+            attempts++;
         }
 
         return indices.OrderBy(i => i).ToList();

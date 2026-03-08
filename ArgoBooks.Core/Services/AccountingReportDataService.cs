@@ -10,23 +10,14 @@ namespace ArgoBooks.Core.Services;
 /// Aggregates from Revenue, Expense, Invoice, Payment, PurchaseOrder, and InventoryItem data
 /// without using a Chart of Accounts or double-entry bookkeeping.
 /// </summary>
-public class AccountingReportDataService
+public class AccountingReportDataService(CompanyData? companyData, ReportFilters filters)
 {
-    private readonly CompanyData? _companyData;
-    private readonly ReportFilters _filters;
-
-    public AccountingReportDataService(CompanyData? companyData, ReportFilters filters)
-    {
-        _companyData = companyData;
-        _filters = filters;
-    }
-
     /// <summary>
     /// Gets the company's configured currency code, defaulting to USD.
     /// </summary>
     private string GetCurrencyCode()
     {
-        return _companyData?.Settings.Localization.Currency ?? "USD";
+        return companyData?.Settings.Localization.Currency ?? "USD";
     }
 
     /// <summary>
@@ -40,7 +31,7 @@ public class AccountingReportDataService
         if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
             return amountUSD;
 
-        var rateDate = _filters.EndDate ?? DateTime.Today;
+        var rateDate = filters.EndDate ?? DateTime.Today;
         var exchangeService = ExchangeRateService.Instance;
         if (exchangeService != null)
         {
@@ -87,9 +78,9 @@ public class AccountingReportDataService
     /// </summary>
     private bool IsInDateRange(DateTime date)
     {
-        if (_filters.StartDate.HasValue && date < _filters.StartDate.Value)
+        if (filters.StartDate.HasValue && date < filters.StartDate.Value)
             return false;
-        if (_filters.EndDate.HasValue && date > _filters.EndDate.Value)
+        if (filters.EndDate.HasValue && date > filters.EndDate.Value)
             return false;
         return true;
     }
@@ -100,7 +91,7 @@ public class AccountingReportDataService
     /// </summary>
     private bool IsOnOrBeforeEndDate(DateTime date)
     {
-        if (_filters.EndDate.HasValue && date > _filters.EndDate.Value)
+        if (filters.EndDate.HasValue && date > filters.EndDate.Value)
             return false;
         return true;
     }
@@ -127,14 +118,14 @@ public class AccountingReportDataService
     /// </summary>
     private string GetCategoryNameForProduct(string? productId)
     {
-        if (string.IsNullOrEmpty(productId) || _companyData == null)
+        if (string.IsNullOrEmpty(productId) || companyData == null)
             return "Uncategorized";
 
-        var product = _companyData.GetProduct(productId);
+        var product = companyData.GetProduct(productId);
         if (product == null || string.IsNullOrEmpty(product.CategoryId))
             return "Uncategorized";
 
-        var category = _companyData.GetCategory(product.CategoryId);
+        var category = companyData.GetCategory(product.CategoryId);
         return category?.Name ?? "Uncategorized";
     }
 
@@ -186,18 +177,18 @@ public class AccountingReportDataService
             ColumnWidthRatios = [0.65, 0.35]
         };
 
-        if (_companyData == null)
+        if (companyData == null)
         {
             AddEmptyIncomeStatement(data, t);
             return data;
         }
 
         // Filter revenues and expenses by date
-        var revenues = _companyData.Revenues
+        var revenues = companyData.Revenues
             .Where(r => IsInDateRange(r.Date))
             .ToList();
 
-        var expenses = _companyData.Expenses
+        var expenses = companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
             .ToList();
 
@@ -309,7 +300,7 @@ public class AccountingReportDataService
             Footnote = "Cash balance estimated from recorded transactions."
         };
 
-        if (_companyData == null)
+        if (companyData == null)
         {
             AddEmptyBalanceSheet(data, t);
             return data;
@@ -317,24 +308,24 @@ public class AccountingReportDataService
 
         // Cash = Revenue (Paid, no invoice) + Payments - Expenses, all filtered by date.
         // Uses post-tax (total) amounts because cash includes tax collected/paid.
-        var cashFromRevenue = _companyData.Revenues
+        var cashFromRevenue = companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsOnOrBeforeEndDate(r.Date))
             .Sum(r => r.EffectiveTotalUSD);
 
-        var cashFromPayments = _companyData.Payments
+        var cashFromPayments = companyData.Payments
             .Where(p => IsOnOrBeforeEndDate(p.Date))
             .Sum(p => p.EffectiveAmountUSD);
 
-        var cashPaidForExpenses = _companyData.Expenses
+        var cashPaidForExpenses = companyData.Expenses
             .Where(e => IsOnOrBeforeEndDate(e.Date))
             .Sum(e => e.EffectiveTotalUSD);
 
         var cash = cashFromRevenue + cashFromPayments - cashPaidForExpenses;
 
         // Accounts Receivable = unpaid/uncancelled invoices (excluding drafts)
-        var accountsReceivable = _companyData.Invoices
+        var accountsReceivable = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
                         && i.Status != InvoiceStatus.Draft)
@@ -344,16 +335,16 @@ public class AccountingReportDataService
         var totalAssets = totalCurrentAssets;
 
         // Accounts Payable = purchase orders not received and not cancelled
-        var accountsPayable = _companyData.PurchaseOrders
+        var accountsPayable = companyData.PurchaseOrders
             .Where(po => po.Status != PurchaseOrderStatus.Received
                          && po.Status != PurchaseOrderStatus.Cancelled)
             .Sum(po => po.Total);
 
         // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses
-        var taxCollected = _companyData.Revenues
+        var taxCollected = companyData.Revenues
             .Where(r => IsOnOrBeforeEndDate(r.Date))
             .Sum(r => r.EffectiveTotalUSD - r.EffectiveSubtotalUSD);
-        var taxPaidOnExpenses = _companyData.Expenses
+        var taxPaidOnExpenses = companyData.Expenses
             .Where(e => IsOnOrBeforeEndDate(e.Date))
             .Sum(e => e.EffectiveTotalUSD - e.EffectiveSubtotalUSD);
         var salesTaxPayable = taxCollected - taxPaidOnExpenses;
@@ -529,7 +520,7 @@ public class AccountingReportDataService
             ColumnWidthRatios = [0.65, 0.35]
         };
 
-        if (_companyData == null)
+        if (companyData == null)
         {
             AddEmptyCashFlow(data);
             return data;
@@ -538,17 +529,17 @@ public class AccountingReportDataService
         // Operating Activities
         // Exclude invoice-linked revenue to avoid double counting with Payments.
         // Uses pre-tax (subtotal) amounts, consistent with Dashboard and Income Statement.
-        var cashFromSales = _companyData.Revenues
+        var cashFromSales = companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
             .Sum(r => r.EffectiveSubtotalUSD);
 
-        var cashFromInvoicePayments = _companyData.Payments
+        var cashFromInvoicePayments = companyData.Payments
             .Where(p => IsInDateRange(p.Date))
             .Sum(p => p.EffectiveAmountUSD);
 
-        var cashPaidForExpenses = _companyData.Expenses
+        var cashPaidForExpenses = companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
             .Sum(e => e.EffectiveSubtotalUSD);
 
@@ -640,14 +631,14 @@ public class AccountingReportDataService
             ColumnWidthRatios = [0.12, 0.3, 0.14, 0.14, 0.14, 0.16]
         };
 
-        if (_companyData == null)
+        if (companyData == null)
             return data;
 
         // Build a list of all ledger entries grouped by category
         var entries = new Dictionary<string, List<LedgerEntry>>();
 
         // Revenue transactions (credits)
-        foreach (var rev in _companyData.Revenues.Where(r => IsInDateRange(r.Date)))
+        foreach (var rev in companyData.Revenues.Where(r => IsInDateRange(r.Date)))
         {
             if (rev.LineItems.Count > 0)
             {
@@ -678,7 +669,7 @@ public class AccountingReportDataService
         }
 
         // Expense transactions (debits)
-        foreach (var exp in _companyData.Expenses.Where(e => IsInDateRange(e.Date)))
+        foreach (var exp in companyData.Expenses.Where(e => IsInDateRange(e.Date)))
         {
             if (exp.LineItems.Count > 0)
             {
@@ -709,9 +700,9 @@ public class AccountingReportDataService
         }
 
         // Payments (credits to AR / debits to cash)
-        foreach (var pmt in _companyData.Payments.Where(p => IsInDateRange(p.Date)))
+        foreach (var pmt in companyData.Payments.Where(p => IsInDateRange(p.Date)))
         {
-            var customerName = _companyData.GetCustomer(pmt.CustomerId)?.Name ?? "Unknown";
+            var customerName = companyData.GetCustomer(pmt.CustomerId)?.Name ?? "Unknown";
             AddLedgerEntry(entries, t.PaymentsReceivedCategory, new LedgerEntry
             {
                 Date = pmt.Date,
@@ -800,7 +791,7 @@ public class AccountingReportDataService
             ColumnWidthRatios = [0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]
         };
 
-        if (_companyData == null)
+        if (companyData == null)
         {
             data.Rows.Add(new AccountingRow
             {
@@ -814,7 +805,7 @@ public class AccountingReportDataService
         var today = DateTime.Today;
 
         // Filter to unpaid, non-draft, uncancelled invoices (drafts are not real receivables)
-        var openInvoices = _companyData.Invoices
+        var openInvoices = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
                         && i.Status != InvoiceStatus.Draft)
@@ -823,7 +814,7 @@ public class AccountingReportDataService
         // Group by customer
         var byCustomer = openInvoices
             .GroupBy(i => i.CustomerId)
-            .OrderBy(g => _companyData.GetCustomer(g.Key)?.Name ?? "Unknown");
+            .OrderBy(g => companyData.GetCustomer(g.Key)?.Name ?? "Unknown");
 
         var totalCurrent = 0m;
         var total1to30 = 0m;
@@ -834,7 +825,7 @@ public class AccountingReportDataService
 
         foreach (var group in byCustomer)
         {
-            var customerName = _companyData.GetCustomer(group.Key)?.Name ?? "Unknown";
+            var customerName = companyData.GetCustomer(group.Key)?.Name ?? "Unknown";
             var current = 0m;
             var days1to30 = 0m;
             var days31to60 = 0m;
@@ -952,7 +943,7 @@ public class AccountingReportDataService
     /// </summary>
     private AccountingTerms GetAccountingTerms()
     {
-        var country = _companyData?.Settings.Company.Country;
+        var country = companyData?.Settings.Company.Country;
         var normalized = country?.Trim().ToUpperInvariant() ?? "";
 
         // Determine accounting tradition from country
@@ -1101,14 +1092,14 @@ public class AccountingReportDataService
             ColumnWidthRatios = [0.65, 0.35]
         };
 
-        if (_companyData == null)
+        if (companyData == null)
         {
             AddEmptyTaxSummary(data, t);
             return data;
         }
 
         // Tax collected from revenue, grouped by tax rate
-        var filteredRevenues = _companyData.Revenues
+        var filteredRevenues = companyData.Revenues
             .Where(r => IsInDateRange(r.Date))
             .ToList();
 
@@ -1137,7 +1128,7 @@ public class AccountingReportDataService
         }
 
         // Tax paid on expenses, grouped by tax rate
-        var filteredExpenses = _companyData.Expenses
+        var filteredExpenses = companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
             .ToList();
 

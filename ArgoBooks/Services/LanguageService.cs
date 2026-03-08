@@ -304,7 +304,7 @@ public partial class LanguageService
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, true, "Downloading translations..."));
 
             // Get app version for download URL
-            var version = ArgoBooks.Core.Services.AppInfo.VersionNumber;
+            var version = Core.Services.AppInfo.VersionNumber;
             var downloadUrl = string.Format(DownloadUrlTemplate, version, isoCode);
 
             System.Diagnostics.Debug.WriteLine($"LanguageService: Downloading from {downloadUrl}");

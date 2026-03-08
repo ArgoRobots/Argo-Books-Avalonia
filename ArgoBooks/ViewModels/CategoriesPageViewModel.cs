@@ -18,7 +18,7 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class CategoriesPageViewModel : SortablePageViewModelBase
 {
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #region Tab Selection
 

@@ -13,7 +13,7 @@ public partial class EmojiTabItem : ObservableObject
 {
     public string Name { get; init; } = string.Empty;
     public string Icon { get; init; } = string.Empty;
-    public bool IsSpecial { get; init; } = false;
+    public bool IsSpecial { get; init; }
 
     [ObservableProperty]
     private bool _isSelected;

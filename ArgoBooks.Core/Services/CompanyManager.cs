@@ -294,7 +294,7 @@ public class CompanyManager : IDisposable
             else
             {
                 // Fall back to synchronous event (for backwards compatibility)
-                var args = new PasswordRequiredEventArgs(filePath);
+                var args = new PasswordRequiredEventArgs();
                 PasswordRequired?.Invoke(this, args);
 
                 if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
@@ -809,9 +809,8 @@ public class CompanyOpenedEventArgs(string companyName, string filePath, bool is
 /// <summary>
 /// Event args for password required event.
 /// </summary>
-public class PasswordRequiredEventArgs(string filePath) : EventArgs
+public class PasswordRequiredEventArgs() : EventArgs
 {
-    public string FilePath { get; } = filePath;
     public string? Password { get; set; }
     public bool IsCancelled { get; set; }
 }

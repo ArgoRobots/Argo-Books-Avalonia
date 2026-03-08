@@ -357,11 +357,11 @@ public class PaymentPortalService
 
             if (invoice.Balance <= 0)
             {
-                invoice.Status = Enums.InvoiceStatus.Paid;
+                invoice.Status = InvoiceStatus.Paid;
             }
             else if (totalPaid > 0)
             {
-                invoice.Status = Enums.InvoiceStatus.Partial;
+                invoice.Status = InvoiceStatus.Partial;
             }
 
             // Add history entry

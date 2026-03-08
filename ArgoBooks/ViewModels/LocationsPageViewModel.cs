@@ -18,7 +18,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
 {
     #region Responsive Header
 
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #endregion
 

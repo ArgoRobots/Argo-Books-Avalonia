@@ -21,7 +21,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Responsive header helper for adaptive layout.
     /// </summary>
-    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
     #endregion
 

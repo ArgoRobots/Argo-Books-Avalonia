@@ -52,7 +52,7 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
-    public bool IsConsentGranted => _settingsService.GetSettings()?.Privacy?.AnonymousDataCollectionConsent ?? false;
+    public bool IsConsentGranted => _settingsService.GetSettings()?.Privacy.AnonymousDataCollectionConsent ?? false;
 
     /// <inheritdoc />
     public void SetConsent(bool granted)

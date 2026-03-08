@@ -140,7 +140,7 @@ public class GeoLocationService : IGeoLocationService
         try
         {
             var response = await _httpClient.GetStringAsync(IpifyUrl, cancellationToken);
-            return response?.Trim();
+            return response.Trim();
         }
         catch (Exception ex)
         {

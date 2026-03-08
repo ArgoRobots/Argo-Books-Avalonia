@@ -20,7 +20,7 @@ public record SchemaColumn(string Name, string Type, string Description, bool Re
 public static class ImportSchemaDefinition
 {
     // Cache per country key (null key = default)
-    private static readonly Dictionary<string, Dictionary<SpreadsheetSheetType, List<SchemaColumn>>> _schemaCache = new();
+    private static readonly Dictionary<string, Dictionary<SpreadsheetSheetType, List<SchemaColumn>>> SchemaCache = new();
 
     /// <summary>
     /// Returns country-specific labels for address fields.
@@ -66,10 +66,10 @@ public static class ImportSchemaDefinition
     public static Dictionary<SpreadsheetSheetType, List<SchemaColumn>> GetSchema(string? country = null)
     {
         var key = (country ?? "").Trim().ToUpperInvariant();
-        if (!_schemaCache.TryGetValue(key, out var schema))
+        if (!SchemaCache.TryGetValue(key, out var schema))
         {
             schema = BuildSchema(country);
-            _schemaCache[key] = schema;
+            SchemaCache[key] = schema;
         }
         return schema;
     }
@@ -79,7 +79,7 @@ public static class ImportSchemaDefinition
     /// </summary>
     public static List<SchemaColumn>? GetSchemaForType(SpreadsheetSheetType type, string? country = null)
     {
-        return GetSchema(country).TryGetValue(type, out var columns) ? columns : null;
+        return GetSchema(country).GetValueOrDefault(type);
     }
 
     /// <summary>

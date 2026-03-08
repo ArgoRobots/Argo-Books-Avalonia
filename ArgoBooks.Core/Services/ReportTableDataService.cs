@@ -594,7 +594,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             Id = c.Id,
             Name = c.Name,
             CompanyName = c.CompanyName ?? "",
-            Country = c.Address.Country ?? "",
+            Country = c.Address.Country,
             TotalPurchases = c.TotalPurchases,
             Status = c.Status.ToString()
         }).ToList();
@@ -615,7 +615,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             Id = s.Id,
             Name = s.Name,
             ContactPerson = s.ContactPerson,
-            Country = s.Address.Country ?? "",
+            Country = s.Address.Country,
             PaymentTerms = s.PaymentTerms
         }).ToList();
     }

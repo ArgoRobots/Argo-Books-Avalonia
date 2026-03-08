@@ -257,7 +257,7 @@ public static partial class NumericInputBehavior
         var hasExistingDecimal = textWithoutSelection.Contains('.');
 
         // Filter to only digits and at most one decimal point
-        var filteredChars = new System.Collections.Generic.List<char>();
+        var filteredChars = new List<char>();
         var hasDecimalInPaste = false;
         foreach (var c in clipboardText)
         {

@@ -357,7 +357,6 @@
                                                                                            FontFamily="JetBrains Mono, Consolas, monospace"
                                                                                            Foreground="#7C3AED" />
                                                                             </Border>
-                                                                            <!-- Transform hint (hidden) -->
                                                                         </StackPanel>
 
                                                                         <!-- Confidence -->
