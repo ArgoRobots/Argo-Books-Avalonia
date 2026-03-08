@@ -2109,6 +2109,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             {
                 _errorLogger?.LogError(ex, ErrorCategory.Import, "AI categorization failed, falling back to product name as category");
             }
+        }
 
         // Fallback: use product name as category name (same as Tier 2 last-resort logic)
         foreach (var product in uncategorized)
