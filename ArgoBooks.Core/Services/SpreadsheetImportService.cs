@@ -34,6 +34,12 @@ public class ImportOptions
     /// If true, skip records that already exist instead of overwriting them.
     /// </summary>
     public bool SkipExistingRecords { get; set; }
+
+    /// <summary>
+    /// Tracks the number of records actually skipped during import.
+    /// Reset before each sheet import. Used internally by import methods.
+    /// </summary>
+    internal int SkippedCount { get; set; }
 }
 
 /// <summary>
@@ -602,12 +608,14 @@ public class SpreadsheetImportService
         ImportOptions? options = null)
     {
         var countBefore = GetEntityCount(data, sheetType);
+        if (options != null)
+            options.SkippedCount = 0;
         ImportBySheetType(sheetType, data, headers, rows, options);
         var countAfter = GetEntityCount(data, sheetType);
         var inserted = Math.Max(0, countAfter - countBefore);
         if (options?.SkipExistingRecords == true)
         {
-            var skipped = Math.Max(0, rows.Count - inserted);
+            var skipped = options.SkippedCount;
             return (inserted, 0, skipped);
         }
         var updated = Math.Max(0, rows.Count - inserted);
@@ -2265,7 +2273,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Customers.FirstOrDefault(c => c.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var customer = existing ?? new Customer();
             customer.Id = id;
@@ -2296,7 +2304,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var invoiceNumber = GetString(row, headers, "Invoice #");
             var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var invoice = existing ?? new Invoice();
             invoice.Id = invoiceNumber;
@@ -2359,7 +2367,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
@@ -2435,7 +2443,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 if (placeholder != null)
                     existing = placeholder;
             }
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var typeStr = GetString(row, headers, "Type");
             var productType = typeStr.ToLowerInvariant() switch
@@ -2527,7 +2535,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Inventory.FirstOrDefault(i => i.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var item = existing ?? new InventoryItem();
             item.Id = id;
@@ -2553,7 +2561,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Payments.FirstOrDefault(p => p.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var payment = existing ?? new Payment();
             payment.Id = id;
@@ -2582,7 +2590,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Suppliers.FirstOrDefault(s => s.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var supplier = existing ?? new Supplier();
             supplier.Id = id;
@@ -2611,7 +2619,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
@@ -2709,7 +2717,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.RentalInventory.FirstOrDefault(r => r.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var item = existing ?? new RentalItem();
             item.Id = id;
@@ -2746,7 +2754,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var (id, idRows) in groupedRows)
         {
             var existing = data.Rentals.FirstOrDefault(r => r.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
             var record = existing ?? new RentalRecord();
             record.Id = id;
 
@@ -2798,7 +2806,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Categories.FirstOrDefault(c => c.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var typeStr = GetString(row, headers, "Type");
             var categoryType = typeStr.ToLowerInvariant() switch
@@ -2837,7 +2845,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Departments.FirstOrDefault(d => d.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var department = existing ?? new Department();
             department.Id = id;
@@ -2855,7 +2863,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Employees.FirstOrDefault(e => e.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var employee = existing ?? new Employee();
             employee.Id = id;
@@ -2891,7 +2899,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Locations.FirstOrDefault(l => l.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var location = existing ?? new Location();
             location.Id = id;
@@ -2920,7 +2928,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var recurring = existing ?? new RecurringInvoice();
             recurring.Id = id;
@@ -2945,7 +2953,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.StockAdjustments.FirstOrDefault(s => s.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var adjustment = existing ?? new StockAdjustment();
             adjustment.Id = id;
@@ -2971,7 +2979,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var po = existing ?? new PurchaseOrder();
             po.Id = id;
@@ -3030,7 +3038,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Returns.FirstOrDefault(r => r.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var returnRecord = existing ?? new Return();
             returnRecord.Id = id;
@@ -3085,7 +3093,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var id = GetString(row, headers, "ID");
             var existing = data.LostDamaged.FirstOrDefault(ld => ld.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) continue;
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var lostDamaged = existing ?? new LostDamaged();
             lostDamaged.Id = id;
