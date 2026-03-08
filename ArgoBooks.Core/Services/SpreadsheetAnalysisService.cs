@@ -34,8 +34,6 @@ public class SpreadsheetAnalysisService(
     {
         try
         {
-            progress?.Report(("Reading spreadsheet...", 20));
-
             using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var workbook = new XLWorkbook(fileStream);
 
@@ -56,10 +54,8 @@ public class SpreadsheetAnalysisService(
             if (sheetsData.Count == 0)
                 return null;
 
-            progress?.Report(("Analyzing with AI...", 50));
-
             return await AnalyzeWithLlmAsync(
-                Path.GetFileName(filePath), sheetsData, cancellationToken);
+                Path.GetFileName(filePath), sheetsData, cancellationToken, progress);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -79,8 +75,6 @@ public class SpreadsheetAnalysisService(
     {
         try
         {
-            progress?.Report(("Reading file...", 20));
-
             var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
             if (lines.Length < 2)
                 return null;
@@ -105,10 +99,8 @@ public class SpreadsheetAnalysisService(
                 (sheetName, headers, sampleRows, totalRows)
             };
 
-            progress?.Report(("Analyzing with AI...", 50));
-
             return await AnalyzeWithLlmAsync(
-                Path.GetFileName(filePath), sheetsData, cancellationToken);
+                Path.GetFileName(filePath), sheetsData, cancellationToken, progress);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -121,15 +113,42 @@ public class SpreadsheetAnalysisService(
     private async Task<SpreadsheetAnalysisResult?> AnalyzeWithLlmAsync(
         string fileName,
         List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> sheetsData,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         var systemPrompt = BuildAnalysisSystemPrompt();
         var userPrompt = BuildAnalysisUserPrompt(sheetsData);
 
         // Scale max tokens based on number of sheets — each sheet needs ~300-500 tokens for mappings
         var maxTokens = Math.Max(4000, sheetsData.Count * 500);
-        var response = await openAiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+
+        // Animate progress while waiting for the LLM response
+        var currentProgress = 10.0;
+        progress?.Report(("Analyzing with AI...", currentProgress));
+
+        using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+        var timerTask = Task.Run(async () =>
+        {
+            while (await progressTimer.WaitForNextTickAsync(cancellationToken))
+            {
+                // Ease-out curve: fast start, asymptotically approaches 90%
+                currentProgress += (90 - currentProgress) * 0.08;
+                progress?.Report(("Analyzing with AI...", currentProgress));
+            }
+        }, cancellationToken);
+
+        string? response;
+        try
+        {
+            response = await openAiService.SendChatAsync(
+                systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+        }
+        finally
+        {
+            progressTimer.Dispose(); // stops the timer, timerTask will complete
+        }
+
+        progress?.Report(("Analyzing with AI...", 100));
 
         if (string.IsNullOrEmpty(response))
             return null;
