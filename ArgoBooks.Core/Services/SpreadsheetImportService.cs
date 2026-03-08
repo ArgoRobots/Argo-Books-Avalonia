@@ -166,7 +166,7 @@ public class SpreadsheetImportService
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
         CancellationToken cancellationToken = default,
-        IProgress<string>? progress = null)
+        IProgress<(string detail, double percent)>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -180,21 +180,24 @@ public class SpreadsheetImportService
         {
             await Task.Run(() =>
             {
-                progress?.Report("Reading spreadsheet...");
+                progress?.Report(("Reading spreadsheet...", -1));
                 using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var workbook = new XLWorkbook(fileStream);
 
                 if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
                 {
-                    progress?.Report("Creating missing references...");
+                    progress?.Report(("Creating missing references...", -1));
                     CreateMissingReferences(workbook, companyData, options);
                 }
 
                 var worksheets = workbook.Worksheets.ToList();
+                // +1 for AI categorization step at the end
+                var totalSteps = worksheets.Count + 1;
                 for (int i = 0; i < worksheets.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report($"Importing {worksheets[i].Name} ({i + 1}/{worksheets.Count})...");
+                    var pct = (double)i / totalSteps * 100;
+                    progress?.Report(($"Importing {worksheets[i].Name} ({i + 1}/{worksheets.Count})...", pct));
                     ImportWorksheetWithMapping(worksheets[i], companyData, analysis, result);
                 }
 
@@ -203,7 +206,7 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
-            progress?.Report("Categorizing products...");
+            progress?.Report(("Categorizing products...", 90));
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             stopwatch.Stop();
@@ -227,7 +230,7 @@ public class SpreadsheetImportService
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
         CancellationToken cancellationToken = default,
-        IProgress<string>? progress = null)
+        IProgress<(string detail, double percent)>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -239,7 +242,7 @@ public class SpreadsheetImportService
         {
             await Task.Run(() =>
             {
-                progress?.Report("Reading CSV file...");
+                progress?.Report(("Reading CSV file...", 0));
                 var lines = File.ReadAllLines(filePath);
                 if (lines.Length < 2)
                 {
@@ -255,7 +258,7 @@ public class SpreadsheetImportService
                     return;
                 }
 
-                progress?.Report($"Processing {lines.Length - 1:N0} rows...");
+                progress?.Report(($"Processing {lines.Length - 1:N0} rows...", 20));
                 var rows = new List<List<object?>>();
                 for (int i = 1; i < lines.Length; i++)
                 {
@@ -274,7 +277,7 @@ public class SpreadsheetImportService
 
                 if (sheetAnalysis != null)
                 {
-                    progress?.Report($"Importing {rows.Count:N0} records...");
+                    progress?.Report(($"Importing {rows.Count:N0} records...", 50));
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
                     var (inserted, updated, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows);
@@ -294,7 +297,7 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
-            progress?.Report("Categorizing products...");
+            progress?.Report(("Categorizing products...", 80));
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
 
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);

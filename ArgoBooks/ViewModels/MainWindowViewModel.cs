@@ -60,9 +60,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsLoadingIndeterminate => LoadingProgress < 0;
 
+    public string? LoadingProgressText => LoadingProgress >= 0 ? $"{LoadingProgress:0}%" : null;
+
     partial void OnLoadingProgressChanged(double value)
     {
         OnPropertyChanged(nameof(IsLoadingIndeterminate));
+        OnPropertyChanged(nameof(LoadingProgressText));
     }
 
     /// <summary>

@@ -2922,9 +2922,9 @@ public class App : Application
                 // Import Tier 1 data
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
-                var importProgress = new Progress<string>(detail =>
+                var importProgress = new Progress<(string detail, double percent)>(p =>
                 {
-                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), detail);
+                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), p.detail, p.percent);
                 });
 
                 tier1Result = isCsv
