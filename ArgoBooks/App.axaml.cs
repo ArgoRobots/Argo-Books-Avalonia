@@ -2972,6 +2972,7 @@ public class App : Application
                     _mainWindowViewModel?.ShowLoading(
                         "AI processing...".Translate(),
                         sheet.SourceSheetName,
+                        progress: 0,
                         cts: tier2Cts,
                         cancelConfirmation: ConfirmCancelAsync);
 

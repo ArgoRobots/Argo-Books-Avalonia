@@ -122,18 +122,24 @@ public class SpreadsheetAnalysisService(
         // Scale max tokens based on number of sheets — each sheet needs ~300-500 tokens for mappings
         var maxTokens = Math.Max(4000, sheetsData.Count * 500);
 
-        // Animate progress while waiting for the LLM response
-        var currentProgress = 10.0;
+        // Estimate LLM duration based on prompt size (more sheets → longer)
+        var estimatedSeconds = Math.Max(6, sheetsData.Count * 3);
+        var intervalMs = (int)(estimatedSeconds * 1000.0 / 95);
+
+        var currentProgress = 0.0;
         progress?.Report(("Analyzing with AI...", currentProgress));
 
-        using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+        using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(intervalMs));
         var timerTask = Task.Run(async () =>
         {
             while (await progressTimer.WaitForNextTickAsync(cancellationToken))
             {
-                // Ease-out curve: fast start, asymptotically approaches 90%
-                currentProgress += (90 - currentProgress) * 0.08;
+                currentProgress = Math.Min(currentProgress + 1, 95);
                 progress?.Report(("Analyzing with AI...", currentProgress));
+
+                // Past 95%, slow down significantly
+                if (currentProgress >= 95)
+                    await Task.Delay(2000, cancellationToken);
             }
         }, cancellationToken);
 
