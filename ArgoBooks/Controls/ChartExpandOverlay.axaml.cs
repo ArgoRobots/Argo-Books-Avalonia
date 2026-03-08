@@ -177,6 +177,26 @@ public partial class ChartExpandOverlay : UserControl
     }
 
     /// <summary>
+    /// Finds the first chart control in a panel, searching one level of nested grids.
+    /// </summary>
+    private static Control? FindChartControl(Panel panel)
+    {
+        foreach (var child in panel.Children)
+        {
+            if (child is CartesianChart or PieChart or GeoMap)
+                return child as Control;
+            if (child is Grid innerGrid)
+            {
+                var nested = innerGrid.Children.OfType<Control>()
+                    .FirstOrDefault(c => c is CartesianChart or PieChart or GeoMap);
+                if (nested != null)
+                    return nested;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Checks if a Grid (or its child Grids) contains a chart control.
     /// </summary>
     private static bool GridContainsChart(Grid grid)
@@ -215,6 +235,14 @@ public partial class ChartExpandOverlay : UserControl
         };
         button.Classes.Add("chart-expand-btn");
         button.Click += OnExpandButtonClick;
+
+        // Hide the expand button when the chart has no data (empty state showing)
+        var chartControl = FindChartControl(panel);
+        if (chartControl != null)
+        {
+            button.Bind(IsVisibleProperty, chartControl.GetObservable(IsVisibleProperty));
+        }
+
         panel.Children.Add(button);
     }
 
@@ -304,7 +332,7 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         if (_expandButton != null)
-            _expandButton.IsVisible = true;
+            _expandButton.ClearValue(IsVisibleProperty);
 
         // Clear the borrowed DataContext
         if (chartArea != null)
