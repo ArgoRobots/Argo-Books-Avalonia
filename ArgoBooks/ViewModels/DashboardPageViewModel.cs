@@ -224,44 +224,45 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriod()
     {
         var now = DateTime.Now;
+        var preset = DateRangePresetExtensions.ParseDateRange(SelectedDateRange);
 
-        return SelectedDateRange switch
+        return preset switch
         {
-            "This Month" => (
+            DateRangePreset.ThisMonth => (
                 new DateTime(now.Year, now.Month, 1).AddMonths(-1),
                 new DateTime(now.Year, now.Month, 1).AddDays(-1)
             ),
-            "Last Month" => (
+            DateRangePreset.LastMonth => (
                 new DateTime(now.Year, now.Month, 1).AddMonths(-2),
                 new DateTime(now.Year, now.Month, 1).AddMonths(-1).AddDays(-1)
             ),
-            "This Quarter" => (
+            DateRangePreset.Last30Days => (
+                StartDate.AddDays(-30), StartDate.AddDays(-1)
+            ),
+            DateRangePreset.Last100Days => (
+                StartDate.AddDays(-100), StartDate.AddDays(-1)
+            ),
+            DateRangePreset.Last365Days => (
+                StartDate.AddDays(-365), StartDate.AddDays(-1)
+            ),
+            DateRangePreset.ThisQuarter => (
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3),
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1)
             ),
-            "Last Quarter" => (
+            DateRangePreset.LastQuarter => (
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-6),
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3).AddDays(-1)
             ),
-            "This Year" => (
+            DateRangePreset.ThisYear => (
                 new DateTime(now.Year - 1, 1, 1),
                 new DateTime(now.Year - 1, 12, 31)
             ),
-            "Last 30 Days" => (
-                StartDate.AddDays(-30), StartDate.AddDays(-1)
-            ),
-            "Last 100 Days" => (
-                StartDate.AddDays(-100), StartDate.AddDays(-1)
-            ),
-            "Last 365 Days" => (
-                StartDate.AddDays(-365), StartDate.AddDays(-1)
-            ),
-            "Last Year" => (
+            DateRangePreset.LastYear => (
                 new DateTime(now.Year - 2, 1, 1),
                 new DateTime(now.Year - 2, 12, 31)
             ),
-            "All Time" => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
-            "Custom Range" => (
+            DateRangePreset.AllTime => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
+            DateRangePreset.CustomRange => (
                 StartDate.AddDays(-(EndDate - StartDate).TotalDays - 1),
                 StartDate.AddDays(-1)
             ),
