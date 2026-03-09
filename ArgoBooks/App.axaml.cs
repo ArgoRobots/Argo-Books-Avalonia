@@ -2991,7 +2991,7 @@ public class App : Application
                         while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
                         {
                             if (chunkProgressReceived) break;
-                            estimatedProgress = Math.Min(estimatedProgress + 2, 90);
+                            estimatedProgress = Math.Min(estimatedProgress + 1, 90);
                             _mainWindowViewModel?.ShowLoading(
                                 "AI processing...".Translate(),
                                 $"{sheet.SourceSheetName} — processing rows...",
