@@ -2815,7 +2815,7 @@ public class App : Application
         if (_appShellViewModel == null) return;
 
         using var analysisCts = new CancellationTokenSource();
-        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), cts: analysisCts, cancelConfirmation: ConfirmCancelAsync);
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
         // Check rate limit via server-side API
