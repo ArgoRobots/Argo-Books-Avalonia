@@ -1991,48 +1991,46 @@ public class SpreadsheetImportService
     /// <summary>
     /// Normalizes free-form payment status strings into the canonical values
     /// used by the application: "Paid", "Unpaid", "Partial", "Overdue", or "Pending".
+    /// Uses substring matching to handle typos and variations (e.g., "Piad", "Compelted").
     /// </summary>
     internal static string NormalizePaymentStatus(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
             return "Paid";
 
-        var s = status.Trim();
+        var s = status.Trim().ToLowerInvariant();
 
-        // Exact canonical values (case-insensitive)
-        if (s.Equals("Paid", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Complete", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Completed", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Settled", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Received", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Cleared", StringComparison.OrdinalIgnoreCase))
-            return "Paid";
-
-        if (s.Equals("Partial", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Partially Paid", StringComparison.OrdinalIgnoreCase))
+        // Partial must be checked before "paid" substring match
+        if (s.Contains("partial"))
             return "Partial";
 
-        if (s.Equals("Overdue", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Past Due", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Late", StringComparison.OrdinalIgnoreCase))
+        // Paid and common synonyms/typos
+        if (s.Contains("paid") || s.Contains("piad") ||
+            s.Contains("complet") || s.Contains("settle") ||
+            s.Contains("receive") || s.Contains("clear") ||
+            s.Contains("collect"))
+            return "Paid";
+
+        // Overdue
+        if (s.Contains("overdue") || s.Contains("past due") ||
+            s.Contains("pastdue") || s.Contains("late"))
             return "Overdue";
 
-        if (s.Equals("Pending", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Processing", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("In Progress", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Awaiting Payment", StringComparison.OrdinalIgnoreCase))
+        // Pending
+        if (s.Contains("pending") || s.Contains("pend") ||
+            s.Contains("processing") || s.Contains("progress") ||
+            s.Contains("awaiting") || s.Contains("waiting"))
             return "Pending";
 
-        // Everything else (Unpaid, Outstanding, Not Paid, Due, Open, etc.) → Unpaid
-        if (s.Equals("Unpaid", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Outstanding", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Not Paid", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Due", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals("Open", StringComparison.OrdinalIgnoreCase))
+        // Unpaid and common synonyms
+        if (s.Contains("unpaid") || s.Contains("not paid") ||
+            s.Contains("outstanding") || s.Contains("open") ||
+            s.Contains("due") || s.Contains("owe") ||
+            s.Contains("unsettled"))
             return "Unpaid";
 
-        // Fallback: unrecognized → keep as-is but title-case it
-        return char.ToUpper(s[0]) + s[1..].ToLower();
+        // Fallback: unrecognized → default to Paid
+        return "Paid";
     }
 
     private static decimal GetDecimal(List<object?> row, List<string> headers, string columnName)

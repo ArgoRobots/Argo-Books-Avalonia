@@ -208,7 +208,7 @@ public static class ImportSchemaDefinition
                 new("Tax", "decimal", "Tax amount", JsonName: "taxAmount"),
                 new("Total", "decimal", "Total amount including tax", JsonName: "total"),
                 new("Reference", "string", "External reference number", JsonName: "referenceNumber"),
-                new("Payment Status", "string", "Payment status (e.g., Paid, Pending)", JsonName: "paymentStatus"),
+                new("Payment Status", "enum:Paid,Unpaid,Partial,Pending,Overdue", "Payment status", JsonName: "paymentStatus"),
                 new("Shipping", "decimal", "Shipping cost", JsonName: "shippingCost"),
             ],
 
