@@ -257,11 +257,12 @@ public partial class TranslationGenerator
             foreach (Match match in constStringMatches)
             {
                 var text = match.Groups[1].Value;
-                // Only add if it looks like display text (not empty, not a path, not a URL)
+                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code)
                 if (!string.IsNullOrEmpty(text) && text.Length > 1 &&
                     !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
                     !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
-                    !text.StartsWith("{"))
+                    !text.StartsWith("{") &&
+                    !text.StartsWith('#'))
                 {
                     AddString(strings, text);
                 }
@@ -350,6 +351,11 @@ public partial class TranslationGenerator
 
         // Skip if it looks like a variable or placeholder
         if (text.StartsWith('{') || text.Contains("{{"))
+            return;
+
+        // Skip hex color codes (e.g., "#3B82F6", "#FFF")
+        if (text.StartsWith('#') && text.Length >= 4 && text.Length <= 9 &&
+            text[1..].All(c => char.IsAsciiHexDigit(c)))
             return;
 
         var key = LanguageService.GetStringKey(text);
