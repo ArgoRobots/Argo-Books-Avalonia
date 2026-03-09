@@ -260,6 +260,49 @@ public class SpreadsheetAnalysisService(
     }
 
     /// <summary>
+    /// Reads all sheet data from a file for the given sheets, returning headers and rows per sheet.
+    /// Use this to pre-read the file once before calling ProcessAllChunksAsync with pre-read data.
+    /// </summary>
+    public static async Task<Dictionary<string, (List<string> Headers, List<List<string>> Rows)>> ReadSheetDataAsync(
+        string filePath,
+        List<SheetAnalysis> sheets,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, (List<string> Headers, List<List<string>> Rows)>();
+
+        if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
+            if (lines.Length < 2) return result;
+            var delimiter = DetectCsvDelimiter(lines[0]);
+            var headers = ParseCsvLine(lines[0], delimiter);
+            var rows = new List<List<string>>();
+            for (int i = 1; i < lines.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(lines[i]))
+                    rows.Add(ParseCsvLine(lines[i], delimiter));
+            }
+            foreach (var sheet in sheets)
+                result[sheet.SourceSheetName] = (headers, rows);
+        }
+        else
+        {
+            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var wb = new XLWorkbook(fs);
+            foreach (var sheet in sheets)
+            {
+                var ws = wb.Worksheets.FirstOrDefault(w => w.Name == sheet.SourceSheetName);
+                if (ws == null) continue;
+                var headers = GetHeaders(ws);
+                var rows = GetAllRowsAsStrings(ws, headers.Count);
+                result[sheet.SourceSheetName] = (headers, rows);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Processes pre-read rows through LLM in chunks, reporting progress.
     /// Use this overload to avoid re-reading the file for each sheet.
     /// </summary>

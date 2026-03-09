@@ -2991,34 +2991,8 @@ public class App : Application
 
                 // Pre-read all Tier 2 sheet data from the file once to avoid
                 // re-parsing the workbook for each sheet.
-                var sheetDataMap = new Dictionary<string, (List<string> Headers, List<List<string>> Rows)>();
-                if (isCsv)
-                {
-                    var lines = await File.ReadAllLinesAsync(filePath, tier2Cts.Token);
-                    var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
-                    var csvHeaders = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
-                    var csvRows = new List<List<string>>();
-                    for (int i = 1; i < lines.Length; i++)
-                    {
-                        if (!string.IsNullOrWhiteSpace(lines[i]))
-                            csvRows.Add(SpreadsheetAnalysisService.ParseCsvLine(lines[i], delimiter));
-                    }
-                    foreach (var sheet in tier2Sheets)
-                        sheetDataMap[sheet.SourceSheetName] = (csvHeaders, csvRows);
-                }
-                else
-                {
-                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    using var wb = new ClosedXML.Excel.XLWorkbook(fs);
-                    foreach (var sheet in tier2Sheets)
-                    {
-                        var ws = wb.Worksheets.FirstOrDefault(w => w.Name == sheet.SourceSheetName);
-                        if (ws == null) continue;
-                        var headers = SpreadsheetAnalysisService.GetHeaders(ws);
-                        var rows = SpreadsheetAnalysisService.GetAllRowsAsStrings(ws, headers.Count);
-                        sheetDataMap[sheet.SourceSheetName] = (headers, rows);
-                    }
-                }
+                var sheetDataMap = await SpreadsheetAnalysisService.ReadSheetDataAsync(
+                    filePath, tier2Sheets, tier2Cts.Token);
 
                 // Compute total rows across all Tier 2 sheets for aggregate progress
                 var totalRowsAllSheets = sheetDataMap.Values.Sum(d => d.Rows.Count);

@@ -2183,7 +2183,7 @@ public class SpreadsheetImportService
     /// Batches all uncategorized products into a single AI call for efficiency.
     /// Falls back to using the product name as the category name if AI is unavailable.
     /// </summary>
-    internal async Task AiCategorizeMissingProductsAsync(CompanyData data, CancellationToken cancellationToken)
+    public async Task AiCategorizeMissingProductsAsync(CompanyData data, CancellationToken cancellationToken)
     {
         var uncategorized = data.Products
             .Where(p => string.IsNullOrEmpty(p.CategoryId))
