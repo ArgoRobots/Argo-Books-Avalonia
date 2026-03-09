@@ -201,11 +201,11 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             var forecastEngine = model.CreateTimeSeriesEngine<TimeSeriesInput, TimeSeriesOutput>(_mlContext);
             var forecast = forecastEngine.Predict();
 
-            // Apply sanity checks to SSA forecasts
-            var historicalMax = data.Max();
+            // Apply sanity checks to SSA forecasts using statistical bounds
             var historicalAvg = data.Average();
-            var maxReasonableForecast = historicalMax * 3m; // Cap at 3x historical max
-            var minReasonableForecast = historicalAvg * 0.1m; // Floor at 10% of average
+            var historicalStdDev = (decimal)data.Select(d => (double)d).StandardDeviation();
+            var maxReasonableForecast = historicalAvg + 2.5m * historicalStdDev;
+            var minReasonableForecast = Math.Max(0, historicalAvg - 2.5m * historicalStdDev);
 
             result.ForecastedValues = forecast.Forecast
                 .Select(f => Math.Max(minReasonableForecast, Math.Min(maxReasonableForecast, (decimal)Math.Max(0, f))))
@@ -262,11 +262,11 @@ public class LocalMLForecastingService : ILocalMLForecastingService
 
         var hwResult = _holtWinters.AutoForecast(data, seasonLength, periodsToForecast);
 
-        // Apply sanity checks to prevent unrealistic forecasts
-        var historicalMax = data.Max();
+        // Apply sanity checks using statistical bounds
         var historicalAvg = data.Average();
-        var maxReasonableForecast = historicalMax * 3m; // Cap at 3x historical max
-        var minReasonableForecast = historicalAvg * 0.1m; // Floor at 10% of average
+        var historicalStdDev = (decimal)data.Select(d => (double)d).StandardDeviation();
+        var maxReasonableForecast = historicalAvg + 2.5m * historicalStdDev;
+        var minReasonableForecast = Math.Max(0, historicalAvg - 2.5m * historicalStdDev);
 
         result.ForecastedValues = hwResult.ForecastedValues
             .Select(v => Math.Max(minReasonableForecast, Math.Min(maxReasonableForecast, v)))

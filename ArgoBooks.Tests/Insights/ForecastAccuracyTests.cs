@@ -23,7 +23,7 @@ public class ForecastAccuracyTests
     }
 
     [Fact]
-    public void RevenueAccuracyPercent_10PercentOver_Returns90()
+    public void RevenueAccuracyPercent_10PercentOver_ReturnsAbout90()
     {
         var record = new ForecastAccuracyRecord
         {
@@ -31,13 +31,12 @@ public class ForecastAccuracyTests
             ActualRevenue = 1000m
         };
 
-        // Error = |1100 - 1000| / 1000 = 10%
-        // Accuracy = 100 - 10 = 90%
-        Assert.Equal(90.0, record.RevenueAccuracyPercent);
+        // SMAPE: error=100, denom=(1100+1000)/2=1050, accuracy=100-100/1050*100≈90.48
+        Assert.InRange(record.RevenueAccuracyPercent!.Value, 90, 91);
     }
 
     [Fact]
-    public void RevenueAccuracyPercent_10PercentUnder_Returns90()
+    public void RevenueAccuracyPercent_10PercentUnder_ReturnsAbout90()
     {
         var record = new ForecastAccuracyRecord
         {
@@ -45,7 +44,8 @@ public class ForecastAccuracyTests
             ActualRevenue = 1000m
         };
 
-        Assert.Equal(90.0, record.RevenueAccuracyPercent);
+        // SMAPE: error=100, denom=(900+1000)/2=950, accuracy=100-100/950*100≈89.47
+        Assert.InRange(record.RevenueAccuracyPercent!.Value, 89, 91);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class ForecastAccuracyTests
     }
 
     [Fact]
-    public void RevenueAccuracyPercent_ZeroActual_ReturnsNull()
+    public void RevenueAccuracyPercent_ZeroActual_ReturnsZero()
     {
         var record = new ForecastAccuracyRecord
         {
@@ -69,11 +69,12 @@ public class ForecastAccuracyTests
             ActualRevenue = 0m
         };
 
-        Assert.Null(record.RevenueAccuracyPercent);
+        // SMAPE: error=1000, denom=(1000+0)/2=500, accuracy=100-1000/500*100=0
+        Assert.Equal(0.0, record.RevenueAccuracyPercent);
     }
 
     [Fact]
-    public void RevenueAccuracyPercent_VeryBadForecast_ReturnsZero()
+    public void RevenueAccuracyPercent_VeryBadForecast_ReturnsLowOrZero()
     {
         var record = new ForecastAccuracyRecord
         {
@@ -81,20 +82,19 @@ public class ForecastAccuracyTests
             ActualRevenue = 1000m
         };
 
-        // Error = |5000 - 1000| / 1000 = 400%
-        // Accuracy = Max(0, 100 - 400) = 0%
+        // SMAPE: error=4000, denom=(5000+1000)/2=3000, accuracy=100-4000/3000*100≈-33 → 0
         Assert.Equal(0.0, record.RevenueAccuracyPercent);
     }
 
     [Theory]
-    [InlineData(1000, 1000, 100)]   // Perfect
-    [InlineData(950, 1000, 95)]     // 5% under
-    [InlineData(1050, 1000, 95)]    // 5% over
-    [InlineData(800, 1000, 80)]     // 20% under
-    [InlineData(1200, 1000, 80)]    // 20% over
-    [InlineData(500, 1000, 50)]     // 50% under
+    [InlineData(1000, 1000, 100, 100)]  // Perfect
+    [InlineData(950, 1000, 94, 96)]     // 5% under → SMAPE ≈94.87
+    [InlineData(1050, 1000, 94, 96)]    // 5% over → SMAPE ≈95.12
+    [InlineData(800, 1000, 77, 79)]     // 20% under → SMAPE ≈77.78
+    [InlineData(1200, 1000, 81, 83)]    // 20% over → SMAPE ≈81.82
+    [InlineData(500, 1000, 33, 34)]     // 50% under → SMAPE ≈33.33
     public void RevenueAccuracyPercent_VariousScenarios(
-        decimal forecasted, decimal actual, double expectedAccuracy)
+        decimal forecasted, decimal actual, double expectedMin, double expectedMax)
     {
         var record = new ForecastAccuracyRecord
         {
@@ -102,7 +102,7 @@ public class ForecastAccuracyTests
             ActualRevenue = actual
         };
 
-        Assert.Equal(expectedAccuracy, record.RevenueAccuracyPercent);
+        Assert.InRange(record.RevenueAccuracyPercent!.Value, expectedMin, expectedMax);
     }
 
     #endregion
@@ -134,12 +134,12 @@ public class ForecastAccuracyTests
     }
 
     [Theory]
-    [InlineData(500, 500, 100)]    // Perfect
-    [InlineData(550, 500, 90)]     // 10% over
-    [InlineData(450, 500, 90)]     // 10% under
-    [InlineData(600, 500, 80)]     // 20% over
+    [InlineData(500, 500, 100, 100)]   // Perfect
+    [InlineData(550, 500, 90, 91)]     // 10% over → SMAPE ≈90.48
+    [InlineData(450, 500, 89, 91)]     // 10% under → SMAPE ≈89.47
+    [InlineData(600, 500, 81, 83)]     // 20% over → SMAPE ≈81.82
     public void ExpensesAccuracyPercent_VariousScenarios(
-        decimal forecasted, decimal actual, double expectedAccuracy)
+        decimal forecasted, decimal actual, double expectedMin, double expectedMax)
     {
         var record = new ForecastAccuracyRecord
         {
@@ -147,7 +147,7 @@ public class ForecastAccuracyTests
             ActualExpenses = actual
         };
 
-        Assert.Equal(expectedAccuracy, record.ExpensesAccuracyPercent);
+        Assert.InRange(record.ExpensesAccuracyPercent!.Value, expectedMin, expectedMax);
     }
 
     #endregion
@@ -280,7 +280,7 @@ public class ForecastAccuracyTests
                 {
                     IsValidated = true,
                     ForecastedRevenue = 1000m,
-                    ActualRevenue = 1000m, // 100% accuracy, 0% MAPE
+                    ActualRevenue = 1000m, // 100% accuracy
                     ForecastedExpenses = 500m,
                     ActualExpenses = 500m  // 100% accuracy
                 },
@@ -288,9 +288,9 @@ public class ForecastAccuracyTests
                 {
                     IsValidated = true,
                     ForecastedRevenue = 900m,
-                    ActualRevenue = 1000m, // 90% accuracy, 10% MAPE
+                    ActualRevenue = 1000m, // SMAPE ≈89.47%
                     ForecastedExpenses = 550m,
-                    ActualExpenses = 500m  // 90% accuracy
+                    ActualExpenses = 500m  // SMAPE ≈90.48%
                 }
             ]
         };
@@ -298,9 +298,9 @@ public class ForecastAccuracyTests
         data.CalculateStatistics();
 
         Assert.Equal(2, data.ValidatedForecastCount);
-        Assert.Equal(95.0, data.AverageRevenueAccuracy);  // (100 + 90) / 2
-        Assert.Equal(95.0, data.AverageExpensesAccuracy); // (100 + 90) / 2
-        Assert.Equal(5.0, data.OverallRevenueMAPE);       // (0 + 10) / 2
+        Assert.InRange(data.AverageRevenueAccuracy, 94, 96);   // (100 + ~89.47) / 2 ≈ 94.74
+        Assert.InRange(data.AverageExpensesAccuracy, 94, 96);   // (100 + ~90.48) / 2 ≈ 95.24
+        Assert.Equal(5.0, data.OverallRevenueMAPE);              // MAPE unchanged (0 + 10) / 2
     }
 
     [Fact]

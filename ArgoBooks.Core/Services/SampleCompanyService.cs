@@ -108,6 +108,10 @@ public class SampleCompanyService
             // For each finalized invoice, either match an existing revenue or create one.
             LinkInvoicesToRevenues(context.CompanyData);
 
+            // Smooth revenue/expense data to reduce month-to-month volatility.
+            // This makes the sample data more representative of real business patterns.
+            SmoothMonthlyTransactions(context.CompanyData);
+
             // Add additional active rental records for richer sample data
             // Use the data's max date as the reference point (not DateTime.Today)
             // so that TimeShiftSampleData can shift these dates along with everything else.
@@ -559,6 +563,85 @@ public class SampleCompanyService
 
         // Update the ID counter
         data.IdCounters.Rental = maxId;
+    }
+
+    /// <summary>
+    /// Smooths monthly revenue and expense totals using a 3-month moving average,
+    /// scaling each transaction proportionally. This reduces month-to-month volatility
+    /// to make the sample data more representative of real business patterns.
+    /// </summary>
+    private static void SmoothMonthlyTransactions(CompanyData data)
+    {
+        SmoothTransactionGroup(data.Revenues);
+        SmoothTransactionGroup(data.Expenses);
+    }
+
+    private static void SmoothTransactionGroup<T>(List<T> transactions) where T : Transaction
+    {
+        if (transactions.Count < 3)
+            return;
+
+        // Group by month
+        var byMonth = transactions
+            .GroupBy(t => new DateTime(t.Date.Year, t.Date.Month, 1))
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        if (byMonth.Count < 3)
+            return;
+
+        // Calculate monthly totals
+        var monthlyTotals = byMonth.Select(g => g.Sum(t => t.Total)).ToList();
+
+        // Apply 3-month centered moving average
+        var smoothed = new List<decimal>(monthlyTotals.Count);
+        for (int i = 0; i < monthlyTotals.Count; i++)
+        {
+            var start = Math.Max(0, i - 1);
+            var end = Math.Min(monthlyTotals.Count - 1, i + 1);
+            var count = end - start + 1;
+            var avg = 0m;
+            for (int j = start; j <= end; j++)
+                avg += monthlyTotals[j];
+            smoothed.Add(avg / count);
+        }
+
+        // Scale each transaction proportionally so monthly totals match smoothed values
+        for (int i = 0; i < byMonth.Count; i++)
+        {
+            var originalTotal = monthlyTotals[i];
+            if (originalTotal == 0)
+                continue;
+
+            var scaleFactor = smoothed[i] / originalTotal;
+            if (scaleFactor == 1m)
+                continue;
+
+            foreach (var t in byMonth[i])
+            {
+                t.UnitPrice = Math.Round(t.UnitPrice * scaleFactor, 2);
+                t.Amount = Math.Round(t.Amount * scaleFactor, 2);
+                t.TaxAmount = Math.Round(t.TaxAmount * scaleFactor, 2);
+                t.Total = Math.Round(t.Total * scaleFactor, 2);
+                t.ShippingCost = Math.Round(t.ShippingCost * scaleFactor, 2);
+                t.Discount = Math.Round(t.Discount * scaleFactor, 2);
+                t.Fee = Math.Round(t.Fee * scaleFactor, 2);
+
+                // Also scale USD equivalents if set
+                if (t.UnitPriceUSD > 0) t.UnitPriceUSD = Math.Round(t.UnitPriceUSD * scaleFactor, 2);
+                if (t.TotalUSD > 0) t.TotalUSD = Math.Round(t.TotalUSD * scaleFactor, 2);
+                if (t.TaxAmountUSD > 0) t.TaxAmountUSD = Math.Round(t.TaxAmountUSD * scaleFactor, 2);
+                if (t.ShippingCostUSD > 0) t.ShippingCostUSD = Math.Round(t.ShippingCostUSD * scaleFactor, 2);
+                if (t.DiscountUSD > 0) t.DiscountUSD = Math.Round(t.DiscountUSD * scaleFactor, 2);
+                if (t.FeeUSD > 0) t.FeeUSD = Math.Round(t.FeeUSD * scaleFactor, 2);
+
+                // Scale line item unit prices (Amount/TaxAmount are computed from UnitPrice)
+                foreach (var li in t.LineItems)
+                {
+                    li.UnitPrice = Math.Round(li.UnitPrice * scaleFactor, 2);
+                }
+            }
+        }
     }
 
     /// <summary>

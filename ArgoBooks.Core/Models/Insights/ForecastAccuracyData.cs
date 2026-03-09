@@ -88,11 +88,13 @@ public class ForecastAccuracyRecord
     {
         get
         {
-            if (!ActualRevenue.HasValue || ActualRevenue.Value == 0)
+            if (!ActualRevenue.HasValue)
                 return null;
 
             var error = Math.Abs(ForecastedRevenue - ActualRevenue.Value);
-            var accuracy = Math.Max(0, 100 - (double)(error / ActualRevenue.Value * 100));
+            var denominator = (Math.Abs(ForecastedRevenue) + Math.Abs(ActualRevenue.Value)) / 2m;
+            if (denominator == 0) return 100; // both zero = perfect match
+            var accuracy = Math.Max(0, 100 - (double)(error / denominator * 100));
             return accuracy;
         }
     }
@@ -104,11 +106,13 @@ public class ForecastAccuracyRecord
     {
         get
         {
-            if (!ActualExpenses.HasValue || ActualExpenses.Value == 0)
+            if (!ActualExpenses.HasValue)
                 return null;
 
             var error = Math.Abs(ForecastedExpenses - ActualExpenses.Value);
-            var accuracy = Math.Max(0, 100 - (double)(error / ActualExpenses.Value * 100));
+            var denominator = (Math.Abs(ForecastedExpenses) + Math.Abs(ActualExpenses.Value)) / 2m;
+            if (denominator == 0) return 100; // both zero = perfect match
+            var accuracy = Math.Max(0, 100 - (double)(error / denominator * 100));
             return accuracy;
         }
     }

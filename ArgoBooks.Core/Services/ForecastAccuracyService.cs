@@ -10,6 +10,10 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ForecastAccuracyService : IForecastAccuracyService
 {
+    /// <summary>
+    /// Increment this when the forecasting algorithm changes to trigger a full re-backtest.
+    /// </summary>
+    private const string CurrentBacktestVersion = "v2-smape-interpolation";
     /// <inheritdoc />
     public void SaveForecast(CompanyData companyData, ForecastData forecast, AnalysisDateRange forecastPeriod)
     {
@@ -223,6 +227,15 @@ public class ForecastAccuracyService : IForecastAccuracyService
     {
         return await Task.Run(() =>
         {
+            // Check if algorithm version changed — if so, clear old backtests and re-run
+            if (settings.BacktestVersion != CurrentBacktestVersion)
+            {
+                companyData.ForecastRecords.RemoveAll(r => r.IsValidated && r.ForecastDate.Date == r.PeriodStartDate.Date);
+                settings.LastBacktestedMonth = null;
+                settings.BacktestVersion = CurrentBacktestVersion;
+                companyData.MarkAsModified();
+            }
+
             // Get monthly revenue and expense aggregates
             var monthlyData = GetMonthlyAggregates(companyData);
 
@@ -263,14 +276,16 @@ public class ForecastAccuracyService : IForecastAccuracyService
 
                 progress?.Report((i + 1, total, $"Analyzing {targetMonth.Month:MMMM yyyy}..."));
 
-                // Get training data (all months before the target)
+                // Get training data (up to 24 months before target, matching live forecast window)
                 var trainingRevenue = monthlyData
                     .Take(targetIndex)
+                    .TakeLast(24)
                     .Select(m => m.Revenue)
                     .ToList();
 
                 var trainingExpenses = monthlyData
                     .Take(targetIndex)
+                    .TakeLast(24)
                     .Select(m => m.Expenses)
                     .ToList();
 
@@ -341,21 +356,26 @@ public class ForecastAccuracyService : IForecastAccuracyService
         if (allDataMonths.Count == 0)
             return new List<MonthlyAggregate>();
 
-        // Build a continuous monthly series, zero-filling gaps
         var startMonth = allDataMonths.Min();
         var endMonth = allDataMonths.Max();
 
+        // Interpolate gaps instead of zero-filling to avoid false seasonal patterns
+        var interpolatedRevenue = InsightsService.InterpolateMonthlyGaps(salesByMonth, startMonth, endMonth);
+        var interpolatedExpenses = InsightsService.InterpolateMonthlyGaps(purchasesByMonth, startMonth, endMonth);
+
         var result = new List<MonthlyAggregate>();
         var current = startMonth;
+        int i = 0;
         while (current <= endMonth)
         {
             result.Add(new MonthlyAggregate
             {
                 Month = current,
-                Revenue = salesByMonth.TryGetValue(current, out var rev) ? rev : 0,
-                Expenses = purchasesByMonth.TryGetValue(current, out var exp) ? exp : 0
+                Revenue = interpolatedRevenue[i],
+                Expenses = interpolatedExpenses[i]
             });
             current = current.AddMonths(1);
+            i++;
         }
         return result;
     }
@@ -464,16 +484,19 @@ public class ForecastAccuracyService : IForecastAccuracyService
     /// </summary>
     private double CalculateRecordAccuracy(ForecastAccuracyRecord record)
     {
-        if (!record.ActualRevenue.HasValue || record.ActualRevenue.Value == 0) return 0;
+        if (!record.ActualRevenue.HasValue) return 0;
 
-        var revenueError = Math.Abs(record.ForecastedRevenue - record.ActualRevenue.Value) / record.ActualRevenue.Value;
-        var revenueAccuracy = Math.Max(0, 100 * (1 - (double)revenueError));
+        // Use SMAPE-based accuracy: handles small actuals better than MAPE
+        var revDenominator = (Math.Abs(record.ForecastedRevenue) + Math.Abs(record.ActualRevenue.Value)) / 2m;
+        var revenueAccuracy = revDenominator == 0 ? 100.0
+            : Math.Max(0, 100 * (1 - (double)(Math.Abs(record.ForecastedRevenue - record.ActualRevenue.Value) / revDenominator)));
 
         // Also consider expense accuracy if available
-        if (record.ActualExpenses.HasValue && record.ActualExpenses.Value > 0)
+        if (record.ActualExpenses.HasValue)
         {
-            var expenseError = Math.Abs(record.ForecastedExpenses - record.ActualExpenses.Value) / record.ActualExpenses.Value;
-            var expenseAccuracy = Math.Max(0, 100 * (1 - (double)expenseError));
+            var expDenominator = (Math.Abs(record.ForecastedExpenses) + Math.Abs(record.ActualExpenses.Value)) / 2m;
+            var expenseAccuracy = expDenominator == 0 ? 100.0
+                : Math.Max(0, 100 * (1 - (double)(Math.Abs(record.ForecastedExpenses - record.ActualExpenses.Value) / expDenominator)));
             return (revenueAccuracy + expenseAccuracy) / 2;
         }
 

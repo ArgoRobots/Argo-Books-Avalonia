@@ -1082,17 +1082,77 @@ public class InsightsService(
         if (monthlyAmounts.Count == 0)
             return new List<decimal>();
 
-        // Build a continuous monthly series with zero-fill for missing months
         var startMonth = monthlyAmounts.Keys.Min();
         var endMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
-        var result = new List<decimal>();
+        return InterpolateMonthlyGaps(monthlyAmounts, startMonth, endMonth);
+    }
+
+    /// <summary>
+    /// Builds a continuous monthly series, interpolating gaps instead of zero-filling.
+    /// Interior gaps are linearly interpolated; leading/trailing gaps use nearest known value.
+    /// </summary>
+    internal static List<decimal> InterpolateMonthlyGaps(Dictionary<DateTime, decimal> knownValues, DateTime startMonth, DateTime endMonth)
+    {
+        // First pass: collect months with null for gaps
+        var months = new List<DateTime>();
+        var values = new List<decimal?>();
         var current = startMonth;
         while (current <= endMonth)
         {
-            result.Add(monthlyAmounts.TryGetValue(current, out var amount) ? amount : 0m);
+            months.Add(current);
+            values.Add(knownValues.TryGetValue(current, out var amount) ? amount : null);
             current = current.AddMonths(1);
         }
+
+        // Second pass: interpolate gaps
+        var result = new List<decimal>(values.Count);
+        for (int i = 0; i < values.Count; i++)
+        {
+            if (values[i].HasValue)
+            {
+                result.Add(values[i]!.Value);
+                continue;
+            }
+
+            // Find previous known value
+            decimal? prevVal = null;
+            int prevIdx = -1;
+            for (int j = i - 1; j >= 0; j--)
+            {
+                if (values[j].HasValue) { prevVal = values[j]!.Value; prevIdx = j; break; }
+            }
+
+            // Find next known value
+            decimal? nextVal = null;
+            int nextIdx = -1;
+            for (int j = i + 1; j < values.Count; j++)
+            {
+                if (values[j].HasValue) { nextVal = values[j]!.Value; nextIdx = j; break; }
+            }
+
+            if (prevVal.HasValue && nextVal.HasValue)
+            {
+                // Interior gap: linear interpolation
+                var fraction = (decimal)(i - prevIdx) / (nextIdx - prevIdx);
+                result.Add(prevVal.Value + fraction * (nextVal.Value - prevVal.Value));
+            }
+            else if (prevVal.HasValue)
+            {
+                // Trailing gap: carry forward
+                result.Add(prevVal.Value);
+            }
+            else if (nextVal.HasValue)
+            {
+                // Leading gap: carry backward
+                result.Add(nextVal.Value);
+            }
+            else
+            {
+                result.Add(0m); // No known values at all (shouldn't happen)
+            }
+        }
+
         return result;
     }
 
