@@ -309,20 +309,13 @@ public class SpreadsheetImportService
                     progress?.Report(($"Importing {rows.Count:N0} records...", 50));
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
-                    var (inserted, updated, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows, options);
-                    result.TotalImported += inserted;
-                    result.TotalUpdated += updated;
-                    result.TotalSkipped += skipped;
                     var csvSheetName = Path.GetFileNameWithoutExtension(filePath);
-                    result.SheetResults.Add(new SheetImportResult
-                    {
-                        SheetName = csvSheetName,
-                        EntityType = sheetType.ToString(),
-                        Inserted = inserted,
-                        Updated = updated,
-                        Skipped = skipped
-                    });
-                    if (inserted == 0 && updated == 0)
+                    var sheetResult = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows, csvSheetName, options);
+                    result.TotalImported += sheetResult.Inserted;
+                    result.TotalUpdated += sheetResult.Updated;
+                    result.TotalSkipped += sheetResult.Skipped;
+                    result.SheetResults.Add(sheetResult);
+                    if (sheetResult.Inserted == 0 && sheetResult.Updated == 0)
                         result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
                 }
                 else
@@ -513,19 +506,12 @@ public class SpreadsheetImportService
 
         ApplyColumnMapping(headers, sheetAnalysis);
         var sheetType = sheetAnalysis.DetectedType;
-        var (inserted, updated, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows, options);
-        result.TotalImported += inserted;
-        result.TotalUpdated += updated;
-        result.TotalSkipped += skipped;
-        result.SheetResults.Add(new SheetImportResult
-        {
-            SheetName = sheetName,
-            EntityType = sheetType.ToString(),
-            Inserted = inserted,
-            Updated = updated,
-            Skipped = skipped
-        });
-        if (inserted == 0 && updated == 0 && rows.Count > 0)
+        var sheetResult = ImportBySheetTypeWithCount(sheetType, data, headers, rows, sheetName, options);
+        result.TotalImported += sheetResult.Inserted;
+        result.TotalUpdated += sheetResult.Updated;
+        result.TotalSkipped += sheetResult.Skipped;
+        result.SheetResults.Add(sheetResult);
+        if (sheetResult.Inserted == 0 && sheetResult.Updated == 0 && rows.Count > 0)
             result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
     }
 
@@ -621,9 +607,9 @@ public class SpreadsheetImportService
         _ => 0
     };
 
-    private (int inserted, int updated, int skipped) ImportBySheetTypeWithCount(
+    private SheetImportResult ImportBySheetTypeWithCount(
         SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows,
-        ImportOptions? options = null)
+        string sheetName, ImportOptions? options = null)
     {
         var countBefore = GetEntityCount(data, sheetType);
         if (options != null)
@@ -631,13 +617,35 @@ public class SpreadsheetImportService
         ImportBySheetType(sheetType, data, headers, rows, options);
         var countAfter = GetEntityCount(data, sheetType);
         var inserted = Math.Max(0, countAfter - countBefore);
+
+        var result = new SheetImportResult
+        {
+            SheetName = sheetName,
+            EntityType = sheetType.ToString(),
+            Inserted = inserted
+        };
+
         if (options?.SkipExistingRecords == true)
         {
-            var skipped = options.SkippedCount;
-            return (inserted, 0, skipped);
+            result.Skipped = options.SkippedCount;
+            if (result.Skipped > 0)
+                result.SkipReasons.Add($"{result.Skipped} existing {sheetType} records skipped");
         }
-        var updated = Math.Max(0, rows.Count - inserted);
-        return (inserted, updated, 0);
+        else
+        {
+            result.Updated = Math.Max(0, rows.Count - inserted);
+        }
+
+        // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows)
+        var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
+        var unaccounted = rows.Count - totalAccountedFor;
+        if (unaccounted > 0)
+        {
+            result.Skipped += unaccounted;
+            result.SkipReasons.Add($"{unaccounted} rows with missing or empty required fields");
+        }
+
+        return result;
     }
 
     internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
