@@ -19,7 +19,7 @@ public class SpreadsheetAnalysisService(
     private const int SampleFirstRows = 5;
     private const int SampleLastRows = 3;
     private const int SampleRandomRows = 5;
-    private const int Tier2ChunkSize = 200;
+    private const int Tier2ChunkSize = 100;
     private const int MaxConcurrentChunks = 10;
 
     #region Analysis Phase
@@ -210,7 +210,7 @@ public class SpreadsheetAnalysisService(
 
 
         var response = await openAiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: 8000, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
         {
@@ -344,10 +344,19 @@ public class SpreadsheetAnalysisService(
         await Task.WhenAll(tasks);
 
         var results = new List<LlmProcessedData>();
-        foreach (var result in chunkResults)
+        var failedRows = 0;
+        for (int i = 0; i < chunkResults.Length; i++)
         {
-            if (result != null)
-                results.Add(result);
+            if (chunkResults[i] != null)
+                results.Add(chunkResults[i]!);
+            else
+                failedRows += chunks[i].Rows.Count;
+        }
+
+        if (failedRows > 0)
+        {
+            errorLogger?.LogWarning(ErrorCategory.Import,
+                $"AI processing: {failedRows} of {total} rows failed to process for sheet '{sheetAnalysis.SourceSheetName}'");
         }
 
         return results;
@@ -478,6 +487,7 @@ IMPORTANT:
         sb.AppendLine("- Skip rows that are clearly subtotals, headers, or empty");
         sb.AppendLine("- If multiple source rows represent one entity, group them");
         sb.AppendLine("- Respond with JSON array only, no markdown");
+        sb.AppendLine("- Cell values containing pipe characters appear as \\| in the table — use | (without backslash) in your JSON output");
 
         // Product-specific instructions for category generation
         if (entityType == SpreadsheetSheetType.Products)
@@ -703,12 +713,26 @@ IMPORTANT:
     {
         var headers = new List<string>();
         var row = worksheet.Row(headerRow);
-        for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
+        var colCount = worksheet.ColumnsUsed().Count();
+        var trailingEmpty = 0;
+        for (int col = 1; col <= colCount; col++)
         {
             var cell = row.Cell(col);
-            if (cell.IsEmpty()) break;
-            headers.Add(cell.GetString().Trim());
+            if (cell.IsEmpty())
+            {
+                // Track consecutive trailing empties — add placeholder for gaps
+                headers.Add($"Column{col}");
+                trailingEmpty++;
+            }
+            else
+            {
+                trailingEmpty = 0;
+                headers.Add(cell.GetString().Trim());
+            }
         }
+        // Remove trailing empty placeholders (only gap columns in the middle matter)
+        if (trailingEmpty > 0)
+            headers.RemoveRange(headers.Count - trailingEmpty, trailingEmpty);
         return headers;
     }
 
@@ -767,7 +791,9 @@ IMPORTANT:
         if (cell.IsEmpty()) return "";
         return cell.DataType switch
         {
-            XLDataType.DateTime => cell.GetDateTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            XLDataType.DateTime => cell.GetDateTime().TimeOfDay == TimeSpan.Zero
+                ? cell.GetDateTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                : cell.GetDateTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture),
             XLDataType.Number => cell.GetDouble().ToString(CultureInfo.InvariantCulture),
             XLDataType.Boolean => cell.GetBoolean().ToString(),
             _ => cell.GetString()
@@ -827,7 +853,14 @@ IMPORTANT:
 
         foreach (var delimiter in candidates)
         {
-            var count = headerLine.Count(c => c == delimiter);
+            // Count delimiter occurrences outside quoted fields
+            var count = 0;
+            var inQuotes = false;
+            foreach (var c in headerLine)
+            {
+                if (c == '"') inQuotes = !inQuotes;
+                else if (c == delimiter && !inQuotes) count++;
+            }
             if (count > maxCount)
             {
                 maxCount = count;
