@@ -1,5 +1,6 @@
-using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
@@ -29,6 +30,30 @@ public class ImportOptions
     /// Keys: "Products", "Categories", "Customers", "Suppliers", "Locations", "Departments", etc.
     /// </summary>
     public HashSet<string> AutoCreateTypes { get; set; } = [];
+
+    /// <summary>
+    /// If true, skip records that already exist instead of overwriting them.
+    /// </summary>
+    public bool SkipExistingRecords { get; set; }
+
+    /// <summary>
+    /// Tracks the number of records actually skipped during import.
+    /// Reset before each sheet import. Used internally by import methods.
+    /// </summary>
+    internal int SkippedCount { get; set; }
+}
+
+/// <summary>
+/// Per-sheet import result breakdown.
+/// </summary>
+public class SheetImportResult
+{
+    public required string SheetName { get; init; }
+    public required string EntityType { get; init; }
+    public int Inserted { get; set; }
+    public int Updated { get; set; }
+    public int Skipped { get; set; }
+    public List<string> SkipReasons { get; } = [];
 }
 
 /// <summary>
@@ -37,8 +62,21 @@ public class ImportOptions
 public class SpreadsheetImportResult
 {
     public int TotalImported { get; set; }
+    public int TotalUpdated { get; set; }
     public int TotalSkipped { get; set; }
     public List<string> Warnings { get; } = [];
+    public List<SheetImportResult> SheetResults { get; } = [];
+}
+
+/// <summary>
+/// Result of importing a single entity.
+/// </summary>
+public enum ImportEntityResult
+{
+    Failed,
+    Inserted,
+    Updated,
+    SkippedExisting
 }
 
 /// <summary>
@@ -114,7 +152,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
 
         options ??= new ImportOptions();
-        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -142,9 +179,6 @@ public class SpreadsheetImportService
                 // Mark data as modified
                 companyData.MarkAsModified();
             }, cancellationToken);
-
-            stopwatch.Stop();
-            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, Path.GetExtension(filePath), cancellationToken);
         }
         catch (Exception ex)
         {
@@ -164,32 +198,39 @@ public class SpreadsheetImportService
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(analysis);
 
         options ??= new ImportOptions();
-        var stopwatch = Stopwatch.StartNew();
         var result = new SpreadsheetImportResult();
 
         try
         {
             await Task.Run(() =>
             {
+                progress?.Report(("Reading spreadsheet...", -1));
                 using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var workbook = new XLWorkbook(fileStream);
 
                 if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
                 {
+                    progress?.Report(("Creating missing references...", -1));
                     CreateMissingReferences(workbook, companyData, options);
                 }
 
-                foreach (var worksheet in workbook.Worksheets)
+                var worksheets = workbook.Worksheets.ToList();
+                // +1 for AI categorization step at the end
+                var totalSteps = worksheets.Count + 1;
+                for (int i = 0; i < worksheets.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ImportWorksheetWithMapping(worksheet, companyData, analysis, result);
+                    var pct = (double)i / totalSteps * 100;
+                    progress?.Report(($"Importing {worksheets[i].Name} ({i + 1}/{worksheets.Count})...", pct));
+                    ImportWorksheetWithMapping(worksheets[i], companyData, analysis, result, options);
                 }
 
                 UpdateIdCounters(companyData);
@@ -197,10 +238,8 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
+            progress?.Report(("Categorizing products...", 90));
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
-
-            stopwatch.Stop();
-            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-xlsx", cancellationToken);
         }
         catch (Exception ex)
         {
@@ -219,7 +258,8 @@ public class SpreadsheetImportService
         CompanyData companyData,
         SpreadsheetAnalysisResult analysis,
         ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
@@ -231,6 +271,7 @@ public class SpreadsheetImportService
         {
             await Task.Run(() =>
             {
+                progress?.Report(("Reading CSV file...", 0));
                 var lines = File.ReadAllLines(filePath);
                 if (lines.Length < 2)
                 {
@@ -246,6 +287,7 @@ public class SpreadsheetImportService
                     return;
                 }
 
+                progress?.Report(($"Processing {lines.Length - 1:N0} rows...", 20));
                 var rows = new List<List<object?>>();
                 for (int i = 1; i < lines.Length; i++)
                 {
@@ -264,12 +306,16 @@ public class SpreadsheetImportService
 
                 if (sheetAnalysis != null)
                 {
+                    progress?.Report(($"Importing {rows.Count:N0} records...", 50));
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
-                    var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows);
-                    result.TotalImported += imported;
-                    result.TotalSkipped += skipped;
-                    if (imported == 0)
+                    var csvSheetName = Path.GetFileNameWithoutExtension(filePath);
+                    var sheetResult = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows, csvSheetName, options);
+                    result.TotalImported += sheetResult.Inserted;
+                    result.TotalUpdated += sheetResult.Updated;
+                    result.TotalSkipped += sheetResult.Skipped;
+                    result.SheetResults.Add(sheetResult);
+                    if (sheetResult.Inserted == 0 && sheetResult.Updated == 0)
                         result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
                 }
                 else
@@ -282,9 +328,8 @@ public class SpreadsheetImportService
             }, cancellationToken);
 
             // AI-categorize any products that ended up without a category
+            progress?.Report(("Categorizing products...", 80));
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
-
-            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", cancellationToken);
         }
         catch (Exception ex)
         {
@@ -351,16 +396,48 @@ public class SpreadsheetImportService
     /// Imports pre-processed entities from LLM Tier 2 processing.
     /// Returns (imported count, skipped count) for reporting.
     /// </summary>
-    public (int Imported, int Skipped) ImportProcessedEntities(
+    public SheetImportResult ImportProcessedEntities(
         CompanyData companyData,
         List<LlmProcessedData> processedData,
+        string sheetName,
+        ImportOptions? options = null)
+    {
+        return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
+    }
+
+    /// <summary>
+    /// Imports AI-processed entities and then runs AI categorization for any uncategorized products.
+    /// </summary>
+    public async Task<SheetImportResult> ImportProcessedEntitiesAsync(
+        CompanyData companyData,
+        List<LlmProcessedData> processedData,
+        string sheetName,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
+
+        // AI-categorize any products that ended up without a category
+        await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
+
+        return result;
+    }
+
+    private SheetImportResult ImportProcessedEntitiesCore(
+        CompanyData companyData,
+        List<LlmProcessedData> processedData,
+        string sheetName,
         ImportOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(processedData);
 
-        var imported = 0;
-        var skipped = 0;
+        var entityType = processedData.FirstOrDefault()?.EntityType.ToString() ?? "Unknown";
+        var sheetResult = new SheetImportResult
+        {
+            SheetName = sheetName,
+            EntityType = entityType
+        };
 
         foreach (var chunk in processedData)
         {
@@ -368,14 +445,26 @@ public class SpreadsheetImportService
             {
                 try
                 {
-                    if (ImportSingleEntity(companyData, chunk.EntityType, entityJson))
-                        imported++;
+                    var singleResult = ImportSingleEntity(companyData, chunk.EntityType, entityJson, options);
+                    if (singleResult == ImportEntityResult.Inserted)
+                        sheetResult.Inserted++;
+                    else if (singleResult == ImportEntityResult.Updated)
+                        sheetResult.Updated++;
+                    else if (singleResult == ImportEntityResult.SkippedExisting)
+                    {
+                        sheetResult.Skipped++;
+                        sheetResult.SkipReasons.Add($"Existing {chunk.EntityType} record skipped");
+                    }
                     else
-                        skipped++;
+                    {
+                        sheetResult.Skipped++;
+                        sheetResult.SkipReasons.Add($"Row had missing or empty ID ({chunk.EntityType})");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    skipped++;
+                    sheetResult.Skipped++;
+                    sheetResult.SkipReasons.Add($"Error importing {chunk.EntityType}: {ex.Message}");
                     _errorLogger?.LogError(ex, ErrorCategory.Import,
                         $"Failed to import {chunk.EntityType} entity from AI processing");
                 }
@@ -385,10 +474,10 @@ public class SpreadsheetImportService
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
 
-        return (imported, skipped);
+        return sheetResult;
     }
 
-    private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis, SpreadsheetImportResult result)
+    private void ImportWorksheetWithMapping(IXLWorksheet worksheet, CompanyData data, SpreadsheetAnalysisResult analysis, SpreadsheetImportResult result, ImportOptions? options = null)
     {
         var sheetName = worksheet.Name;
         var headers = GetHeaders(worksheet);
@@ -417,76 +506,78 @@ public class SpreadsheetImportService
 
         ApplyColumnMapping(headers, sheetAnalysis);
         var sheetType = sheetAnalysis.DetectedType;
-        var (imported, skipped) = ImportBySheetTypeWithCount(sheetType, data, headers, rows);
-        result.TotalImported += imported;
-        result.TotalSkipped += skipped;
-        if (imported == 0 && rows.Count > 0)
+        var sheetResult = ImportBySheetTypeWithCount(sheetType, data, headers, rows, sheetName, options);
+        result.TotalImported += sheetResult.Inserted;
+        result.TotalUpdated += sheetResult.Updated;
+        result.TotalSkipped += sheetResult.Skipped;
+        result.SheetResults.Add(sheetResult);
+        if (sheetResult.Inserted == 0 && sheetResult.Updated == 0 && rows.Count > 0)
             result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
     }
 
-    private void ImportBySheetType(SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportBySheetType(SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         switch (sheetType)
         {
             case SpreadsheetSheetType.Customers:
-                ImportCustomers(data, headers, rows);
+                ImportCustomers(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Invoices:
-                ImportInvoices(data, headers, rows);
+                ImportInvoices(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Expenses:
-                ImportPurchases(data, headers, rows);
+                ImportPurchases(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Products:
-                ImportProducts(data, headers, rows);
+                ImportProducts(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Inventory:
-                ImportInventory(data, headers, rows);
+                ImportInventory(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Payments:
-                ImportPayments(data, headers, rows);
+                ImportPayments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Suppliers:
-                ImportSuppliers(data, headers, rows);
+                ImportSuppliers(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Revenue:
-                ImportSales(data, headers, rows);
+                ImportSales(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.RentalInventory:
-                ImportRentalInventory(data, headers, rows);
+                ImportRentalInventory(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.RentalRecords:
-                ImportRentalRecords(data, headers, rows);
+                ImportRentalRecords(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Categories:
-                ImportCategories(data, headers, rows);
+                ImportCategories(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Departments:
-                ImportDepartments(data, headers, rows);
+                ImportDepartments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Employees:
-                ImportEmployees(data, headers, rows);
+                ImportEmployees(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Locations:
-                ImportLocations(data, headers, rows);
+                ImportLocations(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.RecurringInvoices:
-                ImportRecurringInvoices(data, headers, rows);
+                ImportRecurringInvoices(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.StockAdjustments:
-                ImportStockAdjustments(data, headers, rows);
+                ImportStockAdjustments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.PurchaseOrders:
-                ImportPurchaseOrders(data, headers, rows);
+                ImportPurchaseOrders(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
-                ImportPurchaseOrderLineItems(data, headers, rows);
+                ImportPurchaseOrderLineItems(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Returns:
-                ImportReturns(data, headers, rows);
+                ImportReturns(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.LostDamaged:
-                ImportLostDamaged(data, headers, rows);
+                ImportLostDamaged(data, headers, rows, options);
                 break;
         }
     }
@@ -516,15 +607,45 @@ public class SpreadsheetImportService
         _ => 0
     };
 
-    private (int imported, int skipped) ImportBySheetTypeWithCount(
-        SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows)
+    private SheetImportResult ImportBySheetTypeWithCount(
+        SpreadsheetSheetType sheetType, CompanyData data, List<string> headers, List<List<object?>> rows,
+        string sheetName, ImportOptions? options = null)
     {
         var countBefore = GetEntityCount(data, sheetType);
-        ImportBySheetType(sheetType, data, headers, rows);
+        if (options != null)
+            options.SkippedCount = 0;
+        ImportBySheetType(sheetType, data, headers, rows, options);
         var countAfter = GetEntityCount(data, sheetType);
-        var imported = countAfter - countBefore;
-        var skipped = rows.Count - imported;
-        return (Math.Max(0, imported), Math.Max(0, skipped));
+        var inserted = Math.Max(0, countAfter - countBefore);
+
+        var result = new SheetImportResult
+        {
+            SheetName = sheetName,
+            EntityType = sheetType.ToString(),
+            Inserted = inserted
+        };
+
+        if (options?.SkipExistingRecords == true)
+        {
+            result.Skipped = options.SkippedCount;
+            if (result.Skipped > 0)
+                result.SkipReasons.Add($"{result.Skipped} existing {sheetType} records skipped");
+        }
+        else
+        {
+            result.Updated = Math.Max(0, rows.Count - inserted);
+        }
+
+        // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows)
+        var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
+        var unaccounted = rows.Count - totalAccountedFor;
+        if (unaccounted > 0)
+        {
+            result.Skipped += unaccounted;
+            result.SkipReasons.Add($"{unaccounted} rows with missing or empty required fields");
+        }
+
+        return result;
     }
 
     internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
@@ -538,10 +659,17 @@ public class SpreadsheetImportService
         }
     }
 
-    private bool ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson)
+    private static readonly JsonSerializerOptions ImportJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new LenientEnumConverterFactory() }
+    };
+
+    private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null)
     {
         var jsonStr = entityJson.GetRawText();
-        var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var opts = ImportJsonOptions;
+        var skipExisting = options?.SkipExistingRecords == true;
 
         switch (entityType)
         {
@@ -550,36 +678,37 @@ public class SpreadsheetImportService
                 if (customer != null && !string.IsNullOrEmpty(customer.Id))
                 {
                     var existing = data.Customers.FirstOrDefault(c => c.Id == customer.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Customers.Remove(existing);
                     data.Customers.Add(customer);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Suppliers:
                 var supplier = JsonSerializer.Deserialize<Supplier>(jsonStr, opts);
                 if (supplier != null && !string.IsNullOrEmpty(supplier.Id))
                 {
                     var existing = data.Suppliers.FirstOrDefault(s => s.Id == supplier.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Suppliers.Remove(existing);
                     data.Suppliers.Add(supplier);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Products:
                 var product = JsonSerializer.Deserialize<Product>(jsonStr, opts);
                 if (product != null && !string.IsNullOrEmpty(product.Id))
                 {
-
                     // Auto-create category if product has a category name but no matching category
                     ResolveProductCategory(data, product, entityJson);
 
-
                     var existing = data.Products.FirstOrDefault(p => p.Id == product.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Products.Remove(existing);
                     data.Products.Add(product);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Invoices:
                 var invoice = JsonSerializer.Deserialize<Invoice>(jsonStr, opts);
                 if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
@@ -587,12 +716,17 @@ public class SpreadsheetImportService
                     invoice.OriginalCurrency = "USD";
                     invoice.TotalUSD = invoice.Total;
                     invoice.BalanceUSD = invoice.Balance;
+
+                    // Auto-create missing customer reference
+                    EnsureCustomerExists(data, invoice.CustomerId);
+
                     var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Invoices.Remove(existing);
                     data.Invoices.Add(invoice);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Expenses:
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
@@ -601,6 +735,10 @@ public class SpreadsheetImportService
                     expense.TotalUSD = expense.Total;
                     expense.TaxAmountUSD = expense.TaxAmount;
                     expense.ShippingCostUSD = expense.ShippingCost;
+
+                    // Auto-create missing supplier reference
+                    if (!string.IsNullOrEmpty(expense.SupplierId))
+                        EnsureSupplierExists(data, expense.SupplierId);
 
                     // Link product by name and auto-create if missing
                     var expProductName = expense.Description;
@@ -633,11 +771,12 @@ public class SpreadsheetImportService
                     }
 
                     var existing = data.Expenses.FirstOrDefault(e => e.Id == expense.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Expenses.Remove(existing);
                     data.Expenses.Add(expense);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Revenue:
                 var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
@@ -646,6 +785,10 @@ public class SpreadsheetImportService
                     revenue.TotalUSD = revenue.Total;
                     revenue.TaxAmountUSD = revenue.TaxAmount;
                     revenue.ShippingCostUSD = revenue.ShippingCost;
+
+                    // Auto-create missing customer reference
+                    if (!string.IsNullOrEmpty(revenue.CustomerId))
+                        EnsureCustomerExists(data, revenue.CustomerId);
 
                     // Link product by name and auto-create if missing
                     var productName = revenue.Description;
@@ -679,65 +822,76 @@ public class SpreadsheetImportService
                     }
 
                     var existing = data.Revenues.FirstOrDefault(r => r.Id == revenue.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Revenues.Remove(existing);
                     data.Revenues.Add(revenue);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Payments:
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
                     payment.OriginalCurrency = "USD";
                     payment.AmountUSD = payment.Amount;
+
+                    // Auto-create missing customer and invoice references
+                    EnsureCustomerExists(data, payment.CustomerId);
+                    EnsureInvoiceExists(data, payment.InvoiceId, payment.CustomerId);
+
                     var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Payments.Remove(existing);
                     data.Payments.Add(payment);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Categories:
                 var category = JsonSerializer.Deserialize<Category>(jsonStr, opts);
                 if (category != null && !string.IsNullOrEmpty(category.Id))
                 {
                     var existing = data.Categories.FirstOrDefault(c => c.Id == category.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Categories.Remove(existing);
                     data.Categories.Add(category);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Employees:
                 var employee = JsonSerializer.Deserialize<Employee>(jsonStr, opts);
                 if (employee != null && !string.IsNullOrEmpty(employee.Id))
                 {
                     var existing = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Employees.Remove(existing);
                     data.Employees.Add(employee);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Locations:
                 var location = JsonSerializer.Deserialize<Location>(jsonStr, opts);
                 if (location != null && !string.IsNullOrEmpty(location.Id))
                 {
                     var existing = data.Locations.FirstOrDefault(l => l.Id == location.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Locations.Remove(existing);
                     data.Locations.Add(location);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Departments:
                 var dept = JsonSerializer.Deserialize<Department>(jsonStr, opts);
                 if (dept != null && !string.IsNullOrEmpty(dept.Id))
                 {
                     var existing = data.Departments.FirstOrDefault(d => d.Id == dept.Id);
+                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Departments.Remove(existing);
                     data.Departments.Add(dept);
-                    return true;
+                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
-                return false;
+                return ImportEntityResult.Failed;
             default:
-                return false;
+                return ImportEntityResult.Failed;
         }
     }
 
@@ -2162,12 +2316,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     #region Import Methods (Merge Logic)
 
-    private void ImportCustomers(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportCustomers(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Customers.FirstOrDefault(c => c.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var customer = existing ?? new Customer();
             customer.Id = id;
@@ -2192,12 +2347,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportInvoices(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportInvoices(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var invoiceNumber = GetString(row, headers, "Invoice #");
             var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var invoice = existing ?? new Invoice();
             invoice.Id = invoiceNumber;
@@ -2254,12 +2410,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportPurchases(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportPurchases(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
@@ -2308,7 +2465,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         // Build lookup dictionaries to avoid O(N) scans per row
         var productsById = data.Products.ToDictionary(p => p.Id, p => p);
@@ -2331,10 +2488,11 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Match by name for auto-created placeholder products (created from foreign key references)
             if (existing == null && !string.IsNullOrEmpty(name))
             {
-                productsByName.TryGetValue(id, out var placeholder);
+                productsByName.TryGetValue(name, out var placeholder);
                 if (placeholder != null)
                     existing = placeholder;
             }
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var typeStr = GetString(row, headers, "Type");
             var productType = typeStr.ToLowerInvariant() switch
@@ -2420,12 +2578,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportInventory(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportInventory(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Inventory.FirstOrDefault(i => i.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var item = existing ?? new InventoryItem();
             item.Id = id;
@@ -2445,12 +2604,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportPayments(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportPayments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Payments.FirstOrDefault(p => p.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var payment = existing ?? new Payment();
             payment.Id = id;
@@ -2473,12 +2633,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportSuppliers(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportSuppliers(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Suppliers.FirstOrDefault(s => s.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var supplier = existing ?? new Supplier();
             supplier.Id = id;
@@ -2501,12 +2662,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
@@ -2558,6 +2720,32 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
+    private static void EnsureCustomerExists(CompanyData data, string? customerId)
+    {
+        if (string.IsNullOrEmpty(customerId)) return;
+        if (data.Customers.Any(c => c.Id == customerId)) return;
+        data.Customers.Add(new Customer { Id = customerId, Name = customerId });
+    }
+
+    private static void EnsureSupplierExists(CompanyData data, string? supplierId)
+    {
+        if (string.IsNullOrEmpty(supplierId)) return;
+        if (data.Suppliers.Any(s => s.Id == supplierId)) return;
+        data.Suppliers.Add(new Supplier { Id = supplierId, Name = supplierId });
+    }
+
+    private static void EnsureInvoiceExists(CompanyData data, string? invoiceId, string? customerId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        if (data.Invoices.Any(i => i.Id == invoiceId)) return;
+        data.Invoices.Add(new Invoice
+        {
+            Id = invoiceId,
+            CustomerId = customerId ?? string.Empty,
+            OriginalCurrency = "USD"
+        });
+    }
+
     /// <summary>
     /// Finds a product by name, preferring products whose category matches the given type.
     /// This handles the case where the same product name exists under both Revenue and Expense categories.
@@ -2583,7 +2771,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// Auto-creates a product from revenue/expense data when no matching product exists.
     /// Uses the product name from the transaction description and sets a sensible unit price.
     /// </summary>
-    private static Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
+    private Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
     {
         var newId = $"PRD-IMP-{data.Products.Count + 1:D3}";
         var product = new Product
@@ -2594,16 +2782,22 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             Type = type,
             ItemType = "Product"
         };
+
+        // Always assign a category so no product is left uncategorized
+        var category = FindOrCreateCategory(data, name, type, "Product");
+        product.CategoryId = category.Id;
+
         data.Products.Add(product);
         return product;
     }
 
-    private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.RentalInventory.FirstOrDefault(r => r.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var item = existing ?? new RentalItem();
             item.Id = id;
@@ -2624,7 +2818,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportRentalRecords(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportRentalRecords(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         // Group rows by ID to support multi-line-item rentals (same ID = multiple line items)
         var groupedRows = new Dictionary<string, List<List<object?>>>();
@@ -2640,6 +2834,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var (id, idRows) in groupedRows)
         {
             var existing = data.Rentals.FirstOrDefault(r => r.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
             var record = existing ?? new RentalRecord();
             record.Id = id;
 
@@ -2685,12 +2880,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportCategories(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportCategories(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Categories.FirstOrDefault(c => c.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var typeStr = GetString(row, headers, "Type");
             var categoryType = typeStr.ToLowerInvariant() switch
@@ -2723,12 +2919,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportDepartments(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportDepartments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Departments.FirstOrDefault(d => d.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var department = existing ?? new Department();
             department.Id = id;
@@ -2740,12 +2937,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Employees.FirstOrDefault(e => e.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var employee = existing ?? new Employee();
             employee.Id = id;
@@ -2775,12 +2973,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportLocations(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportLocations(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Locations.FirstOrDefault(l => l.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var location = existing ?? new Location();
             location.Id = id;
@@ -2803,12 +3002,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportRecurringInvoices(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportRecurringInvoices(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var recurring = existing ?? new RecurringInvoice();
             recurring.Id = id;
@@ -2827,12 +3027,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportStockAdjustments(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportStockAdjustments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.StockAdjustments.FirstOrDefault(s => s.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var adjustment = existing ?? new StockAdjustment();
             adjustment.Id = id;
@@ -2852,12 +3053,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportPurchaseOrders(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportPurchaseOrders(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var po = existing ?? new PurchaseOrder();
             po.Id = id;
@@ -2872,7 +3074,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportPurchaseOrderLineItems(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportPurchaseOrderLineItems(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         // Group line items by purchase order ID
         var lineItemsByPo = new Dictionary<string, List<PurchaseOrderLineItem>>();
@@ -2902,6 +3104,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             var po = data.PurchaseOrders.FirstOrDefault(p => p.Id == poId);
             if (po != null)
             {
+                if (options?.SkipExistingRecords == true && po.LineItems.Count > 0) continue;
                 po.LineItems = lineItems;
                 // Calculate subtotal from line items
                 po.Subtotal = lineItems.Sum(li => li.Total);
@@ -2909,12 +3112,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportReturns(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportReturns(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.Returns.FirstOrDefault(r => r.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var returnRecord = existing ?? new Return();
             returnRecord.Id = id;
@@ -2963,12 +3167,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportLostDamaged(CompanyData data, List<string> headers, List<List<object?>> rows)
+    private void ImportLostDamaged(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
             var existing = data.LostDamaged.FirstOrDefault(ld => ld.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var lostDamaged = existing ?? new LostDamaged();
             lostDamaged.Id = id;
@@ -3061,4 +3266,55 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     }
 
     #endregion
+}
+
+/// <summary>
+/// A JsonConverterFactory that handles enum values leniently — strips spaces,
+/// hyphens, and underscores before attempting case-insensitive enum parsing.
+/// Falls back to the first enum value if parsing fails entirely.
+/// </summary>
+internal class LenientEnumConverterFactory : JsonConverterFactory
+{
+    public override bool CanConvert(Type typeToConvert) =>
+        typeToConvert.IsEnum || (Nullable.GetUnderlyingType(typeToConvert)?.IsEnum == true);
+
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        var enumType = Nullable.GetUnderlyingType(typeToConvert) ?? typeToConvert;
+        var converterType = typeof(LenientEnumConverter<>).MakeGenericType(enumType);
+        return (JsonConverter)Activator.CreateInstance(converterType)!;
+    }
+}
+
+internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Number)
+        {
+            var intValue = reader.GetInt32();
+            if (Enum.IsDefined(typeof(T), intValue))
+                return (T)Enum.ToObject(typeof(T), intValue);
+            return default;
+        }
+
+        var value = reader.GetString();
+        if (string.IsNullOrEmpty(value))
+            return default;
+
+        // Try exact match first
+        if (Enum.TryParse<T>(value, ignoreCase: true, out var result))
+            return result;
+
+        // Strip spaces, hyphens, underscores and try again
+        var normalized = value.Replace(" ", "").Replace("-", "").Replace("_", "");
+        if (Enum.TryParse<T>(normalized, ignoreCase: true, out result))
+            return result;
+
+        // Fall back to default enum value
+        return default;
+    }
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.ToString());
 }

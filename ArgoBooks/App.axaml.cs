@@ -2796,6 +2796,20 @@ public class App : Application
         };
     }
 
+    private static async Task<bool> ConfirmCancelAsync()
+    {
+        var dialog = ConfirmationDialog;
+        if (dialog == null) return true;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Cancel Operation?".Translate(),
+            Message = "Are you sure you want to cancel?".Translate(),
+            PrimaryButtonText = "Yes".Translate(),
+            CancelButtonText = "No".Translate()
+        });
+        return result == ConfirmationResult.Primary;
+    }
+
     /// <summary>
     /// Performs the AI-powered import flow: analyze → review → validate → import.
     /// </summary>
@@ -2803,7 +2817,9 @@ public class App : Application
     {
         if (_appShellViewModel == null) return;
 
-        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate());
+        using var analysisCts = new CancellationTokenSource();
+        _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
+        await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
         // Check rate limit via server-side API
         var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
@@ -2843,13 +2859,19 @@ public class App : Application
         var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company?.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, openAiService);
 
+        var analysisProgress = new Progress<(string detail, double percent)>(p =>
+        {
+            _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync);
+        });
+
         try
         {
             // Step 1: AI Analysis
             var analysis = isCsv
-                ? await analysisService.AnalyzeCsvAsync(filePath)
-                : await analysisService.AnalyzeAsync(filePath);
+                ? await analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress)
+                : await analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress);
 
+            await Task.Yield();
             _mainWindowViewModel?.HideLoading();
 
             if (analysis == null || analysis.Sheets.Count == 0)
@@ -2879,27 +2901,29 @@ public class App : Application
                 return;
             }
 
+            // Start timing after user approval — excludes UI wait time
+            var importStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             // Create snapshot for undo
             var snapshot = CreateCompanyDataSnapshot(companyData);
 
-            // Step 3: Process Tier 1 sheets (validation + import with mapped headers)
-            // For CSV files, treat all sheets as Tier 1 — the column-mapping import path
-            // already handles currency symbols, mixed date formats, and other format variations
-            // via ParseDecimalString and DateTime.TryParse, so LLM row processing is unnecessary.
-            var tier1Sheets = isCsv
-                ? includedSheets.ToList()
-                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
-            var tier2Sheets = isCsv
-                ? new List<SheetAnalysis>()
-                : includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
+            // Step 3: Split sheets by processing tier
+            // Respect the AI's tier recommendation for both Excel and CSV files.
+            // Mixed-type CSVs (e.g., expenses + payments in one file) need Tier 2 LLM processing.
+            var tier1Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier1_Mapping).ToList();
+            var tier2Sheets = includedSheets.Where(s => s.Tier == ProcessingTier.Tier2_LlmProcessing).ToList();
 
-            var importOptions = new ImportOptions();
+            var importOptions = new ImportOptions
+            {
+                SkipExistingRecords = mappingDialog.SkipExistingRecords
+            };
 
             // Tier 1: Validate with mappings
             SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)
             {
-                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate());
+                using var validationCts = new CancellationTokenSource();
+                _mainWindowViewModel?.ShowLoading("Validating mapped data...".Translate(), cts: validationCts, cancelConfirmation: ConfirmCancelAsync);
 
                 var validationResult = isCsv
                     ? new ImportValidationResult() // CSV validation is simpler
@@ -2923,35 +2947,94 @@ public class App : Application
                 }
 
                 // Import Tier 1 data
-                _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
+                using var importCts = new CancellationTokenSource();
+                _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts, cancelConfirmation: ConfirmCancelAsync);
+
+                var importProgress = new Progress<(string detail, double percent)>(p =>
+                {
+                    _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), p.detail, p.percent, importCts, ConfirmCancelAsync);
+                });
 
                 tier1Result = isCsv
-                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions)
-                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions);
+                    ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, importCts.Token, importProgress)
+                    : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, importCts.Token, importProgress);
 
+                // Yield to let any pending Progress<T> callbacks (dispatched via
+                // SynchronizationContext.Post) execute before hiding the loading
+                // overlay, otherwise the last callback can re-show it after HideLoading.
+                await Task.Yield();
                 _mainWindowViewModel?.HideLoading();
             }
 
             // Tier 2: LLM row processing
             var totalImported = 0;
             var totalSkipped = 0;
+            var allSheetResults = new List<SheetImportResult>();
             if (tier2Sheets.Count > 0)
             {
+                using var tier2Cts = new CancellationTokenSource();
                 foreach (var sheet in tier2Sheets)
                 {
-                    _mainWindowViewModel?.ShowLoading($"AI processing {sheet.SourceSheetName}...");
+                    _mainWindowViewModel?.ShowLoading(
+                        "AI processing...".Translate(),
+                        sheet.SourceSheetName,
+                        progress: 0,
+                        cts: tier2Cts,
+                        cancelConfirmation: ConfirmCancelAsync);
+
+                    // Use a timer to show estimated progress while waiting for
+                    // the LLM to finish. Chunk-level progress only fires after
+                    // each chunk completes, so with few rows (< chunk size) the
+                    // bar would otherwise stay at 0% the entire time.
+                    var estimatedProgress = 0.0;
+                    var chunkProgressReceived = false;
+                    using var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+                    var timerTask = Task.Run(async () =>
+                    {
+                        while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
+                        {
+                            if (chunkProgressReceived) break;
+                            estimatedProgress = Math.Min(estimatedProgress + 1, 90);
+                            _mainWindowViewModel?.ShowLoading(
+                                "AI processing...".Translate(),
+                                $"{sheet.SourceSheetName} — processing rows...",
+                                estimatedProgress,
+                                tier2Cts,
+                                ConfirmCancelAsync);
+                        }
+                    }, tier2Cts.Token);
 
                     var processedChunks = await analysisService.ProcessAllChunksAsync(
                         filePath, sheet,
                         new Progress<(int processed, int total)>(p =>
                         {
+                            chunkProgressReceived = true;
+                            var pct = p.total > 0 ? (double)p.processed / p.total * 100 : -1;
                             _mainWindowViewModel?.ShowLoading(
-                                $"AI processing {sheet.SourceSheetName}... {p.processed}/{p.total} rows");
-                        }));
+                                "AI processing...".Translate(),
+                                $"{sheet.SourceSheetName} — {p.processed}/{p.total} rows",
+                                pct,
+                                tier2Cts,
+                                ConfirmCancelAsync);
+                        }),
+                        tier2Cts.Token);
 
-                    var (imported, skipped) = importService.ImportProcessedEntities(companyData, processedChunks, importOptions);
-                    totalImported += imported;
-                    totalSkipped += skipped;
+                    // Stop the estimate timer and wait for it to exit cleanly
+                    estimateTimer.Dispose();
+                    try { await timerTask; } catch (OperationCanceledException) { }
+
+                    // Show categorization step
+                    _mainWindowViewModel?.ShowLoading(
+                        "AI processing...".Translate(),
+                        "Categorizing products...",
+                        95,
+                        tier2Cts,
+                        ConfirmCancelAsync);
+
+                    var tier2Result = await importService.ImportProcessedEntitiesAsync(companyData, processedChunks, sheet.SourceSheetName, importOptions, tier2Cts.Token);
+                    totalImported += tier2Result.Inserted;
+                    totalSkipped += tier2Result.Skipped;
+                    allSheetResults.Add(tier2Result);
                 }
 
                 // Yield to let any pending Progress<T> callbacks (dispatched via
@@ -2960,6 +3043,16 @@ public class App : Application
                 await Task.Yield();
                 _mainWindowViewModel?.HideLoading();
             }
+
+            // Track import duration telemetry (covers analysis, validation, all tiers, and categorization)
+            importStopwatch.Stop();
+            var importContext = isCsv ? "ai-csv" : "ai-xlsx";
+            if (tier2Sheets.Count > 0 && tier1Sheets.Count == 0)
+                importContext = isCsv ? "ai-csv-tier2" : "ai-xlsx-tier2";
+            else if (tier2Sheets.Count > 0)
+                importContext = isCsv ? "ai-csv-mixed" : "ai-xlsx-mixed";
+            _ = TelemetryManager?.TrackFeatureAsync(
+                FeatureName.DataImported, importContext, importStopwatch.ElapsedMilliseconds);
 
             // Record usage on server
             await usageService.IncrementUsageAsync();
@@ -2981,36 +3074,38 @@ public class App : Application
             ChartSettingsService.Instance.SelectedDateRange = "All Time";
 
             // Combine Tier 1 and Tier 2 counts
+            var totalUpdated = 0;
             if (tier1Result != null)
             {
                 totalImported += tier1Result.TotalImported;
+                totalUpdated += tier1Result.TotalUpdated;
                 totalSkipped += tier1Result.TotalSkipped;
+                allSheetResults.AddRange(tier1Result.SheetResults);
             }
 
+            var totalProcessed = totalImported + totalUpdated;
+
             // Collect all warnings
-            var allWarnings = tier1Result?.Warnings ?? [];
+            var allWarnings = (tier1Result?.Warnings ?? []).ToList();
 
-            // Build success message
-            var successMessage = totalImported > 0
-                ? "AI import completed successfully.".Translate()
-                : "AI import completed but no records were imported.".Translate();
+            // Collect skip reasons from all sheets
+            var allSkipReasons = allSheetResults
+                .SelectMany(sr => sr.SkipReasons)
+                .GroupBy(r => r)
+                .Select(g => g.Count() > 1 ? $"{g.Key} (\u00d7{g.Count()})" : g.Key)
+                .ToList();
 
-            successMessage += $"\n\n{"Imported:".Translate()} {totalImported:N0}";
-            if (totalSkipped > 0)
-                successMessage += $" — {"Skipped:".Translate()} {totalSkipped:N0}";
-
-            if (allWarnings.Count > 0)
-                successMessage += "\n\n" + string.Join("\n", allWarnings);
-
-            if (totalImported > 0)
-                successMessage += "\n\n" + "Please save to persist changes.".Translate();
-
-            if (totalImported == 0)
-                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
-            else if (totalSkipped > 0 || allWarnings.Count > 0)
-                await ShowWarningMessageBoxAsync("Import Complete".Translate(), successMessage);
-            else
-                await ShowSuccessMessageBoxAsync("Import Complete".Translate(), successMessage);
+            // Show import result dialog
+            var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
+            await resultDialog.ShowAsync(
+                Path.GetFileName(filePath),
+                allSheetResults,
+                totalImported, totalUpdated, totalSkipped,
+                allSkipReasons, allWarnings, totalProcessed > 0);
+        }
+        catch (OperationCanceledException)
+        {
+            _mainWindowViewModel?.HideLoading();
         }
         catch (Exception ex)
         {

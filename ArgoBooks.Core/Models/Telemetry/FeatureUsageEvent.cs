@@ -18,6 +18,11 @@ public class FeatureUsageEvent : TelemetryEvent
     /// Additional context about the feature usage (e.g., chart type, report type).
     /// </summary>
     public string? Context { get; set; }
+
+    /// <summary>
+    /// Duration of the operation in milliseconds (when applicable, e.g., data imports).
+    /// </summary>
+    public long? DurationMs { get; set; }
 }
 
 /// <summary>

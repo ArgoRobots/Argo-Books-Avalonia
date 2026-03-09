@@ -481,15 +481,21 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="Review the detected mappings above, then click Accept to proceed with import."
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       VerticalAlignment="Center"
-                                       TextWrapping="Wrap" />
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="6">
+                                <TextBlock Text="Review the detected mappings above, then click Accept to proceed with import."
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap" />
+                                <CheckBox IsChecked="{Binding SkipExistingRecords}">
+                                    <TextBlock Text="Don't overwrite existing records"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </CheckBox>
+                            </StackPanel>
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
-                                        Spacing="12">
+                                        Spacing="12"
+                                        VerticalAlignment="Bottom">
                                 <Button Classes="secondary-button"
                                         Content="Cancel"
                                         Command="{Binding RequestCloseCommand}" />

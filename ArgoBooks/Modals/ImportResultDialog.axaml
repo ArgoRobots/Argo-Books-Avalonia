@@ -1,0 +1,278 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.ImportResultDialog"
+             x:DataType="vm:ImportResultDialogViewModel"
+             Focusable="True">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CloseCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="460"
+                MaxHeight="600"
+                Margin="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Success Icon -->
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="20"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding IsSuccess}">
+                            <Border.Background>
+                                <SolidColorBrush Color="{DynamicResource SuccessColor}" Opacity="0.15" />
+                            </Border.Background>
+                            <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource SuccessBrush}" />
+                        </Border>
+                        <!-- Warning Icon -->
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="20"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding !IsSuccess}">
+                            <Border.Background>
+                                <SolidColorBrush Color="{DynamicResource WarningColor}" Opacity="0.15" />
+                            </Border.Background>
+                            <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1"
+                                   Text="Import Complete"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Width="32" Height="32"
+                                VerticalAlignment="Top"
+                                Command="{Binding CloseCommand}">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="16" Margin="24">
+
+                        <!-- File name -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="12,10">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="{x:Static icons:Icons.DocumentBlankAlt}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding FileName}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Summary Stats -->
+                        <Grid ColumnDefinitions="*,*,*">
+                            <!-- New -->
+                            <Border Grid.Column="0"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16,12"
+                                    Margin="0,0,4,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="New"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding TotalNew, StringFormat='{}{0:N0}'}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource SuccessBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <!-- Updated -->
+                            <Border Grid.Column="1"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16,12"
+                                    Margin="4,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="Updated"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding TotalUpdated, StringFormat='{}{0:N0}'}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource PrimaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                            <!-- Skipped -->
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16,12"
+                                    Margin="4,0,0,0">
+                                <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="Skipped"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding TotalSkipped, StringFormat='{}{0:N0}'}"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource WarningBrush}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Per-sheet breakdown (only when multiple sheets) -->
+                        <StackPanel Spacing="6" IsVisible="{Binding HasMultipleSheets}">
+                            <TextBlock Text="Per sheet"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Margin="0,0,0,2" />
+                            <ItemsControl ItemsSource="{Binding SheetResults}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:SheetResultItem">
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="6"
+                                                Padding="12,8"
+                                                Margin="0,0,0,4">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding DisplayLabel}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Summary}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Skip Reasons -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="16,12"
+                                IsVisible="{Binding HasSkipReasons}">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                                              Width="16" Height="16"
+                                              Foreground="{DynamicResource WarningBrush}" />
+                                    <TextBlock Text="Skip Reasons"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding SkipReasons}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat='• {0}'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="24,2,0,0" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Warnings -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="16,12"
+                                IsVisible="{Binding HasWarnings}">
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                              Width="16" Height="16"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Warnings"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding Warnings}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat='• {0}'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="24,2,0,0" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Please save to persist changes."
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding NeedsSave}" />
+                        <Button Grid.Column="1"
+                                Classes="primary-button"
+                                Content="OK"
+                                MinWidth="80"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding CloseCommand}" />
+                    </Grid>
+                </Border>
+            </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

@@ -31,7 +31,7 @@ public interface ITelemetryManager
     /// <summary>
     /// Tracks a feature usage event.
     /// </summary>
-    Task TrackFeatureAsync(FeatureName featureName, string? context = null, CancellationToken cancellationToken = default);
+    Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Tracks a page view event.

@@ -29,10 +29,15 @@ public class SpreadsheetAnalysisService(
     /// </summary>
     public async Task<SpreadsheetAnalysisResult?> AnalyzeAsync(
         string filePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         try
         {
+            // Report initial progress so the UI shows the loading overlay immediately
+            progress?.Report(("Reading file...", 0));
+            await Task.Yield();
+
             using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var workbook = new XLWorkbook(fileStream);
 
@@ -54,8 +59,9 @@ public class SpreadsheetAnalysisService(
                 return null;
 
             return await AnalyzeWithLlmAsync(
-                Path.GetFileName(filePath), sheetsData, cancellationToken);
+                Path.GetFileName(filePath), sheetsData, cancellationToken, progress);
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze spreadsheet with AI");
@@ -68,10 +74,15 @@ public class SpreadsheetAnalysisService(
     /// </summary>
     public async Task<SpreadsheetAnalysisResult?> AnalyzeCsvAsync(
         string filePath,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         try
         {
+            // Report initial progress so the UI shows the loading overlay immediately
+            progress?.Report(("Reading file...", 0));
+            await Task.Yield();
+
             var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
             if (lines.Length < 2)
                 return null;
@@ -97,8 +108,9 @@ public class SpreadsheetAnalysisService(
             };
 
             return await AnalyzeWithLlmAsync(
-                Path.GetFileName(filePath), sheetsData, cancellationToken);
+                Path.GetFileName(filePath), sheetsData, cancellationToken, progress);
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             errorLogger?.LogError(ex, ErrorCategory.Import, "Failed to analyze CSV with AI");
@@ -109,15 +121,52 @@ public class SpreadsheetAnalysisService(
     private async Task<SpreadsheetAnalysisResult?> AnalyzeWithLlmAsync(
         string fileName,
         List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> sheetsData,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IProgress<(string detail, double percent)>? progress = null)
     {
         var systemPrompt = BuildAnalysisSystemPrompt();
         var userPrompt = BuildAnalysisUserPrompt(sheetsData);
 
         // Scale max tokens based on number of sheets — each sheet needs ~300-500 tokens for mappings
         var maxTokens = Math.Max(4000, sheetsData.Count * 500);
-        var response = await openAiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+
+        // Estimate LLM duration based on prompt size (more sheets → longer)
+        var estimatedSeconds = Math.Max(6, sheetsData.Count * 3);
+        var intervalMs = (int)(estimatedSeconds * 1000.0 / 95);
+
+        var currentProgress = 0.0;
+        progress?.Report(("Analyzing with AI...", currentProgress));
+
+        using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(intervalMs));
+        var timerTask = Task.Run(async () =>
+        {
+            while (await progressTimer.WaitForNextTickAsync(cancellationToken))
+            {
+                if (currentProgress < 95)
+                {
+                    currentProgress = Math.Min(currentProgress + 1, 95);
+                }
+                else
+                {
+                    // Slow asymptotic approach toward 99 so it never looks stuck
+                    currentProgress += (99 - currentProgress) * 0.05;
+                }
+                progress?.Report(("Analyzing with AI...", currentProgress));
+            }
+        }, cancellationToken);
+
+        string? response;
+        try
+        {
+            response = await openAiService.SendChatAsync(
+                systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+        }
+        finally
+        {
+            progressTimer.Dispose(); // stops the timer, timerTask will complete
+        }
+
+        progress?.Report(("Analyzing with AI...", 100));
 
         if (string.IsNullOrEmpty(response))
             return null;

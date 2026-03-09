@@ -2,6 +2,7 @@ using ArgoBooks.Core.Models;
 using Avalonia.Controls;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
 
@@ -51,6 +52,39 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _loadingMessage;
+
+    [ObservableProperty]
+    private string? _loadingDetail;
+
+    [ObservableProperty]
+    private double _loadingProgress = -1;
+
+    [ObservableProperty]
+    private bool _isLoadingCancellable;
+
+    private CancellationTokenSource? _loadingCts;
+    private Func<Task<bool>>? _cancelConfirmation;
+
+    public bool IsLoadingIndeterminate => LoadingProgress < 0;
+
+    public string? LoadingProgressText => LoadingProgress >= 0 ? $"{LoadingProgress:0}%" : null;
+
+    partial void OnLoadingProgressChanged(double value)
+    {
+        OnPropertyChanged(nameof(IsLoadingIndeterminate));
+        OnPropertyChanged(nameof(LoadingProgressText));
+    }
+
+    [RelayCommand]
+    private async Task CancelLoadingAsync()
+    {
+        if (_cancelConfirmation != null)
+        {
+            var confirmed = await _cancelConfirmation();
+            if (!confirmed) return;
+        }
+        _loadingCts?.Cancel();
+    }
 
     /// <summary>
     /// Gets or sets the CreateCompanyViewModel for the full-screen wizard.
@@ -290,9 +324,20 @@ public partial class MainWindowViewModel : ViewModelBase
     /// Shows a loading overlay with optional message.
     /// </summary>
     /// <param name="message">Loading message to display.</param>
-    public void ShowLoading(string? message = null)
+    /// <param name="detail">Optional secondary detail text.</param>
+    /// <param name="progress">Progress value 0-100, or -1 for indeterminate.</param>
+    public void ShowLoading(string? message = null, string? detail = null, double progress = -1,
+        CancellationTokenSource? cts = null, Func<Task<bool>>? cancelConfirmation = null)
     {
         LoadingMessage = message ?? "Loading...";
+        LoadingDetail = detail;
+        LoadingProgress = progress;
+        if (cts != null)
+        {
+            _loadingCts = cts;
+            _cancelConfirmation = cancelConfirmation;
+            IsLoadingCancellable = true;
+        }
         IsLoading = true;
     }
 
@@ -303,6 +348,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsLoading = false;
         LoadingMessage = null;
+        LoadingDetail = null;
+        LoadingProgress = -1;
+        _loadingCts = null;
+        _cancelConfirmation = null;
+        IsLoadingCancellable = false;
     }
 
     /// <summary>

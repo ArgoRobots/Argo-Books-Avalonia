@@ -122,6 +122,11 @@ public partial class AppShellViewModel : ViewModelBase
     public ImportValidationDialogViewModel ImportValidationDialogViewModel { get; }
 
     /// <summary>
+    /// Gets the import result dialog view model.
+    /// </summary>
+    public ImportResultDialogViewModel ImportResultDialogViewModel { get; }
+
+    /// <summary>
     /// Gets the import mapping dialog view model.
     /// </summary>
     public ImportMappingDialogViewModel ImportMappingDialogViewModel { get; }
@@ -397,6 +402,7 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create import validation dialog
         ImportValidationDialogViewModel = new ImportValidationDialogViewModel();
+        ImportResultDialogViewModel = new ImportResultDialogViewModel();
 
         // Create import mapping dialog
         ImportMappingDialogViewModel = new ImportMappingDialogViewModel();
