@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
@@ -542,7 +543,7 @@ public partial class InsightsPageViewModel : ViewModelBase
             var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
 
             // Update the analysis period description
-            InsightsAnalysisPeriod = SelectedInsightsDateRange == "All Time"
+            InsightsAnalysisPeriod = SelectedInsightsDateRange == DateRangePreset.AllTime.GetDisplayName()
                 ? "Based on all available data"
                 : $"Based on {SelectedInsightsDateRange.ToLowerInvariant()} of data";
 

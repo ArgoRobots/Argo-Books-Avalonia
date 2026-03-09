@@ -126,7 +126,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                     OnPropertyChanged(nameof(ComparisonPeriodLabel));
                     OnPropertyChanged(nameof(DateRangeDisplayText));
 
-                    if (value == "Custom Range")
+                    if (value == DateRangePreset.CustomRange.GetDisplayName())
                     {
                         OpenCustomDateRangeModal();
                     }
@@ -148,7 +148,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     }
 
     // Stores the previous selection before opening custom range modal
-    private string _previousDateRange = "This Month";
+    private string _previousDateRange = DateRangePreset.ThisMonth.GetDisplayName();
 
     /// <summary>
     /// Gets or sets the start date (delegates to shared service).
@@ -244,7 +244,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Gets whether the custom date range option is selected.
     /// </summary>
-    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
+    public bool IsCustomDateRange => SelectedDateRange == DateRangePreset.CustomRange.GetDisplayName();
 
     /// <summary>
     /// Gets the label for comparison period based on selected date range (delegates to shared service).
@@ -258,7 +258,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         // Store the previous selection before opening the modal
         // so we can restore it if the user cancels
-        if (SelectedDateRange != "Custom Range")
+        if (SelectedDateRange != DateRangePreset.CustomRange.GetDisplayName())
         {
             _previousDateRange = SelectedDateRange;
         }
@@ -1584,7 +1584,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         if (!styleChangeOnly)
         {
             // Determine if a date range filter is active and data exists beyond it
-            var isFiltered = SelectedDateRange != "All Time";
+            var isFiltered = SelectedDateRange != DateRangePreset.AllTime.GetDisplayName();
             ShowRevenueDateRangeMessage = isFiltered && data.Revenues.Count > 0;
             ShowExpenseDateRangeMessage = isFiltered && data.Expenses.Count > 0;
             ShowFinancialDateRangeMessage = isFiltered && (data.Revenues.Count > 0 || data.Expenses.Count > 0);

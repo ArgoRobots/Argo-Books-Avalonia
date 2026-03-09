@@ -56,7 +56,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                     OnPropertyChanged(nameof(ComparisonPeriodLabel));
                     OnPropertyChanged(nameof(DateRangeDisplayText));
 
-                    if (value == "Custom Range")
+                    if (value == DateRangePreset.CustomRange.GetDisplayName())
                     {
                         OpenCustomDateRangeModal();
                     }
@@ -78,7 +78,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     // Stores the previous selection before opening custom range modal
-    private string _previousDateRange = "This Month";
+    private string _previousDateRange = DateRangePreset.ThisMonth.GetDisplayName();
 
     /// <summary>
     /// Gets or sets the start date (delegates to shared service).
@@ -174,7 +174,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Gets whether the custom date range option is selected.
     /// </summary>
-    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
+    public bool IsCustomDateRange => SelectedDateRange == DateRangePreset.CustomRange.GetDisplayName();
 
     /// <summary>
     /// Gets the label for comparison period based on selected date range (delegates to shared service).
@@ -188,7 +188,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     {
         // Store the previous selection before opening the modal
         // so we can restore it if the user cancels
-        if (SelectedDateRange != "Custom Range")
+        if (SelectedDateRange != DateRangePreset.CustomRange.GetDisplayName())
         {
             _previousDateRange = SelectedDateRange;
         }
@@ -224,35 +224,45 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriod()
     {
         var now = DateTime.Now;
+        var preset = DateRangePresetExtensions.ParseDateRange(SelectedDateRange);
 
-        return SelectedDateRange switch
+        return preset switch
         {
-            "This Month" => (
+            DateRangePreset.ThisMonth => (
                 new DateTime(now.Year, now.Month, 1).AddMonths(-1),
                 new DateTime(now.Year, now.Month, 1).AddDays(-1)
             ),
-            "Last Month" => (
+            DateRangePreset.LastMonth => (
                 new DateTime(now.Year, now.Month, 1).AddMonths(-2),
                 new DateTime(now.Year, now.Month, 1).AddMonths(-1).AddDays(-1)
             ),
-            "This Quarter" => (
+            DateRangePreset.Last30Days => (
+                StartDate.AddDays(-30), StartDate.AddDays(-1)
+            ),
+            DateRangePreset.Last100Days => (
+                StartDate.AddDays(-100), StartDate.AddDays(-1)
+            ),
+            DateRangePreset.Last365Days => (
+                StartDate.AddDays(-365), StartDate.AddDays(-1)
+            ),
+            DateRangePreset.ThisQuarter => (
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3),
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1)
             ),
-            "Last Quarter" => (
+            DateRangePreset.LastQuarter => (
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-6),
                 new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3).AddDays(-1)
             ),
-            "This Year" => (
+            DateRangePreset.ThisYear => (
                 new DateTime(now.Year - 1, 1, 1),
                 new DateTime(now.Year - 1, 12, 31)
             ),
-            "Last Year" => (
+            DateRangePreset.LastYear => (
                 new DateTime(now.Year - 2, 1, 1),
                 new DateTime(now.Year - 2, 12, 31)
             ),
-            "All Time" => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
-            "Custom Range" => (
+            DateRangePreset.AllTime => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
+            DateRangePreset.CustomRange => (
                 StartDate.AddDays(-(EndDate - StartDate).TotalDays - 1),
                 StartDate.AddDays(-1)
             ),
@@ -650,7 +660,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         CorrectRentalStatuses(data);
 
         // Show date range message only when data exists but the current range has no matching records
-        var isFiltered = SelectedDateRange != "All Time";
+        var isFiltered = SelectedDateRange != DateRangePreset.AllTime.GetDisplayName();
         var hasAnyData = data.Revenues.Count > 0 || data.Expenses.Count > 0;
         var hasDataInRange = hasAnyData && (
             data.Revenues.Any(s => s.Date >= StartDate && s.Date <= EndDate) ||
@@ -693,6 +703,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Calculate comparison period based on selected date range
         var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
+        // Check if we have sufficient data for a meaningful prior period comparison.
+        // If the earliest transaction date is after the prior period start, the comparison
+        // would be misleading (e.g., comparing 365 days against partial data).
+        var hasSufficientPriorData = prevStartDate != DateTime.MinValue &&
+            HasSufficientPriorData(data, prevStartDate);
+
         // Calculate current period revenue (pre-tax, since tax is a liability not revenue)
         var currentRevenueUSD = data.Revenues
             .Where(s => s.Date >= StartDate && s.Date <= EndDate)
@@ -704,7 +720,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             .Sum(s => s.EffectiveSubtotalUSD);
 
         TotalRevenue = FormatCurrencyFromUSD(currentRevenueUSD, DateTime.Now);
-        RevenueChangeValue = CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD);
+        RevenueChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD) : null;
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
         // Calculate current period expenses (pre-tax, since tax is a liability not expense)
@@ -718,14 +734,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             .Sum(p => p.EffectiveSubtotalUSD);
 
         TotalExpenses = FormatCurrencyFromUSD(currentExpensesUSD, DateTime.Now);
-        ExpenseChangeValue = CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD);
+        ExpenseChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD) : null;
         ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
 
         // Calculate net profit
         var netProfitUSD = currentRevenueUSD - currentExpensesUSD;
         var prevProfitUSD = prevRevenueUSD - prevExpensesUSD;
         NetProfit = FormatCurrencyFromUSD(Math.Abs(netProfitUSD), DateTime.Now);
-        ProfitChangeValue = CalculatePercentageChange(prevProfitUSD, netProfitUSD);
+        ProfitChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevProfitUSD, netProfitUSD) : null;
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
         // Calculate outstanding invoices (using USD)
@@ -1380,6 +1396,24 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         if (date.Date > now.Date.AddDays(-7))
             return date.ToString("dddd");
         return DateFormatService.Format(date);
+    }
+
+    /// <summary>
+    /// Checks if there is sufficient data coverage for the prior comparison period.
+    /// Returns false if the earliest transaction date is after the prior period start,
+    /// which would make the comparison misleading.
+    /// </summary>
+    private static bool HasSufficientPriorData(CompanyData data, DateTime prevStartDate)
+    {
+        var earliestRevenue = data.Revenues.Count > 0 ? data.Revenues.Min(r => r.Date) : DateTime.MaxValue;
+        var earliestExpense = data.Expenses.Count > 0 ? data.Expenses.Min(e => e.Date) : DateTime.MaxValue;
+        var earliestDate = earliestRevenue < earliestExpense ? earliestRevenue : earliestExpense;
+
+        // If no data at all, no meaningful comparison
+        if (earliestDate == DateTime.MaxValue)
+            return false;
+
+        return earliestDate <= prevStartDate;
     }
 
     private static double? CalculatePercentageChange(decimal previous, decimal current)
