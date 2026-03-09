@@ -130,7 +130,7 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
-    public async Task TrackFeatureAsync(FeatureName featureName, string? context = null, CancellationToken cancellationToken = default)
+    public async Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default)
     {
         if (!IsConsentGranted)
             return;
@@ -140,6 +140,7 @@ public class TelemetryManager : ITelemetryManager
             var featureEvent = await CreateEventAsync<FeatureUsageEvent>(cancellationToken);
             featureEvent.FeatureName = featureName;
             featureEvent.Context = context;
+            featureEvent.DurationMs = durationMs;
             await _storageService.RecordEventAsync(featureEvent, cancellationToken);
         }
         catch (Exception ex)
@@ -151,7 +152,7 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackPageViewAsync(string pageName, CancellationToken cancellationToken = default)
     {
-        await TrackFeatureAsync(FeatureName.PageView, pageName, cancellationToken);
+        await TrackFeatureAsync(FeatureName.PageView, pageName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
