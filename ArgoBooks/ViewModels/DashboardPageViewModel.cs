@@ -247,6 +247,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 new DateTime(now.Year - 1, 1, 1),
                 new DateTime(now.Year - 1, 12, 31)
             ),
+            "Last 30 Days" => (
+                StartDate.AddDays(-30), StartDate.AddDays(-1)
+            ),
+            "Last 100 Days" => (
+                StartDate.AddDays(-100), StartDate.AddDays(-1)
+            ),
+            "Last 365 Days" => (
+                StartDate.AddDays(-365), StartDate.AddDays(-1)
+            ),
             "Last Year" => (
                 new DateTime(now.Year - 2, 1, 1),
                 new DateTime(now.Year - 2, 12, 31)
@@ -693,6 +702,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Calculate comparison period based on selected date range
         var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
+        // Check if we have sufficient data for a meaningful prior period comparison.
+        // If the earliest transaction date is after the prior period start, the comparison
+        // would be misleading (e.g., comparing 365 days against partial data).
+        var hasSufficientPriorData = prevStartDate != DateTime.MinValue &&
+            HasSufficientPriorData(data, prevStartDate);
+
         // Calculate current period revenue (pre-tax, since tax is a liability not revenue)
         var currentRevenueUSD = data.Revenues
             .Where(s => s.Date >= StartDate && s.Date <= EndDate)
@@ -704,7 +719,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             .Sum(s => s.EffectiveSubtotalUSD);
 
         TotalRevenue = FormatCurrencyFromUSD(currentRevenueUSD, DateTime.Now);
-        RevenueChangeValue = CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD);
+        RevenueChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD) : null;
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
         // Calculate current period expenses (pre-tax, since tax is a liability not expense)
@@ -718,14 +733,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             .Sum(p => p.EffectiveSubtotalUSD);
 
         TotalExpenses = FormatCurrencyFromUSD(currentExpensesUSD, DateTime.Now);
-        ExpenseChangeValue = CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD);
+        ExpenseChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD) : null;
         ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
 
         // Calculate net profit
         var netProfitUSD = currentRevenueUSD - currentExpensesUSD;
         var prevProfitUSD = prevRevenueUSD - prevExpensesUSD;
         NetProfit = FormatCurrencyFromUSD(Math.Abs(netProfitUSD), DateTime.Now);
-        ProfitChangeValue = CalculatePercentageChange(prevProfitUSD, netProfitUSD);
+        ProfitChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevProfitUSD, netProfitUSD) : null;
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
         // Calculate outstanding invoices (using USD)
@@ -1380,6 +1395,24 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         if (date.Date > now.Date.AddDays(-7))
             return date.ToString("dddd");
         return DateFormatService.Format(date);
+    }
+
+    /// <summary>
+    /// Checks if there is sufficient data coverage for the prior comparison period.
+    /// Returns false if the earliest transaction date is after the prior period start,
+    /// which would make the comparison misleading.
+    /// </summary>
+    private static bool HasSufficientPriorData(CompanyData data, DateTime prevStartDate)
+    {
+        var earliestRevenue = data.Revenues.Count > 0 ? data.Revenues.Min(r => r.Date) : DateTime.MaxValue;
+        var earliestExpense = data.Expenses.Count > 0 ? data.Expenses.Min(e => e.Date) : DateTime.MaxValue;
+        var earliestDate = earliestRevenue < earliestExpense ? earliestRevenue : earliestExpense;
+
+        // If no data at all, no meaningful comparison
+        if (earliestDate == DateTime.MaxValue)
+            return false;
+
+        return earliestDate <= prevStartDate;
     }
 
     private static double? CalculatePercentageChange(decimal previous, decimal current)
