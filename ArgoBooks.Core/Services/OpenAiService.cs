@@ -122,6 +122,7 @@ public class OpenAiService : IOpenAiService
                 success = true;
             return response;
         }
+        catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
