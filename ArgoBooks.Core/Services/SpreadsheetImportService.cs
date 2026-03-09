@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -153,7 +152,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
 
         options ??= new ImportOptions();
-        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -181,9 +179,6 @@ public class SpreadsheetImportService
                 // Mark data as modified
                 companyData.MarkAsModified();
             }, cancellationToken);
-
-            stopwatch.Stop();
-            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, Path.GetExtension(filePath), stopwatch.ElapsedMilliseconds, cancellationToken);
         }
         catch (Exception ex)
         {
