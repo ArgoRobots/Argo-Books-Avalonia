@@ -101,8 +101,8 @@ public class LocalMLForecastingService : ILocalMLForecastingService
     {
         double score = 0;
 
-        // Data quantity score (0-35 points)
-        var dataScore = Math.Min(35, historicalData.Count * 1.5);
+        // Data quantity score (0-25 points)
+        var dataScore = Math.Min(25, historicalData.Count * 1.0);
         score += dataScore;
 
         // Data stability score (0-25 points)
@@ -116,19 +116,18 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         // Seasonal pattern score (0-20 points)
         if (seasonalPattern != null && seasonalPattern.SeasonalStrength > 0.1)
         {
-            // Strong seasonal pattern = more predictable = higher score
             score += seasonalPattern.SeasonalStrength * 20;
         }
         else if (historicalData.Count >= MinimumDataPointsForHoltWinters)
         {
-            // Enough data but weak seasonality - still okay
             score += 10;
         }
 
-        // Historical accuracy bonus (0-20 points)
+        // Historical accuracy score (0-30 points) — weighted heavily since actual backtested
+        // accuracy is the best predictor of future forecast quality
         if (historicalAccuracy.HasValue && historicalAccuracy.Value > 0)
         {
-            score += (historicalAccuracy.Value / 100) * 20;
+            score += (historicalAccuracy.Value / 100) * 30;
         }
 
         return Math.Min(100, Math.Max(0, score));

@@ -8,10 +8,11 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class HoltWintersForecasting
 {
-    // Smoothing parameters (can be tuned for different data characteristics)
+    // Default smoothing parameters (used when optimization is not possible)
     private const double DefaultAlpha = 0.3; // Level smoothing
     private const double DefaultBeta = 0.1;  // Trend smoothing
     private const double DefaultGamma = 0.2; // Seasonal smoothing
+    private const double DefaultPhi = 0.9;   // Trend dampening (1.0 = no dampening)
 
     /// <summary>
     /// Generates a forecast using the Holt-Winters additive method.
@@ -24,55 +25,53 @@ public class HoltWintersForecasting
     public HoltWintersForecastResult ForecastAdditive(
         List<decimal> data,
         int seasonLength = 12,
-        int periodsToForecast = 1)
+        int periodsToForecast = 1,
+        double? alpha = null,
+        double? beta = null,
+        double? gamma = null,
+        double? phi = null)
     {
         var result = new HoltWintersForecastResult();
 
         if (data.Count < seasonLength * 2)
         {
-            // Not enough data for seasonal decomposition, fall back to simple exponential smoothing
             return FallbackForecast(data, periodsToForecast, result);
         }
+
+        var a = alpha ?? DefaultAlpha;
+        var b = beta ?? DefaultBeta;
+        var g = gamma ?? DefaultGamma;
+        var p = phi ?? DefaultPhi;
 
         var values = data.Select(d => (double)d).ToList();
         var n = values.Count;
 
-        // Initialize components
         var (level, trend, seasonals) = InitializeComponents(values, seasonLength);
 
-        // Apply Holt-Winters smoothing
         var smoothedLevel = new double[n];
         var smoothedTrend = new double[n];
         var smoothedSeasonals = new double[n + seasonLength];
 
-        // Copy initial seasonal factors
         for (int i = 0; i < seasonLength; i++)
-        {
             smoothedSeasonals[i] = seasonals[i];
-        }
 
         smoothedLevel[0] = level;
         smoothedTrend[0] = trend;
 
-        // Smooth through the data
         for (int t = 1; t < n; t++)
         {
-            double prevSeasonal = smoothedSeasonals[t - seasonLength + seasonLength]; // Previous year's seasonal
+            double prevSeasonal = smoothedSeasonals[t];
 
-            // Update level: alpha * (Y_t - S_{t-m}) + (1 - alpha) * (L_{t-1} + T_{t-1})
-            smoothedLevel[t] = DefaultAlpha * (values[t] - prevSeasonal) +
-                               (1 - DefaultAlpha) * (smoothedLevel[t - 1] + smoothedTrend[t - 1]);
+            smoothedLevel[t] = a * (values[t] - prevSeasonal) +
+                               (1 - a) * (smoothedLevel[t - 1] + p * smoothedTrend[t - 1]);
 
-            // Update trend: beta * (L_t - L_{t-1}) + (1 - beta) * T_{t-1}
-            smoothedTrend[t] = DefaultBeta * (smoothedLevel[t] - smoothedLevel[t - 1]) +
-                               (1 - DefaultBeta) * smoothedTrend[t - 1];
+            smoothedTrend[t] = b * (smoothedLevel[t] - smoothedLevel[t - 1]) +
+                               (1 - b) * p * smoothedTrend[t - 1];
 
-            // Update seasonal: gamma * (Y_t - L_t) + (1 - gamma) * S_{t-m}
-            smoothedSeasonals[t + seasonLength] = DefaultGamma * (values[t] - smoothedLevel[t]) +
-                                                   (1 - DefaultGamma) * prevSeasonal;
+            smoothedSeasonals[t + seasonLength] = g * (values[t] - smoothedLevel[t]) +
+                                                   (1 - g) * prevSeasonal;
         }
 
-        // Generate forecasts
         var lastLevel = smoothedLevel[n - 1];
         var lastTrend = smoothedTrend[n - 1];
 
@@ -81,18 +80,16 @@ public class HoltWintersForecasting
         {
             int seasonIndex = (n + h - 1) % seasonLength;
             double seasonalFactor = smoothedSeasonals[n - seasonLength + seasonIndex + seasonLength];
-            double forecast = lastLevel + (h * lastTrend) + seasonalFactor;
-            forecasts.Add(Math.Max(0, forecast)); // Ensure non-negative
+            // Damped trend: phi + phi^2 + ... + phi^h
+            double dampedTrendSum = DampedTrendSum(p, h);
+            double forecast = lastLevel + dampedTrendSum * lastTrend + seasonalFactor;
+            forecasts.Add(Math.Max(0, forecast));
         }
 
-        // Extract final seasonal factors
         var finalSeasonals = new List<double>();
         for (int i = 0; i < seasonLength; i++)
-        {
             finalSeasonals.Add(smoothedSeasonals[n + i]);
-        }
 
-        // Calculate seasonal strength
         var seasonalVariance = finalSeasonals.Select(s => s * s).Average();
         var dataVariance = CalculateVariance(values);
         var seasonalStrength = dataVariance > 0 ? Math.Min(1, seasonalVariance / dataVariance) : 0;
@@ -122,7 +119,11 @@ public class HoltWintersForecasting
     public HoltWintersForecastResult ForecastMultiplicative(
         List<decimal> data,
         int seasonLength = 12,
-        int periodsToForecast = 1)
+        int periodsToForecast = 1,
+        double? alpha = null,
+        double? beta = null,
+        double? gamma = null,
+        double? phi = null)
     {
         var result = new HoltWintersForecastResult();
 
@@ -133,55 +134,45 @@ public class HoltWintersForecasting
 
         var values = data.Select(d => (double)d).ToList();
 
-        // Check for zero or negative values (multiplicative doesn't work with these)
         if (values.Any(v => v <= 0))
         {
-            return ForecastAdditive(data, seasonLength, periodsToForecast);
+            return ForecastAdditive(data, seasonLength, periodsToForecast, alpha, beta, gamma, phi);
         }
 
+        var a = alpha ?? DefaultAlpha;
+        var b = beta ?? DefaultBeta;
+        var g = gamma ?? DefaultGamma;
+        var p = phi ?? DefaultPhi;
         var n = values.Count;
 
-        // Initialize components for multiplicative
         var (level, trend, seasonals) = InitializeComponentsMultiplicative(values, seasonLength);
 
-        // Apply Holt-Winters multiplicative smoothing
         var smoothedLevel = new double[n];
         var smoothedTrend = new double[n];
         var smoothedSeasonals = new double[n + seasonLength];
 
-        // Copy initial seasonal factors
         for (int i = 0; i < seasonLength; i++)
-        {
             smoothedSeasonals[i] = seasonals[i];
-        }
 
         smoothedLevel[0] = level;
         smoothedTrend[0] = trend;
 
         for (int t = 1; t < n; t++)
         {
-            double prevSeasonal = smoothedSeasonals[t - seasonLength + seasonLength];
-
-            // Avoid division by zero
+            double prevSeasonal = smoothedSeasonals[t];
             if (Math.Abs(prevSeasonal) < 0.0001) prevSeasonal = 0.0001;
 
-            // Update level: alpha * (Y_t / S_{t-m}) + (1 - alpha) * (L_{t-1} + T_{t-1})
-            smoothedLevel[t] = DefaultAlpha * (values[t] / prevSeasonal) +
-                               (1 - DefaultAlpha) * (smoothedLevel[t - 1] + smoothedTrend[t - 1]);
+            smoothedLevel[t] = a * (values[t] / prevSeasonal) +
+                               (1 - a) * (smoothedLevel[t - 1] + p * smoothedTrend[t - 1]);
 
-            // Update trend: beta * (L_t - L_{t-1}) + (1 - beta) * T_{t-1}
-            smoothedTrend[t] = DefaultBeta * (smoothedLevel[t] - smoothedLevel[t - 1]) +
-                               (1 - DefaultBeta) * smoothedTrend[t - 1];
+            smoothedTrend[t] = b * (smoothedLevel[t] - smoothedLevel[t - 1]) +
+                               (1 - b) * p * smoothedTrend[t - 1];
 
-            // Avoid division by zero for seasonal update
             var levelForSeasonal = Math.Abs(smoothedLevel[t]) < 0.0001 ? 0.0001 : smoothedLevel[t];
-
-            // Update seasonal: gamma * (Y_t / L_t) + (1 - gamma) * S_{t-m}
-            smoothedSeasonals[t + seasonLength] = DefaultGamma * (values[t] / levelForSeasonal) +
-                                                   (1 - DefaultGamma) * prevSeasonal;
+            smoothedSeasonals[t + seasonLength] = g * (values[t] / levelForSeasonal) +
+                                                   (1 - g) * prevSeasonal;
         }
 
-        // Generate forecasts
         var lastLevel = smoothedLevel[n - 1];
         var lastTrend = smoothedTrend[n - 1];
 
@@ -190,20 +181,17 @@ public class HoltWintersForecasting
         {
             int seasonIndex = (n + h - 1) % seasonLength;
             double seasonalFactor = smoothedSeasonals[n - seasonLength + seasonIndex + seasonLength];
-            double forecast = (lastLevel + (h * lastTrend)) * seasonalFactor;
+            double dampedTrendSum = DampedTrendSum(p, h);
+            double forecast = (lastLevel + dampedTrendSum * lastTrend) * seasonalFactor;
             forecasts.Add(Math.Max(0, forecast));
         }
 
-        // Extract final seasonal factors
         var finalSeasonals = new List<double>();
         for (int i = 0; i < seasonLength; i++)
-        {
             finalSeasonals.Add(smoothedSeasonals[n + i]);
-        }
 
-        // Calculate seasonal strength
         var seasonalDeviation = finalSeasonals.Select(s => Math.Abs(s - 1)).Average();
-        var seasonalStrength = Math.Min(1, seasonalDeviation * 5); // Scale to 0-1
+        var seasonalStrength = Math.Min(1, seasonalDeviation * 5);
 
         result.ForecastedValues = forecasts.Select(f => (decimal)f).ToList();
         result.SeasonalPattern = new SeasonalPattern
@@ -236,30 +224,30 @@ public class HoltWintersForecasting
             return FallbackForecast(data, periodsToForecast, new HoltWintersForecastResult());
         }
 
-        // Check if multiplicative is appropriate (no zeros, seasonal variation scales with level)
-        var hasZeros = data.Any(d => d <= 0);
-        if (hasZeros)
+        // Replace exact zeros (from gap-filling) with a small value so multiplicative can run
+        var adjustedData = data.Select(d =>
         {
-            return ForecastAdditive(data, seasonLength, periodsToForecast);
+            if (d <= 0)
+            {
+                var median = data.Where(v => v > 0).OrderBy(v => v).ToList();
+                var medianVal = median.Count > 0 ? median[median.Count / 2] : 1m;
+                return medianVal * 0.01m;
+            }
+            return d;
+        }).ToList();
+
+        // Optimize parameters via grid search
+        var (bestAlpha, bestBeta, bestGamma, bestPhi, useMultiplicative) =
+            OptimizeParameters(adjustedData, seasonLength);
+
+        if (useMultiplicative)
+        {
+            return ForecastMultiplicative(adjustedData, seasonLength, periodsToForecast,
+                bestAlpha, bestBeta, bestGamma, bestPhi);
         }
 
-        // Compute coefficient of variation for each season to detect multiplicative pattern
-        var values = data.Select(d => (double)d).ToList();
-        var seasonGroups = values.Select((v, i) => new { Value = v, Season = i % seasonLength })
-            .GroupBy(x => x.Season)
-            .Select(g => new { Mean = g.Average(x => x.Value), Std = Math.Sqrt(g.Select(x => x.Value).Variance()) })
-            .ToList();
-
-        var cvs = seasonGroups.Where(g => g.Mean > 0).Select(g => g.Std / g.Mean).ToList();
-        var cvVariation = cvs.Any() ? cvs.StandardDeviation() : 0;
-
-        // If CV is relatively constant, multiplicative is better
-        if (cvVariation < 0.3)
-        {
-            return ForecastMultiplicative(data, seasonLength, periodsToForecast);
-        }
-
-        return ForecastAdditive(data, seasonLength, periodsToForecast);
+        return ForecastAdditive(adjustedData, seasonLength, periodsToForecast,
+            bestAlpha, bestBeta, bestGamma, bestPhi);
     }
 
     /// <summary>
@@ -287,6 +275,169 @@ public class HoltWintersForecasting
     }
 
     #region Private Methods
+
+    /// <summary>
+    /// Computes the damped trend sum: phi + phi^2 + ... + phi^h
+    /// </summary>
+    private static double DampedTrendSum(double phi, int h)
+    {
+        if (Math.Abs(phi - 1.0) < 0.001) return h; // No dampening
+        double sum = 0;
+        double phiPow = 1;
+        for (int i = 0; i < h; i++)
+        {
+            phiPow *= phi;
+            sum += phiPow;
+        }
+        return sum;
+    }
+
+    /// <summary>
+    /// Grid search over alpha, beta, gamma, phi to minimize one-step-ahead MSE.
+    /// Also determines whether additive or multiplicative is better.
+    /// </summary>
+    private (double alpha, double beta, double gamma, double phi, bool useMultiplicative)
+        OptimizeParameters(List<decimal> data, int seasonLength)
+    {
+        if (data.Count < seasonLength * 2)
+        {
+            return (DefaultAlpha, DefaultBeta, DefaultGamma, DefaultPhi, false);
+        }
+
+        var values = data.Select(d => (double)d).ToList();
+        var canMultiplicative = values.All(v => v > 0);
+
+        var alphaValues = new[] { 0.1, 0.2, 0.3, 0.5, 0.7 };
+        var betaValues = new[] { 0.01, 0.05, 0.1, 0.2 };
+        var gammaValues = new[] { 0.05, 0.1, 0.2, 0.3 };
+        var phiValues = new[] { 0.8, 0.9, 0.95, 1.0 };
+
+        double bestMse = double.MaxValue;
+        double bestA = DefaultAlpha, bestB = DefaultBeta, bestG = DefaultGamma, bestP = DefaultPhi;
+        bool bestIsMultiplicative = false;
+
+        foreach (var a in alphaValues)
+        foreach (var b in betaValues)
+        foreach (var g in gammaValues)
+        foreach (var p in phiValues)
+        {
+            // Test additive
+            var additiveMse = ComputeOneStepMSE(values, seasonLength, a, b, g, p, multiplicative: false);
+            if (additiveMse < bestMse)
+            {
+                bestMse = additiveMse;
+                bestA = a; bestB = b; bestG = g; bestP = p;
+                bestIsMultiplicative = false;
+            }
+
+            // Test multiplicative if possible
+            if (canMultiplicative)
+            {
+                var multMse = ComputeOneStepMSE(values, seasonLength, a, b, g, p, multiplicative: true);
+                if (multMse < bestMse)
+                {
+                    bestMse = multMse;
+                    bestA = a; bestB = b; bestG = g; bestP = p;
+                    bestIsMultiplicative = true;
+                }
+            }
+        }
+
+        return (bestA, bestB, bestG, bestP, bestIsMultiplicative);
+    }
+
+    /// <summary>
+    /// Compute one-step-ahead MSE for a given set of parameters.
+    /// Uses the second half of the data for validation.
+    /// </summary>
+    private double ComputeOneStepMSE(
+        List<double> values, int seasonLength,
+        double alpha, double beta, double gamma, double phi,
+        bool multiplicative)
+    {
+        var n = values.Count;
+        if (n < seasonLength * 2) return double.MaxValue;
+
+        try
+        {
+            double level, trend;
+            double[] seasonals;
+
+            if (multiplicative)
+            {
+                (level, trend, seasonals) = InitializeComponentsMultiplicative(values, seasonLength);
+            }
+            else
+            {
+                (level, trend, seasonals) = InitializeComponents(values, seasonLength);
+            }
+
+            var smoothedLevel = new double[n];
+            var smoothedTrend = new double[n];
+            var smoothedSeasonals = new double[n + seasonLength];
+
+            for (int i = 0; i < seasonLength; i++)
+                smoothedSeasonals[i] = seasonals[i];
+
+            smoothedLevel[0] = level;
+            smoothedTrend[0] = trend;
+
+            double sumSquaredError = 0;
+            int errorCount = 0;
+            // Start computing errors from seasonLength onward (after initialization)
+            var errorStart = seasonLength;
+
+            for (int t = 1; t < n; t++)
+            {
+                double prevSeasonal = smoothedSeasonals[t];
+
+                // One-step-ahead forecast from t-1
+                if (t >= errorStart)
+                {
+                    double predicted;
+                    if (multiplicative)
+                    {
+                        predicted = (smoothedLevel[t - 1] + phi * smoothedTrend[t - 1]) * prevSeasonal;
+                    }
+                    else
+                    {
+                        predicted = smoothedLevel[t - 1] + phi * smoothedTrend[t - 1] + prevSeasonal;
+                    }
+                    var error = values[t] - predicted;
+                    sumSquaredError += error * error;
+                    errorCount++;
+                }
+
+                // Update components
+                if (multiplicative)
+                {
+                    if (Math.Abs(prevSeasonal) < 0.0001) prevSeasonal = 0.0001;
+                    smoothedLevel[t] = alpha * (values[t] / prevSeasonal) +
+                                       (1 - alpha) * (smoothedLevel[t - 1] + phi * smoothedTrend[t - 1]);
+                    smoothedTrend[t] = beta * (smoothedLevel[t] - smoothedLevel[t - 1]) +
+                                       (1 - beta) * phi * smoothedTrend[t - 1];
+                    var lvl = Math.Abs(smoothedLevel[t]) < 0.0001 ? 0.0001 : smoothedLevel[t];
+                    smoothedSeasonals[t + seasonLength] = gamma * (values[t] / lvl) +
+                                                           (1 - gamma) * prevSeasonal;
+                }
+                else
+                {
+                    smoothedLevel[t] = alpha * (values[t] - prevSeasonal) +
+                                       (1 - alpha) * (smoothedLevel[t - 1] + phi * smoothedTrend[t - 1]);
+                    smoothedTrend[t] = beta * (smoothedLevel[t] - smoothedLevel[t - 1]) +
+                                       (1 - beta) * phi * smoothedTrend[t - 1];
+                    smoothedSeasonals[t + seasonLength] = gamma * (values[t] - smoothedLevel[t]) +
+                                                           (1 - gamma) * prevSeasonal;
+                }
+            }
+
+            return errorCount > 0 ? sumSquaredError / errorCount : double.MaxValue;
+        }
+        catch
+        {
+            return double.MaxValue;
+        }
+    }
 
     private (double level, double trend, double[] seasonals) InitializeComponents(
         List<double> values, int seasonLength)
