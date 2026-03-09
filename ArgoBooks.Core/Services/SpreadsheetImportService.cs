@@ -768,6 +768,7 @@ public class SpreadsheetImportService
                 var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
                 {
+                    revenue.PaymentStatus = NormalizePaymentStatus(revenue.PaymentStatus);
                     revenue.OriginalCurrency = "USD";
                     revenue.TotalUSD = revenue.Total;
                     revenue.TaxAmountUSD = revenue.TaxAmount;
@@ -1987,6 +1988,53 @@ public class SpreadsheetImportService
         return string.IsNullOrEmpty(value) ? null : value;
     }
 
+    /// <summary>
+    /// Normalizes free-form payment status strings into the canonical values
+    /// used by the application: "Paid", "Unpaid", "Partial", "Overdue", or "Pending".
+    /// </summary>
+    internal static string NormalizePaymentStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return "Paid";
+
+        var s = status.Trim();
+
+        // Exact canonical values (case-insensitive)
+        if (s.Equals("Paid", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Complete", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Completed", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Settled", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Received", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Cleared", StringComparison.OrdinalIgnoreCase))
+            return "Paid";
+
+        if (s.Equals("Partial", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Partially Paid", StringComparison.OrdinalIgnoreCase))
+            return "Partial";
+
+        if (s.Equals("Overdue", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Past Due", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Late", StringComparison.OrdinalIgnoreCase))
+            return "Overdue";
+
+        if (s.Equals("Pending", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Processing", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("In Progress", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Awaiting Payment", StringComparison.OrdinalIgnoreCase))
+            return "Pending";
+
+        // Everything else (Unpaid, Outstanding, Not Paid, Due, Open, etc.) → Unpaid
+        if (s.Equals("Unpaid", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Outstanding", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Not Paid", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Due", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("Open", StringComparison.OrdinalIgnoreCase))
+            return "Unpaid";
+
+        // Fallback: unrecognized → keep as-is but title-case it
+        return char.ToUpper(s[0]) + s[1..].ToLower();
+    }
+
     private static decimal GetDecimal(List<object?> row, List<string> headers, string columnName)
     {
         var index = GetColumnIndex(headers, columnName);
@@ -2671,7 +2719,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             revenue.TaxAmount = GetDecimal(row, headers, "Tax");
             revenue.Total = GetDecimal(row, headers, "Total");
             revenue.ReferenceNumber = GetString(row, headers, "Reference");
-            revenue.PaymentStatus = GetString(row, headers, "Payment Status");
+            revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
             revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
             // Set USD values (assume imported data is in USD)
@@ -2679,9 +2727,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             revenue.TotalUSD = revenue.Total;
             revenue.TaxAmountUSD = revenue.TaxAmount;
             revenue.ShippingCostUSD = revenue.ShippingCost;
-
-            if (string.IsNullOrEmpty(revenue.PaymentStatus))
-                revenue.PaymentStatus = "Paid";
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Revenue-type categories when there are duplicate names
