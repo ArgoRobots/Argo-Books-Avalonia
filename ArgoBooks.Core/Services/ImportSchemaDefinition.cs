@@ -316,7 +316,7 @@ public static class ImportSchemaDefinition
                 new("Description", "string", "Invoice description", JsonName: "description"),
                 new("Frequency", "enum:Weekly,BiWeekly,Monthly,Quarterly,Annually", "Billing frequency", JsonName: "frequency"),
                 new("Next Date", "datetime", "Next invoice date", JsonName: "nextInvoiceDate"),
-                new("Status", "string", "Status (Active, Paused, etc.)", JsonName: "status"),
+                new("Status", "enum:Active,Paused,Cancelled", "Recurring invoice status", JsonName: "status"),
             ],
 
             [SpreadsheetSheetType.StockAdjustments] =
