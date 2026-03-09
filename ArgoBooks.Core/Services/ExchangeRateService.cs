@@ -9,7 +9,7 @@ namespace ArgoBooks.Core.Services;
 /// Service for fetching and managing currency exchange rates.
 /// Uses OpenExchangeRates API with local caching.
 /// </summary>
-public class ExchangeRateService : IExchangeRateService
+public class ExchangeRateService
 {
     private const string BaseUrl = "https://openexchangerates.org/api";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
@@ -292,40 +292,4 @@ public class ExchangeRateService : IExchangeRateService
         [JsonPropertyName("rates")]
         public Dictionary<string, decimal>? Rates { get; init; }
     }
-}
-
-/// <summary>
-/// Interface for exchange rate service.
-/// </summary>
-public interface IExchangeRateService
-{
-    /// <summary>
-    /// Gets the exchange rate between two currencies.
-    /// </summary>
-    Task<decimal> GetExchangeRateAsync(string fromCurrency, string toCurrency, DateTime date, bool fetchIfMissing = true);
-
-    /// <summary>
-    /// Gets the exchange rate synchronously from cache only.
-    /// </summary>
-    decimal GetExchangeRate(string fromCurrency, string toCurrency, DateTime date);
-
-    /// <summary>
-    /// Converts an amount between currencies.
-    /// </summary>
-    Task<decimal> ConvertAsync(decimal amount, string fromCurrency, string toCurrency, DateTime date);
-
-    /// <summary>
-    /// Converts an amount to USD.
-    /// </summary>
-    Task<decimal> ConvertToUSDAsync(decimal amount, string fromCurrency, DateTime date);
-
-    /// <summary>
-    /// Converts an amount from USD.
-    /// </summary>
-    Task<decimal> ConvertFromUSDAsync(decimal amountUSD, string toCurrency, DateTime date);
-
-    /// <summary>
-    /// Whether the service has an API key configured.
-    /// </summary>
-    bool HasApiKey { get; }
 }

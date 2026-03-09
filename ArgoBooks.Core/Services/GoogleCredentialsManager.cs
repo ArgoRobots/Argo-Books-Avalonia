@@ -65,14 +65,6 @@ public static class GoogleCredentialsManager
     }
 
     /// <summary>
-    /// Clears the cached credential, forcing re-authentication on next use.
-    /// </summary>
-    public static void ClearCache()
-    {
-        _cachedCredential = null;
-    }
-
-    /// <summary>
     /// Checks if Google OAuth credentials are configured in the .env file or environment variables.
     /// </summary>
     /// <returns>True if credentials are configured, false otherwise.</returns>

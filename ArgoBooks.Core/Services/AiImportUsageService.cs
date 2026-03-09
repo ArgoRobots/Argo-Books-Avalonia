@@ -7,7 +7,7 @@ namespace ArgoBooks.Core.Services;
 /// Service for tracking and enforcing AI import usage limits via server-side API.
 /// Communicates with the server API to track usage per license key.
 /// </summary>
-public class AiImportUsageService : IAiImportUsageService
+public class AiImportUsageService
 {
     private const string UsageApiUrl = "https://argorobots.com/api/ai-import/usage.php";
     private const string ApiHostUrl = "https://argorobots.com";
@@ -324,32 +324,6 @@ public class AiImportUsageService : IAiImportUsageService
         [JsonPropertyName("error")]
         public string? Error { get; init; }
     }
-}
-
-/// <summary>
-/// Interface for AI import usage tracking service.
-/// </summary>
-public interface IAiImportUsageService
-{
-    /// <summary>
-    /// Checks current usage and whether the user can perform more AI imports.
-    /// </summary>
-    Task<AiImportCheckResult> CheckUsageAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Increments the usage count after a successful import.
-    /// </summary>
-    Task<AiImportIncrementResult> IncrementUsageAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Invalidates the cached usage data.
-    /// </summary>
-    void InvalidateCache();
-
-    /// <summary>
-    /// Gets the cached usage status (may be stale).
-    /// </summary>
-    AiImportUsageStatus? GetCachedUsage();
 }
 
 /// <summary>

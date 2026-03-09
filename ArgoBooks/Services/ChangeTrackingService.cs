@@ -207,33 +207,3 @@ public class ChangeTrackingService
         ChangeStateChanged?.Invoke(this, EventArgs.Empty);
     }
 }
-
-/// <summary>
-/// Simple change tracker for basic scenarios.
-/// </summary>
-public class SimpleChangeTracker : IChangeTracker
-{
-    private readonly List<ChangeItem> _changes = [];
-
-    public string CategoryName { get; set; } = "Changes";
-    public string CategoryIcon { get; set; } = "Folder";
-    public bool HasChanges => _changes.Count > 0;
-
-    public void AddChange(string description, ChangeType changeType = ChangeType.Modified)
-    {
-        _changes.Add(new ChangeItem
-        {
-            Description = description,
-            ChangeType = changeType
-        });
-    }
-
-    public void AddChange(ChangeItem change)
-    {
-        _changes.Add(change);
-    }
-
-    public IEnumerable<ChangeItem> GetChanges() => _changes;
-
-    public void ClearChanges() => _changes.Clear();
-}

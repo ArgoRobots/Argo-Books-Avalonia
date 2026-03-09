@@ -39,8 +39,6 @@ public static class AppColors
     // ── Semantic: Info ──────────────────────────────────────────────
     public const string Info = "#0369A1";
     public const string InfoLight = "#F0F9FF";
-    public const string InfoDark = "#0C4A6E";
-
     // ── Semantic: Purple ────────────────────────────────────────────
     public const string Purple = "#A855F7";
     public const string PurpleLight = "#F3E8FF";

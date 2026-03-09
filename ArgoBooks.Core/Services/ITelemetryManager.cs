@@ -59,11 +59,6 @@ public interface ITelemetryManager
     Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Exports all collected telemetry data as JSON for user review.
-    /// </summary>
-    Task<string> ExportDataAsJsonAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Clears all collected telemetry data.
     /// </summary>
     Task ClearAllDataAsync(CancellationToken cancellationToken = default);

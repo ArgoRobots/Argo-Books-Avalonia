@@ -252,22 +252,6 @@ public enum AccuracyTrend
 }
 
 /// <summary>
-/// Time series data point for ML forecasting.
-/// </summary>
-public class TimeSeriesDataPoint
-{
-    /// <summary>
-    /// The date/time of this data point.
-    /// </summary>
-    public DateTime Date { get; set; }
-
-    /// <summary>
-    /// The value (e.g., revenue, expenses).
-    /// </summary>
-    public float Value { get; set; }
-}
-
-/// <summary>
 /// Seasonal pattern information detected by Holt-Winters.
 /// </summary>
 public class SeasonalPattern
