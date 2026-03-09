@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
@@ -9,24 +10,6 @@ namespace ArgoBooks.Views;
 /// </summary>
 public partial class RevenuePage : UserControl
 {
-    private static readonly FilePickerFileType ImageFileType = new("Images")
-    {
-        Patterns = ["*.jpg", "*.jpeg", "*.png"],
-        MimeTypes = ["image/jpeg", "image/png"]
-    };
-
-    private static readonly FilePickerFileType PdfFileType = new("PDF Documents")
-    {
-        Patterns = ["*.pdf"],
-        MimeTypes = ["application/pdf"]
-    };
-
-    private static readonly FilePickerFileType AllSupportedTypes = new("All Supported")
-    {
-        Patterns = ["*.jpg", "*.jpeg", "*.png", "*.pdf"],
-        MimeTypes = ["image/jpeg", "image/png", "application/pdf"]
-    };
-
     public RevenuePage()
     {
         InitializeComponent();
@@ -57,7 +40,7 @@ public partial class RevenuePage : UserControl
         {
             Title = "Select Receipt to Scan",
             AllowMultiple = false,
-            FileTypeFilter = [AllSupportedTypes, ImageFileType, PdfFileType]
+            FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
         });
 
         if (files.Count > 0)

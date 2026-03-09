@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -18,6 +19,8 @@ public partial class FileMenuPanel : UserControl
     private bool _isInSubmenu;
     private bool _isOverSubmenu;
     private bool _isOverRecentButton;
+    private FileMenuPanelViewModel? _previousVm;
+    private PropertyChangedEventHandler? _propertyChangedHandler;
 
     public FileMenuPanel()
     {
@@ -26,9 +29,16 @@ public partial class FileMenuPanel : UserControl
         // Animate and focus the menu when it opens
         DataContextChanged += (_, _) =>
         {
+            // Unsubscribe from previous ViewModel to prevent leak
+            if (_previousVm != null && _propertyChangedHandler != null)
+            {
+                _previousVm.PropertyChanged -= _propertyChangedHandler;
+            }
+
             if (DataContext is FileMenuPanelViewModel vm)
             {
-                vm.PropertyChanged += (_, e) =>
+                _previousVm = vm;
+                _propertyChangedHandler = (_, e) =>
                 {
                     if (e.PropertyName == nameof(FileMenuPanelViewModel.IsOpen))
                     {
@@ -37,15 +47,12 @@ public partial class FileMenuPanel : UserControl
                             // Animate in
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (FileMenuBorder != null)
-                                {
-                                    FileMenuBorder.Opacity = 1;
-                                    FileMenuBorder.RenderTransform = new TranslateTransform(0, 0);
-                                }
+                                FileMenuBorder.Opacity = 1;
+                                FileMenuBorder.RenderTransform = new TranslateTransform(0, 0);
                                 _focusedIndex = -1;
                                 _submenuFocusedIndex = -1;
                                 _isInSubmenu = false;
-                                FileMenuBorder?.Focus();
+                                FileMenuBorder.Focus();
                             }, DispatcherPriority.Render);
                         }
                         else
@@ -53,15 +60,18 @@ public partial class FileMenuPanel : UserControl
                             // Reset for next open
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (FileMenuBorder != null)
-                                {
-                                    FileMenuBorder.Opacity = 0;
-                                    FileMenuBorder.RenderTransform = new TranslateTransform(0, -8);
-                                }
+                                FileMenuBorder.Opacity = 0;
+                                FileMenuBorder.RenderTransform = new TranslateTransform(0, -8);
                             }, DispatcherPriority.Background);
                         }
                     }
                 };
+                vm.PropertyChanged += _propertyChangedHandler;
+            }
+            else
+            {
+                _previousVm = null;
+                _propertyChangedHandler = null;
             }
         };
     }

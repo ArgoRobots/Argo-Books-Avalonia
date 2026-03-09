@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -14,6 +15,9 @@ namespace ArgoBooks.Panels;
 /// </summary>
 public partial class QuickActionsPanel : UserControl
 {
+    private QuickActionsViewModel? _previousVm;
+    private PropertyChangedEventHandler? _propertyChangedHandler;
+
     public QuickActionsPanel()
     {
         InitializeComponent();
@@ -35,9 +39,16 @@ public partial class QuickActionsPanel : UserControl
     {
         base.OnLoaded(e);
 
+        // Unsubscribe from previous ViewModel to prevent leak
+        if (_previousVm != null && _propertyChangedHandler != null)
+        {
+            _previousVm.PropertyChanged -= _propertyChangedHandler;
+        }
+
         if (DataContext is QuickActionsViewModel vm)
         {
-            vm.PropertyChanged += (_, args) =>
+            _previousVm = vm;
+            _propertyChangedHandler = (_, args) =>
             {
                 if (args.PropertyName == nameof(QuickActionsViewModel.IsOpen))
                 {
@@ -48,19 +59,13 @@ public partial class QuickActionsPanel : UserControl
                         {
                             if (vm.IsDropdownMode)
                             {
-                                if (DropdownBorder != null)
-                                {
-                                    DropdownBorder.Opacity = 1;
-                                    DropdownBorder.RenderTransform = new TranslateTransform(0, 0);
-                                }
+                                DropdownBorder.Opacity = 1;
+                                DropdownBorder.RenderTransform = new TranslateTransform(0, 0);
                             }
                             else
                             {
-                                if (ModalBorder != null)
-                                {
-                                    ModalBorder.Opacity = 1;
-                                    ModalBorder.RenderTransform = new ScaleTransform(1, 1);
-                                }
+                                ModalBorder.Opacity = 1;
+                                ModalBorder.RenderTransform = new ScaleTransform(1, 1);
                                 var searchInput = FindDescendantOfType<TextBox>();
                                 searchInput?.Focus();
                             }
@@ -71,16 +76,10 @@ public partial class QuickActionsPanel : UserControl
                         // Reset for next open and return focus to parent
                         Dispatcher.UIThread.Post(() =>
                         {
-                            if (DropdownBorder != null)
-                            {
-                                DropdownBorder.Opacity = 0;
-                                DropdownBorder.RenderTransform = new TranslateTransform(0, -8);
-                            }
-                            if (ModalBorder != null)
-                            {
-                                ModalBorder.Opacity = 0;
-                                ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
-                            }
+                            DropdownBorder.Opacity = 0;
+                            DropdownBorder.RenderTransform = new TranslateTransform(0, -8);
+                            ModalBorder.Opacity = 0;
+                            ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
 
                             ModalHelper.ReturnFocusToAppShell(this);
                         }, DispatcherPriority.Background);
@@ -92,6 +91,12 @@ public partial class QuickActionsPanel : UserControl
                     Dispatcher.UIThread.Post(() => FocusSelectedItem(vm.SelectedIndex), DispatcherPriority.Background);
                 }
             };
+            vm.PropertyChanged += _propertyChangedHandler;
+        }
+        else
+        {
+            _previousVm = null;
+            _propertyChangedHandler = null;
         }
     }
 
