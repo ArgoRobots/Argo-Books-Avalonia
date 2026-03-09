@@ -19,7 +19,6 @@ Console.WriteLine("=== Argo Books Translation Generator ===\n");
 
 // Parse command line arguments (args is provided by top-level statements)
 var collectOnly = args.Contains("--collect");
-var translateAll = args.Contains("--translate");
 var skipConfirmation = args.Contains("--yes") || args.Contains("-y");
 var specificLanguages = new List<string>();
 var outputDir = "./translations";
@@ -51,19 +50,6 @@ var azureRegion = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_REGION") 
 // Fetch USD to CAD exchange rate for cost display
 var usdToCad = await GetUsdToCadRateAsync();
 
-
-// If translation was requested but no API key, exit with error
-var translationRequested = translateAll || specificLanguages.Count > 0;
-if (translationRequested && string.IsNullOrEmpty(azureKey))
-{
-    Console.WriteLine("ERROR: AZURE_TRANSLATOR_KEY environment variable not set.\n");
-    Console.WriteLine("Set the environment variable and try again:");
-    Console.WriteLine("  PowerShell:  $env:AZURE_TRANSLATOR_KEY = \"your-api-key\"");
-    Console.WriteLine("  Cmd:         set AZURE_TRANSLATOR_KEY=your-api-key");
-    Console.WriteLine("  Bash:        export AZURE_TRANSLATOR_KEY=your-api-key\n");
-    Console.WriteLine("Or use --collect to just collect strings without translating.");
-    return 1;
-}
 
 Console.WriteLine($"Source directory: {sourceDir}");
 Console.WriteLine($"Output directory: {outputDir}");
@@ -131,10 +117,11 @@ foreach (var lang in languagesToTranslate)
         resolvedLanguages.Add((Languages.GetIsoCode(lang), lang));
 }
 
-// Check existing translations and count new vs existing per language
+// Check existing translations and count new vs existing vs stale per language
 Console.WriteLine($"\nStep 2: Checking existing translations...");
 var totalNewStrings = 0;
 var totalExistingStrings = 0;
+var totalStaleStrings = 0;
 var totalCharsToTranslate = 0L;
 
 foreach (var (isoCode, displayName) in resolvedLanguages)
@@ -164,22 +151,29 @@ foreach (var (isoCode, displayName) in resolvedLanguages)
 
     var newCount = strings.Keys.Count(k => !existingKeys.Contains(k));
     var existingCount = strings.Keys.Count(k => existingKeys.Contains(k));
+    var staleCount = existingKeys.Count(k => !strings.ContainsKey(k));
     var newChars = strings.Where(kvp => !existingKeys.Contains(kvp.Key)).Sum(kvp => (long)kvp.Value.Length);
 
     totalNewStrings += newCount;
     totalExistingStrings += existingCount;
+    totalStaleStrings += staleCount;
     totalCharsToTranslate += newChars;
 
     if (existingKeys.Count > 0)
-        Console.WriteLine($"  {displayName} ({isoCode}): {newCount} new, {existingCount} existing");
+    {
+        var parts = new List<string> { $"{newCount} new", $"{existingCount} existing" };
+        if (staleCount > 0)
+            parts.Add($"{staleCount} stale");
+        Console.WriteLine($"  {displayName} ({isoCode}): {string.Join(", ", parts)}");
+    }
     else
         Console.WriteLine($"  {displayName} ({isoCode}): {strings.Count} new (no existing file)");
 }
 
 var nonEnglishCount = resolvedLanguages.Count(l => l.isoCode != "en");
 
-// If nothing new to translate, skip entirely
-if (totalNewStrings == 0)
+// If nothing new to translate and no stale keys to remove, skip entirely
+if (totalNewStrings == 0 && totalStaleStrings == 0)
 {
     Console.WriteLine($"\nAll {totalExistingStrings} translations are up to date. Nothing to do.");
     return 0;
@@ -189,13 +183,30 @@ if (totalNewStrings == 0)
 var estimatedCostUsd = totalCharsToTranslate / 1_000_000m * 10m;
 
 Console.WriteLine();
-Console.WriteLine($"New strings to translate: {totalNewStrings} across {nonEnglishCount} language(s)");
-Console.WriteLine($"Characters to translate:  {totalCharsToTranslate:N0}");
-Console.WriteLine($"Estimated cost:           {FormatCost(estimatedCostUsd, usdToCad)}");
+if (totalNewStrings > 0)
+{
+    Console.WriteLine($"New strings to translate: {totalNewStrings} across {nonEnglishCount} language(s)");
+    Console.WriteLine($"Characters to translate:  {totalCharsToTranslate:N0}");
+    Console.WriteLine($"Estimated cost:           {FormatCost(estimatedCostUsd, usdToCad)}");
+}
+if (totalStaleStrings > 0)
+    Console.WriteLine($"Stale keys to remove:     {totalStaleStrings} across {nonEnglishCount} language(s)");
 Console.WriteLine();
 
-// Confirmation prompt
-if (!skipConfirmation)
+// Azure API key is required only when there are new strings to translate
+if (totalNewStrings > 0 && string.IsNullOrEmpty(azureKey))
+{
+    Console.WriteLine("ERROR: AZURE_TRANSLATOR_KEY environment variable not set.\n");
+    Console.WriteLine("Set the environment variable and try again:");
+    Console.WriteLine("  PowerShell:  $env:AZURE_TRANSLATOR_KEY = \"your-api-key\"");
+    Console.WriteLine("  Cmd:         set AZURE_TRANSLATOR_KEY=your-api-key");
+    Console.WriteLine("  Bash:        export AZURE_TRANSLATOR_KEY=your-api-key\n");
+    Console.WriteLine("Or use --collect to just collect strings without translating.");
+    return 1;
+}
+
+// Confirmation prompt (skip for stale-key-only cleanup since it's free)
+if (!skipConfirmation && totalNewStrings > 0)
 {
     Console.Write("Proceed with translation? [y/N] ");
     var response = Console.ReadLine()?.Trim().ToLowerInvariant();
@@ -207,7 +218,8 @@ if (!skipConfirmation)
     Console.WriteLine();
 }
 
-Console.WriteLine($"Translating to {nonEnglishCount} languages...");
+var action = totalNewStrings > 0 ? "Translating" : "Cleaning up";
+Console.WriteLine($"{action} {nonEnglishCount} languages...");
 Console.WriteLine("Languages: " + string.Join(", ", resolvedLanguages.Where(l => l.isoCode != "en").Select(l => l.displayName).Take(10)) +
     (nonEnglishCount > 10 ? $" ... and {nonEnglishCount - 10} more" : ""));
 Console.WriteLine();
@@ -221,16 +233,22 @@ try
         CancellationToken.None);
 
     Console.WriteLine($"\nDone! Translations saved to: {outputDir}");
-    Console.WriteLine($"Translated {generator.LanguagesTranslated} languages.");
+    if (generator.LanguagesTranslated > 0)
+        Console.WriteLine($"Translated {generator.LanguagesTranslated} languages.");
+    if (generator.StaleKeysRemoved > 0)
+        Console.WriteLine($"Removed {generator.StaleKeysRemoved} stale key(s) across all languages.");
 
-    // Print Azure API usage summary
-    Console.WriteLine();
-    Console.WriteLine("--- Azure Translator API Usage ---");
-    Console.WriteLine($"  Languages translated:  {generator.LanguagesTranslated}");
-    Console.WriteLine($"  API calls made:        {generator.ApiCallCount}");
-    Console.WriteLine($"  Characters translated: {generator.TotalCharactersTranslated:N0}");
-    Console.WriteLine($"  Estimated cost:        {FormatCost(generator.EstimatedCost, usdToCad)}");
-    Console.WriteLine("----------------------------------");
+    // Print Azure API usage summary (only if API was used)
+    if (generator.ApiCallCount > 0)
+    {
+        Console.WriteLine();
+        Console.WriteLine("--- Azure Translator API Usage ---");
+        Console.WriteLine($"  Languages translated:  {generator.LanguagesTranslated}");
+        Console.WriteLine($"  API calls made:        {generator.ApiCallCount}");
+        Console.WriteLine($"  Characters translated: {generator.TotalCharactersTranslated:N0}");
+        Console.WriteLine($"  Estimated cost:        {FormatCost(generator.EstimatedCost, usdToCad)}");
+        Console.WriteLine("----------------------------------");
+    }
 }
 catch (Exception ex)
 {
