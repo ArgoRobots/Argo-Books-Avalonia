@@ -22,6 +22,12 @@ public class CompanySettings
     /// </summary>
     public string? LastBacktestedMonth { get; set; }
 
+    /// <summary>
+    /// Tracks the backtest algorithm version. When the algorithm changes,
+    /// this triggers a full re-backtest with the updated logic.
+    /// </summary>
+    public string? BacktestVersion { get; set; }
+
     public CompanyInfo Company { get; set; } = new();
     public LocalizationSettings Localization { get; set; } = new();
     public NotificationSettings Notifications { get; set; } = new();

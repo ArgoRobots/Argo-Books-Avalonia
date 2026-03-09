@@ -309,9 +309,12 @@
                                                                Text="{Binding ExpensesAccuracy}"
                                                                FontSize="12"
                                                                FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                                                HorizontalAlignment="Right"
-                                                               VerticalAlignment="Center" />
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Foreground>
+                                                            <SolidColorBrush Color="{Binding ExpensesAccuracyColor}" />
+                                                        </TextBlock.Foreground>
+                                                    </TextBlock>
 
                                                     <!-- Confidence -->
                                                     <TextBlock Grid.Column="8"

@@ -101,8 +101,8 @@ public class LocalMLForecastingService : ILocalMLForecastingService
     {
         double score = 0;
 
-        // Data quantity score (0-35 points)
-        var dataScore = Math.Min(35, historicalData.Count * 1.5);
+        // Data quantity score (0-25 points)
+        var dataScore = Math.Min(25, historicalData.Count * 1.0);
         score += dataScore;
 
         // Data stability score (0-25 points)
@@ -116,19 +116,18 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         // Seasonal pattern score (0-20 points)
         if (seasonalPattern != null && seasonalPattern.SeasonalStrength > 0.1)
         {
-            // Strong seasonal pattern = more predictable = higher score
             score += seasonalPattern.SeasonalStrength * 20;
         }
         else if (historicalData.Count >= MinimumDataPointsForHoltWinters)
         {
-            // Enough data but weak seasonality - still okay
             score += 10;
         }
 
-        // Historical accuracy bonus (0-20 points)
+        // Historical accuracy score (0-30 points) — weighted heavily since actual backtested
+        // accuracy is the best predictor of future forecast quality
         if (historicalAccuracy.HasValue && historicalAccuracy.Value > 0)
         {
-            score += (historicalAccuracy.Value / 100) * 20;
+            score += (historicalAccuracy.Value / 100) * 30;
         }
 
         return Math.Min(100, Math.Max(0, score));
@@ -202,11 +201,11 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             var forecastEngine = model.CreateTimeSeriesEngine<TimeSeriesInput, TimeSeriesOutput>(_mlContext);
             var forecast = forecastEngine.Predict();
 
-            // Apply sanity checks to SSA forecasts
-            var historicalMax = data.Max();
+            // Apply sanity checks to SSA forecasts using statistical bounds
             var historicalAvg = data.Average();
-            var maxReasonableForecast = historicalMax * 3m; // Cap at 3x historical max
-            var minReasonableForecast = historicalAvg * 0.1m; // Floor at 10% of average
+            var historicalStdDev = (decimal)data.Select(d => (double)d).StandardDeviation();
+            var maxReasonableForecast = historicalAvg + 2.5m * historicalStdDev;
+            var minReasonableForecast = Math.Max(0, historicalAvg - 2.5m * historicalStdDev);
 
             result.ForecastedValues = forecast.Forecast
                 .Select(f => Math.Max(minReasonableForecast, Math.Min(maxReasonableForecast, (decimal)Math.Max(0, f))))
@@ -240,21 +239,34 @@ public class LocalMLForecastingService : ILocalMLForecastingService
     private EnhancedForecastResult GenerateHoltWintersForecast(
         List<decimal> data, int periodsToForecast, EnhancedForecastResult result)
     {
-        // Detect optimal season length
-        var candidateLengths = new[] { 12, 6, 4, 3 };
-        var seasonLength = data.Count >= 12
-            ? _holtWinters.DetectSeasonLength(data, candidateLengths)
-            : Math.Min(4, Math.Max(2, data.Count / 2));
+        // Detect optimal season length, adapting candidates to data size
+        // Holt-Winters needs seasonLength*2 data points, so exclude candidates that are too large
+        int seasonLength;
+        if (data.Count >= 24)
+        {
+            var candidateLengths = new[] { 12, 6, 4, 3 };
+            seasonLength = _holtWinters.DetectSeasonLength(data, candidateLengths);
+        }
+        else if (data.Count >= 12)
+        {
+            // Cap at 6 so Holt-Winters can run properly (needs seasonLength*2 = 12 points)
+            var candidateLengths = new[] { 6, 4, 3 };
+            seasonLength = Math.Min(6, _holtWinters.DetectSeasonLength(data, candidateLengths));
+        }
+        else
+        {
+            seasonLength = Math.Min(4, Math.Max(2, data.Count / 3));
+        }
 
         seasonLength = Math.Max(2, seasonLength);
 
         var hwResult = _holtWinters.AutoForecast(data, seasonLength, periodsToForecast);
 
-        // Apply sanity checks to prevent unrealistic forecasts
-        var historicalMax = data.Max();
+        // Apply sanity checks using statistical bounds
         var historicalAvg = data.Average();
-        var maxReasonableForecast = historicalMax * 3m; // Cap at 3x historical max
-        var minReasonableForecast = historicalAvg * 0.1m; // Floor at 10% of average
+        var historicalStdDev = (decimal)data.Select(d => (double)d).StandardDeviation();
+        var maxReasonableForecast = historicalAvg + 2.5m * historicalStdDev;
+        var minReasonableForecast = Math.Max(0, historicalAvg - 2.5m * historicalStdDev);
 
         result.ForecastedValues = hwResult.ForecastedValues
             .Select(v => Math.Max(minReasonableForecast, Math.Min(maxReasonableForecast, v)))

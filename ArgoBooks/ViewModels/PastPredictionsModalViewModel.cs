@@ -57,6 +57,9 @@ public partial class PastPredictionItemViewModel : ObservableObject
     private Color _accuracyColor = Color.Parse(AppColors.GrayMedium);
 
     [ObservableProperty]
+    private Color _expensesAccuracyColor = Color.Parse(AppColors.GrayMedium);
+
+    [ObservableProperty]
     private string _typeLabel = "Live";
 
     [ObservableProperty]
@@ -81,6 +84,14 @@ public partial class PastPredictionItemViewModel : ObservableObject
             _ => AppColors.ExpenseRed
         };
 
+        var expAccuracyColor = expensesAccuracy switch
+        {
+            >= 90 => AppColors.Success,
+            >= 80 => AppColors.Primary,
+            >= 70 => AppColors.Warning,
+            _ => AppColors.ExpenseRed
+        };
+
         return new PastPredictionItemViewModel
         {
             PeriodLabel = $"{record.PeriodStartDate:MMM yyyy}",
@@ -95,6 +106,7 @@ public partial class PastPredictionItemViewModel : ObservableObject
             IsBacktested = isBacktested,
             IsValidated = record.IsValidated,
             AccuracyColor = Color.Parse(revenueAccuracy.HasValue ? accuracyColor : AppColors.GrayMedium),
+            ExpensesAccuracyColor = Color.Parse(expensesAccuracy.HasValue ? expAccuracyColor : AppColors.GrayMedium),
             TypeLabel = isBacktested ? "Backtest" : "Live",
             TypeBadgeColor = Color.Parse(isBacktested ? AppColors.Violet : AppColors.Primary)
         };
