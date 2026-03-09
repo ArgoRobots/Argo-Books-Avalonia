@@ -426,35 +426,62 @@ public class SpreadsheetImportService
             EntityType = entityType
         };
 
+        // Deduplicate entities across chunks by ID — later chunks win on conflict.
+        // The LLM processes chunks independently and may produce duplicate IDs,
+        // especially at chunk boundaries.
+        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Collect all (chunk, entityJson) pairs, then reverse-iterate to keep the last occurrence of each ID
+        var allEntities = new List<(SpreadsheetSheetType EntityType, JsonElement Entity)>();
         foreach (var chunk in processedData)
         {
             foreach (var entityJson in chunk.Entities)
+                allEntities.Add((chunk.EntityType, entityJson));
+        }
+
+        // Walk backwards so the last occurrence of a duplicate ID wins
+        var deduplicatedEntities = new List<(SpreadsheetSheetType EntityType, JsonElement Entity)>();
+        for (int i = allEntities.Count - 1; i >= 0; i--)
+        {
+            var id = ExtractEntityId(allEntities[i].Entity);
+            if (string.IsNullOrEmpty(id) || seenIds.Add(id))
+                deduplicatedEntities.Add(allEntities[i]);
+        }
+        deduplicatedEntities.Reverse(); // restore original order
+
+        var duplicatesRemoved = allEntities.Count - deduplicatedEntities.Count;
+        if (duplicatesRemoved > 0)
+        {
+            _errorLogger?.LogWarning(ErrorCategory.Import,
+                $"Removed {duplicatesRemoved} duplicate entities (by ID) across AI chunks for sheet '{sheetName}'");
+        }
+
+        foreach (var (chunkEntityType, entityJson) in deduplicatedEntities)
+        {
+            try
             {
-                try
-                {
-                    var singleResult = ImportSingleEntity(companyData, chunk.EntityType, entityJson, options);
-                    if (singleResult == ImportEntityResult.Inserted)
-                        sheetResult.Inserted++;
-                    else if (singleResult == ImportEntityResult.Updated)
-                        sheetResult.Updated++;
-                    else if (singleResult == ImportEntityResult.SkippedExisting)
-                    {
-                        sheetResult.Skipped++;
-                        sheetResult.SkipReasons.Add($"Existing {chunk.EntityType} record skipped");
-                    }
-                    else
-                    {
-                        sheetResult.Skipped++;
-                        sheetResult.SkipReasons.Add($"Row had missing or empty ID ({chunk.EntityType})");
-                    }
-                }
-                catch (Exception ex)
+                var singleResult = ImportSingleEntity(companyData, chunkEntityType, entityJson, options);
+                if (singleResult == ImportEntityResult.Inserted)
+                    sheetResult.Inserted++;
+                else if (singleResult == ImportEntityResult.Updated)
+                    sheetResult.Updated++;
+                else if (singleResult == ImportEntityResult.SkippedExisting)
                 {
                     sheetResult.Skipped++;
-                    sheetResult.SkipReasons.Add($"Error importing {chunk.EntityType}: {ex.Message}");
-                    _errorLogger?.LogError(ex, ErrorCategory.Import,
-                        $"Failed to import {chunk.EntityType} entity from AI processing");
+                    sheetResult.SkipReasons.Add($"Existing {chunkEntityType} record skipped");
                 }
+                else
+                {
+                    sheetResult.Skipped++;
+                    sheetResult.SkipReasons.Add($"Row had missing or empty ID ({chunkEntityType})");
+                }
+            }
+            catch (Exception ex)
+            {
+                sheetResult.Skipped++;
+                sheetResult.SkipReasons.Add($"Error importing {chunkEntityType}: {ex.Message}");
+                _errorLogger?.LogError(ex, ErrorCategory.Import,
+                    $"Failed to import {chunkEntityType} entity from AI processing");
             }
         }
 
@@ -652,6 +679,16 @@ public class SpreadsheetImportService
         Converters = { new LenientEnumConverterFactory() }
     };
 
+    /// <summary>
+    /// Extracts the "id" field from a JSON entity element for deduplication.
+    /// </summary>
+    private static string? ExtractEntityId(JsonElement entityJson)
+    {
+        if (entityJson.TryGetProperty("id", out var idProp))
+            return idProp.GetString();
+        return null;
+    }
+
     private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null)
     {
         var jsonStr = entityJson.GetRawText();
@@ -704,7 +741,8 @@ public class SpreadsheetImportService
                     if (string.IsNullOrEmpty(invoice.InvoiceNumber))
                         invoice.InvoiceNumber = invoice.Id;
 
-                    invoice.OriginalCurrency = "USD";
+                    var currency = data.Settings.Currency;
+                    invoice.OriginalCurrency = currency;
                     invoice.TotalUSD = invoice.Total;
                     invoice.BalanceUSD = invoice.Balance;
 
@@ -755,7 +793,7 @@ public class SpreadsheetImportService
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
                 {
-                    expense.OriginalCurrency = "USD";
+                    expense.OriginalCurrency = data.Settings.Currency;
                     expense.TotalUSD = expense.Total;
                     expense.TaxAmountUSD = expense.TaxAmount;
                     expense.ShippingCostUSD = expense.ShippingCost;
@@ -806,7 +844,7 @@ public class SpreadsheetImportService
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
                 {
                     revenue.PaymentStatus = NormalizePaymentStatus(revenue.PaymentStatus);
-                    revenue.OriginalCurrency = "USD";
+                    revenue.OriginalCurrency = data.Settings.Currency;
                     revenue.TotalUSD = revenue.Total;
                     revenue.TaxAmountUSD = revenue.TaxAmount;
                     revenue.ShippingCostUSD = revenue.ShippingCost;
@@ -857,7 +895,7 @@ public class SpreadsheetImportService
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
-                    payment.OriginalCurrency = "USD";
+                    payment.OriginalCurrency = data.Settings.Currency;
                     payment.AmountUSD = payment.Amount;
 
                     // Auto-create missing customer and invoice references
@@ -2558,8 +2596,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             invoice.Balance = GetDecimal(row, headers, "Balance");
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
-            // Set USD values (assume imported data is in USD)
-            invoice.OriginalCurrency = "USD";
+            // Set currency values from company settings
+            invoice.OriginalCurrency = data.Settings.Currency;
             invoice.TotalUSD = invoice.Total;
             invoice.BalanceUSD = invoice.Balance;
 
@@ -2625,8 +2663,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
             purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            // Set USD values (assume imported data is in USD)
-            purchase.OriginalCurrency = "USD";
+            // Set currency values from company settings
+            purchase.OriginalCurrency = data.Settings.Currency;
             purchase.TotalUSD = purchase.Total;
             purchase.TaxAmountUSD = purchase.TaxAmount;
             purchase.ShippingCostUSD = purchase.ShippingCost;
@@ -2814,8 +2852,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             payment.ReferenceNumber = GetNullableString(row, headers, "Reference");
             payment.Notes = GetString(row, headers, "Notes");
 
-            // Set USD values (assume imported data is in USD)
-            payment.OriginalCurrency = "USD";
+            // Set currency values from company settings
+            payment.OriginalCurrency = data.Settings.Currency;
             payment.AmountUSD = payment.Amount;
 
             if (existing == null)
@@ -2877,8 +2915,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
             revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            // Set USD values (assume imported data is in USD)
-            revenue.OriginalCurrency = "USD";
+            // Set currency values from company settings
+            revenue.OriginalCurrency = data.Settings.Currency;
             revenue.TotalUSD = revenue.Total;
             revenue.TaxAmountUSD = revenue.TaxAmount;
             revenue.ShippingCostUSD = revenue.ShippingCost;
@@ -2929,7 +2967,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             Id = invoiceId,
             CustomerId = customerId ?? string.Empty,
-            OriginalCurrency = "USD"
+            OriginalCurrency = data.Settings.Currency
         });
     }
 
