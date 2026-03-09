@@ -452,7 +452,7 @@ public class SpreadsheetImportService
         var duplicatesRemoved = allEntities.Count - deduplicatedEntities.Count;
         if (duplicatesRemoved > 0)
         {
-            _errorLogger?.LogWarning(ErrorCategory.Import,
+            _errorLogger?.LogWarning(
                 $"Removed {duplicatesRemoved} duplicate entities (by ID) across AI chunks for sheet '{sheetName}'");
         }
 
@@ -741,7 +741,7 @@ public class SpreadsheetImportService
                     if (string.IsNullOrEmpty(invoice.InvoiceNumber))
                         invoice.InvoiceNumber = invoice.Id;
 
-                    var currency = data.Settings.Currency;
+                    var currency = data.Settings.Localization.Currency;
                     invoice.OriginalCurrency = currency;
                     invoice.TotalUSD = invoice.Total;
                     invoice.BalanceUSD = invoice.Balance;
@@ -793,7 +793,7 @@ public class SpreadsheetImportService
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
                 {
-                    expense.OriginalCurrency = data.Settings.Currency;
+                    expense.OriginalCurrency = data.Settings.Localization.Currency;
                     expense.TotalUSD = expense.Total;
                     expense.TaxAmountUSD = expense.TaxAmount;
                     expense.ShippingCostUSD = expense.ShippingCost;
@@ -844,7 +844,7 @@ public class SpreadsheetImportService
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
                 {
                     revenue.PaymentStatus = NormalizePaymentStatus(revenue.PaymentStatus);
-                    revenue.OriginalCurrency = data.Settings.Currency;
+                    revenue.OriginalCurrency = data.Settings.Localization.Currency;
                     revenue.TotalUSD = revenue.Total;
                     revenue.TaxAmountUSD = revenue.TaxAmount;
                     revenue.ShippingCostUSD = revenue.ShippingCost;
@@ -895,7 +895,7 @@ public class SpreadsheetImportService
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
-                    payment.OriginalCurrency = data.Settings.Currency;
+                    payment.OriginalCurrency = data.Settings.Localization.Currency;
                     payment.AmountUSD = payment.Amount;
 
                     // Auto-create missing customer and invoice references
@@ -2597,7 +2597,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
             // Set currency values from company settings
-            invoice.OriginalCurrency = data.Settings.Currency;
+            invoice.OriginalCurrency = data.Settings.Localization.Currency;
             invoice.TotalUSD = invoice.Total;
             invoice.BalanceUSD = invoice.Balance;
 
@@ -2664,7 +2664,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
 
             // Set currency values from company settings
-            purchase.OriginalCurrency = data.Settings.Currency;
+            purchase.OriginalCurrency = data.Settings.Localization.Currency;
             purchase.TotalUSD = purchase.Total;
             purchase.TaxAmountUSD = purchase.TaxAmount;
             purchase.ShippingCostUSD = purchase.ShippingCost;
@@ -2853,7 +2853,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             payment.Notes = GetString(row, headers, "Notes");
 
             // Set currency values from company settings
-            payment.OriginalCurrency = data.Settings.Currency;
+            payment.OriginalCurrency = data.Settings.Localization.Currency;
             payment.AmountUSD = payment.Amount;
 
             if (existing == null)
@@ -2916,7 +2916,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
             // Set currency values from company settings
-            revenue.OriginalCurrency = data.Settings.Currency;
+            revenue.OriginalCurrency = data.Settings.Localization.Currency;
             revenue.TotalUSD = revenue.Total;
             revenue.TaxAmountUSD = revenue.TaxAmount;
             revenue.ShippingCostUSD = revenue.ShippingCost;
@@ -2967,7 +2967,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             Id = invoiceId,
             CustomerId = customerId ?? string.Empty,
-            OriginalCurrency = data.Settings.Currency
+            OriginalCurrency = data.Settings.Localization.Currency
         });
     }
 

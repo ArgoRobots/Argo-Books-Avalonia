@@ -355,7 +355,7 @@ public class SpreadsheetAnalysisService(
 
         if (failedRows > 0)
         {
-            errorLogger?.LogWarning(ErrorCategory.Import,
+            errorLogger?.LogWarning(
                 $"AI processing: {failedRows} of {total} rows failed to process for sheet '{sheetAnalysis.SourceSheetName}'");
         }
 
