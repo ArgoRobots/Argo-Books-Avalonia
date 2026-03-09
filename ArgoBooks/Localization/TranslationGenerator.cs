@@ -97,6 +97,11 @@ public partial class TranslationGenerator
     public int LanguagesTranslated { get; private set; }
 
     /// <summary>
+    /// Gets the total number of stale keys removed from translation files.
+    /// </summary>
+    public int StaleKeysRemoved { get; private set; }
+
+    /// <summary>
     /// Gets the estimated cost based on Azure Translator S1 pricing ($10 per 1M characters).
     /// </summary>
     public decimal EstimatedCost => TotalCharactersTranslated / 1_000_000m * PricePerMillionChars;
@@ -432,28 +437,41 @@ public partial class TranslationGenerator
                 }
             }
 
-            if (stringsToTranslate.Count == 0)
+            // Count stale keys that exist in the file but are no longer in the source
+            var staleCount = existing.Keys.Count(k => !englishStrings.ContainsKey(k));
+
+            if (stringsToTranslate.Count == 0 && staleCount == 0)
             {
                 ReportProgress($"Skipping {displayName} ({isoCode}) - already up to date", currentLanguage, totalLanguages);
                 continue;
             }
 
-            ReportProgress($"Translating {stringsToTranslate.Count} new strings to {displayName} ({isoCode})...", currentLanguage, totalLanguages);
-
-            // Translate only the new strings
-            var translations = await TranslateToLanguageAsync(stringsToTranslate, isoCode, cancellationToken);
-
-            foreach (var (key, value) in translations)
+            if (stringsToTranslate.Count > 0)
             {
-                fullTranslation[key] = value;
+                ReportProgress($"Translating {stringsToTranslate.Count} new strings to {displayName} ({isoCode})...", currentLanguage, totalLanguages);
+
+                // Translate only the new strings
+                var translations = await TranslateToLanguageAsync(stringsToTranslate, isoCode, cancellationToken);
+
+                foreach (var (key, value) in translations)
+                {
+                    fullTranslation[key] = value;
+                }
+
+                LanguagesTranslated++;
             }
 
-            // Save immediately after this language completes
+            if (staleCount > 0)
+            {
+                var staleKeys = existing.Keys.Where(k => !englishStrings.ContainsKey(k)).ToList();
+                ReportProgress($"Removing {staleCount} stale key(s) from {displayName} ({isoCode}): {string.Join(", ", staleKeys.Take(5))}{(staleKeys.Count > 5 ? $" ... and {staleKeys.Count - 5} more" : "")}", currentLanguage, totalLanguages);
+                StaleKeysRemoved += staleCount;
+            }
+
+            // Save the file (with new translations added and stale keys pruned)
             var json = JsonSerializer.Serialize(fullTranslation, jsonOptions);
             await File.WriteAllTextAsync(filePath, json);
-            ReportProgress($"Saved {isoCode}.json ({stringsToTranslate.Count} new, {fullTranslation.Count} total)", currentLanguage, totalLanguages);
-
-            LanguagesTranslated++;
+            ReportProgress($"Saved {isoCode}.json ({stringsToTranslate.Count} new, {staleCount} removed, {fullTranslation.Count} total)", currentLanguage, totalLanguages);
         }
     }
 
