@@ -166,6 +166,34 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
     [ObservableProperty]
     private bool _skipExistingRecords;
 
+    private bool _suppressSkipConfirmation;
+
+    async partial void OnSkipExistingRecordsChanged(bool value)
+    {
+        if (value || _suppressSkipConfirmation)
+            return;
+
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Overwrite Existing Records?".Translate(),
+                Message = "This may overwrite existing data in your company file with values from the spreadsheet. Are you sure?".Translate(),
+                PrimaryButtonText = "Allow Overwrite".Translate(),
+                CancelButtonText = "Keep Safe".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary)
+            {
+                _suppressSkipConfirmation = true;
+                SkipExistingRecords = true;
+                _suppressSkipConfirmation = false;
+            }
+        }
+    }
+
     public ObservableCollection<SheetAnalysisViewModel> Sheets { get; } = [];
 
     public ObservableCollection<string> Warnings { get; } = [];

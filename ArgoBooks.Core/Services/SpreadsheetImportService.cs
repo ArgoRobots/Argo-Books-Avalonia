@@ -315,7 +315,7 @@ public class SpreadsheetImportService
                     result.TotalUpdated += sheetResult.Updated;
                     result.TotalSkipped += sheetResult.Skipped;
                     result.SheetResults.Add(sheetResult);
-                    if (sheetResult.Inserted == 0 && sheetResult.Updated == 0)
+                    if (sheetResult.Inserted == 0 && sheetResult.Updated == 0 && sheetResult.Skipped == 0)
                         result.Warnings.Add($"Sheet detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
                 }
                 else
@@ -511,7 +511,7 @@ public class SpreadsheetImportService
         result.TotalUpdated += sheetResult.Updated;
         result.TotalSkipped += sheetResult.Skipped;
         result.SheetResults.Add(sheetResult);
-        if (sheetResult.Inserted == 0 && sheetResult.Updated == 0 && rows.Count > 0)
+        if (sheetResult.Inserted == 0 && sheetResult.Updated == 0 && sheetResult.Skipped == 0 && rows.Count > 0)
             result.Warnings.Add($"Sheet '{sheetName}': detected as '{sheetType}' but 0 records were imported from {rows.Count} rows.");
     }
 
@@ -629,7 +629,7 @@ public class SpreadsheetImportService
         {
             result.Skipped = options.SkippedCount;
             if (result.Skipped > 0)
-                result.SkipReasons.Add($"{result.Skipped} existing {sheetType} records skipped");
+                result.SkipReasons.Add($"{result.Skipped} {sheetType} records skipped (already exist)");
         }
         else
         {
