@@ -34,16 +34,13 @@ public partial class LanguageService
     // HTTP client for downloading translations
     private readonly HttpClient _httpClient = new();
 
-    // Translation caches
+    // Translation caches - only current language loaded in memory
     private Dictionary<string, string> _englishCache = new();
-    private Dictionary<string, Dictionary<string, string>> _translationCache = new();
-
-    // Current language
+    private Dictionary<string, string> _currentLanguageCache = new();
+    private string _currentLoadedIsoCode = "";
 
     // File paths
     private readonly string _cacheDirectory;
-    private readonly string _translationsFilePath;
-    private readonly string _englishFilePath;
 
     // Download URL template (version will be inserted)
     private const string DownloadUrlTemplate = "https://argorobots.com/resources/downloads/{0}/languages/{1}.json";
@@ -87,12 +84,16 @@ public partial class LanguageService
         // Set up cache directory in AppData
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         _cacheDirectory = Path.Combine(appData, "ArgoBooks", "Languages");
-        _translationsFilePath = Path.Combine(_cacheDirectory, "translations.json");
-        _englishFilePath = Path.Combine(_cacheDirectory, "en.json");
 
         // Ensure directory exists
         Directory.CreateDirectory(_cacheDirectory);
     }
+
+    /// <summary>
+    /// Gets the file path for a language's cache file.
+    /// </summary>
+    private string GetLanguageFilePath(string isoCode) =>
+        Path.Combine(_cacheDirectory, $"{isoCode}.json");
 
     /// <summary>
     /// Initializes the language service by loading cached translations.
@@ -103,44 +104,20 @@ public partial class LanguageService
     }
 
     /// <summary>
-    /// Loads cached translations from disk.
+    /// Loads cached translations from disk. Only loads English on startup.
+    /// Other languages are loaded on demand when switching.
     /// </summary>
     private void LoadCachedTranslations()
     {
         try
         {
-            // Load non-English translation cache from translations.json
-            if (File.Exists(_translationsFilePath))
-            {
-                var content = File.ReadAllText(_translationsFilePath);
-                if (!string.IsNullOrWhiteSpace(content))
-                {
-                    var translations = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(content);
-                    if (translations != null)
-                    {
-                        _translationCache = translations;
-                    }
-                }
-            }
-
-            // Also load individual language JSON files (e.g., fr.json, de.json) for easier testing
-            LoadIndividualLanguageFiles();
+            // Migrate legacy monolithic translations.json to per-language files
+            MigrateLegacyTranslationsFile();
 
             // Load English translations
-            if (File.Exists(_englishFilePath))
-            {
-                var content = File.ReadAllText(_englishFilePath);
-                if (!string.IsNullOrWhiteSpace(content))
-                {
-                    var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
-                    if (translations != null)
-                    {
-                        _englishCache = translations;
-                    }
-                }
-            }
+            LoadLanguageFile("en", ref _englishCache);
 
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {_englishCache.Count} English translations, {_translationCache.Count} other language caches");
+            System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {_englishCache.Count} English translations");
         }
         catch (Exception ex)
         {
@@ -149,76 +126,103 @@ public partial class LanguageService
     }
 
     /// <summary>
-    /// Loads individual language JSON files from the cache directory.
-    /// This allows placing files like fr.json, de.json directly in the Languages folder.
+    /// Loads a single language file from disk into the provided dictionary.
     /// </summary>
-    private void LoadIndividualLanguageFiles()
+    private bool LoadLanguageFile(string isoCode, ref Dictionary<string, string> target)
     {
+        var filePath = GetLanguageFilePath(isoCode);
+        if (!File.Exists(filePath))
+            return false;
+
         try
         {
-            var jsonFiles = Directory.GetFiles(_cacheDirectory, "*.json");
-            foreach (var file in jsonFiles)
+            var content = File.ReadAllText(filePath);
+            if (!string.IsNullOrWhiteSpace(content))
             {
-                var fileName = Path.GetFileNameWithoutExtension(file);
-
-                // Skip translations.json and en.json (handled separately)
-                if (fileName == "translations" || fileName == "en")
-                    continue;
-
-                // Check if it's a valid ISO code
-                if (!Languages.IsValidIsoCode(fileName))
-                    continue;
-
-                try
+                var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+                if (translations != null && translations.Count > 0)
                 {
-                    var content = File.ReadAllText(file);
-                    if (!string.IsNullOrWhiteSpace(content))
-                    {
-                        var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
-                        if (translations != null && translations.Count > 0)
-                        {
-                            // Merge with existing translations (file takes priority)
-                            if (!_translationCache.TryGetValue(fileName, out var existing))
-                            {
-                                existing = new Dictionary<string, string>();
-                                _translationCache[fileName] = existing;
-                            }
-
-                            foreach (var kvp in translations)
-                            {
-                                existing[kvp.Key] = kvp.Value;
-                            }
-
-                            System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {translations.Count} translations from {fileName}.json");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to load language file: {Path.GetFileName(file)}");
+                    target = translations;
+                    System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {translations.Count} translations from {isoCode}.json");
+                    return true;
                 }
             }
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to scan language files");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to load language file: {isoCode}.json");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Ensures the current language's translations are loaded into memory.
+    /// </summary>
+    private void EnsureLanguageLoaded(string isoCode)
+    {
+        if (isoCode == "en" || _currentLoadedIsoCode == isoCode)
+            return;
+
+        var cache = new Dictionary<string, string>();
+        LoadLanguageFile(isoCode, ref cache);
+        _currentLanguageCache = cache;
+        _currentLoadedIsoCode = isoCode;
+    }
+
+    /// <summary>
+    /// Migrates the legacy monolithic translations.json file to individual per-language files.
+    /// </summary>
+    private void MigrateLegacyTranslationsFile()
+    {
+        var legacyPath = Path.Combine(_cacheDirectory, "translations.json");
+        if (!File.Exists(legacyPath))
+            return;
+
+        try
+        {
+            var content = File.ReadAllText(legacyPath);
+            if (string.IsNullOrWhiteSpace(content))
+                return;
+
+            var allTranslations = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(content);
+            if (allTranslations == null)
+                return;
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            foreach (var (isoCode, translations) in allTranslations)
+            {
+                var filePath = GetLanguageFilePath(isoCode);
+                if (!File.Exists(filePath)) // Don't overwrite existing per-language files
+                {
+                    File.WriteAllText(filePath, JsonSerializer.Serialize(translations, options));
+                }
+            }
+
+            // Remove the legacy file after successful migration
+            File.Delete(legacyPath);
+            System.Diagnostics.Debug.WriteLine($"LanguageService: Migrated {allTranslations.Count} languages from legacy translations.json");
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to migrate legacy translations.json");
         }
     }
 
     /// <summary>
-    /// Saves the translation cache to disk.
+    /// Saves a single language's translations to its own file.
     /// </summary>
-    private void SaveCacheToFile()
+    private void SaveLanguageFile(string isoCode, Dictionary<string, string> translations)
     {
         try
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
-            var jsonContent = JsonSerializer.Serialize(_translationCache, options);
-            File.WriteAllText(_translationsFilePath, jsonContent);
+            var jsonContent = JsonSerializer.Serialize(translations, options);
+            File.WriteAllText(GetLanguageFilePath(isoCode), jsonContent);
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save translation cache");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to save translation cache for {isoCode}");
         }
     }
 
@@ -248,13 +252,16 @@ public partial class LanguageService
 
         if (!downloadSuccess && isoCode != "en")
         {
-            // If download failed and it's not English, check if we have cached translations
-            if (!_translationCache.ContainsKey(isoCode))
+            // If download failed and it's not English, check if we have cached translations on disk
+            if (!File.Exists(GetLanguageFilePath(isoCode)))
             {
                 System.Diagnostics.Debug.WriteLine($"LanguageService: Failed to download or find cached translations for {languageName}");
                 return false;
             }
         }
+
+        // Load the language into memory
+        EnsureLanguageLoaded(isoCode);
 
         // Update current language
         CurrentLanguage = languageName;
@@ -281,7 +288,7 @@ public partial class LanguageService
     {
         var isoCode = Languages.GetIsoCode(languageName);
 
-        // Check if already cached
+        // Check if already cached (in memory or on disk)
         if (!overwrite)
         {
             if (isoCode == "en")
@@ -292,9 +299,9 @@ public partial class LanguageService
                     return true;
                 }
             }
-            else if (_translationCache.ContainsKey(isoCode))
+            else if (File.Exists(GetLanguageFilePath(isoCode)))
             {
-                System.Diagnostics.Debug.WriteLine($"LanguageService: {languageName} already cached");
+                System.Diagnostics.Debug.WriteLine($"LanguageService: {languageName} already cached on disk");
                 return true;
             }
         }
@@ -328,31 +335,18 @@ public partial class LanguageService
                 return false;
             }
 
-            // Handle English separately
+            // Save to per-language file and update in-memory cache
             if (isoCode == "en")
             {
                 _englishCache = downloadedTranslations;
-
-                // Save to dedicated English file
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                await File.WriteAllTextAsync(_englishFilePath, JsonSerializer.Serialize(_englishCache, options), cancellationToken);
             }
-            else
+            else if (isoCode == _currentLoadedIsoCode || isoCode == CurrentIsoCode)
             {
-                // Merge with existing translations
-                if (!_translationCache.TryGetValue(isoCode, out var existingTranslations))
-                {
-                    existingTranslations = new Dictionary<string, string>();
-                    _translationCache[isoCode] = existingTranslations;
-                }
-
-                foreach (var kvp in downloadedTranslations)
-                {
-                    existingTranslations[kvp.Key] = kvp.Value;
-                }
-
-                SaveCacheToFile();
+                _currentLanguageCache = downloadedTranslations;
+                _currentLoadedIsoCode = isoCode;
             }
+
+            SaveLanguageFile(isoCode, downloadedTranslations);
 
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "Translations loaded"));
             System.Diagnostics.Debug.WriteLine($"LanguageService: Successfully downloaded {downloadedTranslations.Count} translations for {languageName}");
@@ -381,20 +375,23 @@ public partial class LanguageService
     {
         var languagesToUpdate = new HashSet<string>();
 
-        // Add languages from translation cache
-        foreach (var isoCode in _translationCache.Keys)
+        // Scan per-language files on disk to find cached languages
+        try
         {
-            var languageName = Languages.GetLanguageName(isoCode);
-            if (!string.IsNullOrEmpty(languageName))
+            foreach (var file in Directory.GetFiles(_cacheDirectory, "*.json"))
             {
-                languagesToUpdate.Add(languageName);
+                var isoCode = Path.GetFileNameWithoutExtension(file);
+                if (Languages.IsValidIsoCode(isoCode))
+                {
+                    var name = Languages.GetLanguageName(isoCode);
+                    if (!string.IsNullOrEmpty(name))
+                        languagesToUpdate.Add(name);
+                }
             }
         }
-
-        // Add English if cached
-        if (_englishCache.Count > 0)
+        catch (Exception ex)
         {
-            languagesToUpdate.Add("English");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to scan language files for update");
         }
 
         if (languagesToUpdate.Count == 0)
@@ -463,19 +460,15 @@ public partial class LanguageService
         {
             if (_englishCache.TryGetValue(key, out var cachedTranslation))
             {
-                // Decode HTML entities in case the translation file contains encoded characters
                 return DecodeHtmlEntities(cachedTranslation);
             }
         }
         else
         {
-            if (_translationCache.TryGetValue(isoCode, out var languageTranslations))
+            EnsureLanguageLoaded(isoCode);
+            if (_currentLanguageCache.TryGetValue(key, out var cachedTranslation))
             {
-                if (languageTranslations.TryGetValue(key, out var cachedTranslation))
-                {
-                    // Decode HTML entities in case the translation file contains encoded characters
-                    return DecodeHtmlEntities(cachedTranslation);
-                }
+                return DecodeHtmlEntities(cachedTranslation);
             }
         }
 
@@ -569,13 +562,8 @@ public partial class LanguageService
             return true;
 
         var textKey = GetStringKey(text);
-
-        if (_translationCache.TryGetValue(CurrentIsoCode, out var languageTranslations))
-        {
-            return languageTranslations.ContainsKey(textKey);
-        }
-
-        return false;
+        EnsureLanguageLoaded(CurrentIsoCode);
+        return _currentLanguageCache.ContainsKey(textKey);
     }
 
     /// <summary>
@@ -588,10 +576,8 @@ public partial class LanguageService
             if (CurrentIsoCode == "en")
                 return _englishCache.Count;
 
-            if (_translationCache.TryGetValue(CurrentIsoCode, out var translations))
-                return translations.Count;
-
-            return 0;
+            EnsureLanguageLoaded(CurrentIsoCode);
+            return _currentLanguageCache.Count;
         }
     }
 
@@ -603,9 +589,16 @@ public partial class LanguageService
         get
         {
             var languages = new List<string>();
-            if (_englishCache.Count > 0)
-                languages.Add("en");
-            languages.AddRange(_translationCache.Keys);
+            try
+            {
+                foreach (var file in Directory.GetFiles(_cacheDirectory, "*.json"))
+                {
+                    var isoCode = Path.GetFileNameWithoutExtension(file);
+                    if (Languages.IsValidIsoCode(isoCode))
+                        languages.Add(isoCode);
+                }
+            }
+            catch { /* directory access error - return empty */ }
             return languages;
         }
     }
@@ -616,14 +609,15 @@ public partial class LanguageService
     public void ClearCache()
     {
         _englishCache.Clear();
-        _translationCache.Clear();
+        _currentLanguageCache.Clear();
+        _currentLoadedIsoCode = "";
 
         try
         {
-            if (File.Exists(_translationsFilePath))
-                File.Delete(_translationsFilePath);
-            if (File.Exists(_englishFilePath))
-                File.Delete(_englishFilePath);
+            foreach (var file in Directory.GetFiles(_cacheDirectory, "*.json"))
+            {
+                File.Delete(file);
+            }
         }
         catch (Exception ex)
         {
@@ -645,12 +639,8 @@ public partial class LanguageService
         }
         else
         {
-            if (!_translationCache.TryGetValue(isoCode, out var translations))
-            {
-                translations = new Dictionary<string, string>();
-                _translationCache[isoCode] = translations;
-            }
-            translations[key] = value;
+            EnsureLanguageLoaded(isoCode);
+            _currentLanguageCache[key] = value;
         }
     }
 
@@ -666,13 +656,13 @@ public partial class LanguageService
             // Save English cache
             if (_englishCache.Count > 0)
             {
-                await File.WriteAllTextAsync(_englishFilePath, JsonSerializer.Serialize(_englishCache, options));
+                await File.WriteAllTextAsync(GetLanguageFilePath("en"), JsonSerializer.Serialize(_englishCache, options));
             }
 
-            // Save other translations
-            if (_translationCache.Count > 0)
+            // Save current language cache
+            if (_currentLoadedIsoCode != "" && _currentLoadedIsoCode != "en" && _currentLanguageCache.Count > 0)
             {
-                await File.WriteAllTextAsync(_translationsFilePath, JsonSerializer.Serialize(_translationCache, options));
+                await File.WriteAllTextAsync(GetLanguageFilePath(_currentLoadedIsoCode), JsonSerializer.Serialize(_currentLanguageCache, options));
             }
         }
         catch (Exception ex)
@@ -691,10 +681,8 @@ public partial class LanguageService
         if (isoCode == "en")
             return _englishCache;
 
-        if (_translationCache.TryGetValue(isoCode, out var translations))
-            return translations;
-
-        return new Dictionary<string, string>();
+        EnsureLanguageLoaded(isoCode);
+        return _currentLanguageCache;
     }
 }
 
