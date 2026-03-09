@@ -15,7 +15,8 @@
     </Design.DataContext>
 
     <Panel>
-        <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                               ClosingCommand="{Binding CloseCommand}">
             <controls:ModalOverlay.ModalContent>
                 <!-- Wizard Container -->
                 <Border Background="{DynamicResource SurfaceBrush}"

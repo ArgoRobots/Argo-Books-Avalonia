@@ -20,7 +20,7 @@ public class SpreadsheetAnalysisService(
     private const int SampleLastRows = 3;
     private const int SampleRandomRows = 5;
     private const int Tier2ChunkSize = 100;
-    private const int MaxConcurrentChunks = 5;
+    private const int MaxConcurrentChunks = 10;
 
     #region Analysis Phase
 
@@ -210,7 +210,7 @@ public class SpreadsheetAnalysisService(
 
 
         var response = await openAiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: 8000, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
         {
@@ -229,8 +229,6 @@ public class SpreadsheetAnalysisService(
         IProgress<(int processed, int total)>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var results = new List<LlmProcessedData>();
-
         List<string> headers;
         List<List<string>> allRows;
 
@@ -252,12 +250,69 @@ public class SpreadsheetAnalysisService(
             using var workbook = new XLWorkbook(fileStream);
             var worksheet = workbook.Worksheets.FirstOrDefault(w => w.Name == sheetAnalysis.SourceSheetName);
             if (worksheet == null)
-                return results;
+                return [];
 
             headers = GetHeaders(worksheet);
             allRows = GetAllRowsAsStrings(worksheet, headers.Count);
         }
 
+        return await ProcessAllChunksAsync(headers, allRows, sheetAnalysis, progress, cancellationToken);
+    }
+
+    /// <summary>
+    /// Reads all sheet data from a file for the given sheets, returning headers and rows per sheet.
+    /// Use this to pre-read the file once before calling ProcessAllChunksAsync with pre-read data.
+    /// </summary>
+    public static async Task<Dictionary<string, (List<string> Headers, List<List<string>> Rows)>> ReadSheetDataAsync(
+        string filePath,
+        List<SheetAnalysis> sheets,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, (List<string> Headers, List<List<string>> Rows)>();
+
+        if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
+            if (lines.Length < 2) return result;
+            var delimiter = DetectCsvDelimiter(lines[0]);
+            var headers = ParseCsvLine(lines[0], delimiter);
+            var rows = new List<List<string>>();
+            for (int i = 1; i < lines.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(lines[i]))
+                    rows.Add(ParseCsvLine(lines[i], delimiter));
+            }
+            foreach (var sheet in sheets)
+                result[sheet.SourceSheetName] = (headers, rows);
+        }
+        else
+        {
+            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var wb = new XLWorkbook(fs);
+            foreach (var sheet in sheets)
+            {
+                var ws = wb.Worksheets.FirstOrDefault(w => w.Name == sheet.SourceSheetName);
+                if (ws == null) continue;
+                var headers = GetHeaders(ws);
+                var rows = GetAllRowsAsStrings(ws, headers.Count);
+                result[sheet.SourceSheetName] = (headers, rows);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Processes pre-read rows through LLM in chunks, reporting progress.
+    /// Use this overload to avoid re-reading the file for each sheet.
+    /// </summary>
+    public async Task<List<LlmProcessedData>> ProcessAllChunksAsync(
+        List<string> headers,
+        List<List<string>> allRows,
+        SheetAnalysis sheetAnalysis,
+        IProgress<(int processed, int total)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
         var total = allRows.Count;
 
         // Build all chunks upfront
@@ -288,10 +343,20 @@ public class SpreadsheetAnalysisService(
 
         await Task.WhenAll(tasks);
 
-        foreach (var result in chunkResults)
+        var results = new List<LlmProcessedData>();
+        var failedRows = 0;
+        for (int i = 0; i < chunkResults.Length; i++)
         {
-            if (result != null)
-                results.Add(result);
+            if (chunkResults[i] != null)
+                results.Add(chunkResults[i]!);
+            else
+                failedRows += chunks[i].Rows.Count;
+        }
+
+        if (failedRows > 0)
+        {
+            errorLogger?.LogWarning(
+                $"AI processing: {failedRows} of {total} rows failed to process for sheet '{sheetAnalysis.SourceSheetName}'");
         }
 
         return results;
@@ -422,6 +487,7 @@ IMPORTANT:
         sb.AppendLine("- Skip rows that are clearly subtotals, headers, or empty");
         sb.AppendLine("- If multiple source rows represent one entity, group them");
         sb.AppendLine("- Respond with JSON array only, no markdown");
+        sb.AppendLine("- Cell values containing pipe characters appear as \\| in the table — use | (without backslash) in your JSON output");
 
         // Product-specific instructions for category generation
         if (entityType == SpreadsheetSheetType.Products)
@@ -638,21 +704,35 @@ IMPORTANT:
         return 1;
     }
 
-    private static List<string> GetHeaders(IXLWorksheet worksheet)
+    internal static List<string> GetHeaders(IXLWorksheet worksheet)
     {
         return GetHeaders(worksheet, FindHeaderRow(worksheet));
     }
 
-    private static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
+    internal static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
     {
         var headers = new List<string>();
         var row = worksheet.Row(headerRow);
-        for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
+        var colCount = worksheet.ColumnsUsed().Count();
+        var trailingEmpty = 0;
+        for (int col = 1; col <= colCount; col++)
         {
             var cell = row.Cell(col);
-            if (cell.IsEmpty()) break;
-            headers.Add(cell.GetString().Trim());
+            if (cell.IsEmpty())
+            {
+                // Track consecutive trailing empties — add placeholder for gaps
+                headers.Add($"Column{col}");
+                trailingEmpty++;
+            }
+            else
+            {
+                trailingEmpty = 0;
+                headers.Add(cell.GetString().Trim());
+            }
         }
+        // Remove trailing empty placeholders (only gap columns in the middle matter)
+        if (trailingEmpty > 0)
+            headers.RemoveRange(headers.Count - trailingEmpty, trailingEmpty);
         return headers;
     }
 
@@ -679,7 +759,7 @@ IMPORTANT:
         return result;
     }
 
-    private static List<List<string>> GetAllRowsAsStrings(IXLWorksheet worksheet, int columnCount)
+    internal static List<List<string>> GetAllRowsAsStrings(IXLWorksheet worksheet, int columnCount)
     {
         var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<string>>();
@@ -711,7 +791,9 @@ IMPORTANT:
         if (cell.IsEmpty()) return "";
         return cell.DataType switch
         {
-            XLDataType.DateTime => cell.GetDateTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            XLDataType.DateTime => cell.GetDateTime().TimeOfDay == TimeSpan.Zero
+                ? cell.GetDateTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                : cell.GetDateTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture),
             XLDataType.Number => cell.GetDouble().ToString(CultureInfo.InvariantCulture),
             XLDataType.Boolean => cell.GetBoolean().ToString(),
             _ => cell.GetString()
@@ -771,7 +853,14 @@ IMPORTANT:
 
         foreach (var delimiter in candidates)
         {
-            var count = headerLine.Count(c => c == delimiter);
+            // Count delimiter occurrences outside quoted fields
+            var count = 0;
+            var inQuotes = false;
+            foreach (var c in headerLine)
+            {
+                if (c == '"') inQuotes = !inQuotes;
+                else if (c == delimiter && !inQuotes) count++;
+            }
             if (count > maxCount)
             {
                 maxCount = count;

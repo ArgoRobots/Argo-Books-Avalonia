@@ -2959,6 +2959,14 @@ public class App : Application
                     ? await importService.ImportCsvWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, importCts.Token, importProgress)
                     : await importService.ImportWithMappingsAsync(filePath, companyData, updatedAnalysis, importOptions, importCts.Token, importProgress);
 
+                // AI-categorize any products that ended up without a category
+                // (skip if Tier 2 sheets will handle it after their processing)
+                if (tier2Sheets.Count == 0)
+                {
+                    _mainWindowViewModel?.ShowLoading("Categorizing products...".Translate(), progress: 95, cts: importCts, cancelConfirmation: ConfirmCancelAsync);
+                    await importService.AiCategorizeMissingProductsAsync(companyData, importCts.Token);
+                }
+
                 // Yield to let any pending Progress<T> callbacks (dispatched via
                 // SynchronizationContext.Post) execute before hiding the loading
                 // overlay, otherwise the last callback can re-show it after HideLoading.
@@ -2973,69 +2981,95 @@ public class App : Application
             if (tier2Sheets.Count > 0)
             {
                 using var tier2Cts = new CancellationTokenSource();
-                foreach (var sheet in tier2Sheets)
+
+                _mainWindowViewModel?.ShowLoading(
+                    "AI processing...".Translate(),
+                    $"Processing {tier2Sheets.Count} sheet(s)...",
+                    progress: 0,
+                    cts: tier2Cts,
+                    cancelConfirmation: ConfirmCancelAsync);
+
+                // Pre-read all Tier 2 sheet data from the file once to avoid
+                // re-parsing the workbook for each sheet.
+                var sheetDataMap = await SpreadsheetAnalysisService.ReadSheetDataAsync(
+                    filePath, tier2Sheets, tier2Cts.Token);
+
+                // Compute total rows across all Tier 2 sheets for aggregate progress
+                var totalRowsAllSheets = sheetDataMap.Values.Sum(d => d.Rows.Count);
+                var processedRowCounts = new int[tier2Sheets.Count];
+
+                // Use a timer to show estimated progress while waiting for
+                // the LLM to finish. Chunk-level progress only fires after
+                // each chunk completes, so with few rows (< chunk size) the
+                // bar would otherwise stay at 0% the entire time.
+                var estimatedProgress = 0.0;
+                var chunkProgressReceived = false;
+                using var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+                var timerTask = Task.Run(async () =>
                 {
-                    _mainWindowViewModel?.ShowLoading(
-                        "AI processing...".Translate(),
-                        sheet.SourceSheetName,
-                        progress: 0,
-                        cts: tier2Cts,
-                        cancelConfirmation: ConfirmCancelAsync);
-
-                    // Use a timer to show estimated progress while waiting for
-                    // the LLM to finish. Chunk-level progress only fires after
-                    // each chunk completes, so with few rows (< chunk size) the
-                    // bar would otherwise stay at 0% the entire time.
-                    var estimatedProgress = 0.0;
-                    var chunkProgressReceived = false;
-                    using var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
-                    var timerTask = Task.Run(async () =>
+                    while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
                     {
-                        while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
-                        {
-                            if (chunkProgressReceived) break;
-                            estimatedProgress = Math.Min(estimatedProgress + 1, 90);
-                            _mainWindowViewModel?.ShowLoading(
-                                "AI processing...".Translate(),
-                                $"{sheet.SourceSheetName} — processing rows...",
-                                estimatedProgress,
-                                tier2Cts,
-                                ConfirmCancelAsync);
-                        }
-                    }, tier2Cts.Token);
+                        if (chunkProgressReceived) break;
+                        estimatedProgress = Math.Min(estimatedProgress + 1, 90);
+                        _mainWindowViewModel?.ShowLoading(
+                            "AI processing...".Translate(),
+                            "Processing rows...",
+                            estimatedProgress,
+                            tier2Cts,
+                            ConfirmCancelAsync);
+                    }
+                }, tier2Cts.Token);
 
-                    var processedChunks = await analysisService.ProcessAllChunksAsync(
-                        filePath, sheet,
+                // Phase A: Process all Tier 2 sheets in parallel (LLM calls are stateless)
+                var sheetTasks = tier2Sheets.Select((sheet, idx) =>
+                {
+                    if (!sheetDataMap.TryGetValue(sheet.SourceSheetName, out var data))
+                        return Task.FromResult(new List<LlmProcessedData>());
+
+                    return analysisService.ProcessAllChunksAsync(
+                        data.Headers, data.Rows, sheet,
                         new Progress<(int processed, int total)>(p =>
                         {
                             chunkProgressReceived = true;
-                            var pct = p.total > 0 ? (double)p.processed / p.total * 100 : -1;
+                            Interlocked.Exchange(ref processedRowCounts[idx], p.processed);
+                            var totalProcessed = processedRowCounts.Sum();
+                            var pct = totalRowsAllSheets > 0
+                                ? (double)totalProcessed / totalRowsAllSheets * 100
+                                : -1;
                             _mainWindowViewModel?.ShowLoading(
                                 "AI processing...".Translate(),
-                                $"{sheet.SourceSheetName} — {p.processed}/{p.total} rows",
+                                $"{totalProcessed}/{totalRowsAllSheets} rows",
                                 pct,
                                 tier2Cts,
                                 ConfirmCancelAsync);
                         }),
                         tier2Cts.Token);
+                }).ToArray();
 
-                    // Stop the estimate timer and wait for it to exit cleanly
-                    estimateTimer.Dispose();
-                    try { await timerTask; } catch (OperationCanceledException) { }
+                var allProcessedChunks = await Task.WhenAll(sheetTasks);
 
-                    // Show categorization step
-                    _mainWindowViewModel?.ShowLoading(
-                        "AI processing...".Translate(),
-                        "Categorizing products...",
-                        95,
-                        tier2Cts,
-                        ConfirmCancelAsync);
+                // Stop the estimate timer and wait for it to exit cleanly
+                estimateTimer.Dispose();
+                try { await timerTask; } catch (OperationCanceledException) { }
 
-                    var tier2Result = await importService.ImportProcessedEntitiesAsync(companyData, processedChunks, sheet.SourceSheetName, importOptions, tier2Cts.Token);
+                // Phase B: Import sequentially (CompanyData mutation is not thread-safe)
+                for (int i = 0; i < tier2Sheets.Count; i++)
+                {
+                    var tier2Result = importService.ImportProcessedEntities(
+                        companyData, allProcessedChunks[i], tier2Sheets[i].SourceSheetName, importOptions);
                     totalImported += tier2Result.Inserted;
                     totalSkipped += tier2Result.Skipped;
                     allSheetResults.Add(tier2Result);
                 }
+
+                // AI-categorize any products that ended up without a category (single call for all sheets)
+                _mainWindowViewModel?.ShowLoading(
+                    "AI processing...".Translate(),
+                    "Categorizing products...",
+                    95,
+                    tier2Cts,
+                    ConfirmCancelAsync);
+                await importService.AiCategorizeMissingProductsAsync(companyData, tier2Cts.Token);
 
                 // Yield to let any pending Progress<T> callbacks (dispatched via
                 // SynchronizationContext.Post) execute before hiding the loading

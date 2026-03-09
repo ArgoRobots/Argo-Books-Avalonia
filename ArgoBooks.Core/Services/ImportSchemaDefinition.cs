@@ -208,7 +208,7 @@ public static class ImportSchemaDefinition
                 new("Tax", "decimal", "Tax amount", JsonName: "taxAmount"),
                 new("Total", "decimal", "Total amount including tax", JsonName: "total"),
                 new("Reference", "string", "External reference number", JsonName: "referenceNumber"),
-                new("Payment Status", "string", "Payment status (e.g., Paid, Pending)", JsonName: "paymentStatus"),
+                new("Payment Status", "enum:Paid,Unpaid,Partial,Pending,Overdue", "Payment status", JsonName: "paymentStatus"),
                 new("Shipping", "decimal", "Shipping cost", JsonName: "shippingCost"),
             ],
 
@@ -316,7 +316,7 @@ public static class ImportSchemaDefinition
                 new("Description", "string", "Invoice description", JsonName: "description"),
                 new("Frequency", "enum:Weekly,BiWeekly,Monthly,Quarterly,Annually", "Billing frequency", JsonName: "frequency"),
                 new("Next Date", "datetime", "Next invoice date", JsonName: "nextInvoiceDate"),
-                new("Status", "string", "Status (Active, Paused, etc.)", JsonName: "status"),
+                new("Status", "enum:Active,Paused,Cancelled", "Recurring invoice status", JsonName: "status"),
             ],
 
             [SpreadsheetSheetType.StockAdjustments] =
