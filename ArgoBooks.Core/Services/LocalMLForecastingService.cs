@@ -240,11 +240,24 @@ public class LocalMLForecastingService : ILocalMLForecastingService
     private EnhancedForecastResult GenerateHoltWintersForecast(
         List<decimal> data, int periodsToForecast, EnhancedForecastResult result)
     {
-        // Detect optimal season length
-        var candidateLengths = new[] { 12, 6, 4, 3 };
-        var seasonLength = data.Count >= 12
-            ? _holtWinters.DetectSeasonLength(data, candidateLengths)
-            : Math.Min(4, Math.Max(2, data.Count / 2));
+        // Detect optimal season length, adapting candidates to data size
+        // Holt-Winters needs seasonLength*2 data points, so exclude candidates that are too large
+        int seasonLength;
+        if (data.Count >= 24)
+        {
+            var candidateLengths = new[] { 12, 6, 4, 3 };
+            seasonLength = _holtWinters.DetectSeasonLength(data, candidateLengths);
+        }
+        else if (data.Count >= 12)
+        {
+            // Cap at 6 so Holt-Winters can run properly (needs seasonLength*2 = 12 points)
+            var candidateLengths = new[] { 6, 4, 3 };
+            seasonLength = Math.Min(6, _holtWinters.DetectSeasonLength(data, candidateLengths));
+        }
+        else
+        {
+            seasonLength = Math.Min(4, Math.Max(2, data.Count / 3));
+        }
 
         seasonLength = Math.Max(2, seasonLength);
 

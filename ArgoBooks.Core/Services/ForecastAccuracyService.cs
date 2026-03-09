@@ -336,19 +336,28 @@ public class ForecastAccuracyService : IForecastAccuracyService
             .GroupBy(p => new DateTime(p.Date.Year, p.Date.Month, 1))
             .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveSubtotalUSD));
 
-        // Get all months with any data
-        var allMonths = salesByMonth.Keys
-            .Concat(purchasesByMonth.Keys)
-            .Distinct()
-            .OrderBy(m => m)
-            .ToList();
+        // Get the full range of months with data
+        var allDataMonths = salesByMonth.Keys.Concat(purchasesByMonth.Keys).ToList();
+        if (allDataMonths.Count == 0)
+            return new List<MonthlyAggregate>();
 
-        return allMonths.Select(month => new MonthlyAggregate
+        // Build a continuous monthly series, zero-filling gaps
+        var startMonth = allDataMonths.Min();
+        var endMonth = allDataMonths.Max();
+
+        var result = new List<MonthlyAggregate>();
+        var current = startMonth;
+        while (current <= endMonth)
         {
-            Month = month,
-            Revenue = salesByMonth.TryGetValue(month, out var rev) ? rev : 0,
-            Expenses = purchasesByMonth.TryGetValue(month, out var exp) ? exp : 0
-        }).ToList();
+            result.Add(new MonthlyAggregate
+            {
+                Month = current,
+                Revenue = salesByMonth.TryGetValue(current, out var rev) ? rev : 0,
+                Expenses = purchasesByMonth.TryGetValue(current, out var exp) ? exp : 0
+            });
+            current = current.AddMonths(1);
+        }
+        return result;
     }
 
     /// <summary>

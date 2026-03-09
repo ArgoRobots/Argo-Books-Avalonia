@@ -1073,29 +1073,57 @@ public class InsightsService(
     private List<decimal> GetMonthlyTotals<T>(List<T> transactions, Func<T, decimal> amountSelector)
         where T : Transaction
     {
-        return transactions
-            .Where(t => t.Date >= DateTime.Now.AddMonths(-12))
-            .GroupBy(t => new { t.Date.Year, t.Date.Month })
-            .OrderBy(g => g.Key.Year)
-            .ThenBy(g => g.Key.Month)
-            .Select(g => g.Sum(amountSelector))
-            .ToList();
+        var cutoff = DateTime.Now.AddMonths(-24);
+        var monthlyAmounts = transactions
+            .Where(t => t.Date >= cutoff)
+            .GroupBy(t => new DateTime(t.Date.Year, t.Date.Month, 1))
+            .ToDictionary(g => g.Key, g => g.Sum(amountSelector));
+
+        if (monthlyAmounts.Count == 0)
+            return new List<decimal>();
+
+        // Build a continuous monthly series with zero-fill for missing months
+        var startMonth = monthlyAmounts.Keys.Min();
+        var endMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+        var result = new List<decimal>();
+        var current = startMonth;
+        while (current <= endMonth)
+        {
+            result.Add(monthlyAmounts.TryGetValue(current, out var amount) ? amount : 0m);
+            current = current.AddMonths(1);
+        }
+        return result;
     }
 
     private List<int> GetMonthlyNewCustomers(CompanyData companyData)
     {
+        var cutoff = DateTime.Now.AddMonths(-24);
         var firstPurchaseByCustomer = companyData.Revenues
             .GroupBy(s => s.CustomerId)
             .Select(g => new { CustomerId = g.Key, FirstPurchase = g.Min(s => s.Date) })
             .ToList();
 
-        return firstPurchaseByCustomer
-            .Where(c => c.FirstPurchase >= DateTime.Now.AddMonths(-12))
-            .GroupBy(c => new { c.FirstPurchase.Year, c.FirstPurchase.Month })
-            .OrderBy(g => g.Key.Year)
-            .ThenBy(g => g.Key.Month)
-            .Select(g => g.Count())
-            .ToList();
+        var monthlyCounts = firstPurchaseByCustomer
+            .Where(c => c.FirstPurchase >= cutoff)
+            .GroupBy(c => new DateTime(c.FirstPurchase.Year, c.FirstPurchase.Month, 1))
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        if (monthlyCounts.Count == 0)
+            return new List<int>();
+
+        // Build a continuous monthly series with zero-fill for missing months
+        var startMonth = monthlyCounts.Keys.Min();
+        var endMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+        var result = new List<int>();
+        var current = startMonth;
+        while (current <= endMonth)
+        {
+            result.Add(monthlyCounts.TryGetValue(current, out var count) ? count : 0);
+            current = current.AddMonths(1);
+        }
+        return result;
     }
 
     private static decimal CalculatePercentChange(decimal oldValue, decimal newValue)

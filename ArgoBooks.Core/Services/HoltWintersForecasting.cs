@@ -340,35 +340,53 @@ public class HoltWintersForecasting
             return result;
         }
 
-        // Simple exponential smoothing
         var values = data.Select(d => (double)d).ToList();
-        var smoothed = values[0];
 
-        foreach (var v in values.Skip(1))
+        // Use weighted moving average (more recent months weighted higher)
+        var windowSize = Math.Min(6, values.Count);
+        var recentValues = values.TakeLast(windowSize).ToList();
+        double totalWeight = 0;
+        double weightedSum = 0;
+        for (int i = 0; i < recentValues.Count; i++)
         {
-            smoothed = DefaultAlpha * v + (1 - DefaultAlpha) * smoothed;
+            var weight = i + 1.0; // Linear increasing weights (older=1, newest=windowSize)
+            weightedSum += recentValues[i] * weight;
+            totalWeight += weight;
+        }
+        var weightedAvg = weightedSum / totalWeight;
+
+        // Robust trend using Theil-Sen median slope estimator (resistant to outliers)
+        double medianTrend = 0;
+        if (values.Count > 1)
+        {
+            var slopes = new List<double>();
+            for (int i = 0; i < values.Count; i++)
+                for (int j = i + 1; j < values.Count; j++)
+                    slopes.Add((values[j] - values[i]) / (j - i));
+            slopes.Sort();
+            medianTrend = slopes[slopes.Count / 2];
+
+            // Dampen trend to prevent runaway extrapolation
+            medianTrend *= 0.5;
         }
 
-        // Simple trend calculation
-        var trend = data.Count > 1
-            ? ((double)data[^1] - (double)data[0]) / (data.Count - 1)
-            : 0;
-
+        var maxVal = values.Max() * 2.0;
         var forecasts = new List<decimal>();
         for (int h = 1; h <= periodsToForecast; h++)
         {
-            forecasts.Add((decimal)Math.Max(0, smoothed + h * trend));
+            var forecast = weightedAvg + h * medianTrend;
+            forecasts.Add((decimal)Math.Max(0, Math.Min(maxVal, forecast)));
         }
 
         result.ForecastedValues = forecasts;
-        result.FinalLevel = (decimal)smoothed;
-        result.FinalTrend = (decimal)trend;
+        result.FinalLevel = (decimal)weightedAvg;
+        result.FinalTrend = (decimal)medianTrend;
         result.SeasonalPattern = new SeasonalPattern
         {
             SeasonalStrength = 0,
             Description = "Insufficient data for seasonal analysis."
         };
-        result.Method = "Simple Exponential Smoothing";
+        result.Method = "Weighted Moving Average";
 
         return result;
     }
