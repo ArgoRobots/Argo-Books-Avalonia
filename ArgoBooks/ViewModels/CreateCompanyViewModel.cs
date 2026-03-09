@@ -1,4 +1,6 @@
 using ArgoBooks.Controls;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -138,6 +140,26 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     #endregion
 
+    #region Change Detection
+
+    public bool HasChanges =>
+        !string.IsNullOrEmpty(CompanyName) ||
+        !string.IsNullOrEmpty(BusinessType) ||
+        !string.IsNullOrEmpty(Industry) ||
+        SelectedCurrency != "USD - US Dollar ($)" ||
+        !string.IsNullOrEmpty(PhoneNumber) ||
+        SelectedPhoneCountry != null ||
+        !string.IsNullOrEmpty(Country) ||
+        !string.IsNullOrEmpty(City) ||
+        !string.IsNullOrEmpty(ProvinceState) ||
+        !string.IsNullOrEmpty(Address) ||
+        EnablePassword ||
+        !string.IsNullOrEmpty(Password) ||
+        !string.IsNullOrEmpty(ConfirmPassword) ||
+        HasLogo;
+
+    #endregion
+
     /// <summary>
     /// Event raised when a company is created.
     /// </summary>
@@ -153,8 +175,45 @@ public partial class CreateCompanyViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Close()
+    private async Task CloseAsync()
     {
+        await RequestCloseAsync();
+    }
+
+    public async void RequestClose()
+    {
+        await RequestCloseAsync();
+    }
+
+    private async Task RequestCloseAsync()
+    {
+        if (HasChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Unsaved Changes".Translate(),
+                    Message = "You have unsaved changes. Are you sure you want to close?".Translate(),
+                    PrimaryButtonText = "Don't Save".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                switch (result)
+                {
+                    case ConfirmationResult.Primary:
+                        IsOpen = false;
+                        Reset();
+                        return;
+                    case ConfirmationResult.Cancel:
+                    case ConfirmationResult.None:
+                        return;
+                }
+            }
+        }
+
         IsOpen = false;
         Reset();
     }
@@ -233,7 +292,8 @@ public partial class CreateCompanyViewModel : ViewModelBase
         };
 
         CompanyCreated?.Invoke(this, args);
-        Close();
+        IsOpen = false;
+        Reset();
     }
 
     #endregion
