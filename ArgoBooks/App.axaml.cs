@@ -2898,6 +2898,9 @@ public class App : Application
                 return;
             }
 
+            // Start timing after user approval — excludes UI wait time
+            var importStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             // Create snapshot for undo
             var snapshot = CreateCompanyDataSnapshot(companyData);
 
@@ -3037,6 +3040,16 @@ public class App : Application
                 await Task.Yield();
                 _mainWindowViewModel?.HideLoading();
             }
+
+            // Track import duration telemetry (covers analysis, validation, all tiers, and categorization)
+            importStopwatch.Stop();
+            var importContext = isCsv ? "ai-csv" : "ai-xlsx";
+            if (tier2Sheets.Count > 0 && tier1Sheets.Count == 0)
+                importContext = isCsv ? "ai-csv-tier2" : "ai-xlsx-tier2";
+            else if (tier2Sheets.Count > 0)
+                importContext = isCsv ? "ai-csv-mixed" : "ai-xlsx-mixed";
+            _ = TelemetryManager?.TrackFeatureAsync(
+                FeatureName.DataImported, importContext, importStopwatch.ElapsedMilliseconds);
 
             // Record usage on server
             await usageService.IncrementUsageAsync();

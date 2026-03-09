@@ -142,12 +142,16 @@ public class SpreadsheetAnalysisService(
         {
             while (await progressTimer.WaitForNextTickAsync(cancellationToken))
             {
-                currentProgress = Math.Min(currentProgress + 1, 95);
+                if (currentProgress < 95)
+                {
+                    currentProgress = Math.Min(currentProgress + 1, 95);
+                }
+                else
+                {
+                    // Slow asymptotic approach toward 99 so it never looks stuck
+                    currentProgress += (99 - currentProgress) * 0.05;
+                }
                 progress?.Report(("Analyzing with AI...", currentProgress));
-
-                // Past 95%, slow down significantly
-                if (currentProgress >= 95)
-                    await Task.Delay(2000, cancellationToken);
             }
         }, cancellationToken);
 

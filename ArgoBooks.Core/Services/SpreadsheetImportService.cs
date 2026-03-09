@@ -211,7 +211,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(analysis);
 
         options ??= new ImportOptions();
-        var stopwatch = Stopwatch.StartNew();
         var result = new SpreadsheetImportResult();
 
         try
@@ -246,9 +245,6 @@ public class SpreadsheetImportService
             // AI-categorize any products that ended up without a category
             progress?.Report(("Categorizing products...", 90));
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
-
-            stopwatch.Stop();
-            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-xlsx", stopwatch.ElapsedMilliseconds, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -275,7 +271,6 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(analysis);
 
         var result = new SpreadsheetImportResult();
-        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -347,9 +342,6 @@ public class SpreadsheetImportService
             // AI-categorize any products that ended up without a category
             progress?.Report(("Categorizing products...", 80));
             await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
-
-            stopwatch.Stop();
-            _ = _telemetryManager?.TrackFeatureAsync(FeatureName.DataImported, "ai-csv", stopwatch.ElapsedMilliseconds, cancellationToken);
         }
         catch (Exception ex)
         {
