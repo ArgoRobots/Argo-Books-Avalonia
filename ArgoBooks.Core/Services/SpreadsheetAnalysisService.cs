@@ -19,8 +19,8 @@ public class SpreadsheetAnalysisService(
     private const int SampleFirstRows = 5;
     private const int SampleLastRows = 3;
     private const int SampleRandomRows = 5;
-    private const int Tier2ChunkSize = 100;
-    private const int MaxConcurrentChunks = 5;
+    private const int Tier2ChunkSize = 200;
+    private const int MaxConcurrentChunks = 10;
 
     #region Analysis Phase
 
@@ -229,8 +229,6 @@ public class SpreadsheetAnalysisService(
         IProgress<(int processed, int total)>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var results = new List<LlmProcessedData>();
-
         List<string> headers;
         List<List<string>> allRows;
 
@@ -252,12 +250,26 @@ public class SpreadsheetAnalysisService(
             using var workbook = new XLWorkbook(fileStream);
             var worksheet = workbook.Worksheets.FirstOrDefault(w => w.Name == sheetAnalysis.SourceSheetName);
             if (worksheet == null)
-                return results;
+                return [];
 
             headers = GetHeaders(worksheet);
             allRows = GetAllRowsAsStrings(worksheet, headers.Count);
         }
 
+        return await ProcessAllChunksAsync(headers, allRows, sheetAnalysis, progress, cancellationToken);
+    }
+
+    /// <summary>
+    /// Processes pre-read rows through LLM in chunks, reporting progress.
+    /// Use this overload to avoid re-reading the file for each sheet.
+    /// </summary>
+    public async Task<List<LlmProcessedData>> ProcessAllChunksAsync(
+        List<string> headers,
+        List<List<string>> allRows,
+        SheetAnalysis sheetAnalysis,
+        IProgress<(int processed, int total)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
         var total = allRows.Count;
 
         // Build all chunks upfront
@@ -288,6 +300,7 @@ public class SpreadsheetAnalysisService(
 
         await Task.WhenAll(tasks);
 
+        var results = new List<LlmProcessedData>();
         foreach (var result in chunkResults)
         {
             if (result != null)
@@ -638,12 +651,12 @@ IMPORTANT:
         return 1;
     }
 
-    private static List<string> GetHeaders(IXLWorksheet worksheet)
+    internal static List<string> GetHeaders(IXLWorksheet worksheet)
     {
         return GetHeaders(worksheet, FindHeaderRow(worksheet));
     }
 
-    private static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
+    internal static List<string> GetHeaders(IXLWorksheet worksheet, int headerRow)
     {
         var headers = new List<string>();
         var row = worksheet.Row(headerRow);
@@ -679,7 +692,7 @@ IMPORTANT:
         return result;
     }
 
-    private static List<List<string>> GetAllRowsAsStrings(IXLWorksheet worksheet, int columnCount)
+    internal static List<List<string>> GetAllRowsAsStrings(IXLWorksheet worksheet, int columnCount)
     {
         var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<string>>();

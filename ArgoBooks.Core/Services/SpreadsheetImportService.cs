@@ -223,8 +223,7 @@ public class SpreadsheetImportService
                 }
 
                 var worksheets = workbook.Worksheets.ToList();
-                // +1 for AI categorization step at the end
-                var totalSteps = worksheets.Count + 1;
+                var totalSteps = worksheets.Count;
                 for (int i = 0; i < worksheets.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -236,10 +235,6 @@ public class SpreadsheetImportService
                 UpdateIdCounters(companyData);
                 companyData.MarkAsModified();
             }, cancellationToken);
-
-            // AI-categorize any products that ended up without a category
-            progress?.Report(("Categorizing products...", 90));
-            await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -326,10 +321,6 @@ public class SpreadsheetImportService
                 UpdateIdCounters(companyData);
                 companyData.MarkAsModified();
             }, cancellationToken);
-
-            // AI-categorize any products that ended up without a category
-            progress?.Report(("Categorizing products...", 80));
-            await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -415,12 +406,8 @@ public class SpreadsheetImportService
         ImportOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var result = ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
-
-        // AI-categorize any products that ended up without a category
-        await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
-
-        return result;
+        _ = cancellationToken; // reserved for future use
+        return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
     }
 
     private SheetImportResult ImportProcessedEntitiesCore(
@@ -2196,7 +2183,7 @@ public class SpreadsheetImportService
     /// Batches all uncategorized products into a single AI call for efficiency.
     /// Falls back to using the product name as the category name if AI is unavailable.
     /// </summary>
-    private async Task AiCategorizeMissingProductsAsync(CompanyData data, CancellationToken cancellationToken)
+    internal async Task AiCategorizeMissingProductsAsync(CompanyData data, CancellationToken cancellationToken)
     {
         var uncategorized = data.Products
             .Where(p => string.IsNullOrEmpty(p.CategoryId))
