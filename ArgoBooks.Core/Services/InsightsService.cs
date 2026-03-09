@@ -571,7 +571,7 @@ public class InsightsService(
 
         var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveSubtotalUSD).ToList());
 
-        var largestRevenue = currentSales.OrderByDescending(s => s.EffectiveSubtotalUSD).First();
+        var largestRevenue = currentSales.MaxBy(s => s.EffectiveSubtotalUSD)!;
 
         if (stats.StandardDeviation > 0)
         {

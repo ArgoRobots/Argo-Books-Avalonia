@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -11,6 +12,9 @@ namespace ArgoBooks.Panels;
 /// </summary>
 public partial class NotificationPanel : UserControl
 {
+    private NotificationPanelViewModel? _previousVm;
+    private PropertyChangedEventHandler? _propertyChangedHandler;
+
     public NotificationPanel()
     {
         InitializeComponent();
@@ -18,9 +22,16 @@ public partial class NotificationPanel : UserControl
         // Animate the panel when it opens
         DataContextChanged += (_, _) =>
         {
+            // Unsubscribe from previous ViewModel to prevent leak
+            if (_previousVm != null && _propertyChangedHandler != null)
+            {
+                _previousVm.PropertyChanged -= _propertyChangedHandler;
+            }
+
             if (DataContext is NotificationPanelViewModel vm)
             {
-                vm.PropertyChanged += (_, e) =>
+                _previousVm = vm;
+                _propertyChangedHandler = (_, e) =>
                 {
                     if (e.PropertyName == nameof(NotificationPanelViewModel.IsOpen))
                     {
@@ -28,26 +39,26 @@ public partial class NotificationPanel : UserControl
                         {
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (NotificationBorder != null)
-                                {
-                                    NotificationBorder.Opacity = 1;
-                                    NotificationBorder.RenderTransform = new TranslateTransform(0, 0);
-                                }
+                                NotificationBorder.Opacity = 1;
+                                NotificationBorder.RenderTransform = new TranslateTransform(0, 0);
                             }, DispatcherPriority.Render);
                         }
                         else
                         {
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (NotificationBorder != null)
-                                {
-                                    NotificationBorder.Opacity = 0;
-                                    NotificationBorder.RenderTransform = new TranslateTransform(0, -8);
-                                }
+                                NotificationBorder.Opacity = 0;
+                                NotificationBorder.RenderTransform = new TranslateTransform(0, -8);
                             }, DispatcherPriority.Background);
                         }
                     }
                 };
+                vm.PropertyChanged += _propertyChangedHandler;
+            }
+            else
+            {
+                _previousVm = null;
+                _propertyChangedHandler = null;
             }
         };
     }

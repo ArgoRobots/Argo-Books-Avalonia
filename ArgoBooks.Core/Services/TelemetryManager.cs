@@ -237,12 +237,6 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
-    public Task<string> ExportDataAsJsonAsync(CancellationToken cancellationToken = default)
-    {
-        return _storageService.ExportToJsonAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
     public Task ClearAllDataAsync(CancellationToken cancellationToken = default)
     {
         _errorLogger.LogInfo("User requested to clear all telemetry data");

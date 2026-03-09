@@ -429,52 +429,6 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
 }
 
 /// <summary>
-/// A composite action that groups multiple actions together.
-/// </summary>
-public class CompositeAction : IUndoableAction
-{
-    private readonly List<IUndoableAction> _actions;
-
-    /// <summary>
-    /// Gets the description of the composite action.
-    /// </summary>
-    public string Description { get; }
-
-    /// <summary>
-    /// Initializes a new composite action.
-    /// </summary>
-    /// <param name="description">Description of the action.</param>
-    /// <param name="actions">Actions to group together.</param>
-    public CompositeAction(string description, IEnumerable<IUndoableAction> actions)
-    {
-        Description = description;
-        _actions = actions.ToList();
-    }
-
-    /// <summary>
-    /// Undoes all actions in reverse order.
-    /// </summary>
-    public void Undo()
-    {
-        for (int i = _actions.Count - 1; i >= 0; i--)
-        {
-            _actions[i].Undo();
-        }
-    }
-
-    /// <summary>
-    /// Redoes all actions in order.
-    /// </summary>
-    public void Redo()
-    {
-        foreach (var action in _actions)
-        {
-            action.Redo();
-        }
-    }
-}
-
-/// <summary>
 /// A generic property change action.
 /// </summary>
 /// <typeparam name="T">Type of the property value.</typeparam>

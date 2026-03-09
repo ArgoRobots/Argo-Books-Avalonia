@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -13,6 +14,8 @@ public partial class HelpPanel : UserControl
 {
     private int _focusedIndex = -1;
     private readonly int _menuItemCount = 5; // Total menu items (0-4)
+    private HelpPanelViewModel? _previousVm;
+    private PropertyChangedEventHandler? _propertyChangedHandler;
 
     public HelpPanel()
     {
@@ -21,9 +24,16 @@ public partial class HelpPanel : UserControl
         // Animate and focus the panel when it opens
         DataContextChanged += (_, _) =>
         {
+            // Unsubscribe from previous ViewModel to prevent leak
+            if (_previousVm != null && _propertyChangedHandler != null)
+            {
+                _previousVm.PropertyChanged -= _propertyChangedHandler;
+            }
+
             if (DataContext is HelpPanelViewModel vm)
             {
-                vm.PropertyChanged += (_, e) =>
+                _previousVm = vm;
+                _propertyChangedHandler = (_, e) =>
                 {
                     if (e.PropertyName == nameof(HelpPanelViewModel.IsOpen))
                     {
@@ -31,28 +41,28 @@ public partial class HelpPanel : UserControl
                         {
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (HelpPanelBorder != null)
-                                {
-                                    HelpPanelBorder.Opacity = 1;
-                                    HelpPanelBorder.RenderTransform = new TranslateTransform(0, 0);
-                                }
+                                HelpPanelBorder.Opacity = 1;
+                                HelpPanelBorder.RenderTransform = new TranslateTransform(0, 0);
                                 _focusedIndex = -1;
-                                HelpPanelBorder?.Focus();
+                                HelpPanelBorder.Focus();
                             }, DispatcherPriority.Render);
                         }
                         else
                         {
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (HelpPanelBorder != null)
-                                {
-                                    HelpPanelBorder.Opacity = 0;
-                                    HelpPanelBorder.RenderTransform = new TranslateTransform(0, -8);
-                                }
+                                HelpPanelBorder.Opacity = 0;
+                                HelpPanelBorder.RenderTransform = new TranslateTransform(0, -8);
                             }, DispatcherPriority.Background);
                         }
                     }
                 };
+                vm.PropertyChanged += _propertyChangedHandler;
+            }
+            else
+            {
+                _previousVm = null;
+                _propertyChangedHandler = null;
             }
         };
     }

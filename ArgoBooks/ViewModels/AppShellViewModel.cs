@@ -947,35 +947,3 @@ public partial class AppShellViewModel : ViewModelBase
         });
     }
 }
-
-/// <summary>
-/// Observable dictionary that notifies on changes for individual keys.
-/// </summary>
-public class ObservableDictionary<TKey, TValue> : ObservableCollection<KeyValuePair<TKey, TValue>>
-    where TKey : notnull
-{
-    private readonly Dictionary<TKey, TValue> _dictionary = new();
-
-    public TValue this[TKey key]
-    {
-        get => _dictionary[key];
-        set
-        {
-            _dictionary[key] = value;
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Reset));
-        }
-    }
-
-    public void Add(TKey key, TValue value)
-    {
-        _dictionary.Add(key, value);
-        Add(new KeyValuePair<TKey, TValue>(key, value));
-    }
-
-    public bool ContainsKey(TKey key) => _dictionary.ContainsKey(key);
-
-    public ICollection<TKey> Keys => _dictionary.Keys;
-
-    public bool TryGetValue(TKey key, out TValue? value) => _dictionary.TryGetValue(key, out value);
-}

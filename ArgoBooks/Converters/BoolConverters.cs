@@ -13,19 +13,6 @@ namespace ArgoBooks.Converters;
 public static class BoolConverters
 {
     /// <summary>
-    /// Converts bool to one of two strings based on the parameter.
-    /// Parameter format: "TrueValue;FalseValue"
-    /// </summary>
-    public new static readonly IValueConverter ToString = new BoolToStringConverter();
-
-    /// <summary>
-    /// Converts bool (isExpanded) to rotation angle.
-    /// Expanded = 0, Collapsed = -90.
-    /// </summary>
-    public static readonly IValueConverter ToCollapseAngle =
-        new FuncValueConverter<bool, double>(value => value ? 0 : -90);
-
-    /// <summary>
     /// Converts bool to "Expense Products" (true) or "Revenue Products" (false).
     /// </summary>
     public static readonly IValueConverter ToExpensesOrRevenue =
@@ -42,26 +29,6 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToChildIndent =
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24, 0, 0, 0) : new Thickness(0));
-
-    /// <summary>
-    /// Converts bool (isActive) to view toggle button background.
-    /// Active = surface hover color, Inactive = transparent.
-    /// </summary>
-    public static readonly IValueConverter ToViewToggleBackground =
-        new FuncValueConverter<bool, IBrush>(value =>
-        {
-            if (value)
-            {
-                if (Application.Current?.Resources != null &&
-                    Application.Current.Resources.TryGetResource("SurfaceHoverBrush", Application.Current.ActualThemeVariant, out var resource) &&
-                    resource is IBrush brush)
-                {
-                    return brush;
-                }
-                return new SolidColorBrush(Color.Parse(AppColors.GrayLightest));
-            }
-            return Brushes.Transparent;
-        });
 
     /// <summary>
     /// Converts bool (isActive) to status badge background color.
@@ -160,11 +127,6 @@ public static class BoolConverters
     public static readonly IValueConverter ToFullscreenHeight = new FullscreenDimensionConverter(650);
 
     /// <summary>
-    /// Converts bool to width based on parameter "TrueValue,FalseValue".
-    /// </summary>
-    public static readonly IValueConverter ToWidth = new BoolToDoubleConverter();
-
-    /// <summary>
     /// Converts bool to height based on parameter "TrueValue,FalseValue".
     /// </summary>
     public static readonly IValueConverter ToHeight = new BoolToDoubleConverter();
@@ -175,12 +137,6 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToFullscreenMargin =
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 24, 0, 24) : new Thickness(0));
-
-    /// <summary>
-    /// Converts bool (isFullscreen) to modal min width.
-    /// Fullscreen = 0 (no min), Normal = parameter or 800.
-    /// </summary>
-    public static readonly IValueConverter ToFullscreenMinWidth = new FullscreenMinMaxConverter(800, true);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal max width.
@@ -228,17 +184,6 @@ public static class BoolConverters
             value ? Avalonia.Controls.Primitives.ScrollBarVisibility.Auto : Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled);
 
     /// <summary>
-    /// Returns the ConverterParameter when the bool value is true, null otherwise.
-    /// Useful for conditionally showing tooltips only in compact mode.
-    /// </summary>
-    public static readonly IValueConverter ToParameterWhenTrue = new BoolToParameterConverter(true);
-
-    /// <summary>
-    /// Returns the ConverterParameter when the bool value is false, null otherwise.
-    /// </summary>
-    public static readonly IValueConverter ToParameterWhenFalse = new BoolToParameterConverter(false);
-
-    /// <summary>
     /// Converts bool (isExpanded) to header border thickness.
     /// Expanded = bottom border only, Collapsed = no border.
     /// </summary>
@@ -259,11 +204,6 @@ public static class BoolConverters
     public static readonly IValueConverter ToCircleBorderThickness =
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0) : new Thickness(2));
 
-    /// <summary>
-    /// Multi-value converter that returns one of two brushes based on a boolean condition.
-    /// Values[0] = bool condition, Values[1] = brush when true, Values[2] = brush when false.
-    /// </summary>
-    public static readonly IMultiValueConverter ToConditionalBrush = new ConditionalBrushMultiConverter();
 }
 
 /// <summary>

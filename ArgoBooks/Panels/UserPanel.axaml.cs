@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -14,6 +15,8 @@ public partial class UserPanel : UserControl
     private int _focusedIndex = -1;
     // Menu item names in visual order
     private readonly string[] _menuItemNames = ["MenuItem0", "MenuItemPlan", "MenuItem1", "MenuItem2", "MenuItem3"];
+    private UserPanelViewModel? _previousVm;
+    private PropertyChangedEventHandler? _propertyChangedHandler;
 
     public UserPanel()
     {
@@ -22,9 +25,16 @@ public partial class UserPanel : UserControl
         // Animate and focus the panel when it opens
         DataContextChanged += (_, _) =>
         {
+            // Unsubscribe from previous ViewModel to prevent leak
+            if (_previousVm != null && _propertyChangedHandler != null)
+            {
+                _previousVm.PropertyChanged -= _propertyChangedHandler;
+            }
+
             if (DataContext is UserPanelViewModel vm)
             {
-                vm.PropertyChanged += (_, e) =>
+                _previousVm = vm;
+                _propertyChangedHandler = (_, e) =>
                 {
                     if (e.PropertyName == nameof(UserPanelViewModel.IsOpen))
                     {
@@ -32,28 +42,28 @@ public partial class UserPanel : UserControl
                         {
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (UserPanelBorder != null)
-                                {
-                                    UserPanelBorder.Opacity = 1;
-                                    UserPanelBorder.RenderTransform = new TranslateTransform(0, 0);
-                                }
+                                UserPanelBorder.Opacity = 1;
+                                UserPanelBorder.RenderTransform = new TranslateTransform(0, 0);
                                 _focusedIndex = -1;
-                                UserPanelBorder?.Focus();
+                                UserPanelBorder.Focus();
                             }, DispatcherPriority.Render);
                         }
                         else
                         {
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (UserPanelBorder != null)
-                                {
-                                    UserPanelBorder.Opacity = 0;
-                                    UserPanelBorder.RenderTransform = new TranslateTransform(0, -8);
-                                }
+                                UserPanelBorder.Opacity = 0;
+                                UserPanelBorder.RenderTransform = new TranslateTransform(0, -8);
                             }, DispatcherPriority.Background);
                         }
                     }
                 };
+                vm.PropertyChanged += _propertyChangedHandler;
+            }
+            else
+            {
+                _previousVm = null;
+                _propertyChangedHandler = null;
             }
         };
     }

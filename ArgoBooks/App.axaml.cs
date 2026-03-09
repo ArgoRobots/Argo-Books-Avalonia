@@ -1128,7 +1128,7 @@ public class App : Application
 
             if (!exchangeService.HasApiKey)
             {
-                Console.WriteLine("Exchange rate service initialized without API key - currency conversion will use cached rates only");
+                ErrorLogger?.LogInfo("Exchange rate service initialized without API key - currency conversion will use cached rates only");
             }
         }
         catch (Exception ex)
@@ -1219,7 +1219,7 @@ public class App : Application
                 }
             }
 
-            Console.WriteLine("Could not find icon resource");
+            ErrorLogger?.LogWarning("Could not find icon resource", "IconExtraction");
             return null;
         }
         catch (Exception ex)
@@ -1285,9 +1285,6 @@ public class App : Application
             if (CompanyManager.CompanyData != null)
             {
                 EventLogService.Initialize(CompanyManager.CompanyData.EventLog, CompanyManager.CompanyData);
-
-                // Remove this line when done testing the version history UI
-                // EventLogService.GenerateTestEvents(80);
 
                 _appShellViewModel.VersionHistoryModalViewModel.SetEventLogService(EventLogService);
             }

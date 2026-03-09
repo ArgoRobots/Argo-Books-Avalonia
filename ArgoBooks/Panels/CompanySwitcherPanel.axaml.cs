@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -11,6 +12,9 @@ namespace ArgoBooks.Panels;
 /// </summary>
 public partial class CompanySwitcherPanel : UserControl
 {
+    private CompanySwitcherPanelViewModel? _previousVm;
+    private PropertyChangedEventHandler? _propertyChangedHandler;
+
     public CompanySwitcherPanel()
     {
         InitializeComponent();
@@ -18,9 +22,16 @@ public partial class CompanySwitcherPanel : UserControl
         // Animate and focus the panel when it opens
         DataContextChanged += (_, _) =>
         {
+            // Unsubscribe from previous ViewModel
+            if (_previousVm != null && _propertyChangedHandler != null)
+            {
+                _previousVm.PropertyChanged -= _propertyChangedHandler;
+            }
+
             if (DataContext is CompanySwitcherPanelViewModel vm)
             {
-                vm.PropertyChanged += (_, e) =>
+                _previousVm = vm;
+                _propertyChangedHandler = (_, e) =>
                 {
                     if (e.PropertyName == nameof(CompanySwitcherPanelViewModel.IsOpen))
                     {
@@ -29,12 +40,9 @@ public partial class CompanySwitcherPanel : UserControl
                             // Animate in
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (SwitcherBorder != null)
-                                {
-                                    SwitcherBorder.Opacity = 1;
-                                    SwitcherBorder.RenderTransform = new TranslateTransform(0, 0);
-                                }
-                                SwitcherBorder?.Focus();
+                                SwitcherBorder.Opacity = 1;
+                                SwitcherBorder.RenderTransform = new TranslateTransform(0, 0);
+                                SwitcherBorder.Focus();
                             }, DispatcherPriority.Render);
                         }
                         else
@@ -42,15 +50,18 @@ public partial class CompanySwitcherPanel : UserControl
                             // Reset for next open
                             Dispatcher.UIThread.Post(() =>
                             {
-                                if (SwitcherBorder != null)
-                                {
-                                    SwitcherBorder.Opacity = 0;
-                                    SwitcherBorder.RenderTransform = new TranslateTransform(0, -8);
-                                }
+                                SwitcherBorder.Opacity = 0;
+                                SwitcherBorder.RenderTransform = new TranslateTransform(0, -8);
                             }, DispatcherPriority.Background);
                         }
                     }
                 };
+                vm.PropertyChanged += _propertyChangedHandler;
+            }
+            else
+            {
+                _previousVm = null;
+                _propertyChangedHandler = null;
             }
         };
     }
