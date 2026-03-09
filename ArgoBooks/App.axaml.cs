@@ -2976,10 +2976,33 @@ public class App : Application
                         cts: tier2Cts,
                         cancelConfirmation: ConfirmCancelAsync);
 
+                    // Use a timer to show estimated progress while waiting for
+                    // the LLM to finish. Chunk-level progress only fires after
+                    // each chunk completes, so with few rows (< chunk size) the
+                    // bar would otherwise stay at 0% the entire time.
+                    var estimatedProgress = 0.0;
+                    var chunkProgressReceived = false;
+                    using var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+                    var timerTask = Task.Run(async () =>
+                    {
+                        while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
+                        {
+                            if (chunkProgressReceived) break;
+                            estimatedProgress = Math.Min(estimatedProgress + 2, 90);
+                            _mainWindowViewModel?.ShowLoading(
+                                "AI processing...".Translate(),
+                                $"{sheet.SourceSheetName} — processing rows...",
+                                estimatedProgress,
+                                tier2Cts,
+                                ConfirmCancelAsync);
+                        }
+                    }, tier2Cts.Token);
+
                     var processedChunks = await analysisService.ProcessAllChunksAsync(
                         filePath, sheet,
                         new Progress<(int processed, int total)>(p =>
                         {
+                            chunkProgressReceived = true;
                             var pct = p.total > 0 ? (double)p.processed / p.total * 100 : -1;
                             _mainWindowViewModel?.ShowLoading(
                                 "AI processing...".Translate(),
@@ -2990,7 +3013,19 @@ public class App : Application
                         }),
                         tier2Cts.Token);
 
-                    var tier2Result = importService.ImportProcessedEntities(companyData, processedChunks, sheet.SourceSheetName, importOptions);
+                    // Stop the estimate timer and wait for it to exit cleanly
+                    estimateTimer.Dispose();
+                    try { await timerTask; } catch (OperationCanceledException) { }
+
+                    // Show categorization step
+                    _mainWindowViewModel?.ShowLoading(
+                        "AI processing...".Translate(),
+                        "Categorizing products...",
+                        95,
+                        tier2Cts,
+                        ConfirmCancelAsync);
+
+                    var tier2Result = await importService.ImportProcessedEntitiesAsync(companyData, processedChunks, sheet.SourceSheetName, importOptions, tier2Cts.Token);
                     totalImported += tier2Result.Inserted;
                     totalSkipped += tier2Result.Skipped;
                     allSheetResults.Add(tier2Result);

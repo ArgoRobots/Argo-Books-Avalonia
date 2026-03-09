@@ -420,6 +420,33 @@ public class SpreadsheetImportService
         string sheetName,
         ImportOptions? options = null)
     {
+        return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
+    }
+
+    /// <summary>
+    /// Imports AI-processed entities and then runs AI categorization for any uncategorized products.
+    /// </summary>
+    public async Task<SheetImportResult> ImportProcessedEntitiesAsync(
+        CompanyData companyData,
+        List<LlmProcessedData> processedData,
+        string sheetName,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
+
+        // AI-categorize any products that ended up without a category
+        await AiCategorizeMissingProductsAsync(companyData, cancellationToken);
+
+        return result;
+    }
+
+    private SheetImportResult ImportProcessedEntitiesCore(
+        CompanyData companyData,
+        List<LlmProcessedData> processedData,
+        string sheetName,
+        ImportOptions? options = null)
+    {
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(processedData);
 
@@ -692,6 +719,10 @@ public class SpreadsheetImportService
                     invoice.OriginalCurrency = "USD";
                     invoice.TotalUSD = invoice.Total;
                     invoice.BalanceUSD = invoice.Balance;
+
+                    // Auto-create missing customer reference
+                    EnsureCustomerExists(data, invoice.CustomerId);
+
                     var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Invoices.Remove(existing);
@@ -707,6 +738,10 @@ public class SpreadsheetImportService
                     expense.TotalUSD = expense.Total;
                     expense.TaxAmountUSD = expense.TaxAmount;
                     expense.ShippingCostUSD = expense.ShippingCost;
+
+                    // Auto-create missing supplier reference
+                    if (!string.IsNullOrEmpty(expense.SupplierId))
+                        EnsureSupplierExists(data, expense.SupplierId);
 
                     // Link product by name and auto-create if missing
                     var expProductName = expense.Description;
@@ -754,6 +789,10 @@ public class SpreadsheetImportService
                     revenue.TaxAmountUSD = revenue.TaxAmount;
                     revenue.ShippingCostUSD = revenue.ShippingCost;
 
+                    // Auto-create missing customer reference
+                    if (!string.IsNullOrEmpty(revenue.CustomerId))
+                        EnsureCustomerExists(data, revenue.CustomerId);
+
                     // Link product by name and auto-create if missing
                     var productName = revenue.Description;
                     if (!string.IsNullOrEmpty(productName))
@@ -798,6 +837,11 @@ public class SpreadsheetImportService
                 {
                     payment.OriginalCurrency = "USD";
                     payment.AmountUSD = payment.Amount;
+
+                    // Auto-create missing customer and invoice references
+                    EnsureCustomerExists(data, payment.CustomerId);
+                    EnsureInvoiceExists(data, payment.InvoiceId, payment.CustomerId);
+
                     var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Payments.Remove(existing);
@@ -2679,6 +2723,32 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
+    private static void EnsureCustomerExists(CompanyData data, string? customerId)
+    {
+        if (string.IsNullOrEmpty(customerId)) return;
+        if (data.Customers.Any(c => c.Id == customerId)) return;
+        data.Customers.Add(new Customer { Id = customerId, Name = customerId });
+    }
+
+    private static void EnsureSupplierExists(CompanyData data, string? supplierId)
+    {
+        if (string.IsNullOrEmpty(supplierId)) return;
+        if (data.Suppliers.Any(s => s.Id == supplierId)) return;
+        data.Suppliers.Add(new Supplier { Id = supplierId, Name = supplierId });
+    }
+
+    private static void EnsureInvoiceExists(CompanyData data, string? invoiceId, string? customerId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        if (data.Invoices.Any(i => i.Id == invoiceId)) return;
+        data.Invoices.Add(new Invoice
+        {
+            Id = invoiceId,
+            CustomerId = customerId ?? string.Empty,
+            OriginalCurrency = "USD"
+        });
+    }
+
     /// <summary>
     /// Finds a product by name, preferring products whose category matches the given type.
     /// This handles the case where the same product name exists under both Revenue and Expense categories.
@@ -2704,7 +2774,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// Auto-creates a product from revenue/expense data when no matching product exists.
     /// Uses the product name from the transaction description and sets a sensible unit price.
     /// </summary>
-    private static Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
+    private Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
     {
         var newId = $"PRD-IMP-{data.Products.Count + 1:D3}";
         var product = new Product
@@ -2715,6 +2785,11 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             Type = type,
             ItemType = "Product"
         };
+
+        // Always assign a category so no product is left uncategorized
+        var category = FindOrCreateCategory(data, name, type, "Product");
+        product.CategoryId = category.Id;
+
         data.Products.Add(product);
         return product;
     }
