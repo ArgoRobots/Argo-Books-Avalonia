@@ -788,9 +788,11 @@ public partial class ProductModalsViewModel : ObservableObject
             }
         }
 
-        if (HasCategories && string.IsNullOrEmpty(ModalCategoryId))
+        if (string.IsNullOrEmpty(ModalCategoryId))
         {
-            ModalCategoryError = "Category is required.".Translate();
+            ModalCategoryError = HasCategories
+                ? "Category is required.".Translate()
+                : "Please create a category first.".Translate();
             isValid = false;
         }
 
