@@ -150,12 +150,6 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
-    public async Task TrackPageViewAsync(string pageName, CancellationToken cancellationToken = default)
-    {
-        await TrackFeatureAsync(FeatureName.PageView, pageName, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc />
     public async Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default)
     {
         if (!IsConsentGranted)

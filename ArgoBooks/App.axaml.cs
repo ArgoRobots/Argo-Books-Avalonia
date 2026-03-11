@@ -745,12 +745,9 @@ public class App : Application
             // Set navigation callback to update current page in AppShell
             NavigationService.SetNavigationCallback(page => _appShellViewModel.CurrentPage = page);
 
-            // Track page views for telemetry and dismiss tutorial guidance on navigation
-            NavigationService.Navigated += (_, args) =>
+            // Dismiss tutorial completion guidance when user navigates
+            NavigationService.Navigated += (_, _) =>
             {
-                _ = TelemetryManager?.TrackPageViewAsync(args.PageName);
-
-                // Dismiss tutorial completion guidance when user navigates
                 TutorialService.Instance.DismissCompletionGuidance();
             };
 

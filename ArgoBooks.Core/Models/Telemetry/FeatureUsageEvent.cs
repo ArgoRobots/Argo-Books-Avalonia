@@ -30,9 +30,6 @@ public class FeatureUsageEvent : TelemetryEvent
 /// </summary>
 public enum FeatureName
 {
-    // Navigation
-    PageView,
-
     // Charts
     ChartViewed,
     ChartTypeChanged,

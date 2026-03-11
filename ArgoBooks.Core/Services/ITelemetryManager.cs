@@ -34,11 +34,6 @@ public interface ITelemetryManager
     Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Tracks a page view event.
-    /// </summary>
-    Task TrackPageViewAsync(string pageName, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Tracks an export operation.
     /// </summary>
     Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default);
