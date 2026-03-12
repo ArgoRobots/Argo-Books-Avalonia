@@ -149,18 +149,6 @@
                         </Grid>
                     </Button>
 
-                    <!-- Log Out -->
-                    <Button x:Name="MenuItem3"
-                            Classes="menu-item danger"
-                            Command="{Binding SignOutCommand}">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <PathIcon Grid.Column="0"
-                                      Data="{x:Static local:Icons.Logout}"
-                                      Width="18" Height="18"
-                                      Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Log Out'}" VerticalAlignment="Center" />
-                        </Grid>
-                    </Button>
                 </StackPanel>
             </StackPanel>
         </Border>

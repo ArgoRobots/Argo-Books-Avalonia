@@ -71,32 +71,6 @@
                             </Panel>
                         </Border>
 
-                        <!-- Upload Area -->
-                        <Border BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="2"
-                                CornerRadius="6"
-                                Padding="16"
-                                HorizontalAlignment="Stretch"
-                                Cursor="Hand"
-                                Classes="upload-area">
-                            <Button Classes="upload-button"
-                                    Command="{Binding ChangeAvatarCommand}"
-                                    HorizontalAlignment="Stretch">
-                                <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                    <PathIcon Data="{x:Static local:Icons.Employees}"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Click to upload a new photo'}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               HorizontalAlignment="Center" />
-                                    <TextBlock Text="{loc:Loc 'JPG, PNG up to 5MB'}"
-                                               FontSize="11"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                        </Border>
                     </StackPanel>
 
                 </StackPanel>

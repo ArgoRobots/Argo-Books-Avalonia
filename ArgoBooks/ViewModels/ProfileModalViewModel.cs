@@ -117,14 +117,6 @@ public partial class ProfileModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens file picker to change avatar.
-    /// </summary>
-    [RelayCommand]
-    private void ChangeAvatar()
-    {
-    }
-
-    /// <summary>
     /// Removes the current avatar.
     /// </summary>
     [RelayCommand]
