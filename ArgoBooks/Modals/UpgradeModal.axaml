@@ -23,7 +23,7 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Width="680"
+                    Width="460"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
 
