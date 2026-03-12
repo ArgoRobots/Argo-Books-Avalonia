@@ -133,7 +133,7 @@ public static class DotEnv
                 Environment.SetEnvironmentVariable(key, value);
             }
         }
-        catch (Exception ex)
+        catch
         {
             // .env file loading is best-effort; errors are non-critical
         }

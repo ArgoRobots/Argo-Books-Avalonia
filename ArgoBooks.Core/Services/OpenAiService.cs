@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.AI;
@@ -257,7 +258,7 @@ Respond with JSON only.";
         return null;
     }
 
-    private static SupplierCategorySuggestion? ParseResponse(string response, ReceiptAnalysisRequest request)
+    private SupplierCategorySuggestion? ParseResponse(string response, ReceiptAnalysisRequest request)
     {
         try
         {

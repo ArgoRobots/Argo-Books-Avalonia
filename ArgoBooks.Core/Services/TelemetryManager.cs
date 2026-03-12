@@ -207,7 +207,7 @@ public class TelemetryManager : ITelemetryManager
             errorEvent.MethodName = errorEntry.MethodName;
             await _storageService.RecordEventAsync(errorEvent, cancellationToken);
         }
-        catch (Exception ex)
+        catch
         {
             // Don't log errors about error tracking to avoid infinite loops
         }
