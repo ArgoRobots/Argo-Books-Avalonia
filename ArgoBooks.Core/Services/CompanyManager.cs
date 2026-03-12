@@ -409,8 +409,14 @@ public class CompanyManager : IDisposable
 
         // Release file lock before saving (save uses exclusive access), then re-acquire
         ReleaseFileLock();
-        await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
-        AcquireFileLock(CurrentFilePath);
+        try
+        {
+            await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+        }
+        finally
+        {
+            AcquireFileLock(CurrentFilePath);
+        }
 
         // Mark as saved
         CompanyData!.MarkAsSaved();
@@ -460,12 +466,18 @@ public class CompanyManager : IDisposable
 
         // Release file lock before saving, then re-acquire on new path
         ReleaseFileLock();
-        await _fileService.SaveCompanyAsync(newFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+        try
+        {
+            await _fileService.SaveCompanyAsync(newFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
 
-        // Update current file path and password
-        CurrentFilePath = newFilePath;
-        _currentPassword = passwordToUse;
-        AcquireFileLock(newFilePath);
+            // Update current file path and password
+            CurrentFilePath = newFilePath;
+            _currentPassword = passwordToUse;
+        }
+        finally
+        {
+            AcquireFileLock(CurrentFilePath);
+        }
 
         // Mark as saved
         CompanyData!.MarkAsSaved();
