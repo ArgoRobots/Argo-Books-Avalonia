@@ -368,15 +368,6 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Signs out the current user.
-    /// </summary>
-    [RelayCommand]
-    private void SignOut()
-    {
-        // TODO: Implement sign out logic
-    }
-
-    /// <summary>
     /// Toggles the sidebar collapsed state.
     /// </summary>
     [RelayCommand]

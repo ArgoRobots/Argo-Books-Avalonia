@@ -180,16 +180,6 @@ public partial class UserPanelViewModel : ViewModelBase
         SwitchAccountRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// Signs out the current user.
-    /// </summary>
-    [RelayCommand]
-    private void SignOut()
-    {
-        Close();
-        SignOutRequested?.Invoke(this, EventArgs.Empty);
-    }
-
     #endregion
 
     #region Events
@@ -199,7 +189,6 @@ public partial class UserPanelViewModel : ViewModelBase
     public event EventHandler? OpenSettingsRequested;
     public event EventHandler? OpenHelpRequested;
     public event EventHandler? SwitchAccountRequested;
-    public event EventHandler? SignOutRequested;
 
     #endregion
 }

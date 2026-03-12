@@ -80,32 +80,45 @@ public static class InvoicePreviewService
 
     /// <summary>
     /// Opens a URL in the default browser (cross-platform).
+    /// Uses argument arrays instead of shell interpretation to prevent command injection.
     /// </summary>
     private static void OpenUrl(string url)
     {
         try
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-        }
-        catch
-        {
-            // Try platform-specific approaches
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Process.Start(new ProcessStartInfo("cmd", $"/c start {url.Replace("&", "^&")}") { CreateNoWindow = true });
+                // Use cmd /c start with empty title ("") and the URL as a separate argument
+                // to prevent shell metacharacter injection
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "cmd",
+                    ArgumentList = { "/c", "start", "", url },
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                });
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                Process.Start("xdg-open", url);
+                Process.Start("xdg-open", [url]);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Process.Start("open", url);
+                Process.Start("open", [url]);
             }
+            else
+            {
+                // Fallback for unknown platforms
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch
+        {
+            // Silently fail if unable to open browser
         }
     }
 }

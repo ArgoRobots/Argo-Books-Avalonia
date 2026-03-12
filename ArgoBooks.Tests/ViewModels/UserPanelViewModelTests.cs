@@ -223,17 +223,6 @@ public class UserPanelViewModelTests
         Assert.False(vm.IsOpen);
     }
 
-    [Fact]
-    public void SignOutCommand_WhenExecuted_ClosesPanel()
-    {
-        var vm = new UserPanelViewModel();
-        vm.IsOpen = true;
-
-        vm.SignOutCommand.Execute(null);
-
-        Assert.False(vm.IsOpen);
-    }
-
     #endregion
 
     #region Event Raising Tests
@@ -258,18 +247,6 @@ public class UserPanelViewModelTests
         vm.OpenMyPlanRequested += (_, _) => eventRaised = true;
 
         vm.OpenMyPlanCommand.Execute(null);
-
-        Assert.True(eventRaised);
-    }
-
-    [Fact]
-    public void SignOutCommand_RaisesSignOutRequestedEvent()
-    {
-        var vm = new UserPanelViewModel();
-        var eventRaised = false;
-        vm.SignOutRequested += (_, _) => eventRaised = true;
-
-        vm.SignOutCommand.Execute(null);
 
         Assert.True(eventRaised);
     }

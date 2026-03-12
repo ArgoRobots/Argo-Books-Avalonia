@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using ArgoBooks.Core.Data;
@@ -421,7 +422,8 @@ public partial class InvoiceHtmlRenderer
 
             if (context.TryGetValue(name, out var value) && value != null)
             {
-                return value.ToString() ?? string.Empty;
+                // HTML-encode all values to prevent XSS when rendering in browser
+                return WebUtility.HtmlEncode(value.ToString()) ?? string.Empty;
             }
 
             return string.Empty;

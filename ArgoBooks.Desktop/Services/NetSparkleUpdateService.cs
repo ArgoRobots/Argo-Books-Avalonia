@@ -55,9 +55,9 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     {
         _errorLogger = errorLogger;
 
-        // Use Ed25519 with UseIfPossible — will verify signatures when a public key is present,
-        // but won't block updates if no key is configured yet.
-        _sparkle = new SparkleUpdater(AppCastUrl, new Ed25519Checker(SecurityMode.UseIfPossible))
+        // Use Ed25519 with Strict mode — all updates must have valid signatures.
+        // This prevents man-in-the-middle attacks from installing unsigned/tampered updates.
+        _sparkle = new SparkleUpdater(AppCastUrl, new Ed25519Checker(SecurityMode.Strict))
         {
             UIFactory = null, // We use our own UI
             RelaunchAfterUpdate = false
@@ -371,6 +371,13 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     }
 
     /// <summary>
+    /// Escapes a string for safe use inside single-quoted bash arguments.
+    /// Single quotes within the value are handled by ending the quote, adding an escaped
+    /// single quote, and re-opening the quote: 'it'\''s' → it's
+    /// </summary>
+    private static string ShellEscape(string value) => "'" + value.Replace("'", "'\\''") + "'";
+
+    /// <summary>
     /// macOS: Unzip the .app bundle and replace the current application, then relaunch.
     /// The zip contains the .app bundle at the top level.
     /// </summary>
@@ -386,10 +393,11 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                 Directory.Delete(stagingDir, true);
 
             // Use system unzip command (handles macOS resource forks correctly)
+            // Pass arguments as an array to avoid shell interpretation
             var unzipProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = "unzip",
-                Arguments = $"-o \"{installerPath}\" -d \"{stagingDir}\"",
+                ArgumentList = { "-o", installerPath, "-d", stagingDir },
                 UseShellExecute = false,
                 CreateNoWindow = true
             });
@@ -404,15 +412,16 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
             // Use a shell script to replace the app and relaunch after a short delay
             // (we need the current process to exit first)
+            // All paths are shell-escaped to prevent injection via crafted filenames
             var updateDir = Path.Combine(Path.GetTempPath(), UpdateTempDirName);
             var script = $"""
                           #!/bin/bash
                           sleep 2
-                          rm -rf "{appBundlePath}"
-                          mv "{newAppPath}" "{appBundlePath}"
-                          open -n "{appBundlePath}"
-                          rm -rf "{stagingDir}"
-                          rm -rf "{updateDir}"
+                          rm -rf {ShellEscape(appBundlePath)}
+                          mv {ShellEscape(newAppPath)} {ShellEscape(appBundlePath)}
+                          open -n {ShellEscape(appBundlePath)}
+                          rm -rf {ShellEscape(stagingDir)}
+                          rm -rf {ShellEscape(updateDir)}
                           """;
 
             var scriptPath = Path.Combine(Path.GetTempPath(), "argo-update.sh");
@@ -447,14 +456,15 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             installerPath.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase))
         {
             // Use a shell script to replace the AppImage and relaunch after a short delay
+            // All paths are shell-escaped to prevent injection via crafted filenames
             var updateDir = Path.Combine(Path.GetTempPath(), UpdateTempDirName);
             var script = $"""
                           #!/bin/bash
                           sleep 2
-                          cp "{installerPath}" "{currentExePath}"
-                          chmod +x "{currentExePath}"
-                          "{currentExePath}" &
-                          rm -rf "{updateDir}"
+                          cp {ShellEscape(installerPath)} {ShellEscape(currentExePath)}
+                          chmod +x {ShellEscape(currentExePath)}
+                          {ShellEscape(currentExePath)} &
+                          rm -rf {ShellEscape(updateDir)}
                           """;
 
             var scriptPath = Path.Combine(Path.GetTempPath(), "argo-update.sh");

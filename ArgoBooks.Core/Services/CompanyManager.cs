@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Telemetry;
@@ -66,7 +68,14 @@ public class CompanyManager : IDisposable
     {
         if (!IsCompanyOpen) return false;
         if (!IsEncrypted) return string.IsNullOrEmpty(password);
-        return _currentPassword == password;
+
+        // Use constant-time comparison to prevent timing attacks
+        if (_currentPassword == null || password == null)
+            return _currentPassword == null && password == null;
+
+        var storedBytes = Encoding.UTF8.GetBytes(_currentPassword);
+        var inputBytes = Encoding.UTF8.GetBytes(password);
+        return CryptographicOperations.FixedTimeEquals(storedBytes, inputBytes);
     }
 
     /// <summary>
