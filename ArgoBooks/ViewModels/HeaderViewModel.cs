@@ -373,7 +373,6 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void SignOut()
     {
-        // TODO: Implement sign out logic
     }
 
     /// <summary>

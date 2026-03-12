@@ -122,7 +122,6 @@ public partial class ProfileModalViewModel : ViewModelBase
     [RelayCommand]
     private void ChangeAvatar()
     {
-        // TODO: Open file picker for avatar
     }
 
     /// <summary>
