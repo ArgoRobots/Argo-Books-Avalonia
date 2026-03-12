@@ -13,6 +13,8 @@ namespace ArgoBooks.Modals;
 /// </summary>
 public partial class UpgradeModal : UserControl
 {
+    private UpgradeModalViewModel? _subscribedVm;
+
     public UpgradeModal()
     {
         InitializeComponent();
@@ -20,31 +22,37 @@ public partial class UpgradeModal : UserControl
         // Handle success animation when verification succeeds
         DataContextChanged += (_, _) =>
         {
+            // Unsubscribe from previous ViewModel to prevent memory leaks
+            if (_subscribedVm != null)
+            {
+                _subscribedVm.PropertyChanged -= OnViewModelPropertyChanged;
+                _subscribedVm = null;
+            }
+
             if (DataContext is UpgradeModalViewModel vm)
             {
-                vm.PropertyChanged += (_, e) =>
-                {
-                    if (e.PropertyName == nameof(UpgradeModalViewModel.IsVerificationSuccess))
-                    {
-                        if (vm.IsVerificationSuccess)
-                        {
-                            PlaySuccessAnimation();
-                        }
-                        else
-                        {
-                            ResetSuccessAnimation();
-                        }
-                    }
-                    else if (e.PropertyName == nameof(UpgradeModalViewModel.ShowContinueButton))
-                    {
-                        if (vm.ShowContinueButton)
-                        {
-                            PlayContinueButtonAnimation();
-                        }
-                    }
-                };
+                _subscribedVm = vm;
+                vm.PropertyChanged += OnViewModelPropertyChanged;
             }
         };
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (sender is not UpgradeModalViewModel vm) return;
+
+        if (e.PropertyName == nameof(UpgradeModalViewModel.IsVerificationSuccess))
+        {
+            if (vm.IsVerificationSuccess)
+                PlaySuccessAnimation();
+            else
+                ResetSuccessAnimation();
+        }
+        else if (e.PropertyName == nameof(UpgradeModalViewModel.ShowContinueButton))
+        {
+            if (vm.ShowContinueButton)
+                PlayContinueButtonAnimation();
+        }
     }
 
     private void ResetSuccessAnimation()
