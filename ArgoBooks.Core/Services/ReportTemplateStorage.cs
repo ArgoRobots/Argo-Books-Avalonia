@@ -218,7 +218,7 @@ public class ReportTemplateStorage
             if (!File.Exists(oldPath) || File.Exists(newPath))
                 return false;
 
-            // Load, update, and save
+            // Load, update, and save atomically (write to temp file first)
             var json = await File.ReadAllTextAsync(oldPath);
             var templateData = JsonSerializer.Deserialize<SavedTemplate>(json, JsonOptions);
 
@@ -228,7 +228,9 @@ public class ReportTemplateStorage
                 templateData.ModifiedAt = DateTime.UtcNow;
 
                 var newJson = JsonSerializer.Serialize(templateData, JsonOptions);
-                await File.WriteAllTextAsync(newPath, newJson);
+                var tempPath = newPath + ".tmp";
+                await File.WriteAllTextAsync(tempPath, newJson);
+                File.Move(tempPath, newPath);
                 File.Delete(oldPath);
 
                 return true;

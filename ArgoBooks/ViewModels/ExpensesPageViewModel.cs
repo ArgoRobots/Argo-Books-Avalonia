@@ -15,6 +15,9 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ExpensesPageViewModel : SortablePageViewModelBase
 {
+    [ObservableProperty]
+    private bool _hasPremium;
+
     #region Statistics
 
     [ObservableProperty]

@@ -21,6 +21,9 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 {
+    [ObservableProperty]
+    private bool _hasPremium;
+
     #region Date Range
 
     /// <summary>

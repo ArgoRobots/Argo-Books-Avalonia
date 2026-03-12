@@ -59,6 +59,7 @@
                                 AddCommand="{Binding AiScanReceiptCommand}"
                                 AddButtonText="{loc:Loc 'AI Scan Receipt'}"
                                 AddButtonTooltip="{loc:Loc 'AI Scan Receipt'}"
+                                IsAddButtonEnabled="{Binding HasPremium}"
                                 ColumnWidthsManager="{Binding ColumnWidths}"
                                 CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
                                 TotalPages="{Binding TotalPages}"

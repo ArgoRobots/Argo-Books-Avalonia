@@ -17,6 +17,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 {
     public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
+    [ObservableProperty]
+    private bool _hasPremium;
+
     #region Statistics
 
     [ObservableProperty]
