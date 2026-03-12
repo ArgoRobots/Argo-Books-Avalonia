@@ -1117,7 +1117,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"AI suggestion failed: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Api, "AI suggestion failed");
             TryBasicSupplierMatch(result.SupplierName);
         }
         finally

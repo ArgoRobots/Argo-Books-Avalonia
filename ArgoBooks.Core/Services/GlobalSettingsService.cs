@@ -308,13 +308,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     void IGlobalSettingsService.SaveSettings(GlobalSettings settings)
     {
         GlobalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
-        _ = SaveGlobalSettingsAsync().ContinueWith(t =>
-        {
-            if (t.Exception != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to save global settings: {t.Exception.InnerException?.Message}");
-            }
-        }, TaskContinuationOptions.OnlyOnFaulted);
+        _ = SaveGlobalSettingsAsync();
     }
 
     /// <inheritdoc />

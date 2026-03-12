@@ -135,7 +135,7 @@ public static class DotEnv
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load .env file: {ex.Message}");
+            // .env file loading is best-effort; errors are non-critical
         }
     }
 

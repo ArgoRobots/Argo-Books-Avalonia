@@ -194,7 +194,7 @@ public partial class TranslationGenerator
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error scanning {filePath}: {ex.Message}");
+            App.ErrorLogger?.LogWarning($"Error scanning {filePath}: {ex.Message}");
         }
     }
 
@@ -321,7 +321,7 @@ public partial class TranslationGenerator
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error scanning {filePath}: {ex.Message}");
+            App.ErrorLogger?.LogWarning($"Error scanning {filePath}: {ex.Message}");
         }
     }
 
@@ -701,7 +701,6 @@ public partial class TranslationGenerator
     private void ReportProgress(string message, int current, int total)
     {
         Progress?.Invoke(this, new TranslationGeneratorProgressEventArgs(message, current, total));
-        System.Diagnostics.Debug.WriteLine($"TranslationGenerator: {message}");
     }
 
     // Response models for Azure API

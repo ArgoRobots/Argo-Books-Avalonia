@@ -117,7 +117,7 @@ public partial class LanguageService
             // Load English translations
             LoadLanguageFile("en", ref _englishCache);
 
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {_englishCache.Count} English translations");
+            App.ErrorLogger?.LogDebug($"LanguageService: Loaded {_englishCache.Count} English translations");
         }
         catch (Exception ex)
         {
@@ -143,7 +143,7 @@ public partial class LanguageService
                 if (translations != null && translations.Count > 0)
                 {
                     target = translations;
-                    System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {translations.Count} translations from {isoCode}.json");
+                    App.ErrorLogger?.LogDebug($"LanguageService: Loaded {translations.Count} translations from {isoCode}.json");
                     return true;
                 }
             }
@@ -201,7 +201,7 @@ public partial class LanguageService
 
             // Remove the legacy file after successful migration
             File.Delete(legacyPath);
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Migrated {allTranslations.Count} languages from legacy translations.json");
+            App.ErrorLogger?.LogDebug($"LanguageService: Migrated {allTranslations.Count} languages from legacy translations.json");
         }
         catch (Exception ex)
         {
@@ -239,7 +239,7 @@ public partial class LanguageService
 
         if (!Languages.IsValidLanguage(languageName))
         {
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Invalid language '{languageName}'");
+            App.ErrorLogger?.LogWarning($"LanguageService: Invalid language '{languageName}'");
             return false;
         }
 
@@ -255,7 +255,7 @@ public partial class LanguageService
             // If download failed and it's not English, check if we have cached translations on disk
             if (!File.Exists(GetLanguageFilePath(isoCode)))
             {
-                System.Diagnostics.Debug.WriteLine($"LanguageService: Failed to download or find cached translations for {languageName}");
+                App.ErrorLogger?.LogWarning($"LanguageService: Failed to download or find cached translations for {languageName}");
                 return false;
             }
         }
@@ -273,7 +273,7 @@ public partial class LanguageService
             LanguageChanged?.Invoke(this, new LanguageChangedEventArgs(previousLanguage, languageName, previousIsoCode, isoCode));
         }
 
-        System.Diagnostics.Debug.WriteLine($"LanguageService: Language changed to {languageName} ({isoCode})");
+        App.ErrorLogger?.LogDebug($"LanguageService: Language changed to {languageName} ({isoCode})");
         return true;
     }
 
@@ -295,13 +295,13 @@ public partial class LanguageService
             {
                 if (_englishCache.Count > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("LanguageService: English already cached");
+                    App.ErrorLogger?.LogDebug("LanguageService: English already cached");
                     return true;
                 }
             }
             else if (File.Exists(GetLanguageFilePath(isoCode)))
             {
-                System.Diagnostics.Debug.WriteLine($"LanguageService: {languageName} already cached on disk");
+                App.ErrorLogger?.LogDebug($"LanguageService: {languageName} already cached on disk");
                 return true;
             }
         }
@@ -314,13 +314,13 @@ public partial class LanguageService
             var version = Core.Services.AppInfo.VersionNumber;
             var downloadUrl = string.Format(DownloadUrlTemplate, version, isoCode);
 
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Downloading from {downloadUrl}");
+            App.ErrorLogger?.LogDebug($"LanguageService: Downloading from {downloadUrl}");
 
             var response = await _httpClient.GetAsync(downloadUrl, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                System.Diagnostics.Debug.WriteLine($"LanguageService: Download failed with status {response.StatusCode}");
+                App.ErrorLogger?.LogWarning($"LanguageService: Download failed with status {response.StatusCode}");
                 TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "Download failed"));
                 return false;
             }
@@ -330,7 +330,7 @@ public partial class LanguageService
 
             if (downloadedTranslations == null || downloadedTranslations.Count == 0)
             {
-                System.Diagnostics.Debug.WriteLine("LanguageService: Downloaded translations are empty");
+                App.ErrorLogger?.LogWarning("LanguageService: Downloaded translations are empty");
                 TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "No translations found"));
                 return false;
             }
@@ -349,12 +349,12 @@ public partial class LanguageService
             SaveLanguageFile(isoCode, downloadedTranslations);
 
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "Translations loaded"));
-            System.Diagnostics.Debug.WriteLine($"LanguageService: Successfully downloaded {downloadedTranslations.Count} translations for {languageName}");
+            App.ErrorLogger?.LogDebug($"LanguageService: Successfully downloaded {downloadedTranslations.Count} translations for {languageName}");
             return true;
         }
         catch (OperationCanceledException)
         {
-            System.Diagnostics.Debug.WriteLine("LanguageService: Download cancelled");
+            App.ErrorLogger?.LogDebug("LanguageService: Download cancelled");
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "Download cancelled"));
             return false;
         }
@@ -396,7 +396,7 @@ public partial class LanguageService
 
         if (languagesToUpdate.Count == 0)
         {
-            System.Diagnostics.Debug.WriteLine("LanguageService: No cached translations to update");
+            App.ErrorLogger?.LogDebug("LanguageService: No cached translations to update");
             return true;
         }
 

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
 
@@ -90,7 +89,7 @@ public class TelemetryManager : ITelemetryManager
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Failed to get geolocation: {ex.Message}");
+                    _errorLogger.LogDebug($"Failed to get geolocation: {ex.Message}");
                 }
             }, cancellationToken);
 
@@ -211,7 +210,6 @@ public class TelemetryManager : ITelemetryManager
         catch (Exception ex)
         {
             // Don't log errors about error tracking to avoid infinite loops
-            Debug.WriteLine($"Failed to track error: {ex.Message}");
         }
     }
 

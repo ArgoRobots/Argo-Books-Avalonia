@@ -493,7 +493,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load logo: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to load logo");
         }
     }
 

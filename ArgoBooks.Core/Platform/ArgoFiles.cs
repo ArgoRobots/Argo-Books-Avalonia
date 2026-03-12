@@ -90,7 +90,6 @@ public static class ArgoFiles
         catch (Exception ex)
         {
             // Log but don't crash - file association is not critical
-            System.Diagnostics.Debug.WriteLine($"Failed to register file icon for {extension}: {ex.Message}");
         }
     }
 

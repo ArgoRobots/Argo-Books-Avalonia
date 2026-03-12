@@ -256,7 +256,7 @@ public partial class PastPredictionsModal : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to export to Google Sheets: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "Failed to export to Google Sheets");
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {
@@ -319,11 +319,10 @@ public partial class PastPredictionsModal : UserControl
                 isCurrency: false,
                 excelChartType: OfficeOpenXml.Drawing.Chart.eChartType.Line);
 
-            System.Diagnostics.Debug.WriteLine($"Chart exported to: {filePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to export to Excel: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "Failed to export to Excel");
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {

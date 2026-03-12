@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Controls;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Localization;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
@@ -49,12 +50,11 @@ public static class ChartImageExportService
                 Background = SKColors.Transparent
             };
             skChart.SaveImage(filePath, format, 100);
-            System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
             return true;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Export, "Failed to save chart image");
             await ShowSaveErrorDialog(ex.Message);
             return false;
         }
@@ -94,12 +94,11 @@ public static class ChartImageExportService
                 skChart.SaveImage(filePath, format, 100);
             }
 
-            System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
             return true;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Export, "Failed to save chart image");
             await ShowSaveErrorDialog(ex.Message);
             return false;
         }
@@ -124,12 +123,11 @@ public static class ChartImageExportService
                 Background = SKColors.Transparent
             };
             skChart.SaveImage(filePath, format, 100);
-            System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
             return true;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Export, "Failed to save chart image");
             await ShowSaveErrorDialog(ex.Message);
             return false;
         }

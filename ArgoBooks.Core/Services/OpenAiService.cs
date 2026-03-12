@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.AI;
@@ -241,7 +240,7 @@ Respond with JSON only.";
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            Debug.WriteLine($"OpenAI API error {response.StatusCode}: {errorBody}");
+            _errorLogger?.LogError($"OpenAI API error {response.StatusCode}: {errorBody}", ErrorCategory.Api, "OpenAI chat completion");
             return null;
         }
 
@@ -374,8 +373,7 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed to parse OpenAI response: {ex.Message}");
-            Debug.WriteLine($"Response was: {response}");
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, $"Failed to parse OpenAI response: {response}");
             return null;
         }
     }

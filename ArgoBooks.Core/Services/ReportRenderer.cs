@@ -2151,7 +2151,7 @@ public class ReportRenderer : IDisposable
         catch (Exception ex)
         {
             // Fallback to placeholder if SKGeoMap rendering fails
-            System.Diagnostics.Debug.WriteLine($"GeoMap render failed: {ex.Message}");
+            _errorLogger?.LogError(ex, ErrorCategory.UI, "GeoMap render failed");
             DrawNoDataPlaceholder(canvas, chartArea);
         }
     }
