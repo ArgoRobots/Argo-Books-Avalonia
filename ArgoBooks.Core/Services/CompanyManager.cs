@@ -476,7 +476,7 @@ public class CompanyManager : IDisposable
         }
         finally
         {
-            AcquireFileLock(CurrentFilePath);
+            AcquireFileLock(newFilePath);
         }
 
         // Mark as saved
