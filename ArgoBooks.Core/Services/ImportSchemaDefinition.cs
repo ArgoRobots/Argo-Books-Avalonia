@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Services;
@@ -19,8 +20,8 @@ public record SchemaColumn(string Name, string Type, string Description, bool Re
 /// </summary>
 public static class ImportSchemaDefinition
 {
-    // Cache per country key (null key = default)
-    private static readonly Dictionary<string, Dictionary<SpreadsheetSheetType, List<SchemaColumn>>> SchemaCache = new();
+    // Cache per country key (null key = default). Thread-safe for concurrent import operations.
+    private static readonly ConcurrentDictionary<string, Dictionary<SpreadsheetSheetType, List<SchemaColumn>>> SchemaCache = new();
 
     /// <summary>
     /// Returns country-specific labels for address fields.
@@ -66,12 +67,7 @@ public static class ImportSchemaDefinition
     public static Dictionary<SpreadsheetSheetType, List<SchemaColumn>> GetSchema(string? country = null)
     {
         var key = (country ?? "").Trim().ToUpperInvariant();
-        if (!SchemaCache.TryGetValue(key, out var schema))
-        {
-            schema = BuildSchema(country);
-            SchemaCache[key] = schema;
-        }
-        return schema;
+        return SchemaCache.GetOrAdd(key, _ => BuildSchema(country));
     }
 
     /// <summary>
