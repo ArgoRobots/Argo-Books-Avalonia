@@ -87,9 +87,9 @@ public static class ArgoFiles
             // Notify Windows to refresh icon cache and file associations
             SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
         }
-        catch (Exception ex)
+        catch
         {
-            // Log but don't crash - file association is not critical
+            // File association is not critical
         }
     }
 
