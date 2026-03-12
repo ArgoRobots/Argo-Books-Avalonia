@@ -59,6 +59,11 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
             <Setter Property="RenderTransform" Value="scale(0.98)" />
         </Style>
+        <Style Selector="Button.quick-action-compact:disabled">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
 
         <!-- Card Style -->
         <Style Selector="Border.card">
