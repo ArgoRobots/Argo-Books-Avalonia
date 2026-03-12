@@ -133,9 +133,9 @@ public static class DotEnv
                 Environment.SetEnvironmentVariable(key, value);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load .env file: {ex.Message}");
+            // .env file loading is best-effort; errors are non-critical
         }
     }
 

@@ -1104,10 +1104,12 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Validate category (required when categories exist)
-        if (HasCategories && string.IsNullOrEmpty(ModalCategoryId))
+        // Validate category (always required)
+        if (string.IsNullOrEmpty(ModalCategoryId))
         {
-            ModalCategoryError = "Category is required.";
+            ModalCategoryError = HasCategories
+                ? "Category is required."
+                : "Please create a category first.";
             isValid = false;
         }
 

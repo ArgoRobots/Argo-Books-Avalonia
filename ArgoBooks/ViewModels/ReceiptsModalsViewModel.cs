@@ -1117,7 +1117,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"AI suggestion failed: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Api, "AI suggestion failed");
             TryBasicSupplierMatch(result.SupplierName);
         }
         finally
@@ -1151,6 +1151,22 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             SupplierMatchConfidence = 0;
         }
 
+        // Apply category suggestion
+        if (!string.IsNullOrEmpty(suggestion.MatchedCategoryId))
+        {
+            var category = CategoryOptions.FirstOrDefault(c => c.Id == suggestion.MatchedCategoryId);
+            if (category != null)
+            {
+                SelectedCategory = category;
+                CategoryMatchConfidence = suggestion.CategoryConfidence;
+            }
+        }
+        else if (suggestion.ShouldCreateNewCategory && suggestion.NewCategory != null)
+        {
+            ShowCreateCategorySuggestion = true;
+            SuggestedCategoryName = ToTitleCase(suggestion.NewCategory.Name);
+            CategoryMatchConfidence = 0;
+        }
     }
 
     /// <summary>

@@ -745,12 +745,9 @@ public class App : Application
             // Set navigation callback to update current page in AppShell
             NavigationService.SetNavigationCallback(page => _appShellViewModel.CurrentPage = page);
 
-            // Track page views for telemetry and dismiss tutorial guidance on navigation
-            NavigationService.Navigated += (_, args) =>
+            // Dismiss tutorial completion guidance when user navigates
+            NavigationService.Navigated += (_, _) =>
             {
-                _ = TelemetryManager?.TrackPageViewAsync(args.PageName);
-
-                // Dismiss tutorial completion guidance when user navigates
                 TutorialService.Instance.DismissCompletionGuidance();
             };
 
@@ -3900,6 +3897,7 @@ public class App : Application
                     }
                 };
             }
+            _dashboardPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             if (CompanyManager?.IsCompanyOpen == true)
             {
                 _dashboardPageViewModel.Initialize(CompanyManager);
@@ -3922,6 +3920,7 @@ public class App : Application
         navigationService.RegisterPage("Revenue", param =>
         {
             _revenuePageViewModel ??= new RevenuePageViewModel();
+            _revenuePageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             // Clear any previous highlight first
             _revenuePageViewModel.HighlightTransactionId = null;
             if (param is TransactionNavigationParameter navParam)
@@ -3934,6 +3933,7 @@ public class App : Application
         navigationService.RegisterPage("Expenses", param =>
         {
             _expensesPageViewModel ??= new ExpensesPageViewModel();
+            _expensesPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             // Clear any previous highlight first
             _expensesPageViewModel.HighlightTransactionId = null;
             if (param is TransactionNavigationParameter navParam)

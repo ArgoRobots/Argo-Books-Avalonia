@@ -120,8 +120,8 @@ public class GeoLocationService : IGeoLocationService
             var response = await _httpClient.GetFromJsonAsync<IpInfoResponse>(IpInfoUrl, cancellationToken);
             if (response != null && !string.IsNullOrEmpty(response.Country))
             {
-                data.Country = response.Country ?? "Unknown";
-                data.CountryCode = response.Country ?? "Unknown"; // ipinfo uses country code in country field
+                data.Country = "Unknown"; // ipinfo.io only provides country code, not full name
+                data.CountryCode = response.Country ?? "Unknown";
                 data.Region = response.Region ?? "Unknown";
                 data.City = response.City ?? "Unknown";
                 data.Timezone = response.Timezone ?? "Unknown";

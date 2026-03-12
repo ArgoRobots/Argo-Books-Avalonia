@@ -95,8 +95,6 @@ public static class LocalizationManager
 
     private static void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Language changed to {e.NewLanguage}. Refreshing bindings...");
-
         Dispatcher.UIThread.Post(RefreshAllBindings, DispatcherPriority.Normal);
     }
 
@@ -127,8 +125,6 @@ public static class LocalizationManager
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Refreshing {validBindings.Count} bindings (removed {deadBindings.Count} dead)");
-
         // Update all valid bindings
         foreach (var binding in validBindings)
         {
@@ -139,7 +135,6 @@ public static class LocalizationManager
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Refresh complete");
     }
 }
 

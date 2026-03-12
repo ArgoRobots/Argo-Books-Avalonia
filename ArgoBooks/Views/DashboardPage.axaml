@@ -59,6 +59,11 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
             <Setter Property="RenderTransform" Value="scale(0.98)" />
         </Style>
+        <Style Selector="Button.quick-action-compact:disabled">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
 
         <!-- Card Style -->
         <Style Selector="Border.card">
@@ -220,7 +225,8 @@
                         <!-- Scan Receipt -->
                         <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding ScanReceiptCommand}"
-                                IsVisible="{Binding ShowScanReceipt}">
+                                IsVisible="{Binding ShowScanReceipt}"
+                                IsEnabled="{Binding HasPremium}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
                                     <PathIcon Data="{x:Static local:Icons.ScanReceipt}"

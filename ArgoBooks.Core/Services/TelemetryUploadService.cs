@@ -154,10 +154,8 @@ public class TelemetryUploadService : ITelemetryUploadService
 
                 result.ErrorMessage = uploadResult.ErrorMessage;
 
-                // Don't retry on client errors (4xx)
-                if (uploadResult.ErrorMessage?.Contains("400") == true ||
-                    uploadResult.ErrorMessage?.Contains("401") == true ||
-                    uploadResult.ErrorMessage?.Contains("413") == true)
+                // Don't retry on client errors (4xx) — these won't succeed on retry
+                if (uploadResult.HttpStatusCode is >= 400 and < 500)
                 {
                     break;
                 }
@@ -230,7 +228,9 @@ public class TelemetryUploadService : ITelemetryUploadService
         request.Headers.Add("X-API-Key", apiKey);
         request.Headers.UserAgent.ParseAdd($"{UserAgentPrefix}/{_appVersion}");
 
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        result.HttpStatusCode = (int)response.StatusCode;
 
         if (response.IsSuccessStatusCode)
         {
@@ -290,6 +290,7 @@ public class TelemetryUploadResult
     public int EventsUploaded { get; set; }
     public int TotalPending { get; set; }
     public string? ErrorMessage { get; set; }
+    public int? HttpStatusCode { get; set; }
     /// <summary>
     /// Path to the local backup file saved when upload fails. Null if upload succeeded or no backup was needed.
     /// </summary>

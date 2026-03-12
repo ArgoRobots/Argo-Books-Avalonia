@@ -386,11 +386,10 @@ public partial class AnalyticsPage : UserControl
                     excelChartType: excelChartType);
             }
 
-            System.Diagnostics.Debug.WriteLine($"Chart exported to Excel: {filePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to export chart to Excel: {ex.Message}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "Failed to export chart to Excel");
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {

@@ -79,6 +79,7 @@
                             Classes="primary-button"
                             Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                             Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                            IsEnabled="{Binding HasPremium}"
                             Click="OnAiScanButtonClick"
                             ToolTip.Tip="{loc:Loc 'AI Scan Receipt'}">
                         <StackPanel Orientation="Horizontal" Spacing="8">

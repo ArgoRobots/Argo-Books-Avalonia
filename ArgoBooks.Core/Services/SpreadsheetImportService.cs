@@ -645,10 +645,6 @@ public class SpreadsheetImportService
             if (result.Skipped > 0)
                 result.SkipReasons.Add($"{result.Skipped} {sheetType} records skipped (already exist)");
         }
-        else
-        {
-            result.Updated = Math.Max(0, rows.Count - inserted);
-        }
 
         // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows)
         var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;

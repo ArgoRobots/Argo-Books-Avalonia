@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
 
@@ -90,7 +89,7 @@ public class TelemetryManager : ITelemetryManager
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Failed to get geolocation: {ex.Message}");
+                    _errorLogger.LogDebug($"Failed to get geolocation: {ex.Message}");
                 }
             }, cancellationToken);
 
@@ -147,12 +146,6 @@ public class TelemetryManager : ITelemetryManager
         {
             _errorLogger.LogDebug($"Failed to track feature: {ex.Message}");
         }
-    }
-
-    /// <inheritdoc />
-    public async Task TrackPageViewAsync(string pageName, CancellationToken cancellationToken = default)
-    {
-        await TrackFeatureAsync(FeatureName.PageView, pageName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
@@ -214,10 +207,9 @@ public class TelemetryManager : ITelemetryManager
             errorEvent.MethodName = errorEntry.MethodName;
             await _storageService.RecordEventAsync(errorEvent, cancellationToken);
         }
-        catch (Exception ex)
+        catch
         {
             // Don't log errors about error tracking to avoid infinite loops
-            Debug.WriteLine($"Failed to track error: {ex.Message}");
         }
     }
 

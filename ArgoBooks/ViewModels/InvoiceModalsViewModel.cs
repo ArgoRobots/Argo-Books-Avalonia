@@ -1174,29 +1174,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateAndSendInvoice()
     {
-        System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: START");
-
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
-
-        System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Got companyData");
 
         // Validate that we have a template selected
         if (SelectedTemplate == null)
         {
-            System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: No template, calling ShowSendErrorAsync");
             await ShowSendErrorAsync("Please select an invoice template.".Translate());
             return;
         }
-
-        System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Template OK, checking IsConfigured");
-        System.Diagnostics.Debug.WriteLine($"CreateAndSendInvoice: InvoiceEmailSettings.IsConfigured = {InvoiceEmailSettings.IsConfigured}");
 
         // Check if email API is configured (only required when portal is NOT configured,
         // since the portal server handles email delivery via sendEmail: true)
         if (!PortalSettings.IsConfigured && !InvoiceEmailSettings.IsConfigured)
         {
-            System.Diagnostics.Debug.WriteLine("CreateAndSendInvoice: Not configured, calling ShowSendErrorAsync");
             await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
             return;
         }
