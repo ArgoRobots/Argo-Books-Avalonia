@@ -7,6 +7,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <SelfContained>true</SelfContained>
+
+        <AssemblyName>Argo Books</AssemblyName>
+        <Title>Argo Books</Title>
+        <Product>Argo Books</Product>
+        <Description>Argo Books Desktop App</Description>
     </PropertyGroup>
 
     <!-- Windows-specific settings for WinRT APIs -->
