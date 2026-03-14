@@ -39,7 +39,7 @@ public class PaymentPortalService
             {
                 Success = false,
                 Connected = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file."
+                Message = "Payment portal is not configured. Please register your company first."
             };
         }
 
@@ -95,7 +95,7 @@ public class PaymentPortalService
             return new PortalPublishResponse
             {
                 Success = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Payment portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -209,7 +209,7 @@ public class PaymentPortalService
             return new PortalSyncResponse
             {
                 Success = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Payment portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -395,7 +395,7 @@ public class PaymentPortalService
             return new PortalOAuthResponse
             {
                 Success = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Payment portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -417,7 +417,7 @@ public class PaymentPortalService
 
             var statusCode = (int)response.StatusCode;
             var message = statusCode == 401
-                ? "Authentication failed. Your portal API key may be invalid or the company has not been registered. Please check your .env file."
+                ? "Authentication failed. Your portal API key may be invalid or the company has not been registered."
                 : $"Failed to initiate connection (HTTP {statusCode}).";
 
             // Try to extract server error message

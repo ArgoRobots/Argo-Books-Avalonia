@@ -12,12 +12,10 @@ public class AzureReceiptScannerServiceTests
     #region IsConfigured Tests
 
     [Fact]
-    public void IsConfigured_WithoutCredentials_ReturnsFalse()
+    public void IsConfigured_WithoutPortalKey_ReturnsFalse()
     {
-        // Remove the keys from both the in-memory cache and environment
-        // so the service sees no credentials.
-        DotEnv.Unset("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT");
-        DotEnv.Unset("AZURE_DOCUMENT_INTELLIGENCE_API_KEY");
+        // Remove the portal API key so IsConfigured returns false
+        DotEnv.Unset("PAYMENT_PORTAL_API_KEY");
 
         try
         {
@@ -37,11 +35,10 @@ public class AzureReceiptScannerServiceTests
     #region ValidateConfiguration Tests
 
     [Fact]
-    public async Task ValidateConfigurationAsync_WithoutCredentials_ReturnsFalse()
+    public async Task ValidateConfigurationAsync_WithoutPortalKey_ReturnsFalse()
     {
-        // Remove the keys from both the in-memory cache and environment.
-        DotEnv.Unset("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT");
-        DotEnv.Unset("AZURE_DOCUMENT_INTELLIGENCE_API_KEY");
+        // Remove the portal API key so IsConfigured returns false
+        DotEnv.Unset("PAYMENT_PORTAL_API_KEY");
 
         try
         {

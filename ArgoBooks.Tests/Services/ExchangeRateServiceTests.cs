@@ -15,7 +15,7 @@ public class ExchangeRateServiceTests
     public void Constructor_WithNoApiKey_HasApiKeyIsFalse()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService("", new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         Assert.False(service.HasApiKey);
     }
@@ -24,7 +24,7 @@ public class ExchangeRateServiceTests
     public void Constructor_WithApiKey_HasApiKeyIsTrue()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService("test-key", new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         Assert.True(service.HasApiKey);
     }
@@ -37,7 +37,7 @@ public class ExchangeRateServiceTests
     public void GetExchangeRate_SameCurrency_ReturnsOne()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService(null, new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var rate = service.GetExchangeRate("USD", "USD", DateTime.Today);
 
@@ -48,7 +48,7 @@ public class ExchangeRateServiceTests
     public void GetExchangeRate_SameCurrencyCaseInsensitive_ReturnsOne()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService(null, new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var rate = service.GetExchangeRate("usd", "USD", DateTime.Today);
 
@@ -59,7 +59,7 @@ public class ExchangeRateServiceTests
     public void GetExchangeRate_UncachedRate_ReturnsNegativeOne()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService(null, new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var rate = service.GetExchangeRate("USD", "EUR", DateTime.Today);
 
@@ -74,7 +74,7 @@ public class ExchangeRateServiceTests
     public async Task GetExchangeRateAsync_SameCurrency_ReturnsOne()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService(null, new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var rate = await service.GetExchangeRateAsync("USD", "USD", DateTime.Today);
 
@@ -85,7 +85,7 @@ public class ExchangeRateServiceTests
     public async Task GetExchangeRateAsync_NoApiKey_ReturnsNegativeOne()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService(null, new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var rate = await service.GetExchangeRateAsync("USD", "EUR", DateTime.Today, false);
 
@@ -100,7 +100,7 @@ public class ExchangeRateServiceTests
     public async Task ConvertAsync_SameCurrency_ReturnsSameAmount()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService(null, new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var result = await service.ConvertAsync(100m, "USD", "USD", DateTime.Today);
 
@@ -111,7 +111,7 @@ public class ExchangeRateServiceTests
     public async Task ConvertAsync_UnavailableRate_ReturnsOriginalAmount()
     {
         var httpClient = new HttpClient();
-        var service = new ExchangeRateService("", new MockPlatformService(), httpClient);
+        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var result = await service.ConvertAsync(100m, "USD", "EUR", DateTime.Today);
 
