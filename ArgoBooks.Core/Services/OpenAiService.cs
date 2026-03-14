@@ -2,32 +2,29 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// OpenAI API service for AI-powered supplier and category suggestions.
-/// Follows the same pattern as AIQueryTranslator from Argo-Books-WinForms.
+/// Routes requests through the argorobots.com server proxy.
 /// </summary>
 public class OpenAiService : IOpenAiService
 {
-    private const string ApiKeyEnvVar = "OPENAI_API_KEY";
-    private const string ModelEnvVar = "OPENAI_MODEL";
     private const string DefaultModel = "gpt-4o-mini";
-    private const string ApiEndpoint = "https://api.openai.com/v1/chat/completions";
+    private const string ApiEndpoint = "https://argorobots.com/api/ai/completions";
 
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
-    private string? _lastApiKey;
 
     /// <summary>
     /// Creates a new instance of the OpenAI service.
     /// </summary>
     public OpenAiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
-        DotEnv.Load();
         _httpClient = new HttpClient();
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
@@ -35,7 +32,7 @@ public class OpenAiService : IOpenAiService
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => DotEnv.HasValue(ApiKeyEnvVar);
+    public bool IsConfigured => PortalSettings.IsConfigured;
 
     /// <inheritdoc />
     public async Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
@@ -45,17 +42,8 @@ public class OpenAiService : IOpenAiService
         if (!IsConfigured)
             return null;
 
-        // Reconfigure if API key changed
-        var currentApiKey = DotEnv.Get(ApiKeyEnvVar);
-        if (_lastApiKey != currentApiKey)
-        {
-            ConfigureHttpClient();
-        }
-
         var stopwatch = Stopwatch.StartNew();
-        var model = DotEnv.Get(ModelEnvVar);
-        if (string.IsNullOrEmpty(model))
-            model = DefaultModel;
+        var model = DefaultModel;
         var success = false;
 
         try
@@ -102,17 +90,8 @@ public class OpenAiService : IOpenAiService
         if (!IsConfigured)
             return null;
 
-        // Reconfigure if API key changed
-        var currentApiKey = DotEnv.Get(ApiKeyEnvVar);
-        if (_lastApiKey != currentApiKey)
-        {
-            ConfigureHttpClient();
-        }
-
         var stopwatch = Stopwatch.StartNew();
-        var model = DotEnv.Get(ModelEnvVar);
-        if (string.IsNullOrEmpty(model))
-            model = DefaultModel;
+        var model = DefaultModel;
         var success = false;
 
         try
@@ -142,14 +121,8 @@ public class OpenAiService : IOpenAiService
 
     private void ConfigureHttpClient()
     {
-        var apiKey = DotEnv.Get(ApiKeyEnvVar);
-        if (!string.IsNullOrEmpty(apiKey))
-        {
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _lastApiKey = apiKey;
-        }
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
     private static string BuildPrompt(ReceiptAnalysisRequest request)
@@ -217,41 +190,38 @@ Respond with JSON only.";
         double temperature = 0.3,
         CancellationToken cancellationToken = default)
     {
-        var model = DotEnv.Get(ModelEnvVar);
-        if (string.IsNullOrEmpty(model))
-            model = DefaultModel;
-
         var requestBody = new
         {
-            model,
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = userPrompt }
-            },
-            temperature,
-            max_tokens = maxTokens
+            systemPrompt,
+            userPrompt,
+            model = DefaultModel,
+            maxTokens,
+            temperature
         };
 
         var json = JsonSerializer.Serialize(requestBody);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(ApiEndpoint, content, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
+        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
-            _errorLogger?.LogError($"OpenAI API error {response.StatusCode}", ErrorCategory.Api, "OpenAI chat completion");
+            _errorLogger?.LogError($"AI proxy error {response.StatusCode}", ErrorCategory.Api, "AI chat completion");
             return null;
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
         using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
 
-        var choices = doc.RootElement.GetProperty("choices");
-        if (choices.GetArrayLength() > 0)
+        if (root.TryGetProperty("success", out var successProp) && successProp.GetBoolean()
+            && root.TryGetProperty("content", out var contentProp))
         {
-            var messageContent = choices[0].GetProperty("message").GetProperty("content").GetString();
-            return messageContent;
+            return contentProp.GetString();
         }
 
         return null;

@@ -490,11 +490,12 @@ public class PaymentPortalService
     #region Registration
 
     /// <summary>
-    /// Registers the company with the payment portal using the master registration key.
+    /// Registers the company with the payment portal using a premium license key.
     /// On success, saves the returned per-company API key to .env.
     /// </summary>
     public async Task<PortalRegisterResponse> RegisterCompanyAsync(
-        string registrationKey,
+        string licenseKey,
+        string deviceId,
         string companyName,
         string? ownerEmail,
         CancellationToken cancellationToken = default)
@@ -503,10 +504,8 @@ public class PaymentPortalService
         {
             var url = PortalSettings.ApiBaseUrl.TrimEnd('/') + "/register";
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", registrationKey);
-            request.Headers.Add("X-Api-Key", registrationKey);
 
-            var body = new { companyName, ownerEmail };
+            var body = new { licenseKey, deviceId, companyName, ownerEmail };
             var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -538,7 +537,7 @@ public class PaymentPortalService
                 ?? $"Registration failed (HTTP {(int)response.StatusCode}).";
 
             if ((int)response.StatusCode == 401)
-                message = "Invalid registration key. Please check that the key matches your server's PORTAL_REGISTRATION_KEY.";
+                message = "Invalid or expired license key. Please check your premium subscription.";
 
             return new PortalRegisterResponse { Success = false, Message = message };
         }

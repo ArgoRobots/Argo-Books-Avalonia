@@ -1,75 +1,125 @@
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Util.Store;
+using System.Net.Http.Headers;
+using System.Text;
+using ArgoBooks.Core.Models.Portal;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Manages Google OAuth 2.0 credentials for Google Sheets and Drive API access.
+/// Manages Google OAuth 2.0 credentials via the argorobots.com server proxy.
+/// The server handles OAuth token storage and refresh.
 /// </summary>
 public static class GoogleCredentialsManager
 {
-    private static readonly string[] Scopes =
-    [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive.file"
-    ];
-
-    private static UserCredential? _cachedCredential;
+    private const string AuthEndpoint = "https://argorobots.com/api/google/auth";
 
     /// <summary>
-    /// Gets user credentials using OAuth from environment variables.
-    /// First time will prompt user to authenticate in browser.
+    /// Checks if Google API access is configured (portal must be configured).
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The user credential for Google API access.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when credentials are not configured.</exception>
-    public static async Task<UserCredential> GetUserCredentialAsync(CancellationToken cancellationToken = default)
+    public static bool AreCredentialsConfigured()
     {
-        // Return cached credential if available and not expired
-        if (_cachedCredential != null)
-        {
-            return _cachedCredential;
-        }
-
-        var clientId = DotEnv.Get("GOOGLE_CLIENT_ID");
-        var clientSecret = DotEnv.Get("GOOGLE_CLIENT_SECRET");
-
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
-        {
-            throw new InvalidOperationException(
-                "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file.");
-        }
-
-        var secrets = new ClientSecrets
-        {
-            ClientId = clientId,
-            ClientSecret = clientSecret
-        };
-
-        // Store token in AppData
-        var credPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ArgoBooks",
-            "google_token"
-        );
-
-        _cachedCredential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            secrets,
-            Scopes,
-            "user",
-            cancellationToken,
-            new FileDataStore(credPath, true)
-        );
-
-        return _cachedCredential;
+        return PortalSettings.IsConfigured;
     }
 
     /// <summary>
-    /// Checks if Google OAuth credentials are configured in the .env file or environment variables.
+    /// Initiates the Google OAuth flow by requesting an auth URL from the server.
+    /// The user should be directed to open this URL in their browser.
     /// </summary>
-    /// <returns>True if credentials are configured, false otherwise.</returns>
-    public static bool AreCredentialsConfigured()
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The OAuth URL to open in a browser, or null if the request failed.</returns>
+    public static async Task<string?> InitiateAuthAsync(CancellationToken cancellationToken = default)
     {
-        return DotEnv.HasValue("GOOGLE_CLIENT_ID") && DotEnv.HasValue("GOOGLE_CLIENT_SECRET");
+        if (!PortalSettings.IsConfigured)
+            return null;
+
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var requestBody = new { action = "initiate" };
+        var json = JsonSerializer.Serialize(requestBody);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, AuthEndpoint);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
+        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
+
+        if (root.TryGetProperty("success", out var success) && success.GetBoolean()
+            && root.TryGetProperty("authUrl", out var authUrl))
+        {
+            return authUrl.GetString();
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks whether the company has completed Google OAuth and has valid tokens stored on the server.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the company has Google tokens, false otherwise.</returns>
+    public static async Task<bool> CheckAuthStatusAsync(CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+            return false;
+
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        var requestBody = new { action = "status" };
+        var json = JsonSerializer.Serialize(requestBody);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, AuthEndpoint);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
+        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return false;
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
+
+        if (root.TryGetProperty("success", out var success) && success.GetBoolean()
+            && root.TryGetProperty("authenticated", out var authenticated))
+        {
+            return authenticated.GetBoolean();
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Revokes the Google OAuth connection for this company.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if revocation was successful.</returns>
+    public static async Task<bool> RevokeAuthAsync(CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+            return false;
+
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        var requestBody = new { action = "revoke" };
+        var json = JsonSerializer.Serialize(requestBody);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, AuthEndpoint);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
+        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return false;
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
+
+        return root.TryGetProperty("success", out var success) && success.GetBoolean();
     }
 }

@@ -654,19 +654,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Attempts to register the company with the portal using the registration key from .env.
+    /// Attempts to register the company with the portal using the premium license key.
     /// Returns true if registration succeeded (or was already done), false otherwise.
     /// </summary>
     private async Task<bool> TryRegisterPortalAsync(PaymentPortalService portalService)
     {
-        var registrationKey = DotEnv.Get(PortalSettings.RegistrationKeyEnvVar);
-        if (string.IsNullOrEmpty(registrationKey))
+        var licenseService = App.LicenseService;
+        var licenseKey = licenseService?.GetLicenseKey();
+        if (string.IsNullOrEmpty(licenseKey))
         {
             await ShowErrorDialogAsync(
-                "Portal Not Configured".Translate(),
-                $"No portal API key found. Please add your PORTAL_REGISTRATION_KEY to the .env file to register, or add an existing PAYMENT_PORTAL_API_KEY.".Translate());
+                "Premium License Required".Translate(),
+                "Please activate a premium license first to use portal features.".Translate());
             return false;
         }
+
+        var deviceId = licenseService!.GetDeviceId();
 
         IsConnectingProvider = true;
         try
@@ -675,7 +678,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             var companyName = companyData?.Settings.Company.Name ?? "My Company";
             var ownerEmail = companyData?.Settings.Company.Email;
 
-            var result = await portalService.RegisterCompanyAsync(registrationKey, companyName, ownerEmail);
+            var result = await portalService.RegisterCompanyAsync(licenseKey, deviceId, companyName, ownerEmail);
             if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
             {
                 // If company already has a logo, upload it to the portal (fire-and-forget)
@@ -692,7 +695,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 return true;
             }
 
-            var message = result.Message ?? "Registration failed. Please check your registration key.";
+            var message = result.Message ?? "Registration failed. Please check your license key.";
             await ShowErrorDialogAsync("Registration Failed".Translate(), message.Translate());
             return false;
         }

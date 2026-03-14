@@ -2846,7 +2846,7 @@ public class App : Application
             _mainWindowViewModel?.HideLoading();
             await ShowErrorMessageBoxAsync(
                 "AI Not Configured".Translate(),
-                "OpenAI API key is not configured. Please set the OPENAI_API_KEY environment variable to use AI-powered import.".Translate());
+                "Portal is not configured. Please register your company first to use AI-powered import.".Translate());
             return;
         }
 

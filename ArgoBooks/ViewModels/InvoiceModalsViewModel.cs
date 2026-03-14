@@ -1186,9 +1186,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Check if email API is configured (only required when portal is NOT configured,
         // since the portal server handles email delivery via sendEmail: true)
-        if (!PortalSettings.IsConfigured && !InvoiceEmailSettings.IsConfigured)
+        if (!PortalSettings.IsConfigured)
         {
-            await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
+            await ShowSendErrorAsync("Portal is not configured. Please register your company first to send invoice emails.".Translate());
             return;
         }
 

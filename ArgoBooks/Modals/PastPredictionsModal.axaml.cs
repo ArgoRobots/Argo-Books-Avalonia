@@ -209,7 +209,7 @@ public partial class PastPredictionsModal : UserControl
                 await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Export Failed",
-                    Message = "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file.",
+                    Message = "Portal is not configured. Please register your company first to export to Google Sheets.",
                     PrimaryButtonText = "OK",
                     SecondaryButtonText = null,
                     CancelButtonText = null

@@ -935,7 +935,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,
-                ErrorMessage = "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file."
+                ErrorMessage = "Portal is not configured. Please register your company first to export to Google Sheets."
             });
             return;
         }

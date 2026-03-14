@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Services;
@@ -331,9 +332,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private void CheckAzureConfiguration()
     {
-        // Check if Azure credentials are configured in .env file
-        IsAzureConfigured = DotEnv.HasValue("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT") &&
-                           DotEnv.HasValue("AZURE_DOCUMENT_INTELLIGENCE_API_KEY");
+        // Check if portal is configured (receipt scanning goes through server proxy)
+        IsAzureConfigured = PortalSettings.IsConfigured;
     }
 
     /// <summary>
@@ -356,7 +356,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             App.AddNotification(
                 Loc.Tr("Configuration Required"),
-                Loc.Tr("Please add AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY to your .env file."),
+                Loc.Tr("Portal is not configured. Please register your company first to use receipt scanning."),
                 NotificationType.Warning);
             return;
         }

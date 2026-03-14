@@ -1,19 +1,19 @@
-using Google.Apis.Drive.v3;
-using Google.Apis.Drive.v3.Data;
-using Google.Apis.Services;
-using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data;
 using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Handles exporting chart data to Google Sheets.
+/// Handles exporting chart data to Google Sheets via the argorobots.com server proxy.
 /// </summary>
 public class GoogleSheetsService
 {
-    private SheetsService? _sheetsService;
+    private const string ExportEndpoint = "https://argorobots.com/api/google/sheets/export";
+
+    private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
 
@@ -22,6 +22,7 @@ public class GoogleSheetsService
     /// </summary>
     public GoogleSheetsService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
     }
@@ -41,40 +42,8 @@ public class GoogleSheetsService
     }
 
     /// <summary>
-    /// Initializes the Google Sheets service.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if initialization succeeded, false otherwise.</returns>
-    private async Task<bool> InitializeServiceAsync(CancellationToken cancellationToken = default)
-    {
-        if (_sheetsService != null)
-        {
-            return true;
-        }
-
-        var credential = await GoogleCredentialsManager.GetUserCredentialAsync(cancellationToken);
-
-        _sheetsService = new SheetsService(new BaseClientService.Initializer
-        {
-            HttpClientInitializer = credential,
-            ApplicationName = "Argo Books"
-        });
-
-        return true;
-    }
-
-    /// <summary>
     /// Exports chart data to a new Google Sheets spreadsheet.
     /// </summary>
-    /// <param name="data">Dictionary of label to value pairs.</param>
-    /// <param name="chartTitle">Title of the chart.</param>
-    /// <param name="chartType">Type of chart to create.</param>
-    /// <param name="column1Text">Header text for the first column (labels).</param>
-    /// <param name="column2Text">Header text for the second column (values).</param>
-    /// <param name="companyName">Name of the company for the spreadsheet title.</param>
-    /// <param name="numberFormat">Number format pattern (default: "#,##0.00").</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The URL of the created spreadsheet, or null if export failed.</returns>
     public async Task<string?> ExportChartToGoogleSheetsAsync(
         IReadOnlyDictionary<string, double> data,
         string chartTitle,
@@ -90,49 +59,27 @@ public class GoogleSheetsService
 
         try
         {
-            if (!await InitializeServiceAsync(cancellationToken))
+            var rows = data.OrderBy(x => x.Key)
+                .Select(item => new List<object> { item.Key, item.Value })
+                .ToList();
+
+            var sheet = new
             {
-                return null;
-            }
-
-            const string sheetName = "Chart Data";
-
-            var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
-            var spreadsheetId = spreadsheet.SpreadsheetId;
-
-            // Prepare the data
-            var values = new List<IList<object>> { new List<object> { column1Text, column2Text } };
-            foreach (var item in data.OrderBy(x => x.Key))
-            {
-                values.Add(new List<object> { item.Key, item.Value });
-            }
-
-            // Write data to sheet
-            var range = $"'{sheetName}'!A1:B{values.Count}";
-            var valueRange = new ValueRange { Values = values };
-
-            var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-            // Use RAW to prevent Google Sheets from parsing date strings (e.g. "Jan 2024")
-            // into date serial numbers, which can cause chart rendering artifacts.
-            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
-            await updateRequest.ExecuteAsync(cancellationToken);
-
-            // Format headers and numbers, add chart
-            var requests = new List<Request>
-            {
-                CreateHeaderFormatRequest(0, 0, 0, 1),
-                CreateNumberFormatRequest(1, values.Count - 1, 1, 1, numberFormat),
-                CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, [("A", "B")])
+                name = "Chart Data",
+                headers = new[] { column1Text, column2Text },
+                rows,
+                numberFormat
             };
 
-            await _sheetsService.Spreadsheets
-                .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
-                .ExecuteAsync(cancellationToken);
+            var result = await SendExportRequestAsync(
+                $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}",
+                new[] { sheet },
+                new { type = MapChartType(chartType), title = chartTitle },
+                true,
+                cancellationToken);
 
-            await AutoResizeColumnsAsync(spreadsheetId, 2, cancellationToken);
-
-            success = true;
-            return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
+            success = result != null;
+            return result;
         }
         catch (Exception ex)
         {
@@ -152,7 +99,7 @@ public class GoogleSheetsService
                 _ = _telemetryManager?.TrackExportAsync(
                     ExportType.GoogleSheets,
                     stopwatch.ElapsedMilliseconds,
-                    0, // No file size for Google Sheets
+                    0,
                     cancellationToken);
             }
         }
@@ -186,84 +133,43 @@ public class GoogleSheetsService
         string companyName,
         CancellationToken cancellationToken = default)
     {
-        if (!await InitializeServiceAsync(cancellationToken))
-        {
-            return null;
-        }
-
-        const string sheetName = "Chart Data";
-
-        var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
-        var spreadsheetId = spreadsheet.SpreadsheetId;
-
-        // Set file permissions to be accessible by anyone with the link
-        var driveService = new DriveService(new BaseClientService.Initializer
-        {
-            HttpClientInitializer = _sheetsService!.HttpClientInitializer,
-            ApplicationName = "Argo Books"
-        });
-        await driveService.Permissions
-            .Create(new Permission { Type = "anyone", Role = "reader", AllowFileDiscovery = false }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-
-        // Get series names and prepare headers
         var seriesNames = data.First().Value.Keys.ToList();
         var orderedSeriesNames = seriesNames.OrderBy(x => x.Contains("Sales")).ToList();
-        var headers = new List<object> { "Date" };
+
+        var headers = new List<string> { "Date" };
         headers.AddRange(orderedSeriesNames);
 
-        // Prepare the data
-        var values = new List<IList<object>> { headers };
-        foreach (var dateEntry in data.OrderBy(x => x.Key))
-        {
-            var row = new List<object> { dateEntry.Key };
-            foreach (var seriesName in orderedSeriesNames)
+        var rows = data.OrderBy(x => x.Key)
+            .Select(dateEntry =>
             {
-                row.Add(dateEntry.Value[seriesName]);
-            }
-            values.Add(row);
-        }
+                var row = new List<object> { dateEntry.Key };
+                foreach (var seriesName in orderedSeriesNames)
+                {
+                    row.Add(dateEntry.Value[seriesName]);
+                }
+                return row;
+            })
+            .ToList();
 
-        // Write data to sheet
-        var range = $"{sheetName}!A1:{(char)('A' + seriesNames.Count)}{values.Count}";
-        var valueRange = new ValueRange { Values = values };
-        var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-        // Use RAW to prevent Google Sheets from parsing date strings (e.g. "Jan 2024")
-        // into date serial numbers, which can cause chart rendering artifacts.
-        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
-        await updateRequest.ExecuteAsync(cancellationToken);
-
-        // Format headers and numbers
-        var requests = new List<Request> { CreateHeaderFormatRequest(0, 0, 0, seriesNames.Count) };
-        for (var i = 1; i <= seriesNames.Count; i++)
+        var sheet = new
         {
-            requests.Add(CreateNumberFormatRequest(1, values.Count - 1, i, i, "#,##0.00"));
-        }
+            name = "Chart Data",
+            headers = headers.ToArray(),
+            rows,
+            numberFormat = "#,##0.00"
+        };
 
-        // Add chart with multiple series
-        var seriesRanges = Enumerable.Range(0, seriesNames.Count)
-            .Select(i => ("A", $"{(char)('B' + i)}"))
-            .ToArray();
-        requests.Add(CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, seriesRanges));
-
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-
-        await AutoResizeColumnsAsync(spreadsheetId, seriesNames.Count + 1, cancellationToken);
-
-        return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
+        return await SendExportRequestAsync(
+            $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}",
+            new[] { sheet },
+            new { type = MapChartType(chartType), title = chartTitle },
+            true,
+            cancellationToken);
     }
 
     /// <summary>
     /// Exports pre-formatted chart data (from ChartLoaderService) to Google Sheets.
     /// </summary>
-    /// <param name="exportData">Pre-formatted data as List of List of objects (first row is headers).</param>
-    /// <param name="chartTitle">Title of the chart.</param>
-    /// <param name="chartType">Type of chart to create.</param>
-    /// <param name="companyName">Name of the company for the spreadsheet title.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The URL of the created spreadsheet, or null if export failed.</returns>
     public async Task<string?> ExportFormattedDataToGoogleSheetsAsync(
         List<List<object>> exportData,
         string chartTitle,
@@ -271,56 +177,32 @@ public class GoogleSheetsService
         string companyName,
         CancellationToken cancellationToken = default)
     {
-        if (exportData.Count == 0 || !await InitializeServiceAsync(cancellationToken))
-        {
+        if (exportData.Count == 0)
             return null;
-        }
 
-        const string sheetName = "Chart Data";
+        // First row is headers
+        var headers = exportData[0].Select(h => h.ToString() ?? "").ToArray();
+        var rows = exportData.Skip(1).ToList();
 
-        var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
-        var spreadsheetId = spreadsheet.SpreadsheetId;
-
-        // Convert and write data
-        var values = exportData.Select(row => (IList<object>)row.ToList()).ToList();
-        var columnCount = values.Max(row => row.Count);
-        var lastColumn = (char)('A' + columnCount - 1);
-
-        var range = $"'{sheetName}'!A1:{lastColumn}{values.Count}";
-        var valueRange = new ValueRange { Values = values };
-        var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-        // Use RAW to prevent Google Sheets from parsing date strings (e.g. "Jan 2024")
-        // into date serial numbers, which can cause chart rendering artifacts.
-        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
-        await updateRequest.ExecuteAsync(cancellationToken);
-
-        // Format headers and numbers
-        var requests = new List<Request> { CreateHeaderFormatRequest(0, 0, 0, columnCount - 1) };
-        for (var i = 1; i < columnCount; i++)
+        var sheet = new
         {
-            requests.Add(CreateNumberFormatRequest(1, values.Count - 1, i, i, "#,##0.00"));
-        }
+            name = "Chart Data",
+            headers,
+            rows,
+            numberFormat = "#,##0.00"
+        };
 
-        // Add chart
-        var seriesRanges = Enumerable.Range(1, columnCount - 1)
-            .Select(i => ("A", $"{(char)('A' + i)}"))
-            .ToArray();
-        requests.Add(CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, seriesRanges));
-
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-
-        await AutoResizeColumnsAsync(spreadsheetId, columnCount, cancellationToken);
-
-        return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
+        return await SendExportRequestAsync(
+            $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}",
+            new[] { sheet },
+            new { type = MapChartType(chartType), title = chartTitle },
+            true,
+            cancellationToken);
     }
 
     /// <summary>
     /// Opens a Google Sheets URL in the default browser.
     /// </summary>
-    /// <param name="url">The URL to open.</param>
-    /// <returns>True if the browser was opened successfully, false otherwise.</returns>
     public static bool OpenInBrowser(string url)
     {
         try
@@ -338,352 +220,66 @@ public class GoogleSheetsService
         }
     }
 
-    #region Private Helper Methods
-
-    /// <summary>
-    /// Creates a new spreadsheet with a single sheet.
-    /// </summary>
-    private async Task<Spreadsheet> CreateSpreadsheetAsync(
-        string chartTitle,
-        string companyName,
-        string sheetName,
+    private async Task<string?> SendExportRequestAsync(
+        string title,
+        object sheets,
+        object chartConfig,
+        bool shareAsReader,
         CancellationToken cancellationToken)
     {
-        var spreadsheet = new Spreadsheet
+        if (!PortalSettings.IsConfigured)
+            return null;
+
+        var requestBody = new
         {
-            Properties = new SpreadsheetProperties
-            {
-                Title = $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}"
-            },
-            Sheets =
-            [
-                new Sheet
-                {
-                    Properties = new SheetProperties
-                    {
-                        Title = sheetName,
-                        SheetId = 0
-                    }
-                }
-            ]
+            title,
+            sheets,
+            chartConfig,
+            shareAsReader
         };
 
-        return await _sheetsService!.Spreadsheets
-            .Create(spreadsheet)
-            .ExecuteAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Auto-resizes columns in the spreadsheet.
-    /// </summary>
-    private async Task AutoResizeColumnsAsync(
-        string spreadsheetId,
-        int columnCount,
-        CancellationToken cancellationToken)
-    {
-        var request = new Request
+        var json = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions
         {
-            AutoResizeDimensions = new AutoResizeDimensionsRequest
-            {
-                Dimensions = new DimensionRange
-                {
-                    SheetId = 0,
-                    Dimension = "COLUMNS",
-                    StartIndex = 0,
-                    EndIndex = columnCount
-                }
-            }
-        };
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
 
-        await _sheetsService!.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = [request] }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-    }
+        using var request = new HttpRequestMessage(HttpMethod.Post, ExportEndpoint);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
+        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
 
-    private static Request CreateHeaderFormatRequest(
-        int startRowIndex,
-        int endRowIndex,
-        int startColumnIndex,
-        int endColumnIndex)
-    {
-        return new Request
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
         {
-            RepeatCell = new RepeatCellRequest
-            {
-                Range = new GridRange
-                {
-                    SheetId = 0,
-                    StartRowIndex = startRowIndex,
-                    EndRowIndex = endRowIndex + 1,
-                    StartColumnIndex = startColumnIndex,
-                    EndColumnIndex = endColumnIndex + 1
-                },
-                Cell = new CellData
-                {
-                    UserEnteredFormat = new CellFormat
-                    {
-                        TextFormat = new TextFormat
-                        {
-                            Bold = true
-                        },
-                        BackgroundColor = new Color
-                        {
-                            Red = 0.678f,
-                            Green = 0.847f,
-                            Blue = 0.902f
-                        }
-                    }
-                },
-                Fields = "userEnteredFormat(textFormat,backgroundColor)"
-            }
-        };
-    }
-
-    private static Request CreateNumberFormatRequest(
-        int startRowIndex,
-        int endRowIndex,
-        int startColumnIndex,
-        int endColumnIndex,
-        string numberFormat)
-    {
-        return new Request
-        {
-            RepeatCell = new RepeatCellRequest
-            {
-                Range = new GridRange
-                {
-                    SheetId = 0,
-                    StartRowIndex = startRowIndex,
-                    EndRowIndex = endRowIndex + 1,
-                    StartColumnIndex = startColumnIndex,
-                    EndColumnIndex = endColumnIndex + 1
-                },
-                Cell = new CellData
-                {
-                    UserEnteredFormat = new CellFormat
-                    {
-                        NumberFormat = new NumberFormat
-                        {
-                            Type = "NUMBER",
-                            Pattern = numberFormat
-                        }
-                    }
-                },
-                Fields = "userEnteredFormat.numberFormat"
-            }
-        };
-    }
-
-    private static Request CreateChartRequest(
-        ChartType chartType,
-        string chartTitle,
-        int startRowIndex,
-        int endRowIndex,
-        (string XColumn, string YColumn)[] seriesRanges)
-    {
-        var chartSpec = new ChartSpec
-        {
-            Title = chartTitle
-        };
-
-        switch (chartType)
-        {
-            case ChartType.Line:
-            case ChartType.Spline:
-                chartSpec.BasicChart = CreateBasicChartSpec(
-                    seriesRanges,
-                    startRowIndex,
-                    endRowIndex,
-                    "LINE"
-                );
-                break;
-
-            case ChartType.Area:
-                chartSpec.BasicChart = CreateBasicChartSpec(
-                    seriesRanges,
-                    startRowIndex,
-                    endRowIndex,
-                    "AREA"
-                );
-                break;
-
-            case ChartType.StepLine:
-                chartSpec.BasicChart = CreateBasicChartSpec(
-                    seriesRanges,
-                    startRowIndex,
-                    endRowIndex,
-                    "STEPPED_AREA"
-                );
-                break;
-
-            case ChartType.Column:
-                chartSpec.BasicChart = CreateBasicChartSpec(
-                    seriesRanges,
-                    startRowIndex,
-                    endRowIndex,
-                    "COLUMN"
-                );
-                break;
-
-            case ChartType.Scatter:
-                chartSpec.BasicChart = CreateBasicChartSpec(
-                    seriesRanges,
-                    startRowIndex,
-                    endRowIndex,
-                    "SCATTER"
-                );
-                break;
-
-            case ChartType.Pie:
-                chartSpec.PieChart = CreatePieChartSpec(
-                    seriesRanges[0],
-                    startRowIndex,
-                    endRowIndex
-                );
-                break;
+            _errorLogger?.LogError($"Google Sheets export proxy error {response.StatusCode}", ErrorCategory.Api, "Google Sheets export");
+            return null;
         }
 
-        return new Request
-        {
-            AddChart = new AddChartRequest
-            {
-                Chart = new EmbeddedChart
-                {
-                    Spec = chartSpec,
-                    Position = new EmbeddedObjectPosition
-                    {
-                        OverlayPosition = new OverlayPosition
-                        {
-                            AnchorCell = new GridCoordinate
-                            {
-                                SheetId = 0,
-                                RowIndex = 0,
-                                ColumnIndex = seriesRanges.Length + 2
-                            },
-                            WidthPixels = 800,
-                            HeightPixels = 420
-                        }
-                    }
-                }
-            }
-        };
-    }
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
 
-    private static BasicChartSpec CreateBasicChartSpec(
-        (string XColumn, string YColumn)[] seriesRanges,
-        int startRowIndex,
-        int endRowIndex,
-        string chartType)
-    {
-        var series = new List<BasicChartSeries>();
-
-        foreach (var (_, yColumn) in seriesRanges)
+        if (root.TryGetProperty("success", out var success) && success.GetBoolean()
+            && root.TryGetProperty("spreadsheetUrl", out var url))
         {
-            series.Add(new BasicChartSeries
-            {
-                Series = new ChartData
-                {
-                    SourceRange = new ChartSourceRange
-                    {
-                        Sources =
-                        [
-                            new GridRange
-                            {
-                                SheetId = 0,
-                                StartRowIndex = startRowIndex,
-                                EndRowIndex = endRowIndex + 1,
-                                StartColumnIndex = yColumn[0] - 'A',
-                                EndColumnIndex = yColumn[0] - 'A' + 1
-                            }
-                        ]
-                    }
-                },
-                TargetAxis = "LEFT_AXIS",
-                PointStyle = new PointStyle { Size = 7 }
-            });
+            return url.GetString();
         }
 
-        var spec = new BasicChartSpec
-        {
-            ChartType = chartType,
-            HeaderCount = 1,
-            LegendPosition = "TOP_LEGEND",
-            Series = series,
-            Domains =
-            [
-                new BasicChartDomain
-                {
-                    Domain = new ChartData
-                    {
-                        SourceRange = new ChartSourceRange
-                        {
-                            Sources =
-                            [
-                                new GridRange
-                                {
-                                    SheetId = 0,
-                                    StartRowIndex = startRowIndex,
-                                    EndRowIndex = endRowIndex + 1,
-                                    StartColumnIndex = 0,
-                                    EndColumnIndex = 1
-                                }
-                            ]
-                        }
-                    }
-                }
-            ],
-            LineSmoothing = true
-        };
-
-        return spec;
+        return null;
     }
 
-    private static PieChartSpec CreatePieChartSpec(
-        (string XColumn, string YColumn) range,
-        int startRowIndex,
-        int endRowIndex)
+    private static string MapChartType(ChartType chartType)
     {
-        return new PieChartSpec
+        return chartType switch
         {
-            LegendPosition = "RIGHT_LEGEND",
-            Domain = new ChartData
-            {
-                SourceRange = new ChartSourceRange
-                {
-                    Sources =
-                    [
-                        new GridRange
-                        {
-                            SheetId = 0,
-                            StartRowIndex = startRowIndex,
-                            EndRowIndex = endRowIndex + 1,
-                            StartColumnIndex = 0,
-                            EndColumnIndex = 1
-                        }
-                    ]
-                }
-            },
-            Series = new ChartData
-            {
-                SourceRange = new ChartSourceRange
-                {
-                    Sources =
-                    [
-                        new GridRange
-                        {
-                            SheetId = 0,
-                            StartRowIndex = startRowIndex,
-                            EndRowIndex = endRowIndex + 1,
-                            StartColumnIndex = range.YColumn[0] - 'A',
-                            EndColumnIndex = range.YColumn[0] - 'A' + 1
-                        }
-                    ]
-                }
-            },
-            PieHole = 0,
-            ThreeDimensional = false
+            ChartType.Line => "line",
+            ChartType.Spline => "line",
+            ChartType.Column => "column",
+            ChartType.Pie => "pie",
+            ChartType.Area => "area",
+            ChartType.StepLine => "stepped_area",
+            ChartType.Scatter => "scatter",
+            _ => "column"
         };
     }
-
-    #endregion
 }

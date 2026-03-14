@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -49,7 +50,7 @@ public class TelemetryUploadService : ITelemetryUploadService
 
         try
         {
-            var apiKey = GetApiKey();
+            var apiKey = PortalSettings.ApiKey;
             if (string.IsNullOrEmpty(apiKey))
             {
                 result.Success = false;
@@ -247,16 +248,7 @@ public class TelemetryUploadService : ITelemetryUploadService
         return result;
     }
 
-    private static string GetApiKey()
-    {
-        // Try environment variable first
-        var apiKey = Environment.GetEnvironmentVariable("ARGO_TELEMETRY_API_KEY");
-        if (!string.IsNullOrEmpty(apiKey))
-            return apiKey;
-
-        // Try DotEnv
-        return DotEnv.Get("UPLOAD_API_KEY");
-    }
+    // API key is now obtained from PortalSettings.ApiKey directly
 
     private class TelemetryUploadData
     {

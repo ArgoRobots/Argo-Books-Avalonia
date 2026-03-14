@@ -3,6 +3,7 @@ using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Invoices;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services.InvoiceTemplates;
@@ -37,12 +38,12 @@ public class InvoiceEmailService : IDisposable
         string currencySymbol = "$",
         CancellationToken cancellationToken = default)
     {
-        if (!InvoiceEmailSettings.IsConfigured)
+        if (!PortalSettings.IsConfigured)
         {
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -147,8 +148,8 @@ public class InvoiceEmailService : IDisposable
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InvoiceEmailSettings.ApiEndpoint);
         httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        // Add API key authentication (from .env file)
-        var apiKey = InvoiceEmailSettings.ApiKey;
+        // Add API key authentication (portal API key)
+        var apiKey = PortalSettings.ApiKey;
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         httpRequest.Headers.Add("X-Api-Key", apiKey);
 
@@ -216,12 +217,12 @@ public class InvoiceEmailService : IDisposable
     public async Task<InvoiceEmailResponse> TestConnectionAsync(
         CancellationToken cancellationToken = default)
     {
-        if (!InvoiceEmailSettings.IsConfigured)
+        if (!PortalSettings.IsConfigured)
         {
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = $"Email API is not configured. Please add {InvoiceEmailSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -229,7 +230,7 @@ public class InvoiceEmailService : IDisposable
         try
         {
             // Try to reach the API endpoint with a simple HEAD or GET request
-            var apiKey = InvoiceEmailSettings.ApiKey;
+            var apiKey = PortalSettings.ApiKey;
             using var request = new HttpRequestMessage(HttpMethod.Get, InvoiceEmailSettings.ApiEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             request.Headers.Add("X-Api-Key", apiKey);
