@@ -78,6 +78,8 @@ public class GeoLocationService : IGeoLocationService
             {
                 data.Country = response.Country ?? "Unknown";
                 data.CountryCode = response.CountryCode ?? "Unknown";
+                data.Region = response.Region ?? "Unknown";
+                data.City = response.City ?? "Unknown";
                 data.Timezone = response.Timezone ?? "Unknown";
                 return true;
             }
@@ -98,6 +100,8 @@ public class GeoLocationService : IGeoLocationService
             {
                 data.Country = response.CountryName ?? "Unknown";
                 data.CountryCode = response.CountryCode ?? "Unknown";
+                data.Region = response.Region ?? "Unknown";
+                data.City = response.City ?? "Unknown";
                 data.Timezone = response.Timezone ?? "Unknown";
                 return true;
             }
@@ -118,6 +122,8 @@ public class GeoLocationService : IGeoLocationService
             {
                 data.Country = "Unknown"; // ipinfo.io only provides country code, not full name
                 data.CountryCode = response.Country ?? "Unknown";
+                data.Region = response.Region ?? "Unknown";
+                data.City = response.City ?? "Unknown";
                 data.Timezone = response.Timezone ?? "Unknown";
                 return true;
             }

@@ -146,9 +146,10 @@ public class CompressionService
     }
 
     /// <summary>
-    /// Maximum decompressed size (500 MB) to prevent zip bomb attacks.
+    /// Maximum decompressed size (4 GB) to prevent zip bomb attacks.
+    /// Set high to accommodate company files with large numbers of receipt images.
     /// </summary>
-    private const long MaxDecompressedSize = 500L * 1024 * 1024;
+    private const long MaxDecompressedSize = 4L * 1024 * 1024 * 1024;
 
     /// <summary>
     /// Decompresses GZip data with a size limit to prevent zip bomb attacks.
