@@ -226,7 +226,8 @@ public class TelemetryUploadService : ITelemetryUploadService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, UploadUrl);
         request.Content = content;
-        request.Headers.Add("X-API-Key", apiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        request.Headers.Add("X-Api-Key", apiKey);
         request.Headers.UserAgent.ParseAdd($"{UserAgentPrefix}/{_appVersion}");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
