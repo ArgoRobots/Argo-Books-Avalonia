@@ -184,6 +184,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task RequestCloseEnterKey()
     {
+        // Don't allow closing during success animation - user must click Continue
+        if (IsVerificationSuccess)
+            return;
+
         // If no data was entered, just close
         if (string.IsNullOrWhiteSpace(LicenseKey))
         {

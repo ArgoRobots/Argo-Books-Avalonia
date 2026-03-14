@@ -187,7 +187,7 @@ public class PaymentPortalService
         {
             return new PortalPublishResponse { Success = false, Message = $"Network error: {ex.Message}", ErrorCode = "NETWORK_ERROR" };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return new PortalPublishResponse { Success = false, Message = "An unexpected error occurred. Please try again.", ErrorCode = "UNKNOWN_ERROR" };
         }

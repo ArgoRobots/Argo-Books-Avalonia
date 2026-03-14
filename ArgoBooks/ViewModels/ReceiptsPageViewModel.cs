@@ -345,19 +345,17 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         if (!HasPremium)
         {
-            App.AddNotification(
+            await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Premium Feature"),
-                Loc.Tr("AI Receipt Scanning requires a Premium subscription."),
-                NotificationType.Warning);
+                Loc.Tr("AI Receipt Scanning requires a Premium subscription."));
             return;
         }
 
         if (!IsAzureConfigured)
         {
-            App.AddNotification(
+            await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Configuration Required"),
-                Loc.Tr("Portal is not configured. Please register your company first to use receipt scanning."),
-                NotificationType.Warning);
+                Loc.Tr("Portal is not configured. Please register your company first to use receipt scanning."));
             return;
         }
 
@@ -376,10 +374,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         var extension = Path.GetExtension(filePath).ToLowerInvariant();
         if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".pdf")
         {
-            App.AddNotification(
+            await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop a JPEG, PNG, or PDF file."),
-                NotificationType.Warning);
+                Loc.Tr("Please drop a JPEG, PNG, or PDF file."));
             return;
         }
 

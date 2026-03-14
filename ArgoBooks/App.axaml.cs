@@ -274,7 +274,7 @@ public class App : Application
     /// <summary>
     /// Shows a modal warning message box.
     /// </summary>
-    private static async Task ShowWarningMessageBoxAsync(string title, string message)
+    public static async Task ShowWarningMessageBoxAsync(string title, string message)
     {
         if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
