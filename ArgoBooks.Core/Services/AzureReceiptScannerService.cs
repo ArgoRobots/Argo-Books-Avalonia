@@ -96,7 +96,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
         catch (RequestFailedException ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Azure Document Intelligence API error");
-            return ReceiptScanResult.Failed($"Azure API error: {ex.Message}");
+            return ReceiptScanResult.Failed("An error occurred communicating with the receipt scanning service. Please try again.");
         }
         catch (TaskCanceledException)
         {
@@ -105,7 +105,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan failed");
-            return ReceiptScanResult.Failed($"Failed to scan receipt: {ex.Message}");
+            return ReceiptScanResult.Failed("Failed to scan receipt. Please try again.");
         }
         finally
         {

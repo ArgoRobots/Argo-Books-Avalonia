@@ -189,7 +189,7 @@ public class PaymentPortalService
         }
         catch (Exception ex)
         {
-            return new PortalPublishResponse { Success = false, Message = $"Error: {ex.Message}", ErrorCode = "UNKNOWN_ERROR" };
+            return new PortalPublishResponse { Success = false, Message = "An unexpected error occurred. Please try again.", ErrorCode = "UNKNOWN_ERROR" };
         }
     }
 
@@ -624,9 +624,9 @@ public class PaymentPortalService
         {
             return new PortalLogoResponse { Success = false, Message = $"Network error: {ex.Message}" };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return new PortalLogoResponse { Success = false, Message = $"Error: {ex.Message}" };
+            return new PortalLogoResponse { Success = false, Message = "An unexpected error occurred while uploading the logo." };
         }
     }
 

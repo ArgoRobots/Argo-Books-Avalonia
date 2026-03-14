@@ -288,7 +288,7 @@ public class LicenseService
             return new LicenseValidationResult
             {
                 Status = LicenseValidationStatus.NetworkError,
-                Message = $"Validation error: {ex.Message}"
+                Message = "An unexpected error occurred during license validation. Please try again."
             };
         }
     }

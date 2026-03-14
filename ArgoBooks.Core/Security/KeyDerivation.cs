@@ -10,9 +10,8 @@ public static class KeyDerivation
     /// <summary>
     /// Number of PBKDF2 iterations.
     /// OWASP recommends at least 600,000 for SHA-256 as of 2023.
-    /// Using 100,000 for balance between security and performance.
     /// </summary>
-    public const int Iterations = 100_000;
+    public const int Iterations = 600_000;
 
     /// <summary>
     /// Salt size in bytes (256 bits).
@@ -30,6 +29,11 @@ public static class KeyDerivation
     public const int HashSize = 32;
 
     /// <summary>
+    /// Master key size in bytes (64 bytes = 32 for encryption + 32 for verification).
+    /// </summary>
+    public const int MasterKeySize = 64;
+
+    /// <summary>
     /// IV/Nonce size for AES-GCM in bytes (96 bits recommended).
     /// </summary>
     public const int IvSize = 12;
@@ -41,21 +45,29 @@ public static class KeyDerivation
 
     /// <summary>
     /// Derives an encryption key from a password using PBKDF2-SHA256.
+    /// Uses a 64-byte master key derivation, returning only the first 32 bytes
+    /// for encryption. The last 32 bytes are used separately for password verification.
     /// </summary>
     /// <param name="password">The password to derive the key from.</param>
     /// <param name="salt">The salt bytes.</param>
-    /// <returns>The derived key bytes.</returns>
+    /// <returns>The derived key bytes (32 bytes for AES-256).</returns>
     public static byte[] DeriveKey(string password, byte[] salt)
     {
         ArgumentException.ThrowIfNullOrEmpty(password);
         ArgumentNullException.ThrowIfNull(salt);
 
-        return Rfc2898DeriveBytes.Pbkdf2(
+        var masterKey = Rfc2898DeriveBytes.Pbkdf2(
             password,
             salt,
             Iterations,
             HashAlgorithmName.SHA256,
-            KeySize);
+            MasterKeySize);
+
+        // First 32 bytes for encryption key
+        var encryptionKey = new byte[KeySize];
+        Buffer.BlockCopy(masterKey, 0, encryptionKey, 0, KeySize);
+        CryptographicOperations.ZeroMemory(masterKey);
+        return encryptionKey;
     }
 
     /// <summary>
@@ -108,21 +120,29 @@ public static class KeyDerivation
 
     /// <summary>
     /// Computes a password hash for storage/verification using PBKDF2.
+    /// Derives a 64-byte master key and returns the last 32 bytes as the verification hash.
+    /// This ensures the verification hash is distinct from the encryption key (first 32 bytes).
     /// </summary>
     /// <param name="password">The password to hash.</param>
     /// <param name="salt">The salt bytes.</param>
-    /// <returns>The password hash bytes.</returns>
+    /// <returns>The password hash bytes (32 bytes, distinct from the encryption key).</returns>
     public static byte[] ComputePasswordHash(string password, byte[] salt)
     {
         ArgumentException.ThrowIfNullOrEmpty(password);
         ArgumentNullException.ThrowIfNull(salt);
 
-        return Rfc2898DeriveBytes.Pbkdf2(
+        var masterKey = Rfc2898DeriveBytes.Pbkdf2(
             password,
             salt,
             Iterations,
             HashAlgorithmName.SHA256,
-            HashSize);
+            MasterKeySize);
+
+        // Last 32 bytes for verification hash (first 32 are for encryption key)
+        var verificationHash = new byte[HashSize];
+        Buffer.BlockCopy(masterKey, KeySize, verificationHash, 0, HashSize);
+        CryptographicOperations.ZeroMemory(masterKey);
+        return verificationHash;
     }
 
     /// <summary>

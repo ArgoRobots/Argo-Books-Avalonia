@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using ArgoBooks.Core.Services;
 using NetSparkleUpdater;
 using NetSparkleUpdater.Enums;
@@ -25,6 +26,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
     private readonly SparkleUpdater _sparkle;
     private readonly IErrorLogger? _errorLogger;
+    private string? _updateSignature;
 
     /// <inheritdoc />
     public UpdateState State { get; private set; } = UpdateState.Idle;
@@ -98,6 +100,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                     return null;
                 }
 
+                _updateSignature = item.DownloadSignature;
                 AvailableUpdate = new Core.Services.UpdateInfo
                 {
                     Version = item.Version ?? "Unknown",
@@ -174,6 +177,27 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
             // Ensure 100% is reported
             DownloadProgressChanged?.Invoke(this, 100);
+
+            // Verify Ed25519 signature of the downloaded file
+            if (!string.IsNullOrEmpty(_updateSignature))
+            {
+                var verificationResult = _sparkle.SignatureVerifier
+                    .VerifySignatureOfFile(_updateSignature, filePath);
+                if (verificationResult != NetSparkleUpdater.Enums.ValidationResult.Valid)
+                {
+                    // Delete the unverified file
+                    try { File.Delete(filePath); } catch { }
+                    throw new CryptographicException(
+                        "Downloaded update failed Ed25519 signature verification. The file may have been tampered with.");
+                }
+            }
+            else
+            {
+                // SecurityMode.Strict requires a signature - reject unsigned updates
+                try { File.Delete(filePath); } catch { }
+                throw new CryptographicException(
+                    "Update has no signature. Unsigned updates are rejected in strict security mode.");
+            }
 
             // On Linux, make the downloaded file executable if it's an AppImage
             if (OperatingSystem.IsLinux())

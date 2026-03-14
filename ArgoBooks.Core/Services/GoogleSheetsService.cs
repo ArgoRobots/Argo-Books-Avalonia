@@ -203,7 +203,7 @@ public class GoogleSheetsService
             ApplicationName = "Argo Books"
         });
         await driveService.Permissions
-            .Create(new Permission { Type = "anyone", Role = "writer", AllowFileDiscovery = false }, spreadsheetId)
+            .Create(new Permission { Type = "anyone", Role = "reader", AllowFileDiscovery = false }, spreadsheetId)
             .ExecuteAsync(cancellationToken);
 
         // Get series names and prepare headers

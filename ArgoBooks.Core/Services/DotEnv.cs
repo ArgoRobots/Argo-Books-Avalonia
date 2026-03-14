@@ -60,15 +60,21 @@ public static class DotEnv
     }
 
     /// <summary>
-    /// Finds the .env file by searching the application directory and parent directories.
+    /// Maximum number of parent directories to search for .env file.
+    /// </summary>
+    private const int MaxParentSearchDepth = 1;
+
+    /// <summary>
+    /// Finds the .env file by searching the application directory and one level up.
+    /// Limited to prevent an attacker from injecting a .env file in a distant parent directory.
     /// </summary>
     private static string? FindEnvFile()
     {
         // Start from the application's base directory
         var directory = AppDomain.CurrentDomain.BaseDirectory;
 
-        // Search up the directory tree for .env file
-        while (!string.IsNullOrEmpty(directory))
+        // Search up the directory tree for .env file (limited depth)
+        for (var depth = 0; depth <= MaxParentSearchDepth && !string.IsNullOrEmpty(directory); depth++)
         {
             var envPath = Path.Combine(directory, ".env");
             if (File.Exists(envPath))
@@ -80,13 +86,6 @@ public static class DotEnv
             var parent = Directory.GetParent(directory);
             if (parent == null) break;
             directory = parent.FullName;
-        }
-
-        // Also check current working directory
-        var cwdEnvPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-        if (File.Exists(cwdEnvPath))
-        {
-            return cwdEnvPath;
         }
 
         return null;

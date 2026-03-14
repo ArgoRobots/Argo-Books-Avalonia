@@ -240,8 +240,7 @@ Respond with JSON only.";
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            _errorLogger?.LogError($"OpenAI API error {response.StatusCode}: {errorBody}", ErrorCategory.Api, "OpenAI chat completion");
+            _errorLogger?.LogError($"OpenAI API error {response.StatusCode}", ErrorCategory.Api, "OpenAI chat completion");
             return null;
         }
 
@@ -374,7 +373,7 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Parsing, $"Failed to parse OpenAI response: {response}");
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse OpenAI response");
             return null;
         }
     }
