@@ -280,7 +280,6 @@ public class CompanyData
         if (StockAdjustments.Count > 0) dates.Add(MinDate(StockAdjustments.Select(s => s.Timestamp)));
         if (PurchaseOrders.Count > 0) dates.Add(MinDate(PurchaseOrders.Select(p => p.OrderDate)));
         if (Rentals.Count > 0) dates.Add(MinDate(Rentals.Select(r => r.StartDate)));
-        if (Receipts.Count > 0) dates.Add(MinDate(Receipts.Select(r => r.Date)));
 
         return dates.Count > 0 ? dates.Min() : DateTime.Today;
     }
