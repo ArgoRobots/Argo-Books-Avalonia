@@ -107,7 +107,7 @@ public static class GoogleCredentialsManager
     /// </summary>
     internal static void AddAuthHeaders(HttpRequestMessage request)
     {
-        var deviceId = App.LicenseService?.GetDeviceId();
+        var deviceId = LicenseService.Instance?.GetDeviceId();
         if (!string.IsNullOrEmpty(deviceId))
         {
             request.Headers.Add("X-Device-Id", deviceId);

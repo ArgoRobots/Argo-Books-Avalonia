@@ -11,7 +11,7 @@ public static class LicenseAuthHelper
     /// <summary>
     /// Returns the current license key, or null if not available.
     /// </summary>
-    public static string? GetLicenseKey() => App.LicenseService?.GetLicenseKey();
+    public static string? GetLicenseKey() => LicenseService.Instance?.GetLicenseKey();
 
     /// <summary>
     /// Whether a license key is configured and available.
