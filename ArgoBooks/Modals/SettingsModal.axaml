@@ -698,26 +698,6 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- File Encryption -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="{loc:Loc 'File Encryption'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Encrypt company files with AES-256'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding FileEncryptionEnabled}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
                                 <!-- Auto-Lock -->
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc Auto-Lock}"

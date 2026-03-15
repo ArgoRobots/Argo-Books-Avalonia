@@ -81,5 +81,4 @@ public class SecuritySettings
     public bool AutoLockEnabled { get; set; } = false;
     public int AutoLockMinutes { get; set; } = 5;
     public bool BiometricEnabled { get; set; } = false;
-    public bool FileEncryptionEnabled { get; set; } = false;
 }

@@ -278,9 +278,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _windowsHelloEnabled;
 
     [ObservableProperty]
-    private bool _fileEncryptionEnabled;
-
-    [ObservableProperty]
     private string _selectedAutoLock = "5 minutes";
 
     [ObservableProperty]
@@ -396,40 +393,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     partial void OnIsConfirmPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
     partial void OnIsCurrentPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(CurrentPasswordVisibilityIcon));
 
-    // Flag to prevent recursive updates when syncing FileEncryptionEnabled with HasPassword
-    private bool _isUpdatingEncryption;
-
     // Flag to prevent firing AutoLockSettingsChanged when syncing UI with company settings
     private bool _isLoadingAutoLock;
 
     /// <summary>
-    /// Called when FileEncryptionEnabled changes - opens appropriate password modal.
-    /// </summary>
-    partial void OnFileEncryptionEnabledChanged(bool value)
-    {
-        if (_isUpdatingEncryption) return;
-
-        if (value && !HasPassword)
-        {
-            // User wants to enable encryption but no password set - open Add Password modal
-            OpenAddPasswordCommand.Execute(null);
-        }
-        else if (!value && HasPassword)
-        {
-            // User wants to disable encryption but has password - open Remove Password modal
-            OpenRemovePasswordCommand.Execute(null);
-        }
-    }
-
-    /// <summary>
-    /// Called when HasPassword changes - sync with FileEncryptionEnabled and notify Windows Hello properties.
+    /// Called when HasPassword changes - notify dependent properties.
     /// </summary>
     partial void OnHasPasswordChanged(bool value)
     {
-        _isUpdatingEncryption = true;
-        FileEncryptionEnabled = value;
-        _isUpdatingEncryption = false;
-
         // Notify Windows Hello and Auto-Lock computed properties
         OnPropertyChanged(nameof(CanEnableWindowsHello));
         OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
@@ -1665,21 +1636,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void ClosePasswordModal()
     {
-        // If user was adding password but cancelled, revert the toggle
-        if (IsAddPasswordModalOpen && !HasPassword)
-        {
-            _isUpdatingEncryption = true;
-            FileEncryptionEnabled = false;
-            _isUpdatingEncryption = false;
-        }
-        // If user was removing password but cancelled, revert the toggle
-        else if (IsRemovePasswordModalOpen && HasPassword)
-        {
-            _isUpdatingEncryption = true;
-            FileEncryptionEnabled = true;
-            _isUpdatingEncryption = false;
-        }
-
         IsAddPasswordModalOpen = false;
         IsChangePasswordModalOpen = false;
         IsRemovePasswordModalOpen = false;
