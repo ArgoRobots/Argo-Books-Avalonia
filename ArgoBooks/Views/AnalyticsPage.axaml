@@ -216,6 +216,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.RevenueDistribution}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding RevenueDistributionSeries}"
@@ -288,6 +289,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.ExpensesDistribution}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ExpensesDistributionSeries}"
@@ -337,6 +339,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.CountriesOfOrigin}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CountriesOfOriginSeries}"
@@ -424,6 +427,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.CountriesOfDestination}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CountriesOfDestinationSeries}"
@@ -466,6 +470,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.CompaniesOfDestination}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CompaniesOfDestinationSeries}"
@@ -621,6 +626,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.AccountantsTransactions}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding AccountantsTransactionsSeries}"
@@ -851,6 +857,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.TopCustomersByRevenue}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CompaniesOfOriginSeries}"
@@ -893,6 +900,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.CustomerPaymentStatus}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding CustomerPaymentStatusSeries}"
@@ -995,6 +1003,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.ActiveVsInactiveCustomers}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ActiveInactiveCustomersSeries}"
@@ -1180,6 +1189,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.TaxByCategory}"
                                                       PointerPressed="OnChartPointerPressed"
                                                       PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding TaxByCategorySeries}"
@@ -1223,6 +1233,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.TaxByProduct}"
                                                       PointerPressed="OnChartPointerPressed"
                                                       PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding TaxByProductSeries}"
@@ -1355,6 +1366,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.ReturnReasons}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ReturnReasonsSeries}"
@@ -1427,6 +1439,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.ReturnsByCategory}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ReturnsByCategorySeries}"
@@ -1472,6 +1485,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.ReturnsByProduct}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding ReturnsByProductSeries}"
@@ -1607,6 +1621,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.LossReasons}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding LossReasonsSeries}"
@@ -1679,6 +1694,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.LossesByCategory}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding LossesByCategorySeries}"
@@ -1724,6 +1740,7 @@
                                                Margin="0,8,0,4" />
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <lvc:PieChart Grid.Column="0"
+                                                      Tag="{x:Static enums:ChartDataType.LossesByProduct}"
                                                       PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased"
                                                       Series="{Binding LossesByProductSeries}"
