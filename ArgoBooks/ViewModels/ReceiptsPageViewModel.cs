@@ -351,14 +351,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             return;
         }
 
-        if (!IsAzureConfigured)
-        {
-            await App.ShowWarningMessageBoxAsync(
-                Loc.Tr("Configuration Required"),
-                Loc.Tr("Portal is not configured. Please register your company first to use receipt scanning."));
-            return;
-        }
-
         await App.ReceiptsModalsViewModel!.OpenScanModalAsync(filePath);
     }
 

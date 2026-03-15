@@ -1567,8 +1567,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService? CreateScannerService()
     {
-        // Credentials are loaded from .env file by the service
-        return new AzureReceiptScannerService(App.ErrorLogger, App.TelemetryManager);
+        return new AzureReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
     }
 
     private IReceiptUsageService? CreateUsageService()

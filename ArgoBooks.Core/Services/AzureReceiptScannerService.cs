@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -15,21 +14,23 @@ public class AzureReceiptScannerService : IReceiptScannerService
     private const string ScanEndpoint = "https://argorobots.com/api/receipt/scan";
 
     private readonly HttpClient _httpClient;
+    private readonly LicenseService? _licenseService;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
 
     /// <summary>
     /// Creates a new instance of the receipt scanner service.
     /// </summary>
-    public AzureReceiptScannerService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public AzureReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for Azure processing
+        _licenseService = licenseService;
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => PortalSettings.IsConfigured;
+    public bool IsConfigured => _licenseService?.GetLicenseKey() != null;
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
@@ -39,9 +40,10 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
         try
         {
-            if (!IsConfigured)
+            var licenseKey = _licenseService?.GetLicenseKey();
+            if (string.IsNullOrEmpty(licenseKey))
             {
-                return ReceiptScanResult.Failed("Portal is not configured. Please register your company first.");
+                return ReceiptScanResult.Failed("No active license key found. Please activate your premium subscription.");
             }
 
             // Validate file size (4MB limit)
@@ -66,8 +68,8 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
             using var request = new HttpRequestMessage(HttpMethod.Post, ScanEndpoint);
             request.Content = content;
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
-            request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", licenseKey);
+            request.Headers.Add("X-License-Key", licenseKey);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
 
