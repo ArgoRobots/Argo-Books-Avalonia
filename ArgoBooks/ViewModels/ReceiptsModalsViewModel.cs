@@ -680,16 +680,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (_currentImageData != null && _currentFileName != null)
         {
-            // Set scanning state first to show loading spinner
-            IsScanning = true;
-            ScanningMessage = "Retrying...".Translate();
-
-            // Small delay to ensure smooth transition from error to loading state
-            await Task.Delay(100);
-
-            // Now clear the error state
+            // Clear error/result state first to avoid UI overlap
             HasScanError = false;
             HasScanResult = false;
+
+            // Then show scanning state
+            IsScanning = true;
+            ScanningMessage = "Retrying...".Translate();
 
             // Start the scan
             await ScanReceiptAsync();
