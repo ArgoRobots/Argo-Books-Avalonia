@@ -6,28 +6,16 @@ namespace ArgoBooks.Tests.Services;
 /// <summary>
 /// Tests for the AzureReceiptScannerService class.
 /// </summary>
-[Collection("DotEnv")]
 public class AzureReceiptScannerServiceTests
 {
     #region IsConfigured Tests
 
     [Fact]
-    public void IsConfigured_WithoutPortalKey_ReturnsFalse()
+    public void IsConfigured_WithoutLicenseService_ReturnsFalse()
     {
-        // Remove the portal API key so IsConfigured returns false
-        DotEnv.Unset("PAYMENT_PORTAL_API_KEY");
+        var service = new AzureReceiptScannerService();
 
-        try
-        {
-            var service = new AzureReceiptScannerService();
-
-            Assert.False(service.IsConfigured);
-        }
-        finally
-        {
-            // Reload from .env to restore original state.
-            DotEnv.Reload();
-        }
+        Assert.False(service.IsConfigured);
     }
 
     #endregion
@@ -35,23 +23,13 @@ public class AzureReceiptScannerServiceTests
     #region ValidateConfiguration Tests
 
     [Fact]
-    public async Task ValidateConfigurationAsync_WithoutPortalKey_ReturnsFalse()
+    public async Task ValidateConfigurationAsync_WithoutLicenseService_ReturnsFalse()
     {
-        // Remove the portal API key so IsConfigured returns false
-        DotEnv.Unset("PAYMENT_PORTAL_API_KEY");
+        var service = new AzureReceiptScannerService();
 
-        try
-        {
-            var service = new AzureReceiptScannerService();
+        var result = await service.ValidateConfigurationAsync();
 
-            var result = await service.ValidateConfigurationAsync();
-
-            Assert.False(result);
-        }
-        finally
-        {
-            DotEnv.Reload();
-        }
+        Assert.False(result);
     }
 
     #endregion

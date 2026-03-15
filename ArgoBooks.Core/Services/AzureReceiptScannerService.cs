@@ -76,7 +76,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                _errorLogger?.LogError($"Receipt scan proxy error {response.StatusCode}", ErrorCategory.Api, "Receipt scan");
+                _errorLogger?.LogError($"Receipt scan proxy error {response.StatusCode}: {errorBody}", ErrorCategory.Api, "Receipt scan");
 
                 if ((int)response.StatusCode == 429)
                     return ReceiptScanResult.Failed("Rate limit exceeded. Please try again later.");
@@ -111,7 +111,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan failed");
-            return ReceiptScanResult.Failed($"Failed to scan receipt: {ex.Message}");
+            return ReceiptScanResult.Failed("Failed to scan receipt. Please try again.");
         }
         finally
         {

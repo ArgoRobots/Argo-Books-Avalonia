@@ -118,9 +118,13 @@ public static class GoogleCredentialsManager
         if (string.IsNullOrEmpty(authUrl))
             return false;
 
-        // Open browser for user to authorize
+        // Validate and open browser for user to authorize
         try
         {
+            if (!Uri.TryCreate(authUrl, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != "https" && uri.Scheme != "http"))
+                return false;
+
             Process.Start(new ProcessStartInfo
             {
                 FileName = authUrl,

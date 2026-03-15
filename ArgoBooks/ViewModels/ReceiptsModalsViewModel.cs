@@ -1061,7 +1061,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 ItemType = aiCategory?.ItemType ?? "Product",
                 Description = aiCategory?.Description
             };
-            companyData.Categories!.Add(category);
+            companyData.Categories ??= [];
+            companyData.Categories.Add(category);
             _createdCategoryForUndo = category;
         }
 

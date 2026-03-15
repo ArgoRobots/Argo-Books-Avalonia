@@ -622,7 +622,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         try
         {
             var response = await portalService.InitiateConnectAsync(provider);
-            if (response.Success && !string.IsNullOrEmpty(response.AuthUrl))
+            if (response.Success && !string.IsNullOrEmpty(response.AuthUrl)
+                && Uri.TryCreate(response.AuthUrl, UriKind.Absolute, out var authUri)
+                && (authUri.Scheme == "https" || authUri.Scheme == "http"))
             {
                 // Open OAuth URL in default browser
                 Process.Start(new ProcessStartInfo

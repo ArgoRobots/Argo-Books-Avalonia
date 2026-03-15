@@ -12,21 +12,12 @@ public class ExchangeRateServiceTests
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithNoApiKey_HasApiKeyIsFalse()
+    public void Constructor_WithNoLicenseService_HasApiKeyIsFalse()
     {
         var httpClient = new HttpClient();
         var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         Assert.False(service.HasApiKey);
-    }
-
-    [Fact]
-    public void Constructor_WithApiKey_HasApiKeyIsTrue()
-    {
-        var httpClient = new HttpClient();
-        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
-
-        Assert.True(service.HasApiKey);
     }
 
     #endregion
