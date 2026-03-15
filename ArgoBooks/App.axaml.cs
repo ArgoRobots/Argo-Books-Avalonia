@@ -2504,6 +2504,83 @@ public class App : Application
             }
         };
 
+        // Portal authentication — prompt for password/biometric before allowing portal changes
+        settings.PortalAuthenticationRequested += async () =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true || !CompanyManager.IsEncrypted)
+                return true; // No password set, allow access
+
+            var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
+            var companyName = CompanyManager.CompanyData?.CompanyInfo?.CompanyName ?? "Company";
+            var filePath = CompanyManager.CurrentFilePath ?? "";
+
+            // Check if Windows Hello is available for this file
+            var windowsHelloAvailable = false;
+            var platformService = PlatformServiceFactory.GetPlatformService();
+            var securitySettings = CompanyManager.CurrentCompanySettings?.Security;
+            if (securitySettings?.BiometricEnabled == true)
+            {
+                windowsHelloAvailable = await platformService.IsBiometricAvailableAsync();
+            }
+
+            var password = await passwordModal.ShowAsync(companyName, filePath, windowsHelloAvailable);
+
+            if (password == null)
+            {
+                // User cancelled
+                return false;
+            }
+
+            if (password == "__WINDOWS_HELLO__")
+            {
+                // Windows Hello succeeded — retrieve stored password and verify
+                var fileId = GetBiometricFileId(filePath);
+                var storedPassword = platformService.GetPasswordForBiometric(fileId);
+                if (!string.IsNullOrEmpty(storedPassword) && CompanyManager.VerifyCurrentPassword(storedPassword))
+                {
+                    passwordModal.Close();
+                    return true;
+                }
+
+                // Stored password didn't match — fall back to manual entry
+                passwordModal.ShowError("Stored password not found. Please enter the password manually.".Translate());
+                password = await passwordModal.WaitForPasswordAsync();
+                if (password == null)
+                    return false;
+            }
+
+            // Verify the entered password
+            while (true)
+            {
+                if (CompanyManager.VerifyCurrentPassword(password))
+                {
+                    passwordModal.Close();
+                    return true;
+                }
+
+                passwordModal.ShowError("Incorrect password. Please try again.".Translate());
+                password = await passwordModal.WaitForPasswordAsync();
+                if (password == null)
+                    return false;
+
+                // Handle Windows Hello retry
+                if (password == "__WINDOWS_HELLO__")
+                {
+                    var fileId = GetBiometricFileId(filePath);
+                    var storedPassword = platformService.GetPasswordForBiometric(fileId);
+                    if (!string.IsNullOrEmpty(storedPassword) && CompanyManager.VerifyCurrentPassword(storedPassword))
+                    {
+                        passwordModal.Close();
+                        return true;
+                    }
+                    passwordModal.ShowError("Stored password not found. Please enter the password manually.".Translate());
+                    password = await passwordModal.WaitForPasswordAsync();
+                    if (password == null)
+                        return false;
+                }
+            }
+        };
+
     }
 
     /// <summary>

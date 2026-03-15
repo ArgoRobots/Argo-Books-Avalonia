@@ -543,12 +543,118 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #region Payment Portal Settings
 
+    /// <summary>
+    /// Whether the user has authenticated to modify portal settings in this session.
+    /// Reset when the settings modal is reopened.
+    /// </summary>
+    private bool _isPortalAuthenticated;
+
+    // Flag to suppress auth check when loading portal settings from company data
+    private bool _isLoadingPortalSettings;
+
+    /// <summary>
+    /// Event raised when portal authentication is required before making changes.
+    /// The handler should verify the user's identity (password or biometric) and call
+    /// <see cref="OnPortalAuthResult"/> with the result.
+    /// </summary>
+    public event Func<Task<bool>>? PortalAuthenticationRequested;
+
+    /// <summary>
+    /// Ensures the user has authenticated to modify portal settings.
+    /// On first interaction, prompts for password/biometric. Once authenticated,
+    /// subsequent changes are allowed without re-prompting.
+    /// </summary>
+    /// <returns>True if authenticated, false if cancelled or no password is set.</returns>
+    private async Task<bool> EnsurePortalAuthenticatedAsync()
+    {
+        if (_isPortalAuthenticated) return true;
+        if (!HasPassword) return true; // No password set, no auth needed
+
+        if (PortalAuthenticationRequested != null)
+        {
+            var result = await PortalAuthenticationRequested.Invoke();
+            if (result)
+            {
+                _isPortalAuthenticated = true;
+                return true;
+            }
+            return false;
+        }
+
+        // No handler wired up — allow by default
+        return true;
+    }
+
+    /// <summary>
+    /// Called by App.axaml.cs to set the portal authentication result.
+    /// </summary>
+    public void OnPortalAuthResult(bool success)
+    {
+        _isPortalAuthenticated = success;
+    }
+
     [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
+
+    /// <summary>
+    /// Called when PortalNotifyOnPayment changes — requires auth if password is enabled.
+    /// </summary>
+    partial void OnPortalNotifyOnPaymentChanged(bool value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (!HasPassword || _isPortalAuthenticated) return;
+
+        // Revert and request auth
+        _ = RevertAndAuthPortalNotifyAsync(value);
+    }
+
+    private async Task RevertAndAuthPortalNotifyAsync(bool attemptedValue)
+    {
+        // Revert to opposite while we authenticate
+        _isLoadingPortalSettings = true;
+        PortalNotifyOnPayment = !attemptedValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalNotifyOnPayment = attemptedValue;
+            _isLoadingPortalSettings = false;
+        }
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSyncIntervalNumeric))]
     private string _portalSyncInterval = "5";
+
+    /// <summary>
+    /// Called when PortalSyncInterval changes — requires auth if password is enabled.
+    /// </summary>
+    partial void OnPortalSyncIntervalChanged(string value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (!HasPassword || _isPortalAuthenticated) return;
+
+        _ = RevertAndAuthPortalSyncIntervalAsync(value);
+    }
+
+    private string? _previousSyncInterval;
+
+    private async Task RevertAndAuthPortalSyncIntervalAsync(string attemptedValue)
+    {
+        var previousValue = _previousSyncInterval ?? "5";
+
+        _isLoadingPortalSettings = true;
+        PortalSyncInterval = previousValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalSyncInterval = attemptedValue;
+            _isLoadingPortalSettings = false;
+        }
+    }
 
     public bool IsSyncIntervalNumeric => PortalSyncInterval != "Manual";
 
@@ -592,36 +698,42 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectStripeAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("stripe");
     }
 
     [RelayCommand]
     private async Task ConnectPaypalAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("paypal");
     }
 
     [RelayCommand]
     private async Task ConnectSquareAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("square");
     }
 
     [RelayCommand]
     private async Task DisconnectStripeAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await DisconnectProviderAsync("stripe");
     }
 
     [RelayCommand]
     private async Task DisconnectPaypalAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await DisconnectProviderAsync("paypal");
     }
 
     [RelayCommand]
     private async Task DisconnectSquareAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await DisconnectProviderAsync("square");
     }
 
@@ -632,8 +744,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     public event EventHandler? BrowsePortalLogoRequested;
 
     [RelayCommand]
-    private void BrowsePortalLogo()
+    private async Task BrowsePortalLogoAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         BrowsePortalLogoRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -684,6 +797,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task RemovePortalLogoAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
+
         var portalService = App.PaymentPortalService;
         if (portalService == null || !PortalSettings.IsConfigured) return;
 
@@ -922,10 +1037,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
         if (settings == null) return;
 
+        _isLoadingPortalSettings = true;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
             ? "Manual"
             : settings.AutoSyncIntervalMinutes.ToString();
+        _previousSyncInterval = PortalSyncInterval;
+        _isLoadingPortalSettings = false;
 
         StripeConnected = settings.ConnectedAccounts.StripeConnected;
         StripeEmail = settings.ConnectedAccounts.StripeEmail;
@@ -1065,6 +1183,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             ? 0
             : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;
 
+        // Track the saved sync interval for revert-on-auth
+        _previousSyncInterval = PortalSyncInterval;
+
         settings.ConnectedAccounts.StripeConnected = StripeConnected;
         settings.ConnectedAccounts.StripeEmail = StripeEmail;
         settings.ConnectedAccounts.PaypalConnected = PaypalConnected;
@@ -1123,6 +1244,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
     public void OpenWithTab(int tabIndex)
     {
+        // Reset portal authentication — require re-auth each time settings opens
+        _isPortalAuthenticated = false;
+
         // Sync with current ThemeService values
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
