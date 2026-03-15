@@ -2063,35 +2063,11 @@ public class App : Application
                     if (!string.IsNullOrEmpty(args.LogoPath))
                     {
                         await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
-
-                        // Sync logo to payment portal (fire-and-forget)
-                        if (PortalSettings.IsConfigured && PaymentPortalService != null)
-                        {
-                            var portalLogoPath = CompanyManager.CurrentCompanyLogoPath;
-                            if (!string.IsNullOrEmpty(portalLogoPath))
-                            {
-                                _ = Task.Run(async () =>
-                                {
-                                    try { await PaymentPortalService.UploadCompanyLogoAsync(portalLogoPath); }
-                                    catch (Exception ex) { ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to upload logo to portal"); }
-                                });
-                            }
-                        }
                     }
                     else if (args.LogoSource == null && CompanyManager.CurrentCompanyLogoPath != null)
                     {
                         // Logo was removed
                         await CompanyManager.RemoveCompanyLogoAsync();
-
-                        // Remove logo from payment portal (fire-and-forget)
-                        if (PortalSettings.IsConfigured && PaymentPortalService != null)
-                        {
-                            _ = Task.Run(async () =>
-                            {
-                                try { await PaymentPortalService.DeleteCompanyLogoAsync(); }
-                                catch (Exception ex) { ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to delete logo from portal"); }
-                            });
-                        }
                     }
 
                     // Capture new logo state after changes
@@ -2502,6 +2478,31 @@ public class App : Application
                 }
             };
         }
+
+        // Portal logo file picker
+        settings.BrowsePortalLogoRequested += async (_, _) =>
+        {
+            if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Portal Logo".Translate(),
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                    }
+                ]
+            });
+
+            if (files.Count > 0)
+            {
+                await settings.UploadPortalLogoFromFileAsync(files[0].Path.LocalPath);
+            }
+        };
 
     }
 

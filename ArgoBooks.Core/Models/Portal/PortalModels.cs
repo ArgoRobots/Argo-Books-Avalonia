@@ -181,6 +181,12 @@ public class PortalStatusResponse
     public string? PortalUrl { get; set; }
 
     /// <summary>
+    /// Company info returned by the server, including logo URL.
+    /// </summary>
+    [JsonPropertyName("company")]
+    public PortalCompanyInfo? Company { get; set; }
+
+    /// <summary>
     /// Which payment providers the business has connected.
     /// </summary>
     [JsonPropertyName("connectedProviders")]
@@ -188,6 +194,18 @@ public class PortalStatusResponse
 
     [JsonPropertyName("message")]
     public string? Message { get; set; }
+}
+
+/// <summary>
+/// Company info returned by the portal status endpoint.
+/// </summary>
+public class PortalCompanyInfo
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("logo_url")]
+    public string? LogoUrl { get; set; }
 }
 
 /// <summary>

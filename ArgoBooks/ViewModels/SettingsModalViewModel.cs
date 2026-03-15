@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
@@ -545,7 +547,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _portalNotifyOnPayment = true;
 
     [ObservableProperty]
-    private int _portalSyncInterval = 5;
+    private string _portalSyncInterval = "5";
 
     [ObservableProperty]
     private bool _stripeConnected;
@@ -568,7 +570,21 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isConnectingProvider;
 
-    public int[] SyncIntervalOptions { get; } = [0, 1, 2, 5, 10, 15, 30];
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.Bitmap? _portalLogoSource;
+
+    [ObservableProperty]
+    private bool _hasPortalLogo;
+
+    [ObservableProperty]
+    private bool _isUploadingPortalLogo;
+
+    /// <summary>
+    /// The current portal logo URL from the server.
+    /// </summary>
+    private string? _portalLogoUrl;
+
+    public string[] SyncIntervalOptions { get; } = ["Manual", "1", "2", "5", "10", "15", "30"];
 
     [RelayCommand]
     private async Task ConnectStripeAsync()
@@ -604,6 +620,119 @@ public partial class SettingsModalViewModel : ViewModelBase
     private async Task DisconnectSquareAsync()
     {
         await DisconnectProviderAsync("square");
+    }
+
+    /// <summary>
+    /// Event raised when the portal logo browse button is clicked.
+    /// Handled in App.axaml.cs to open the file picker.
+    /// </summary>
+    public event EventHandler? BrowsePortalLogoRequested;
+
+    [RelayCommand]
+    private void BrowsePortalLogo()
+    {
+        BrowsePortalLogoRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Uploads the selected file as the portal logo.
+    /// Called from App.axaml.cs after the file picker returns.
+    /// </summary>
+    public async Task UploadPortalLogoFromFileAsync(string filePath)
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        IsUploadingPortalLogo = true;
+        try
+        {
+            var result = await portalService.UploadCompanyLogoAsync(filePath);
+            if (result.Success)
+            {
+                _portalLogoUrl = result.LogoUrl;
+                try
+                {
+                    PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(filePath);
+                    HasPortalLogo = true;
+                }
+                catch
+                {
+                    // File may not be a valid image for Avalonia, but upload succeeded
+                    HasPortalLogo = !string.IsNullOrEmpty(result.LogoUrl);
+                }
+            }
+            else
+            {
+                await ShowErrorDialogAsync("Upload Failed".Translate(),
+                    (result.Message ?? "Failed to upload logo.").Translate());
+            }
+        }
+        catch
+        {
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to upload logo. Please check your internet connection.".Translate());
+        }
+        finally
+        {
+            IsUploadingPortalLogo = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RemovePortalLogoAsync()
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        IsUploadingPortalLogo = true;
+        try
+        {
+            var result = await portalService.DeleteCompanyLogoAsync();
+            if (result.Success)
+            {
+                PortalLogoSource = null;
+                HasPortalLogo = false;
+                _portalLogoUrl = null;
+            }
+        }
+        catch
+        {
+            // Silently fail
+        }
+        finally
+        {
+            IsUploadingPortalLogo = false;
+        }
+    }
+
+    /// <summary>
+    /// Loads the portal logo from its URL on the server.
+    /// </summary>
+    private async Task LoadPortalLogoFromUrlAsync(string? logoUrl)
+    {
+        if (string.IsNullOrEmpty(logoUrl))
+        {
+            PortalLogoSource = null;
+            HasPortalLogo = false;
+            _portalLogoUrl = null;
+            return;
+        }
+
+        _portalLogoUrl = logoUrl;
+        HasPortalLogo = true;
+
+        try
+        {
+            using var httpClient = new HttpClient();
+            var imageBytes = await httpClient.GetByteArrayAsync(logoUrl);
+            using var stream = new MemoryStream(imageBytes);
+            PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(stream);
+        }
+        catch
+        {
+            // Failed to load image — still show HasPortalLogo since URL exists
+            PortalLogoSource = null;
+        }
     }
 
     private async Task ConnectProviderAsync(string provider)
@@ -683,17 +812,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             var result = await portalService.RegisterCompanyAsync(licenseKey, deviceId, companyName, ownerEmail);
             if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
             {
-                // If company already has a logo, upload it to the portal (fire-and-forget)
-                var logoPath = App.CompanyManager?.CurrentCompanyLogoPath;
-                if (!string.IsNullOrEmpty(logoPath))
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        try { await portalService.UploadCompanyLogoAsync(logoPath); }
-                        catch { /* Best-effort — don't block registration */ }
-                    });
-                }
-
                 return true;
             }
 
@@ -802,7 +920,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         PortalNotifyOnPayment = settings.NotifyOnPayment;
-        PortalSyncInterval = settings.AutoSyncIntervalMinutes;
+        PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
+            ? "Manual"
+            : settings.AutoSyncIntervalMinutes.ToString();
 
         StripeConnected = settings.ConnectedAccounts.StripeConnected;
         StripeEmail = settings.ConnectedAccounts.StripeEmail;
@@ -848,6 +968,12 @@ public partial class SettingsModalViewModel : ViewModelBase
 
                 // Notify invoice views and other subscribers that provider state changed
                 PaymentProviderService.NotifyProvidersChanged();
+            }
+
+            // Load portal logo from server
+            if (status.Success)
+            {
+                await LoadPortalLogoFromUrlAsync(status.Company?.LogoUrl);
             }
         }
         catch
@@ -932,7 +1058,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         settings.NotifyOnPayment = PortalNotifyOnPayment;
-        settings.AutoSyncIntervalMinutes = PortalSyncInterval;
+        settings.AutoSyncIntervalMinutes = PortalSyncInterval == "Manual"
+            ? 0
+            : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;
 
         settings.ConnectedAccounts.StripeConnected = StripeConnected;
         settings.ConnectedAccounts.StripeEmail = StripeEmail;
