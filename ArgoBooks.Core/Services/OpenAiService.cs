@@ -154,10 +154,11 @@ public class OpenAiService : IOpenAiService
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a clean supplier name
 
 2. CATEGORY: Find the best matching category based on:
+   - Line item descriptions (most important — use these to determine what was actually purchased)
    - What the supplier typically sells
-   - Line item descriptions if available
    - Common business expense categories
-   - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest an appropriate category
+   - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a SPECIFIC category name
+   - IMPORTANT: Be specific! Use descriptive names based on the actual items (e.g., ""Groceries"", ""Cooking Ingredients"", ""Office Supplies"", ""Cleaning Products""). NEVER use vague names like ""Purchases"", ""General"", ""Miscellaneous"", or ""Expenses""
 
 ## Response Format (JSON only, no markdown code blocks)
 {{
