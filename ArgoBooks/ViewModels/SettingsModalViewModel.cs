@@ -547,7 +547,10 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _portalNotifyOnPayment = true;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSyncIntervalNumeric))]
     private string _portalSyncInterval = "5";
+
+    public bool IsSyncIntervalNumeric => PortalSyncInterval != "Manual";
 
     [ObservableProperty]
     private bool _stripeConnected;
