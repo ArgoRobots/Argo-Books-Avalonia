@@ -1019,8 +1019,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 Type = CategoryType.Expense,
                 ItemType = "Product"
             };
-            companyData.Categories ??= [];
-            companyData.Categories.Add(defaultCategory);
+            companyData.Categories!.Add(defaultCategory);
         }
 
         // Generate proper product ID
