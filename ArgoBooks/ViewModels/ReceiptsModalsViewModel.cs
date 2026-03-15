@@ -212,6 +212,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private byte[]? _currentImageData;
     private string? _currentFileName;
 
+    // Track entities created during receipt flow for undo
+    private Supplier? _createdSupplierForUndo;
+    private Category? _createdCategoryForUndo;
+    private readonly List<Product> _createdProductsForUndo = new();
+
     [ObservableProperty]
     private bool _isScanReviewModalOpen;
 
@@ -867,9 +872,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now
         };
 
-        // Record undo action
+        // Capture auto-created entities for undo
         var capturedReceipt = receipt;
         var capturedExpense = expense;
+        var capturedSupplier = _createdSupplierForUndo;
+        var capturedCategory = _createdCategoryForUndo;
+        var capturedProducts = _createdProductsForUndo.ToList();
+
         var action = new DelegateAction(
             $"AI scan expense {expenseId}",
             () =>
@@ -878,10 +887,45 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 companyData.Receipts.Remove(capturedReceipt);
                 companyData.IdCounters.Expense--;
                 companyData.IdCounters.Receipt--;
+
+                // Also undo auto-created entities
+                foreach (var product in capturedProducts)
+                {
+                    companyData.Products?.Remove(product);
+                    companyData.IdCounters.Product--;
+                }
+                if (capturedCategory != null)
+                {
+                    companyData.Categories?.Remove(capturedCategory);
+                    companyData.IdCounters.Category--;
+                }
+                if (capturedSupplier != null)
+                {
+                    companyData.Suppliers?.Remove(capturedSupplier);
+                    companyData.IdCounters.Supplier--;
+                }
+
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
+                // Re-add auto-created entities
+                if (capturedSupplier != null)
+                {
+                    companyData.Suppliers?.Add(capturedSupplier);
+                    companyData.IdCounters.Supplier++;
+                }
+                if (capturedCategory != null)
+                {
+                    companyData.Categories?.Add(capturedCategory);
+                    companyData.IdCounters.Category++;
+                }
+                foreach (var product in capturedProducts)
+                {
+                    companyData.Products?.Add(product);
+                    companyData.IdCounters.Product++;
+                }
+
                 companyData.Expenses.Add(capturedExpense);
                 companyData.Receipts.Add(capturedReceipt);
                 companyData.IdCounters.Expense++;
@@ -939,9 +983,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now
         };
 
-        // Record undo action
+        // Capture auto-created entities for undo
         var capturedReceipt = receipt;
         var capturedRevenue = revenue;
+        var capturedSupplier = _createdSupplierForUndo;
+        var capturedCategory = _createdCategoryForUndo;
+        var capturedProducts = _createdProductsForUndo.ToList();
+
         var action = new DelegateAction(
             $"AI scan revenue {revenueId}",
             () =>
@@ -950,10 +998,45 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 companyData.Receipts.Remove(capturedReceipt);
                 companyData.IdCounters.Revenue--;
                 companyData.IdCounters.Receipt--;
+
+                // Also undo auto-created entities
+                foreach (var product in capturedProducts)
+                {
+                    companyData.Products?.Remove(product);
+                    companyData.IdCounters.Product--;
+                }
+                if (capturedCategory != null)
+                {
+                    companyData.Categories?.Remove(capturedCategory);
+                    companyData.IdCounters.Category--;
+                }
+                if (capturedSupplier != null)
+                {
+                    companyData.Suppliers?.Remove(capturedSupplier);
+                    companyData.IdCounters.Supplier--;
+                }
+
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
+                // Re-add auto-created entities
+                if (capturedSupplier != null)
+                {
+                    companyData.Suppliers?.Add(capturedSupplier);
+                    companyData.IdCounters.Supplier++;
+                }
+                if (capturedCategory != null)
+                {
+                    companyData.Categories?.Add(capturedCategory);
+                    companyData.IdCounters.Category++;
+                }
+                foreach (var product in capturedProducts)
+                {
+                    companyData.Products?.Add(product);
+                    companyData.IdCounters.Product++;
+                }
+
                 companyData.Revenues.Add(capturedRevenue);
                 companyData.Receipts.Add(capturedReceipt);
                 companyData.IdCounters.Revenue++;
@@ -1015,11 +1098,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             defaultCategory = new Category
             {
                 Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
-                Name = "Purchases",
+                Name = SelectedCategory?.Name ?? "General Expenses",
                 Type = CategoryType.Expense,
                 ItemType = "Product"
             };
             companyData.Categories!.Add(defaultCategory);
+            _createdCategoryForUndo = defaultCategory;
         }
 
         // Generate proper product ID
@@ -1038,6 +1122,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         };
 
         companyData.Products.Add(newProduct);
+        _createdProductsForUndo.Add(newProduct);
 
         // Add to options and select
         var option = new ProductOption
@@ -1417,6 +1502,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         };
 
         companyData.Suppliers.Add(newSupplier);
+        _createdSupplierForUndo = newSupplier;
 
         // Add to options and select
         var option = new SupplierOption { Id = newId, Name = newSupplier.Name };
@@ -1456,6 +1542,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         };
 
         companyData.Categories.Add(newCategory);
+        _createdCategoryForUndo = newCategory;
 
         // Add to options and select
         var option = new CategoryOption { Id = newId, Name = newCategory.Name };
@@ -1535,6 +1622,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SupplierMatchConfidence = 0;
         ShowCreateSupplierSuggestion = false;
         SuggestedSupplierName = string.Empty;
+
+        // Reset undo tracking for auto-created entities
+        _createdSupplierForUndo = null;
+        _createdCategoryForUndo = null;
+        _createdProductsForUndo.Clear();
 
         // Reset usage state (keep cached values for display)
         IsNearLimit = false;
