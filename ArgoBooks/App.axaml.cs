@@ -2506,7 +2506,8 @@ public class App : Application
                 windowsHelloAvailable = await platformService.IsBiometricAvailableAsync();
             }
 
-            var password = await passwordModal.ShowAsync(companyName, filePath, windowsHelloAvailable);
+            var password = await passwordModal.ShowAsync(companyName, filePath, windowsHelloAvailable,
+                "Password is required to make changes to the payment portal.".Translate());
 
             if (password == null)
             {

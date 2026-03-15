@@ -19,6 +19,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     private string _filePath = string.Empty;
 
     [ObservableProperty]
+    private string _message = string.Empty;
+
+    [ObservableProperty]
     private string _password = string.Empty;
 
     [ObservableProperty]
@@ -89,11 +92,13 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     /// <param name="companyName">Name of the company file.</param>
     /// <param name="filePath">Path to the file.</param>
     /// <param name="windowsHelloAvailable">Whether Windows Hello is available and enabled for this file.</param>
+    /// <param name="message">Optional custom message. If null, defaults to "Enter password for {companyName}".</param>
     /// <returns>The entered password, or null if cancelled.</returns>
-    public Task<string?> ShowAsync(string companyName, string filePath, bool windowsHelloAvailable = false)
+    public Task<string?> ShowAsync(string companyName, string filePath, bool windowsHelloAvailable = false, string? message = null)
     {
         CompanyName = companyName;
         FilePath = filePath;
+        Message = message ?? string.Format("Enter password for {0}", companyName);
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;

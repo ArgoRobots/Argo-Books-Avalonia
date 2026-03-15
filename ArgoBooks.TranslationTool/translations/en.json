@@ -2309,5 +2309,6 @@
   "str_amountpaid": "AmountPaid",
   "str_itemdescription": "ItemDescription",
   "str_invoicepreviews": "InvoicePreviews",
-  "str_areyousureyouwanttocloseanyenteredinformationwillbelost": "Are you sure you want to close? Any entered information will be lost."
+  "str_areyousureyouwanttocloseanyenteredinformationwillbelost": "Are you sure you want to close? Any entered information will be lost.",
+  "str_passwordisrequiredtomakechangestothepaymentportal": "Password is required to make changes to the payment portal."
 }
