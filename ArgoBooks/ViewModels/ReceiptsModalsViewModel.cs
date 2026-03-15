@@ -1088,22 +1088,28 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Products == null) return;
 
-        // Get or create a default expense category
-        var defaultCategory = companyData.Categories?
-            .FirstOrDefault(c => c.Type == CategoryType.Expense);
+        // Find or create an expense category for the product.
+        // Prefer the AI-suggested category, then fall back to any existing expense category.
+        var category = _createdCategoryForUndo
+            ?? companyData.Categories?.FirstOrDefault(c => c.Type == CategoryType.Expense);
 
-        if (defaultCategory == null)
+        if (category == null)
         {
+            // No expense category exists — create one from AI suggestion if available
+            var aiCategory = AiSuggestion?.NewCategory;
+            var categoryName = aiCategory?.Name ?? "General Expenses";
+
             companyData.IdCounters.Category++;
-            defaultCategory = new Category
+            category = new Category
             {
                 Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
-                Name = SelectedCategory?.Name ?? "General Expenses",
+                Name = categoryName,
                 Type = CategoryType.Expense,
-                ItemType = "Product"
+                ItemType = aiCategory?.ItemType ?? "Product",
+                Description = aiCategory?.Description
             };
-            companyData.Categories!.Add(defaultCategory);
-            _createdCategoryForUndo = defaultCategory;
+            companyData.Categories!.Add(category);
+            _createdCategoryForUndo = category;
         }
 
         // Generate proper product ID
@@ -1117,7 +1123,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Description = string.Empty,
             CostPrice = decimal.TryParse(lineItem.UnitPrice, out var price) ? price : 0,
             UnitPrice = 0,
-            CategoryId = defaultCategory.Id,
+            CategoryId = category.Id,
             Type = CategoryType.Expense
         };
 
