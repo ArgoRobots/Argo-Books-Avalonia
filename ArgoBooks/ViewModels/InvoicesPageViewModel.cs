@@ -280,6 +280,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             CheckPortalConfiguration();
             FilterInvoices();
         };
+
+        // Subscribe to company data changes (e.g. payment sync updating invoice status)
+        if (App.CompanyManager != null)
+        {
+            App.CompanyManager.CompanyDataChanged += (_, _) => LoadInvoices();
+        }
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)

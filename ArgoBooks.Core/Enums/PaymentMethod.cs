@@ -23,6 +23,9 @@ public enum PaymentMethod
     /// <summary>PayPal payment.</summary>
     PayPal,
 
+    /// <summary>Stripe payment.</summary>
+    Stripe,
+
     /// <summary>Square payment.</summary>
     Square,
 
@@ -45,6 +48,7 @@ public static class PaymentMethodExtensions
             PaymentMethod.BankTransfer => "Bank Transfer",
             PaymentMethod.CreditCard => "Credit Card",
             PaymentMethod.DebitCard => "Debit Card",
+            PaymentMethod.Stripe => "Stripe",
             _ => method.ToString()
         };
     }

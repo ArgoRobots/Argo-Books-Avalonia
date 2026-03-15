@@ -53,6 +53,13 @@ public partial class PaymentModalsViewModel : ObservableObject
     [ObservableProperty]
     private string _modalNotes = string.Empty;
 
+    /// <summary>
+    /// Whether the payment being edited is a portal (online) payment.
+    /// When true, all fields except Notes are read-only.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isPortalPayment;
+
     [ObservableProperty]
     private string? _modalInvoiceError;
 
@@ -165,7 +172,7 @@ public partial class PaymentModalsViewModel : ObservableObject
     /// <summary>
     /// Payment method options for filter (includes All).
     /// </summary>
-    public ObservableCollection<string> FilterPaymentMethodOptions { get; } = ["All", "Cash", "Check"];
+    public ObservableCollection<string> FilterPaymentMethodOptions { get; } = ["All", "Cash", "Check", "Stripe", "PayPal", "Square"];
 
     /// <summary>
     /// Status options for filter.
@@ -394,12 +401,8 @@ public partial class PaymentModalsViewModel : ObservableObject
         ModalCustomerId = payment.CustomerId;
         ModalAmount = payment.Amount.ToString("F2");
         ModalDate = new DateTimeOffset(payment.Date);
-        ModalPaymentMethod = payment.PaymentMethod switch
-        {
-            PaymentMethod.Cash => "Cash",
-            PaymentMethod.Check => "Check",
-            _ => "Cash"
-        };
+        IsPortalPayment = payment.Source == "Online";
+        ModalPaymentMethod = payment.PaymentMethod.GetDisplayName();
         ModalReferenceNumber = payment.ReferenceNumber ?? string.Empty;
         ModalNotes = payment.Notes;
 
@@ -453,11 +456,57 @@ public partial class PaymentModalsViewModel : ObservableObject
     [RelayCommand]
     public void SaveEditedPayment()
     {
-        if (!ValidateModal() || _editingPayment == null)
+        if (_editingPayment == null)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
+            return;
+
+        // For portal payments, only notes can be edited
+        if (IsPortalPayment)
+        {
+            var oldNotes = _editingPayment.Notes;
+            var newNotes = ModalNotes.Trim();
+
+            if (oldNotes == newNotes)
+            {
+                CloseEditModal();
+                return;
+            }
+
+            var paymentToEdit = _editingPayment;
+            App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit.Id);
+            var changes = new Dictionary<string, FieldChange>
+            {
+                ["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes }
+            };
+            App.EventLogService?.SetPendingChanges(changes);
+            paymentToEdit.Notes = newNotes;
+
+            companyData.MarkAsModified();
+
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Edit payment '{paymentToEdit.Id}'",
+                () =>
+                {
+                    paymentToEdit.Notes = oldNotes;
+                    companyData.MarkAsModified();
+                    PaymentSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    paymentToEdit.Notes = newNotes;
+                    companyData.MarkAsModified();
+                    PaymentSaved?.Invoke(this, EventArgs.Empty);
+                }));
+
+            PaymentSaved?.Invoke(this, EventArgs.Empty);
+            CloseEditModal();
+            return;
+        }
+
+        if (!ValidateModal())
             return;
 
         var oldInvoiceId = _editingPayment.InvoiceId;
@@ -466,7 +515,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         var oldAmount = _editingPayment.Amount;
         var oldPaymentMethod = _editingPayment.PaymentMethod;
         var oldReferenceNumber = _editingPayment.ReferenceNumber;
-        var oldNotes = _editingPayment.Notes;
+        var oldNotesVal = _editingPayment.Notes;
 
         var newInvoiceId = ModalInvoiceId ?? string.Empty;
         var newCustomerId = ModalCustomerId ?? string.Empty;
@@ -479,7 +528,7 @@ public partial class PaymentModalsViewModel : ObservableObject
             _ => PaymentMethod.Cash
         };
         var newReferenceNumber = string.IsNullOrWhiteSpace(ModalReferenceNumber) ? null : ModalReferenceNumber.Trim();
-        var newNotes = ModalNotes.Trim();
+        var newNotesVal = ModalNotes.Trim();
 
         // Check if anything actually changed
         var hasChanges = oldInvoiceId != newInvoiceId ||
@@ -488,7 +537,7 @@ public partial class PaymentModalsViewModel : ObservableObject
                          oldAmount != newAmount ||
                          oldPaymentMethod != newPaymentMethod ||
                          oldReferenceNumber != newReferenceNumber ||
-                         oldNotes != newNotes;
+                         oldNotesVal != newNotesVal;
 
         // If nothing changed, just close the modal without recording an action
         if (!hasChanges)
@@ -497,48 +546,48 @@ public partial class PaymentModalsViewModel : ObservableObject
             return;
         }
 
-        var paymentToEdit = _editingPayment;
-        App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit.Id);
-        var changes = new Dictionary<string, FieldChange>();
-        if (oldDate != newDate) changes["Date"] = new FieldChange { OldValue = oldDate.ToString("d"), NewValue = newDate.ToString("d") };
-        if (oldAmount != newAmount) changes["Amount"] = new FieldChange { OldValue = oldAmount.ToString("F2"), NewValue = newAmount.ToString("F2") };
-        if (oldPaymentMethod != newPaymentMethod) changes["Payment Method"] = new FieldChange { OldValue = oldPaymentMethod.ToString(), NewValue = newPaymentMethod.ToString() };
-        if (oldReferenceNumber != newReferenceNumber) changes["Reference"] = new FieldChange { OldValue = oldReferenceNumber ?? "", NewValue = newReferenceNumber ?? "" };
-        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
-        if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
-        paymentToEdit.InvoiceId = newInvoiceId;
-        paymentToEdit.CustomerId = newCustomerId;
-        paymentToEdit.Date = newDate;
-        paymentToEdit.Amount = newAmount;
-        paymentToEdit.PaymentMethod = newPaymentMethod;
-        paymentToEdit.ReferenceNumber = newReferenceNumber;
-        paymentToEdit.Notes = newNotes;
+        var paymentToEdit2 = _editingPayment;
+        App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit2.Id);
+        var changes2 = new Dictionary<string, FieldChange>();
+        if (oldDate != newDate) changes2["Date"] = new FieldChange { OldValue = oldDate.ToString("d"), NewValue = newDate.ToString("d") };
+        if (oldAmount != newAmount) changes2["Amount"] = new FieldChange { OldValue = oldAmount.ToString("F2"), NewValue = newAmount.ToString("F2") };
+        if (oldPaymentMethod != newPaymentMethod) changes2["Payment Method"] = new FieldChange { OldValue = oldPaymentMethod.ToString(), NewValue = newPaymentMethod.ToString() };
+        if (oldReferenceNumber != newReferenceNumber) changes2["Reference"] = new FieldChange { OldValue = oldReferenceNumber ?? "", NewValue = newReferenceNumber ?? "" };
+        if (oldNotesVal != newNotesVal) changes2["Notes"] = new FieldChange { OldValue = oldNotesVal, NewValue = newNotesVal };
+        if (changes2.Count > 0) App.EventLogService?.SetPendingChanges(changes2);
+        paymentToEdit2.InvoiceId = newInvoiceId;
+        paymentToEdit2.CustomerId = newCustomerId;
+        paymentToEdit2.Date = newDate;
+        paymentToEdit2.Amount = newAmount;
+        paymentToEdit2.PaymentMethod = newPaymentMethod;
+        paymentToEdit2.ReferenceNumber = newReferenceNumber;
+        paymentToEdit2.Notes = newNotesVal;
 
         companyData.MarkAsModified();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
-            $"Edit payment '{paymentToEdit.Id}'",
+            $"Edit payment '{paymentToEdit2.Id}'",
             () =>
             {
-                paymentToEdit.InvoiceId = oldInvoiceId;
-                paymentToEdit.CustomerId = oldCustomerId;
-                paymentToEdit.Date = oldDate;
-                paymentToEdit.Amount = oldAmount;
-                paymentToEdit.PaymentMethod = oldPaymentMethod;
-                paymentToEdit.ReferenceNumber = oldReferenceNumber;
-                paymentToEdit.Notes = oldNotes;
+                paymentToEdit2.InvoiceId = oldInvoiceId;
+                paymentToEdit2.CustomerId = oldCustomerId;
+                paymentToEdit2.Date = oldDate;
+                paymentToEdit2.Amount = oldAmount;
+                paymentToEdit2.PaymentMethod = oldPaymentMethod;
+                paymentToEdit2.ReferenceNumber = oldReferenceNumber;
+                paymentToEdit2.Notes = oldNotesVal;
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                paymentToEdit.InvoiceId = newInvoiceId;
-                paymentToEdit.CustomerId = newCustomerId;
-                paymentToEdit.Date = newDate;
-                paymentToEdit.Amount = newAmount;
-                paymentToEdit.PaymentMethod = newPaymentMethod;
-                paymentToEdit.ReferenceNumber = newReferenceNumber;
-                paymentToEdit.Notes = newNotes;
+                paymentToEdit2.InvoiceId = newInvoiceId;
+                paymentToEdit2.CustomerId = newCustomerId;
+                paymentToEdit2.Date = newDate;
+                paymentToEdit2.Amount = newAmount;
+                paymentToEdit2.PaymentMethod = newPaymentMethod;
+                paymentToEdit2.ReferenceNumber = newReferenceNumber;
+                paymentToEdit2.Notes = newNotesVal;
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -747,6 +796,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         ModalPaymentMethod = "Cash";
         ModalReferenceNumber = string.Empty;
         ModalNotes = string.Empty;
+        IsPortalPayment = false;
         ClearModalErrors();
     }
 

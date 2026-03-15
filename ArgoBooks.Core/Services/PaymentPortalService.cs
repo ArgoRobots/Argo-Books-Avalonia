@@ -305,7 +305,7 @@ public class PaymentPortalService
             // Map payment method
             var method = portalPayment.PaymentMethod.ToLowerInvariant() switch
             {
-                "stripe" => PaymentMethod.CreditCard,
+                "stripe" => PaymentMethod.Stripe,
                 "paypal" => PaymentMethod.PayPal,
                 "square" => PaymentMethod.Square,
                 _ => PaymentMethod.Other
