@@ -1005,10 +1005,27 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Products == null) return;
 
-        // Create new product with default purchase category
-        var newId = Guid.NewGuid().ToString();
+        // Get or create a default expense category
         var defaultCategory = companyData.Categories?
             .FirstOrDefault(c => c.Type == CategoryType.Expense);
+
+        if (defaultCategory == null)
+        {
+            companyData.IdCounters.Category++;
+            defaultCategory = new Category
+            {
+                Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
+                Name = "Purchases",
+                Type = CategoryType.Expense,
+                ItemType = "Product"
+            };
+            companyData.Categories ??= [];
+            companyData.Categories.Add(defaultCategory);
+        }
+
+        // Generate proper product ID
+        companyData.IdCounters.Product++;
+        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
 
         var newProduct = new Product
         {
@@ -1017,7 +1034,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Description = string.Empty,
             CostPrice = decimal.TryParse(lineItem.UnitPrice, out var price) ? price : 0,
             UnitPrice = 0,
-            CategoryId = defaultCategory?.Id
+            CategoryId = defaultCategory.Id,
+            Type = CategoryType.Expense
         };
 
         companyData.Products.Add(newProduct);
