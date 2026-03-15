@@ -648,6 +648,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)
     {
+        // When "All Time" is selected, recalculate the date range to include any new data
+        if (SelectedDateRange == DateRangePreset.AllTime.GetDisplayName())
+        {
+            ChartSettings.UpdateDateRangeFromSelection();
+        }
+
         LoadDashboardData();
     }
 
@@ -929,10 +935,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             return;
         }
 
-        // Notify that export is starting
+        // Notify that export is starting (with cancellation support)
+        var cts = new CancellationTokenSource();
         GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
         {
-            IsExporting = true
+            IsExporting = true,
+            CancellationTokenSource = cts
         });
 
         try
@@ -971,12 +979,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 };
             }
 
+            cts.Token.ThrowIfCancellationRequested();
+
             var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
                 chartType,
-                companyName
+                companyName,
+                cts.Token
             );
 
             if (!string.IsNullOrEmpty(url))
@@ -1014,6 +1025,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                     ErrorMessage = "Failed to create spreadsheet."
                 });
             }
+        }
+        catch (OperationCanceledException)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = null // Cancelled by user, no error message needed
+            });
+            return;
         }
         catch (InvalidOperationException ex)
         {
@@ -1547,6 +1567,11 @@ public class GoogleSheetsExportEventArgs : EventArgs
     /// Gets or sets the error message if the export failed.
     /// </summary>
     public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the cancellation token source for cancelling the export.
+    /// </summary>
+    public CancellationTokenSource? CancellationTokenSource { get; set; }
 }
 
 /// <summary>

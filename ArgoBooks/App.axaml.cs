@@ -3883,7 +3883,9 @@ public class App : Application
                 {
                     if (args.IsExporting)
                     {
-                        _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...".Translate());
+                        _mainWindowViewModel?.ShowLoading(
+                            "Exporting to Google Sheets...".Translate(),
+                            cts: args.CancellationTokenSource);
                     }
                     else if (args.IsSuccess)
                     {
@@ -3894,6 +3896,11 @@ public class App : Application
                     {
                         _mainWindowViewModel?.HideLoading();
                         await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
+                    }
+                    else
+                    {
+                        // Cancelled or no error message
+                        _mainWindowViewModel?.HideLoading();
                     }
                 };
             }
