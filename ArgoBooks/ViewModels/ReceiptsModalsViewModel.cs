@@ -606,6 +606,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Detect if this is a revenue or expense based on merchant name matching company name
         DetectTransactionType(result.SupplierName);
 
+        // Set payment method if detected
+        if (!string.IsNullOrEmpty(result.PaymentMethod) && PaymentMethodOptions.Contains(result.PaymentMethod))
+        {
+            SelectedPaymentMethod = result.PaymentMethod;
+        }
+
         // Confidence
         ConfidenceScore = result.Confidence;
         ConfidenceText = $"{result.Confidence:P0}";
@@ -1320,6 +1326,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             SelectedSupplier = matchedSupplier;
             SupplierMatchConfidence = 0.7; // Assume medium confidence for basic match
+        }
+        else
+        {
+            // No match found — suggest creating a new supplier
+            ShowCreateSupplierSuggestion = true;
+            SuggestedSupplierName = ToTitleCase(supplierName);
         }
     }
 

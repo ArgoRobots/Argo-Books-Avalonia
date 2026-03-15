@@ -187,6 +187,9 @@ public class AzureReceiptScannerService : IReceiptScannerService
         if (response.TryGetProperty("rawText", out var rawText) && rawText.ValueKind != JsonValueKind.Null)
             result.RawText = rawText.GetString();
 
+        if (response.TryGetProperty("paymentMethod", out var paymentMethod) && paymentMethod.ValueKind != JsonValueKind.Null)
+            result.PaymentMethod = paymentMethod.GetString();
+
         if (response.TryGetProperty("lineItems", out var lineItems) && lineItems.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in lineItems.EnumerateArray())

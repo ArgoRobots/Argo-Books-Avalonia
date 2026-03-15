@@ -604,14 +604,14 @@
                                                             <TextBox Grid.Column="1" Grid.Row="0"
                                                                      Text="{Binding Quantity}"
                                                                      HorizontalContentAlignment="Center"
-                                                                     VerticalAlignment="Stretch"
+                                                                     VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
                                                                      behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                                                      MaxLength="5" />
                                                             <TextBox Grid.Column="2" Grid.Row="0"
                                                                      Text="{Binding UnitPrice}"
                                                                      HorizontalContentAlignment="Center"
-                                                                     VerticalAlignment="Stretch"
+                                                                     VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
                                                                      behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                                      MaxLength="12" />
@@ -621,11 +621,11 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        HorizontalAlignment="Right"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="0,0,12,0" />
+                                                                       VerticalAlignment="Top"
+                                                                       Margin="0,8,12,0" />
                                                             <Button Grid.Column="4" Grid.Row="0"
                                                                     Classes="icon-button danger"
-                                                                    VerticalAlignment="Center"
+                                                                    VerticalAlignment="Top"
                                                                     HorizontalAlignment="Center"
                                                                     IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RemoveLineItemCommand}"
