@@ -1044,7 +1044,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Find or create an expense category for the product.
         // Prefer the AI-suggested category, then fall back to any existing expense category.
         var category = _createdCategoryForUndo
-            ?? companyData.Categories?.FirstOrDefault(c => c.Type == CategoryType.Expense);
+            ?? companyData.Categories.FirstOrDefault(c => c.Type == CategoryType.Expense);
 
         if (category == null)
         {
