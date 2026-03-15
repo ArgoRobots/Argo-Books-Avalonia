@@ -1,37 +1,28 @@
 using System.Net.Http.Headers;
 using System.Text;
-using ArgoBooks.Core.Models.Portal;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Manages Google OAuth 2.0 credentials via the argorobots.com server proxy.
 /// The server handles OAuth token storage and refresh.
-/// Supports authentication via portal API key or premium license key.
+/// Google Sheets is a free feature — authentication uses device ID.
 /// </summary>
 public static class GoogleCredentialsManager
 {
     private const string AuthEndpoint = "https://argorobots.com/api/google/auth.php";
 
     /// <summary>
-    /// Checks if Google API access is configured (portal or license key must be available).
+    /// Checks if Google API access is configured (always true — free feature).
     /// </summary>
-    public static bool AreCredentialsConfigured()
-    {
-        return PortalSettings.IsConfigured || HasLicenseKey();
-    }
+    public static bool AreCredentialsConfigured() => true;
 
     /// <summary>
     /// Initiates the Google OAuth flow by requesting an auth URL from the server.
     /// The user should be directed to open this URL in their browser.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The OAuth URL to open in a browser, or null if the request failed.</returns>
     public static async Task<string?> InitiateAuthAsync(CancellationToken cancellationToken = default)
     {
-        if (!AreCredentialsConfigured())
-            return null;
-
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         var requestBody = new { action = "initiate" };
         var json = JsonSerializer.Serialize(requestBody);
@@ -58,15 +49,10 @@ public static class GoogleCredentialsManager
     }
 
     /// <summary>
-    /// Checks whether the company has completed Google OAuth and has valid tokens stored on the server.
+    /// Checks whether the user has completed Google OAuth and has valid tokens stored on the server.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the company has Google tokens, false otherwise.</returns>
     public static async Task<bool> CheckAuthStatusAsync(CancellationToken cancellationToken = default)
     {
-        if (!AreCredentialsConfigured())
-            return false;
-
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         var requestBody = new { action = "status" };
         var json = JsonSerializer.Serialize(requestBody);
@@ -93,15 +79,10 @@ public static class GoogleCredentialsManager
     }
 
     /// <summary>
-    /// Revokes the Google OAuth connection for this company.
+    /// Revokes the Google OAuth connection for this user.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if revocation was successful.</returns>
     public static async Task<bool> RevokeAuthAsync(CancellationToken cancellationToken = default)
     {
-        if (!AreCredentialsConfigured())
-            return false;
-
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         var requestBody = new { action = "revoke" };
         var json = JsonSerializer.Serialize(requestBody);
@@ -122,32 +103,14 @@ public static class GoogleCredentialsManager
     }
 
     /// <summary>
-    /// Adds the appropriate auth headers (portal API key or license key).
+    /// Adds device ID auth header for Google API requests (free feature).
     /// </summary>
     internal static void AddAuthHeaders(HttpRequestMessage request)
     {
-        if (PortalSettings.IsConfigured)
+        var deviceId = App.LicenseService?.GetDeviceId();
+        if (!string.IsNullOrEmpty(deviceId))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
-            request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+            request.Headers.Add("X-Device-Id", deviceId);
         }
-        else
-        {
-            var licenseKey = GetLicenseKey();
-            if (!string.IsNullOrEmpty(licenseKey))
-            {
-                request.Headers.Add("X-License-Key", licenseKey);
-            }
-        }
-    }
-
-    private static bool HasLicenseKey()
-    {
-        return !string.IsNullOrEmpty(GetLicenseKey());
-    }
-
-    private static string? GetLicenseKey()
-    {
-        return App.LicenseService?.GetLicenseKey();
     }
 }

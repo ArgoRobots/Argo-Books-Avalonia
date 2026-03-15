@@ -106,9 +106,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
         catch (HttpRequestException ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan network error");
-            var innerMsg = ex.InnerException?.Message;
-            var fullMsg = innerMsg != null ? $"Network error: {ex.Message} ({innerMsg})" : $"Network error: {ex.Message}";
-            return ReceiptScanResult.Failed(fullMsg);
+            return ReceiptScanResult.Failed("Network error: unable to reach the scanning service. Please check your internet connection.");
         }
         catch (Exception ex)
         {

@@ -200,24 +200,6 @@ public partial class PastPredictionsModal : UserControl
         var (labels, revenueAccuracy, expensesAccuracy) = ViewModel.GetExportData();
         if (labels.Length == 0) return;
 
-        // Check if Google credentials are configured
-        if (!GoogleCredentialsManager.AreCredentialsConfigured())
-        {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Export Failed",
-                    Message = "Premium subscription required to export to Google Sheets. Please activate your license key.",
-                    PrimaryButtonText = "OK",
-                    SecondaryButtonText = null,
-                    CancelButtonText = null
-                });
-            }
-            return;
-        }
-
         try
         {
             // Prepare data for export

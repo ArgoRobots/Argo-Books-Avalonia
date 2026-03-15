@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
-using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -227,9 +226,6 @@ public class GoogleSheetsService
         bool shareAsReader,
         CancellationToken cancellationToken)
     {
-        if (!GoogleCredentialsManager.AreCredentialsConfigured())
-            return null;
-
         var requestBody = new
         {
             title,

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using ArgoBooks.Core.Models.Portal;
+
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
@@ -212,7 +212,7 @@ public class ExchangeRateService
     /// <summary>
     /// Checks if the service has a valid API key configured.
     /// </summary>
-    public bool HasApiKey => PortalSettings.IsConfigured;
+    public bool HasApiKey => LicenseAuthHelper.IsConfigured;
 
     /// <summary>
     /// Gets the number of cached exchange rates.
@@ -224,7 +224,7 @@ public class ExchangeRateService
     /// </summary>
     private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date)
     {
-        if (!PortalSettings.IsConfigured)
+        if (!LicenseAuthHelper.IsConfigured)
         {
             return null;
         }
@@ -240,8 +240,7 @@ public class ExchangeRateService
                 : $"{BaseUrl}?date={date:yyyy-MM-dd}";
 
             using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
-            request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+            LicenseAuthHelper.AddAuthHeaders(request);
 
             var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)

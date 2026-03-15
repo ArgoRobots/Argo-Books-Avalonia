@@ -1308,17 +1308,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             return;
         }
 
-        // Check if Google credentials are configured
-        if (!GoogleCredentialsManager.AreCredentialsConfigured())
-        {
-            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
-            {
-                IsSuccess = false,
-                ErrorMessage = "Premium subscription required to export to Google Sheets. Please activate your license key."
-            });
-            return;
-        }
-
         // Notify that export is starting
         GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
         {

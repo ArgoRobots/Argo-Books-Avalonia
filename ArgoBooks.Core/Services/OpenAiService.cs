@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.AI;
-using ArgoBooks.Core.Models.Portal;
+
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -32,7 +32,7 @@ public class OpenAiService : IOpenAiService
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => PortalSettings.IsConfigured;
+    public bool IsConfigured => LicenseAuthHelper.IsConfigured;
 
     /// <inheritdoc />
     public async Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
@@ -203,8 +203,7 @@ Respond with JSON only.";
 
         using var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
-        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+        LicenseAuthHelper.AddAuthHeaders(request);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
