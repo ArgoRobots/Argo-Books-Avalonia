@@ -202,6 +202,25 @@ public partial class PastPredictionsModal : UserControl
 
         try
         {
+            // Ensure Google is authorized (auto-initiates OAuth if needed)
+            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync();
+            if (!isAuthenticated)
+            {
+                var dialog = App.ConfirmationDialog;
+                if (dialog != null)
+                {
+                    await dialog.ShowAsync(new ConfirmationDialogOptions
+                    {
+                        Title = "Export Failed",
+                        Message = "Google Sheets authorization was not completed. Please try again.",
+                        PrimaryButtonText = "OK",
+                        SecondaryButtonText = null,
+                        CancelButtonText = null
+                    });
+                }
+                return;
+            }
+
             // Prepare data for export
             var exportData = new List<List<object>>
             {

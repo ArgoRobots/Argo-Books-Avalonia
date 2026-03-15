@@ -1014,7 +1014,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             Id = newId,
             Name = lineItem.SuggestedProductName,
-            Description = lineItem.Description,
+            Description = string.Empty,
             CostPrice = decimal.TryParse(lineItem.UnitPrice, out var price) ? price : 0,
             UnitPrice = 0,
             CategoryId = defaultCategory?.Id
@@ -1027,7 +1027,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             Id = newId,
             Name = newProduct.Name,
-            Description = newProduct.Description,
+            Description = string.Empty,
             UnitPrice = newProduct.CostPrice
         };
         ProductOptions.Add(option);

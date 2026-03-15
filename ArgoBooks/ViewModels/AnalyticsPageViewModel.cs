@@ -1316,6 +1316,18 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         try
         {
+            // Ensure Google is authorized (auto-initiates OAuth if needed)
+            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync();
+            if (!isAuthenticated)
+            {
+                GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Google Sheets authorization was not completed. Please try again."
+                });
+                return;
+            }
+
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
             var chartExportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
             var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";

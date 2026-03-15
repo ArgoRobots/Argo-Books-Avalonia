@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -100,6 +101,46 @@ public static class GoogleCredentialsManager
         var root = doc.RootElement;
 
         return root.TryGetProperty("success", out var success) && success.GetBoolean();
+    }
+
+    /// <summary>
+    /// Ensures the user is authenticated with Google. If not, initiates OAuth by opening
+    /// the browser and polls for completion. Returns true if authenticated.
+    /// </summary>
+    public static async Task<bool> EnsureAuthenticatedAsync(CancellationToken cancellationToken = default)
+    {
+        // Already authenticated?
+        if (await CheckAuthStatusAsync(cancellationToken))
+            return true;
+
+        // Initiate OAuth flow
+        var authUrl = await InitiateAuthAsync(cancellationToken);
+        if (string.IsNullOrEmpty(authUrl))
+            return false;
+
+        // Open browser for user to authorize
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = authUrl,
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            return false;
+        }
+
+        // Poll for completion (up to 2 minutes, checking every 5 seconds)
+        for (var i = 0; i < 24; i++)
+        {
+            await Task.Delay(5000, cancellationToken);
+            if (await CheckAuthStatusAsync(cancellationToken))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
