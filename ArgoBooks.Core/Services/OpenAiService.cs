@@ -318,14 +318,25 @@ Respond with JSON only.";
                 {
                     result.NewCategory = new NewCategorySuggestion();
 
+                    var suggestedName = "General";
                     if (category.TryGetProperty("newName", out var newName) && newName.ValueKind != JsonValueKind.Null)
                     {
-                        result.NewCategory.Name = newName.GetString() ?? "General";
+                        suggestedName = newName.GetString() ?? "General";
                     }
-                    else
+
+                    // Reject vague category names — the AI sometimes suggests these
+                    var vagueName = IsVagueCategoryName(suggestedName);
+                    if (vagueName && category.TryGetProperty("newDescription", out var descFallback)
+                        && descFallback.ValueKind != JsonValueKind.Null
+                        && !string.IsNullOrWhiteSpace(descFallback.GetString()))
                     {
-                        result.NewCategory.Name = "General";
+                        // Use the description as the name if it's more specific
+                        var desc = descFallback.GetString()!;
+                        if (!IsVagueCategoryName(desc) && desc.Length <= 40)
+                            suggestedName = desc;
                     }
+
+                    result.NewCategory.Name = suggestedName;
 
                     if (category.TryGetProperty("newDescription", out var newDesc) && newDesc.ValueKind != JsonValueKind.Null)
                     {
@@ -346,5 +357,11 @@ Respond with JSON only.";
             _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse OpenAI response");
             return null;
         }
+    }
+
+    private static bool IsVagueCategoryName(string name)
+    {
+        var vague = new[] { "purchases", "general", "miscellaneous", "expenses", "other", "various", "items", "goods" };
+        return vague.Contains(name.Trim().ToLowerInvariant());
     }
 }
