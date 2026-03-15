@@ -946,7 +946,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         try
         {
             // Ensure Google is authorized (auto-initiates OAuth if needed)
-            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync();
+            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync(cts.Token);
             if (!isAuthenticated)
             {
                 GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
