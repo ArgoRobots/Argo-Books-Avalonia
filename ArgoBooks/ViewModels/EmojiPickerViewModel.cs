@@ -119,7 +119,7 @@ public partial class EmojiPickerViewModel : ObservableObject
     public void Open(string? currentEmoji, Action<string> onSelected)
     {
         _onEmojiSelected = onSelected;
-        _settings = App.SettingsService?.GlobalSettings?.Ui?.EmojiPicker ?? new EmojiPickerSettings();
+        _settings = App.SettingsService?.GlobalSettings.Ui.EmojiPicker ?? new EmojiPickerSettings();
         SelectedEmoji = currentEmoji;
         SearchText = string.Empty;
 

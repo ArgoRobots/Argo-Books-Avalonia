@@ -513,8 +513,8 @@ public partial class ProductModalsViewModel : ObservableObject
         App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
-        if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
-        if (oldSku != newSku) changes["SKU"] = new FieldChange { OldValue = oldSku ?? "", NewValue = newSku ?? "" };
+        if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription, NewValue = newDescription };
+        if (oldSku != newSku) changes["SKU"] = new FieldChange { OldValue = oldSku, NewValue = newSku };
         if (oldUnitPrice != newUnitPrice) changes["Unit Price"] = new FieldChange { OldValue = oldUnitPrice.ToString("F2"), NewValue = newUnitPrice.ToString("F2") };
         if (oldCostPrice != newCostPrice) changes["Cost Price"] = new FieldChange { OldValue = oldCostPrice.ToString("F2"), NewValue = newCostPrice.ToString("F2") };
         if (oldTrackInventory != newTrackInventory) changes["Track Inventory"] = new FieldChange { OldValue = oldTrackInventory.ToString(), NewValue = newTrackInventory.ToString() };
@@ -522,8 +522,8 @@ public partial class ProductModalsViewModel : ObservableObject
         if (oldOverstockThreshold != newOverstockThreshold) changes["Overstock Threshold"] = new FieldChange { OldValue = oldOverstockThreshold.ToString(), NewValue = newOverstockThreshold.ToString() };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         productToEdit.Name = newName;
-        productToEdit.Description = newDescription ?? string.Empty;
-        productToEdit.Sku = newSku ?? string.Empty;
+        productToEdit.Description = newDescription;
+        productToEdit.Sku = newSku;
         productToEdit.CategoryId = newCategoryId;
         productToEdit.SupplierId = newSupplierId;
         productToEdit.UnitPrice = newUnitPrice;
@@ -540,8 +540,8 @@ public partial class ProductModalsViewModel : ObservableObject
             () =>
             {
                 productToEdit.Name = oldName;
-                productToEdit.Description = oldDescription ?? string.Empty;
-                productToEdit.Sku = oldSku ?? string.Empty;
+                productToEdit.Description = oldDescription;
+                productToEdit.Sku = oldSku;
                 productToEdit.CategoryId = oldCategoryId;
                 productToEdit.SupplierId = oldSupplierId;
                 productToEdit.UnitPrice = oldUnitPrice;
@@ -555,8 +555,8 @@ public partial class ProductModalsViewModel : ObservableObject
             () =>
             {
                 productToEdit.Name = newName;
-                productToEdit.Description = newDescription ?? string.Empty;
-                productToEdit.Sku = newSku ?? string.Empty;
+                productToEdit.Description = newDescription;
+                productToEdit.Sku = newSku;
                 productToEdit.CategoryId = newCategoryId;
                 productToEdit.SupplierId = newSupplierId;
                 productToEdit.UnitPrice = newUnitPrice;

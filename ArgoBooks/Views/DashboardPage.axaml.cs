@@ -33,7 +33,7 @@ public partial class DashboardPage : UserControl
     public void SetClickedChart(Control? chart, string name)
     {
         _clickedChart = chart;
-        _clickedChartName = name ?? "Chart";
+        _clickedChartName = name;
     }
 
     public DashboardPage()

@@ -203,7 +203,7 @@ public abstract partial class TablePageViewModelBase : SortablePageViewModelBase
 /// Generic base class for table pages with a typed display item collection.
 /// </summary>
 /// <typeparam name="TDisplayItem">The type of display item shown in the table.</typeparam>
-public abstract partial class TablePageViewModelBase<TDisplayItem> : TablePageViewModelBase
+public abstract class TablePageViewModelBase<TDisplayItem> : TablePageViewModelBase
     where TDisplayItem : class
 {
     /// <summary>

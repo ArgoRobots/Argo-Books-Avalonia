@@ -582,7 +582,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         if (oldMonthlyRate != newMonthlyRate) changes["Monthly Rate"] = new FieldChange { OldValue = oldMonthlyRate.ToString("F2"), NewValue = newMonthlyRate.ToString("F2") };
         if (oldSecurityDeposit != newSecurityDeposit) changes["Security Deposit"] = new FieldChange { OldValue = oldSecurityDeposit.ToString("F2"), NewValue = newSecurityDeposit.ToString("F2") };
         if (oldStatus != newStatus) changes["Status"] = new FieldChange { OldValue = oldStatus.ToString(), NewValue = newStatus.ToString() };
-        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes ?? "", NewValue = newNotes };
+        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         itemToEdit.ProductId = newProductId;
         itemToEdit.Name = newName;
@@ -613,7 +613,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
                 itemToEdit.MonthlyRate = oldMonthlyRate;
                 itemToEdit.SecurityDeposit = oldSecurityDeposit;
                 itemToEdit.Status = oldStatus;
-                itemToEdit.Notes = oldNotes ?? string.Empty;
+                itemToEdit.Notes = oldNotes;
                 companyData.MarkAsModified();
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             },

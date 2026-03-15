@@ -1210,7 +1210,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Check if we're continuing a draft invoice or creating a new one
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
-        Invoice? existingDraft = null;
+        Invoice? existingDraft;
 
         if (isContinuingDraft)
         {
@@ -1636,22 +1636,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
             if (revenue != null)
                 revenue.InvoiceId = invoice.Id;
-        }
-    }
-
-    /// <summary>
-    /// Unlinks an invoice from any revenue records referenced by its line items.
-    /// </summary>
-    private static void UnlinkInvoiceFromRevenue(Invoice invoice, CompanyData companyData)
-    {
-        foreach (var revenueId in invoice.LineItems
-                     .Where(li => !string.IsNullOrEmpty(li.RevenueRecordId))
-                     .Select(li => li.RevenueRecordId!)
-                     .Distinct())
-        {
-            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
-            if (revenue != null && revenue.InvoiceId == invoice.Id)
-                revenue.InvoiceId = null;
         }
     }
 

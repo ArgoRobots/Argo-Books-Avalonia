@@ -81,7 +81,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         {
             var updateInfo = await _sparkle.CheckForUpdatesQuietly();
 
-            if (updateInfo?.Status == UpdateStatus.UpdateAvailable &&
+            if (updateInfo.Status == UpdateStatus.UpdateAvailable &&
                 updateInfo.Updates is { Count: > 0 })
             {
                 // Find the best update for the current OS
@@ -183,7 +183,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             {
                 var verificationResult = _sparkle.SignatureVerifier
                     .VerifySignatureOfFile(_updateSignature, filePath);
-                if (verificationResult != NetSparkleUpdater.Enums.ValidationResult.Valid)
+                if (verificationResult != ValidationResult.Valid)
                 {
                     // Delete the unverified file
                     try { File.Delete(filePath); } catch { }
@@ -204,7 +204,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             {
                 try
                 {
-                    Process.Start("chmod", ["+x", filePath])?.WaitForExit(5000);
+                    Process.Start("chmod", ["+x", filePath]).WaitForExit(5000);
                 }
                 catch
                 {
@@ -450,7 +450,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
             var scriptPath = Path.Combine(Path.GetTempPath(), "argo-update.sh");
             File.WriteAllText(scriptPath, script);
-            Process.Start("chmod", ["+x", scriptPath])?.WaitForExit(5000);
+            Process.Start("chmod", ["+x", scriptPath]).WaitForExit(5000);
             Process.Start(new ProcessStartInfo
             {
                 FileName = "/bin/bash",
@@ -493,7 +493,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
             var scriptPath = Path.Combine(Path.GetTempPath(), "argo-update.sh");
             File.WriteAllText(scriptPath, script);
-            Process.Start("chmod", ["+x", scriptPath])?.WaitForExit(5000);
+            Process.Start("chmod", ["+x", scriptPath]).WaitForExit(5000);
             Process.Start(new ProcessStartInfo
             {
                 FileName = "/bin/bash",

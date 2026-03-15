@@ -131,10 +131,6 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     #endregion
 
-    public CategoryModalsViewModel()
-    {
-    }
-
     /// <summary>
     /// Opens the emoji picker modal.
     /// </summary>

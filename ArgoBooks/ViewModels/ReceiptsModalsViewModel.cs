@@ -858,12 +858,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }
                 if (capturedCategory != null)
                 {
-                    companyData.Categories?.Remove(capturedCategory);
+                    companyData.Categories.Remove(capturedCategory);
                     companyData.IdCounters.Category--;
                 }
                 if (capturedSupplier != null)
                 {
-                    companyData.Suppliers?.Remove(capturedSupplier);
+                    companyData.Suppliers.Remove(capturedSupplier);
                     companyData.IdCounters.Supplier--;
                 }
 
@@ -874,12 +874,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 // Re-add auto-created entities
                 if (capturedSupplier != null)
                 {
-                    companyData.Suppliers?.Add(capturedSupplier);
+                    companyData.Suppliers.Add(capturedSupplier);
                     companyData.IdCounters.Supplier++;
                 }
                 if (capturedCategory != null)
                 {
-                    companyData.Categories?.Add(capturedCategory);
+                    companyData.Categories.Add(capturedCategory);
                     companyData.IdCounters.Category++;
                 }
                 foreach (var product in capturedProducts)
@@ -969,12 +969,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }
                 if (capturedCategory != null)
                 {
-                    companyData.Categories?.Remove(capturedCategory);
+                    companyData.Categories.Remove(capturedCategory);
                     companyData.IdCounters.Category--;
                 }
                 if (capturedSupplier != null)
                 {
-                    companyData.Suppliers?.Remove(capturedSupplier);
+                    companyData.Suppliers.Remove(capturedSupplier);
                     companyData.IdCounters.Supplier--;
                 }
 
@@ -985,12 +985,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 // Re-add auto-created entities
                 if (capturedSupplier != null)
                 {
-                    companyData.Suppliers?.Add(capturedSupplier);
+                    companyData.Suppliers.Add(capturedSupplier);
                     companyData.IdCounters.Supplier++;
                 }
                 if (capturedCategory != null)
                 {
-                    companyData.Categories?.Add(capturedCategory);
+                    companyData.Categories.Add(capturedCategory);
                     companyData.IdCounters.Category++;
                 }
                 foreach (var product in capturedProducts)
@@ -1150,19 +1150,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 RawText = result.RawText,
                 LineItemDescriptions = result.LineItems.Select(li => li.Description).ToList(),
                 TotalAmount = result.TotalAmount ?? 0,
-                ExistingSuppliers = companyData.Suppliers?.Select(s => new ExistingSupplierInfo
+                ExistingSuppliers = companyData.Suppliers.Select(s => new ExistingSupplierInfo
                 {
                     Id = s.Id,
                     Name = s.Name
-                }).ToList() ?? [],
-                ExistingCategories = companyData.Categories?
+                }).ToList(),
+                ExistingCategories = companyData.Categories
                     .Where(c => c.Type == CategoryType.Expense)
                     .Select(c => new ExistingCategoryInfo
                     {
                         Id = c.Id,
                         Name = c.Name,
                         Description = c.Description
-                    }).ToList() ?? []
+                    }).ToList()
             };
 
             var suggestion = await openAiService.GetSupplierCategorySuggestionAsync(request);
@@ -1218,7 +1218,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private static bool IsDiscountLine(ScannedLineItem item)
     {
-        var desc = item.Description?.ToLowerInvariant() ?? string.Empty;
+        var desc = item.Description.ToLowerInvariant();
         return desc.Contains("discount") || desc.Contains("% off") || desc.Contains("coupon")
             || desc.Contains("promo");
     }
@@ -1253,7 +1253,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         var cleaned = CleanOcrText(text);
         if (string.IsNullOrEmpty(cleaned))
-            return text?.Trim() ?? string.Empty;
+            return text.Trim();
 
         return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cleaned.ToLower());
     }
@@ -1267,7 +1267,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void DetectTransactionType(string? merchantName)
     {
         var companyData = App.CompanyManager?.CompanyData;
-        var companyName = companyData?.Settings?.Company?.Name;
+        var companyName = companyData?.Settings.Company.Name;
 
         if (string.IsNullOrWhiteSpace(merchantName) || string.IsNullOrWhiteSpace(companyName))
         {
@@ -1551,12 +1551,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
     }
 
-    private IReceiptScannerService? CreateScannerService()
+    private IReceiptScannerService CreateScannerService()
     {
         return new AzureReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
     }
 
-    private IReceiptUsageService? CreateUsageService()
+    private IReceiptUsageService CreateUsageService()
     {
         return new ReceiptUsageService(App.LicenseService);
     }

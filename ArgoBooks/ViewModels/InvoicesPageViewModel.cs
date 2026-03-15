@@ -613,7 +613,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         // Consider the portal configured if the API key is present (or PortalUrl persisted)
         // AND at least one payment provider is actually connected.
-        var portalUrl = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal?.PortalUrl;
+        var portalUrl = App.CompanyManager?.CompanyData?.Settings.PaymentPortal.PortalUrl;
         var hasPortalKey = PortalSettings.IsConfigured || !string.IsNullOrEmpty(portalUrl);
         var hasConnectedProvider = PaymentProviderService.GetConnectedMethods().Count > 0;
         IsPortalConfigured = hasPortalKey && hasConnectedProvider;

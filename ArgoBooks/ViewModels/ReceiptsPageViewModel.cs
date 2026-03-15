@@ -3,7 +3,6 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Helpers;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
 using ArgoBooks.Views;
@@ -223,7 +222,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(receipt.Supplier))
             title += $"\n{receipt.Supplier}";
 
-        App.ReceiptViewerModal?.Show(receipt.ImagePath ?? string.Empty, receipt.Id, title);
+        App.ReceiptViewerModal?.Show(receipt.ImagePath, receipt.Id, title);
     }
 
     #endregion

@@ -36,24 +36,17 @@ public partial class SheetIssueGroup : ObservableObject
 /// <summary>
 /// ViewModel wrapper for a ValidationIssue.
 /// </summary>
-public partial class ValidationIssueViewModel : ObservableObject
+public class ValidationIssueViewModel(ValidationIssue issue) : ObservableObject
 {
-    private readonly ValidationIssue _issue;
-
-    public ValidationIssueViewModel(ValidationIssue issue)
-    {
-        _issue = issue;
-    }
-
-    public int RowNumber => _issue.RowNumber;
-    public string ColumnName => _issue.ColumnName;
-    public string InvalidValue => _issue.InvalidValue;
-    public string Description => _issue.Description;
-    public string ReferenceType => _issue.ReferenceType;
-    public string RowId => _issue.RowId;
-    public bool IsError => _issue.Severity == ValidationIssueSeverity.Error;
-    public bool IsWarning => _issue.Severity == ValidationIssueSeverity.Warning;
-    public bool IsAutoFixable => _issue.IsAutoFixable;
+    public int RowNumber => issue.RowNumber;
+    public string ColumnName => issue.ColumnName;
+    public string InvalidValue => issue.InvalidValue;
+    public string Description => issue.Description;
+    public string ReferenceType => issue.ReferenceType;
+    public string RowId => issue.RowId;
+    public bool IsError => issue.Severity == ValidationIssueSeverity.Error;
+    public bool IsWarning => issue.Severity == ValidationIssueSeverity.Warning;
+    public bool IsAutoFixable => issue.IsAutoFixable;
 
     public string CellReference => $"Row {RowNumber}";
     public string DisplayValue => string.IsNullOrEmpty(InvalidValue) ? "(empty)" : InvalidValue;

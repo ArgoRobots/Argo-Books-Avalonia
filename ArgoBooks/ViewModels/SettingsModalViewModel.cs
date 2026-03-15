@@ -1,7 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
@@ -663,11 +661,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isUploadingPortalLogo;
 
-    /// <summary>
-    /// The current portal logo URL from the server.
-    /// </summary>
-    private string? _portalLogoUrl;
-
     public string[] SyncIntervalOptions { get; } = ["Manual", "1", "2", "5", "10", "15", "30"];
 
     [RelayCommand]
@@ -740,7 +733,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             var result = await portalService.UploadCompanyLogoAsync(filePath);
             if (result.Success)
             {
-                _portalLogoUrl = result.LogoUrl;
                 try
                 {
                     PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(filePath);
@@ -785,7 +777,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             {
                 PortalLogoSource = null;
                 HasPortalLogo = false;
-                _portalLogoUrl = null;
             }
         }
         catch
@@ -807,11 +798,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             PortalLogoSource = null;
             HasPortalLogo = false;
-            _portalLogoUrl = null;
             return;
         }
 
-        _portalLogoUrl = logoUrl;
         HasPortalLogo = true;
 
         try
@@ -1009,7 +998,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     private void LoadPortalSettings()
     {
-        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
         _isLoadingPortalSettings = true;
@@ -1057,7 +1046,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
                 if (!string.IsNullOrEmpty(status.PortalUrl))
                 {
-                    var portalSettings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+                    var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
                     if (portalSettings != null)
                         portalSettings.PortalUrl = status.PortalUrl;
                 }
@@ -1129,7 +1118,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                             // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
                             if (!string.IsNullOrEmpty(status.PortalUrl))
                             {
-                                var portalSettings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+                                var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
                                 if (portalSettings != null)
                                     portalSettings.PortalUrl = status.PortalUrl;
                             }
@@ -1150,7 +1139,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     private void SavePortalSettings()
     {
-        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
         settings.NotifyOnPayment = PortalNotifyOnPayment;

@@ -156,7 +156,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         {
             // Try to parse the phone number - format is typically "+1 5551000000"
             var dialCodes = PhoneInput.AllDialCodes;
-            CountryDialCode? matchedDialCode = null;
+            CountryDialCode? matchedDialCode;
 
             // Find all dial codes that match the phone prefix
             var matchingCodes = dialCodes
