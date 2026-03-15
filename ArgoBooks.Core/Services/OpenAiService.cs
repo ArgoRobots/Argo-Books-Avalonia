@@ -158,7 +158,7 @@ public class OpenAiService : IOpenAiService
    - What the supplier typically sells
    - Common business expense categories
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a SPECIFIC category name
-   - IMPORTANT: Be specific! Use descriptive names based on the actual items (e.g., ""Groceries"", ""Cooking Ingredients"", ""Office Supplies"", ""Cleaning Products""). NEVER use vague names like ""Purchases"", ""General"", ""Miscellaneous"", or ""Expenses""
+   - IMPORTANT: Be specific! Use descriptive names based on the actual items (e.g., ""Groceries"", ""Cooking Ingredients"", ""Office Supplies"", ""Cleaning Products""). NEVER use vague or generic names like ""Purchases"", ""General"", ""General Expenses"", ""Miscellaneous"", ""Expenses"", or any combination of these words
 
 ## Response Format (JSON only, no markdown code blocks)
 {{
@@ -361,7 +361,13 @@ Respond with JSON only.";
 
     private static bool IsVagueCategoryName(string name)
     {
-        var vague = new[] { "purchases", "general", "miscellaneous", "expenses", "other", "various", "items", "goods" };
-        return vague.Contains(name.Trim().ToLowerInvariant());
+        var normalized = name.Trim().ToLowerInvariant();
+        var vagueExact = new[] { "purchases", "general", "miscellaneous", "expenses", "other", "various", "items", "goods" };
+        if (vagueExact.Contains(normalized))
+            return true;
+
+        // Catch compound vague names like "general expenses", "other purchases", "miscellaneous items"
+        var words = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return words.Length >= 1 && words.All(w => vagueExact.Contains(w));
     }
 }
