@@ -11,7 +11,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class AzureReceiptScannerService : IReceiptScannerService
 {
-    private const string ScanEndpoint = "https://argorobots.com/api/receipt/scan";
+    private const string ScanEndpoint = "https://argorobots.com/api/receipt/scan.php";
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
@@ -106,7 +106,9 @@ public class AzureReceiptScannerService : IReceiptScannerService
         catch (HttpRequestException ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan network error");
-            return ReceiptScanResult.Failed($"Network error: {ex.Message}");
+            var innerMsg = ex.InnerException?.Message;
+            var fullMsg = innerMsg != null ? $"Network error: {ex.Message} ({innerMsg})" : $"Network error: {ex.Message}";
+            return ReceiptScanResult.Failed(fullMsg);
         }
         catch (Exception ex)
         {
