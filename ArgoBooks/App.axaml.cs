@@ -2494,7 +2494,7 @@ public class App : Application
                 return true; // No password set, allow access
 
             var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
-            var companyName = CompanyManager.CompanyData!.Settings.Company.Name ?? "Company";
+            var companyName = CompanyManager.CompanyData!.Settings.Company.Name;
             var filePath = CompanyManager.CurrentFilePath ?? "";
 
             // Check if Windows Hello is available for this file
@@ -2913,7 +2913,7 @@ public class App : Application
             return;
         }
 
-        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company?.Country);
+        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, openAiService);
 
         var analysisProgress = new Progress<(string detail, double percent)>(p =>
@@ -3064,7 +3064,7 @@ public class App : Application
                 var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
                 // estimateTimer is intentionally captured and disposed from the outer scope
                 // to signal the timer task to stop. WaitForNextTickAsync returns false on dispose.
-#pragma warning disable CA2000
+
                 var timerTask = Task.Run(async () =>
                 {
                     while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
@@ -3079,7 +3079,6 @@ public class App : Application
                             ConfirmCancelAsync);
                     }
                 }, tier2Cts.Token);
-#pragma warning restore CA2000
 
                 // Phase A: Process all Tier 2 sheets in parallel (LLM calls are stateless)
                 var sheetTasks = tier2Sheets.Select((sheet, idx) =>
@@ -3158,11 +3157,11 @@ public class App : Application
             // Record undo action
             UndoRedoManager.RecordAction(new DelegateAction(
                 "AI import spreadsheet data".Translate(),
-                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager!.MarkAsChanged(); },
-                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager!.MarkAsChanged(); }
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
             ));
 
-            CompanyManager!.MarkAsChanged();
+            CompanyManager.MarkAsChanged();
 
             // Auto-switch date range to "All Time" so imported data is visible on dashboard/analytics
             // (imported data may be from any time period, not necessarily the current month)
