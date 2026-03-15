@@ -1656,6 +1656,11 @@ public partial class SettingsModalViewModel : ViewModelBase
             }
         }
 
+        ClosePasswordModalInternal();
+    }
+
+    private void ClosePasswordModalInternal()
+    {
         IsAddPasswordModalOpen = false;
         IsChangePasswordModalOpen = false;
         IsRemovePasswordModalOpen = false;
@@ -1687,7 +1692,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Raise event to add password
         AddPasswordRequested?.Invoke(this, new PasswordChangeEventArgs(NewPassword));
         HasPassword = true;
-        ClosePasswordModal();
+        ClosePasswordModalInternal();
     }
 
     /// <summary>
@@ -1727,7 +1732,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public void OnPasswordChanged()
     {
-        ClosePasswordModal();
+        ClosePasswordModalInternal();
     }
 
     /// <summary>
@@ -1753,7 +1758,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     public void OnPasswordRemoved()
     {
         HasPassword = false;
-        ClosePasswordModal();
+        ClosePasswordModalInternal();
     }
 
     /// <summary>
