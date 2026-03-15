@@ -10,7 +10,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public static class GoogleCredentialsManager
 {
-    private const string AuthEndpoint = "https://argorobots.com/api/google/auth";
+    private const string AuthEndpoint = "https://argorobots.com/api/google/auth.php";
 
     /// <summary>
     /// Checks if Google API access is configured (portal must be configured).

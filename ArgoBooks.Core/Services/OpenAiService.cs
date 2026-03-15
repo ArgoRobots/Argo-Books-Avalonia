@@ -14,7 +14,7 @@ namespace ArgoBooks.Core.Services;
 public class OpenAiService : IOpenAiService
 {
     private const string DefaultModel = "gpt-4o-mini";
-    private const string ApiEndpoint = "https://argorobots.com/api/ai/completions";
+    private const string ApiEndpoint = "https://argorobots.com/api/ai/completions.php";
 
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;

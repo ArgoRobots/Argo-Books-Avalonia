@@ -13,7 +13,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ExchangeRateService
 {
-    private const string BaseUrl = "https://argorobots.com/api/exchange-rates";
+    private const string BaseUrl = "https://argorobots.com/api/exchange-rates.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
 
     private readonly ExchangeRateCache _cache;
