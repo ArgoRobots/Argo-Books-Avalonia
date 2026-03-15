@@ -244,13 +244,24 @@ public class GoogleSheetsService
         GoogleCredentialsManager.AddAuthHeaders(request);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
         if (!response.IsSuccessStatusCode)
         {
-            _errorLogger?.LogError($"Google Sheets export proxy error {response.StatusCode}", ErrorCategory.Api, "Google Sheets export");
-            return null;
+            // Extract server error message
+            var errorMsg = "Google Sheets export failed.";
+            try
+            {
+                using var errorDoc = JsonDocument.Parse(responseBody);
+                if (errorDoc.RootElement.TryGetProperty("message", out var msg))
+                    errorMsg = msg.GetString() ?? errorMsg;
+            }
+            catch { /* ignore parse errors */ }
+
+            _errorLogger?.LogError($"Google Sheets export proxy error {response.StatusCode}: {errorMsg}", ErrorCategory.Api, "Google Sheets export");
+            throw new InvalidOperationException(errorMsg);
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
         using var doc = JsonDocument.Parse(responseBody);
         var root = doc.RootElement;
 
