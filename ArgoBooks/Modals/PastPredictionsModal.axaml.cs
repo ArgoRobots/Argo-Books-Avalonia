@@ -209,7 +209,7 @@ public partial class PastPredictionsModal : UserControl
                 await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Export Failed",
-                    Message = "Portal is not configured. Please register your company first to export to Google Sheets.",
+                    Message = "Premium subscription required to export to Google Sheets. Please activate your license key.",
                     PrimaryButtonText = "OK",
                     SecondaryButtonText = null,
                     CancelButtonText = null

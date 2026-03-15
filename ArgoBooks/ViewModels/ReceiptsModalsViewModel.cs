@@ -1376,12 +1376,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Creates a new supplier from the AI suggestion.
+    /// Creates a new supplier from the AI suggestion or basic match suggestion.
     /// </summary>
     [RelayCommand]
     private void CreateSuggestedSupplier()
     {
-        if (AiSuggestion?.NewSupplier == null || string.IsNullOrEmpty(SuggestedSupplierName))
+        if (string.IsNullOrEmpty(SuggestedSupplierName))
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
@@ -1396,7 +1396,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             Id = newId,
             Name = SuggestedSupplierName,
-            Notes = AiSuggestion.NewSupplier.Notes ?? "Created from AI receipt scan".Translate()
+            Notes = AiSuggestion?.NewSupplier?.Notes ?? "Created from receipt scan".Translate()
         };
 
         companyData.Suppliers.Add(newSupplier);

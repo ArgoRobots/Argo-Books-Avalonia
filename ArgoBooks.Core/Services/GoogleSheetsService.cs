@@ -227,7 +227,7 @@ public class GoogleSheetsService
         bool shareAsReader,
         CancellationToken cancellationToken)
     {
-        if (!PortalSettings.IsConfigured)
+        if (!GoogleCredentialsManager.AreCredentialsConfigured())
             return null;
 
         var requestBody = new
@@ -245,8 +245,7 @@ public class GoogleSheetsService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, ExportEndpoint);
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", PortalSettings.ApiKey);
-        request.Headers.Add("X-Api-Key", PortalSettings.ApiKey);
+        GoogleCredentialsManager.AddAuthHeaders(request);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)

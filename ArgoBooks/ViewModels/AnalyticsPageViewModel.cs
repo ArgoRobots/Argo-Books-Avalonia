@@ -1314,7 +1314,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,
-                ErrorMessage = "Portal is not configured. Please register your company first to export to Google Sheets."
+                ErrorMessage = "Premium subscription required to export to Google Sheets. Please activate your license key."
             });
             return;
         }
