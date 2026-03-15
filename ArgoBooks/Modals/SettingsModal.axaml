@@ -766,7 +766,7 @@
                                             <!-- Buttons -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                 <Button Classes="primary-button"
-                                                        Content="{loc:Loc Upload}"
+                                                        Content="{Binding PortalLogoButtonText}"
                                                         Command="{Binding BrowsePortalLogoCommand}"
                                                         IsEnabled="{Binding !IsUploadingPortalLogo}"
                                                         Padding="12,6" />

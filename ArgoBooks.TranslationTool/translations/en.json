@@ -2308,5 +2308,6 @@
   "str_discountamount": "DiscountAmount",
   "str_amountpaid": "AmountPaid",
   "str_itemdescription": "ItemDescription",
-  "str_invoicepreviews": "InvoicePreviews"
+  "str_invoicepreviews": "InvoicePreviews",
+  "str_areyousureyouwanttocloseanyenteredinformationwillbelost": "Are you sure you want to close? Any entered information will be lost."
 }

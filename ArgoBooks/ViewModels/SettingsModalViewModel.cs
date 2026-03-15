@@ -567,6 +567,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
 
+    partial void OnHasPortalLogoChanged(bool value) => OnPropertyChanged(nameof(PortalLogoButtonText));
+
     /// <summary>
     /// Called when PortalNotifyOnPayment changes — requires auth if password is enabled.
     /// </summary>
@@ -655,6 +657,8 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasPortalLogo;
+
+    public string PortalLogoButtonText => HasPortalLogo ? "Change".Translate() : "Upload".Translate();
 
     [ObservableProperty]
     private bool _isUploadingPortalLogo;
@@ -1631,11 +1635,38 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Closes all password modals.
+    /// Returns whether any password fields have been filled in.
+    /// </summary>
+    private bool HasPasswordModalInput =>
+        !string.IsNullOrEmpty(CurrentPassword) ||
+        !string.IsNullOrEmpty(NewPassword) ||
+        !string.IsNullOrEmpty(ConfirmPassword);
+
+    /// <summary>
+    /// Closes all password modals, prompting to confirm if there is input.
     /// </summary>
     [RelayCommand]
-    private void ClosePasswordModal()
+    private async Task ClosePasswordModalAsync()
     {
+        if ((IsChangePasswordModalOpen || IsRemovePasswordModalOpen) && HasPasswordModalInput)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "Are you sure you want to close? Any entered information will be lost.".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
         IsAddPasswordModalOpen = false;
         IsChangePasswordModalOpen = false;
         IsRemovePasswordModalOpen = false;
