@@ -505,7 +505,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             if (_scannerService == null || !_scannerService.IsConfigured)
             {
                 HasScanError = true;
-                ScanErrorMessage = "Azure Document Intelligence is not configured.\n\nPlease add your API key and endpoint in Settings > AI Receipt Scanning.".Translate();
+                ScanErrorMessage = "AI Receipt Scanning requires an active premium license.".Translate();
                 IsScanning = false;
                 return;
             }
