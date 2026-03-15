@@ -285,9 +285,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private SupplierOption? _selectedSupplier;
 
     [ObservableProperty]
-    private CategoryOption? _selectedCategory;
-
-    [ObservableProperty]
     private string _selectedPaymentMethod = "Cash";
 
     [ObservableProperty]
@@ -320,7 +317,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
-    public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
     public ObservableCollection<string> PaymentMethodOptions { get; } =
     [
@@ -345,12 +341,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _supplierErrorMessage = string.Empty;
 
-    [ObservableProperty]
-    private bool _hasCategoryError;
-
-    [ObservableProperty]
-    private string _categoryErrorMessage = string.Empty;
-
     partial void OnSelectedSupplierChanged(SupplierOption? value)
     {
         if (value != null)
@@ -360,45 +350,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
     }
 
-    partial void OnSelectedCategoryChanged(CategoryOption? value)
-    {
-        if (value != null)
-        {
-            HasCategoryError = false;
-            CategoryErrorMessage = string.Empty;
-        }
-    }
-
     // AI Suggestion State
     [ObservableProperty]
     private bool _isLoadingAiSuggestions;
 
-    [ObservableProperty]
-    private bool _hasAiSuggestions;
-
-    [ObservableProperty]
     private SupplierCategorySuggestion? _aiSuggestion;
-
-    [ObservableProperty]
-    private double _supplierMatchConfidence;
-
-    [ObservableProperty]
-    private double _categoryMatchConfidence;
 
     [ObservableProperty]
     private bool _showCreateSupplierSuggestion;
 
     [ObservableProperty]
     private string _suggestedSupplierName = string.Empty;
-
-    [ObservableProperty]
-    private bool _showCreateCategorySuggestion;
-
-    [ObservableProperty]
-    private string _suggestedCategoryName = string.Empty;
-
-    [ObservableProperty]
-    private bool _isAiConfigured;
 
     // Usage tracking state
     [ObservableProperty]
@@ -1059,15 +1021,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void NavigateToCreateCategory()
-    {
-        // Close modal and navigate to categories page with add modal open
-        CloseScanReviewModal();
-        App.NavigationService?.NavigateTo("Categories");
-        App.CategoryModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
     private void NavigateToCreateProduct()
     {
         // Close modal and navigate to products page with add modal open
@@ -1096,7 +1049,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (category == null)
         {
             // No expense category exists — create one from AI suggestion if available
-            var aiCategory = AiSuggestion?.NewCategory;
+            var aiCategory = _aiSuggestion?.NewCategory;
             var categoryName = aiCategory?.Name ?? "General Expenses";
 
             companyData.IdCounters.Category++;
@@ -1171,7 +1124,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private async Task GetAiSuggestionsAsync(ReceiptScanResult result)
     {
         var openAiService = new OpenAiService(App.ErrorLogger, App.TelemetryManager);
-        IsAiConfigured = openAiService.IsConfigured;
 
         if (!openAiService.IsConfigured)
         {
@@ -1181,7 +1133,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         IsLoadingAiSuggestions = true;
-        HasAiSuggestions = false;
         ShowCreateSupplierSuggestion = false;
 
         try
@@ -1242,8 +1193,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private void ApplyAiSuggestion(SupplierCategorySuggestion suggestion)
     {
-        AiSuggestion = suggestion;
-        HasAiSuggestions = true;
+        _aiSuggestion = suggestion;
 
         // Apply supplier suggestion
         if (!string.IsNullOrEmpty(suggestion.MatchedSupplierId))
@@ -1252,31 +1202,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             if (supplier != null)
             {
                 SelectedSupplier = supplier;
-                SupplierMatchConfidence = suggestion.SupplierConfidence;
             }
         }
         else if (suggestion.ShouldCreateNewSupplier && suggestion.NewSupplier != null)
         {
             ShowCreateSupplierSuggestion = true;
             SuggestedSupplierName = ToTitleCase(suggestion.NewSupplier.Name);
-            SupplierMatchConfidence = 0;
-        }
-
-        // Apply category suggestion
-        if (!string.IsNullOrEmpty(suggestion.MatchedCategoryId))
-        {
-            var category = CategoryOptions.FirstOrDefault(c => c.Id == suggestion.MatchedCategoryId);
-            if (category != null)
-            {
-                SelectedCategory = category;
-                CategoryMatchConfidence = suggestion.CategoryConfidence;
-            }
-        }
-        else if (suggestion.ShouldCreateNewCategory && suggestion.NewCategory != null)
-        {
-            ShowCreateCategorySuggestion = true;
-            SuggestedCategoryName = ToTitleCase(suggestion.NewCategory.Name);
-            CategoryMatchConfidence = 0;
         }
     }
 
@@ -1433,7 +1364,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (matchedSupplier != null)
         {
             SelectedSupplier = matchedSupplier;
-            SupplierMatchConfidence = 0.7; // Assume medium confidence for basic match
         }
         else
         {
@@ -1504,7 +1434,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             Id = newId,
             Name = SuggestedSupplierName,
-            Notes = AiSuggestion?.NewSupplier?.Notes ?? "Created from receipt scan".Translate()
+            Notes = _aiSuggestion?.NewSupplier?.Notes ?? "Created from receipt scan".Translate()
         };
 
         companyData.Suppliers.Add(newSupplier);
@@ -1516,47 +1446,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedSupplier = option;
 
         ShowCreateSupplierSuggestion = false;
-        SupplierMatchConfidence = 1.0;
-
-        App.CompanyManager?.MarkAsChanged();
-    }
-
-    /// <summary>
-    /// Creates a new category from the AI suggestion.
-    /// </summary>
-    [RelayCommand]
-    private void CreateSuggestedCategory()
-    {
-        if (AiSuggestion?.NewCategory == null || string.IsNullOrEmpty(SuggestedCategoryName))
-            return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        // Generate ID
-        companyData.IdCounters.Category++;
-        var newId = $"CAT-PUR-{companyData.IdCounters.Category:D3}";
-
-        // Create category
-        var newCategory = new Category
-        {
-            Id = newId,
-            Type = CategoryType.Expense,
-            Name = SuggestedCategoryName,
-            Description = AiSuggestion.NewCategory.Description,
-            ItemType = AiSuggestion.NewCategory.ItemType
-        };
-
-        companyData.Categories.Add(newCategory);
-        _createdCategoryForUndo = newCategory;
-
-        // Add to options and select
-        var option = new CategoryOption { Id = newId, Name = newCategory.Name };
-        CategoryOptions.Add(option);
-        SelectedCategory = option;
-
-        ShowCreateCategorySuggestion = false;
-        CategoryMatchConfidence = 1.0;
 
         App.CompanyManager?.MarkAsChanged();
     }
@@ -1568,15 +1457,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void DismissSupplierSuggestion()
     {
         ShowCreateSupplierSuggestion = false;
-    }
-
-    /// <summary>
-    /// Dismisses the category suggestion without creating.
-    /// </summary>
-    [RelayCommand]
-    private void DismissCategorySuggestion()
-    {
-        ShowCreateCategorySuggestion = false;
     }
 
     #endregion
@@ -1623,9 +1503,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Reset AI suggestion state
         IsLoadingAiSuggestions = false;
-        HasAiSuggestions = false;
-        AiSuggestion = null;
-        SupplierMatchConfidence = 0;
+        _aiSuggestion = null;
         ShowCreateSupplierSuggestion = false;
         SuggestedSupplierName = string.Empty;
 
@@ -1647,22 +1525,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
         {
             SupplierOptions.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
-        }
-    }
-
-    private void LoadCategoryOptions()
-    {
-        CategoryOptions.Clear();
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Categories == null) return;
-
-        // Load categories based on transaction type (Revenue or Expense)
-        var targetType = IsRevenue ? CategoryType.Revenue : CategoryType.Expense;
-        foreach (var category in companyData.Categories
-            .Where(c => c.Type == targetType)
-            .OrderBy(c => c.Name))
-        {
-            CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });
         }
     }
 
