@@ -167,12 +167,12 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// <summary>
     /// Payment method options for add/edit modal (Cash and Check only as per requirements).
     /// </summary>
-    public ObservableCollection<string> ModalPaymentMethodOptions { get; } = ["Cash", "Check"];
+    public ObservableCollection<string> ModalPaymentMethodOptions { get; } = ["Cash", "Credit Card", "Debit Card", "Check"];
 
     /// <summary>
     /// Payment method options for filter (includes All).
     /// </summary>
-    public ObservableCollection<string> FilterPaymentMethodOptions { get; } = ["All", "Cash", "Check", "Stripe", "PayPal", "Square"];
+    public ObservableCollection<string> FilterPaymentMethodOptions { get; } = ["All", "Cash", "Credit Card", "Debit Card", "Check", "Stripe", "PayPal", "Square"];
 
     /// <summary>
     /// Status options for filter.

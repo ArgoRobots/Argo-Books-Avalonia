@@ -61,7 +61,8 @@ public static class PaymentMethodExtensions
         return
         [
             PaymentMethod.Cash.GetDisplayName(),
-            "Bank Card",
+            PaymentMethod.CreditCard.GetDisplayName(),
+            PaymentMethod.DebitCard.GetDisplayName(),
             PaymentMethod.BankTransfer.GetDisplayName(),
             PaymentMethod.Check.GetDisplayName(),
             PaymentMethod.PayPal.GetDisplayName(),

@@ -583,8 +583,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         LineItems.Clear();
         foreach (var item in result.LineItems)
         {
-            // Skip discount lines and negative-amount adjustments
-            if (IsDiscountLine(item))
+            // Skip discount lines, negative-amount adjustments, and $0 items
+            if (IsDiscountLine(item) || item.TotalPrice == 0)
                 continue;
 
             var lineItem = new ScannedLineItemViewModel
