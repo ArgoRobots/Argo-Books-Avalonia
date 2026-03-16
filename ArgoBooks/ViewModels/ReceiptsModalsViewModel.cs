@@ -305,16 +305,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
-    public ObservableCollection<string> PaymentMethodOptions { get; } =
-    [
-        "Cash",
-        "Credit Card",
-        "Debit Card",
-        "Bank Transfer",
-        "Check",
-        "PayPal",
-        "Other"
-    ];
+    public ObservableCollection<string> PaymentMethodOptions { get; } = new(PaymentMethodExtensions.GetCommonOptions());
 
     [ObservableProperty]
     private bool _hasTotalError;
@@ -583,8 +574,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         LineItems.Clear();
         foreach (var item in result.LineItems)
         {
-            // Skip discount lines and negative-amount adjustments
-            if (IsDiscountLine(item))
+            // Skip discount lines, negative-amount adjustments, and $0 items
+            if (IsDiscountLine(item) || item.TotalPrice == 0)
                 continue;
 
             var lineItem = new ScannedLineItemViewModel

@@ -328,7 +328,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Payment method options for filter.
     /// </summary>
-    public ObservableCollection<string> PaymentMethodOptions { get; } = ["All", "Cash", "Check"];
+    public ObservableCollection<string> PaymentMethodOptions { get; } = new(PaymentMethodExtensions.GetFilterOptions());
 
     /// <summary>
     /// Status options for filter.

@@ -302,6 +302,10 @@ public partial class UpgradeModal : UserControl
             var text = textBox.Text ?? string.Empty;
             var caretIndex = textBox.CaretIndex;
 
+            // Detect if the user just typed a dash (text has a dash that isn't at a formatted position)
+            var userTypedDash = caretIndex > 0 && caretIndex <= text.Length
+                && text[caretIndex - 1] == '-';
+
             // Count digits before cursor in original text
             var digitsBeforeCaret = text.Take(caretIndex).Count(char.IsLetterOrDigit);
 
@@ -321,25 +325,38 @@ public partial class UpgradeModal : UserControl
                 formatted.Append(digitsOnly[i]);
             }
 
+            // If user typed a dash at a group boundary, add trailing dash
+            // so the caret can advance past it (e.g. "3333" -> "3333-")
+            if (userTypedDash && digitsOnly.Length > 0 && digitsOnly.Length % 4 == 0 && digitsOnly.Length < 20)
+            {
+                formatted.Append('-');
+            }
+
             var formattedText = formatted.ToString();
 
-            // Only update if different to avoid infinite loop
+            // Calculate new caret position based on digits before caret
+            var newCaretIndex = 0;
+            var digitCount = 0;
+            for (int i = 0; i < formattedText.Length && digitCount < digitsBeforeCaret; i++)
+            {
+                newCaretIndex = i + 1;
+                if (char.IsLetterOrDigit(formattedText[i]))
+                    digitCount++;
+            }
+
+            // If user typed a dash, advance caret past the next dash in formatted text
+            if (userTypedDash && newCaretIndex < formattedText.Length && formattedText[newCaretIndex] == '-')
+            {
+                newCaretIndex++;
+            }
+
+            // Only update text if different to avoid infinite loop
             if (text != formattedText)
             {
                 textBox.Text = formattedText;
-
-                // Calculate new caret position based on digits before caret
-                var newCaretIndex = 0;
-                var digitCount = 0;
-                for (int i = 0; i < formattedText.Length && digitCount < digitsBeforeCaret; i++)
-                {
-                    newCaretIndex = i + 1;
-                    if (char.IsLetterOrDigit(formattedText[i]))
-                        digitCount++;
-                }
-
-                textBox.CaretIndex = Math.Min(newCaretIndex, formattedText.Length);
             }
+
+            textBox.CaretIndex = Math.Min(newCaretIndex, formattedText.Length);
         }
         finally
         {

@@ -61,11 +61,20 @@ public static class PaymentMethodExtensions
         return
         [
             PaymentMethod.Cash.GetDisplayName(),
-            "Bank Card",
+            PaymentMethod.CreditCard.GetDisplayName(),
+            PaymentMethod.DebitCard.GetDisplayName(),
             PaymentMethod.BankTransfer.GetDisplayName(),
             PaymentMethod.Check.GetDisplayName(),
             PaymentMethod.PayPal.GetDisplayName(),
             PaymentMethod.Other.GetDisplayName()
         ];
+    }
+
+    /// <summary>
+    /// Gets all payment method options for filter dropdowns, prefixed with "All".
+    /// </summary>
+    public static string[] GetFilterOptions()
+    {
+        return ["All", .. Enum.GetValues<PaymentMethod>().Select(m => m.GetDisplayName())];
     }
 }
