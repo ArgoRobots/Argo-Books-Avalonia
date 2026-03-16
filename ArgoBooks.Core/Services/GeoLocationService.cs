@@ -10,9 +10,9 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class GeoLocationService : IGeoLocationService
 {
-    private const string IpApiUrl = "http://ip-api.com/json/?fields=status,country,countryCode,region,city,timezone,proxy";
     private const string IpApiCoUrl = "https://ipapi.co/json/";
     private const string IpInfoUrl = "https://ipinfo.io/json";
+    private const string IpApiUrl = "http://ip-api.com/json/?fields=status,country,countryCode,region,city,timezone,proxy"; // HTTP-only fallback (free tier)
     private const string IpifyUrl = "https://api.ipify.org";
     private const string HashSalt = "ArgoBooks2024GeoHash"; // Salt for IP hashing
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(12);
@@ -43,10 +43,10 @@ public class GeoLocationService : IGeoLocationService
 
         var locationData = new GeoLocationData();
 
-        // Try each geolocation API in order
-        _ = await TryIpApiAsync(locationData, cancellationToken) ||
-            await TryIpApiCoAsync(locationData, cancellationToken) ||
-            await TryIpInfoAsync(locationData, cancellationToken);
+        // Try HTTPS APIs first, fall back to HTTP-only ip-api.com last
+        _ = await TryIpApiCoAsync(locationData, cancellationToken) ||
+            await TryIpInfoAsync(locationData, cancellationToken) ||
+            await TryIpApiAsync(locationData, cancellationToken);
 
         // Get and hash IP address
         var ip = await GetIpAddressAsync(cancellationToken);

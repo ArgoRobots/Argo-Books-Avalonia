@@ -172,7 +172,7 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
                                                                    Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
@@ -182,7 +182,7 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding AmountFormatted}"

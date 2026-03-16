@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for rental inventory modals.
 /// </summary>
-public partial class RentalInventoryModalsViewModel : ObservableObject
+public partial class RentalInventoryModalsViewModel : ViewModelBase
 {
     #region Modal State
 
@@ -343,21 +343,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     {
         if (HasAddModalEnteredData)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardNewAsync())
+                return;
         }
 
         CloseAddModal();
@@ -499,21 +486,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     {
         if (HasEditModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardEditsAsync())
+                return;
         }
 
         CloseEditModal();
@@ -582,7 +556,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         if (oldMonthlyRate != newMonthlyRate) changes["Monthly Rate"] = new FieldChange { OldValue = oldMonthlyRate.ToString("F2"), NewValue = newMonthlyRate.ToString("F2") };
         if (oldSecurityDeposit != newSecurityDeposit) changes["Security Deposit"] = new FieldChange { OldValue = oldSecurityDeposit.ToString("F2"), NewValue = newSecurityDeposit.ToString("F2") };
         if (oldStatus != newStatus) changes["Status"] = new FieldChange { OldValue = oldStatus.ToString(), NewValue = newStatus.ToString() };
-        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes ?? "", NewValue = newNotes };
+        if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         itemToEdit.ProductId = newProductId;
         itemToEdit.Name = newName;
@@ -613,7 +587,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
                 itemToEdit.MonthlyRate = oldMonthlyRate;
                 itemToEdit.SecurityDeposit = oldSecurityDeposit;
                 itemToEdit.Status = oldStatus;
-                itemToEdit.Notes = oldNotes ?? string.Empty;
+                itemToEdit.Notes = oldNotes;
                 companyData.MarkAsModified();
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -720,21 +694,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync())
+                return;
 
             // Restore filter values to the state when modal was opened
             FilterStatus = _originalFilterStatus;

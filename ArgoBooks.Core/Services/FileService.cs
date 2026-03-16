@@ -30,8 +30,9 @@ public class FileService(
 
         try
         {
-            // Create company directory inside temp
-            var companyDir = Path.Combine(tempDirectory, companyName);
+            // Create company directory inside temp (sanitize name to prevent path traversal)
+            var sanitizedName = SanitizeDirectoryName(companyName);
+            var companyDir = Path.Combine(tempDirectory, sanitizedName);
             Directory.CreateDirectory(companyDir);
 
             // Create default company data
@@ -354,6 +355,41 @@ public class FileService(
         return tempPath;
     }
 
+    /// <summary>
+    /// Cleans up orphaned temp directories older than the specified threshold.
+    /// Should be called at application startup.
+    /// </summary>
+    public static void CleanupOrphanedTempDirectories(TimeSpan maxAge)
+    {
+        try
+        {
+            var argoTempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks");
+            if (!Directory.Exists(argoTempDir))
+                return;
+
+            var cutoff = DateTime.UtcNow - maxAge;
+            foreach (var dir in Directory.GetDirectories(argoTempDir))
+            {
+                try
+                {
+                    var info = new DirectoryInfo(dir);
+                    if (info.LastWriteTimeUtc < cutoff)
+                    {
+                        Directory.Delete(dir, recursive: true);
+                    }
+                }
+                catch
+                {
+                    // Best effort cleanup per directory
+                }
+            }
+        }
+        catch
+        {
+            // Best effort - don't fail startup over cleanup
+        }
+    }
+
     private string GetCompanyNameFromDirectory(string tempDirectory)
     {
         // First try to read the company name from settings (in case it was renamed)
@@ -443,6 +479,17 @@ public class FileService(
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Sanitizes a directory name by removing path separators and traversal sequences.
+    /// </summary>
+    private static string SanitizeDirectoryName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var sanitized = new string(name.Where(c => !invalid.Contains(c)).ToArray());
+        sanitized = sanitized.Replace("..", "");
+        return string.IsNullOrWhiteSpace(sanitized) ? "Company" : sanitized.Trim();
     }
 
     private const int ThumbnailMaxSize = 64;

@@ -39,7 +39,7 @@ public class PaymentPortalService
             {
                 Success = false,
                 Connected = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file."
+                Message = "Payment portal is not configured. Please register your company first."
             };
         }
 
@@ -95,7 +95,7 @@ public class PaymentPortalService
             return new PortalPublishResponse
             {
                 Success = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Payment portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -187,9 +187,9 @@ public class PaymentPortalService
         {
             return new PortalPublishResponse { Success = false, Message = $"Network error: {ex.Message}", ErrorCode = "NETWORK_ERROR" };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return new PortalPublishResponse { Success = false, Message = $"Error: {ex.Message}", ErrorCode = "UNKNOWN_ERROR" };
+            return new PortalPublishResponse { Success = false, Message = "An unexpected error occurred. Please try again.", ErrorCode = "UNKNOWN_ERROR" };
         }
     }
 
@@ -209,7 +209,7 @@ public class PaymentPortalService
             return new PortalSyncResponse
             {
                 Success = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Payment portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -305,7 +305,7 @@ public class PaymentPortalService
             // Map payment method
             var method = portalPayment.PaymentMethod.ToLowerInvariant() switch
             {
-                "stripe" => PaymentMethod.CreditCard,
+                "stripe" => PaymentMethod.Stripe,
                 "paypal" => PaymentMethod.PayPal,
                 "square" => PaymentMethod.Square,
                 _ => PaymentMethod.Other
@@ -395,7 +395,7 @@ public class PaymentPortalService
             return new PortalOAuthResponse
             {
                 Success = false,
-                Message = $"Payment portal is not configured. Please add {PortalSettings.ApiKeyEnvVar} to your .env file.",
+                Message = "Payment portal is not configured. Please register your company first.",
                 ErrorCode = "NOT_CONFIGURED"
             };
         }
@@ -417,7 +417,7 @@ public class PaymentPortalService
 
             var statusCode = (int)response.StatusCode;
             var message = statusCode == 401
-                ? "Authentication failed. Your portal API key may be invalid or the company has not been registered. Please check your .env file."
+                ? "Authentication failed. Your portal API key may be invalid or the company has not been registered."
                 : $"Failed to initiate connection (HTTP {statusCode}).";
 
             // Try to extract server error message
@@ -490,11 +490,12 @@ public class PaymentPortalService
     #region Registration
 
     /// <summary>
-    /// Registers the company with the payment portal using the master registration key.
+    /// Registers the company with the payment portal using a premium license key.
     /// On success, saves the returned per-company API key to .env.
     /// </summary>
     public async Task<PortalRegisterResponse> RegisterCompanyAsync(
-        string registrationKey,
+        string licenseKey,
+        string deviceId,
         string companyName,
         string? ownerEmail,
         CancellationToken cancellationToken = default)
@@ -503,10 +504,8 @@ public class PaymentPortalService
         {
             var url = PortalSettings.ApiBaseUrl.TrimEnd('/') + "/register";
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", registrationKey);
-            request.Headers.Add("X-Api-Key", registrationKey);
 
-            var body = new { companyName, ownerEmail };
+            var body = new { licenseKey, deviceId, companyName, ownerEmail };
             var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -538,7 +537,7 @@ public class PaymentPortalService
                 ?? $"Registration failed (HTTP {(int)response.StatusCode}).";
 
             if ((int)response.StatusCode == 401)
-                message = "Invalid registration key. Please check that the key matches your server's PORTAL_REGISTRATION_KEY.";
+                message = "Invalid or expired license key. Please check your premium subscription.";
 
             return new PortalRegisterResponse { Success = false, Message = message };
         }
@@ -624,9 +623,9 @@ public class PaymentPortalService
         {
             return new PortalLogoResponse { Success = false, Message = $"Network error: {ex.Message}" };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return new PortalLogoResponse { Success = false, Message = $"Error: {ex.Message}" };
+            return new PortalLogoResponse { Success = false, Message = "An unexpected error occurred while uploading the logo." };
         }
     }
 

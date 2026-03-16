@@ -1308,25 +1308,28 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             return;
         }
 
-        // Check if Google credentials are configured
-        if (!GoogleCredentialsManager.AreCredentialsConfigured())
-        {
-            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
-            {
-                IsSuccess = false,
-                ErrorMessage = "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file."
-            });
-            return;
-        }
-
-        // Notify that export is starting
+        // Notify that export is starting (with cancellation support)
+        var cts = new CancellationTokenSource();
         GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
         {
-            IsExporting = true
+            IsExporting = true,
+            CancellationTokenSource = cts
         });
 
         try
         {
+            // Ensure Google is authorized (auto-initiates OAuth if needed)
+            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync(cts.Token);
+            if (!isAuthenticated)
+            {
+                GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Google Sheets authorization was not completed. Please try again."
+                });
+                return;
+            }
+
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
             var chartExportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
             var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";
@@ -1349,12 +1352,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 };
             }
 
+            cts.Token.ThrowIfCancellationRequested();
+
             var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
                 chartType,
-                companyName
+                companyName,
+                cts.Token
             );
 
             if (!string.IsNullOrEmpty(url))
@@ -1392,6 +1398,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                     ErrorMessage = "Failed to create spreadsheet."
                 });
             }
+        }
+        catch (OperationCanceledException)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = null // Cancelled by user, no error message needed
+            });
+            return;
         }
         catch (InvalidOperationException ex)
         {

@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -49,11 +50,11 @@ public class TelemetryUploadService : ITelemetryUploadService
 
         try
         {
-            var apiKey = GetApiKey();
-            if (string.IsNullOrEmpty(apiKey))
+            var licenseKey = LicenseAuthHelper.GetLicenseKey();
+            if (string.IsNullOrEmpty(licenseKey))
             {
                 result.Success = false;
-                result.ErrorMessage = "API key not configured";
+                result.ErrorMessage = "License key not configured";
                 // Save backup when API key is missing
                 result.BackupFilePath = await _storageService.SaveBackupFileAsync(cancellationToken);
                 return result;
@@ -80,7 +81,7 @@ public class TelemetryUploadService : ITelemetryUploadService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var batchResult = await UploadBatchWithRetryAsync(batch, apiKey, cancellationToken);
+                var batchResult = await UploadBatchWithRetryAsync(batch, licenseKey, cancellationToken);
                 if (batchResult.Success)
                 {
                     uploadedIds.AddRange(batch.Select(e => e.DataId));
@@ -225,7 +226,8 @@ public class TelemetryUploadService : ITelemetryUploadService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, UploadUrl);
         request.Content = content;
-        request.Headers.Add("X-API-Key", apiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        request.Headers.Add("X-License-Key", apiKey);
         request.Headers.UserAgent.ParseAdd($"{UserAgentPrefix}/{_appVersion}");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -247,16 +249,6 @@ public class TelemetryUploadService : ITelemetryUploadService
         return result;
     }
 
-    private static string GetApiKey()
-    {
-        // Try environment variable first
-        var apiKey = Environment.GetEnvironmentVariable("ARGO_TELEMETRY_API_KEY");
-        if (!string.IsNullOrEmpty(apiKey))
-            return apiKey;
-
-        // Try DotEnv
-        return DotEnv.Get("UPLOAD_API_KEY");
-    }
 
     private class TelemetryUploadData
     {

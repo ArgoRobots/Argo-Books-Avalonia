@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
@@ -7,16 +9,15 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Service for fetching and managing currency exchange rates.
-/// Uses OpenExchangeRates API with local caching.
+/// Routes requests through the argorobots.com server proxy.
 /// </summary>
 public class ExchangeRateService
 {
-    private const string BaseUrl = "https://openexchangerates.org/api";
+    private const string BaseUrl = "https://argorobots.com/api/exchange-rates.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
 
     private readonly ExchangeRateCache _cache;
     private readonly HttpClient _httpClient;
-    private readonly string? _apiKey;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
     private bool _isInitialized;
@@ -29,20 +30,18 @@ public class ExchangeRateService
     /// <summary>
     /// Creates a new ExchangeRateService instance.
     /// </summary>
-    /// <param name="apiKey">OpenExchangeRates API key. If null, will try to read from environment variable.</param>
     /// <param name="errorLogger">Optional error logger for tracking errors.</param>
     /// <param name="telemetryManager">Optional telemetry manager for tracking API calls.</param>
-    public ExchangeRateService(string? apiKey = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
-        : this(apiKey, PlatformServiceFactory.GetPlatformService(), new HttpClient(), errorLogger, telemetryManager)
+    public ExchangeRateService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+        : this(PlatformServiceFactory.GetPlatformService(), new HttpClient(), errorLogger, telemetryManager)
     {
     }
 
     /// <summary>
     /// Creates a new ExchangeRateService instance with custom dependencies.
     /// </summary>
-    public ExchangeRateService(string? apiKey, IPlatformService platformService, HttpClient httpClient, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public ExchangeRateService(IPlatformService platformService, HttpClient httpClient, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
-        _apiKey = apiKey ?? DotEnv.Get("OPENEXCHANGERATES_API_KEY");
         _httpClient = httpClient;
         _httpClient.Timeout = TimeSpan.FromSeconds(10);
         _cache = new ExchangeRateCache(platformService);
@@ -89,7 +88,7 @@ public class ExchangeRateService
         }
 
         // Fetch from API if allowed
-        if (fetchIfMissing && !string.IsNullOrEmpty(_apiKey))
+        if (fetchIfMissing && HasApiKey)
         {
             var rates = await FetchRatesForDateAsync(date);
             if (rates != null)
@@ -213,7 +212,7 @@ public class ExchangeRateService
     /// <summary>
     /// Checks if the service has a valid API key configured.
     /// </summary>
-    public bool HasApiKey => !string.IsNullOrEmpty(_apiKey);
+    public bool HasApiKey => LicenseAuthHelper.IsConfigured;
 
     /// <summary>
     /// Gets the number of cached exchange rates.
@@ -225,7 +224,7 @@ public class ExchangeRateService
     /// </summary>
     private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date)
     {
-        if (string.IsNullOrEmpty(_apiKey))
+        if (!LicenseAuthHelper.IsConfigured)
         {
             return null;
         }
@@ -235,22 +234,29 @@ public class ExchangeRateService
 
         try
         {
-            // Use historical endpoint for past dates, latest for today
             var isToday = date.Date == DateTime.Today;
             var endpoint = isToday
-                ? $"{BaseUrl}/latest.json?app_id={_apiKey}&base={BaseCurrency}"
-                : $"{BaseUrl}/historical/{date:yyyy-MM-dd}.json?app_id={_apiKey}&base={BaseCurrency}";
+                ? BaseUrl
+                : $"{BaseUrl}?date={date:yyyy-MM-dd}";
 
-            var response = await _httpClient.GetAsync(endpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            LicenseAuthHelper.AddAuthHeaders(request);
+
+            var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
                 _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode}", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
                 return null;
             }
 
-            var result = await response.Content.ReadFromJsonAsync<OpenExchangeRatesResponse>();
-            success = result?.Rates != null;
-            return result?.Rates;
+            var result = await response.Content.ReadFromJsonAsync<ProxyExchangeRatesResponse>();
+            if (result?.Success == true && result.Rates != null)
+            {
+                success = true;
+                return result.Rates;
+            }
+
+            return null;
         }
         catch (Exception ex)
         {
@@ -273,21 +279,18 @@ public class ExchangeRateService
     public Task SaveCacheAsync() => _cache.SaveAsync();
 
     /// <summary>
-    /// Response from OpenExchangeRates API.
+    /// Response from the exchange rates proxy endpoint.
     /// </summary>
-    private class OpenExchangeRatesResponse
+    private class ProxyExchangeRatesResponse
     {
-        [JsonPropertyName("disclaimer")]
-        public string? Disclaimer { get; init; }
-
-        [JsonPropertyName("license")]
-        public string? License { get; init; }
-
-        [JsonPropertyName("timestamp")]
-        public long Timestamp { get; init; }
+        [JsonPropertyName("success")]
+        public bool Success { get; init; }
 
         [JsonPropertyName("base")]
         public string? Base { get; init; }
+
+        [JsonPropertyName("date")]
+        public string? Date { get; init; }
 
         [JsonPropertyName("rates")]
         public Dictionary<string, decimal>? Rates { get; init; }

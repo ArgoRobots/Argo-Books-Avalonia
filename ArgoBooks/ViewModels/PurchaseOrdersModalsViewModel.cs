@@ -319,23 +319,11 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var hasChanges = IsEditMode ? HasEditModalChanges : HasAddModalEnteredData;
         if (hasChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = IsEditMode
-                        ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
-                        : "You have entered data that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            var confirmed = IsEditMode
+                ? await ConfirmDiscardEditsAsync()
+                : await ConfirmDiscardNewAsync();
+            if (!confirmed)
+                return;
         }
 
         CloseAddModal();
@@ -988,21 +976,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync())
+                return;
 
             RestoreOriginalFilterValues();
         }

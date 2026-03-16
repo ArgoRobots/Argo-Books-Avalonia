@@ -148,7 +148,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
                 if (newPayments.Count > 0)
                 {
-                    // Mark data as changed
+                    // Mark data as changed and notify other pages (e.g. invoices)
                     App.CompanyManager?.MarkAsChanged();
                 }
             }
@@ -592,6 +592,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             {
                 "Cash" => PaymentMethod.Cash,
                 "Check" => PaymentMethod.Check,
+                "Stripe" => PaymentMethod.Stripe,
+                "PayPal" => PaymentMethod.PayPal,
+                "Square" => PaymentMethod.Square,
                 _ => PaymentMethod.Cash
             };
             filtered = filtered.Where(p => p.PaymentMethod == method).ToList();
@@ -644,17 +647,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
                 PaymentMethod = payment.PaymentMethod,
-                PaymentMethodDisplay = payment.PaymentMethod switch
-                {
-                    PaymentMethod.Cash => "Cash",
-                    PaymentMethod.Check => "Check",
-                    PaymentMethod.CreditCard => "Credit Card",
-                    PaymentMethod.DebitCard => "Debit Card",
-                    PaymentMethod.BankTransfer => "Bank Transfer",
-                    PaymentMethod.PayPal => "PayPal",
-                    PaymentMethod.Square => "Square",
-                    _ => payment.PaymentMethod.ToString()
-                },
+                PaymentMethodDisplay = payment.PaymentMethod.GetDisplayName(),
                 Amount = payment.Amount,
                 AmountUSD = payment.EffectiveAmountUSD,
                 Status = status,

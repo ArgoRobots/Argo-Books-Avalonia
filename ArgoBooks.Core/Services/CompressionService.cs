@@ -146,11 +146,18 @@ public class CompressionService
     }
 
     /// <summary>
-    /// Decompresses GZip data.
+    /// Maximum decompressed size (4 GB) to prevent zip bomb attacks.
+    /// Set high to accommodate company files with large numbers of receipt images.
+    /// </summary>
+    private const long MaxDecompressedSize = 4L * 1024 * 1024 * 1024;
+
+    /// <summary>
+    /// Decompresses GZip data with a size limit to prevent zip bomb attacks.
     /// </summary>
     /// <param name="compressedStream">Stream containing compressed data.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Memory stream containing decompressed data.</returns>
+    /// <exception cref="InvalidDataException">Thrown if decompressed size exceeds the limit.</exception>
     public async Task<MemoryStream> DecompressGZipAsync(
         Stream compressedStream,
         CancellationToken cancellationToken = default)
@@ -159,7 +166,21 @@ public class CompressionService
 
         await using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress, leaveOpen: true))
         {
-            await gzipStream.CopyToAsync(decompressedStream, cancellationToken);
+            var buffer = new byte[81920];
+            int bytesRead;
+            long totalRead = 0;
+
+            while ((bytesRead = await gzipStream.ReadAsync(buffer, cancellationToken)) > 0)
+            {
+                totalRead += bytesRead;
+                if (totalRead > MaxDecompressedSize)
+                {
+                    throw new InvalidDataException(
+                        $"Decompressed data exceeds the maximum allowed size of {MaxDecompressedSize / (1024 * 1024)} MB. The file may be corrupted.");
+                }
+
+                await decompressedStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+            }
         }
 
         decompressedStream.Position = 0;

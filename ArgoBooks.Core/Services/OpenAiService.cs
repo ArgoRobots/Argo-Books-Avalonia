@@ -2,32 +2,29 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.AI;
+
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// OpenAI API service for AI-powered supplier and category suggestions.
-/// Follows the same pattern as AIQueryTranslator from Argo-Books-WinForms.
+/// Routes requests through the argorobots.com server proxy.
 /// </summary>
 public class OpenAiService : IOpenAiService
 {
-    private const string ApiKeyEnvVar = "OPENAI_API_KEY";
-    private const string ModelEnvVar = "OPENAI_MODEL";
     private const string DefaultModel = "gpt-4o-mini";
-    private const string ApiEndpoint = "https://api.openai.com/v1/chat/completions";
+    private const string ApiEndpoint = "https://argorobots.com/api/ai/completions.php";
 
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
-    private string? _lastApiKey;
 
     /// <summary>
     /// Creates a new instance of the OpenAI service.
     /// </summary>
     public OpenAiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
-        DotEnv.Load();
         _httpClient = new HttpClient();
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
@@ -35,7 +32,7 @@ public class OpenAiService : IOpenAiService
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => DotEnv.HasValue(ApiKeyEnvVar);
+    public bool IsConfigured => LicenseAuthHelper.IsConfigured;
 
     /// <inheritdoc />
     public async Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
@@ -45,17 +42,8 @@ public class OpenAiService : IOpenAiService
         if (!IsConfigured)
             return null;
 
-        // Reconfigure if API key changed
-        var currentApiKey = DotEnv.Get(ApiKeyEnvVar);
-        if (_lastApiKey != currentApiKey)
-        {
-            ConfigureHttpClient();
-        }
-
         var stopwatch = Stopwatch.StartNew();
-        var model = DotEnv.Get(ModelEnvVar);
-        if (string.IsNullOrEmpty(model))
-            model = DefaultModel;
+        var model = DefaultModel;
         var success = false;
 
         try
@@ -102,17 +90,8 @@ public class OpenAiService : IOpenAiService
         if (!IsConfigured)
             return null;
 
-        // Reconfigure if API key changed
-        var currentApiKey = DotEnv.Get(ApiKeyEnvVar);
-        if (_lastApiKey != currentApiKey)
-        {
-            ConfigureHttpClient();
-        }
-
         var stopwatch = Stopwatch.StartNew();
-        var model = DotEnv.Get(ModelEnvVar);
-        if (string.IsNullOrEmpty(model))
-            model = DefaultModel;
+        var model = DefaultModel;
         var success = false;
 
         try
@@ -142,14 +121,8 @@ public class OpenAiService : IOpenAiService
 
     private void ConfigureHttpClient()
     {
-        var apiKey = DotEnv.Get(ApiKeyEnvVar);
-        if (!string.IsNullOrEmpty(apiKey))
-        {
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _lastApiKey = apiKey;
-        }
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
     private static string BuildPrompt(ReceiptAnalysisRequest request)
@@ -181,10 +154,11 @@ public class OpenAiService : IOpenAiService
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a clean supplier name
 
 2. CATEGORY: Find the best matching category based on:
+   - Line item descriptions (most important — use these to determine what was actually purchased)
    - What the supplier typically sells
-   - Line item descriptions if available
    - Common business expense categories
-   - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest an appropriate category
+   - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a SPECIFIC category name
+   - IMPORTANT: Be specific! Use descriptive names based on the actual items (e.g., ""Groceries"", ""Cooking Ingredients"", ""Office Supplies"", ""Cleaning Products""). NEVER use vague or generic names like ""Purchases"", ""General"", ""General Expenses"", ""Miscellaneous"", ""Expenses"", or any combination of these words
 
 ## Response Format (JSON only, no markdown code blocks)
 {{
@@ -217,42 +191,37 @@ Respond with JSON only.";
         double temperature = 0.3,
         CancellationToken cancellationToken = default)
     {
-        var model = DotEnv.Get(ModelEnvVar);
-        if (string.IsNullOrEmpty(model))
-            model = DefaultModel;
-
         var requestBody = new
         {
-            model,
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = userPrompt }
-            },
-            temperature,
-            max_tokens = maxTokens
+            systemPrompt,
+            userPrompt,
+            model = DefaultModel,
+            maxTokens,
+            temperature
         };
 
         var json = JsonSerializer.Serialize(requestBody);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(ApiEndpoint, content, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        LicenseAuthHelper.AddAuthHeaders(request);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            _errorLogger?.LogError($"OpenAI API error {response.StatusCode}: {errorBody}", ErrorCategory.Api, "OpenAI chat completion");
+            _errorLogger?.LogError($"AI proxy error {response.StatusCode}", ErrorCategory.Api, "AI chat completion");
             return null;
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
         using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
 
-        var choices = doc.RootElement.GetProperty("choices");
-        if (choices.GetArrayLength() > 0)
+        if (root.TryGetProperty("success", out var successProp) && successProp.GetBoolean()
+            && root.TryGetProperty("content", out var contentProp))
         {
-            var messageContent = choices[0].GetProperty("message").GetProperty("content").GetString();
-            return messageContent;
+            return contentProp.GetString();
         }
 
         return null;
@@ -349,14 +318,25 @@ Respond with JSON only.";
                 {
                     result.NewCategory = new NewCategorySuggestion();
 
+                    var suggestedName = "General";
                     if (category.TryGetProperty("newName", out var newName) && newName.ValueKind != JsonValueKind.Null)
                     {
-                        result.NewCategory.Name = newName.GetString() ?? "General";
+                        suggestedName = newName.GetString() ?? "General";
                     }
-                    else
+
+                    // Reject vague category names — the AI sometimes suggests these
+                    var vagueName = IsVagueCategoryName(suggestedName);
+                    if (vagueName && category.TryGetProperty("newDescription", out var descFallback)
+                        && descFallback.ValueKind != JsonValueKind.Null
+                        && !string.IsNullOrWhiteSpace(descFallback.GetString()))
                     {
-                        result.NewCategory.Name = "General";
+                        // Use the description as the name if it's more specific
+                        var desc = descFallback.GetString()!;
+                        if (!IsVagueCategoryName(desc) && desc.Length <= 40)
+                            suggestedName = desc;
                     }
+
+                    result.NewCategory.Name = suggestedName;
 
                     if (category.TryGetProperty("newDescription", out var newDesc) && newDesc.ValueKind != JsonValueKind.Null)
                     {
@@ -374,8 +354,20 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Parsing, $"Failed to parse OpenAI response: {response}");
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse OpenAI response");
             return null;
         }
+    }
+
+    private static bool IsVagueCategoryName(string name)
+    {
+        var normalized = name.Trim().ToLowerInvariant();
+        var vagueExact = new[] { "purchases", "general", "miscellaneous", "expenses", "other", "various", "items", "goods" };
+        if (vagueExact.Contains(normalized))
+            return true;
+
+        // Catch compound vague names like "general expenses", "other purchases", "miscellaneous items"
+        var words = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return words.Length >= 1 && words.All(w => vagueExact.Contains(w));
     }
 }

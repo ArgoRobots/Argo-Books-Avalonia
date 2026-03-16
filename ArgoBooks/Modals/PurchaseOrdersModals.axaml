@@ -148,14 +148,14 @@
                                                              Text="{Binding Quantity, Mode=TwoWay}"
                                                              Classes="form-input-compact"
                                                              HorizontalContentAlignment="Center"
-                                                             VerticalAlignment="Stretch"
+                                                             VerticalAlignment="Top"
                                                              Margin="0,0,8,0"
                                                              MaxLength="5" />
                                                     <TextBox Grid.Column="2"
                                                              Text="{Binding UnitCost, Mode=TwoWay}"
                                                              Classes="form-input-compact"
                                                              HorizontalContentAlignment="Center"
-                                                             VerticalAlignment="Stretch"
+                                                             VerticalAlignment="Top"
                                                              Margin="0,0,8,0"
                                                              MaxLength="12" />
                                                     <TextBlock Grid.Column="3"

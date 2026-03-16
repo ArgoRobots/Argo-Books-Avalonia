@@ -83,7 +83,7 @@
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Argo Community'}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Report a bug'}" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 

@@ -10,7 +10,6 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Inventory;
-using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Transactions;
@@ -259,22 +258,9 @@ public class App : Application
     }
 
     /// <summary>
-    /// Shows a modal success message box.
-    /// </summary>
-    private static async Task ShowSuccessMessageBoxAsync(string title, string message)
-    {
-        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-            && desktop.MainWindow is MainWindow mainWindow
-            && mainWindow.MessageBoxService is { } messageBoxService)
-        {
-            await messageBoxService.ShowSuccessAsync(title, message);
-        }
-    }
-
-    /// <summary>
     /// Shows a modal warning message box.
     /// </summary>
-    private static async Task ShowWarningMessageBoxAsync(string title, string message)
+    public static async Task ShowWarningMessageBoxAsync(string title, string message)
     {
         if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
@@ -631,7 +617,7 @@ public class App : Application
     }
 
     // File watchers for recent companies - watches directories containing recent company files
-    private static readonly Dictionary<string, FileSystemWatcher> _recentCompanyWatchers = new();
+    private static readonly Dictionary<string, FileSystemWatcher> RecentCompanyWatchers = new();
 
     // When true, the CompanySaved event handler skips showing the "Saved" indicator
     private static bool _suppressSavedFeedback;
@@ -740,7 +726,7 @@ public class App : Application
             };
 
             // Register pages with navigation service
-            RegisterPages(NavigationService, _appShellViewModel);
+            RegisterPages(NavigationService);
 
             // Set navigation callback to update current page in AppShell
             NavigationService.SetNavigationCallback(page => _appShellViewModel.CurrentPage = page);
@@ -866,13 +852,10 @@ public class App : Application
             // Apply saved sidebar collapsed state after settings are loaded from disk.
             // The SidebarViewModel was created before settings were loaded, so its constructor
             // read the default value. Re-apply the persisted state now.
-            if (_appShellViewModel != null && SettingsService != null)
+            var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
+            if (savedCollapsed)
             {
-                var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
-                if (savedCollapsed)
-                {
-                    _appShellViewModel.SidebarViewModel.IsCollapsed = true;
-                }
+                _appShellViewModel.SidebarViewModel.IsCollapsed = true;
             }
 
             desktop.MainWindow = new MainWindow
@@ -1303,7 +1286,7 @@ public class App : Application
                     if (SettingsService != null)
                     {
                         SettingsService.GlobalSettings.Ui.Language = language;
-                        _ = SettingsService.SaveGlobalSettingsAsync();
+                        await SettingsService.SaveGlobalSettingsAsync();
                     }
                 }
             }
@@ -2063,35 +2046,11 @@ public class App : Application
                     if (!string.IsNullOrEmpty(args.LogoPath))
                     {
                         await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
-
-                        // Sync logo to payment portal (fire-and-forget)
-                        if (PortalSettings.IsConfigured && PaymentPortalService != null)
-                        {
-                            var portalLogoPath = CompanyManager.CurrentCompanyLogoPath;
-                            if (!string.IsNullOrEmpty(portalLogoPath))
-                            {
-                                _ = Task.Run(async () =>
-                                {
-                                    try { await PaymentPortalService.UploadCompanyLogoAsync(portalLogoPath); }
-                                    catch (Exception ex) { ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to upload logo to portal"); }
-                                });
-                            }
-                        }
                     }
                     else if (args.LogoSource == null && CompanyManager.CurrentCompanyLogoPath != null)
                     {
                         // Logo was removed
                         await CompanyManager.RemoveCompanyLogoAsync();
-
-                        // Remove logo from payment portal (fire-and-forget)
-                        if (PortalSettings.IsConfigured && PaymentPortalService != null)
-                        {
-                            _ = Task.Run(async () =>
-                            {
-                                try { await PaymentPortalService.DeleteCompanyLogoAsync(); }
-                                catch (Exception ex) { ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to delete logo from portal"); }
-                            });
-                        }
                     }
 
                     // Capture new logo state after changes
@@ -2170,11 +2129,11 @@ public class App : Application
                             // Clear pending rename (revert to original file name)
                             if (oldFilePath != newFilePath)
                             {
-                                CompanyManager!.ClearPendingRename();
+                                CompanyManager.ClearPendingRename();
                             }
 
                             settings.ChangesMade = true;
-                            RefreshCompanyUI(oldName);
+                            RefreshCompanyUi(oldName);
                         },
                         () =>
                         {
@@ -2193,11 +2152,11 @@ public class App : Application
                             // Re-schedule the file rename
                             if (oldFilePath != newFilePath && newFilePath != null)
                             {
-                                CompanyManager!.SetPendingRename(newFilePath);
+                                CompanyManager.SetPendingRename(newFilePath);
                             }
 
                             settings.ChangesMade = true;
-                            RefreshCompanyUI(newName);
+                            RefreshCompanyUi(newName);
                         }));
                 }
             }
@@ -2258,7 +2217,7 @@ public class App : Application
     /// Refreshes company-related UI elements (sidebar, company switcher, main window title).
     /// Used by undo/redo to update the UI after restoring company data.
     /// </summary>
-    private static void RefreshCompanyUI(string companyName)
+    private static void RefreshCompanyUi(string companyName)
     {
         if (_appShellViewModel == null) return;
         _mainWindowViewModel?.OpenCompany(companyName);
@@ -2503,6 +2462,109 @@ public class App : Application
             };
         }
 
+        // Portal logo file picker
+        settings.BrowsePortalLogoRequested += async (_, _) =>
+        {
+            if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Portal Logo".Translate(),
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                    }
+                ]
+            });
+
+            if (files.Count > 0)
+            {
+                await settings.UploadPortalLogoFromFileAsync(files[0].Path.LocalPath);
+            }
+        };
+
+        // Portal authentication — prompt for password/biometric before allowing portal changes
+        settings.PortalAuthenticationRequested += async () =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true || !CompanyManager.IsEncrypted)
+                return true; // No password set, allow access
+
+            var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
+            var companyName = CompanyManager.CompanyData!.Settings.Company.Name;
+            var filePath = CompanyManager.CurrentFilePath ?? "";
+
+            // Check if Windows Hello is available for this file
+            var windowsHelloAvailable = false;
+            var platformService = PlatformServiceFactory.GetPlatformService();
+            var securitySettings = CompanyManager.CurrentCompanySettings?.Security;
+            if (securitySettings?.BiometricEnabled == true)
+            {
+                windowsHelloAvailable = await platformService.IsBiometricAvailableAsync();
+            }
+
+            var password = await passwordModal.ShowAsync(companyName, filePath, windowsHelloAvailable,
+                "Password is required to make changes to the payment portal.".Translate());
+
+            if (password == null)
+            {
+                // User cancelled
+                return false;
+            }
+
+            if (password == "__WINDOWS_HELLO__")
+            {
+                // Windows Hello succeeded — retrieve stored password and verify
+                var fileId = GetBiometricFileId(filePath);
+                var storedPassword = platformService.GetPasswordForBiometric(fileId);
+                if (!string.IsNullOrEmpty(storedPassword) && CompanyManager.VerifyCurrentPassword(storedPassword))
+                {
+                    passwordModal.Close();
+                    return true;
+                }
+
+                // Stored password didn't match — fall back to manual entry
+                passwordModal.ShowError("Stored password not found. Please enter the password manually.".Translate());
+                password = await passwordModal.WaitForPasswordAsync();
+                if (password == null)
+                    return false;
+            }
+
+            // Verify the entered password
+            while (true)
+            {
+                if (CompanyManager.VerifyCurrentPassword(password))
+                {
+                    passwordModal.Close();
+                    return true;
+                }
+
+                passwordModal.ShowError("Incorrect password. Please try again.".Translate());
+                password = await passwordModal.WaitForPasswordAsync();
+                if (password == null)
+                    return false;
+
+                // Handle Windows Hello retry
+                if (password == "__WINDOWS_HELLO__")
+                {
+                    var fileId = GetBiometricFileId(filePath);
+                    var storedPassword = platformService.GetPasswordForBiometric(fileId);
+                    if (!string.IsNullOrEmpty(storedPassword) && CompanyManager.VerifyCurrentPassword(storedPassword))
+                    {
+                        passwordModal.Close();
+                        return true;
+                    }
+                    passwordModal.ShowError("Stored password not found. Please enter the password manually.".Translate());
+                    password = await passwordModal.WaitForPasswordAsync();
+                    if (password == null)
+                        return false;
+                }
+            }
+        };
+
     }
 
     /// <summary>
@@ -2562,7 +2624,8 @@ public class App : Application
 
                     // Track telemetry
                     var fileSize = new FileInfo(backupPath).Length;
-                    _ = TelemetryManager?.TrackExportAsync(ExportType.Backup, backupStopwatch.ElapsedMilliseconds, fileSize);
+                    if (TelemetryManager != null)
+                        await TelemetryManager.TrackExportAsync(ExportType.Backup, backupStopwatch.ElapsedMilliseconds, fileSize);
 
                     // Open the containing folder
                     try
@@ -2688,7 +2751,8 @@ public class App : Application
                     "pdf" => ExportType.Pdf,
                     _ => ExportType.Excel
                 };
-                _ = TelemetryManager?.TrackExportAsync(exportType, stopwatch.ElapsedMilliseconds, fileSize);
+                if (TelemetryManager != null)
+                    await TelemetryManager.TrackExportAsync(exportType, stopwatch.ElapsedMilliseconds, fileSize);
 
                 // Open the containing folder
                 try
@@ -2846,11 +2910,11 @@ public class App : Application
             _mainWindowViewModel?.HideLoading();
             await ShowErrorMessageBoxAsync(
                 "AI Not Configured".Translate(),
-                "OpenAI API key is not configured. Please set the OPENAI_API_KEY environment variable to use AI-powered import.".Translate());
+                "Portal is not configured. Please register your company first to use AI-powered import.".Translate());
             return;
         }
 
-        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company?.Country);
+        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, openAiService);
 
         var analysisProgress = new Progress<(string detail, double percent)>(p =>
@@ -2941,7 +3005,7 @@ public class App : Application
                 }
 
                 // Import Tier 1 data
-                using var importCts = new CancellationTokenSource();
+                var importCts = new CancellationTokenSource();
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts, cancelConfirmation: ConfirmCancelAsync);
 
                 var importProgress = new Progress<(string detail, double percent)>(p =>
@@ -2974,7 +3038,7 @@ public class App : Application
             var allSheetResults = new List<SheetImportResult>();
             if (tier2Sheets.Count > 0)
             {
-                using var tier2Cts = new CancellationTokenSource();
+                var tier2Cts = new CancellationTokenSource();
 
                 _mainWindowViewModel?.ShowLoading(
                     "AI processing...".Translate(),
@@ -2998,7 +3062,10 @@ public class App : Application
                 // bar would otherwise stay at 0% the entire time.
                 var estimatedProgress = 0.0;
                 var chunkProgressReceived = false;
-                using var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+                var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+                // estimateTimer is intentionally captured and disposed from the outer scope
+                // to signal the timer task to stop. WaitForNextTickAsync returns false on dispose.
+
                 var timerTask = Task.Run(async () =>
                 {
                     while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
@@ -3091,11 +3158,11 @@ public class App : Application
             // Record undo action
             UndoRedoManager.RecordAction(new DelegateAction(
                 "AI import spreadsheet data".Translate(),
-                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager?.MarkAsChanged(); },
-                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager?.MarkAsChanged(); }
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
             ));
 
-            CompanyManager?.MarkAsChanged();
+            CompanyManager.MarkAsChanged();
 
             // Auto-switch date range to "All Time" so imported data is visible on dashboard/analytics
             // (imported data may be from any time period, not necessarily the current month)
@@ -3474,8 +3541,8 @@ public class App : Application
                         await CompanyManager.SaveCompanyAsync();
                     }
                     CompanyManager.CompanyData.MarkAsSaved();
-                    _mainWindowViewModel!.HasUnsavedChanges = false;
-                    _appShellViewModel!.HeaderViewModel.HasUnsavedChanges = false;
+                    _mainWindowViewModel.HasUnsavedChanges = false;
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
 
@@ -3617,7 +3684,7 @@ public class App : Application
 
             // Refresh UI with the (possibly updated) company name
             var newName = CompanyManager.CurrentCompanyName ?? "Company";
-            RefreshCompanyUI(newName);
+            RefreshCompanyUi(newName);
 
             await LoadRecentCompaniesAsync();
             return true;
@@ -3744,12 +3811,12 @@ public class App : Application
     private static void SetupRecentCompanyFileWatchers(List<string> filePaths)
     {
         // Dispose existing watchers
-        foreach (var watcher in _recentCompanyWatchers.Values)
+        foreach (var watcher in RecentCompanyWatchers.Values)
         {
             watcher.EnableRaisingEvents = false;
             watcher.Dispose();
         }
-        _recentCompanyWatchers.Clear();
+        RecentCompanyWatchers.Clear();
 
         // Group files by directory to minimize number of watchers
         var directories = filePaths
@@ -3775,7 +3842,7 @@ public class App : Application
                 watcher.Deleted += OnRecentCompanyFileDeleted;
                 watcher.Renamed += OnRecentCompanyFileRenamed;
 
-                _recentCompanyWatchers[directory] = watcher;
+                RecentCompanyWatchers[directory] = watcher;
             }
             catch (Exception ex)
             {
@@ -3792,7 +3859,7 @@ public class App : Application
         // Run on UI thread
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            RemoveRecentCompanyFromUI(e.FullPath);
+            RemoveRecentCompanyFromUi(e.FullPath);
         });
     }
 
@@ -3804,14 +3871,14 @@ public class App : Application
         // Run on UI thread - remove the old path
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            RemoveRecentCompanyFromUI(e.OldFullPath);
+            RemoveRecentCompanyFromUi(e.OldFullPath);
         });
     }
 
     /// <summary>
     /// Removes a company from all recent company UI lists and persists the change.
     /// </summary>
-    private static void RemoveRecentCompanyFromUI(string filePath)
+    private static void RemoveRecentCompanyFromUi(string filePath)
     {
         if (_appShellViewModel == null || SettingsService == null)
             return;
@@ -3863,7 +3930,7 @@ public class App : Application
     /// <summary>
     /// Registers all available pages with the navigation service.
     /// </summary>
-    private static void RegisterPages(NavigationService navigationService, AppShellViewModel appShellViewModel)
+    private static void RegisterPages(NavigationService navigationService)
     {
         // Register placeholder pages - these will be replaced with actual views as they're implemented
         // The page factory receives optional parameters and returns a view or viewmodel
@@ -3883,7 +3950,9 @@ public class App : Application
                 {
                     if (args.IsExporting)
                     {
-                        _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...".Translate());
+                        _mainWindowViewModel?.ShowLoading(
+                            "Exporting to Google Sheets...".Translate(),
+                            cts: args.CancellationTokenSource);
                     }
                     else if (args.IsSuccess)
                     {
@@ -3894,6 +3963,11 @@ public class App : Application
                     {
                         _mainWindowViewModel?.HideLoading();
                         await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
+                    }
+                    else
+                    {
+                        // Cancelled or no error message
+                        _mainWindowViewModel?.HideLoading();
                     }
                 };
             }

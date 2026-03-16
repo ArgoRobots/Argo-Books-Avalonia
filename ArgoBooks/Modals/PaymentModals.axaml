@@ -173,6 +173,17 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
+                            <!-- Portal payment info banner -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="12"
+                                    IsVisible="{Binding IsPortalPayment}">
+                                <TextBlock Text="{loc:Loc 'This is an online payment. Only notes can be edited.'}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </Border>
+
                             <!-- Invoice (Optional) -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Invoice (Optional)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -183,7 +194,8 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No invoices found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
+                                                            EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}"
+                                                            IsEnabled="{Binding !IsPortalPayment}" />
                             </StackPanel>
 
                             <!-- Amount -->
@@ -195,7 +207,8 @@
                                          Classes="form-input"
                                          Watermark="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                         MaxLength="20" />
+                                         MaxLength="20"
+                                         IsEnabled="{Binding !IsPortalPayment}" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
@@ -207,7 +220,8 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
-                                <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch"
+                                            IsEnabled="{Binding !IsPortalPayment}" />
                             </StackPanel>
 
                             <!-- Payment Method -->
@@ -215,9 +229,16 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
+                                <!-- Show as read-only text for portal payments -->
+                                <TextBox Text="{Binding ModalPaymentMethod}"
+                                         Classes="form-input"
+                                         IsReadOnly="True"
+                                         IsVisible="{Binding IsPortalPayment}" />
+                                <!-- Show as dropdown for manual payments -->
                                 <ComboBox ItemsSource="{Binding ModalPaymentMethodOptions}"
                                           SelectedItem="{Binding ModalPaymentMethod}"
-                                          Classes="form-combobox">
+                                          Classes="form-combobox"
+                                          IsVisible="{Binding !IsPortalPayment}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
@@ -232,7 +253,8 @@
                                 <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
                                          Watermark="{loc:Loc 'Check number, transaction ID, etc.'}"
-                                         MaxLength="50" />
+                                         MaxLength="50"
+                                         IsEnabled="{Binding !IsPortalPayment}" />
                             </StackPanel>
 
                             <!-- Notes -->

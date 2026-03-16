@@ -61,6 +61,11 @@ public class ReceiptScanResult
     public string? CurrencyCode { get; set; }
 
     /// <summary>
+    /// Detected payment method (e.g., "Credit Card", "Cash", "Debit Card").
+    /// </summary>
+    public string? PaymentMethod { get; set; }
+
+    /// <summary>
     /// Creates a failed result with an error message.
     /// </summary>
     public static ReceiptScanResult Failed(string errorMessage) => new()

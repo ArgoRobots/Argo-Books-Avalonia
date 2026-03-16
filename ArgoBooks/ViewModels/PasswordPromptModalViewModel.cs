@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -17,6 +18,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _filePath = string.Empty;
+
+    [ObservableProperty]
+    private string _message = string.Empty;
 
     [ObservableProperty]
     private string _password = string.Empty;
@@ -89,11 +93,13 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     /// <param name="companyName">Name of the company file.</param>
     /// <param name="filePath">Path to the file.</param>
     /// <param name="windowsHelloAvailable">Whether Windows Hello is available and enabled for this file.</param>
+    /// <param name="message">Optional custom message. If null, defaults to "Enter password for {companyName}".</param>
     /// <returns>The entered password, or null if cancelled.</returns>
-    public Task<string?> ShowAsync(string companyName, string filePath, bool windowsHelloAvailable = false)
+    public Task<string?> ShowAsync(string companyName, string filePath, bool windowsHelloAvailable = false, string? message = null)
     {
         CompanyName = companyName;
         FilePath = filePath;
+        Message = message ?? string.Format("Enter password for {0}".Translate(), companyName);
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;
@@ -222,11 +228,16 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Cancels the password prompt.
+    /// Cancels the password prompt, showing confirmation if a password was entered.
     /// </summary>
     [RelayCommand]
-    private void Cancel()
+    private async Task CancelAsync()
     {
+        if (!string.IsNullOrEmpty(Password))
+        {
+            if (!await ConfirmDiscardNewAsync()) return;
+        }
+
         IsOpen = false;
         Password = string.Empty;
         IsWindowsHelloAuthenticating = false;

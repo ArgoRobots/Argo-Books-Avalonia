@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Helpers;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
 using ArgoBooks.Views;
@@ -222,7 +222,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(receipt.Supplier))
             title += $"\n{receipt.Supplier}";
 
-        App.ReceiptViewerModal?.Show(receipt.ImagePath ?? string.Empty, receipt.Id, title);
+        App.ReceiptViewerModal?.Show(receipt.ImagePath, receipt.Id, title);
     }
 
     #endregion
@@ -331,9 +331,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private void CheckAzureConfiguration()
     {
-        // Check if Azure credentials are configured in .env file
-        IsAzureConfigured = DotEnv.HasValue("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT") &&
-                           DotEnv.HasValue("AZURE_DOCUMENT_INTELLIGENCE_API_KEY");
+        // Check if portal is configured (receipt scanning goes through server proxy)
+        IsAzureConfigured = PortalSettings.IsConfigured;
     }
 
     /// <summary>
@@ -345,19 +344,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         if (!HasPremium)
         {
-            App.AddNotification(
+            await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Premium Feature"),
-                Loc.Tr("AI Receipt Scanning requires a Premium subscription."),
-                NotificationType.Warning);
-            return;
-        }
-
-        if (!IsAzureConfigured)
-        {
-            App.AddNotification(
-                Loc.Tr("Configuration Required"),
-                Loc.Tr("Please add AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY to your .env file."),
-                NotificationType.Warning);
+                Loc.Tr("AI Receipt Scanning requires a Premium subscription."));
             return;
         }
 
@@ -376,10 +365,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         var extension = Path.GetExtension(filePath).ToLowerInvariant();
         if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".pdf")
         {
-            App.AddNotification(
+            await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop a JPEG, PNG, or PDF file."),
-                NotificationType.Warning);
+                Loc.Tr("Please drop a JPEG, PNG, or PDF file."));
             return;
         }
 

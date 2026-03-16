@@ -20,11 +20,6 @@ public class PortalSettings
     public const string ApiKeyEnvVar = "PAYMENT_PORTAL_API_KEY";
 
     /// <summary>
-    /// Environment variable name for the master registration key (shared secret from the server .env).
-    /// </summary>
-    public const string RegistrationKeyEnvVar = "PORTAL_REGISTRATION_KEY";
-
-    /// <summary>
     /// Gets the portal API key from .env file.
     /// </summary>
     [JsonIgnore]

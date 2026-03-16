@@ -881,21 +881,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync()) return;
 
             // Restore filter values to the state when modal was opened
             FilterStatus = _originalFilterStatus;
@@ -1186,9 +1172,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Check if email API is configured (only required when portal is NOT configured,
         // since the portal server handles email delivery via sendEmail: true)
-        if (!PortalSettings.IsConfigured && !InvoiceEmailSettings.IsConfigured)
+        if (!PortalSettings.IsConfigured)
         {
-            await ShowSendErrorAsync($"{"Email API is not configured. Please add".Translate()} {InvoiceEmailSettings.ApiKeyEnvVar} {"to your .env file.".Translate()}");
+            await ShowSendErrorAsync("Portal is not configured. Please register your company first to send invoice emails.".Translate());
             return;
         }
 
@@ -1210,7 +1196,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Check if we're continuing a draft invoice or creating a new one
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
-        Invoice? existingDraft = null;
+        Invoice? existingDraft;
 
         if (isContinuingDraft)
         {
@@ -1485,33 +1471,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (hasUnsavedWork)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
+            // Hide the WebView so the confirmation dialog renders above it (airspace issue)
+            var wasShowingPreview = IsShowingPreview;
+            if (wasShowingPreview)
+                IsShowingPreview = false;
+
+            var confirmed = IsEditMode
+                ? await ConfirmDiscardEditsAsync()
+                : await ConfirmDiscardNewAsync();
+
+            if (!confirmed)
             {
-                // Hide the WebView so the confirmation dialog renders above it (airspace issue)
-                var wasShowingPreview = IsShowingPreview;
                 if (wasShowingPreview)
-                    IsShowingPreview = false;
-
-                var message = IsEditMode
-                    ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
-                    : "You have entered data that will be lost. Are you sure you want to close?".Translate();
-
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = message,
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                {
-                    if (wasShowingPreview)
-                        IsShowingPreview = true;
-                    return;
-                }
+                    IsShowingPreview = true;
+                return;
             }
         }
 
@@ -1636,22 +1609,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
             if (revenue != null)
                 revenue.InvoiceId = invoice.Id;
-        }
-    }
-
-    /// <summary>
-    /// Unlinks an invoice from any revenue records referenced by its line items.
-    /// </summary>
-    private static void UnlinkInvoiceFromRevenue(Invoice invoice, CompanyData companyData)
-    {
-        foreach (var revenueId in invoice.LineItems
-                     .Where(li => !string.IsNullOrEmpty(li.RevenueRecordId))
-                     .Select(li => li.RevenueRecordId!)
-                     .Distinct())
-        {
-            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == revenueId);
-            if (revenue != null && revenue.InvoiceId == invoice.Id)
-                revenue.InvoiceId = null;
         }
     }
 

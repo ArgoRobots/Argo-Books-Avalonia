@@ -652,7 +652,16 @@ public class CompanyManager : IDisposable
 
         // Re-encrypt the file with the new password WITHOUT saving data changes
         // This only packages the existing temp directory content with the new encryption
-        await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+        // Release file lock before saving (save uses exclusive access), then re-acquire
+        ReleaseFileLock();
+        try
+        {
+            await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+        }
+        finally
+        {
+            AcquireFileLock(CurrentFilePath);
+        }
 
         // Update current password
         _currentPassword = passwordToUse;

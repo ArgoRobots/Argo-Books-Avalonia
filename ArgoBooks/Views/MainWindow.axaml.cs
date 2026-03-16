@@ -141,7 +141,7 @@ public partial class MainWindow : Window
             }
 
             // User confirmed, check for other unsaved changes before closing
-            var hasAppUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;
+            var hasAppUnsavedChanges = App.UndoRedoManager.IsAtSavedState == false;
             if (!hasAppUnsavedChanges)
             {
                 // No other unsaved changes, do telemetry upload and close
@@ -153,7 +153,7 @@ public partial class MainWindow : Window
 
         // Check for unsaved changes - use UndoRedoManager's saved state tracking
         // which correctly handles undo back to original state
-        var hasUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;
+        var hasUnsavedChanges = !App.UndoRedoManager.IsAtSavedState;
         if (hasUnsavedChanges)
         {
             // Cancel the close event to show dialog

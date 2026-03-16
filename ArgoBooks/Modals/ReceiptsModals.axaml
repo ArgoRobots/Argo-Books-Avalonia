@@ -384,7 +384,7 @@
 
                                 <!-- Right: Extracted Data -->
                                 <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                <StackPanel Spacing="20">
+                                <StackPanel Spacing="20" Margin="0,0,14,0">
                                     <!-- Confidence Score -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
@@ -604,14 +604,14 @@
                                                             <TextBox Grid.Column="1" Grid.Row="0"
                                                                      Text="{Binding Quantity}"
                                                                      HorizontalContentAlignment="Center"
-                                                                     VerticalAlignment="Stretch"
+                                                                     VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
                                                                      behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                                                      MaxLength="5" />
                                                             <TextBox Grid.Column="2" Grid.Row="0"
                                                                      Text="{Binding UnitPrice}"
                                                                      HorizontalContentAlignment="Center"
-                                                                     VerticalAlignment="Stretch"
+                                                                     VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
                                                                      behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                                      MaxLength="12" />
@@ -621,11 +621,11 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        HorizontalAlignment="Right"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="0,0,12,0" />
+                                                                       VerticalAlignment="Top"
+                                                                       Margin="0,8,12,0" />
                                                             <Button Grid.Column="4" Grid.Row="0"
                                                                     Classes="icon-button danger"
-                                                                    VerticalAlignment="Center"
+                                                                    VerticalAlignment="Top"
                                                                     HorizontalAlignment="Center"
                                                                     IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RemoveLineItemCommand}"
@@ -650,6 +650,13 @@
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        HorizontalAlignment="Center" />
                                         </Border>
+
+                                        <!-- Line Items Error -->
+                                        <TextBlock Text="{Binding LineItemsErrorMessage}"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   IsVisible="{Binding HasLineItemsError}"
+                                                   Margin="0,-4,0,0" />
                                     </StackPanel>
 
                                     <!-- Additional Options -->
@@ -731,9 +738,9 @@
                                             </Grid>
                                         </StackPanel>
 
-                                        <!-- Supplier Row -->
-                                        <Grid>
-                                            <StackPanel Spacing="6"
+                                        <!-- Supplier + Payment Method Row -->
+                                        <Grid ColumnDefinitions="*,12,*">
+                                            <StackPanel Grid.Column="0" Spacing="6"
                                                         IsVisible="{Binding !IsRevenue}">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
@@ -750,7 +757,7 @@
                                                     HasError="{Binding HasSupplierError}"
                                                     ErrorMessage="{Binding SupplierErrorMessage}"
                                                     IsEnabled="{Binding !IsLoadingAiSuggestions}" />
-                                                <!-- AI Create Supplier Suggestion -->
+                                                <!-- Create Supplier Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
                                                         Background="{DynamicResource WarningLightBrush}"
                                                         CornerRadius="6"
@@ -786,25 +793,24 @@
                                                     </Grid>
                                                 </Border>
                                             </StackPanel>
-                                        </Grid>
 
-                                        <!-- Payment Method -->
-                                        <StackPanel Spacing="6">
-                                            <TextBlock Text="{loc:Loc 'Payment Method'}"
-                                                       FontSize="13"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
-                                                      SelectedItem="{Binding SelectedPaymentMethod}"
-                                                      Classes="form-combobox"
-                                                      HorizontalAlignment="Stretch">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                        </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Payment Method'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
+                                                          SelectedItem="{Binding SelectedPaymentMethod}"
+                                                          Classes="form-combobox"
+                                                          HorizontalAlignment="Stretch">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+                                        </Grid>
 
                                         <!-- Notes -->
                                         <StackPanel Spacing="6">

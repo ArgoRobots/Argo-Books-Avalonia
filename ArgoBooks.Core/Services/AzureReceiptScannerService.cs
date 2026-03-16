@@ -1,41 +1,36 @@
 using System.Diagnostics;
-using Azure;
-using Azure.AI.FormRecognizer.DocumentAnalysis;
+using System.Net.Http.Headers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Azure Document Intelligence implementation of receipt scanning.
-/// Uses the prebuilt receipt model for high-accuracy extraction.
-/// Credentials are loaded from .env file (AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY).
+/// Receipt scanning service that proxies requests through the argorobots.com server.
+/// The server handles communication with Azure Document Intelligence.
 /// </summary>
 public class AzureReceiptScannerService : IReceiptScannerService
 {
-    private const string EndpointEnvVar = "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT";
-    private const string ApiKeyEnvVar = "AZURE_DOCUMENT_INTELLIGENCE_API_KEY";
+    private const string ScanEndpoint = "https://argorobots.com/api/receipt/scan.php";
 
-    private DocumentAnalysisClient? _client;
-    private string? _lastEndpoint;
-    private string? _lastApiKey;
+    private readonly HttpClient _httpClient;
+    private readonly LicenseService? _licenseService;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
 
     /// <summary>
-    /// Creates a new instance of the Azure receipt scanner service.
-    /// Credentials are loaded from .env file.
+    /// Creates a new instance of the receipt scanner service.
     /// </summary>
-    public AzureReceiptScannerService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public AzureReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
-        // Ensure .env file is loaded
-        DotEnv.Load();
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for Azure processing
+        _licenseService = licenseService;
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => DotEnv.HasValue(EndpointEnvVar) && DotEnv.HasValue(ApiKeyEnvVar);
+    public bool IsConfigured => _licenseService?.GetLicenseKey() != null;
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
@@ -45,17 +40,17 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
         try
         {
-            var client = GetOrCreateClient();
-            if (client == null)
+            var licenseKey = _licenseService?.GetLicenseKey();
+            if (string.IsNullOrEmpty(licenseKey))
             {
-                return ReceiptScanResult.Failed("Azure Document Intelligence is not configured. Please add AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY to your .env file.");
+                return ReceiptScanResult.Failed("No active license key found. Please activate your premium subscription.");
             }
 
-            // Validate file size (4MB limit for free tier)
+            // Validate file size (4MB limit)
             const int maxFileSizeBytes = 4 * 1024 * 1024;
             if (imageData.Length > maxFileSizeBytes)
             {
-                return ReceiptScanResult.Failed($"File size exceeds the 4MB limit. Please use a smaller image.");
+                return ReceiptScanResult.Failed("File size exceeds the 4MB limit. Please use a smaller image.");
             }
 
             // Validate file type
@@ -65,47 +60,58 @@ public class AzureReceiptScannerService : IReceiptScannerService
                 return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, or PDF files.");
             }
 
-            // Analyze the receipt using Azure's prebuilt receipt model
-            using var stream = new MemoryStream(imageData);
-            var operation = await client.AnalyzeDocumentAsync(
-                WaitUntil.Completed,
-                "prebuilt-receipt",
-                stream,
-                cancellationToken: cancellationToken);
+            // Send image to server proxy
+            using var content = new MultipartFormDataContent();
+            var imageContent = new ByteArrayContent(imageData);
+            imageContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(imageContent, "image", fileName);
 
-            var result = operation.Value;
+            using var request = new HttpRequestMessage(HttpMethod.Post, ScanEndpoint);
+            request.Content = content;
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", licenseKey);
+            request.Headers.Add("X-License-Key", licenseKey);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _errorLogger?.LogError($"Receipt scan proxy error {response.StatusCode}: {errorBody}", ErrorCategory.Api, "Receipt scan");
+
+                if ((int)response.StatusCode == 429)
+                    return ReceiptScanResult.Failed("Rate limit exceeded. Please try again later.");
+                if ((int)response.StatusCode == 413)
+                    return ReceiptScanResult.Failed("File too large for the scanning service.");
+
+                return ReceiptScanResult.Failed("An error occurred communicating with the receipt scanning service. Please try again.");
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            var scanResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
+
+            if (!scanResponse.TryGetProperty("success", out var successProp) || !successProp.GetBoolean())
+            {
+                var message = scanResponse.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Scan failed";
+                return ReceiptScanResult.Failed(message ?? "Scan failed");
+            }
+
             success = true;
             _ = _telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, cancellationToken: cancellationToken);
-            return ParseAnalyzeResult(result);
-        }
-        catch (RequestFailedException ex) when (ex.Status == 401)
-        {
-            _errorLogger?.LogError(ex, ErrorCategory.Authentication, "Azure Document Intelligence auth failed");
-            return ReceiptScanResult.Failed("Invalid Azure API key. Please check your AZURE_DOCUMENT_INTELLIGENCE_API_KEY in .env file.");
-        }
-        catch (RequestFailedException ex) when (ex.Status == 403)
-        {
-            _errorLogger?.LogError(ex, ErrorCategory.Authentication, "Azure Document Intelligence access denied");
-            return ReceiptScanResult.Failed("Azure API access denied. Please verify your subscription and endpoint in .env file.");
-        }
-        catch (RequestFailedException ex) when (ex.Status == 429)
-        {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "Azure Document Intelligence rate limited");
-            return ReceiptScanResult.Failed("Azure API rate limit exceeded. Please try again later or upgrade your plan.");
-        }
-        catch (RequestFailedException ex)
-        {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "Azure Document Intelligence API error");
-            return ReceiptScanResult.Failed($"Azure API error: {ex.Message}");
+            return ParseProxyResponse(scanResponse);
         }
         catch (TaskCanceledException)
         {
-            return ReceiptScanResult.Failed("Scan operation was cancelled.");
+            return ReceiptScanResult.Failed("Scan operation was cancelled or timed out.");
+        }
+        catch (HttpRequestException ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan network error");
+            return ReceiptScanResult.Failed("Network error: unable to reach the scanning service. Please check your internet connection.");
         }
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan failed");
-            return ReceiptScanResult.Failed($"Failed to scan receipt: {ex.Message}");
+            return ReceiptScanResult.Failed("Failed to scan receipt. Please try again.");
         }
         finally
         {
@@ -141,211 +147,84 @@ public class AzureReceiptScannerService : IReceiptScannerService
     /// <inheritdoc />
     public Task<bool> ValidateConfigurationAsync()
     {
-        if (!IsConfigured)
-            return Task.FromResult(false);
-
-        try
-        {
-            var client = GetOrCreateClient();
-            return Task.FromResult(client != null);
-        }
-        catch
-        {
-            return Task.FromResult(false);
-        }
+        return Task.FromResult(IsConfigured);
     }
 
-    private DocumentAnalysisClient? GetOrCreateClient()
+    private static ReceiptScanResult ParseProxyResponse(JsonElement response)
     {
-        var envEndpoint = DotEnv.Get(EndpointEnvVar);
-        var envApiKey = DotEnv.Get(ApiKeyEnvVar);
-
-        if (string.IsNullOrWhiteSpace(envEndpoint) || string.IsNullOrWhiteSpace(envApiKey))
-        {
-            return null;
-        }
-
-        // Recreate client if settings changed
-        if (_client == null || _lastEndpoint != envEndpoint || _lastApiKey != envApiKey)
-        {
-            var endpoint = envEndpoint.TrimEnd('/');
-            if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                endpoint = "https://" + endpoint;
-            }
-
-            _client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(envApiKey));
-            _lastEndpoint = envEndpoint;
-            _lastApiKey = envApiKey;
-        }
-
-        return _client;
-    }
-
-    private static ReceiptScanResult ParseAnalyzeResult(AnalyzeResult result)
-    {
-        var scanResult = new ReceiptScanResult
+        var result = new ReceiptScanResult
         {
             IsSuccess = true,
             LineItems = [],
-            RawText = result.Content
         };
 
-        // Calculate overall confidence from document confidence
-        var confidenceScores = new List<double>();
+        if (response.TryGetProperty("supplierName", out var supplier) && supplier.ValueKind != JsonValueKind.Null)
+            result.SupplierName = supplier.GetString();
 
-        foreach (var document in result.Documents)
+        if (response.TryGetProperty("transactionDate", out var date) && date.ValueKind != JsonValueKind.Null)
         {
-            confidenceScores.Add(document.Confidence);
+            if (DateTime.TryParse(date.GetString(), out var parsedDate))
+                result.TransactionDate = parsedDate;
+        }
 
-            foreach (var field in document.Fields)
+        if (response.TryGetProperty("subtotal", out var subtotal) && subtotal.ValueKind != JsonValueKind.Null)
+            result.Subtotal = subtotal.GetDecimal();
+
+        if (response.TryGetProperty("total", out var total) && total.ValueKind != JsonValueKind.Null)
+            result.TotalAmount = total.GetDecimal();
+
+        if (response.TryGetProperty("tax", out var tax) && tax.ValueKind != JsonValueKind.Null)
+            result.TaxAmount = tax.GetDecimal();
+
+        if (response.TryGetProperty("currency", out var currency) && currency.ValueKind != JsonValueKind.Null)
+            result.CurrencyCode = currency.GetString();
+
+        if (response.TryGetProperty("confidence", out var confidence) && confidence.ValueKind != JsonValueKind.Null)
+            result.Confidence = confidence.GetDouble();
+
+        if (response.TryGetProperty("rawText", out var rawText) && rawText.ValueKind != JsonValueKind.Null)
+            result.RawText = rawText.GetString();
+
+        if (response.TryGetProperty("paymentMethod", out var paymentMethod) && paymentMethod.ValueKind != JsonValueKind.Null)
+            result.PaymentMethod = paymentMethod.GetString();
+
+        if (response.TryGetProperty("lineItems", out var lineItems) && lineItems.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in lineItems.EnumerateArray())
             {
-                var fieldName = field.Key;
-                var fieldValue = field.Value;
+                var lineItem = new ScannedLineItem();
+                var hasData = false;
 
-                switch (ReceiptFieldTypeExtensions.ParseReceiptField(fieldName))
+                if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
                 {
-                    case ReceiptFieldType.MerchantName:
-                        scanResult.SupplierName = fieldValue.Content;
-                        break;
-
-                    case ReceiptFieldType.TransactionDate:
-                        if (fieldValue.FieldType == DocumentFieldType.Date && fieldValue.Value.AsDate() is { } date)
-                        {
-                            scanResult.TransactionDate = date.DateTime;
-                        }
-                        break;
-
-                    case ReceiptFieldType.Subtotal:
-                        scanResult.Subtotal = ExtractDecimalValue(fieldValue, out var subtotalCurrency);
-                        scanResult.CurrencyCode ??= subtotalCurrency;
-                        break;
-
-                    case ReceiptFieldType.TotalTax:
-                    case ReceiptFieldType.Tax:
-                        scanResult.TaxAmount = ExtractDecimalValue(fieldValue, out _);
-                        break;
-
-                    case ReceiptFieldType.Total:
-                        scanResult.TotalAmount = ExtractDecimalValue(fieldValue, out var totalCurrency);
-                        scanResult.CurrencyCode ??= totalCurrency;
-                        break;
-
-                    case ReceiptFieldType.Tip:
-                        // Skip tips, we want the actual total
-                        break;
-
-                    case ReceiptFieldType.Items:
-                        if (fieldValue.FieldType == DocumentFieldType.List)
-                        {
-                            foreach (var item in fieldValue.Value.AsList())
-                            {
-                                if (item.FieldType == DocumentFieldType.Dictionary)
-                                {
-                                    var lineItem = ParseLineItem(item.Value.AsDictionary());
-                                    if (lineItem != null)
-                                    {
-                                        scanResult.LineItems.Add(lineItem);
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-        }
-
-        // Calculate average confidence
-        scanResult.Confidence = confidenceScores.Count > 0
-            ? confidenceScores.Average()
-            : 0.5;
-
-        // If we didn't get a subtotal but have total and tax, calculate it
-        if (scanResult.Subtotal == null && scanResult.TotalAmount != null && scanResult.TaxAmount != null)
-        {
-            scanResult.Subtotal = scanResult.TotalAmount - scanResult.TaxAmount;
-        }
-
-        // If we didn't get a total but have line items, calculate it
-        if (scanResult.TotalAmount == null && scanResult.LineItems.Count > 0)
-        {
-            scanResult.TotalAmount = scanResult.LineItems.Sum(li => li.TotalPrice);
-        }
-
-        return scanResult;
-    }
-
-    private static ScannedLineItem? ParseLineItem(IReadOnlyDictionary<string, DocumentField> itemFields)
-    {
-        var lineItem = new ScannedLineItem();
-        var hasData = false;
-        var confidenceScores = new List<double>();
-
-        foreach (var field in itemFields)
-        {
-            switch (ReceiptFieldTypeExtensions.ParseLineItemField(field.Key))
-            {
-                case ReceiptLineItemFieldType.Description:
-                    lineItem.Description = field.Value.Content ?? string.Empty;
+                    lineItem.Description = desc.GetString() ?? "";
                     hasData = true;
-                    if (field.Value.Confidence.HasValue)
-                        confidenceScores.Add(field.Value.Confidence.Value);
-                    break;
+                }
 
-                case ReceiptLineItemFieldType.Quantity:
-                    var qtyValue = ExtractDecimalValue(field.Value, out _);
-                    if (qtyValue.HasValue)
-                    {
-                        lineItem.Quantity = qtyValue.Value;
-                        if (field.Value.Confidence.HasValue)
-                            confidenceScores.Add(field.Value.Confidence.Value);
-                    }
-                    break;
+                if (item.TryGetProperty("quantity", out var qty) && qty.ValueKind != JsonValueKind.Null)
+                    lineItem.Quantity = qty.GetDecimal();
 
-                case ReceiptLineItemFieldType.Price:
-                case ReceiptLineItemFieldType.UnitPrice:
-                    var priceValue = ExtractDecimalValue(field.Value, out _);
-                    if (priceValue.HasValue)
-                    {
-                        lineItem.UnitPrice = priceValue.Value;
-                        hasData = true;
-                        if (field.Value.Confidence.HasValue)
-                            confidenceScores.Add(field.Value.Confidence.Value);
-                    }
-                    break;
+                if (item.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind != JsonValueKind.Null)
+                {
+                    lineItem.UnitPrice = unitPrice.GetDecimal();
+                    hasData = true;
+                }
 
-                case ReceiptLineItemFieldType.TotalPrice:
-                case ReceiptLineItemFieldType.Amount:
-                    var totalPriceValue = ExtractDecimalValue(field.Value, out _);
-                    if (totalPriceValue.HasValue)
-                    {
-                        lineItem.TotalPrice = totalPriceValue.Value;
-                        hasData = true;
-                        if (field.Value.Confidence.HasValue)
-                            confidenceScores.Add(field.Value.Confidence.Value);
-                    }
-                    break;
+                if (item.TryGetProperty("totalPrice", out var totalPrice) && totalPrice.ValueKind != JsonValueKind.Null)
+                {
+                    lineItem.TotalPrice = totalPrice.GetDecimal();
+                    hasData = true;
+                }
+
+                if (item.TryGetProperty("confidence", out var itemConf) && itemConf.ValueKind != JsonValueKind.Null)
+                    lineItem.Confidence = itemConf.GetDouble();
+
+                if (hasData)
+                    result.LineItems.Add(lineItem);
             }
         }
 
-        if (!hasData)
-            return null;
-
-        // Calculate total price if not provided
-        if (lineItem.TotalPrice == 0 && lineItem.UnitPrice > 0)
-        {
-            lineItem.TotalPrice = lineItem.UnitPrice * lineItem.Quantity;
-        }
-
-        // Calculate unit price if only total was provided
-        if (lineItem.UnitPrice == 0 && lineItem.TotalPrice > 0 && lineItem.Quantity > 0)
-        {
-            lineItem.UnitPrice = lineItem.TotalPrice / lineItem.Quantity;
-        }
-
-        lineItem.Confidence = confidenceScores.Count > 0 ? confidenceScores.Average() : 0.5;
-
-        return lineItem;
+        return result;
     }
 
     private static string? GetContentType(string fileName)
@@ -361,74 +240,4 @@ public class AzureReceiptScannerService : IReceiptScannerService
             _ => null
         };
     }
-
-    /// <summary>
-    /// Extracts a decimal value from a document field, trying multiple approaches.
-    /// </summary>
-    private static decimal? ExtractDecimalValue(DocumentField field, out string? currencyCode)
-    {
-        currencyCode = null;
-
-        // Try Currency type first
-        if (field.FieldType == DocumentFieldType.Currency)
-        {
-            try
-            {
-                var currency = field.Value.AsCurrency();
-                currencyCode = currency.Code;
-                return (decimal)currency.Amount;
-            }
-            catch
-            {
-                // Fall through to other methods
-            }
-        }
-
-        // Try Double type
-        if (field.FieldType == DocumentFieldType.Double)
-        {
-            try
-            {
-                return (decimal)field.Value.AsDouble();
-            }
-            catch
-            {
-                // Fall through to content parsing
-            }
-        }
-
-        // Try Int64 type
-        if (field.FieldType == DocumentFieldType.Int64)
-        {
-            try
-            {
-                return field.Value.AsInt64();
-            }
-            catch
-            {
-                // Fall through to content parsing
-            }
-        }
-
-        // Try parsing from Content string as last resort
-        if (!string.IsNullOrWhiteSpace(field.Content))
-        {
-            // Remove currency symbols and parse
-            var content = field.Content
-                .Replace("$", "")
-                .Replace("€", "")
-                .Replace("£", "")
-                .Replace("¥", "")
-                .Replace(",", "")
-                .Trim();
-
-            if (decimal.TryParse(content, out var parsed))
-            {
-                return parsed;
-            }
-        }
-
-        return null;
-    }
 }
-

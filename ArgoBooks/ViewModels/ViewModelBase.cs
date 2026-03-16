@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ArgoBooks.ViewModels;
@@ -13,6 +15,69 @@ public abstract partial class ViewModelBase : ObservableObject
 
     [ObservableProperty]
     private string? _busyMessage;
+
+    /// <summary>
+    /// Shows a "Discard Changes?" confirmation dialog for Add modals.
+    /// Returns true if the user confirmed they want to discard.
+    /// </summary>
+    protected static async Task<bool> ConfirmDiscardNewAsync()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return true;
+
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Discard Changes?".Translate(),
+            Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
+            PrimaryButtonText = "Discard".Translate(),
+            CancelButtonText = "Cancel".Translate(),
+            IsPrimaryDestructive = true
+        });
+
+        return result == ConfirmationResult.Primary;
+    }
+
+    /// <summary>
+    /// Shows a "Discard Changes?" confirmation dialog for Edit modals.
+    /// Returns true if the user confirmed they want to discard.
+    /// </summary>
+    protected static async Task<bool> ConfirmDiscardEditsAsync()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return true;
+
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Discard Changes?".Translate(),
+            Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
+            PrimaryButtonText = "Discard".Translate(),
+            CancelButtonText = "Cancel".Translate(),
+            IsPrimaryDestructive = true
+        });
+
+        return result == ConfirmationResult.Primary;
+    }
+
+    /// <summary>
+    /// Shows a "Discard Changes?" confirmation dialog for Filter modals.
+    /// Returns true if the user confirmed they want to discard.
+    /// </summary>
+    protected static async Task<bool> ConfirmDiscardFiltersAsync()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return true;
+
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Discard Changes?".Translate(),
+            Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
+            PrimaryButtonText = "Discard".Translate(),
+            CancelButtonText = "Cancel".Translate(),
+            IsPrimaryDestructive = true
+        });
+
+        return result == ConfirmationResult.Primary;
+    }
 
     /// <summary>
     /// Executes an async operation while showing a busy indicator.

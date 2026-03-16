@@ -276,9 +276,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _windowsHelloEnabled;
 
     [ObservableProperty]
-    private bool _fileEncryptionEnabled;
-
-    [ObservableProperty]
     private string _selectedAutoLock = "5 minutes";
 
     [ObservableProperty]
@@ -394,40 +391,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     partial void OnIsConfirmPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
     partial void OnIsCurrentPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(CurrentPasswordVisibilityIcon));
 
-    // Flag to prevent recursive updates when syncing FileEncryptionEnabled with HasPassword
-    private bool _isUpdatingEncryption;
-
     // Flag to prevent firing AutoLockSettingsChanged when syncing UI with company settings
     private bool _isLoadingAutoLock;
 
     /// <summary>
-    /// Called when FileEncryptionEnabled changes - opens appropriate password modal.
-    /// </summary>
-    partial void OnFileEncryptionEnabledChanged(bool value)
-    {
-        if (_isUpdatingEncryption) return;
-
-        if (value && !HasPassword)
-        {
-            // User wants to enable encryption but no password set - open Add Password modal
-            OpenAddPasswordCommand.Execute(null);
-        }
-        else if (!value && HasPassword)
-        {
-            // User wants to disable encryption but has password - open Remove Password modal
-            OpenRemovePasswordCommand.Execute(null);
-        }
-    }
-
-    /// <summary>
-    /// Called when HasPassword changes - sync with FileEncryptionEnabled and notify Windows Hello properties.
+    /// Called when HasPassword changes - notify dependent properties.
     /// </summary>
     partial void OnHasPasswordChanged(bool value)
     {
-        _isUpdatingEncryption = true;
-        FileEncryptionEnabled = value;
-        _isUpdatingEncryption = false;
-
         // Notify Windows Hello and Auto-Lock computed properties
         OnPropertyChanged(nameof(CanEnableWindowsHello));
         OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
@@ -541,11 +512,122 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #region Payment Portal Settings
 
+    /// <summary>
+    /// Whether the user has authenticated to modify portal settings in this session.
+    /// Reset when the settings modal is reopened.
+    /// </summary>
+    private bool _isPortalAuthenticated;
+
+    // Flag to suppress auth check when loading portal settings from company data
+    private bool _isLoadingPortalSettings;
+
+    /// <summary>
+    /// Event raised when portal authentication is required before making changes.
+    /// The handler should verify the user's identity (password or biometric) and call
+    /// <see cref="OnPortalAuthResult"/> with the result.
+    /// </summary>
+    public event Func<Task<bool>>? PortalAuthenticationRequested;
+
+    /// <summary>
+    /// Ensures the user has authenticated to modify portal settings.
+    /// On first interaction, prompts for password/biometric. Once authenticated,
+    /// subsequent changes are allowed without re-prompting.
+    /// </summary>
+    /// <returns>True if authenticated, false if cancelled or no password is set.</returns>
+    private async Task<bool> EnsurePortalAuthenticatedAsync()
+    {
+        if (_isPortalAuthenticated) return true;
+        if (!HasPassword) return true; // No password set, no auth needed
+
+        if (PortalAuthenticationRequested != null)
+        {
+            var result = await PortalAuthenticationRequested.Invoke();
+            if (result)
+            {
+                _isPortalAuthenticated = true;
+                return true;
+            }
+            return false;
+        }
+
+        // No handler wired up — allow by default
+        return true;
+    }
+
+    /// <summary>
+    /// Called by App.axaml.cs to set the portal authentication result.
+    /// </summary>
+    public void OnPortalAuthResult(bool success)
+    {
+        _isPortalAuthenticated = success;
+    }
+
     [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
 
+    partial void OnHasPortalLogoChanged(bool value) => OnPropertyChanged(nameof(PortalLogoButtonText));
+
+    /// <summary>
+    /// Called when PortalNotifyOnPayment changes — requires auth if password is enabled.
+    /// </summary>
+    partial void OnPortalNotifyOnPaymentChanged(bool value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (!HasPassword || _isPortalAuthenticated) return;
+
+        // Revert and request auth
+        _ = RevertAndAuthPortalNotifyAsync(value);
+    }
+
+    private async Task RevertAndAuthPortalNotifyAsync(bool attemptedValue)
+    {
+        // Revert to opposite while we authenticate
+        _isLoadingPortalSettings = true;
+        PortalNotifyOnPayment = !attemptedValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalNotifyOnPayment = attemptedValue;
+            _isLoadingPortalSettings = false;
+        }
+    }
+
     [ObservableProperty]
-    private int _portalSyncInterval = 5;
+    [NotifyPropertyChangedFor(nameof(IsSyncIntervalNumeric))]
+    private string _portalSyncInterval = "5";
+
+    /// <summary>
+    /// Called when PortalSyncInterval changes — requires auth if password is enabled.
+    /// </summary>
+    partial void OnPortalSyncIntervalChanged(string value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (!HasPassword || _isPortalAuthenticated) return;
+
+        _ = RevertAndAuthPortalSyncIntervalAsync(value);
+    }
+
+    private string? _previousSyncInterval;
+
+    private async Task RevertAndAuthPortalSyncIntervalAsync(string attemptedValue)
+    {
+        var previousValue = _previousSyncInterval ?? "5";
+
+        _isLoadingPortalSettings = true;
+        PortalSyncInterval = previousValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalSyncInterval = attemptedValue;
+            _isLoadingPortalSettings = false;
+        }
+    }
+
+    public bool IsSyncIntervalNumeric => PortalSyncInterval != "Manual";
 
     [ObservableProperty]
     private bool _stripeConnected;
@@ -568,42 +650,171 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isConnectingProvider;
 
-    public int[] SyncIntervalOptions { get; } = [0, 1, 2, 5, 10, 15, 30];
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.Bitmap? _portalLogoSource;
+
+    [ObservableProperty]
+    private bool _hasPortalLogo;
+
+    public string PortalLogoButtonText => HasPortalLogo ? "Change".Translate() : "Upload".Translate();
+
+    [ObservableProperty]
+    private bool _isUploadingPortalLogo;
+
+    public string[] SyncIntervalOptions { get; } = ["Manual", "1", "2", "5", "10", "15", "30"];
 
     [RelayCommand]
     private async Task ConnectStripeAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("stripe");
     }
 
     [RelayCommand]
     private async Task ConnectPaypalAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("paypal");
     }
 
     [RelayCommand]
     private async Task ConnectSquareAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("square");
     }
 
     [RelayCommand]
     private async Task DisconnectStripeAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await DisconnectProviderAsync("stripe");
     }
 
     [RelayCommand]
     private async Task DisconnectPaypalAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await DisconnectProviderAsync("paypal");
     }
 
     [RelayCommand]
     private async Task DisconnectSquareAsync()
     {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
         await DisconnectProviderAsync("square");
+    }
+
+    /// <summary>
+    /// Event raised when the portal logo browse button is clicked.
+    /// Handled in App.axaml.cs to open the file picker.
+    /// </summary>
+    public event EventHandler? BrowsePortalLogoRequested;
+
+    [RelayCommand]
+    private async Task BrowsePortalLogoAsync()
+    {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
+        BrowsePortalLogoRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Uploads the selected file as the portal logo.
+    /// Called from App.axaml.cs after the file picker returns.
+    /// </summary>
+    public async Task UploadPortalLogoFromFileAsync(string filePath)
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        IsUploadingPortalLogo = true;
+        try
+        {
+            var result = await portalService.UploadCompanyLogoAsync(filePath);
+            if (result.Success)
+            {
+                try
+                {
+                    PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(filePath);
+                    HasPortalLogo = true;
+                }
+                catch
+                {
+                    // File may not be a valid image for Avalonia, but upload succeeded
+                    HasPortalLogo = !string.IsNullOrEmpty(result.LogoUrl);
+                }
+            }
+            else
+            {
+                await ShowErrorDialogAsync("Upload Failed".Translate(),
+                    (result.Message ?? "Failed to upload logo.").Translate());
+            }
+        }
+        catch
+        {
+            await ShowErrorDialogAsync("Error".Translate(),
+                "Failed to upload logo. Please check your internet connection.".Translate());
+        }
+        finally
+        {
+            IsUploadingPortalLogo = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RemovePortalLogoAsync()
+    {
+        if (!await EnsurePortalAuthenticatedAsync()) return;
+
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        IsUploadingPortalLogo = true;
+        try
+        {
+            var result = await portalService.DeleteCompanyLogoAsync();
+            if (result.Success)
+            {
+                PortalLogoSource = null;
+                HasPortalLogo = false;
+            }
+        }
+        catch
+        {
+            // Silently fail
+        }
+        finally
+        {
+            IsUploadingPortalLogo = false;
+        }
+    }
+
+    /// <summary>
+    /// Loads the portal logo from its URL on the server.
+    /// </summary>
+    private async Task LoadPortalLogoFromUrlAsync(string? logoUrl)
+    {
+        if (string.IsNullOrEmpty(logoUrl))
+        {
+            PortalLogoSource = null;
+            HasPortalLogo = false;
+            return;
+        }
+
+        HasPortalLogo = true;
+
+        try
+        {
+            using var httpClient = new HttpClient();
+            var imageBytes = await httpClient.GetByteArrayAsync(logoUrl);
+            using var stream = new MemoryStream(imageBytes);
+            PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(stream);
+        }
+        catch
+        {
+            // Failed to load image — still show HasPortalLogo since URL exists
+            PortalLogoSource = null;
+        }
     }
 
     private async Task ConnectProviderAsync(string provider)
@@ -622,7 +833,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         try
         {
             var response = await portalService.InitiateConnectAsync(provider);
-            if (response.Success && !string.IsNullOrEmpty(response.AuthUrl))
+            if (response.Success && !string.IsNullOrEmpty(response.AuthUrl)
+                && Uri.TryCreate(response.AuthUrl, UriKind.Absolute, out var authUri)
+                && (authUri.Scheme == "https" || authUri.Scheme == "http"))
             {
                 // Open OAuth URL in default browser
                 Process.Start(new ProcessStartInfo
@@ -654,19 +867,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Attempts to register the company with the portal using the registration key from .env.
+    /// Attempts to register the company with the portal using the premium license key.
     /// Returns true if registration succeeded (or was already done), false otherwise.
     /// </summary>
     private async Task<bool> TryRegisterPortalAsync(PaymentPortalService portalService)
     {
-        var registrationKey = DotEnv.Get(PortalSettings.RegistrationKeyEnvVar);
-        if (string.IsNullOrEmpty(registrationKey))
+        var licenseService = App.LicenseService;
+        var licenseKey = licenseService?.GetLicenseKey();
+        if (string.IsNullOrEmpty(licenseKey))
         {
             await ShowErrorDialogAsync(
-                "Portal Not Configured".Translate(),
-                $"No portal API key found. Please add your PORTAL_REGISTRATION_KEY to the .env file to register, or add an existing PAYMENT_PORTAL_API_KEY.".Translate());
+                "Premium License Required".Translate(),
+                "Please activate a premium license first to use portal features.".Translate());
             return false;
         }
+
+        var deviceId = licenseService!.GetDeviceId();
 
         IsConnectingProvider = true;
         try
@@ -675,24 +891,13 @@ public partial class SettingsModalViewModel : ViewModelBase
             var companyName = companyData?.Settings.Company.Name ?? "My Company";
             var ownerEmail = companyData?.Settings.Company.Email;
 
-            var result = await portalService.RegisterCompanyAsync(registrationKey, companyName, ownerEmail);
+            var result = await portalService.RegisterCompanyAsync(licenseKey, deviceId, companyName, ownerEmail);
             if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
             {
-                // If company already has a logo, upload it to the portal (fire-and-forget)
-                var logoPath = App.CompanyManager?.CurrentCompanyLogoPath;
-                if (!string.IsNullOrEmpty(logoPath))
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        try { await portalService.UploadCompanyLogoAsync(logoPath); }
-                        catch { /* Best-effort — don't block registration */ }
-                    });
-                }
-
                 return true;
             }
 
-            var message = result.Message ?? "Registration failed. Please check your registration key.";
+            var message = result.Message ?? "Registration failed. Please check your license key.";
             await ShowErrorDialogAsync("Registration Failed".Translate(), message.Translate());
             return false;
         }
@@ -793,11 +998,16 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     private void LoadPortalSettings()
     {
-        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
+        _isLoadingPortalSettings = true;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
-        PortalSyncInterval = settings.AutoSyncIntervalMinutes;
+        PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
+            ? "Manual"
+            : settings.AutoSyncIntervalMinutes.ToString();
+        _previousSyncInterval = PortalSyncInterval;
+        _isLoadingPortalSettings = false;
 
         StripeConnected = settings.ConnectedAccounts.StripeConnected;
         StripeEmail = settings.ConnectedAccounts.StripeEmail;
@@ -836,13 +1046,19 @@ public partial class SettingsModalViewModel : ViewModelBase
                 // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
                 if (!string.IsNullOrEmpty(status.PortalUrl))
                 {
-                    var portalSettings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+                    var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
                     if (portalSettings != null)
                         portalSettings.PortalUrl = status.PortalUrl;
                 }
 
                 // Notify invoice views and other subscribers that provider state changed
                 PaymentProviderService.NotifyProvidersChanged();
+            }
+
+            // Load portal logo from server
+            if (status.Success)
+            {
+                await LoadPortalLogoFromUrlAsync(status.Company?.LogoUrl);
             }
         }
         catch
@@ -902,7 +1118,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                             // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
                             if (!string.IsNullOrEmpty(status.PortalUrl))
                             {
-                                var portalSettings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+                                var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
                                 if (portalSettings != null)
                                     portalSettings.PortalUrl = status.PortalUrl;
                             }
@@ -923,11 +1139,16 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     private void SavePortalSettings()
     {
-        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
+        var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
         settings.NotifyOnPayment = PortalNotifyOnPayment;
-        settings.AutoSyncIntervalMinutes = PortalSyncInterval;
+        settings.AutoSyncIntervalMinutes = PortalSyncInterval == "Manual"
+            ? 0
+            : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;
+
+        // Track the saved sync interval for revert-on-auth
+        _previousSyncInterval = PortalSyncInterval;
 
         settings.ConnectedAccounts.StripeConnected = StripeConnected;
         settings.ConnectedAccounts.StripeEmail = StripeEmail;
@@ -987,6 +1208,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
     public void OpenWithTab(int tabIndex)
     {
+        // Reset portal authentication — require re-auth each time settings opens
+        _isPortalAuthenticated = false;
+
         // Sync with current ThemeService values
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
@@ -1400,26 +1624,29 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Closes all password modals.
+    /// Returns whether any password fields have been filled in.
+    /// </summary>
+    private bool HasPasswordModalInput =>
+        !string.IsNullOrEmpty(CurrentPassword) ||
+        !string.IsNullOrEmpty(NewPassword) ||
+        !string.IsNullOrEmpty(ConfirmPassword);
+
+    /// <summary>
+    /// Closes all password modals, prompting to confirm if there is input.
     /// </summary>
     [RelayCommand]
-    private void ClosePasswordModal()
+    private async Task ClosePasswordModalAsync()
     {
-        // If user was adding password but cancelled, revert the toggle
-        if (IsAddPasswordModalOpen && !HasPassword)
+        if ((IsAddPasswordModalOpen || IsChangePasswordModalOpen || IsRemovePasswordModalOpen) && HasPasswordModalInput)
         {
-            _isUpdatingEncryption = true;
-            FileEncryptionEnabled = false;
-            _isUpdatingEncryption = false;
-        }
-        // If user was removing password but cancelled, revert the toggle
-        else if (IsRemovePasswordModalOpen && HasPassword)
-        {
-            _isUpdatingEncryption = true;
-            FileEncryptionEnabled = true;
-            _isUpdatingEncryption = false;
+            if (!await ConfirmDiscardNewAsync()) return;
         }
 
+        ClosePasswordModalInternal();
+    }
+
+    private void ClosePasswordModalInternal()
+    {
         IsAddPasswordModalOpen = false;
         IsChangePasswordModalOpen = false;
         IsRemovePasswordModalOpen = false;
@@ -1451,7 +1678,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Raise event to add password
         AddPasswordRequested?.Invoke(this, new PasswordChangeEventArgs(NewPassword));
         HasPassword = true;
-        ClosePasswordModal();
+        ClosePasswordModalInternal();
     }
 
     /// <summary>
@@ -1491,7 +1718,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public void OnPasswordChanged()
     {
-        ClosePasswordModal();
+        ClosePasswordModalInternal();
     }
 
     /// <summary>
@@ -1517,7 +1744,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     public void OnPasswordRemoved()
     {
         HasPassword = false;
-        ClosePasswordModal();
+        ClosePasswordModalInternal();
     }
 
     /// <summary>

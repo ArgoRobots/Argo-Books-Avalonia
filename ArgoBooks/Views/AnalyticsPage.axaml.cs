@@ -31,7 +31,7 @@ public partial class AnalyticsPage : UserControl
     public void SetClickedChart(Control? chart, string name)
     {
         _clickedChart = chart;
-        _clickedChartName = name ?? "Chart";
+        _clickedChartName = name;
     }
 
     public AnalyticsPage()

@@ -15,9 +15,6 @@
     <ItemGroup>
         <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
-        <!-- Azure Document Intelligence (AI Receipt Scanning) -->
-        <PackageReference Include="Azure.AI.FormRecognizer" />
-
         <!-- MVVM -->
         <PackageReference Include="CommunityToolkit.Mvvm" />
 
@@ -36,10 +33,6 @@
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />
         <PackageReference Include="EPPlus" />
-
-        <!-- Google APIs -->
-        <PackageReference Include="Google.Apis.Sheets.v4" />
-        <PackageReference Include="Google.Apis.Drive.v3" />
 
         <!-- Machine Learning (for local forecasting) -->
         <PackageReference Include="Microsoft.ML" />

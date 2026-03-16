@@ -58,7 +58,13 @@ public class LicenseService
         _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
         _connectivityService = connectivityService ?? throw new ArgumentNullException(nameof(connectivityService));
         _errorLogger = errorLogger;
+        Instance = this;
     }
+
+    /// <summary>
+    /// Singleton instance, set by the constructor.
+    /// </summary>
+    public static LicenseService? Instance { get; private set; }
 
     /// <summary>
     /// Saves the license status securely.
@@ -288,7 +294,7 @@ public class LicenseService
             return new LicenseValidationResult
             {
                 Status = LicenseValidationStatus.NetworkError,
-                Message = $"Validation error: {ex.Message}"
+                Message = "An unexpected error occurred during license validation. Please try again."
             };
         }
     }
