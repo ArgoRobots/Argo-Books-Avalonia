@@ -325,6 +325,13 @@ public partial class UpgradeModal : UserControl
                 formatted.Append(digitsOnly[i]);
             }
 
+            // If user typed a dash at a group boundary, add trailing dash
+            // so the caret can advance past it (e.g. "3333" -> "3333-")
+            if (userTypedDash && digitsOnly.Length > 0 && digitsOnly.Length % 4 == 0 && digitsOnly.Length < 20)
+            {
+                formatted.Append('-');
+            }
+
             var formattedText = formatted.ToString();
 
             // Calculate new caret position based on digits before caret
