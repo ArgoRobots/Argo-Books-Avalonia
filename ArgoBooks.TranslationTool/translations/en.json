@@ -2310,5 +2310,6 @@
   "str_itemdescription": "ItemDescription",
   "str_invoicepreviews": "InvoicePreviews",
   "str_areyousureyouwanttocloseanyenteredinformationwillbelost": "Are you sure you want to close? Any entered information will be lost.",
-  "str_passwordisrequiredtomakechangestothepaymentportal": "Password is required to make changes to the payment portal."
+  "str_passwordisrequiredtomakechangestothepaymentportal": "Password is required to make changes to the payment portal.",
+  "str_pleaseaddatleastonelineitem": "Please add at least one line item."
 }

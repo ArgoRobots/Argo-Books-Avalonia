@@ -144,7 +144,7 @@
                                                                  MaxLength="5"
                                                                  HorizontalContentAlignment="Center"
                                                                  HorizontalAlignment="Stretch"
-                                                                 VerticalAlignment="Stretch"
+                                                                 VerticalAlignment="Top"
                                                                  Margin="0,0,4,0" />
                                                         <TextBlock Grid.Column="2"
                                                                    Text="{Binding AmountFormatted}"
@@ -359,7 +359,7 @@
                                                                  MaxLength="5"
                                                                  HorizontalContentAlignment="Center"
                                                                  HorizontalAlignment="Stretch"
-                                                                 VerticalAlignment="Stretch"
+                                                                 VerticalAlignment="Top"
                                                                  Margin="0,0,4,0" />
                                                         <TextBlock Grid.Column="2"
                                                                    Text="{Binding AmountFormatted}"

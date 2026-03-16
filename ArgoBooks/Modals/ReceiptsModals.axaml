@@ -650,6 +650,13 @@
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        HorizontalAlignment="Center" />
                                         </Border>
+
+                                        <!-- Line Items Error -->
+                                        <TextBlock Text="{Binding LineItemsErrorMessage}"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   IsVisible="{Binding HasLineItemsError}"
+                                                   Margin="0,-4,0,0" />
                                     </StackPanel>
 
                                     <!-- Additional Options -->

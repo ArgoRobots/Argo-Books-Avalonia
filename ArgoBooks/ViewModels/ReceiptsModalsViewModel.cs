@@ -336,6 +336,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string _totalErrorMessage = string.Empty;
 
     [ObservableProperty]
+    private bool _hasLineItemsError;
+
+    [ObservableProperty]
+    private string _lineItemsErrorMessage = string.Empty;
+
+    [ObservableProperty]
     private bool _hasSupplierError;
 
     [ObservableProperty]
@@ -695,6 +701,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Validate
         HasTotalError = false;
         HasSupplierError = false;
+        HasLineItemsError = false;
 
         // Clear product errors on all line items
         foreach (var lineItem in LineItems)
@@ -717,6 +724,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             HasSupplierError = true;
             SupplierErrorMessage = "Please select a supplier.".Translate();
+            hasErrors = true;
+        }
+
+        // At least one line item is required
+        if (LineItems.Count == 0)
+        {
+            HasLineItemsError = true;
+            LineItemsErrorMessage = "Please add at least one line item.".Translate();
             hasErrors = true;
         }
 
@@ -1498,6 +1513,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsRevenue = false;
         HasTotalError = false;
         HasSupplierError = false;
+        HasLineItemsError = false;
+        LineItemsErrorMessage = string.Empty;
         _currentImageData = null;
         _currentFileName = null;
 
