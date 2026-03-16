@@ -305,16 +305,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
-    public ObservableCollection<string> PaymentMethodOptions { get; } =
-    [
-        "Cash",
-        "Credit Card",
-        "Debit Card",
-        "Bank Transfer",
-        "Check",
-        "PayPal",
-        "Other"
-    ];
+    public ObservableCollection<string> PaymentMethodOptions { get; } = new(PaymentMethodExtensions.GetCommonOptions());
 
     [ObservableProperty]
     private bool _hasTotalError;
