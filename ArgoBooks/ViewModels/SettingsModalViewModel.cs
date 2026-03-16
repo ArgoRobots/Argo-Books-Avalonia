@@ -1637,23 +1637,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task ClosePasswordModalAsync()
     {
-        if ((IsChangePasswordModalOpen || IsRemovePasswordModalOpen) && HasPasswordModalInput)
+        if ((IsAddPasswordModalOpen || IsChangePasswordModalOpen || IsRemovePasswordModalOpen) && HasPasswordModalInput)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "Are you sure you want to close? Any entered information will be lost.".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardNewAsync()) return;
         }
 
         ClosePasswordModalInternal();

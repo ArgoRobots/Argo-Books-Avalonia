@@ -1308,16 +1308,18 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             return;
         }
 
-        // Notify that export is starting
+        // Notify that export is starting (with cancellation support)
+        var cts = new CancellationTokenSource();
         GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
         {
-            IsExporting = true
+            IsExporting = true,
+            CancellationTokenSource = cts
         });
 
         try
         {
             // Ensure Google is authorized (auto-initiates OAuth if needed)
-            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync();
+            var isAuthenticated = await GoogleCredentialsManager.EnsureAuthenticatedAsync(cts.Token);
             if (!isAuthenticated)
             {
                 GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -1350,12 +1352,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 };
             }
 
+            cts.Token.ThrowIfCancellationRequested();
+
             var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
                 chartType,
-                companyName
+                companyName,
+                cts.Token
             );
 
             if (!string.IsNullOrEmpty(url))
@@ -1393,6 +1398,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                     ErrorMessage = "Failed to create spreadsheet."
                 });
             }
+        }
+        catch (OperationCanceledException)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = null // Cancelled by user, no error message needed
+            });
+            return;
         }
         catch (InvalidOperationException ex)
         {

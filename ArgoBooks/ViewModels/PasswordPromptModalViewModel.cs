@@ -99,7 +99,7 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     {
         CompanyName = companyName;
         FilePath = filePath;
-        Message = message ?? string.Format("Enter password for {0}", companyName);
+        Message = message ?? string.Format("Enter password for {0}".Translate(), companyName);
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;

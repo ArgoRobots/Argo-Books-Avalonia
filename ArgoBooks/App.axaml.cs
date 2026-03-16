@@ -846,7 +846,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
-                ErrorLogger.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
+                ErrorLogger?.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
             }
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
