@@ -3005,7 +3005,7 @@ public class App : Application
                 }
 
                 // Import Tier 1 data
-                var importCts = new CancellationTokenSource();
+                using var importCts = new CancellationTokenSource();
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts, cancelConfirmation: ConfirmCancelAsync);
 
                 var importProgress = new Progress<(string detail, double percent)>(p =>
@@ -3038,7 +3038,7 @@ public class App : Application
             var allSheetResults = new List<SheetImportResult>();
             if (tier2Sheets.Count > 0)
             {
-                var tier2Cts = new CancellationTokenSource();
+                using var tier2Cts = new CancellationTokenSource();
 
                 _mainWindowViewModel?.ShowLoading(
                     "AI processing...".Translate(),
