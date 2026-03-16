@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -136,21 +135,7 @@ public partial class LostDamagedModalsViewModel : ViewModelBase
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync()) return;
 
             RestoreOriginalFilterValues();
         }

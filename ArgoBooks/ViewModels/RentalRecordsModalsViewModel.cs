@@ -11,7 +11,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for rental records modals.
 /// </summary>
-public partial class RentalRecordsModalsViewModel : ObservableObject
+public partial class RentalRecordsModalsViewModel : ViewModelBase
 {
     #region Modal State
 
@@ -357,21 +357,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     {
         if (HasAddModalEnteredData)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardNewAsync())
+                return;
         }
 
         CloseAddModal();
@@ -607,21 +594,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     {
         if (HasEditModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardEditsAsync())
+                return;
         }
 
         CloseEditModal();
@@ -1225,21 +1199,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync())
+                return;
 
             RestoreOriginalFilterValues();
         }

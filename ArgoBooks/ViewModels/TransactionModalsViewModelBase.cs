@@ -661,21 +661,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync()) return;
 
             // Reset filter values to the state when modal was opened
             FilterStatus = _originalFilterStatus;
@@ -779,25 +765,11 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (hasUnsavedWork)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var message = IsEditMode
-                    ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
-                    : "You have entered data that will be lost. Are you sure you want to close?".Translate();
+            var confirmed = IsEditMode
+                ? await ConfirmDiscardEditsAsync()
+                : await ConfirmDiscardNewAsync();
 
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = message,
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!confirmed) return;
         }
 
         CloseAddEditModal();

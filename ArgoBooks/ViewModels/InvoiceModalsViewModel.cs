@@ -881,21 +881,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync()) return;
 
             // Restore filter values to the state when modal was opened
             FilterStatus = _originalFilterStatus;
@@ -1485,33 +1471,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (hasUnsavedWork)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
+            // Hide the WebView so the confirmation dialog renders above it (airspace issue)
+            var wasShowingPreview = IsShowingPreview;
+            if (wasShowingPreview)
+                IsShowingPreview = false;
+
+            var confirmed = IsEditMode
+                ? await ConfirmDiscardEditsAsync()
+                : await ConfirmDiscardNewAsync();
+
+            if (!confirmed)
             {
-                // Hide the WebView so the confirmation dialog renders above it (airspace issue)
-                var wasShowingPreview = IsShowingPreview;
                 if (wasShowingPreview)
-                    IsShowingPreview = false;
-
-                var message = IsEditMode
-                    ? "You have unsaved changes that will be lost. Are you sure you want to close?".Translate()
-                    : "You have entered data that will be lost. Are you sure you want to close?".Translate();
-
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = message,
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                {
-                    if (wasShowingPreview)
-                        IsShowingPreview = true;
-                    return;
-                }
+                    IsShowingPreview = true;
+                return;
             }
         }
 

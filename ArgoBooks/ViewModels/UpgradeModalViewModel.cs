@@ -196,21 +196,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
 
         // Data was entered - ask for confirmation
-        var dialog = App.ConfirmationDialog;
-        if (dialog != null)
-        {
-            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Discard Changes?".Translate(),
-                Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
-                PrimaryButtonText = "Discard".Translate(),
-                CancelButtonText = "Cancel".Translate(),
-                IsPrimaryDestructive = true
-            });
-
-            if (result != ConfirmationResult.Primary)
-                return;
-        }
+        if (!await ConfirmDiscardNewAsync())
+            return;
 
         CloseEnterKey();
     }

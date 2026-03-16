@@ -159,21 +159,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync())
+                return;
 
             // Restore filter values to original values
             RestoreOriginalFilterValues();
@@ -634,21 +621,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (HasScanResult)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Scanned Receipt?".Translate(),
-                    Message = "You have a scanned receipt that hasn't been saved. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardNewAsync()) return;
         }
 
         CloseScanReviewModal();

@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for payment modals, shared between PaymentsPage and AppShell.
 /// </summary>
-public partial class PaymentModalsViewModel : ObservableObject
+public partial class PaymentModalsViewModel : ViewModelBase
 {
     #region Modal State
 
@@ -288,21 +288,8 @@ public partial class PaymentModalsViewModel : ObservableObject
     {
         if (HasAddModalEnteredData)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have entered data that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardNewAsync())
+                return;
         }
 
         CloseAddModal();
@@ -433,21 +420,8 @@ public partial class PaymentModalsViewModel : ObservableObject
     {
         if (HasEditModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardEditsAsync())
+                return;
         }
 
         CloseEditModal();
@@ -679,21 +653,8 @@ public partial class PaymentModalsViewModel : ObservableObject
     {
         if (HasFilterModalChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unapplied filter changes. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                    return;
-            }
+            if (!await ConfirmDiscardFiltersAsync())
+                return;
 
             // Restore filter values to the state when modal was opened
             FilterPaymentMethod = _originalFilterPaymentMethod;

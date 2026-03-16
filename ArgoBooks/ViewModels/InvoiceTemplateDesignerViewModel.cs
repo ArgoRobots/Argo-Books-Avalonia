@@ -354,26 +354,13 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         if (HasUnsavedChanges)
         {
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
+            // Hide the WebView so the confirmation dialog renders above it (airspace issue)
+            IsPreviewVisible = false;
+
+            if (!await ConfirmDiscardEditsAsync())
             {
-                // Hide the WebView so the confirmation dialog renders above it (airspace issue)
-                IsPreviewVisible = false;
-
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-                {
-                    Title = "Discard Changes?".Translate(),
-                    Message = "You have unsaved changes that will be lost. Are you sure you want to close?".Translate(),
-                    PrimaryButtonText = "Discard".Translate(),
-                    CancelButtonText = "Cancel".Translate(),
-                    IsPrimaryDestructive = true
-                });
-
-                if (result != ConfirmationResult.Primary)
-                {
-                    IsPreviewVisible = true;
-                    return;
-                }
+                IsPreviewVisible = true;
+                return;
             }
         }
 
