@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -227,11 +229,30 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Cancels the password prompt.
+    /// Cancels the password prompt, showing confirmation if a password was entered.
     /// </summary>
     [RelayCommand]
-    private void Cancel()
+    private async Task CancelAsync()
     {
+        if (!string.IsNullOrEmpty(Password))
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Discard Changes?".Translate(),
+                    Message = "Are you sure you want to close? Any entered information will be lost.".Translate(),
+                    PrimaryButtonText = "Discard".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+        }
+
         IsOpen = false;
         Password = string.Empty;
         IsWindowsHelloAuthenticating = false;
