@@ -384,7 +384,7 @@
 
                                 <!-- Right: Extracted Data -->
                                 <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                <StackPanel Spacing="20">
+                                <StackPanel Spacing="20" Margin="0,0,14,0">
                                     <!-- Confidence Score -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
