@@ -27,6 +27,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #endregion
 
+    #region Plan Status
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    #endregion
+
     #region Modal State
 
     [ObservableProperty]
@@ -499,6 +506,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
+
+        // Subscribe to plan status changes
+        App.PlanStatusChanged += (_, e) => HasPremium = e.HasPremium;
     }
 
     private void LoadCustomerOptions(bool includeAllOption = false)
@@ -1162,6 +1172,22 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
+
+        // Enforce free-tier invoice send limit
+        if (!HasPremium)
+        {
+            var now = DateTime.Now;
+            var sentThisMonth = companyData.Invoices.Count(i =>
+                i.Status != InvoiceStatus.Draft &&
+                i.Status != InvoiceStatus.Cancelled &&
+                i.CreatedAt.Year == now.Year &&
+                i.CreatedAt.Month == now.Month);
+            if (sentThisMonth >= 5)
+            {
+                await ShowSendErrorAsync("You've reached the free plan limit of 5 invoices this month. Upgrade to Premium for unlimited invoices.".Translate());
+                return;
+            }
+        }
 
         // Validate that we have a template selected
         if (SelectedTemplate == null)

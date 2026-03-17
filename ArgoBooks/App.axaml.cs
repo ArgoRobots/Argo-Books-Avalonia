@@ -4019,7 +4019,12 @@ public class App : Application
         });
         navigationService.RegisterPage("Invoices", param =>
         {
-            _invoicesPageViewModel ??= new InvoicesPageViewModel();
+            if (_invoicesPageViewModel == null)
+            {
+                _invoicesPageViewModel = new InvoicesPageViewModel();
+                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+            }
+            _invoicesPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             if (param is RentalInvoiceNavigationParameter rentalParam)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>

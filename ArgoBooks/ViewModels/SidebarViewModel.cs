@@ -153,7 +153,7 @@ public partial class SidebarViewModel : ViewModelBase
         TransactionItems.Add(CreateItem("Expenses", "Expenses", Icons.Expenses));
         TransactionItems.Add(CreateItem("Revenue", "Revenue", Icons.Revenue));
         _invoicesItem = CreateItem("Invoices", "Invoices", Icons.Invoices);
-        _invoicesItem.IsVisible = HasPremium; // Hide by default unless premium
+        _invoicesItem.IsVisible = true; // Available on free tier (with send limits)
         TransactionItems.Add(_invoicesItem);
         _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
         _paymentsItem.IsVisible = HasPremium; // Hide by default unless premium
@@ -241,7 +241,6 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnHasPremiumChanged(bool value)
     {
         _insightsItem?.IsVisible = value;
-        _invoicesItem?.IsVisible = value;
         _paymentsItem?.IsVisible = value;
     }
 

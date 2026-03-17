@@ -112,6 +112,89 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Plan Status and Invoice Limits
+
+    private const int FreeInvoiceLimit = 5;
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    [ObservableProperty]
+    private int _sentInvoicesThisMonthCount;
+
+    /// <summary>
+    /// Gets remaining invoices the user can send (on the Free plan).
+    /// </summary>
+    public int RemainingInvoices => Math.Max(0, FreeInvoiceLimit - SentInvoicesThisMonthCount);
+
+    /// <summary>
+    /// Gets whether the user can send more invoices.
+    /// </summary>
+    public bool CanSendInvoice => HasPremium || RemainingInvoices > 0;
+
+    /// <summary>
+    /// Gets the text showing remaining invoices for the current month.
+    /// </summary>
+    public string RemainingInvoicesText => $"{RemainingInvoices} of {FreeInvoiceLimit} remaining";
+
+    /// <summary>
+    /// Gets whether to show the remaining invoices label (only on Free plan).
+    /// </summary>
+    public bool ShowRemainingInvoices => !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show the upgrade button (when limit is reached).
+    /// </summary>
+    public bool ShowInvoiceUpgradeButton => !HasPremium && !CanSendInvoice;
+
+    /// <summary>
+    /// Event raised when the upgrade button is clicked.
+    /// </summary>
+    public event EventHandler? UpgradeRequested;
+
+    partial void OnSentInvoicesThisMonthCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(RemainingInvoices));
+        OnPropertyChanged(nameof(RemainingInvoicesText));
+        OnPropertyChanged(nameof(CanSendInvoice));
+        OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
+    }
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSendInvoice));
+        OnPropertyChanged(nameof(ShowRemainingInvoices));
+        OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
+    }
+
+    [RelayCommand]
+    private void Upgrade()
+    {
+        UpgradeRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Counts non-draft, non-cancelled invoices created in the current calendar month.
+    /// </summary>
+    private void UpdateSentInvoicesCount()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Invoices == null)
+        {
+            SentInvoicesThisMonthCount = 0;
+            return;
+        }
+
+        var now = DateTime.Now;
+        SentInvoicesThisMonthCount = companyData.Invoices.Count(i =>
+            i.Status != InvoiceStatus.Draft &&
+            i.Status != InvoiceStatus.Cancelled &&
+            i.CreatedAt.Year == now.Year &&
+            i.CreatedAt.Month == now.Month);
+    }
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]
@@ -286,6 +369,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         {
             App.CompanyManager.CompanyDataChanged += (_, _) => LoadInvoices();
         }
+
+        // Subscribe to plan status changes so we update when user upgrades
+        App.PlanStatusChanged += (_, e) => HasPremium = e.HasPremium;
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -353,6 +439,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         _allInvoices.AddRange(companyData.Invoices);
         UpdateStatistics();
         FilterInvoices();
+        UpdateSentInvoicesCount();
     }
 
     private void LoadCustomerOptions()

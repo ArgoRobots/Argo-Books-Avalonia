@@ -536,7 +536,7 @@ public class PaymentPortalService
             var message = errorResponse?.Error ?? errorResponse?.Message
                 ?? $"Registration failed (HTTP {(int)response.StatusCode}).";
 
-            if ((int)response.StatusCode == 401)
+            if ((int)response.StatusCode == 401 && !string.IsNullOrEmpty(licenseKey))
                 message = "Invalid or expired license key. Please check your premium subscription.";
 
             return new PortalRegisterResponse { Success = false, Message = message };
