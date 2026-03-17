@@ -910,14 +910,17 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             SaveNewTransaction(companyData);
         }
 
+        // Capture pending state before CloseAddEditModal resets it via ResetForm
+        var wasPendingConversion = IsPendingConversion;
+
         CloseAddEditModal();
 
         // Show offline warning after modal closes
-        if (IsPendingConversion)
+        if (wasPendingConversion)
         {
             _ = App.ShowWarningMessageBoxAsync(
                 "Offline Mode".Translate(),
-                "You are currently offline. This transaction has been saved, but the USD conversion is pending. It will be automatically converted when you reconnect to the internet.".Translate());
+                "You are currently offline. This transaction has been saved and will be fully processed when you reconnect to the internet.".Translate());
         }
     }
 

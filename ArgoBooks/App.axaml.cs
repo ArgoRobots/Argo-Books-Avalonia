@@ -758,8 +758,8 @@ public class App : Application
                     if (args is PendingConversionsProcessedEventArgs e && e.ConvertedCount > 0)
                     {
                         var message = e.ConvertedCount == 1
-                            ? "1 offline transaction has been converted to USD.".Translate()
-                            : $"{e.ConvertedCount} offline transactions have been converted to USD.";
+                            ? "1 pending transaction has been processed successfully.".Translate()
+                            : string.Format("{0} pending transactions have been processed successfully.".Translate(), e.ConvertedCount);
                         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                         {
                             AddNotification(
@@ -1375,7 +1375,7 @@ public class App : Application
             if (PendingConversionService != null && CompanyManager.CompanyData != null)
             {
                 await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
-                _ = PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
             }
 
             // Start periodic timer to process pending conversions when connectivity returns
