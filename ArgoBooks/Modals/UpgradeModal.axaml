@@ -50,7 +50,57 @@
 
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1">
-                        <StackPanel Margin="24" HorizontalAlignment="Center" MaxWidth="400">
+                        <StackPanel Margin="24" HorizontalAlignment="Center" MaxWidth="400" Spacing="16">
+                            <!-- Free Plan -->
+                            <Border Classes="plan-card" IsVisible="{Binding !HasPremium}">
+                                <Grid RowDefinitions="Auto,*">
+                                    <!-- Plan Header -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+                                        <Border Width="48" Height="48"
+                                                CornerRadius="8"
+                                                ClipToBounds="True"
+                                                Background="{DynamicResource SurfaceHoverBrush}">
+                                            <PathIcon Data="{x:Static icons:Icons.Robot}"
+                                                      Width="24" Height="24"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc Free}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Current Plan'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Features -->
+                                    <StackPanel Grid.Row="1" Spacing="0" Margin="0,16,0,0" VerticalAlignment="Top">
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="{x:Static local:Icons.Check}"
+                                                          Width="14" Height="14"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc '10 products'}" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item" BorderThickness="0">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="{x:Static local:Icons.Check}"
+                                                          Width="14" Height="14"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc '5 invoices / month'}" />
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
                             <!-- Premium Plan -->
                             <Border Classes="plan-card">
                                 <Grid RowDefinitions="Auto,*,Auto">
@@ -131,7 +181,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="{DynamicResource SuccessBrush}"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Invoices &amp; Payments'}" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Unlimited Invoices &amp; Payments'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
