@@ -97,6 +97,18 @@ public partial class HeaderViewModel : ViewModelBase
 
     #endregion
 
+    #region Notification Toast
+
+    [ObservableProperty]
+    private bool _showNotificationToast;
+
+    [ObservableProperty]
+    private NotificationItem? _toastNotification;
+
+    private CancellationTokenSource? _toastCancellationTokenSource;
+
+    #endregion
+
     #region User
 
     [ObservableProperty]
@@ -515,7 +527,7 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Adds a notification.
+    /// Adds a notification and shows a toast popup for 5 seconds.
     /// </summary>
     /// <param name="notification">Notification to add.</param>
     public void AddNotification(NotificationItem notification)
@@ -526,6 +538,53 @@ public partial class HeaderViewModel : ViewModelBase
             UnreadNotificationCount++;
             HasUnreadNotifications = true;
         }
+
+        ShowToast(notification);
+    }
+
+    /// <summary>
+    /// Shows a toast popup for the given notification. Auto-dismisses after 5 seconds.
+    /// </summary>
+    private async void ShowToast(NotificationItem notification)
+    {
+        // Cancel any existing toast timer
+        _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource = new CancellationTokenSource();
+        var token = _toastCancellationTokenSource.Token;
+
+        ToastNotification = notification;
+        ShowNotificationToast = true;
+
+        try
+        {
+            await Task.Delay(5000, token);
+            // Auto-dismiss: leave notification as unread
+            ShowNotificationToast = false;
+            ToastNotification = null;
+        }
+        catch (TaskCanceledException)
+        {
+            // Toast was dismissed manually, do nothing
+        }
+    }
+
+    /// <summary>
+    /// Dismisses the notification toast and marks the notification as read.
+    /// </summary>
+    [RelayCommand]
+    private void DismissNotificationToast()
+    {
+        _toastCancellationTokenSource?.Cancel();
+
+        if (ToastNotification is { IsRead: false } notification)
+        {
+            notification.IsRead = true;
+            UnreadNotificationCount = Math.Max(0, UnreadNotificationCount - 1);
+            HasUnreadNotifications = UnreadNotificationCount > 0;
+        }
+
+        ShowNotificationToast = false;
+        ToastNotification = null;
     }
 
     /// <summary>
