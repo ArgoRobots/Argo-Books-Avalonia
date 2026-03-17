@@ -52,6 +52,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _address;
 
     [ObservableProperty]
+    private string? _provinceState;
+
+    [ObservableProperty]
     private string _email = "";
 
     [ObservableProperty]
@@ -117,6 +120,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _originalCountry;
     private string? _originalCity;
     private string? _originalAddress;
+    private string? _originalProvinceState;
     private string _originalEmail = "";
     private string _originalCurrency = "USD - US Dollar ($)";
 
@@ -133,6 +137,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         Country != _originalCountry ||
         City != _originalCity ||
         Address != _originalAddress ||
+        ProvinceState != _originalProvinceState ||
         Email != _originalEmail ||
         SelectedCurrency != _originalCurrency;
 
@@ -160,6 +165,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         string? country = null,
         string? city = null,
         string? address = null,
+        string? provinceState = null,
         string? email = null,
         string? currencyCode = null)
     {
@@ -230,10 +236,12 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         _originalCountry = country;
         _originalCity = city;
         _originalAddress = address;
+        _originalProvinceState = provinceState;
         _originalEmail = email ?? "";
         Country = country;
         City = city;
         Address = address;
+        ProvinceState = provinceState;
         Email = email ?? "";
 
         IsOpen = true;
@@ -339,7 +347,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Change Default Currency".Translate(),
-                    Message = "Changing the default currency will update how all amounts are displayed throughout the app. Existing transactions will be converted using historical exchange rates. This may result in small rounding differences.".Translate(),
+                    Message = "Changing the default currency will update how all amounts are displayed throughout the app. Existing transactions will be converted using historical exchange rates. This may result in small rounding differences. You can change it back any time.".Translate(),
                     PrimaryButtonText = "Change Currency".Translate(),
                     CancelButtonText = "Cancel".Translate(),
                     IsPrimaryDestructive = false
@@ -395,7 +403,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
             Country = Country,
             City = City,
-            Address = Address
+            Address = Address,
+            ProvinceState = ProvinceState
         });
 
         IsOpen = false;
@@ -500,6 +509,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     }
     partial void OnCityChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnProvinceStateChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnSelectedCurrencyChanged(string value) => OnPropertyChanged(nameof(HasChanges));
 
@@ -529,4 +539,5 @@ public class CompanyEditedEventArgs : EventArgs
     public string? Country { get; set; }
     public string? City { get; set; }
     public string? Address { get; set; }
+    public string? ProvinceState { get; set; }
 }

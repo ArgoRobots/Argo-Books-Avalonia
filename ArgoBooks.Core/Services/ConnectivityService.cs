@@ -29,6 +29,7 @@ public class ConnectivityService : IConnectivityService
         {
             try
             {
+                // Try HEAD first, then fall back to GET if HEAD fails
                 using var request = new HttpRequestMessage(HttpMethod.Head, url);
                 using var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
@@ -36,6 +37,17 @@ public class ConnectivityService : IConnectivityService
                 if (response.IsSuccessStatusCode || (int)response.StatusCode == 204)
                 {
                     return true;
+                }
+
+                // Some servers/proxies reject HEAD — try GET as fallback
+                if ((int)response.StatusCode >= 400)
+                {
+                    using var getRequest = new HttpRequestMessage(HttpMethod.Get, url);
+                    using var getResponse = await HttpClient.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                    if (getResponse.IsSuccessStatusCode || (int)getResponse.StatusCode == 204)
+                    {
+                        return true;
+                    }
                 }
             }
             catch (HttpRequestException)

@@ -120,7 +120,7 @@
                             </StackPanel>
 
                             <!-- Two column layout for other fields -->
-                            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto">
+                            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto,16,Auto">
                                 <!-- Business Type -->
                                 <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Business Type'}"
@@ -157,8 +157,20 @@
                                                          PhoneNumber="{Binding PhoneNumber, Mode=TwoWay}" />
                                 </StackPanel>
 
-                                <!-- Country -->
+                                <!-- Email -->
                                 <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="{loc:Loc Email}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Classes="form-input"
+                                             Text="{Binding Email, Mode=TwoWay}"
+                                             Watermark="{loc:Loc 'Enter email address'}"
+                                             MaxLength="200" />
+                                </StackPanel>
+
+                                <!-- Country -->
+                                <StackPanel Grid.Row="4" Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}">
@@ -168,7 +180,7 @@
                                 </StackPanel>
 
                                 <!-- City -->
-                                <StackPanel Grid.Row="4" Grid.Column="0" Spacing="6">
+                                <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc City}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -180,7 +192,7 @@
                                 </StackPanel>
 
                                 <!-- Address -->
-                                <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
+                                <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc Address}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -189,19 +201,6 @@
                                              Text="{Binding Address, Mode=TwoWay}"
                                              Watermark="{loc:Loc 'Enter address'}"
                                              MaxLength="200" />
-                                </StackPanel>
-
-                                <!-- Default Currency -->
-                                <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Default Currency'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
-                                                                  SelectedItem="{Binding SelectedCurrency}"
-                                                                  PriorityItems="{Binding PriorityCurrencies}"
-                                                                  Placeholder="{loc:Loc 'Search currencies...'}" />
                                 </StackPanel>
 
                                 <!-- Province / State -->
@@ -214,6 +213,19 @@
                                              Text="{Binding ProvinceState, Mode=TwoWay}"
                                              Watermark="{loc:Loc 'Enter province or state'}"
                                              MaxLength="100" />
+                                </StackPanel>
+
+                                <!-- Default Currency -->
+                                <StackPanel Grid.Row="8" Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Default Currency'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding Currencies}"
+                                              SelectedItem="{Binding SelectedCurrency}"
+                                              Classes="form-combobox"
+                                              PlaceholderText="{loc:Loc 'Select currency'}"
+                                              HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Grid>
                         </StackPanel>

@@ -1196,6 +1196,19 @@ public class App : Application
                 return;
 
             await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+
+            // Save the company data immediately after processing to persist the cleared pending status
+            if (CompanyManager.CompanyData.ChangesMade && !CompanyManager.IsSampleCompany)
+            {
+                try
+                {
+                    await CompanyManager.SaveCompanyAsync();
+                }
+                catch (Exception saveEx)
+                {
+                    ErrorLogger?.LogWarning($"Auto-save after pending conversion failed: {saveEx.Message}", "App");
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -1768,6 +1781,7 @@ public class App : Application
                     BusinessType = args.BusinessType,
                     Industry = args.Industry,
                     Phone = args.PhoneNumber,
+                    Email = args.Email,
                     Country = args.Country,
                     City = args.City,
                     ProvinceState = args.ProvinceState,
@@ -2095,6 +2109,7 @@ public class App : Application
             settings?.Company.Country,
             settings?.Company.City,
             settings?.Company.Address,
+            settings?.Company.ProvinceState,
             settings?.Company.Email,
             CompanyManager.CompanyData?.Settings?.Localization?.Currency);
     }
@@ -2129,6 +2144,7 @@ public class App : Application
                     var oldCountry = settings.Company.Country;
                     var oldCity = settings.Company.City;
                     var oldAddress = settings.Company.Address;
+                    var oldProvinceState = settings.Company.ProvinceState;
                     var oldLogoFileName = settings.Company.LogoFileName;
 
                     // Save old logo bytes for potential undo restore
@@ -2150,6 +2166,7 @@ public class App : Application
                     settings.Company.Country = args.Country;
                     settings.Company.City = args.City;
                     settings.Company.Address = args.Address;
+                    settings.Company.ProvinceState = args.ProvinceState;
 
                     // Handle logo update if a new one was uploaded
                     if (!string.IsNullOrEmpty(args.LogoPath))
@@ -2217,6 +2234,7 @@ public class App : Application
                     var newCountry = args.Country;
                     var newCity = args.City;
                     var newAddress = args.Address;
+                    var newProvinceState = args.ProvinceState;
 
                     UndoRedoManager.RecordAction(new DelegateAction(
                         $"Edit company '{newName}'",
@@ -2231,6 +2249,7 @@ public class App : Application
                             settings.Company.Country = oldCountry;
                             settings.Company.City = oldCity;
                             settings.Company.Address = oldAddress;
+                            settings.Company.ProvinceState = oldProvinceState;
 
                             // Restore old logo
                             RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
@@ -2254,6 +2273,7 @@ public class App : Application
                             settings.Company.Country = newCountry;
                             settings.Company.City = newCity;
                             settings.Company.Address = newAddress;
+                            settings.Company.ProvinceState = newProvinceState;
 
                             // Restore new logo
                             RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);

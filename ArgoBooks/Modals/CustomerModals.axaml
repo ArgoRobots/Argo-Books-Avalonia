@@ -372,11 +372,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterOutstandingMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" MaxLength="20" />
+                                        <TextBox Text="{Binding FilterOutstandingMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterOutstandingMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" MaxLength="20" />
+                                        <TextBox Text="{Binding FilterOutstandingMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -577,11 +577,11 @@
                             <Grid ColumnDefinitions="*,8,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                    <TextBox Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                    <TextBox Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
