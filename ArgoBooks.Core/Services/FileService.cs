@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Common;
 using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
@@ -69,6 +70,7 @@ public class FileService(
             await WriteJsonAsync(companyDir, "reportTemplates.json", companyData.ReportTemplates, cancellationToken);
             await WriteJsonAsync(companyDir, "idCounters.json", companyData.IdCounters, cancellationToken);
             await WriteJsonAsync(companyDir, "eventLog.json", companyData.EventLog, cancellationToken);
+            await WriteJsonAsync(companyDir, "pendingConversions.json", companyData.PendingConversions, cancellationToken);
 
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
@@ -279,7 +281,8 @@ public class FileService(
             LostDamaged = await ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken) ?? [],
             Receipts = await ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken) ?? [],
             ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? [],
-            EventLog = await ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? []
+            EventLog = await ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? [],
+            PendingConversions = await ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken) ?? []
         };
 
         return data;
@@ -323,6 +326,7 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "receipts.json", data.Receipts, cancellationToken);
         await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
 
         data.MarkAsSaved();
     }

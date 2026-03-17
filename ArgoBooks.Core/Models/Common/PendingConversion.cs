@@ -1,0 +1,58 @@
+namespace ArgoBooks.Core.Models.Common;
+
+/// <summary>
+/// Represents a transaction that was saved offline without USD conversion.
+/// Stored in a persistent queue that survives between sessions.
+/// </summary>
+public class PendingConversion
+{
+    /// <summary>
+    /// The ID of the transaction awaiting conversion (e.g., "PUR-2026-00001" or "REV-2026-00001").
+    /// </summary>
+    [JsonPropertyName("transactionId")]
+    public string TransactionId { get; set; } = "";
+
+    /// <summary>
+    /// The type of transaction: "Revenue" or "Expense".
+    /// </summary>
+    [JsonPropertyName("transactionType")]
+    public string TransactionType { get; set; } = "";
+
+    /// <summary>
+    /// The ISO currency code of the original transaction (e.g., "EUR", "CAD").
+    /// </summary>
+    [JsonPropertyName("originalCurrency")]
+    public string OriginalCurrency { get; set; } = "";
+
+    /// <summary>
+    /// The date of the transaction, used for exchange rate lookup.
+    /// </summary>
+    [JsonPropertyName("transactionDate")]
+    public DateTime TransactionDate { get; set; }
+
+    /// <summary>
+    /// When this pending conversion entry was created.
+    /// </summary>
+    [JsonPropertyName("createdAt")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Original amounts stored as backup for conversion
+
+    [JsonPropertyName("total")]
+    public decimal Total { get; set; }
+
+    [JsonPropertyName("taxAmount")]
+    public decimal TaxAmount { get; set; }
+
+    [JsonPropertyName("shippingCost")]
+    public decimal ShippingCost { get; set; }
+
+    [JsonPropertyName("discount")]
+    public decimal Discount { get; set; }
+
+    [JsonPropertyName("fee")]
+    public decimal Fee { get; set; }
+
+    [JsonPropertyName("unitPrice")]
+    public decimal UnitPrice { get; set; }
+}

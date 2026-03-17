@@ -445,7 +445,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
-            var statusDisplay = GetStatusDisplay(purchase, companyData);
+            var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, companyData);
             var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
@@ -483,7 +483,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 Quantity = (int)purchase.Quantity,
                 UnitPrice = purchase.UnitPrice,
                 PaymentMethod = purchase.PaymentMethod,
-                IsHighlighted = purchase.Id == HighlightTransactionId
+                IsHighlighted = purchase.Id == HighlightTransactionId,
+                IsPendingConversion = purchase.IsPendingConversion,
+                OriginalCurrency = purchase.OriginalCurrency
             };
         }).ToList();
 
@@ -772,15 +774,35 @@ public partial class ExpenseDisplayItem : ObservableObject
     [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
+    [ObservableProperty]
+    private bool _isPendingConversion;
+
+    [ObservableProperty]
+    private string _originalCurrency = "USD";
+
     public string DateFormatted => DateFormatService.Format(Date);
-    public string TotalFormatted => CurrencyService.FormatFromUSD(TotalUSD, Date);
-    public string AmountFormatted => CurrencyService.FormatFromUSD(AmountUSD, Date);
-    public string TaxAmountFormatted => CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
+    public string TotalFormatted => IsPendingConversion
+        ? CurrencyService.Format(Total)
+        : CurrencyService.FormatFromUSD(TotalUSD, Date);
+    public string AmountFormatted => IsPendingConversion
+        ? CurrencyService.Format(Amount)
+        : CurrencyService.FormatFromUSD(AmountUSD, Date);
+    public string TaxAmountFormatted => IsPendingConversion
+        ? CurrencyService.Format(TaxAmount)
+        : CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
     public string TaxRateFormatted => $"{TaxRate:N1}%";
-    public string ShippingCostFormatted => CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
-    public string DiscountFormatted => $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
-    public string FeeFormatted => CurrencyService.FormatFromUSD(FeeUSD, Date);
-    public string UnitPriceFormatted => CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
+    public string ShippingCostFormatted => IsPendingConversion
+        ? CurrencyService.Format(ShippingCost)
+        : CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
+    public string DiscountFormatted => IsPendingConversion
+        ? $"-{CurrencyService.Format(Discount)}"
+        : $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
+    public string FeeFormatted => IsPendingConversion
+        ? CurrencyService.Format(Fee)
+        : CurrencyService.FormatFromUSD(FeeUSD, Date);
+    public string UnitPriceFormatted => IsPendingConversion
+        ? CurrencyService.Format(UnitPrice)
+        : CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
     public string ReceiptIcon => HasReceipt ? "✓" : "✗";
 
     public bool IsReturned => StatusDisplay == "Returned";

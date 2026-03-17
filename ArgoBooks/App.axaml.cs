@@ -562,6 +562,7 @@ public class App : Application
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
+    private static System.Threading.Timer? _pendingConversionTimer;
 
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
@@ -660,6 +661,11 @@ public class App : Application
     /// </summary>
     public static ChangeTrackingService? ChangeTrackingService { get; private set; }
 
+    /// <summary>
+    /// Gets the pending conversion service for processing offline transactions.
+    /// </summary>
+    public static PendingConversionService? PendingConversionService { get; private set; }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -710,6 +716,7 @@ public class App : Application
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
             ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
+            PendingConversionService = new PendingConversionService(errorLogger);
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service and optional update service
@@ -742,6 +749,30 @@ public class App : Application
 
             // Wire up company manager events
             WireCompanyManagerEvents();
+
+            // Wire up pending conversion events
+            if (PendingConversionService != null)
+            {
+                PendingConversionService.PendingConversionsProcessed += (_, args) =>
+                {
+                    if (args is PendingConversionsProcessedEventArgs e && e.ConvertedCount > 0)
+                    {
+                        var message = e.ConvertedCount == 1
+                            ? "1 pending transaction has been processed successfully.".Translate()
+                            : string.Format("{0} pending transactions have been processed successfully.".Translate(), e.ConvertedCount);
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            AddNotification(
+                                "Back Online".Translate(),
+                                message,
+                                NotificationType.Success);
+
+                            // Refresh the current page to update status badges and amounts
+                            NavigationService?.RefreshCurrentPage();
+                        });
+                    }
+                };
+            }
 
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
@@ -929,6 +960,12 @@ public class App : Application
 
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
+
+            // Load pending conversion queue from disk
+            if (PendingConversionService != null)
+            {
+                await PendingConversionService.LoadAsync();
+            }
 
             // Load and apply saved license status
             if (LicenseService != null && _appShellViewModel != null)
@@ -1118,6 +1155,49 @@ public class App : Application
     }
 
     /// <summary>
+    /// Starts a periodic timer that checks for pending conversions and processes them
+    /// when connectivity is restored. Runs every 45 seconds.
+    /// </summary>
+    private static void StartPendingConversionTimer()
+    {
+        // Dispose any existing timer
+        _pendingConversionTimer?.Dispose();
+
+        _pendingConversionTimer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                if (PendingConversionService == null || !PendingConversionService.HasPendingConversions)
+                    return;
+
+                if (CompanyManager?.CompanyData == null)
+                    return;
+
+                // Check if we're online before attempting to process
+                var connectivityService = new ConnectivityService();
+                var isOnline = await connectivityService.IsInternetAvailableAsync();
+                if (!isOnline)
+                    return;
+
+                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Pending conversion timer error: {ex.Message}", "App");
+            }
+        }, null, TimeSpan.FromSeconds(45), TimeSpan.FromSeconds(45));
+    }
+
+    /// <summary>
+    /// Stops the pending conversion timer.
+    /// </summary>
+    private static void StopPendingConversionTimer()
+    {
+        _pendingConversionTimer?.Dispose();
+        _pendingConversionTimer = null;
+    }
+
+    /// <summary>
     /// Registers file type associations for .argo files on Windows.
     /// Extracts the embedded icon to disk and associates it with the file extension.
     /// </summary>
@@ -1291,6 +1371,16 @@ public class App : Application
                 }
             }
 
+            // Reconcile and process any pending currency conversions
+            if (PendingConversionService != null && CompanyManager.CompanyData != null)
+            {
+                await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
+                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+            }
+
+            // Start periodic timer to process pending conversions when connectivity returns
+            StartPendingConversionTimer();
+
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 
@@ -1315,6 +1405,9 @@ public class App : Application
             EventLogService?.Clear();
             ChangeTrackingService?.ClearAllChanges();
             _appShellViewModel.HeaderViewModel.ClearNotifications();
+
+            // Stop pending conversion timer when company is closed
+            StopPendingConversionTimer();
 
             // Clear cached page ViewModels to ensure fresh state when opening a new company
             ClearPageCaches();

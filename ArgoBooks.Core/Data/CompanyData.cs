@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Inventory;
@@ -204,6 +205,17 @@ public class CompanyData
     /// </summary>
     [JsonPropertyName("invoiceTemplates")]
     public List<InvoiceTemplate> InvoiceTemplates { get; init; } = [];
+
+    #endregion
+
+    #region Pending Conversions
+
+    /// <summary>
+    /// Transactions saved offline that are awaiting USD conversion.
+    /// Persisted in the .argo file as a secondary backup (primary backup is in app data directory).
+    /// </summary>
+    [JsonPropertyName("pendingConversions")]
+    public List<PendingConversion> PendingConversions { get; init; } = [];
 
     #endregion
 
