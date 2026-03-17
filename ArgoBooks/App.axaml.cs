@@ -660,6 +660,11 @@ public class App : Application
     /// </summary>
     public static ChangeTrackingService? ChangeTrackingService { get; private set; }
 
+    /// <summary>
+    /// Gets the pending conversion service for processing offline transactions.
+    /// </summary>
+    public static PendingConversionService? PendingConversionService { get; private set; }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -710,6 +715,7 @@ public class App : Application
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
             ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
+            PendingConversionService = new PendingConversionService(errorLogger);
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service and optional update service
@@ -929,6 +935,12 @@ public class App : Application
 
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
+
+            // Load pending conversion queue from disk
+            if (PendingConversionService != null)
+            {
+                await PendingConversionService.LoadAsync();
+            }
 
             // Load and apply saved license status
             if (LicenseService != null && _appShellViewModel != null)
@@ -1289,6 +1301,13 @@ public class App : Application
                         await SettingsService.SaveGlobalSettingsAsync();
                     }
                 }
+            }
+
+            // Reconcile and process any pending currency conversions
+            if (PendingConversionService != null && CompanyManager.CompanyData != null)
+            {
+                await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
+                _ = PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
             }
 
             // Check for low stock and overdue invoice notifications

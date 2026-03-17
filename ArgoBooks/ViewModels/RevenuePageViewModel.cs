@@ -473,7 +473,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 HasReceipt = hasReceipt,
                 ReceiptFilePath = receiptFilePath,
                 IsHighlighted = revenue.Id == HighlightTransactionId,
-                InvoiceId = revenue.InvoiceId ?? string.Empty
+                InvoiceId = revenue.InvoiceId ?? string.Empty,
+                IsPendingConversion = revenue.IsPendingConversion,
+                OriginalCurrency = revenue.OriginalCurrency
             };
         }).ToList();
 
@@ -778,14 +780,32 @@ public partial class RevenueDisplayItem : ObservableObject
     [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
+    [ObservableProperty]
+    private bool _isPendingConversion;
+
+    [ObservableProperty]
+    private string _originalCurrency = "USD";
+
     public string DateFormatted => DateFormatService.Format(Date);
-    public string TotalFormatted => CurrencyService.FormatFromUSD(TotalUSD, Date);
-    public string AmountFormatted => CurrencyService.FormatFromUSD(AmountUSD, Date);
-    public string TaxAmountFormatted => CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
+    public string TotalFormatted => IsPendingConversion
+        ? CurrencyService.Format(Total)
+        : CurrencyService.FormatFromUSD(TotalUSD, Date);
+    public string AmountFormatted => IsPendingConversion
+        ? CurrencyService.Format(Amount)
+        : CurrencyService.FormatFromUSD(AmountUSD, Date);
+    public string TaxAmountFormatted => IsPendingConversion
+        ? CurrencyService.Format(TaxAmount)
+        : CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
     public string TaxRateFormatted => $"{TaxRate:N1}%";
-    public string ShippingCostFormatted => CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
-    public string DiscountFormatted => $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
-    public string UnitPriceFormatted => CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
+    public string ShippingCostFormatted => IsPendingConversion
+        ? CurrencyService.Format(ShippingCost)
+        : CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
+    public string DiscountFormatted => IsPendingConversion
+        ? $"-{CurrencyService.Format(Discount)}"
+        : $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
+    public string UnitPriceFormatted => IsPendingConversion
+        ? CurrencyService.Format(UnitPrice)
+        : CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
 
     public string CustomerInitials
     {
