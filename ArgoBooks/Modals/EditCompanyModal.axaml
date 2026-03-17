@@ -232,7 +232,7 @@
                         </Button>
                         <Button Grid.Column="2"
                                 Classes="primary-button"
-                                Command="{Binding SaveAsyncCommand}"
+                                Command="{Binding SaveCommand}"
                                 IsEnabled="{Binding CanSave}">
                             <TextBlock Text="{loc:Loc 'Save Changes'}" />
                         </Button>
