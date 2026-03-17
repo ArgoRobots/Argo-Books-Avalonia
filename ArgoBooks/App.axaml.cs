@@ -562,6 +562,7 @@ public class App : Application
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
+    private static System.Threading.Timer? _pendingConversionTimer;
 
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
@@ -1154,6 +1155,49 @@ public class App : Application
     }
 
     /// <summary>
+    /// Starts a periodic timer that checks for pending conversions and processes them
+    /// when connectivity is restored. Runs every 45 seconds.
+    /// </summary>
+    private static void StartPendingConversionTimer()
+    {
+        // Dispose any existing timer
+        _pendingConversionTimer?.Dispose();
+
+        _pendingConversionTimer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                if (PendingConversionService == null || !PendingConversionService.HasPendingConversions)
+                    return;
+
+                if (CompanyManager?.CompanyData == null)
+                    return;
+
+                // Check if we're online before attempting to process
+                var connectivityService = new ConnectivityService();
+                var isOnline = await connectivityService.IsInternetAvailableAsync();
+                if (!isOnline)
+                    return;
+
+                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Pending conversion timer error: {ex.Message}", "App");
+            }
+        }, null, TimeSpan.FromSeconds(45), TimeSpan.FromSeconds(45));
+    }
+
+    /// <summary>
+    /// Stops the pending conversion timer.
+    /// </summary>
+    private static void StopPendingConversionTimer()
+    {
+        _pendingConversionTimer?.Dispose();
+        _pendingConversionTimer = null;
+    }
+
+    /// <summary>
     /// Registers file type associations for .argo files on Windows.
     /// Extracts the embedded icon to disk and associates it with the file extension.
     /// </summary>
@@ -1334,6 +1378,9 @@ public class App : Application
                 _ = PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
             }
 
+            // Start periodic timer to process pending conversions when connectivity returns
+            StartPendingConversionTimer();
+
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 
@@ -1358,6 +1405,9 @@ public class App : Application
             EventLogService?.Clear();
             ChangeTrackingService?.ClearAllChanges();
             _appShellViewModel.HeaderViewModel.ClearNotifications();
+
+            // Stop pending conversion timer when company is closed
+            StopPendingConversionTimer();
 
             // Clear cached page ViewModels to ensure fresh state when opening a new company
             ClearPageCaches();
