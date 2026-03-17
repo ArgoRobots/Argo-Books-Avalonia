@@ -529,10 +529,33 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var productId = transaction.LineItems.FirstOrDefault()?.ProductId;
         var product = productId != null ? App.CompanyManager?.CompanyData?.GetProduct(productId) : null;
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == product?.CategoryId);
-        ModalTaxRate = transaction.TaxAmount;
-        ModalShipping = transaction.ShippingCost;
-        ModalDiscount = transaction.Discount;
-        ModalFee = transaction.Fee;
+
+        // Convert monetary values to current display currency if needed
+        var txCurrency = transaction.OriginalCurrency ?? "USD";
+        var currentCurrency = CurrencyService.CurrentCurrencyCode;
+        var needsConversion = !string.Equals(txCurrency, currentCurrency, StringComparison.OrdinalIgnoreCase);
+
+        if (needsConversion)
+        {
+            // Convert from original currency amounts using their USD equivalents (with fallback for legacy data)
+            var taxUSD = transaction.TaxAmountUSD > 0 ? transaction.TaxAmountUSD : transaction.TaxAmount;
+            var shippingUSD = transaction.ShippingCostUSD > 0 ? transaction.ShippingCostUSD : transaction.ShippingCost;
+            var discountUSD = transaction.DiscountUSD > 0 ? transaction.DiscountUSD : transaction.Discount;
+            var feeUSD = transaction.FeeUSD > 0 ? transaction.FeeUSD : transaction.Fee;
+
+            ModalTaxRate = CurrencyService.GetDisplayAmount(taxUSD, transaction.Date);
+            ModalShipping = CurrencyService.GetDisplayAmount(shippingUSD, transaction.Date);
+            ModalDiscount = CurrencyService.GetDisplayAmount(discountUSD, transaction.Date);
+            ModalFee = CurrencyService.GetDisplayAmount(feeUSD, transaction.Date);
+        }
+        else
+        {
+            ModalTaxRate = transaction.TaxAmount;
+            ModalShipping = transaction.ShippingCost;
+            ModalDiscount = transaction.Discount;
+            ModalFee = transaction.Fee;
+        }
+
         SelectedPaymentMethod = transaction.PaymentMethod.ToString();
         ModalNotes = transaction.Notes;
 
@@ -542,12 +565,16 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             foreach (var li in transaction.LineItems)
             {
+                var unitPrice = needsConversion
+                    ? CurrencyService.GetDisplayAmount(transaction.EffectiveUnitPriceUSD, transaction.Date)
+                    : li.UnitPrice;
+
                 var lineItem = new TLineItem
                 {
                     SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId),
                     Description = li.Description,
                     Quantity = li.Quantity,
-                    UnitPrice = li.UnitPrice
+                    UnitPrice = unitPrice
                 };
                 lineItem.PropertyChanged += (_, _) => UpdateTotals();
                 LineItems.Add(lineItem);
@@ -556,11 +583,15 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         else
         {
             // Fallback for old data without line items
+            var unitPrice = needsConversion
+                ? CurrencyService.GetDisplayAmount(transaction.EffectiveUnitPriceUSD, transaction.Date)
+                : transaction.UnitPrice;
+
             var lineItem = new TLineItem
             {
                 Description = transaction.Description,
                 Quantity = transaction.Quantity,
-                UnitPrice = transaction.UnitPrice
+                UnitPrice = unitPrice
             };
             lineItem.PropertyChanged += (_, _) => UpdateTotals();
             LineItems.Add(lineItem);
@@ -920,7 +951,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             _ = App.ShowWarningMessageBoxAsync(
                 "Offline Mode".Translate(),
-                "You are currently offline. This transaction has been saved and will be fully processed when you reconnect to the internet.".Translate());
+                "Your transaction has been saved. It will be updated with the correct converted amount once you're back online.".Translate());
         }
     }
 

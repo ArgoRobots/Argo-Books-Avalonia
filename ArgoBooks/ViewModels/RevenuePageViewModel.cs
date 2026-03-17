@@ -789,23 +789,23 @@ public partial class RevenueDisplayItem : ObservableObject
     public string DateFormatted => DateFormatService.Format(Date);
     public string TotalFormatted => IsPendingConversion
         ? CurrencyService.Format(Total)
-        : CurrencyService.FormatFromUSD(TotalUSD, Date);
+        : CurrencyService.FormatWithOriginal(Total, OriginalCurrency, TotalUSD, Date);
     public string AmountFormatted => IsPendingConversion
         ? CurrencyService.Format(Amount)
-        : CurrencyService.FormatFromUSD(AmountUSD, Date);
+        : CurrencyService.FormatWithOriginal(Amount, OriginalCurrency, AmountUSD, Date);
     public string TaxAmountFormatted => IsPendingConversion
         ? CurrencyService.Format(TaxAmount)
-        : CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
+        : CurrencyService.FormatWithOriginal(TaxAmount, OriginalCurrency, TaxAmountUSD, Date);
     public string TaxRateFormatted => $"{TaxRate:N1}%";
     public string ShippingCostFormatted => IsPendingConversion
         ? CurrencyService.Format(ShippingCost)
-        : CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
+        : CurrencyService.FormatWithOriginal(ShippingCost, OriginalCurrency, ShippingCostUSD, Date);
     public string DiscountFormatted => IsPendingConversion
         ? $"-{CurrencyService.Format(Discount)}"
-        : $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
+        : $"-{CurrencyService.FormatWithOriginal(Discount, OriginalCurrency, DiscountUSD, Date)}";
     public string UnitPriceFormatted => IsPendingConversion
         ? CurrencyService.Format(UnitPrice)
-        : CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
+        : CurrencyService.FormatWithOriginal(UnitPrice, OriginalCurrency, UnitPriceUSD, Date);
 
     public string CustomerInitials
     {

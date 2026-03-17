@@ -193,10 +193,11 @@
 
                                 <!-- Default Currency -->
                                 <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Default Currency'}"
-                                               FontSize="13"
+                                    <TextBlock FontSize="13"
                                                FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Default Currency'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
                                     <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
                                                                   SelectedItem="{Binding SelectedCurrency}"
                                                                   PriorityItems="{Binding PriorityCurrencies}"

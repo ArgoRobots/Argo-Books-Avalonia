@@ -894,6 +894,12 @@ public class App : Application
                 DataContext = _mainWindowViewModel
             };
 
+            // Process pending conversions when window is activated (e.g., user returns after going offline)
+            desktop.MainWindow.Activated += async (_, _) =>
+            {
+                await TryProcessPendingConversionsAsync();
+            };
+
             // Wire up idle detection for auto-logout (needs MainWindow to exist)
             WireIdleDetection(desktop);
 
@@ -1156,7 +1162,7 @@ public class App : Application
 
     /// <summary>
     /// Starts a periodic timer that checks for pending conversions and processes them
-    /// when connectivity is restored. Runs every 45 seconds.
+    /// when connectivity is restored. Runs every 15 seconds.
     /// </summary>
     private static void StartPendingConversionTimer()
     {
@@ -1165,27 +1171,36 @@ public class App : Application
 
         _pendingConversionTimer = new System.Threading.Timer(async _ =>
         {
-            try
-            {
-                if (PendingConversionService == null || !PendingConversionService.HasPendingConversions)
-                    return;
+            await TryProcessPendingConversionsAsync();
+        }, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
 
-                if (CompanyManager?.CompanyData == null)
-                    return;
+    /// <summary>
+    /// Attempts to process pending conversions if online and there are pending items.
+    /// Called by the timer and on window activation for faster reconnect detection.
+    /// </summary>
+    private static async Task TryProcessPendingConversionsAsync()
+    {
+        try
+        {
+            if (PendingConversionService == null || !PendingConversionService.HasPendingConversions)
+                return;
 
-                // Check if we're online before attempting to process
-                var connectivityService = new ConnectivityService();
-                var isOnline = await connectivityService.IsInternetAvailableAsync();
-                if (!isOnline)
-                    return;
+            if (CompanyManager?.CompanyData == null)
+                return;
 
-                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
-            }
-            catch (Exception ex)
-            {
-                ErrorLogger?.LogWarning($"Pending conversion timer error: {ex.Message}", "App");
-            }
-        }, null, TimeSpan.FromSeconds(45), TimeSpan.FromSeconds(45));
+            // Check if we're online before attempting to process
+            var connectivityService = new ConnectivityService();
+            var isOnline = await connectivityService.IsInternetAvailableAsync();
+            if (!isOnline)
+                return;
+
+            await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Pending conversion processing error: {ex.Message}", "App");
+        }
     }
 
     /// <summary>
@@ -2080,7 +2095,8 @@ public class App : Application
             settings?.Company.Country,
             settings?.Company.City,
             settings?.Company.Address,
-            settings?.Company.Email);
+            settings?.Company.Email,
+            CompanyManager.CompanyData?.Settings?.Localization?.Currency);
     }
 
     /// <summary>

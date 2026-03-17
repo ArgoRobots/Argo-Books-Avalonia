@@ -650,6 +650,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 PaymentMethodDisplay = payment.PaymentMethod.GetDisplayName(),
                 Amount = payment.Amount,
                 AmountUSD = payment.EffectiveAmountUSD,
+                OriginalCurrency = payment.OriginalCurrency,
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
@@ -790,6 +791,9 @@ public partial class PaymentDisplayItem : ObservableObject
     private decimal _amountUSD;
 
     [ObservableProperty]
+    private string _originalCurrency = "USD";
+
+    [ObservableProperty]
     private string _status = "Completed";
 
     [ObservableProperty]
@@ -807,8 +811,8 @@ public partial class PaymentDisplayItem : ObservableObject
     /// Gets the formatted amount.
     /// </summary>
     public string AmountFormatted => AmountUSD < 0
-        ? $"-{CurrencyService.FormatFromUSD(Math.Abs(AmountUSD), Date)}"
-        : CurrencyService.FormatFromUSD(AmountUSD, Date);
+        ? $"-{CurrencyService.FormatWithOriginal(Math.Abs(Amount), OriginalCurrency, Math.Abs(AmountUSD), Date)}"
+        : CurrencyService.FormatWithOriginal(Amount, OriginalCurrency, AmountUSD, Date);
 
     /// <summary>
     /// Gets whether the amount is negative (refund).
