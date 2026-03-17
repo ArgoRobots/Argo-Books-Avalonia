@@ -445,7 +445,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
-            var statusDisplay = GetStatusDisplay(purchase, companyData);
+            var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, companyData);
             var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;

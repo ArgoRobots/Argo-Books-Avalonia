@@ -434,7 +434,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
-            var statusDisplay = GetStatusDisplay(revenue, companyData);
+            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, companyData);
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);

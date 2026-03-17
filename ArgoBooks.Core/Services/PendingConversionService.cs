@@ -33,7 +33,7 @@ public class PendingConversionService
     /// Fired after pending conversions are successfully processed.
     /// UI should refresh transaction lists and charts.
     /// </summary>
-    public event EventHandler? PendingConversionsProcessed;
+    public event EventHandler<PendingConversionsProcessedEventArgs>? PendingConversionsProcessed;
 
     public PendingConversionService(IErrorLogger? errorLogger = null)
         : this(PlatformServiceFactory.GetPlatformService(), errorLogger)
@@ -231,7 +231,7 @@ public class PendingConversionService
             // Mark company data as changed so the next save includes the updated USD values
             companyData.MarkAsModified();
 
-            PendingConversionsProcessed?.Invoke(this, EventArgs.Empty);
+            PendingConversionsProcessed?.Invoke(this, new PendingConversionsProcessedEventArgs(processed.Count));
         }
     }
 
@@ -278,4 +278,15 @@ public class PendingConversionService
     {
         return _platformService.CombinePaths(_platformService.GetAppDataPath(), QueueFileName);
     }
+}
+
+/// <summary>
+/// Event args for when pending conversions are processed.
+/// </summary>
+public class PendingConversionsProcessedEventArgs(int convertedCount) : EventArgs
+{
+    /// <summary>
+    /// The number of transactions that were successfully converted.
+    /// </summary>
+    public int ConvertedCount { get; } = convertedCount;
 }

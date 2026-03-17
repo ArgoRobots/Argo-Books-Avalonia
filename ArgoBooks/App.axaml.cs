@@ -749,6 +749,30 @@ public class App : Application
             // Wire up company manager events
             WireCompanyManagerEvents();
 
+            // Wire up pending conversion events
+            if (PendingConversionService != null)
+            {
+                PendingConversionService.PendingConversionsProcessed += (_, args) =>
+                {
+                    if (args is PendingConversionsProcessedEventArgs e && e.ConvertedCount > 0)
+                    {
+                        var message = e.ConvertedCount == 1
+                            ? "1 offline transaction has been converted to USD.".Translate()
+                            : $"{e.ConvertedCount} offline transactions have been converted to USD.";
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            AddNotification(
+                                "Back Online".Translate(),
+                                message,
+                                NotificationType.Success);
+
+                            // Refresh the current page to update status badges and amounts
+                            NavigationService?.RefreshCurrentPage();
+                        });
+                    }
+                };
+            }
+
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
 
