@@ -159,7 +159,7 @@
                                                                    VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <TextBox Grid.Column="2"
-                                                             Text="{Binding UnitPrice, Mode=TwoWay}"
+                                                             Text="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=''}"
                                                              Classes="form-input-compact"
                                                              Watermark="0.00"
                                                              behaviors:NumericInputBehavior.IsDecimalOnly="True"
