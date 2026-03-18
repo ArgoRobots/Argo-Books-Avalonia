@@ -389,6 +389,17 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 settings.Localization.Currency = newCurrencyCode;
             }
             _originalCurrency = SelectedCurrency;
+
+            // Prefetch exchange rates for the new currency so display conversions work immediately
+            if (!string.Equals(newCurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                var exchangeService = ExchangeRateService.Instance;
+                if (exchangeService != null)
+                {
+                    await exchangeService.GetExchangeRateAsync("USD", newCurrencyCode, DateTime.Today, fetchIfMissing: true);
+                }
+            }
+
             CurrencyService.NotifyCurrencyChanged();
         }
 

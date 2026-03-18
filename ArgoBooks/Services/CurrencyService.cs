@@ -116,6 +116,11 @@ public static class CurrencyService
         if (exchangeService != null)
         {
             var rate = exchangeService.GetExchangeRate("USD", targetCurrency, value.RateDate);
+            // Fall back to today's cached rate if the exact date isn't cached
+            if (rate <= 0)
+            {
+                rate = exchangeService.GetExchangeRate("USD", targetCurrency, DateTime.Today);
+            }
             if (rate > 0)
             {
                 return Math.Round(value.AmountUSD * rate, 2);
@@ -146,6 +151,11 @@ public static class CurrencyService
         if (exchangeService != null)
         {
             var rate = exchangeService.GetExchangeRate("USD", targetCurrency, date);
+            // Fall back to today's cached rate if the exact date isn't cached
+            if (rate <= 0)
+            {
+                rate = exchangeService.GetExchangeRate("USD", targetCurrency, DateTime.Today);
+            }
             if (rate > 0)
             {
                 return Math.Round(amountUSD * rate, 2);
