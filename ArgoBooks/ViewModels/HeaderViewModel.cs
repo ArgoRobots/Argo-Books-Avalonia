@@ -591,7 +591,7 @@ public partial class HeaderViewModel : ViewModelBase
     /// Dismisses the notification toast and marks the notification as read.
     /// </summary>
     [RelayCommand]
-    private async void DismissNotificationToast()
+    private async Task DismissNotificationToastAsync()
     {
         _toastCancellationTokenSource?.Cancel();
         _toastCancellationTokenSource?.Dispose();
