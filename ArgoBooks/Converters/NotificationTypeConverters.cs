@@ -48,6 +48,19 @@ public static class NotificationTypeConverters
         });
 
     /// <summary>
+    /// Converter that returns a tinted background brush based on notification type.
+    /// </summary>
+    public static readonly IValueConverter TypeToBackgroundBrush =
+        new FuncValueConverter<NotificationType, IBrush>(type => type switch
+        {
+            NotificationType.Info => new SolidColorBrush(Color.Parse("#1A3B82F6")),
+            NotificationType.Success => new SolidColorBrush(Color.Parse("#1A22C55E")),
+            NotificationType.Warning => new SolidColorBrush(Color.Parse("#1AF59E0B")),
+            NotificationType.System => new SolidColorBrush(Color.Parse("#1A6B7280")),
+            _ => new SolidColorBrush(Color.Parse("#1A3B82F6"))
+        });
+
+    /// <summary>
     /// Converter that returns font weight based on read status.
     /// </summary>
     public static readonly IValueConverter ReadToFontWeight =

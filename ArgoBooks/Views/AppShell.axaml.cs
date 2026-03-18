@@ -1,8 +1,11 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
@@ -28,6 +31,39 @@ public partial class AppShell : UserControl
 
         // Responsive page content margin
         AppContent.SizeChanged += OnContentSizeChanged;
+
+        // Animate toast slide in/out from right
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is AppShellViewModel vm)
+            {
+                vm.HeaderViewModel.PropertyChanged += OnHeaderViewModelPropertyChanged;
+            }
+        };
+    }
+
+    private void OnHeaderViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(HeaderViewModel.ShowNotificationToast))
+            return;
+
+        var vm = (HeaderViewModel)sender!;
+        if (vm.ShowNotificationToast)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                NotificationToastBorder.Opacity = 1;
+                NotificationToastBorder.RenderTransform = TransformOperations.Parse("translate(0px, 0px)");
+            }, DispatcherPriority.Render);
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                NotificationToastBorder.Opacity = 0;
+                NotificationToastBorder.RenderTransform = TransformOperations.Parse("translate(340px, 0px)");
+            }, DispatcherPriority.Background);
+        }
     }
 
     private void OnContentSizeChanged(object? sender, SizeChangedEventArgs e)
