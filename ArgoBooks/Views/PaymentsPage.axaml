@@ -373,6 +373,7 @@
                                                         <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc Delete}"
+                                                            IsVisible="{Binding !IsFromPortal}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />

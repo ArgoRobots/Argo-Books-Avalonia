@@ -667,6 +667,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
+                IsFromPortal = payment.Source == "Online",
             };
         }).ToList();
 
@@ -814,6 +815,9 @@ public partial class PaymentDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _notes = string.Empty;
+
+    [ObservableProperty]
+    private bool _isFromPortal;
 
     /// <summary>
     /// Gets the formatted date.

@@ -835,20 +835,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
 
-        // Block deletion of invoices that have portal-synced payments
-        var companyData = App.CompanyManager?.CompanyData;
-        var hasPortalPayment = companyData?.Payments.Any(p => p.InvoiceId == item.Id && p.Source == "Online") ?? false;
-        if (hasPortalPayment)
-        {
-            await dialog.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Cannot Delete".Translate(),
-                Message = "Invoices with payments received through the payment portal cannot be deleted.".Translate(),
-                PrimaryButtonText = "OK".Translate(),
-            });
-            return;
-        }
-
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Invoice".Translate(),
@@ -859,6 +845,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         });
 
         if (result != ConfirmationResult.Primary) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
 
         var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;

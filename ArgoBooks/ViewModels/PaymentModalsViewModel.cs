@@ -583,22 +583,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         if (dialog == null)
             return;
 
-        // Block deletion of portal-synced payments
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        var sourcePayment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
-        if (sourcePayment?.Source == "Online")
-        {
-            await dialog.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Cannot Delete".Translate(),
-                Message = "Payments received through the payment portal cannot be deleted.".Translate(),
-                PrimaryButtonText = "OK".Translate(),
-            });
-            return;
-        }
-
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Payment".Translate(),
@@ -609,6 +593,10 @@ public partial class PaymentModalsViewModel : ViewModelBase
         });
 
         if (result != ConfirmationResult.Primary)
+            return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
             return;
 
         var payment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
