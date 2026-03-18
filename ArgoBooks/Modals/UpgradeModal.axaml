@@ -51,9 +51,9 @@
 
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1">
-                        <Grid Margin="24" ColumnDefinitions="*,16,*">
+                        <StackPanel Margin="24" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
                             <!-- Free Plan -->
-                            <Border Grid.Column="0" Classes="plan-card" IsVisible="{Binding !HasPremium}">
+                            <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">
                                 <Grid RowDefinitions="Auto,*,Auto">
                                     <!-- Plan Header -->
                                     <StackPanel Grid.Row="0" Spacing="4">
@@ -153,7 +153,7 @@
                             </Border>
 
                             <!-- Premium Plan -->
-                            <Border Grid.Column="2" Classes="plan-card">
+                            <Border Classes="plan-card" Width="340">
                                 <Grid RowDefinitions="Auto,*,Auto">
                                     <!-- Plan Header -->
                                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -282,7 +282,7 @@
                                     </StackPanel>
                                 </Grid>
                             </Border>
-                        </Grid>
+                        </StackPanel>
                     </ScrollViewer>
 
                     <!-- Footer -->
