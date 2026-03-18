@@ -5,12 +5,14 @@
              xmlns:vm="clr-namespace:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:modals="using:ArgoBooks.Modals"
              xmlns:local="using:ArgoBooks"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.EditCompanyModal"
              x:DataType="vm:EditCompanyModalViewModel">
 
+    <Panel>
     <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                            ClosingCommand="{Binding CloseCommand}">
         <controls:ModalOverlay.ModalContent>
@@ -67,7 +69,7 @@
                         </StackPanel>
 
                         <!-- Two column layout for fields -->
-                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto">
+                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto,16,Auto">
                             <!-- Business Type -->
                             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Business Type'}"
@@ -139,7 +141,7 @@
                             </StackPanel>
 
                             <!-- Address -->
-                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Spacing="6">
+                            <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
                                 <TextBlock Text="{loc:Loc Address}"
                                            FontSize="13"
                                            FontWeight="Medium"
@@ -148,6 +150,31 @@
                                          Text="{Binding Address, Mode=TwoWay}"
                                          Watermark="{loc:Loc 'Enter address'}"
                                          MaxLength="200" />
+                            </StackPanel>
+
+                            <!-- Province / State -->
+                            <StackPanel Grid.Row="6" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Province / State'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Classes="form-input"
+                                         Text="{Binding ProvinceState, Mode=TwoWay}"
+                                         Watermark="{loc:Loc 'Enter province or state'}"
+                                         MaxLength="100" />
+                            </StackPanel>
+
+                            <!-- Default Currency -->
+                            <StackPanel Grid.Row="8" Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Default Currency'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding Currencies}"
+                                          SelectedItem="{Binding SelectedCurrency}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="{loc:Loc 'Select currency'}"
+                                          HorizontalAlignment="Stretch" />
                             </StackPanel>
                         </Grid>
 
@@ -227,4 +254,8 @@
             </Border>
         </controls:ModalOverlay.ModalContent>
     </controls:ModalOverlay>
+
+    <!-- Currency Error Modal -->
+    <modals:CurrencyErrorModal />
+    </Panel>
 </UserControl>

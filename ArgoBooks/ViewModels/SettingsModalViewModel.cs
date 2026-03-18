@@ -23,7 +23,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalAccentColor;
     private string _originalLanguage = "English";
     private string _originalDateFormat = "MM/DD/YYYY";
-    private string _originalCurrency = "USD - US Dollar ($)";
     private TimeZoneItem _originalTimeZone = TimeZones.FindById("UTC");
     private string _originalTimeFormat = "12h";
     private int _originalMaxPieSlices = 6;
@@ -80,9 +79,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedLanguage = value;
         _isLoadingLanguage = false;
     }
-
-    [ObservableProperty]
-    private string _selectedCurrency = "USD - US Dollar ($)";
 
     [ObservableProperty]
     private string _selectedDateFormat = "MM/DD/YYYY";
@@ -148,31 +144,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private int _maxPieSlices = 6;
 
-    // Currency change error state
-    [ObservableProperty]
-    private bool _hasCurrencyError;
-
-    [ObservableProperty]
-    private string _currencyErrorMessage = string.Empty;
-
-    [ObservableProperty]
-    private bool _isSavingCurrency;
-
-    [RelayCommand]
-    private void DismissCurrencyError()
-    {
-        HasCurrencyError = false;
-        CurrencyErrorMessage = string.Empty;
-    }
-
-    [RelayCommand]
-    private async Task RetryCurrencySaveAsync()
-    {
-        HasCurrencyError = false;
-        CurrencyErrorMessage = string.Empty;
-        await SaveAsync();
-    }
-
     /// <summary>
     /// Available options for max pie slices.
     /// </summary>
@@ -184,19 +155,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     public IReadOnlyList<string> PriorityLanguages => Data.Languages.Priority;
 
     /// <summary>
-    /// Priority/common currencies shown at the top of the dropdown.
-    /// </summary>
-    public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
-
-    /// <summary>
     /// All available languages.
     /// </summary>
     public IReadOnlyList<string> Languages => Data.Languages.All;
-
-    /// <summary>
-    /// All available currencies.
-    /// </summary>
-    public IReadOnlyList<string> Currencies => Data.Currencies.All;
 
     public ObservableCollection<string> DateFormats { get; } =
     [
@@ -1171,7 +1132,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedAccentColor != _originalAccentColor ||
         SelectedLanguage != _originalLanguage ||
         SelectedDateFormat != _originalDateFormat ||
-        SelectedCurrency != _originalCurrency ||
         SelectedTimeZone.Id != _originalTimeZone.Id ||
         SelectedTimeFormat != _originalTimeFormat ||
         MaxPieSlices != _originalMaxPieSlices ||
@@ -1225,8 +1185,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Load language without triggering change event
             SetLanguageWithoutNotify(settings.Localization.Language);
             SelectedDateFormat = settings.Localization.DateFormat;
-            // Convert currency code to display string
-            SelectedCurrency = CurrencyService.GetDisplayString(settings.Localization.Currency);
 
             // Load notification settings
             LowStockAlert = settings.Notifications.LowStockAlert;
@@ -1270,7 +1228,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalAccentColor = SelectedAccentColor;
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
-        _originalCurrency = SelectedCurrency;
         _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
@@ -1350,10 +1307,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedDateFormat = _originalDateFormat;
         }
-        if (SelectedCurrency != _originalCurrency)
-        {
-            SelectedCurrency = _originalCurrency;
-        }
         if (SelectedTimeZone.Id != _originalTimeZone.Id)
         {
             SelectedTimeZone = _originalTimeZone;
@@ -1383,24 +1336,18 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Check what changed before updating original values
         var languageChanged = SelectedLanguage != _originalLanguage;
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
-        var currencyChanged = SelectedCurrency != _originalCurrency;
         var timeSettingsChanged = SelectedTimeZone.Id != _originalTimeZone.Id ||
                                    SelectedTimeFormat != _originalTimeFormat;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
         // Save the previous values in case download/fetch fails
         var previousLanguage = _originalLanguage;
-        var previousCurrency = _originalCurrency;
-
-        // Extract the new currency code before updating originals
-        var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
 
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
-        _originalCurrency = SelectedCurrency;
         _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
@@ -1417,8 +1364,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             settings.Localization.Language = SelectedLanguage;
             settings.Localization.DateFormat = SelectedDateFormat;
-            // Extract currency code from display string (e.g., "USD - US Dollar ($)" -> "USD")
-            settings.Localization.Currency = newCurrencyCode;
 
             // Save notification settings
             settings.Notifications.LowStockAlert = LowStockAlert;
@@ -1456,33 +1401,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (timeSettingsChanged)
         {
             TimeZoneService.NotifyTimeSettingsChanged();
-        }
-
-        // Notify that currency changed so views can refresh
-        // Also preload exchange rates for the new currency
-        if (currencyChanged)
-        {
-            IsSavingCurrency = true;
-            var success = await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
-            IsSavingCurrency = false;
-
-            if (!success)
-            {
-                // Revert currency change
-                SelectedCurrency = _originalCurrency;
-                _originalCurrency = previousCurrency;
-
-                // Revert in company settings
-                if (settings != null)
-                {
-                    settings.Localization.Currency = CurrencyService.ParseCurrencyCode(previousCurrency);
-                }
-
-                // Show error state modal
-                return;
-            }
-
-            CurrencyService.NotifyCurrencyChanged();
         }
 
         // Notify that chart settings changed so charts can reload
@@ -1544,56 +1462,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         IsOpen = false;
-    }
-
-    /// <summary>
-    /// Preloads exchange rates for the selected currency.
-    /// Returns true if successful, false if exchange rates could not be fetched.
-    /// </summary>
-    private async Task<bool> PreloadExchangeRatesForCurrencyAsync(string currencyCode)
-    {
-        // Skip if USD (no conversion needed)
-        if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService == null)
-        {
-            HasCurrencyError = true;
-            CurrencyErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
-            return false;
-        }
-
-        // Check connectivity first
-        var connectivityService = new ConnectivityService();
-        var hasInternet = await connectivityService.IsInternetAvailableAsync();
-
-        // Try to get exchange rate for today
-        var today = DateTime.Today;
-        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true);
-
-        if (rate <= 0)
-        {
-            // Rate fetch failed
-            HasCurrencyError = true;
-            CurrencyErrorMessage = hasInternet
-                ? "Unable to fetch exchange rates. Please try again.".Translate()
-                : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
-            return false;
-        }
-
-        // Rate available - try to preload more dates in the background
-        try
-        {
-            var dates = Enumerable.Range(1, 30).Select(i => today.AddDays(-i)).ToList();
-            await exchangeService.PreloadRatesAsync(dates);
-        }
-        catch
-        {
-            // Preloading additional dates failed, but we have today's rate so it's OK
-        }
-
-        return true;
     }
 
     /// <summary>

@@ -72,18 +72,6 @@
                                                                   Placeholder="{loc:Loc 'Search languages...'}" />
                                 </StackPanel>
 
-                                <!-- Currency -->
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{loc:Loc Currency}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
-                                                                  SelectedItem="{Binding SelectedCurrency}"
-                                                                  PriorityItems="{Binding PriorityCurrencies}"
-                                                                  Placeholder="{loc:Loc 'Search currencies...'}" />
-                                </StackPanel>
-
                                 <!-- Date Format -->
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Date Format'}"
@@ -1175,8 +1163,6 @@
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 
-        <!-- Currency Error Modal -->
-        <modals:CurrencyErrorModal />
     </Panel>
 
     <UserControl.Styles>

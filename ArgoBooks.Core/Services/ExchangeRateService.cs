@@ -88,7 +88,7 @@ public class ExchangeRateService
         }
 
         // Fetch from API if allowed
-        if (fetchIfMissing && HasApiKey)
+        if (fetchIfMissing)
         {
             var rates = await FetchRatesForDateAsync(date);
             if (rates != null)
@@ -222,55 +222,60 @@ public class ExchangeRateService
     /// <summary>
     /// Fetches exchange rates for a specific date from the API.
     /// </summary>
-    private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date)
+    private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2)
     {
-        if (!LicenseAuthHelper.IsConfigured)
+        for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
-            return null;
-        }
+            var stopwatch = Stopwatch.StartNew();
+            var success = false;
 
-        var stopwatch = Stopwatch.StartNew();
-        var success = false;
-
-        try
-        {
-            var isToday = date.Date == DateTime.Today;
-            var endpoint = isToday
-                ? BaseUrl
-                : $"{BaseUrl}?date={date:yyyy-MM-dd}";
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-            LicenseAuthHelper.AddAuthHeaders(request);
-
-            var response = await _httpClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode}", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
-                return null;
-            }
+                if (attempt > 0)
+                {
+                    await Task.Delay(1000 * attempt); // 1s, 2s backoff
+                }
 
-            var result = await response.Content.ReadFromJsonAsync<ProxyExchangeRatesResponse>();
-            if (result?.Success == true && result.Rates != null)
+                var isToday = date.Date == DateTime.Today;
+                var endpoint = isToday
+                    ? BaseUrl
+                    : $"{BaseUrl}?date={date:yyyy-MM-dd}";
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                LicenseAuthHelper.AddAuthHeaders(request);
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
+                    continue; // retry
+                }
+
+                var result = await response.Content.ReadFromJsonAsync<ProxyExchangeRatesResponse>();
+                if (result?.Success == true && result.Rates != null)
+                {
+                    success = true;
+                    return result.Rates;
+                }
+
+                _errorLogger?.LogError($"Exchange rate API returned invalid data (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
+            }
+            catch (Exception ex)
             {
-                success = true;
-                return result.Rates;
+                _errorLogger?.LogError(ex, ErrorCategory.Api, $"Failed to fetch exchange rates for {date:yyyy-MM-dd} (attempt {attempt + 1}/{maxRetries + 1})");
+                if (attempt == maxRetries) return null;
             }
+            finally
+            {
+                stopwatch.Stop();
+                _ = _telemetryManager?.TrackApiCallAsync(
+                    ApiName.OpenExchangeRates,
+                    stopwatch.ElapsedMilliseconds,
+                    success);
+            }
+        }
 
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, $"Failed to fetch exchange rates for {date:yyyy-MM-dd}");
-            return null;
-        }
-        finally
-        {
-            stopwatch.Stop();
-            _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenExchangeRates,
-                stopwatch.ElapsedMilliseconds,
-                success);
-        }
+        return null;
     }
 
     /// <summary>

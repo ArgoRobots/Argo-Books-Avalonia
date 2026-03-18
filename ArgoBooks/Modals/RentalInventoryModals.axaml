@@ -63,7 +63,7 @@
                                     <Run Text="{loc:Loc 'Total Quantity'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter quantity'}"
-                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="10" />
+                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="7" />
                                 <TextBlock Text="{Binding ModalQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -78,14 +78,14 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Daily Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Weekly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
 
@@ -94,12 +94,12 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Monthly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
 
@@ -172,7 +172,7 @@
                                         <Run Text="{loc:Loc 'Total Quantity'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter quantity'}"
-                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="10" />
+                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="7" />
                                     <TextBlock Text="{Binding ModalQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -198,14 +198,14 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Daily Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Weekly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
 
@@ -214,12 +214,12 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Monthly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
 
@@ -299,11 +299,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterDailyRateMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                        <TextBox Text="{Binding FilterDailyRateMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterDailyRateMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                        <TextBox Text="{Binding FilterDailyRateMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -377,7 +377,7 @@
                                         <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding RentOutQuantity, Mode=TwoWay}" Classes="form-input"
-                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="10" />
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="7" />
                                     <TextBlock Text="{Binding RentOutQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding RentOutQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>

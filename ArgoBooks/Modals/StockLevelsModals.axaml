@@ -82,7 +82,7 @@
                                              Classes="form-input"
                                              Watermark="{loc:Loc 'Enter quantity'}"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                             MaxLength="10" />
+                                             MaxLength="7" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -214,7 +214,7 @@
                                              Classes="form-input"
                                              Watermark="0"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                             MaxLength="10" />
+                                             MaxLength="7" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -227,7 +227,7 @@
                                              Classes="form-input"
                                              Watermark="10"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                             MaxLength="10" />
+                                             MaxLength="7" />
                                 </StackPanel>
                             </Grid>
 
@@ -238,7 +238,7 @@
                                          Classes="form-input"
                                          Watermark="100"
                                          behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                         MaxLength="10" />
+                                         MaxLength="7" />
                             </StackPanel>
 
                             <!-- Error Message -->

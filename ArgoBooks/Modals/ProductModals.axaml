@@ -105,26 +105,26 @@
 
                             <StackPanel Spacing="6" IsVisible="{Binding !IsExpensesTab}">
                                 <TextBlock Text="{loc:Loc 'Default Unit Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="15" />
+                                <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
                             </StackPanel>
 
                             <StackPanel Spacing="6" IsVisible="{Binding IsExpensesTab}">
                                 <TextBlock Text="{loc:Loc 'Default Cost Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="15" />
+                                <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="7" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="7" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
@@ -233,26 +233,26 @@
 
                             <StackPanel Spacing="6" IsVisible="{Binding !IsExpensesTab}">
                                 <TextBlock Text="{loc:Loc 'Default Unit Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="15" />
+                                <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
                             </StackPanel>
 
                             <StackPanel Spacing="6" IsVisible="{Binding IsExpensesTab}">
                                 <TextBlock Text="{loc:Loc 'Default Cost Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="15" />
+                                <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="7" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="10" />
+                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" MaxLength="7" />
                                         <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
