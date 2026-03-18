@@ -609,10 +609,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         if (result != ConfirmationResult.Primary)
             return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
-
         var payment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
         if (payment != null)
         {

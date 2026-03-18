@@ -860,8 +860,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (result != ConfirmationResult.Primary) return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-
         var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
