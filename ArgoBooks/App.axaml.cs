@@ -277,6 +277,7 @@ public class App : Application
     }
 
     private static bool _isAutoSyncing;
+    private static System.Threading.Timer? _portalSyncTimer;
 
     /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
@@ -330,6 +331,14 @@ public class App : Application
                 // so synced payments survive restarts without triggering a full company save
                 try { await CompanyManager!.SavePaymentSyncAsync(); }
                 catch { /* non-fatal */ }
+
+                // Refresh any already-instantiated page ViewModels so the UI reflects the new data
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _paymentsPageViewModel?.RefreshPaymentsCommand.Execute(null);
+                    _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
+                    _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
+                });
             }
         }
         catch
@@ -1481,12 +1490,23 @@ public class App : Application
             // Auto-sync online payments from the portal on company open
             _ = AutoSyncPortalPaymentsAsync();
 
+            // Start periodic portal sync every 5 minutes
+            _portalSyncTimer?.Dispose();
+            _portalSyncTimer = new System.Threading.Timer(
+                _ => AutoSyncPortalPaymentsAsync(),
+                null,
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromMinutes(5));
+
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
         };
 
         CompanyManager.CompanyClosed += async (_, _) =>
         {
+            _portalSyncTimer?.Dispose();
+            _portalSyncTimer = null;
+
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
@@ -4231,7 +4251,12 @@ public class App : Application
             }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
-        navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = _paymentsPageViewModel ??= new PaymentsPageViewModel() });
+        navigationService.RegisterPage("Payments", _ =>
+        {
+            _paymentsPageViewModel ??= new PaymentsPageViewModel();
+            _ = AutoSyncPortalPaymentsAsync();
+            return new PaymentsPage { DataContext = _paymentsPageViewModel };
+        });
 
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
