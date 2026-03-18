@@ -88,7 +88,7 @@ public class ExchangeRateService
         }
 
         // Fetch from API if allowed
-        if (fetchIfMissing && HasApiKey)
+        if (fetchIfMissing)
         {
             var rates = await FetchRatesForDateAsync(date);
             if (rates != null)
@@ -224,12 +224,6 @@ public class ExchangeRateService
     /// </summary>
     private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2)
     {
-        if (!LicenseAuthHelper.IsConfigured)
-        {
-            _errorLogger?.LogWarning("Exchange rate fetch skipped: no license key configured", "ExchangeRateService");
-            return null;
-        }
-
         for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
             var stopwatch = Stopwatch.StartNew();

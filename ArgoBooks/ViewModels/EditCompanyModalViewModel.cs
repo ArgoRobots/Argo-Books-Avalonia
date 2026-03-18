@@ -465,17 +465,6 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             return true;
         }
 
-        if (!exchangeService.HasApiKey)
-        {
-            if (hasTransactions)
-            {
-                HasCurrencyError = true;
-                CurrencyErrorMessage = "A valid license is required to fetch exchange rates. Please activate your license and try again.".Translate();
-                return false;
-            }
-            return true;
-        }
-
         // Try to get exchange rate for today
         var today = DateTime.Today;
         var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true);
