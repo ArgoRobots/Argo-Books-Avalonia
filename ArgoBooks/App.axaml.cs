@@ -294,7 +294,11 @@ public class App : Application
                 return;
 
             var portalSettings = companyData.Settings.PaymentPortal;
-            var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
+
+            // Use force sync to also recover any payments that were previously
+            // confirmed on the server but never saved locally (e.g. due to app crash).
+            // Duplicate prevention in ProcessSyncedPayments handles efficiency.
+            var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
 
             if (!syncResponse.Success)
                 return;
@@ -322,7 +326,10 @@ public class App : Application
 
             if (newPayments.Count > 0)
             {
-                CompanyManager?.MarkAsChanged();
+                // Auto-save so synced payments persist across restarts
+                // without showing the unsaved-changes indicator
+                try { await CompanyManager!.SaveCompanyAsync(); }
+                catch { /* non-fatal */ }
             }
         }
         catch

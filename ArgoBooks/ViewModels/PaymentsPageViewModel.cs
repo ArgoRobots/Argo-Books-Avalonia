@@ -157,8 +157,10 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
                 if (newPayments.Count > 0)
                 {
-                    // Mark data as changed and notify other pages (e.g. invoices)
-                    App.CompanyManager?.MarkAsChanged();
+                    // Auto-save so synced payments persist across restarts
+                    // without showing the unsaved-changes indicator
+                    try { await App.CompanyManager!.SaveCompanyAsync(); }
+                    catch { /* non-fatal */ }
                 }
             }
 
