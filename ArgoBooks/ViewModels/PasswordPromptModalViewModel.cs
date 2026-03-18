@@ -1,4 +1,5 @@
 using ArgoBooks.Localization;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -110,7 +111,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         ShowWindowsHelloSuccess = false;
         IsOpen = true;
 
-        _completionSource = new TaskCompletionSource<string?>();
+        // Use RunContinuationsAsynchronously to prevent TrySetResult from running
+        // the awaiting continuation inline, which can block UI updates
+        _completionSource = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
         return _completionSource.Task;
     }
 
@@ -126,7 +129,8 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         IsOpen = true; // Ensure modal stays/reopens
 
         // Create a new completion source for the retry
-        _completionSource = new TaskCompletionSource<string?>();
+        // Use RunContinuationsAsynchronously to prevent inline continuations
+        _completionSource = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Request focus on the password textbox
         FocusPasswordRequested?.Invoke(this, EventArgs.Empty);
@@ -170,6 +174,18 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     /// Call this when the password was accepted.
     /// </summary>
     public void Close()
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            CloseCore();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(CloseCore);
+        }
+    }
+
+    private void CloseCore()
     {
         IsOpen = false;
         IsLoading = false;

@@ -1384,6 +1384,9 @@ public class App : Application
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 
+            // Enable toast popups now that startup notifications are done
+            _appShellViewModel?.HeaderViewModel.EnableToasts();
+
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
@@ -1479,14 +1482,12 @@ public class App : Application
                         "Stored password not found. Please enter the password manually.".Translate());
                     password = await _appShellViewModel.PasswordPromptModalViewModel.WaitForPasswordAsync();
                 }
-                else
-                {
-                    _mainWindowViewModel.ShowLoading("Opening company...".Translate());
-                }
             }
-            else if (!string.IsNullOrEmpty(password))
+
+            // Close the password modal and show loading before returning
+            if (!string.IsNullOrEmpty(password))
             {
-                // Show loading again after user enters password (if they didn't cancel)
+                _appShellViewModel.PasswordPromptModalViewModel.Close();
                 _mainWindowViewModel.ShowLoading("Opening company...".Translate());
             }
 
@@ -2339,11 +2340,13 @@ public class App : Application
             CompanyManager.CompanyOpened += (_, args) =>
             {
                 settings.HasPassword = args.IsEncrypted;
+                settings.IsSampleCompany = CompanyManager.IsSampleCompany;
             };
 
             CompanyManager.CompanyClosed += (_, _) =>
             {
                 settings.HasPassword = false;
+                settings.IsSampleCompany = false;
             };
         }
 
@@ -3664,7 +3667,8 @@ public class App : Application
                 return;
             }
 
-            // Retry with the new password
+            // Close the modal and retry with the new password
+            passwordModal.Close();
             await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
@@ -3738,7 +3742,8 @@ public class App : Application
                 return false;
             }
 
-            // Retry recursively
+            // Close the modal and retry recursively
+            passwordModal.Close();
             return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (Exception ex)

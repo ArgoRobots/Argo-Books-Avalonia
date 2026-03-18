@@ -270,6 +270,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     #region Security Settings
 
     [ObservableProperty]
+    private bool _isSampleCompany;
+
+    [ObservableProperty]
     private bool _hasPremium; // Whether user has Premium plan
 
     [ObservableProperty]
