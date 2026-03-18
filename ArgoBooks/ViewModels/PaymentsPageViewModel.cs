@@ -157,9 +157,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
                 if (newPayments.Count > 0)
                 {
-                    // Auto-save so synced payments persist across restarts
-                    // without showing the unsaved-changes indicator
-                    try { await App.CompanyManager!.SaveCompanyAsync(); }
+                    // Persist only the sync-related files (payments, invoices, id counters, settings)
+                    // so synced payments survive restarts without triggering a full company save
+                    try { await App.CompanyManager!.SavePaymentSyncAsync(); }
                     catch { /* non-fatal */ }
                 }
             }

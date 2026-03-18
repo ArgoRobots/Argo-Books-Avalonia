@@ -708,6 +708,22 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Saves only the payment-sync-related files (payments, invoices, id counters, settings)
+    /// to the temp directory without triggering a full company save or marking data as changed.
+    /// </summary>
+    public async Task SavePaymentSyncAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsCompanyOpen || _currentTempDirectory == null || CompanyData == null)
+            return;
+
+        var companyDir = GetCompanyDirectory(_currentTempDirectory);
+        await _fileService.WriteJsonAsync(companyDir, "payments.json", CompanyData.Payments, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "invoices.json", CompanyData.Invoices, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "idCounters.json", CompanyData.IdCounters, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "appSettings.json", CompanyData.Settings, cancellationToken);
+    }
+
+    /// <summary>
     /// Marks the company data as changed.
     /// </summary>
     public void MarkAsChanged()
