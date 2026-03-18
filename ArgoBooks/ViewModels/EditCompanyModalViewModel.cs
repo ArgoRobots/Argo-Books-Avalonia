@@ -1,6 +1,7 @@
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -51,6 +52,19 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _email = "";
 
+    [ObservableProperty]
+    private string _selectedCurrency = "USD - US Dollar ($)";
+
+    /// <summary>
+    /// All available currencies.
+    /// </summary>
+    public IReadOnlyList<string> Currencies => Data.Currencies.All;
+
+    /// <summary>
+    /// Priority/common currencies shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
+
     /// <summary>
     /// Available business types (shared data source).
     /// </summary>
@@ -92,6 +106,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _originalCity;
     private string? _originalAddress;
     private string _originalEmail = "";
+    private string _originalSelectedCurrency = "USD - US Dollar ($)";
 
     /// <summary>
     /// Whether any changes have been made.
@@ -106,7 +121,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         Country != _originalCountry ||
         City != _originalCity ||
         Address != _originalAddress ||
-        Email != _originalEmail;
+        Email != _originalEmail ||
+        SelectedCurrency != _originalSelectedCurrency;
 
     /// <summary>
     /// Whether the form is valid for saving.
@@ -132,7 +148,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         string? country = null,
         string? city = null,
         string? address = null,
-        string? email = null)
+        string? email = null,
+        string? currency = null)
     {
         _originalCompanyName = companyName;
         _originalBusinessType = businessType;
@@ -199,6 +216,12 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         City = city;
         Address = address;
         Email = email ?? "";
+
+        var currencyDisplay = !string.IsNullOrEmpty(currency)
+            ? CurrencyService.GetDisplayString(currency)
+            : "USD - US Dollar ($)";
+        _originalSelectedCurrency = currencyDisplay;
+        SelectedCurrency = currencyDisplay;
 
         IsOpen = true;
     }
@@ -296,7 +319,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
             Country = Country,
             City = City,
-            Address = Address
+            Address = Address,
+            Currency = CurrencyService.ParseCurrencyCode(SelectedCurrency)
         });
 
         IsOpen = false;
@@ -352,6 +376,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     partial void OnCityChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnSelectedCurrencyChanged(string value) => OnPropertyChanged(nameof(HasChanges));
 
     /// <summary>
     /// Event raised when the company is saved.
@@ -379,4 +404,5 @@ public class CompanyEditedEventArgs : EventArgs
     public string? Country { get; set; }
     public string? City { get; set; }
     public string? Address { get; set; }
+    public string Currency { get; set; } = "USD";
 }

@@ -1987,7 +1987,8 @@ public class App : Application
             settings?.Company.Country,
             settings?.Company.City,
             settings?.Company.Address,
-            settings?.Company.Email);
+            settings?.Company.Email,
+            settings?.Company.Currency);
     }
 
     /// <summary>
@@ -2020,6 +2021,7 @@ public class App : Application
                     var oldCountry = settings.Company.Country;
                     var oldCity = settings.Company.City;
                     var oldAddress = settings.Company.Address;
+                    var oldCurrency = settings.Company.Currency;
                     var oldLogoFileName = settings.Company.LogoFileName;
 
                     // Save old logo bytes for potential undo restore
@@ -2041,6 +2043,7 @@ public class App : Application
                     settings.Company.Country = args.Country;
                     settings.Company.City = args.City;
                     settings.Company.Address = args.Address;
+                    settings.Company.Currency = args.Currency;
 
                     // Handle logo update if a new one was uploaded
                     if (!string.IsNullOrEmpty(args.LogoPath))
@@ -2108,6 +2111,7 @@ public class App : Application
                     var newCountry = args.Country;
                     var newCity = args.City;
                     var newAddress = args.Address;
+                    var newCurrency = args.Currency;
 
                     UndoRedoManager.RecordAction(new DelegateAction(
                         $"Edit company '{newName}'",
@@ -2122,6 +2126,7 @@ public class App : Application
                             settings.Company.Country = oldCountry;
                             settings.Company.City = oldCity;
                             settings.Company.Address = oldAddress;
+                            settings.Company.Currency = oldCurrency;
 
                             // Restore old logo
                             RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
@@ -2145,6 +2150,7 @@ public class App : Application
                             settings.Company.Country = newCountry;
                             settings.Company.City = newCity;
                             settings.Company.Address = newAddress;
+                            settings.Company.Currency = newCurrency;
 
                             // Restore new logo
                             RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);

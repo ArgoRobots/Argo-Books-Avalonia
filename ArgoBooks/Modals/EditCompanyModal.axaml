@@ -67,7 +67,7 @@
                         </StackPanel>
 
                         <!-- Two column layout for fields -->
-                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto">
+                        <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto,16,Auto">
                             <!-- Business Type -->
                             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Business Type'}"
@@ -149,57 +149,67 @@
                                          Watermark="{loc:Loc 'Enter address'}"
                                          MaxLength="200" />
                             </StackPanel>
-                        </Grid>
 
-                        <!-- Logo Section -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="{loc:Loc 'Company Logo'}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <!-- Default Currency -->
+                            <StackPanel Grid.Row="8" Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Default Currency'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
+                                                              SelectedItem="{Binding SelectedCurrency}"
+                                                              PriorityItems="{Binding PriorityCurrencies}"
+                                                              Placeholder="{loc:Loc 'Search currencies...'}" />
+                            </StackPanel>
 
-                            <Grid ColumnDefinitions="Auto,*">
-                                <!-- Logo Preview -->
-                                <Border Grid.Column="0"
-                                        Width="80" Height="80"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource SurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        ClipToBounds="True"
-                                        Margin="0,0,16,0">
-                                    <Panel>
-                                        <PathIcon Data="{x:Static icons:Icons.GridDetailed}"
-                                                  Width="32" Height="32"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                  IsVisible="{Binding !HasLogo}" />
-                                        <Image Source="{Binding LogoSource}"
-                                               Stretch="Uniform"
-                                               IsVisible="{Binding HasLogo}" />
-                                    </Panel>
-                                </Border>
+                            <!-- Company Logo -->
+                            <StackPanel Grid.Row="8" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Company Logo'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <!-- Logo Preview -->
+                                    <Border Grid.Column="0"
+                                            Width="80" Height="80"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            ClipToBounds="True"
+                                            Margin="0,0,12,0">
+                                        <Panel>
+                                            <PathIcon Data="{x:Static icons:Icons.GridDetailed}"
+                                                      Width="32" Height="32"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      IsVisible="{Binding !HasLogo}" />
+                                            <Image Source="{Binding LogoSource}"
+                                                   Stretch="Uniform"
+                                                   IsVisible="{Binding HasLogo}" />
+                                        </Panel>
+                                    </Border>
 
-                                <!-- Upload Buttons -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
-                                    <Button Classes="secondary-button"
-                                            Command="{Binding BrowseLogoCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="{x:Static local:Icons.ImportData}"
-                                                      Width="16" Height="16" />
-                                            <TextBlock Text="{loc:Loc 'Upload Logo'}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Classes="text-button"
-                                            Command="{Binding RemoveLogoCommand}"
-                                            IsVisible="{Binding HasLogo}">
-                                        <TextBlock Text="{loc:Loc Remove}" Foreground="{DynamicResource DangerBrush}" />
-                                    </Button>
-                                    <TextBlock Text="{loc:Loc 'PNG, JPG up to 5MB'}"
-                                               FontSize="11"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
+                                    <!-- Upload Buttons -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                        <Button Classes="secondary-button"
+                                                Command="{Binding BrowseLogoCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <PathIcon Data="{x:Static local:Icons.ImportData}"
+                                                          Width="16" Height="16" />
+                                                <TextBlock Text="{loc:Loc 'Upload Logo'}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="text-button"
+                                                Command="{Binding RemoveLogoCommand}"
+                                                IsVisible="{Binding HasLogo}">
+                                            <TextBlock Text="{loc:Loc Remove}" Foreground="{DynamicResource DangerBrush}" />
+                                        </Button>
+                                        <TextBlock Text="{loc:Loc 'PNG, JPG up to 5MB'}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
