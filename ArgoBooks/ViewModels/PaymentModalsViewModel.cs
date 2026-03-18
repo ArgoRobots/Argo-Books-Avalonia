@@ -585,7 +585,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
 
         // Block deletion of portal-synced payments
         var companyData = App.CompanyManager?.CompanyData;
-        var sourcePayment = companyData?.Payments.FirstOrDefault(p => p.Id == item.Id);
+        if (companyData == null) return;
+
+        var sourcePayment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
         if (sourcePayment?.Source == "Online")
         {
             await dialog.ShowAsync(new ConfirmationDialogOptions
