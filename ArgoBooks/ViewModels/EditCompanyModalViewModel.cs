@@ -124,6 +124,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _originalProvinceState;
     private string _originalEmail = "";
     private string _originalCurrency = "USD - US Dollar ($)";
+    private string? _pendingCurrencyCode;
 
     /// <summary>
     /// Whether any changes have been made.
@@ -319,6 +320,12 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     {
         HasCurrencyError = false;
         CurrencyErrorMessage = string.Empty;
+        // Revert the currency selection since the user cancelled
+        if (_pendingCurrencyCode != null)
+        {
+            SelectedCurrency = _originalCurrency;
+            _pendingCurrencyCode = null;
+        }
     }
 
     [RelayCommand]
@@ -326,21 +333,43 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     {
         HasCurrencyError = false;
         CurrencyErrorMessage = string.Empty;
-        await SaveAsync();
+
+        if (_pendingCurrencyCode == null)
+        {
+            await SaveAsync();
+            return;
+        }
+
+        // Retry the rate preload for the pending currency
+        IsSavingCurrency = true;
+        var success = await PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode);
+        IsSavingCurrency = false;
+
+        if (!success)
+        {
+            // Still failing — error state is already set by PreloadExchangeRatesForCurrencyAsync
+            return;
+        }
+
+        // Rates loaded successfully — proceed with save (skip confirmation and rate preload)
+        _pendingCurrencyCode = null;
+        await SaveAsync(skipCurrencyValidation: true);
     }
 
     /// <summary>
     /// Saves the changes and closes the modal.
     /// </summary>
     [RelayCommand]
-    private async Task SaveAsync()
+    private Task SaveAsync() => SaveAsync(skipCurrencyValidation: false);
+
+    private async Task SaveAsync(bool skipCurrencyValidation)
     {
         if (!CanSave) return;
 
         var currencyChanged = SelectedCurrency != _originalCurrency;
 
-        // If currency changed, show confirmation dialog
-        if (currencyChanged)
+        // If currency changed and we haven't already validated rates via retry
+        if (currencyChanged && !skipCurrencyValidation)
         {
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
@@ -366,10 +395,11 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
             if (!success)
             {
-                // Revert currency change
-                SelectedCurrency = _originalCurrency;
+                // Store the pending currency so retry can pick it up
+                _pendingCurrencyCode = newCurrencyCode;
                 return;
             }
+            _pendingCurrencyCode = null;
         }
 
         // Build the full phone number with country code
