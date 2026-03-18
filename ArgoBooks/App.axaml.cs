@@ -2342,11 +2342,13 @@ public class App : Application
             CompanyManager.CompanyOpened += (_, args) =>
             {
                 settings.HasPassword = args.IsEncrypted;
+                settings.IsSampleCompany = CompanyManager.IsSampleCompany;
             };
 
             CompanyManager.CompanyClosed += (_, _) =>
             {
                 settings.HasPassword = false;
+                settings.IsSampleCompany = false;
             };
         }
 

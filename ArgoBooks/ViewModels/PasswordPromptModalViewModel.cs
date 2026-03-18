@@ -1,4 +1,5 @@
 using ArgoBooks.Localization;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -170,6 +171,18 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     /// Call this when the password was accepted.
     /// </summary>
     public void Close()
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            CloseCore();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(CloseCore);
+        }
+    }
+
+    private void CloseCore()
     {
         IsOpen = false;
         IsLoading = false;
