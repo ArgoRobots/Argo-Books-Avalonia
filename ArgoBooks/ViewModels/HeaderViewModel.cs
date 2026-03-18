@@ -557,17 +557,18 @@ public partial class HeaderViewModel : ViewModelBase
         if (!_toastsEnabled)
             return;
 
-        // Cancel any existing toast timer
+        // Cancel and dispose any existing toast timer
         _toastCancellationTokenSource?.Cancel();
-        _toastCancellationTokenSource = new CancellationTokenSource();
-        var token = _toastCancellationTokenSource.Token;
+        _toastCancellationTokenSource?.Dispose();
+        var cts = new CancellationTokenSource();
+        _toastCancellationTokenSource = cts;
 
         ToastNotification = notification;
         ShowNotificationToast = true;
 
         try
         {
-            await Task.Delay(10000, token);
+            await Task.Delay(10000, cts.Token);
             // Auto-dismiss: leave notification as unread
             ShowNotificationToast = false;
             // Delay clearing so the slide-out animation finishes
@@ -578,6 +579,12 @@ public partial class HeaderViewModel : ViewModelBase
         {
             // Toast was dismissed manually, do nothing
         }
+        finally
+        {
+            cts.Dispose();
+            if (_toastCancellationTokenSource == cts)
+                _toastCancellationTokenSource = null;
+        }
     }
 
     /// <summary>
@@ -587,6 +594,8 @@ public partial class HeaderViewModel : ViewModelBase
     private async void DismissNotificationToast()
     {
         _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource?.Dispose();
+        _toastCancellationTokenSource = null;
 
         if (ToastNotification is { IsRead: false } notification)
         {
