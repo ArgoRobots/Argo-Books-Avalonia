@@ -1,4 +1,5 @@
 using System.Globalization;
+using ArgoBooks.Core;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
@@ -38,27 +39,30 @@ public static class NotificationTypeConverters
     /// Info=Blue, Success=Green, Warning=Orange, System=Gray.
     /// </summary>
     public static readonly IValueConverter TypeToBrush =
-        new FuncValueConverter<NotificationType, IBrush>(type => type switch
-        {
-            NotificationType.Info => new SolidColorBrush(Color.Parse("#3B82F6")),
-            NotificationType.Success => new SolidColorBrush(Color.Parse("#22C55E")),
-            NotificationType.Warning => new SolidColorBrush(Color.Parse("#F59E0B")),
-            NotificationType.System => new SolidColorBrush(Color.Parse("#6B7280")),
-            _ => new SolidColorBrush(Color.Parse("#3B82F6"))
-        });
+        new FuncValueConverter<NotificationType, IBrush>(type => BrushFor(type));
 
     /// <summary>
     /// Converter that returns a tinted background brush based on notification type.
+    /// Uses 10% opacity of the accent color.
     /// </summary>
     public static readonly IValueConverter TypeToBackgroundBrush =
-        new FuncValueConverter<NotificationType, IBrush>(type => type switch
+        new FuncValueConverter<NotificationType, IBrush>(type =>
         {
-            NotificationType.Info => new SolidColorBrush(Color.Parse("#1A3B82F6")),
-            NotificationType.Success => new SolidColorBrush(Color.Parse("#1A22C55E")),
-            NotificationType.Warning => new SolidColorBrush(Color.Parse("#1AF59E0B")),
-            NotificationType.System => new SolidColorBrush(Color.Parse("#1A6B7280")),
-            _ => new SolidColorBrush(Color.Parse("#1A3B82F6"))
+            var color = ColorFor(type);
+            return new SolidColorBrush(new Color(0x1A, color.R, color.G, color.B));
         });
+
+    private static Color ColorFor(NotificationType type) => type switch
+    {
+        NotificationType.Info => Color.Parse(AppColors.Primary),
+        NotificationType.Success => Color.Parse(AppColors.Success),
+        NotificationType.Warning => Color.Parse(AppColors.Warning),
+        NotificationType.System => Color.Parse(AppColors.GrayMedium),
+        _ => Color.Parse(AppColors.Primary)
+    };
+
+    private static SolidColorBrush BrushFor(NotificationType type) =>
+        new(ColorFor(type));
 
     /// <summary>
     /// Converter that returns font weight based on read status.
