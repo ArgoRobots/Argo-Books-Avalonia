@@ -168,6 +168,24 @@ public static class CurrencyService
     }
 
     /// <summary>
+    /// Formats an amount using the original value when the display currency matches
+    /// the original currency, avoiding rounding errors from USD round-trip conversion.
+    /// </summary>
+    public static string FormatWithOriginal(decimal originalAmount, string originalCurrency, decimal amountUSD, DateTime date)
+    {
+        var targetCurrency = CurrentCurrencyCode;
+
+        // If display currency matches the original currency, use exact original amount
+        if (string.Equals(targetCurrency, originalCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            return Format(originalAmount);
+        }
+
+        // Otherwise convert from USD to the target currency
+        return FormatFromUSD(amountUSD, date);
+    }
+
+    /// <summary>
     /// Formats a legacy decimal value (assumes USD) as a whole number in the current display currency.
     /// </summary>
     public static string FormatWholeNumberFromUSD(decimal amountUSD, DateTime date)

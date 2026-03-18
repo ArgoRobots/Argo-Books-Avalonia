@@ -6,6 +6,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -522,8 +523,29 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
                 ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
-                : averageUnitPrice
+                : averageUnitPrice,
+            IsPendingConversion = IsPendingConversion
         };
+
+        // Queue for offline conversion if pending
+        if (IsPendingConversion)
+        {
+            var pendingEntry = new PendingConversion
+            {
+                TransactionId = revenueId,
+                TransactionType = "Revenue",
+                OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
+                TransactionDate = revenue.Date,
+                Total = Total,
+                TaxAmount = TaxAmount,
+                ShippingCost = ModalShipping,
+                Discount = ModalDiscount,
+                Fee = ModalFee,
+                UnitPrice = averageUnitPrice
+            };
+            companyData.PendingConversions.Add(pendingEntry);
+            _ = PendingConversionService.Instance?.AddPendingConversionAsync(pendingEntry);
+        }
 
         // Create Receipt if file was attached
         Receipt? receipt = null;
@@ -609,6 +631,32 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
             ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
             : averageUnitPrice;
+        revenue.IsPendingConversion = IsPendingConversion;
+
+        // Queue for offline conversion if pending
+        if (IsPendingConversion)
+        {
+            var pendingEntry = new PendingConversion
+            {
+                TransactionId = revenue.Id,
+                TransactionType = "Revenue",
+                OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
+                TransactionDate = revenue.Date,
+                Total = Total,
+                TaxAmount = TaxAmount,
+                ShippingCost = ModalShipping,
+                Discount = ModalDiscount,
+                Fee = ModalFee,
+                UnitPrice = averageUnitPrice
+            };
+            companyData.PendingConversions.RemoveAll(p => p.TransactionId == revenue.Id);
+            companyData.PendingConversions.Add(pendingEntry);
+            _ = PendingConversionService.Instance?.AddPendingConversionAsync(pendingEntry);
+        }
+        else if (original.IsPendingConversion)
+        {
+            companyData.PendingConversions.RemoveAll(p => p.TransactionId == revenue.Id);
+        }
 
         // Handle receipt
         Receipt? newReceipt = null;
@@ -726,7 +774,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             PaymentStatus = revenue.PaymentStatus,
             Notes = revenue.Notes,
             ReferenceNumber = revenue.ReferenceNumber,
-            ReceiptId = revenue.ReceiptId
+            ReceiptId = revenue.ReceiptId,
+            IsPendingConversion = revenue.IsPendingConversion
         };
     }
 
@@ -750,6 +799,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.Notes = state.Notes;
         revenue.ReferenceNumber = state.ReferenceNumber;
         revenue.ReceiptId = state.ReceiptId;
+        revenue.IsPendingConversion = state.IsPendingConversion;
     }
 
     #endregion

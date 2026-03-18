@@ -18,8 +18,9 @@
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel Margin="24" Spacing="20">
-                    <!-- Error Icon and Message -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="16">
+                    <!-- Error Icon and Message (hidden during retry) -->
+                    <StackPanel HorizontalAlignment="Center" Spacing="16"
+                                IsVisible="{Binding !IsSavingCurrency}">
                         <Border Background="#fef2f2"
                                 CornerRadius="50"
                                 Width="64" Height="64"
@@ -43,6 +44,25 @@
                                    HorizontalAlignment="Center" />
                     </StackPanel>
 
+                    <!-- Loading state (shown during retry) -->
+                    <StackPanel HorizontalAlignment="Center" Spacing="16"
+                                IsVisible="{Binding IsSavingCurrency}">
+                        <controls:LoadingSpinner IsSpinning="{Binding IsSavingCurrency}"
+                                                 SizePreset="Large"
+                                                 HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Fetching Exchange Rates...'}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Please wait while we connect to the exchange rate service.'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
                     <!-- Buttons -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
                         <Button Classes="secondary-button"
@@ -53,14 +73,9 @@
                                 Command="{Binding RetryCurrencySaveCommand}"
                                 IsEnabled="{Binding !IsSavingCurrency}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <!-- Retry icon - hidden when saving -->
                                 <PathIcon Data="{x:Static icons:Icons.RefreshAlt}"
                                           Width="16" Height="16"
                                           IsVisible="{Binding !IsSavingCurrency}" />
-                                <!-- Loading spinner - shown when saving -->
-                                <PathIcon Data="{x:Static icons:Icons.Spinner}"
-                                          Width="16" Height="16"
-                                          IsVisible="{Binding IsSavingCurrency}" />
                                 <TextBlock Text="{loc:Loc 'Retry'}"
                                            IsVisible="{Binding !IsSavingCurrency}" />
                                 <TextBlock Text="{loc:Loc 'Retrying...'}"

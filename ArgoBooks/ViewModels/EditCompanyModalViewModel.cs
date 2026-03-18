@@ -1,5 +1,8 @@
+using System.Linq;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Services;
+using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
@@ -50,20 +53,33 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _address;
 
     [ObservableProperty]
+    private string? _provinceState;
+
+    [ObservableProperty]
     private string _email = "";
 
     [ObservableProperty]
     private string _selectedCurrency = "USD - US Dollar ($)";
 
-    /// <summary>
-    /// All available currencies.
-    /// </summary>
-    public IReadOnlyList<string> Currencies => Data.Currencies.All;
+    // Currency change error state
+    [ObservableProperty]
+    private bool _hasCurrencyError;
+
+    [ObservableProperty]
+    private string _currencyErrorMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool _isSavingCurrency;
 
     /// <summary>
     /// Priority/common currencies shown at the top of the dropdown.
     /// </summary>
     public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
+
+    /// <summary>
+    /// All available currencies.
+    /// </summary>
+    public IReadOnlyList<string> Currencies => Data.Currencies.All;
 
     /// <summary>
     /// Available business types (shared data source).
@@ -105,8 +121,10 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string? _originalCountry;
     private string? _originalCity;
     private string? _originalAddress;
+    private string? _originalProvinceState;
     private string _originalEmail = "";
-    private string _originalSelectedCurrency = "USD - US Dollar ($)";
+    private string _originalCurrency = "USD - US Dollar ($)";
+    private string? _pendingCurrencyCode;
 
     /// <summary>
     /// Whether any changes have been made.
@@ -121,8 +139,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         Country != _originalCountry ||
         City != _originalCity ||
         Address != _originalAddress ||
+        ProvinceState != _originalProvinceState ||
         Email != _originalEmail ||
-        SelectedCurrency != _originalSelectedCurrency;
+        SelectedCurrency != _originalCurrency;
 
     /// <summary>
     /// Whether the form is valid for saving.
@@ -148,8 +167,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         string? country = null,
         string? city = null,
         string? address = null,
+        string? provinceState = null,
         string? email = null,
-        string? currency = null)
+        string? currencyCode = null)
     {
         _originalCompanyName = companyName;
         _originalBusinessType = businessType;
@@ -162,6 +182,13 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         LogoSource = logo;
         HasLogo = logo != null;
         LogoPath = null;
+
+        // Load currency
+        var currencyDisplayString = CurrencyService.GetDisplayString(currencyCode ?? "USD");
+        _originalCurrency = currencyDisplayString;
+        SelectedCurrency = currencyDisplayString;
+        HasCurrencyError = false;
+        CurrencyErrorMessage = string.Empty;
 
         // Parse the phone number to extract country code and local number
         _originalPhoneNumber = "";
@@ -211,17 +238,13 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         _originalCountry = country;
         _originalCity = city;
         _originalAddress = address;
+        _originalProvinceState = provinceState;
         _originalEmail = email ?? "";
         Country = country;
         City = city;
         Address = address;
+        ProvinceState = provinceState;
         Email = email ?? "";
-
-        var currencyDisplay = !string.IsNullOrEmpty(currency)
-            ? CurrencyService.GetDisplayString(currency)
-            : "USD - US Dollar ($)";
-        _originalSelectedCurrency = currencyDisplay;
-        SelectedCurrency = currencyDisplay;
 
         IsOpen = true;
     }
@@ -275,7 +298,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 {
                     case ConfirmationResult.Primary:
                         // Save and close
-                        Save();
+                        await SaveAsync();
                         return;
                     case ConfirmationResult.Secondary:
                         // Don't save, just close
@@ -292,13 +315,100 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         IsOpen = false;
     }
 
+    [RelayCommand]
+    private void DismissCurrencyError()
+    {
+        HasCurrencyError = false;
+        CurrencyErrorMessage = string.Empty;
+        // Revert the currency selection since the user cancelled
+        if (_pendingCurrencyCode != null)
+        {
+            SelectedCurrency = _originalCurrency;
+            _pendingCurrencyCode = null;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RetryCurrencySaveAsync()
+    {
+        if (_pendingCurrencyCode == null)
+        {
+            HasCurrencyError = false;
+            CurrencyErrorMessage = string.Empty;
+            await SaveAsync();
+            return;
+        }
+
+        // Keep the modal open but switch to loading state
+        CurrencyErrorMessage = string.Empty;
+        IsSavingCurrency = true;
+
+        // Run the preload and a minimum display time in parallel so the spinner is always visible
+        var preloadTask = PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode);
+        var minimumDisplayTask = Task.Delay(1000);
+        await Task.WhenAll(preloadTask, minimumDisplayTask);
+
+        var success = preloadTask.Result;
+        IsSavingCurrency = false;
+
+        if (!success)
+        {
+            // Still failing — error state is already set by PreloadExchangeRatesForCurrencyAsync
+            return;
+        }
+
+        // Rates loaded successfully — dismiss error and proceed with save
+        HasCurrencyError = false;
+        CurrencyErrorMessage = string.Empty;
+        _pendingCurrencyCode = null;
+        await SaveAsync(skipCurrencyValidation: true);
+    }
+
     /// <summary>
     /// Saves the changes and closes the modal.
     /// </summary>
     [RelayCommand]
-    private void Save()
+    private Task SaveAsync() => SaveAsync(skipCurrencyValidation: false);
+
+    private async Task SaveAsync(bool skipCurrencyValidation)
     {
         if (!CanSave) return;
+
+        var currencyChanged = SelectedCurrency != _originalCurrency;
+
+        // If currency changed and we haven't already validated rates via retry
+        if (currencyChanged && !skipCurrencyValidation)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Change Default Currency".Translate(),
+                    Message = "Changing the default currency will update how all amounts are displayed throughout the app. Existing transactions will be converted using historical exchange rates. This may result in small rounding differences. You can change it back any time.".Translate(),
+                    PrimaryButtonText = "Change Currency".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = false
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            // Preload exchange rates for the new currency
+            var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
+            IsSavingCurrency = true;
+            var success = await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
+            IsSavingCurrency = false;
+
+            if (!success)
+            {
+                // Store the pending currency so retry can pick it up
+                _pendingCurrencyCode = newCurrencyCode;
+                return;
+            }
+            _pendingCurrencyCode = null;
+        }
 
         // Build the full phone number with country code
         string? fullPhone = null;
@@ -306,6 +416,34 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         {
             var dialCode = SelectedPhoneCountry?.DialCode ?? "";
             fullPhone = string.IsNullOrEmpty(dialCode) ? PhoneNumber : $"{dialCode} {PhoneNumber}";
+        }
+
+        // If currency changed, save it to company settings and notify
+        if (currencyChanged)
+        {
+            var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
+            var settings = App.CompanyManager?.CompanyData?.Settings;
+            if (settings != null)
+            {
+                settings.Localization.Currency = newCurrencyCode;
+            }
+            _originalCurrency = SelectedCurrency;
+
+            // Preload exchange rates for all transaction dates so display conversions are exact
+            if (!string.Equals(newCurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                var exchangeService = ExchangeRateService.Instance;
+                var companyData = App.CompanyManager?.CompanyData;
+                if (exchangeService != null && companyData != null)
+                {
+                    var transactionDates = companyData.Expenses.Select(e => e.Date)
+                        .Concat(companyData.Revenues.Select(r => r.Date))
+                        .Append(DateTime.Today);
+                    await exchangeService.PreloadRatesAsync(transactionDates);
+                }
+            }
+
+            CurrencyService.NotifyCurrencyChanged();
         }
 
         CompanySaved?.Invoke(this, new CompanyEditedEventArgs
@@ -320,10 +458,79 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             Country = Country,
             City = City,
             Address = Address,
-            Currency = CurrencyService.ParseCurrencyCode(SelectedCurrency)
+            ProvinceState = ProvinceState
         });
 
         IsOpen = false;
+    }
+
+    /// <summary>
+    /// Preloads exchange rates for the selected currency.
+    /// Returns true if successful, false if exchange rates could not be fetched.
+    /// </summary>
+    private async Task<bool> PreloadExchangeRatesForCurrencyAsync(string currencyCode)
+    {
+        // Skip if USD (no conversion needed)
+        if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var exchangeService = ExchangeRateService.Instance;
+        if (exchangeService == null)
+        {
+            HasCurrencyError = true;
+            CurrencyErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
+            return false;
+        }
+
+        // Check if there are any transactions that need conversion
+        var companyData = App.CompanyManager?.CompanyData;
+        var hasTransactions = companyData != null &&
+            (companyData.Expenses.Any() || companyData.Revenues.Any());
+
+        // Check connectivity first
+        var connectivityService = new ConnectivityService();
+        var hasInternet = await connectivityService.IsInternetAvailableAsync();
+
+        if (!hasInternet)
+        {
+            if (hasTransactions)
+            {
+                HasCurrencyError = true;
+                CurrencyErrorMessage = "No internet connection. Exchange rates are required to convert existing transactions.".Translate();
+                return false;
+            }
+            // No transactions — allow the change without rates
+            return true;
+        }
+
+        // Try to get exchange rate for today
+        var today = DateTime.Today;
+        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true);
+
+        if (rate <= 0)
+        {
+            if (hasTransactions)
+            {
+                HasCurrencyError = true;
+                CurrencyErrorMessage = "Unable to fetch exchange rates. Please check your connection and try again.".Translate();
+                return false;
+            }
+            // No transactions — allow the change even if rate fetch failed
+            return true;
+        }
+
+        // Rate available - try to preload more dates in the background
+        try
+        {
+            var dates = Enumerable.Range(1, 30).Select(i => today.AddDays(-i)).ToList();
+            await exchangeService.PreloadRatesAsync(dates);
+        }
+        catch
+        {
+            // Preloading additional dates failed, but we have today's rate so it's OK
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -375,6 +582,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     }
     partial void OnCityChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnProvinceStateChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnSelectedCurrencyChanged(string value) => OnPropertyChanged(nameof(HasChanges));
 
@@ -404,5 +612,5 @@ public class CompanyEditedEventArgs : EventArgs
     public string? Country { get; set; }
     public string? City { get; set; }
     public string? Address { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string? ProvinceState { get; set; }
 }

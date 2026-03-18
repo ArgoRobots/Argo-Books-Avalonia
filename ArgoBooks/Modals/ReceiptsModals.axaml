@@ -101,7 +101,7 @@
                                                  Classes="form-input"
                                                  Watermark="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -109,7 +109,7 @@
                                                  Classes="form-input"
                                                  Watermark="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -467,7 +467,7 @@
                                                          Classes="form-input"
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                         MaxLength="20" />
+                                                         MaxLength="13" />
                                                 <TextBlock Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource ErrorBrush}"
@@ -486,7 +486,7 @@
                                                          Watermark="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                         MaxLength="20" />
+                                                         MaxLength="13" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Tax'}"
@@ -497,7 +497,7 @@
                                                          Watermark="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                         MaxLength="20" />
+                                                         MaxLength="13" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -607,14 +607,14 @@
                                                                      VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
                                                                      behaviors:NumericInputBehavior.IsIntegerOnly="True"
-                                                                     MaxLength="5" />
+                                                                     MaxLength="7" />
                                                             <TextBox Grid.Column="2" Grid.Row="0"
                                                                      Text="{Binding UnitPrice}"
                                                                      HorizontalContentAlignment="Center"
                                                                      VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
                                                                      behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                                     MaxLength="12" />
+                                                                     MaxLength="13" />
                                                             <TextBlock Grid.Column="3" Grid.Row="0"
                                                                        Text="{Binding TotalPrice, StringFormat='${0}'}"
                                                                        FontSize="14"

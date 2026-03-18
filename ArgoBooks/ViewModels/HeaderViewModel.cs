@@ -97,6 +97,25 @@ public partial class HeaderViewModel : ViewModelBase
 
     #endregion
 
+    #region Notification Toast
+
+    [ObservableProperty]
+    private bool _showNotificationToast;
+
+    [ObservableProperty]
+    private NotificationItem? _toastNotification;
+
+    private CancellationTokenSource? _toastCancellationTokenSource;
+
+    private bool _toastsEnabled;
+
+    /// <summary>
+    /// Enables toast popups. Call after startup notifications have been sent.
+    /// </summary>
+    public void EnableToasts() => _toastsEnabled = true;
+
+    #endregion
+
     #region User
 
     [ObservableProperty]
@@ -515,7 +534,7 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Adds a notification.
+    /// Adds a notification and shows a toast popup for 5 seconds.
     /// </summary>
     /// <param name="notification">Notification to add.</param>
     public void AddNotification(NotificationItem notification)
@@ -526,6 +545,69 @@ public partial class HeaderViewModel : ViewModelBase
             UnreadNotificationCount++;
             HasUnreadNotifications = true;
         }
+
+        ShowToast(notification);
+    }
+
+    /// <summary>
+    /// Shows a toast popup for the given notification. Auto-dismisses after 5 seconds.
+    /// </summary>
+    private async void ShowToast(NotificationItem notification)
+    {
+        if (!_toastsEnabled)
+            return;
+
+        // Cancel and dispose any existing toast timer
+        _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource?.Dispose();
+        var cts = new CancellationTokenSource();
+        _toastCancellationTokenSource = cts;
+
+        ToastNotification = notification;
+        ShowNotificationToast = true;
+
+        try
+        {
+            await Task.Delay(10000, cts.Token);
+            // Auto-dismiss: leave notification as unread
+            ShowNotificationToast = false;
+            // Delay clearing so the slide-out animation finishes
+            await Task.Delay(350, CancellationToken.None);
+            ToastNotification = null;
+        }
+        catch (TaskCanceledException)
+        {
+            // Toast was dismissed manually, do nothing
+        }
+        finally
+        {
+            cts.Dispose();
+            if (_toastCancellationTokenSource == cts)
+                _toastCancellationTokenSource = null;
+        }
+    }
+
+    /// <summary>
+    /// Dismisses the notification toast and marks the notification as read.
+    /// </summary>
+    [RelayCommand]
+    private async Task DismissNotificationToastAsync()
+    {
+        _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource?.Dispose();
+        _toastCancellationTokenSource = null;
+
+        if (ToastNotification is { IsRead: false } notification)
+        {
+            notification.IsRead = true;
+            UnreadNotificationCount = Math.Max(0, UnreadNotificationCount - 1);
+            HasUnreadNotifications = UnreadNotificationCount > 0;
+        }
+
+        ShowNotificationToast = false;
+        // Delay clearing so the slide-out animation finishes
+        await Task.Delay(350);
+        ToastNotification = null;
     }
 
     /// <summary>

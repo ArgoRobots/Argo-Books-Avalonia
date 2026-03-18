@@ -598,6 +598,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 Status = invoice.Status,
                 StatusDisplay = statusDisplay,
                 Notes = invoice.Notes,
+                OriginalCurrency = invoice.OriginalCurrency,
                 IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId)
             };
         }).ToList();
@@ -826,10 +827,13 @@ public partial class InvoiceDisplayItem : ObservableObject
     [ObservableProperty]
     private bool _isRecurring;
 
+    [ObservableProperty]
+    private string _originalCurrency = "USD";
+
     public string IssueDateFormatted => IssueDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
-    public string TotalFormatted => CurrencyService.FormatFromUSD(TotalUSD, IssueDate);
-    public string BalanceFormatted => CurrencyService.FormatFromUSD(BalanceUSD, IssueDate);
+    public string TotalFormatted => CurrencyService.FormatWithOriginal(Total, OriginalCurrency, TotalUSD, IssueDate);
+    public string BalanceFormatted => CurrencyService.FormatWithOriginal(Balance, OriginalCurrency, BalanceUSD, IssueDate);
 
     /// <summary>
     /// Whether this invoice is a draft.

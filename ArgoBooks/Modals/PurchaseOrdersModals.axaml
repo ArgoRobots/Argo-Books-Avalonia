@@ -150,14 +150,14 @@
                                                              HorizontalContentAlignment="Center"
                                                              VerticalAlignment="Top"
                                                              Margin="0,0,8,0"
-                                                             MaxLength="5" />
+                                                             MaxLength="7" />
                                                     <TextBox Grid.Column="2"
                                                              Text="{Binding UnitCost, Mode=TwoWay}"
                                                              Classes="form-input-compact"
                                                              HorizontalContentAlignment="Center"
                                                              VerticalAlignment="Top"
                                                              Margin="0,0,8,0"
-                                                             MaxLength="12" />
+                                                             MaxLength="13" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding TotalDisplay}"
                                                                FontSize="14"
@@ -209,7 +209,7 @@
                                                  Text="{Binding ShippingCost, Mode=TwoWay}"
                                                  Classes="form-input-compact"
                                                  HorizontalAlignment="Right"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </Grid>
                                     <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
                                     <Grid ColumnDefinitions="*,Auto">
@@ -446,7 +446,7 @@
                                                                  Classes="form-input-compact"
                                                                  HorizontalAlignment="Stretch"
                                                                  HorizontalContentAlignment="Center"
-                                                                 MaxLength="10" />
+                                                                 MaxLength="7" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

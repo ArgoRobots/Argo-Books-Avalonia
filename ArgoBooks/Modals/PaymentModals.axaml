@@ -80,7 +80,7 @@
                                          Classes="form-input"
                                          Watermark="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                         MaxLength="20" />
+                                         MaxLength="13" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
@@ -207,7 +207,7 @@
                                          Classes="form-input"
                                          Watermark="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                         MaxLength="20"
+                                         MaxLength="13"
                                          IsEnabled="{Binding !IsPortalPayment}" />
                                 <TextBlock Text="{Binding ModalAmountError}"
                                            FontSize="12"
@@ -368,11 +368,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                        <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="20" />
+                                        <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

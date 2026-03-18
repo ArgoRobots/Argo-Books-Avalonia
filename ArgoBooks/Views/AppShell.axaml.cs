@@ -1,8 +1,11 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
@@ -16,6 +19,8 @@ public partial class AppShell : UserControl
     private const double CompactPageThreshold = 1200;
     private const double MinimalPageThreshold = 900;
 
+    private HeaderViewModel? _previousHeaderVm;
+
     public AppShell()
     {
         InitializeComponent();
@@ -28,6 +33,47 @@ public partial class AppShell : UserControl
 
         // Responsive page content margin
         AppContent.SizeChanged += OnContentSizeChanged;
+
+        // Animate toast slide in/out from right
+        DataContextChanged += (_, _) =>
+        {
+            if (_previousHeaderVm != null)
+                _previousHeaderVm.PropertyChanged -= OnHeaderViewModelPropertyChanged;
+
+            if (DataContext is AppShellViewModel vm)
+            {
+                _previousHeaderVm = vm.HeaderViewModel;
+                vm.HeaderViewModel.PropertyChanged += OnHeaderViewModelPropertyChanged;
+            }
+            else
+            {
+                _previousHeaderVm = null;
+            }
+        };
+    }
+
+    private void OnHeaderViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(HeaderViewModel.ShowNotificationToast))
+            return;
+
+        var vm = (HeaderViewModel)sender!;
+        if (vm.ShowNotificationToast)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                NotificationToastBorder.Opacity = 1;
+                NotificationToastBorder.RenderTransform = new TranslateTransform(0, 0);
+            }, DispatcherPriority.Render);
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                NotificationToastBorder.Opacity = 0;
+                NotificationToastBorder.RenderTransform = new TranslateTransform(340, 0);
+            }, DispatcherPriority.Background);
+        }
     }
 
     private void OnContentSizeChanged(object? sender, SizeChangedEventArgs e)

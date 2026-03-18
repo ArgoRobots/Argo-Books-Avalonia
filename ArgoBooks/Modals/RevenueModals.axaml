@@ -167,7 +167,7 @@
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay, TargetNullValue=1}"
                                                                    Minimum="1"
-                                                                   Maximum="99999"
+                                                                   Maximum="999999"
                                                                    FormatString="0"
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
@@ -231,7 +231,7 @@
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                             MaxLength="20" />
+                                             MaxLength="13" />
                                 </StackPanel>
 
                                 <!-- Shipping -->
@@ -242,7 +242,7 @@
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                             MaxLength="20" />
+                                             MaxLength="13" />
                                 </StackPanel>
 
                                 <!-- Discount -->
@@ -253,7 +253,7 @@
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                             MaxLength="20" />
+                                             MaxLength="13" />
                                 </StackPanel>
                             </Grid>
 
@@ -493,7 +493,7 @@
                                                  Watermark="$0.00"
                                                  HorizontalAlignment="Stretch"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -502,7 +502,7 @@
                                                  Watermark="$0.00"
                                                  HorizontalAlignment="Stretch"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

@@ -195,7 +195,7 @@
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
                                                                    Minimum="1"
-                                                                   Maximum="99999"
+                                                                   Maximum="999999"
                                                                    FormatString="0"
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
@@ -624,7 +624,7 @@
                                                  Classes="form-input"
                                                  Watermark="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -632,7 +632,7 @@
                                                  Classes="form-input"
                                                  Watermark="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                 MaxLength="20" />
+                                                 MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

@@ -72,18 +72,6 @@
                                                                   Placeholder="{loc:Loc 'Search languages...'}" />
                                 </StackPanel>
 
-                                <!-- Currency -->
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{loc:Loc Currency}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
-                                                                  SelectedItem="{Binding SelectedCurrency}"
-                                                                  PriorityItems="{Binding PriorityCurrencies}"
-                                                                  Placeholder="{loc:Loc 'Search currencies...'}" />
-                                </StackPanel>
-
                                 <!-- Date Format -->
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Date Format'}"
@@ -605,11 +593,23 @@
                     <TabItem Header="{loc:Loc Security}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Security settings are not available for the sample company. Save as a new company to enable password protection.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
+
                                 <!-- Password - No password set -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16"
-                                        IsVisible="{Binding !HasPassword}">
+                                        IsVisible="{Binding !HasPassword}"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc Password}"
@@ -624,6 +624,7 @@
                                                 Classes="primary-button"
                                                 Content="{loc:Loc 'Add Password'}"
                                                 Command="{Binding OpenAddPasswordCommand}"
+                                                IsEnabled="{Binding !IsSampleCompany}"
                                                 VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
@@ -632,7 +633,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16"
-                                        IsVisible="{Binding HasPassword}">
+                                        IsVisible="{Binding HasPassword}"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc Password}"
@@ -659,7 +661,8 @@
                                 <!-- Windows Hello -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc 'Windows Hello'}"
@@ -699,7 +702,7 @@
                                 </Border>
 
                                 <!-- Auto-Lock -->
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc Auto-Lock}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -1160,8 +1163,6 @@
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 
-        <!-- Currency Error Modal -->
-        <modals:CurrencyErrorModal />
     </Panel>
 
     <UserControl.Styles>

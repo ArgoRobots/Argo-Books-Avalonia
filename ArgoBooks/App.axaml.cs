@@ -562,6 +562,7 @@ public class App : Application
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
+    private static System.Threading.Timer? _pendingConversionTimer;
 
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
@@ -660,6 +661,11 @@ public class App : Application
     /// </summary>
     public static ChangeTrackingService? ChangeTrackingService { get; private set; }
 
+    /// <summary>
+    /// Gets the pending conversion service for processing offline transactions.
+    /// </summary>
+    public static PendingConversionService? PendingConversionService { get; private set; }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -710,6 +716,7 @@ public class App : Application
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
             ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
+            PendingConversionService = new PendingConversionService(errorLogger);
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service and optional update service
@@ -742,6 +749,30 @@ public class App : Application
 
             // Wire up company manager events
             WireCompanyManagerEvents();
+
+            // Wire up pending conversion events
+            if (PendingConversionService != null)
+            {
+                PendingConversionService.PendingConversionsProcessed += (_, args) =>
+                {
+                    if (args is PendingConversionsProcessedEventArgs e && e.ConvertedCount > 0)
+                    {
+                        var message = e.ConvertedCount == 1
+                            ? "1 pending transaction has been processed successfully.".Translate()
+                            : string.Format("{0} pending transactions have been processed successfully.".Translate(), e.ConvertedCount);
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            AddNotification(
+                                "Back Online".Translate(),
+                                message,
+                                NotificationType.Success);
+
+                            // Refresh the current page to update status badges and amounts
+                            NavigationService?.RefreshCurrentPage();
+                        });
+                    }
+                };
+            }
 
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
@@ -863,6 +894,12 @@ public class App : Application
                 DataContext = _mainWindowViewModel
             };
 
+            // Process pending conversions when window is activated (e.g., user returns after going offline)
+            desktop.MainWindow.Activated += async (_, _) =>
+            {
+                await TryProcessPendingConversionsAsync();
+            };
+
             // Wire up idle detection for auto-logout (needs MainWindow to exist)
             WireIdleDetection(desktop);
 
@@ -929,6 +966,12 @@ public class App : Application
 
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
+
+            // Load pending conversion queue from disk
+            if (PendingConversionService != null)
+            {
+                await PendingConversionService.LoadAsync();
+            }
 
             // Load and apply saved license status
             if (LicenseService != null && _appShellViewModel != null)
@@ -1118,6 +1161,58 @@ public class App : Application
     }
 
     /// <summary>
+    /// Starts a periodic timer that checks for pending conversions and processes them
+    /// when connectivity is restored. Runs every 15 seconds.
+    /// </summary>
+    private static void StartPendingConversionTimer()
+    {
+        // Dispose any existing timer
+        _pendingConversionTimer?.Dispose();
+
+        _pendingConversionTimer = new System.Threading.Timer(async _ =>
+        {
+            await TryProcessPendingConversionsAsync();
+        }, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    /// <summary>
+    /// Attempts to process pending conversions if online and there are pending items.
+    /// Called by the timer and on window activation for faster reconnect detection.
+    /// </summary>
+    private static async Task TryProcessPendingConversionsAsync()
+    {
+        try
+        {
+            if (PendingConversionService == null || !PendingConversionService.HasPendingConversions)
+                return;
+
+            if (CompanyManager?.CompanyData == null)
+                return;
+
+            // Check if we're online before attempting to process
+            var connectivityService = new ConnectivityService();
+            var isOnline = await connectivityService.IsInternetAvailableAsync();
+            if (!isOnline)
+                return;
+
+            await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Pending conversion processing error: {ex.Message}", "App");
+        }
+    }
+
+    /// <summary>
+    /// Stops the pending conversion timer.
+    /// </summary>
+    private static void StopPendingConversionTimer()
+    {
+        _pendingConversionTimer?.Dispose();
+        _pendingConversionTimer = null;
+    }
+
+    /// <summary>
     /// Registers file type associations for .argo files on Windows.
     /// Extracts the embedded icon to disk and associates it with the file extension.
     /// </summary>
@@ -1291,8 +1386,21 @@ public class App : Application
                 }
             }
 
+            // Reconcile and process any pending currency conversions
+            if (PendingConversionService != null && CompanyManager.CompanyData != null)
+            {
+                await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
+                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+            }
+
+            // Start periodic timer to process pending conversions when connectivity returns
+            StartPendingConversionTimer();
+
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
+
+            // Enable toast popups now that startup notifications are done
+            _appShellViewModel?.HeaderViewModel.EnableToasts();
 
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
@@ -1315,6 +1423,9 @@ public class App : Application
             EventLogService?.Clear();
             ChangeTrackingService?.ClearAllChanges();
             _appShellViewModel.HeaderViewModel.ClearNotifications();
+
+            // Stop pending conversion timer when company is closed
+            StopPendingConversionTimer();
 
             // Clear cached page ViewModels to ensure fresh state when opening a new company
             ClearPageCaches();
@@ -1386,14 +1497,12 @@ public class App : Application
                         "Stored password not found. Please enter the password manually.".Translate());
                     password = await _appShellViewModel.PasswordPromptModalViewModel.WaitForPasswordAsync();
                 }
-                else
-                {
-                    _mainWindowViewModel.ShowLoading("Opening company...".Translate());
-                }
             }
-            else if (!string.IsNullOrEmpty(password))
+
+            // Close the password modal and show loading before returning
+            if (!string.IsNullOrEmpty(password))
             {
-                // Show loading again after user enters password (if they didn't cancel)
+                _appShellViewModel.PasswordPromptModalViewModel.Close();
                 _mainWindowViewModel.ShowLoading("Opening company...".Translate());
             }
 
@@ -1660,6 +1769,7 @@ public class App : Application
                     BusinessType = args.BusinessType,
                     Industry = args.Industry,
                     Phone = args.PhoneNumber,
+                    Email = args.Email,
                     Country = args.Country,
                     City = args.City,
                     ProvinceState = args.ProvinceState,
@@ -1987,8 +2097,9 @@ public class App : Application
             settings?.Company.Country,
             settings?.Company.City,
             settings?.Company.Address,
+            settings?.Company.ProvinceState,
             settings?.Company.Email,
-            settings?.Company.Currency);
+            CompanyManager.CompanyData?.Settings?.Localization?.Currency);
     }
 
     /// <summary>
@@ -2021,7 +2132,7 @@ public class App : Application
                     var oldCountry = settings.Company.Country;
                     var oldCity = settings.Company.City;
                     var oldAddress = settings.Company.Address;
-                    var oldCurrency = settings.Company.Currency;
+                    var oldProvinceState = settings.Company.ProvinceState;
                     var oldLogoFileName = settings.Company.LogoFileName;
 
                     // Save old logo bytes for potential undo restore
@@ -2043,7 +2154,7 @@ public class App : Application
                     settings.Company.Country = args.Country;
                     settings.Company.City = args.City;
                     settings.Company.Address = args.Address;
-                    settings.Company.Currency = args.Currency;
+                    settings.Company.ProvinceState = args.ProvinceState;
 
                     // Handle logo update if a new one was uploaded
                     if (!string.IsNullOrEmpty(args.LogoPath))
@@ -2111,7 +2222,7 @@ public class App : Application
                     var newCountry = args.Country;
                     var newCity = args.City;
                     var newAddress = args.Address;
-                    var newCurrency = args.Currency;
+                    var newProvinceState = args.ProvinceState;
 
                     UndoRedoManager.RecordAction(new DelegateAction(
                         $"Edit company '{newName}'",
@@ -2126,7 +2237,7 @@ public class App : Application
                             settings.Company.Country = oldCountry;
                             settings.Company.City = oldCity;
                             settings.Company.Address = oldAddress;
-                            settings.Company.Currency = oldCurrency;
+                            settings.Company.ProvinceState = oldProvinceState;
 
                             // Restore old logo
                             RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
@@ -2150,7 +2261,7 @@ public class App : Application
                             settings.Company.Country = newCountry;
                             settings.Company.City = newCity;
                             settings.Company.Address = newAddress;
-                            settings.Company.Currency = newCurrency;
+                            settings.Company.ProvinceState = newProvinceState;
 
                             // Restore new logo
                             RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);
@@ -2252,11 +2363,13 @@ public class App : Application
             CompanyManager.CompanyOpened += (_, args) =>
             {
                 settings.HasPassword = args.IsEncrypted;
+                settings.IsSampleCompany = CompanyManager.IsSampleCompany;
             };
 
             CompanyManager.CompanyClosed += (_, _) =>
             {
                 settings.HasPassword = false;
+                settings.IsSampleCompany = false;
             };
         }
 
@@ -3577,7 +3690,8 @@ public class App : Application
                 return;
             }
 
-            // Retry with the new password
+            // Close the modal and retry with the new password
+            passwordModal.Close();
             await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
@@ -3651,7 +3765,8 @@ public class App : Application
                 return false;
             }
 
-            // Retry recursively
+            // Close the modal and retry recursively
+            passwordModal.Close();
             return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (Exception ex)

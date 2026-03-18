@@ -102,6 +102,9 @@ public partial class CreateCompanyViewModel : ViewModelBase
     [ObservableProperty]
     private string? _address;
 
+    [ObservableProperty]
+    private string _email = "";
+
     #endregion
 
     #region Step 3: Security & Logo
@@ -153,6 +156,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         !string.IsNullOrEmpty(City) ||
         !string.IsNullOrEmpty(ProvinceState) ||
         !string.IsNullOrEmpty(Address) ||
+        !string.IsNullOrEmpty(Email) ||
         EnablePassword ||
         !string.IsNullOrEmpty(Password) ||
         !string.IsNullOrEmpty(ConfirmPassword) ||
@@ -286,6 +290,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
             ProvinceState = ProvinceState,
             Country = Country,
             PhoneNumber = fullPhone,
+            Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
             DefaultCurrency = CurrencyService.ParseCurrencyCode(SelectedCurrency),
             Password = EnablePassword ? Password : null,
             LogoPath = LogoPath
@@ -326,6 +331,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         City = null;
         ProvinceState = null;
         Address = null;
+        Email = "";
         EnablePassword = false;
         Password = null;
         ConfirmPassword = null;
@@ -392,6 +398,7 @@ public class CompanyCreatedEventArgs : EventArgs
     public string? City { get; init; }
     public string? ProvinceState { get; init; }
     public string? Address { get; init; }
+    public string? Email { get; init; }
     public string? DefaultCurrency { get; init; }
     public string? Password { get; init; }
     public string? LogoPath { get; init; }

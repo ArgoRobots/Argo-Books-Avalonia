@@ -224,6 +224,12 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected MonetaryValue? ConvertedDiscount;
     protected MonetaryValue? ConvertedFee;
 
+    /// <summary>
+    /// Set to true when saving a transaction offline without USD conversion.
+    /// Passed through to the transaction model's IsPendingConversion flag.
+    /// </summary>
+    protected bool IsPendingConversion;
+
     public ObservableCollection<CounterpartyOption> CounterpartyOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
@@ -523,10 +529,33 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var productId = transaction.LineItems.FirstOrDefault()?.ProductId;
         var product = productId != null ? App.CompanyManager?.CompanyData?.GetProduct(productId) : null;
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == product?.CategoryId);
-        ModalTaxRate = transaction.TaxAmount;
-        ModalShipping = transaction.ShippingCost;
-        ModalDiscount = transaction.Discount;
-        ModalFee = transaction.Fee;
+
+        // Convert monetary values to current display currency if needed
+        var txCurrency = transaction.OriginalCurrency ?? "USD";
+        var currentCurrency = CurrencyService.CurrentCurrencyCode;
+        var needsConversion = !string.Equals(txCurrency, currentCurrency, StringComparison.OrdinalIgnoreCase);
+
+        if (needsConversion)
+        {
+            // Convert from original currency amounts using their USD equivalents (with fallback for legacy data)
+            var taxUSD = transaction.TaxAmountUSD > 0 ? transaction.TaxAmountUSD : transaction.TaxAmount;
+            var shippingUSD = transaction.ShippingCostUSD > 0 ? transaction.ShippingCostUSD : transaction.ShippingCost;
+            var discountUSD = transaction.DiscountUSD > 0 ? transaction.DiscountUSD : transaction.Discount;
+            var feeUSD = transaction.FeeUSD > 0 ? transaction.FeeUSD : transaction.Fee;
+
+            ModalTaxRate = CurrencyService.GetDisplayAmount(taxUSD, transaction.Date);
+            ModalShipping = CurrencyService.GetDisplayAmount(shippingUSD, transaction.Date);
+            ModalDiscount = CurrencyService.GetDisplayAmount(discountUSD, transaction.Date);
+            ModalFee = CurrencyService.GetDisplayAmount(feeUSD, transaction.Date);
+        }
+        else
+        {
+            ModalTaxRate = transaction.TaxAmount;
+            ModalShipping = transaction.ShippingCost;
+            ModalDiscount = transaction.Discount;
+            ModalFee = transaction.Fee;
+        }
+
         SelectedPaymentMethod = transaction.PaymentMethod.ToString();
         ModalNotes = transaction.Notes;
 
@@ -536,12 +565,16 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             foreach (var li in transaction.LineItems)
             {
+                var unitPrice = needsConversion
+                    ? CurrencyService.GetDisplayAmount(transaction.EffectiveUnitPriceUSD, transaction.Date)
+                    : li.UnitPrice;
+
                 var lineItem = new TLineItem
                 {
                     SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId),
                     Description = li.Description,
                     Quantity = li.Quantity,
-                    UnitPrice = li.UnitPrice
+                    UnitPrice = unitPrice
                 };
                 lineItem.PropertyChanged += (_, _) => UpdateTotals();
                 LineItems.Add(lineItem);
@@ -550,11 +583,15 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         else
         {
             // Fallback for old data without line items
+            var unitPrice = needsConversion
+                ? CurrencyService.GetDisplayAmount(transaction.EffectiveUnitPriceUSD, transaction.Date)
+                : transaction.UnitPrice;
+
             var lineItem = new TLineItem
             {
                 Description = transaction.Description,
                 Quantity = transaction.Quantity,
-                UnitPrice = transaction.UnitPrice
+                UnitPrice = unitPrice
             };
             lineItem.PropertyChanged += (_, _) => UpdateTotals();
             LineItems.Add(lineItem);
@@ -815,16 +852,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var currentCurrency = CurrencyService.CurrentCurrencyCode;
         var transactionDate = ModalDate?.DateTime ?? DateTime.Now;
 
+        IsPendingConversion = false;
+
         if (!string.Equals(currentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
             IsSavingTransaction = true;
             try
             {
-                // Check connectivity first to provide better error message
-                var connectivityService = new ConnectivityService();
-                var hasInternet = await connectivityService.IsInternetAvailableAsync();
-
-                // Check if exchange rate is available FIRST before any conversion
                 var exchangeService = ExchangeRateService.Instance;
                 if (exchangeService == null)
                 {
@@ -834,32 +868,36 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     return;
                 }
 
-                // Try to get the exchange rate (this will attempt to fetch if missing)
+                // Try to get rate (uses cache first, then fetches from API if needed)
                 var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
-                if (rate <= 0)
+                if (rate > 0)
                 {
-                    // Rate fetch failed
-                    IsSavingTransaction = false;
-                    HasSaveError = true;
-                    SaveErrorMessage = hasInternet
-                        ? "Unable to fetch exchange rates. Please try again.".Translate()
-                        : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
-                    return;
+                    ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
+                    ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
+                    ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
+                    ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
+                    ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, transactionDate);
                 }
-
-                // Now convert amounts to USD (rate is guaranteed to be available)
-                ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
-                ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
-                ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
-                ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
-                ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, transactionDate);
+                else
+                {
+                    // Rate unavailable — save with pending conversion for later
+                    IsPendingConversion = true;
+                    ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
+                    ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);
+                    ConvertedShippingCost = new MonetaryValue(ShippingAmount, currentCurrency, 0, transactionDate);
+                    ConvertedDiscount = new MonetaryValue(DiscountAmount, currentCurrency, 0, transactionDate);
+                    ConvertedFee = new MonetaryValue(FeeAmount, currentCurrency, 0, transactionDate);
+                }
             }
             catch (Exception)
             {
-                IsSavingTransaction = false;
-                HasSaveError = true;
-                SaveErrorMessage = "Failed to convert currency. Please check your internet connection and try again.".Translate();
-                return;
+                // Network or other error — save with pending conversion
+                IsPendingConversion = true;
+                ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
+                ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);
+                ConvertedShippingCost = new MonetaryValue(ShippingAmount, currentCurrency, 0, transactionDate);
+                ConvertedDiscount = new MonetaryValue(DiscountAmount, currentCurrency, 0, transactionDate);
+                ConvertedFee = new MonetaryValue(FeeAmount, currentCurrency, 0, transactionDate);
             }
             finally
             {
@@ -885,7 +923,18 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             SaveNewTransaction(companyData);
         }
 
+        // Capture pending state before CloseAddEditModal resets it via ResetForm
+        var wasPendingConversion = IsPendingConversion;
+
         CloseAddEditModal();
+
+        // Show pending conversion warning after modal closes
+        if (wasPendingConversion)
+        {
+            _ = App.ShowWarningMessageBoxAsync(
+                "Pending Conversion".Translate(),
+                "Your transaction has been saved. The converted amount will be updated automatically when the exchange rate becomes available.".Translate());
+        }
     }
 
     [RelayCommand]
@@ -944,6 +993,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ConvertedShippingCost = null;
         ConvertedDiscount = null;
         ConvertedFee = null;
+        IsPendingConversion = false;
         ClearValidationErrors();
     }
 

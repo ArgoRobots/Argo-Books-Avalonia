@@ -6,6 +6,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -521,8 +522,29 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
                 ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
-                : averageUnitPrice
+                : averageUnitPrice,
+            IsPendingConversion = IsPendingConversion
         };
+
+        // Queue for offline conversion if pending
+        if (IsPendingConversion)
+        {
+            var pendingEntry = new PendingConversion
+            {
+                TransactionId = expenseId,
+                TransactionType = "Expense",
+                OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
+                TransactionDate = expense.Date,
+                Total = Total,
+                TaxAmount = TaxAmount,
+                ShippingCost = ModalShipping,
+                Discount = ModalDiscount,
+                Fee = ModalFee,
+                UnitPrice = averageUnitPrice
+            };
+            companyData.PendingConversions.Add(pendingEntry);
+            _ = PendingConversionService.Instance?.AddPendingConversionAsync(pendingEntry);
+        }
 
         // Create Receipt if file was attached
         Receipt? receipt = null;
@@ -607,6 +629,34 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0
             ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
             : averageUnitPrice;
+        expense.IsPendingConversion = IsPendingConversion;
+
+        // Queue for offline conversion if pending
+        if (IsPendingConversion)
+        {
+            var pendingEntry = new PendingConversion
+            {
+                TransactionId = expense.Id,
+                TransactionType = "Expense",
+                OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
+                TransactionDate = expense.Date,
+                Total = Total,
+                TaxAmount = TaxAmount,
+                ShippingCost = ModalShipping,
+                Discount = ModalDiscount,
+                Fee = ModalFee,
+                UnitPrice = averageUnitPrice
+            };
+            // Remove any existing entry for this transaction before adding updated one
+            companyData.PendingConversions.RemoveAll(p => p.TransactionId == expense.Id);
+            companyData.PendingConversions.Add(pendingEntry);
+            _ = PendingConversionService.Instance?.AddPendingConversionAsync(pendingEntry);
+        }
+        else if (original.IsPendingConversion)
+        {
+            // Was pending, now converted — remove from queue
+            companyData.PendingConversions.RemoveAll(p => p.TransactionId == expense.Id);
+        }
 
         // Handle receipt
         Receipt? newReceipt = null;
@@ -722,7 +772,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             PaymentMethod = expense.PaymentMethod,
             Notes = expense.Notes,
             ReferenceNumber = expense.ReferenceNumber,
-            ReceiptId = expense.ReceiptId
+            ReceiptId = expense.ReceiptId,
+            IsPendingConversion = expense.IsPendingConversion
         };
     }
 
@@ -745,6 +796,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.Notes = state.Notes;
         expense.ReferenceNumber = state.ReferenceNumber;
         expense.ReceiptId = state.ReceiptId;
+        expense.IsPendingConversion = state.IsPendingConversion;
     }
 
     #endregion
@@ -788,4 +840,5 @@ internal class TransactionState
     public string Notes { get; set; } = string.Empty;
     public string ReferenceNumber { get; set; } = string.Empty;
     public string? ReceiptId { get; set; }
+    public bool IsPendingConversion { get; set; }
 }
