@@ -13,9 +13,9 @@ public class ConnectivityService : IConnectivityService
     // Reliable endpoints to check connectivity (in order of preference)
     private static readonly string[] ConnectivityCheckUrls =
     [
-        "https://argorobots.com",                    // Our own API server
-        "https://www.google.com/generate_204",       // Google's connectivity check (returns 204)
-        "https://www.cloudflare.com/cdn-cgi/trace"   // Cloudflare (returns 200 with trace info)
+        "https://www.google.com/generate_204",      // Google's connectivity check (returns 204)
+        "https://connectivitycheck.gstatic.com/generate_204",  // Google's alternate
+        "https://www.cloudflare.com/cdn-cgi/trace"  // Cloudflare (returns 200 with trace info)
     ];
 
     /// <summary>
