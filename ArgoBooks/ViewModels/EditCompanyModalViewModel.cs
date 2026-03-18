@@ -342,7 +342,13 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         // Keep the modal open but switch to loading state
         CurrencyErrorMessage = string.Empty;
         IsSavingCurrency = true;
-        var success = await PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode);
+
+        // Run the preload and a minimum display time in parallel so the spinner is always visible
+        var preloadTask = PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode);
+        var minimumDisplayTask = Task.Delay(1000);
+        await Task.WhenAll(preloadTask, minimumDisplayTask);
+
+        var success = preloadTask.Result;
         IsSavingCurrency = false;
 
         if (!success)
