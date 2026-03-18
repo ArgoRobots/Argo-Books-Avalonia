@@ -272,10 +272,6 @@ public class App : Application
     }
 
     /// <summary>
-    /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
-    /// and sends notifications if enabled. Only sends once per day to avoid duplicates.
-    /// </summary>
-    /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
     /// </summary>
     private static async Task AutoSyncPortalPaymentsAsync()
@@ -311,6 +307,10 @@ public class App : Application
         }
     }
 
+    /// <summary>
+    /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
+    /// and sends notifications if enabled. Only sends once per day to avoid duplicates.
+    /// </summary>
     private static void CheckAndSendNotifications()
     {
         var companyData = CompanyManager?.CompanyData;
