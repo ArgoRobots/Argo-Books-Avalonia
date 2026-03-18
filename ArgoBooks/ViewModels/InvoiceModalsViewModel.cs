@@ -1173,19 +1173,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        // Enforce free-tier invoice send limit
+        // Enforce free-tier invoice send limit via server
         if (!HasPremium)
         {
-            var now = DateTime.Now;
-            var sentThisMonth = companyData.Invoices.Count(i =>
-                i.Status != InvoiceStatus.Draft &&
-                i.Status != InvoiceStatus.Cancelled &&
-                i.CreatedAt.Year == now.Year &&
-                i.CreatedAt.Month == now.Month);
-            if (sentThisMonth >= InvoicesPageViewModel.FreeInvoiceLimit)
+            var usageService = App.InvoiceUsageService;
+            if (usageService != null)
             {
-                await ShowSendErrorAsync($"You've reached the free plan limit of {InvoicesPageViewModel.FreeInvoiceLimit} invoices this month. Upgrade to Premium for unlimited invoices.".Translate());
-                return;
+                var usage = await usageService.CheckUsageAsync();
+                if (!usage.CanSend)
+                {
+                    var limit = usage.MonthlyLimit > 0 ? usage.MonthlyLimit : InvoicesPageViewModel.DefaultFreeInvoiceLimit;
+                    await ShowSendErrorAsync($"You've reached the free plan limit of {limit} invoices this month. Upgrade to Premium for unlimited invoices.".Translate());
+                    return;
+                }
             }
         }
 
@@ -1421,6 +1421,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (!hasLinkedRevenue)
         {
             CreateRevenueFromInvoice(invoice, companyData);
+        }
+
+        // Increment server-side usage count (fire-and-forget, non-blocking)
+        if (!HasPremium)
+        {
+            _ = App.InvoiceUsageService?.IncrementUsageAsync();
         }
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);

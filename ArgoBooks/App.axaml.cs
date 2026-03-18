@@ -57,6 +57,11 @@ public class App : Application
     public static PaymentPortalService? PaymentPortalService { get; private set; }
 
     /// <summary>
+    /// Gets the invoice usage service for tracking free-tier send limits.
+    /// </summary>
+    public static InvoiceUsageService? InvoiceUsageService { get; private set; }
+
+    /// <summary>
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
@@ -758,6 +763,7 @@ public class App : Application
 
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
+            InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
 
             // Create navigation service
             NavigationService = new NavigationService();

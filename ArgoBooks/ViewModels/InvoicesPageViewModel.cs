@@ -115,7 +115,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #region Plan Status and Invoice Limits
 
-    internal const int FreeInvoiceLimit = 5;
+    /// <summary>
+    /// Default fallback limit used when the server hasn't been reached yet.
+    /// </summary>
+    internal const int DefaultFreeInvoiceLimit = 5;
 
     [ObservableProperty]
     private bool _hasPremium;
@@ -123,10 +126,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _sentInvoicesThisMonthCount;
 
+    [ObservableProperty]
+    private int _invoiceMonthlyLimit = DefaultFreeInvoiceLimit;
+
     /// <summary>
     /// Gets remaining invoices the user can send (on the Free plan).
     /// </summary>
-    public int RemainingInvoices => Math.Max(0, FreeInvoiceLimit - SentInvoicesThisMonthCount);
+    public int RemainingInvoices => Math.Max(0, InvoiceMonthlyLimit - SentInvoicesThisMonthCount);
 
     /// <summary>
     /// Gets whether the user can send more invoices.
@@ -136,7 +142,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Gets the text showing remaining invoices for the current month.
     /// </summary>
-    public string RemainingInvoicesText => $"{RemainingInvoices} of {FreeInvoiceLimit} remaining";
+    public string RemainingInvoicesText => $"{RemainingInvoices} of {InvoiceMonthlyLimit} remaining";
 
     /// <summary>
     /// Gets whether to show the remaining invoices label (only on Free plan).
@@ -153,18 +159,21 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// </summary>
     public event EventHandler? UpgradeRequested;
 
-    partial void OnSentInvoicesThisMonthCountChanged(int value)
-    {
-        OnPropertyChanged(nameof(RemainingInvoices));
-        OnPropertyChanged(nameof(RemainingInvoicesText));
-        OnPropertyChanged(nameof(CanSendInvoice));
-        OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
-    }
+    partial void OnSentInvoicesThisMonthCountChanged(int value) => NotifyLimitProperties();
+    partial void OnInvoiceMonthlyLimitChanged(int value) => NotifyLimitProperties();
 
     partial void OnHasPremiumChanged(bool value)
     {
         OnPropertyChanged(nameof(CanSendInvoice));
         OnPropertyChanged(nameof(ShowRemainingInvoices));
+        OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
+    }
+
+    private void NotifyLimitProperties()
+    {
+        OnPropertyChanged(nameof(RemainingInvoices));
+        OnPropertyChanged(nameof(RemainingInvoicesText));
+        OnPropertyChanged(nameof(CanSendInvoice));
         OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
     }
 
@@ -376,6 +385,26 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         // Auto-sync online payments so invoice statuses reflect portal payments
         _ = App.AutoSyncPortalPaymentsAsync();
+
+        // Fetch server-side usage limits (updates InvoiceMonthlyLimit + SentInvoicesThisMonthCount)
+        _ = RefreshUsageFromServerAsync();
+    }
+
+    /// <summary>
+    /// Fetches the invoice send limit and current count from the server.
+    /// </summary>
+    private async Task RefreshUsageFromServerAsync()
+    {
+        var usageService = App.InvoiceUsageService;
+        if (usageService == null || HasPremium) return;
+
+        var result = await usageService.CheckUsageAsync();
+        if (result.Success)
+        {
+            if (result.MonthlyLimit > 0)
+                InvoiceMonthlyLimit = result.MonthlyLimit;
+            SentInvoicesThisMonthCount = result.SendCount;
+        }
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
