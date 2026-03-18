@@ -21,7 +21,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private const string ApiHostUrl = "https://argorobots.com";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private const string PricingApiUrl = "https://argorobots.com/api/pricing/plans.php";
-    private const string PremiumUpgradeUrl = "https://argorobots.com/upgrade/premium/";
+    private const string PremiumUpgradeUrl = "https://argorobots.com/pricing/";
     private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
 
     [ObservableProperty]
