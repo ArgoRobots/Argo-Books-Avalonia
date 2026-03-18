@@ -15,7 +15,7 @@
         <controls:ModalOverlay.ModalContent>
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1" CornerRadius="12" Width="600" Height="560"
+                    BorderThickness="1" CornerRadius="12" Width="600" MaxHeight="560"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,Auto,*,Auto">
                     <!-- Header -->
