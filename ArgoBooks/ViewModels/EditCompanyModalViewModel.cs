@@ -1,3 +1,4 @@
+using System.Linq;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
@@ -443,9 +444,37 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             return false;
         }
 
+        // Check if there are any transactions that need conversion
+        var companyData = App.CompanyManager?.CompanyData;
+        var hasTransactions = companyData != null &&
+            (companyData.Expenses.Any() || companyData.Revenues.Any());
+
         // Check connectivity first
         var connectivityService = new ConnectivityService();
         var hasInternet = await connectivityService.IsInternetAvailableAsync();
+
+        if (!hasInternet)
+        {
+            if (hasTransactions)
+            {
+                HasCurrencyError = true;
+                CurrencyErrorMessage = "No internet connection. Exchange rates are required to convert existing transactions.".Translate();
+                return false;
+            }
+            // No transactions — allow the change without rates
+            return true;
+        }
+
+        if (!exchangeService.HasApiKey)
+        {
+            if (hasTransactions)
+            {
+                HasCurrencyError = true;
+                CurrencyErrorMessage = "A valid license is required to fetch exchange rates. Please activate your license and try again.".Translate();
+                return false;
+            }
+            return true;
+        }
 
         // Try to get exchange rate for today
         var today = DateTime.Today;
@@ -453,12 +482,14 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
         if (rate <= 0)
         {
-            // Rate fetch failed
-            HasCurrencyError = true;
-            CurrencyErrorMessage = hasInternet
-                ? "Unable to fetch exchange rates. Please try again.".Translate()
-                : "No internet connection. Exchange rates are required for non-USD currencies.".Translate();
-            return false;
+            if (hasTransactions)
+            {
+                HasCurrencyError = true;
+                CurrencyErrorMessage = "Unable to fetch exchange rates. Please check your connection and try again.".Translate();
+                return false;
+            }
+            // No transactions — allow the change even if rate fetch failed
+            return true;
         }
 
         // Rate available - try to preload more dates in the background
