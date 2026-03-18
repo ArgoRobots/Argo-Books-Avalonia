@@ -9,6 +9,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
@@ -274,6 +275,42 @@ public class App : Application
     /// Checks for low stock items, out of stock items, overdue invoices, and overdue rentals,
     /// and sends notifications if enabled. Only sends once per day to avoid duplicates.
     /// </summary>
+    /// <summary>
+    /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
+    /// </summary>
+    private static async Task AutoSyncPortalPaymentsAsync()
+    {
+        try
+        {
+            var portalService = PaymentPortalService;
+            var companyData = CompanyManager?.CompanyData;
+            if (portalService == null || companyData == null || !PortalSettings.IsConfigured)
+                return;
+
+            var portalSettings = companyData.Settings.PaymentPortal;
+            var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
+
+            if (!syncResponse.Success || syncResponse.Payments.Count == 0)
+                return;
+
+            var newPayments = Core.Services.PaymentPortalService.ProcessSyncedPayments(
+                syncResponse.Payments, companyData);
+
+            var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
+            await portalService.ConfirmSyncAsync(syncedIds);
+
+            if (newPayments.Count > 0)
+            {
+                portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
+                CompanyManager?.MarkAsChanged();
+            }
+        }
+        catch
+        {
+            // Auto-sync failures are non-critical; silently ignore
+        }
+    }
+
     private static void CheckAndSendNotifications()
     {
         var companyData = CompanyManager?.CompanyData;
@@ -1404,6 +1441,9 @@ public class App : Application
 
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
+
+            // Auto-sync online payments from the portal on company open
+            _ = AutoSyncPortalPaymentsAsync();
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
