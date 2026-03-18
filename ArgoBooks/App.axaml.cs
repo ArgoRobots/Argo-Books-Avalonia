@@ -4192,7 +4192,7 @@ public class App : Application
             if (_invoicesPageViewModel == null)
             {
                 _invoicesPageViewModel = new InvoicesPageViewModel();
-                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel?.OpenCommand.Execute(null);
             }
             _invoicesPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             if (param is RentalInvoiceNavigationParameter rentalParam)
@@ -4213,7 +4213,7 @@ public class App : Application
             {
                 _productsPageViewModel = new ProductsPageViewModel();
                 // Wire up upgrade request to open upgrade modal (only once)
-                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel?.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
             _productsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
