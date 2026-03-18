@@ -53,7 +53,7 @@ public partial class AppShell : UserControl
             Dispatcher.UIThread.Post(() =>
             {
                 NotificationToastBorder.Opacity = 1;
-                NotificationToastBorder.RenderTransform = TransformOperations.Parse("translate(0px, 0px)");
+                NotificationToastBorder.RenderTransform = new TranslateTransform(0, 0);
             }, DispatcherPriority.Render);
         }
         else
@@ -61,7 +61,7 @@ public partial class AppShell : UserControl
             Dispatcher.UIThread.Post(() =>
             {
                 NotificationToastBorder.Opacity = 0;
-                NotificationToastBorder.RenderTransform = TransformOperations.Parse("translate(340px, 0px)");
+                NotificationToastBorder.RenderTransform = new TranslateTransform(340, 0);
             }, DispatcherPriority.Background);
         }
     }

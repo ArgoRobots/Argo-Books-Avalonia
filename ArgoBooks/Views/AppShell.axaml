@@ -133,8 +133,10 @@
                 Margin="0,64,20,0"
                 BoxShadow="0 4 16 0 #40000000"
                 Padding="12"
-                Opacity="0"
-                RenderTransform="translate(340px, 0px)">
+                Opacity="0">
+            <Border.RenderTransform>
+                <TranslateTransform X="340" />
+            </Border.RenderTransform>
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
