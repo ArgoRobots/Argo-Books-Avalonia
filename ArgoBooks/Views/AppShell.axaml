@@ -124,14 +124,14 @@
         <Border x:Name="NotificationToastBorder"
                 IsVisible="{Binding HeaderViewModel.ShowNotificationToast}"
                 Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
+                BorderBrush="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBrush}}"
+                BorderThickness="3,0,0,0"
                 CornerRadius="8"
                 Width="320"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,64,20,0"
-                BoxShadow="0 4 16 0 #30000000"
+                BoxShadow="0 4 16 0 #40000000"
                 Padding="12">
             <Border.Transitions>
                 <Transitions>

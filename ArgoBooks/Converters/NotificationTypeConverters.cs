@@ -34,6 +34,20 @@ public static class NotificationTypeConverters
         new FuncValueConverter<NotificationType, bool>(type => type == NotificationType.System);
 
     /// <summary>
+    /// Converter that returns a brush color based on notification type.
+    /// Info=Blue, Success=Green, Warning=Orange, System=Gray.
+    /// </summary>
+    public static readonly IValueConverter TypeToBrush =
+        new FuncValueConverter<NotificationType, IBrush>(type => type switch
+        {
+            NotificationType.Info => new SolidColorBrush(Color.Parse("#3B82F6")),
+            NotificationType.Success => new SolidColorBrush(Color.Parse("#22C55E")),
+            NotificationType.Warning => new SolidColorBrush(Color.Parse("#F59E0B")),
+            NotificationType.System => new SolidColorBrush(Color.Parse("#6B7280")),
+            _ => new SolidColorBrush(Color.Parse("#3B82F6"))
+        });
+
+    /// <summary>
     /// Converter that returns font weight based on read status.
     /// </summary>
     public static readonly IValueConverter ReadToFontWeight =
