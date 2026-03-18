@@ -1384,6 +1384,9 @@ public class App : Application
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 
+            // Enable toast popups now that startup notifications are done
+            _appShellViewModel?.HeaderViewModel.EnableToasts();
+
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
