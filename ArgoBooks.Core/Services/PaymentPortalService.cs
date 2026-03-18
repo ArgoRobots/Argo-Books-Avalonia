@@ -371,6 +371,14 @@ public class PaymentPortalService
                 invoice.Status = InvoiceStatus.Partial;
             }
 
+            // Update linked revenue records
+            var linkedRevenues = companyData.Revenues
+                .Where(r => r.InvoiceId == invoice.Id);
+            foreach (var revenue in linkedRevenues)
+            {
+                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid ? "Paid" : "Unpaid";
+            }
+
             // Add history entry
             invoice.History.Add(new InvoiceHistoryEntry
             {
