@@ -199,9 +199,12 @@ public class PaymentPortalService
 
     /// <summary>
     /// Syncs new payments from the portal. Returns payment records that haven't been synced yet.
+    /// When force is true, returns ALL payments (including already-synced) to recover
+    /// payments that were confirmed server-side but not saved locally.
     /// </summary>
     public async Task<PortalSyncResponse> SyncPaymentsAsync(
         DateTime? since = null,
+        bool force = false,
         CancellationToken cancellationToken = default)
     {
         if (!PortalSettings.IsConfigured)
@@ -217,7 +220,11 @@ public class PaymentPortalService
         try
         {
             var url = "/payments/sync";
-            if (since.HasValue)
+            if (force)
+            {
+                url += "?force=1";
+            }
+            else if (since.HasValue)
             {
                 url += $"?since={since.Value:O}";
             }

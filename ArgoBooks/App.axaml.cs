@@ -308,8 +308,17 @@ public class App : Application
             var newPayments = Core.Services.PaymentPortalService.ProcessSyncedPayments(
                 syncResponse.Payments, companyData);
 
-            var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
-            await portalService.ConfirmSyncAsync(syncedIds);
+            // Only confirm payments that were actually processed into local records.
+            // Unprocessed payments (e.g. invoice not found locally) must NOT be
+            // confirmed so the server returns them on the next sync attempt.
+            var processedPortalIds = newPayments
+                .Where(p => p.PortalPaymentId != null)
+                .Select(p => int.Parse(p.PortalPaymentId!))
+                .ToList();
+            if (processedPortalIds.Count > 0)
+            {
+                await portalService.ConfirmSyncAsync(processedPortalIds);
+            }
 
             if (newPayments.Count > 0)
             {
