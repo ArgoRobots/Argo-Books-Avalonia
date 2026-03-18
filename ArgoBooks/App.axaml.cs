@@ -271,11 +271,16 @@ public class App : Application
         }
     }
 
+    private static bool _isAutoSyncing;
+
     /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
+    /// Safe to call from multiple places — concurrent calls are deduplicated.
     /// </summary>
-    private static async Task AutoSyncPortalPaymentsAsync()
+    internal static async Task AutoSyncPortalPaymentsAsync()
     {
+        if (_isAutoSyncing) return;
+        _isAutoSyncing = true;
         try
         {
             var portalService = PaymentPortalService;
@@ -304,6 +309,10 @@ public class App : Application
         catch
         {
             // Auto-sync failures are non-critical; silently ignore
+        }
+        finally
+        {
+            _isAutoSyncing = false;
         }
     }
 

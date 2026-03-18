@@ -375,44 +375,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.PlanStatusChanged += (_, e) => HasPremium = e.HasPremium;
 
         // Auto-sync online payments so invoice statuses reflect portal payments
-        _ = SyncPortalPaymentsAsync();
-    }
-
-    /// <summary>
-    /// Silently syncs online payments from the portal to update invoice statuses.
-    /// </summary>
-    private static async Task SyncPortalPaymentsAsync()
-    {
-        try
-        {
-            var portalService = App.PaymentPortalService;
-            var companyData = App.CompanyManager?.CompanyData;
-            if (portalService == null || companyData == null || !PortalSettings.IsConfigured)
-                return;
-
-            var portalSettings = companyData.Settings.PaymentPortal;
-            var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
-
-            if (!syncResponse.Success || syncResponse.Payments.Count == 0)
-                return;
-
-            var newPayments = PaymentPortalService.ProcessSyncedPayments(
-                syncResponse.Payments, companyData);
-
-            // Confirm all payments so the server marks them as synced
-            var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
-            await portalService.ConfirmSyncAsync(syncedIds);
-
-            if (newPayments.Count > 0)
-            {
-                portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
-                App.CompanyManager?.MarkAsChanged();
-            }
-        }
-        catch
-        {
-            // Sync failures are non-critical; silently ignore
-        }
+        _ = App.AutoSyncPortalPaymentsAsync();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
