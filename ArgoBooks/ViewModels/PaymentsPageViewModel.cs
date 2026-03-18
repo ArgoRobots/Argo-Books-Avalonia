@@ -658,7 +658,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
                 PaymentMethod = payment.PaymentMethod,
-                PaymentMethodDisplay = payment.PaymentMethod.GetDisplayName(),
+                PaymentMethodDisplay = payment.Source == "Online"
+                    ? $"Payment Portal - {payment.PaymentMethod.GetDisplayName()}"
+                    : payment.PaymentMethod.GetDisplayName(),
                 Amount = payment.Amount,
                 AmountUSD = payment.EffectiveAmountUSD,
                 OriginalCurrency = payment.OriginalCurrency,
