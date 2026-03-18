@@ -115,7 +115,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #region Plan Status and Invoice Limits
 
-    private const int FreeInvoiceLimit = 5;
+    internal const int FreeInvoiceLimit = 5;
 
     [ObservableProperty]
     private bool _hasPremium;

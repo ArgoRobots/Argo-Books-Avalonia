@@ -1182,9 +1182,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 i.Status != InvoiceStatus.Cancelled &&
                 i.CreatedAt.Year == now.Year &&
                 i.CreatedAt.Month == now.Month);
-            if (sentThisMonth >= 5)
+            if (sentThisMonth >= InvoicesPageViewModel.FreeInvoiceLimit)
             {
-                await ShowSendErrorAsync("You've reached the free plan limit of 5 invoices this month. Upgrade to Premium for unlimited invoices.".Translate());
+                await ShowSendErrorAsync($"You've reached the free plan limit of {InvoicesPageViewModel.FreeInvoiceLimit} invoices this month. Upgrade to Premium for unlimited invoices.".Translate());
                 return;
             }
         }
