@@ -113,7 +113,8 @@
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Padding="0"
-                                        Cursor="Hand">
+                                        Cursor="Hand"
+                                        IsVisible="{Binding ShowInvoiceUpgradeButton}">
                                     <TextBlock Text="{loc:Loc Upgrade}"
                                                FontSize="13"
                                                FontWeight="SemiBold"
