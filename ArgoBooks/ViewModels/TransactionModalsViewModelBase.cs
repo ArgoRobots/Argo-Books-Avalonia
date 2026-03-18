@@ -859,46 +859,28 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             IsSavingTransaction = true;
             try
             {
-                // Check connectivity FIRST — cached rates from previous sessions
-                // would bypass offline detection if we checked the cache first
-                var connectivityService = new ConnectivityService();
-                var isOnline = await connectivityService.IsInternetAvailableAsync();
-
-                if (isOnline)
+                var exchangeService = ExchangeRateService.Instance;
+                if (exchangeService == null)
                 {
-                    var exchangeService = ExchangeRateService.Instance;
-                    if (exchangeService == null)
-                    {
-                        IsSavingTransaction = false;
-                        HasSaveError = true;
-                        SaveErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
-                        return;
-                    }
+                    IsSavingTransaction = false;
+                    HasSaveError = true;
+                    SaveErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
+                    return;
+                }
 
-                    // Online — fetch rate and convert amounts to USD
-                    var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
-                    if (rate > 0)
-                    {
-                        ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
-                        ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
-                        ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
-                        ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
-                        ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, transactionDate);
-                    }
-                    else
-                    {
-                        // Online but rate unavailable — treat as pending
-                        IsPendingConversion = true;
-                        ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
-                        ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);
-                        ConvertedShippingCost = new MonetaryValue(ShippingAmount, currentCurrency, 0, transactionDate);
-                        ConvertedDiscount = new MonetaryValue(DiscountAmount, currentCurrency, 0, transactionDate);
-                        ConvertedFee = new MonetaryValue(FeeAmount, currentCurrency, 0, transactionDate);
-                    }
+                // Try to get rate (uses cache first, then fetches from API if needed)
+                var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
+                if (rate > 0)
+                {
+                    ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
+                    ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
+                    ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
+                    ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
+                    ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, transactionDate);
                 }
                 else
                 {
-                    // Offline — save without USD conversion, queue for later
+                    // Rate unavailable — save with pending conversion for later
                     IsPendingConversion = true;
                     ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
                     ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);
@@ -909,7 +891,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             }
             catch (Exception)
             {
-                // Network error — treat as offline, save with pending conversion
+                // Network or other error — save with pending conversion
                 IsPendingConversion = true;
                 ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
                 ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);
@@ -946,12 +928,12 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         CloseAddEditModal();
 
-        // Show offline warning after modal closes
+        // Show pending conversion warning after modal closes
         if (wasPendingConversion)
         {
             _ = App.ShowWarningMessageBoxAsync(
-                "Offline Mode".Translate(),
-                "Your transaction has been saved. It will be updated with the correct converted amount once you're back online.".Translate());
+                "Pending Conversion".Translate(),
+                "Your transaction has been saved. The converted amount will be updated automatically when the exchange rate becomes available.".Translate());
         }
     }
 
