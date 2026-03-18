@@ -1196,19 +1196,6 @@ public class App : Application
                 return;
 
             await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
-
-            // Save the company data immediately after processing to persist the cleared pending status
-            if (CompanyManager.CompanyData.ChangesMade && !CompanyManager.IsSampleCompany)
-            {
-                try
-                {
-                    await CompanyManager.SaveCompanyAsync();
-                }
-                catch (Exception saveEx)
-                {
-                    ErrorLogger?.LogWarning($"Auto-save after pending conversion failed: {saveEx.Message}", "App");
-                }
-            }
         }
         catch (Exception ex)
         {
