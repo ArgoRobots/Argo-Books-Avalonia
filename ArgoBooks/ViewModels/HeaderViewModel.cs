@@ -567,9 +567,11 @@ public partial class HeaderViewModel : ViewModelBase
 
         try
         {
-            await Task.Delay(5000, token);
+            await Task.Delay(10000, token);
             // Auto-dismiss: leave notification as unread
             ShowNotificationToast = false;
+            // Delay clearing so the slide-out animation finishes
+            await Task.Delay(350, CancellationToken.None);
             ToastNotification = null;
         }
         catch (TaskCanceledException)
@@ -582,7 +584,7 @@ public partial class HeaderViewModel : ViewModelBase
     /// Dismisses the notification toast and marks the notification as read.
     /// </summary>
     [RelayCommand]
-    private void DismissNotificationToast()
+    private async void DismissNotificationToast()
     {
         _toastCancellationTokenSource?.Cancel();
 
@@ -594,6 +596,8 @@ public partial class HeaderViewModel : ViewModelBase
         }
 
         ShowNotificationToast = false;
+        // Delay clearing so the slide-out animation finishes
+        await Task.Delay(350);
         ToastNotification = null;
     }
 

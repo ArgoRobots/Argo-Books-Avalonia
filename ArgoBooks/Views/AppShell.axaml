@@ -123,8 +123,8 @@
         <!-- Notification Toast Popup -->
         <Border x:Name="NotificationToastBorder"
                 IsVisible="{Binding HeaderViewModel.ShowNotificationToast}"
-                Background="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBackgroundBrush}}"
-                BorderBrush="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBrush}}"
+                Background="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBackgroundBrush}, FallbackValue=Transparent}"
+                BorderBrush="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBrush}, FallbackValue=Transparent}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Width="320"
@@ -147,12 +147,12 @@
                   DataContext="{Binding HeaderViewModel}">
                 <!-- Content -->
                 <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ToastNotification.Title}"
+                    <TextBlock Text="{Binding ToastNotification.Title, FallbackValue=''}"
                                FontSize="13"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimaryBrush}"
                                TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding ToastNotification.Message}"
+                    <TextBlock Text="{Binding ToastNotification.Message, FallbackValue=''}"
                                FontSize="12"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                TextWrapping="Wrap"
