@@ -291,7 +291,13 @@ public class App : Application
             var portalSettings = companyData.Settings.PaymentPortal;
             var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
 
-            if (!syncResponse.Success || syncResponse.Payments.Count == 0)
+            if (!syncResponse.Success)
+                return;
+
+            // Always advance the sync timestamp on success to avoid re-querying the same window
+            portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
+
+            if (syncResponse.Payments.Count == 0)
                 return;
 
             var newPayments = Core.Services.PaymentPortalService.ProcessSyncedPayments(
@@ -302,7 +308,6 @@ public class App : Application
 
             if (newPayments.Count > 0)
             {
-                portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
                 CompanyManager?.MarkAsChanged();
             }
         }
