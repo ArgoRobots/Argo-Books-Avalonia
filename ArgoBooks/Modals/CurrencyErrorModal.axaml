@@ -18,8 +18,9 @@
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel Margin="24" Spacing="20">
-                    <!-- Error Icon and Message -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="16">
+                    <!-- Error Icon and Message (hidden during retry) -->
+                    <StackPanel HorizontalAlignment="Center" Spacing="16"
+                                IsVisible="{Binding !IsSavingCurrency}">
                         <Border Background="#fef2f2"
                                 CornerRadius="50"
                                 Width="64" Height="64"
@@ -36,6 +37,25 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="{Binding CurrencyErrorMessage}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Loading state (shown during retry) -->
+                    <StackPanel HorizontalAlignment="Center" Spacing="16"
+                                IsVisible="{Binding IsSavingCurrency}">
+                        <controls:LoadingSpinner IsSpinning="{Binding IsSavingCurrency}"
+                                                 SizePreset="Large"
+                                                 HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Fetching Exchange Rates...'}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Please wait while we connect to the exchange rate service.'}"
                                    FontSize="14"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    TextWrapping="Wrap"

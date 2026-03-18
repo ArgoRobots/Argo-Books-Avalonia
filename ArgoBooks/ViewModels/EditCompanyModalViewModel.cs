@@ -331,16 +331,16 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task RetryCurrencySaveAsync()
     {
-        HasCurrencyError = false;
-        CurrencyErrorMessage = string.Empty;
-
         if (_pendingCurrencyCode == null)
         {
+            HasCurrencyError = false;
+            CurrencyErrorMessage = string.Empty;
             await SaveAsync();
             return;
         }
 
-        // Retry the rate preload for the pending currency
+        // Keep the modal open but switch to loading state
+        CurrencyErrorMessage = string.Empty;
         IsSavingCurrency = true;
         var success = await PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode);
         IsSavingCurrency = false;
@@ -351,7 +351,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             return;
         }
 
-        // Rates loaded successfully — proceed with save (skip confirmation and rate preload)
+        // Rates loaded successfully — dismiss error and proceed with save
+        HasCurrencyError = false;
+        CurrencyErrorMessage = string.Empty;
         _pendingCurrencyCode = null;
         await SaveAsync(skipCurrencyValidation: true);
     }
