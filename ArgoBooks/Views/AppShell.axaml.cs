@@ -19,6 +19,8 @@ public partial class AppShell : UserControl
     private const double CompactPageThreshold = 1200;
     private const double MinimalPageThreshold = 900;
 
+    private HeaderViewModel? _previousHeaderVm;
+
     public AppShell()
     {
         InitializeComponent();
@@ -35,9 +37,17 @@ public partial class AppShell : UserControl
         // Animate toast slide in/out from right
         DataContextChanged += (_, _) =>
         {
+            if (_previousHeaderVm != null)
+                _previousHeaderVm.PropertyChanged -= OnHeaderViewModelPropertyChanged;
+
             if (DataContext is AppShellViewModel vm)
             {
+                _previousHeaderVm = vm.HeaderViewModel;
                 vm.HeaderViewModel.PropertyChanged += OnHeaderViewModelPropertyChanged;
+            }
+            else
+            {
+                _previousHeaderVm = null;
             }
         };
     }
