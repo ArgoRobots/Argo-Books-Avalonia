@@ -1493,7 +1493,7 @@ public class App : Application
             // Start periodic portal sync every 5 minutes
             _portalSyncTimer?.Dispose();
             _portalSyncTimer = new System.Threading.Timer(
-                _ => AutoSyncPortalPaymentsAsync(),
+                async _ => await AutoSyncPortalPaymentsAsync(),
                 null,
                 TimeSpan.FromMinutes(5),
                 TimeSpan.FromMinutes(5));
