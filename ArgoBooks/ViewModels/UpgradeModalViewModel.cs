@@ -224,6 +224,17 @@ public partial class UpgradeModalViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void GoBackToUpgrade()
+    {
+        IsEnterKeyModalOpen = false;
+        IsVerificationSuccess = false;
+        LicenseKey = string.Empty;
+        VerificationError = null;
+        SuccessMessage = null;
+        IsOpen = true;
+    }
+
+    [RelayCommand]
     private void ContinueAfterSuccess()
     {
         IsEnterKeyModalOpen = false;
