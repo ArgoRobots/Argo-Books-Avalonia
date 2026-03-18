@@ -73,14 +73,9 @@
                                 Command="{Binding RetryCurrencySaveCommand}"
                                 IsEnabled="{Binding !IsSavingCurrency}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <!-- Retry icon - hidden when saving -->
                                 <PathIcon Data="{x:Static icons:Icons.RefreshAlt}"
                                           Width="16" Height="16"
                                           IsVisible="{Binding !IsSavingCurrency}" />
-                                <!-- Loading spinner - shown when saving -->
-                                <PathIcon Data="{x:Static icons:Icons.Spinner}"
-                                          Width="16" Height="16"
-                                          IsVisible="{Binding IsSavingCurrency}" />
                                 <TextBlock Text="{loc:Loc 'Retry'}"
                                            IsVisible="{Binding !IsSavingCurrency}" />
                                 <TextBlock Text="{loc:Loc 'Retrying...'}"
