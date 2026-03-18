@@ -1482,14 +1482,12 @@ public class App : Application
                         "Stored password not found. Please enter the password manually.".Translate());
                     password = await _appShellViewModel.PasswordPromptModalViewModel.WaitForPasswordAsync();
                 }
-                else
-                {
-                    _mainWindowViewModel.ShowLoading("Opening company...".Translate());
-                }
             }
-            else if (!string.IsNullOrEmpty(password))
+
+            // Close the password modal and show loading before returning
+            if (!string.IsNullOrEmpty(password))
             {
-                // Show loading again after user enters password (if they didn't cancel)
+                _appShellViewModel.PasswordPromptModalViewModel.Close();
                 _mainWindowViewModel.ShowLoading("Opening company...".Translate());
             }
 
@@ -3669,7 +3667,8 @@ public class App : Application
                 return;
             }
 
-            // Retry with the new password
+            // Close the modal and retry with the new password
+            passwordModal.Close();
             await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
@@ -3743,7 +3742,8 @@ public class App : Application
                 return false;
             }
 
-            // Retry recursively
+            // Close the modal and retry recursively
+            passwordModal.Close();
             return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (Exception ex)

@@ -111,7 +111,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         ShowWindowsHelloSuccess = false;
         IsOpen = true;
 
-        _completionSource = new TaskCompletionSource<string?>();
+        // Use RunContinuationsAsynchronously to prevent TrySetResult from running
+        // the awaiting continuation inline, which can block UI updates
+        _completionSource = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
         return _completionSource.Task;
     }
 
@@ -127,7 +129,8 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         IsOpen = true; // Ensure modal stays/reopens
 
         // Create a new completion source for the retry
-        _completionSource = new TaskCompletionSource<string?>();
+        // Use RunContinuationsAsynchronously to prevent inline continuations
+        _completionSource = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Request focus on the password textbox
         FocusPasswordRequested?.Invoke(this, EventArgs.Empty);
