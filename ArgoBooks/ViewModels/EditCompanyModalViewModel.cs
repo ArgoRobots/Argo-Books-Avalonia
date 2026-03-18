@@ -390,13 +390,17 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             }
             _originalCurrency = SelectedCurrency;
 
-            // Prefetch exchange rates for the new currency so display conversions work immediately
+            // Preload exchange rates for all transaction dates so display conversions are exact
             if (!string.Equals(newCurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
             {
                 var exchangeService = ExchangeRateService.Instance;
-                if (exchangeService != null)
+                var companyData = App.CompanyManager?.CompanyData;
+                if (exchangeService != null && companyData != null)
                 {
-                    await exchangeService.GetExchangeRateAsync("USD", newCurrencyCode, DateTime.Today, fetchIfMissing: true);
+                    var transactionDates = companyData.Expenses.Select(e => e.Date)
+                        .Concat(companyData.Revenues.Select(r => r.Date))
+                        .Append(DateTime.Today);
+                    await exchangeService.PreloadRatesAsync(transactionDates);
                 }
             }
 
