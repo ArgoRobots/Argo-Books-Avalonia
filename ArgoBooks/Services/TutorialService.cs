@@ -193,11 +193,15 @@ public class TutorialService
 
     /// <summary>
     /// Checks if the tutorial should be shown on the current company.
-    /// Returns true if no tutorial is in progress, or if we're on the same company where it was started.
+    /// Returns false if the tutorial was skipped, if no company is set,
+    /// or if we're on a different company than where the tutorial was started.
     /// </summary>
     public bool ShouldShowTutorialOnCurrentCompany()
     {
         if (string.IsNullOrEmpty(_currentCompanyPath))
+            return false;
+
+        if (Settings.HasSkippedTutorial)
             return false;
 
         var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
@@ -281,6 +285,20 @@ public class TutorialService
     }
 
     /// <summary>
+    /// Marks the tutorial as skipped by the user.
+    /// </summary>
+    public void SkipTutorial()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null)
+        {
+            settings.Tutorial.HasSkippedTutorial = true;
+            SaveSettings();
+            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
     /// Checks if a checklist item is completed.
     /// </summary>
     public bool IsChecklistItemCompleted(string itemId)
@@ -296,6 +314,10 @@ public class TutorialService
     {
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial == null || settings.Tutorial.CompletedChecklistItems.Contains(itemId))
+            return;
+
+        // Don't process checklist items if the tutorial was skipped
+        if (settings.Tutorial.HasSkippedTutorial)
             return;
 
         // Check if previous items in sequence are completed
@@ -478,6 +500,7 @@ public class TutorialService
         {
             settings.Tutorial.HasCompletedWelcomeTutorial = false;
             settings.Tutorial.HasCompletedAppTour = false;
+            settings.Tutorial.HasSkippedTutorial = false;
             settings.Tutorial.ShowSetupChecklist = true;
             settings.Tutorial.CompletedChecklistItems.Clear();
             settings.Tutorial.VisitedPages.Clear();
