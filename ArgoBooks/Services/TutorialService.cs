@@ -193,7 +193,7 @@ public class TutorialService
 
     /// <summary>
     /// Checks if the tutorial should be shown on the current company.
-    /// Returns false if the tutorial was skipped/dismissed, if no company is set,
+    /// Returns false if the tutorial was skipped, if no company is set,
     /// or if we're on a different company than where the tutorial was started.
     /// </summary>
     public bool ShouldShowTutorialOnCurrentCompany()
@@ -201,9 +201,7 @@ public class TutorialService
         if (string.IsNullOrEmpty(_currentCompanyPath))
             return false;
 
-        // If the setup checklist has been dismissed (e.g. tutorial was skipped),
-        // the tutorial is no longer active
-        if (!Settings.ShowSetupChecklist)
+        if (Settings.HasSkippedTutorial)
             return false;
 
         var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
@@ -281,6 +279,20 @@ public class TutorialService
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.HasCompletedAppTour = true;
+            SaveSettings();
+            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Marks the tutorial as skipped by the user.
+    /// </summary>
+    public void SkipTutorial()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null)
+        {
+            settings.Tutorial.HasSkippedTutorial = true;
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -484,6 +496,7 @@ public class TutorialService
         {
             settings.Tutorial.HasCompletedWelcomeTutorial = false;
             settings.Tutorial.HasCompletedAppTour = false;
+            settings.Tutorial.HasSkippedTutorial = false;
             settings.Tutorial.ShowSetupChecklist = true;
             settings.Tutorial.CompletedChecklistItems.Clear();
             settings.Tutorial.VisitedPages.Clear();

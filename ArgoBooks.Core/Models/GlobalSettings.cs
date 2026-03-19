@@ -193,6 +193,11 @@ public class TutorialSettings
     public string? TutorialStartedOnCompanyPath { get; set; }
 
     /// <summary>
+    /// Whether the user skipped the tutorial entirely.
+    /// </summary>
+    public bool HasSkippedTutorial { get; set; } = false;
+
+    /// <summary>
     /// Whether to show the setup checklist on the dashboard.
     /// </summary>
     public bool ShowSetupChecklist { get; set; } = true;
