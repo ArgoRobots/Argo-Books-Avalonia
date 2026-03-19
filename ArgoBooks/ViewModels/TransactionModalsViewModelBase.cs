@@ -322,12 +322,12 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public decimal FeeAmount => ModalFee;
     public decimal Total => Subtotal + TaxAmount + ShippingAmount + FeeAmount - DiscountAmount;
 
-    public string SubtotalFormatted => $"${Subtotal:N2}";
-    public string TaxAmountFormatted => $"${TaxAmount:N2}";
-    public string DiscountAmountFormatted => $"-${DiscountAmount:N2}";
-    public string ShippingAmountFormatted => $"${ShippingAmount:N2}";
-    public string FeeAmountFormatted => $"${FeeAmount:N2}";
-    public string TotalFormatted => $"${Total:N2}";
+    public string SubtotalFormatted => CurrencyService.Format(Subtotal);
+    public string TaxAmountFormatted => CurrencyService.Format(TaxAmount);
+    public string DiscountAmountFormatted => $"-{CurrencyService.Format(DiscountAmount)}";
+    public string ShippingAmountFormatted => CurrencyService.Format(ShippingAmount);
+    public string FeeAmountFormatted => CurrencyService.Format(FeeAmount);
+    public string TotalFormatted => CurrencyService.Format(Total);
 
     partial void OnModalQuantityChanged(decimal value) => UpdateTotals();
     partial void OnModalUnitPriceChanged(decimal value) => UpdateTotals();
@@ -1131,7 +1131,7 @@ public abstract partial class TransactionLineItemBase : ObservableObject
     private bool _hasProductError;
 
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
-    public string AmountFormatted => $"${Amount:N2}";
+    public string AmountFormatted => CurrencyService.Format(Amount);
 
     partial void OnSelectedProductChanged(ProductOption? value)
     {

@@ -7,6 +7,7 @@ using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Models.Portal;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -300,12 +301,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public decimal DiscountCalculated => DiscountIsPercent ? Subtotal * (DiscountAmount / 100m) : DiscountAmount;
     public decimal Total => Subtotal + TaxAmount + SecurityDeposit + CustomFeeCalculated - DiscountCalculated;
 
-    public string SubtotalFormatted => $"${Subtotal:N2}";
-    public string TaxAmountFormatted => $"${TaxAmount:N2}";
-    public string SecurityDepositFormatted => $"${SecurityDeposit:N2}";
-    public string CustomFeeCalculatedFormatted => $"+${CustomFeeCalculated:N2}";
-    public string DiscountCalculatedFormatted => $"-${DiscountCalculated:N2}";
-    public string TotalFormatted => $"${Total:N2}";
+    public string SubtotalFormatted => CurrencyService.Format(Subtotal);
+    public string TaxAmountFormatted => CurrencyService.Format(TaxAmount);
+    public string SecurityDepositFormatted => CurrencyService.Format(SecurityDeposit);
+    public string CustomFeeCalculatedFormatted => $"+{CurrencyService.Format(CustomFeeCalculated)}";
+    public string DiscountCalculatedFormatted => $"-{CurrencyService.Format(DiscountCalculated)}";
+    public string TotalFormatted => CurrencyService.Format(Total);
 
     public bool HasSecurityDeposit => SecurityDeposit > 0;
     public bool HasCustomFee => CustomFeeAmount > 0;
@@ -1306,6 +1307,28 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit + feeCalc - discCalc;
         invoice.Balance = invoice.Total - invoice.AmountPaid;
 
+        // Set currency fields for multi-currency support
+        var invoiceCurrency = CurrencyService.CurrentCurrencyCode;
+        invoice.OriginalCurrency = invoiceCurrency;
+        if (!string.Equals(invoiceCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            var exchangeService = ExchangeRateService.Instance;
+            if (exchangeService != null)
+            {
+                var rate = await exchangeService.GetExchangeRateAsync(invoiceCurrency, "USD", invoice.IssueDate);
+                if (rate > 0)
+                {
+                    invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
+                    invoice.BalanceUSD = Math.Round(invoice.Balance * rate, 2);
+                }
+            }
+        }
+        else
+        {
+            invoice.TotalUSD = invoice.Total;
+            invoice.BalanceUSD = invoice.Balance;
+        }
+
         // Publish and send: portal handles both publishing and email delivery via sendEmail: true.
         // When portal is not configured, fall back to desktop email sending.
         if (PortalSettings.IsConfigured)
@@ -1581,6 +1604,28 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }).ToList()
         };
 
+        // Set currency fields for multi-currency support
+        var draftCurrency = CurrencyService.CurrentCurrencyCode;
+        invoice.OriginalCurrency = draftCurrency;
+        if (!string.Equals(draftCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            var exchangeService = ExchangeRateService.Instance;
+            if (exchangeService != null)
+            {
+                var rate = await exchangeService.GetExchangeRateAsync(draftCurrency, "USD", invoice.IssueDate);
+                if (rate > 0)
+                {
+                    invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
+                    invoice.BalanceUSD = Math.Round(invoice.Balance * rate, 2);
+                }
+            }
+        }
+        else
+        {
+            invoice.TotalUSD = invoice.Total;
+            invoice.BalanceUSD = invoice.Balance;
+        }
+
         // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
         LinkInvoiceToRentals(invoice, companyData);
@@ -1806,7 +1851,7 @@ public partial class LineItemDisplayModel : ObservableObject
     private string? _revenueRecordId;
 
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
-    public string AmountFormatted => $"${Amount:N2}";
+    public string AmountFormatted => CurrencyService.Format(Amount);
 
     partial void OnSelectedProductChanged(ProductOption? value)
     {

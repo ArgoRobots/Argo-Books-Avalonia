@@ -201,7 +201,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
                 _ => 0
             };
 
-            return $"${total:N2}";
+            return CurrencyService.Format(total);
         }
     }
 

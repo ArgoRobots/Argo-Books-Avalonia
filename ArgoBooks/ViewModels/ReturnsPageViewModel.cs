@@ -268,7 +268,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
         ExpenseReturns = _allReturns.Count(r => r.ReturnType == "Expense");
         CustomerReturns = _allReturns.Count(r => r.ReturnType == "Customer");
         var totalRefundedValue = _allReturns.Sum(r => r.NetRefund);
-        TotalRefunded = $"${totalRefundedValue:N2}";
+        TotalRefunded = CurrencyService.Format(totalRefundedValue);
     }
 
     [RelayCommand]
@@ -529,5 +529,5 @@ public partial class ReturnDisplayItem : ObservableObject
 
     // Computed properties for display
     public string DateFormatted => ReturnDate.ToString("MMM d, yyyy");
-    public string RefundAmountFormatted => $"${RefundAmount:N2}";
+    public string RefundAmountFormatted => CurrencyService.Format(RefundAmount);
 }

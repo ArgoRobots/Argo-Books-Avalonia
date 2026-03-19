@@ -258,7 +258,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         LostItems = _allItems.Count(item => item.Reason == LostDamagedReason.Lost || item.Reason == LostDamagedReason.Stolen);
         DamagedItems = _allItems.Count(item => item.Reason == LostDamagedReason.Damaged || item.Reason == LostDamagedReason.Expired);
         var totalValue = _allItems.Sum(item => item.ValueLost);
-        TotalLossValue = $"${totalValue:N2}";
+        TotalLossValue = CurrencyService.Format(totalValue);
     }
 
     [RelayCommand]
@@ -484,7 +484,7 @@ public partial class LostDamagedDisplayItem : ObservableObject
 
     // Computed properties for display
     public string DateFormatted => DateDiscovered.ToString("MMM d, yyyy");
-    public string ValueLostFormatted => $"${ValueLost:N2}";
+    public string ValueLostFormatted => CurrencyService.Format(ValueLost);
     public string QuantityFormatted => $"{Quantity} unit(s)";
 
     public bool IsLost => ItemType == "Lost";

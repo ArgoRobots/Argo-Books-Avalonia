@@ -3,6 +3,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Helpers;
+using ArgoBooks.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
 using ArgoBooks.Views;
@@ -869,7 +870,7 @@ public partial class ReceiptDisplayItem : ObservableObject
 
     // Computed properties for display
     public string DateFormatted => Date.ToString("MMM d, yyyy");
-    public string AmountFormatted => $"${Amount:N2}";
+    public string AmountFormatted => CurrencyService.Format(Amount);
     public string FileSizeFormatted => FormatFileSize(FileSize);
 
     public bool IsExpense => TransactionType == "Expense";
