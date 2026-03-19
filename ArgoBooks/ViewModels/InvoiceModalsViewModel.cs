@@ -1315,7 +1315,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var exchangeService = ExchangeRateService.Instance;
             if (exchangeService != null)
             {
-                var rate = exchangeService.GetExchangeRate(invoiceCurrency, "USD", invoice.IssueDate);
+                var rate = await exchangeService.GetExchangeRateAsync(invoiceCurrency, "USD", invoice.IssueDate);
                 if (rate > 0)
                 {
                     invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
@@ -1612,7 +1612,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var exchangeService = ExchangeRateService.Instance;
             if (exchangeService != null)
             {
-                var rate = exchangeService.GetExchangeRate(draftCurrency, "USD", invoice.IssueDate);
+                var rate = await exchangeService.GetExchangeRateAsync(draftCurrency, "USD", invoice.IssueDate);
                 if (rate > 0)
                 {
                     invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);

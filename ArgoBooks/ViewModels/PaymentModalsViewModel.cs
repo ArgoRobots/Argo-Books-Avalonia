@@ -311,7 +311,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveNewPayment()
+    public async Task SaveNewPayment()
     {
         if (!ValidateModal())
             return;
@@ -341,7 +341,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
             var exchangeService = ExchangeRateService.Instance;
             if (exchangeService != null)
             {
-                var rate = exchangeService.GetExchangeRate(currentCurrency, "USD", paymentDate);
+                var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", paymentDate);
                 if (rate > 0)
                 {
                     amountUSD = Math.Round(parsedAmount * rate, 2);
@@ -450,7 +450,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveEditedPayment()
+    public async Task SaveEditedPayment()
     {
         if (_editingPayment == null)
             return;
@@ -526,7 +526,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
             var exchangeService = ExchangeRateService.Instance;
             if (exchangeService != null)
             {
-                var rate = exchangeService.GetExchangeRate(editCurrentCurrency, "USD", newDate);
+                var rate = await exchangeService.GetExchangeRateAsync(editCurrentCurrency, "USD", newDate);
                 if (rate > 0)
                 {
                     newAmountUSD = Math.Round(newAmount * rate, 2);
