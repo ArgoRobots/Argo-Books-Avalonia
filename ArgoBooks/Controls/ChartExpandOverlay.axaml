@@ -111,7 +111,7 @@
                 </Border>
 
                 <!-- Chart Content Area + Context Menu -->
-                <Panel Grid.Row="1" x:Name="ChartArea" x:DataType="vm:ChartContextMenuViewModelBase">
+                <Panel Grid.Row="1" x:Name="ChartArea" x:DataType="vm:ChartContextMenuViewModelBase" DataContext="{x:Null}">
                     <Border Padding="16">
                         <Panel x:Name="ContentPanel" />
                     </Border>

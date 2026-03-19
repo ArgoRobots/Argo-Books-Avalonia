@@ -123,8 +123,8 @@
         <!-- Notification Toast Popup -->
         <Border x:Name="NotificationToastBorder"
                 IsHitTestVisible="{Binding HeaderViewModel.ShowNotificationToast}"
-                Background="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBackgroundBrush}, FallbackValue=Transparent}"
-                BorderBrush="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBrush}, FallbackValue=Transparent}"
+                Background="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBackgroundBrush}, FallbackValue=Transparent, TargetNullValue=Transparent}"
+                BorderBrush="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBrush}, FallbackValue=Transparent, TargetNullValue=Transparent}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Width="320"

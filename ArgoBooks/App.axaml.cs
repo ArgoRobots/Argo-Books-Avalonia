@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
@@ -277,7 +278,7 @@ public class App : Application
     }
 
     private static bool _isAutoSyncing;
-    private static System.Threading.Timer? _portalSyncTimer;
+    private static Timer? _portalSyncTimer;
 
     /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
@@ -310,7 +311,7 @@ public class App : Application
             if (syncResponse.Payments.Count == 0)
                 return;
 
-            var newPayments = Core.Services.PaymentPortalService.ProcessSyncedPayments(
+            var newPayments = PaymentPortalService.ProcessSyncedPayments(
                 syncResponse.Payments, companyData);
 
             // Only confirm payments that were actually processed into local records.
@@ -643,7 +644,7 @@ public class App : Application
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
-    private static System.Threading.Timer? _pendingConversionTimer;
+    private static Timer? _pendingConversionTimer;
 
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
@@ -833,28 +834,25 @@ public class App : Application
             WireCompanyManagerEvents();
 
             // Wire up pending conversion events
-            if (PendingConversionService != null)
+            PendingConversionService.PendingConversionsProcessed += (_, args) =>
             {
-                PendingConversionService.PendingConversionsProcessed += (_, args) =>
+                if (args is PendingConversionsProcessedEventArgs { ConvertedCount: > 0 } e)
                 {
-                    if (args is PendingConversionsProcessedEventArgs e && e.ConvertedCount > 0)
+                    var message = e.ConvertedCount == 1
+                        ? "1 pending transaction has been processed successfully.".Translate()
+                        : string.Format("{0} pending transactions have been processed successfully.".Translate(), e.ConvertedCount);
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
-                        var message = e.ConvertedCount == 1
-                            ? "1 pending transaction has been processed successfully.".Translate()
-                            : string.Format("{0} pending transactions have been processed successfully.".Translate(), e.ConvertedCount);
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            AddNotification(
-                                "Back Online".Translate(),
-                                message,
-                                NotificationType.Success);
+                        AddNotification(
+                            "Back Online".Translate(),
+                            message,
+                            NotificationType.Success);
 
-                            // Refresh the current page to update status badges and amounts
-                            NavigationService?.RefreshCurrentPage();
-                        });
-                    }
-                };
-            }
+                        // Refresh the current page to update status badges and amounts
+                        NavigationService.RefreshCurrentPage();
+                    });
+                }
+            };
 
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
@@ -959,7 +957,7 @@ public class App : Application
             }
             catch (Exception ex)
             {
-                ErrorLogger?.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
+                ErrorLogger.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
             }
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
@@ -1251,10 +1249,8 @@ public class App : Application
         // Dispose any existing timer
         _pendingConversionTimer?.Dispose();
 
-        _pendingConversionTimer = new System.Threading.Timer(async _ =>
-        {
-            await TryProcessPendingConversionsAsync();
-        }, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+        _pendingConversionTimer = new Timer(static _ => TryProcessPendingConversionsAsync(),
+            null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 
     /// <summary>
@@ -1482,18 +1478,18 @@ public class App : Application
             CheckAndSendNotifications();
 
             // Enable toast popups now that startup notifications are done
-            _appShellViewModel?.HeaderViewModel.EnableToasts();
+            _appShellViewModel.HeaderViewModel.EnableToasts();
 
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
             // Auto-sync online payments from the portal on company open
-            _ = AutoSyncPortalPaymentsAsync();
+            await AutoSyncPortalPaymentsAsync();
 
             // Start periodic portal sync every 5 minutes
             _portalSyncTimer?.Dispose();
-            _portalSyncTimer = new System.Threading.Timer(
-                async _ => await AutoSyncPortalPaymentsAsync(),
+            _portalSyncTimer = new Timer(
+                static state => AutoSyncPortalPaymentsAsync(),
                 null,
                 TimeSpan.FromMinutes(5),
                 TimeSpan.FromMinutes(5));
@@ -2195,7 +2191,7 @@ public class App : Application
             settings?.Company.Address,
             settings?.Company.ProvinceState,
             settings?.Company.Email,
-            CompanyManager.CompanyData?.Settings?.Localization?.Currency);
+            CompanyManager.CompanyData!.Settings.Localization?.Currency);
     }
 
     /// <summary>
@@ -4239,9 +4235,9 @@ public class App : Application
             if (_invoicesPageViewModel == null)
             {
                 _invoicesPageViewModel = new InvoicesPageViewModel();
-                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel?.OpenCommand.Execute(null);
+                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel?.OpenCommand.Execute(null);
             }
-            _invoicesPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            _invoicesPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
             if (param is RentalInvoiceNavigationParameter rentalParam)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -4254,7 +4250,7 @@ public class App : Application
         navigationService.RegisterPage("Payments", _ =>
         {
             _paymentsPageViewModel ??= new PaymentsPageViewModel();
-            _ = AutoSyncPortalPaymentsAsync();
+            AutoSyncPortalPaymentsAsync();
             return new PaymentsPage { DataContext = _paymentsPageViewModel };
         });
 
@@ -4265,10 +4261,10 @@ public class App : Application
             {
                 _productsPageViewModel = new ProductsPageViewModel();
                 // Wire up upgrade request to open upgrade modal (only once)
-                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel?.OpenCommand.Execute(null);
+                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel?.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
-            _productsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
             // Reset modal state
             _productsPageViewModel.IsAddModalOpen = false;
             if (param is Dictionary<string, object?> dict)
