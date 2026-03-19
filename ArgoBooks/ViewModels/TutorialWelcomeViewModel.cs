@@ -28,13 +28,22 @@ public partial class TutorialWelcomeViewModel : ViewModelBase
     /// </summary>
     public void ShowIfNeeded()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] TutorialWelcomeViewModel.ShowIfNeeded called");
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   CurrentFilePath='{App.CompanyManager?.CurrentFilePath}'");
         TutorialService.Instance.SetCurrentCompanyPath(App.CompanyManager?.CurrentFilePath);
 
-        if (!TutorialService.Instance.HasCompletedWelcomeTutorial &&
-            TutorialService.Instance.ShouldShowTutorialOnCurrentCompany())
+        var hasCompleted = TutorialService.Instance.HasCompletedWelcomeTutorial;
+        var shouldShow = TutorialService.Instance.ShouldShowTutorialOnCurrentCompany();
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   HasCompletedWelcomeTutorial={hasCompleted}, ShouldShowOnCurrentCompany={shouldShow}");
+        if (!hasCompleted && shouldShow)
         {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => Opening tutorial welcome overlay");
             TutorialService.Instance.InitializeForNewUser();
             IsOpen = true;
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => NOT showing tutorial welcome overlay");
         }
     }
 
@@ -57,6 +66,7 @@ public partial class TutorialWelcomeViewModel : ViewModelBase
     [RelayCommand]
     private void SkipTutorial()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] TutorialWelcomeViewModel.SkipTutorial called");
         IsOpen = false;
         TutorialService.Instance.CompleteWelcomeTutorial();
         TutorialService.Instance.CompleteAppTour();

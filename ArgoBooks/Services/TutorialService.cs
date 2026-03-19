@@ -121,6 +121,7 @@ public class TutorialService
     /// </summary>
     public void ShowGuidance(CompletionGuidanceType type)
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] ShowGuidance called with type={type}");
         CurrentGuidanceType = type;
         ShowCompletionGuidance = true;
         // Skip the next dismiss call to prevent navigation from immediately hiding the guidance
@@ -188,6 +189,7 @@ public class TutorialService
     /// </summary>
     public void SetCurrentCompanyPath(string? companyPath)
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] SetCurrentCompanyPath: '{companyPath}'");
         _currentCompanyPath = companyPath;
     }
 
@@ -198,17 +200,33 @@ public class TutorialService
     /// </summary>
     public bool ShouldShowTutorialOnCurrentCompany()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] ShouldShowTutorialOnCurrentCompany called");
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   _currentCompanyPath='{_currentCompanyPath}'");
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   HasSkippedTutorial={Settings.HasSkippedTutorial}");
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   TutorialStartedOnCompanyPath='{Settings.TutorialStartedOnCompanyPath}'");
+
         if (string.IsNullOrEmpty(_currentCompanyPath))
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => false (no current company)");
             return false;
+        }
 
         if (Settings.HasSkippedTutorial)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => false (tutorial was skipped)");
             return false;
+        }
 
         var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
         if (string.IsNullOrEmpty(tutorialCompanyPath))
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => true (no tutorial company set)");
             return true;
+        }
 
-        return string.Equals(_currentCompanyPath, tutorialCompanyPath, StringComparison.OrdinalIgnoreCase);
+        var result = string.Equals(_currentCompanyPath, tutorialCompanyPath, StringComparison.OrdinalIgnoreCase);
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => {result} (company match check)");
+        return result;
     }
 
     /// <summary>
@@ -244,6 +262,7 @@ public class TutorialService
     /// </summary>
     public void InitializeForNewUser()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] InitializeForNewUser called, _currentCompanyPath='{_currentCompanyPath}'");
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null && settings.Tutorial.FirstLaunchDate == null)
         {
@@ -259,6 +278,7 @@ public class TutorialService
     /// </summary>
     public void CompleteWelcomeTutorial()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] CompleteWelcomeTutorial called");
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
@@ -275,6 +295,7 @@ public class TutorialService
     /// </summary>
     public void CompleteAppTour()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] CompleteAppTour called");
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
@@ -289,12 +310,18 @@ public class TutorialService
     /// </summary>
     public void SkipTutorial()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] SkipTutorial called");
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
             settings.Tutorial.HasSkippedTutorial = true;
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   HasSkippedTutorial set to true");
             SaveSettings();
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   WARNING: settings or Tutorial was null, skip not saved!");
         }
     }
 
@@ -312,34 +339,49 @@ public class TutorialService
     /// </summary>
     public void CompleteChecklistItem(string itemId)
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] CompleteChecklistItem called with itemId='{itemId}'");
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial == null || settings.Tutorial.CompletedChecklistItems.Contains(itemId))
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => early return (null settings or already completed)");
             return;
+        }
 
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   HasSkippedTutorial={settings.Tutorial.HasSkippedTutorial}");
         // Don't process checklist items if the tutorial was skipped
         if (settings.Tutorial.HasSkippedTutorial)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => early return (tutorial was skipped)");
             return;
+        }
 
         // Check if previous items in sequence are completed
         if (!CanCompleteChecklistItem(itemId, settings.Tutorial.CompletedChecklistItems))
+        {
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => early return (prerequisites not met)");
             return;
+        }
 
         settings.Tutorial.CompletedChecklistItems.Add(itemId);
         SaveSettings();
         ChecklistItemCompleted?.Invoke(this, itemId);
 
         // Only show completion guidance if tutorial is active on current company
-        if (ShouldShowTutorialOnCurrentCompany())
+        var shouldShow = ShouldShowTutorialOnCurrentCompany();
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   ShouldShowTutorialOnCurrentCompany={shouldShow}");
+        if (shouldShow)
         {
             // Show completion guidance for main tutorial tasks
             if (itemId == ChecklistItems.CreateCategory ||
                 itemId == ChecklistItems.AddProduct ||
                 itemId == ChecklistItems.RecordExpense)
             {
+                System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => ShowGuidance(Standard) for '{itemId}'");
                 ShowGuidance(CompletionGuidanceType.Standard);
             }
             else if (itemId == ChecklistItems.VisitAnalytics)
             {
+                System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   => ShowGuidance(Analytics)");
                 ShowGuidance(CompletionGuidanceType.Analytics);
             }
         }
@@ -435,6 +477,7 @@ public class TutorialService
     /// </summary>
     public void HideSetupChecklist()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] HideSetupChecklist called");
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
@@ -494,6 +537,7 @@ public class TutorialService
     /// </summary>
     public void ResetAllTutorials()
     {
+        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] ResetAllTutorials called");
         _hintsDisabledThisSession = false;
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
@@ -507,6 +551,7 @@ public class TutorialService
             settings.Tutorial.ShowFirstVisitHints = true;
             settings.Tutorial.TutorialStartedOnCompanyPath = null;
             SaveSettings();
+            System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG]   All tutorial state reset to defaults");
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
