@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Threading;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
@@ -836,11 +835,11 @@ public class App : Application
             // Wire up pending conversion events
             PendingConversionService.PendingConversionsProcessed += (_, args) =>
             {
-                if (args is PendingConversionsProcessedEventArgs { ConvertedCount: > 0 } e)
+                if (args is { ConvertedCount: > 0 })
                 {
-                    var message = e.ConvertedCount == 1
+                    var message = args.ConvertedCount == 1
                         ? "1 pending transaction has been processed successfully.".Translate()
-                        : string.Format("{0} pending transactions have been processed successfully.".Translate(), e.ConvertedCount);
+                        : string.Format("{0} pending transactions have been processed successfully.".Translate(), args.ConvertedCount);
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
                         AddNotification(
@@ -1249,7 +1248,7 @@ public class App : Application
         // Dispose any existing timer
         _pendingConversionTimer?.Dispose();
 
-        _pendingConversionTimer = new Timer(static _ => TryProcessPendingConversionsAsync(),
+        _pendingConversionTimer = new Timer(state => { _ = TryProcessPendingConversionsAsync(); },
             null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 
@@ -1489,7 +1488,7 @@ public class App : Application
             // Start periodic portal sync every 5 minutes
             _portalSyncTimer?.Dispose();
             _portalSyncTimer = new Timer(
-                static state => AutoSyncPortalPaymentsAsync(),
+                state => { _ = AutoSyncPortalPaymentsAsync(); },
                 null,
                 TimeSpan.FromMinutes(5),
                 TimeSpan.FromMinutes(5));
@@ -2191,7 +2190,7 @@ public class App : Application
             settings?.Company.Address,
             settings?.Company.ProvinceState,
             settings?.Company.Email,
-            CompanyManager.CompanyData!.Settings.Localization?.Currency);
+            CompanyManager.CompanyData!.Settings.Localization.Currency);
     }
 
     /// <summary>
@@ -3086,7 +3085,7 @@ public class App : Application
     {
         if (_appShellViewModel == null) return;
 
-        using var analysisCts = new CancellationTokenSource();
+        var analysisCts = new CancellationTokenSource();
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
@@ -3216,7 +3215,7 @@ public class App : Application
                 }
 
                 // Import Tier 1 data
-                using var importCts = new CancellationTokenSource();
+                var importCts = new CancellationTokenSource();
                 _mainWindowViewModel?.ShowLoading("Importing data...".Translate(), cts: importCts, cancelConfirmation: ConfirmCancelAsync);
 
                 var importProgress = new Progress<(string detail, double percent)>(p =>
@@ -3249,7 +3248,7 @@ public class App : Application
             var allSheetResults = new List<SheetImportResult>();
             if (tier2Sheets.Count > 0)
             {
-                using var tier2Cts = new CancellationTokenSource();
+                var tier2Cts = new CancellationTokenSource();
 
                 _mainWindowViewModel?.ShowLoading(
                     "AI processing...".Translate(),
@@ -3273,13 +3272,12 @@ public class App : Application
                 // bar would otherwise stay at 0% the entire time.
                 var estimatedProgress = 0.0;
                 var chunkProgressReceived = false;
-                var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
-                // estimateTimer is intentionally captured and disposed from the outer scope
-                // to signal the timer task to stop. WaitForNextTickAsync returns false on dispose.
+                var estimateTimerCts = new CancellationTokenSource();
 
                 var timerTask = Task.Run(async () =>
                 {
-                    while (await estimateTimer.WaitForNextTickAsync(tier2Cts.Token))
+                    using var estimateTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+                    while (await estimateTimer.WaitForNextTickAsync(estimateTimerCts.Token))
                     {
                         if (chunkProgressReceived) break;
                         estimatedProgress = Math.Min(estimatedProgress + 1, 90);
@@ -3321,7 +3319,7 @@ public class App : Application
                 var allProcessedChunks = await Task.WhenAll(sheetTasks);
 
                 // Stop the estimate timer and wait for it to exit cleanly
-                estimateTimer.Dispose();
+                estimateTimerCts.Cancel();
                 try { await timerTask; } catch (OperationCanceledException) { }
 
                 // Phase B: Import sequentially (CompanyData mutation is not thread-safe)
@@ -4235,7 +4233,7 @@ public class App : Application
             if (_invoicesPageViewModel == null)
             {
                 _invoicesPageViewModel = new InvoicesPageViewModel();
-                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel?.OpenCommand.Execute(null);
+                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             _invoicesPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
             if (param is RentalInvoiceNavigationParameter rentalParam)
@@ -4247,10 +4245,10 @@ public class App : Application
             }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
-        navigationService.RegisterPage("Payments", _ =>
+        navigationService.RegisterPage("Payments", param =>
         {
             _paymentsPageViewModel ??= new PaymentsPageViewModel();
-            AutoSyncPortalPaymentsAsync();
+            _ = AutoSyncPortalPaymentsAsync();
             return new PaymentsPage { DataContext = _paymentsPageViewModel };
         });
 
@@ -4261,7 +4259,7 @@ public class App : Application
             {
                 _productsPageViewModel = new ProductsPageViewModel();
                 // Wire up upgrade request to open upgrade modal (only once)
-                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel?.OpenCommand.Execute(null);
+                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
             _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
