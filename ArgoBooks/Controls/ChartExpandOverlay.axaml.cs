@@ -252,11 +252,34 @@ public partial class ChartExpandOverlay : UserControl
         button.Classes.Add("chart-expand-btn");
         button.Click += OnExpandButtonClick;
 
-        // Hide the expand button when the chart has no data (empty state showing)
-        var chartControl = FindChartControl(panel);
-        if (chartControl != null)
+        // Hide the expand button when the chart has no data (empty state showing).
+        // For pie charts and GeoMaps, the chart control's own IsVisible doesn't
+        // reflect data availability, so we watch ChartEmptyState siblings instead.
+        var emptyStates = FindDescendants<ChartEmptyState>(panel);
+        if (emptyStates.Count > 0)
         {
-            button.Bind(IsVisibleProperty, chartControl.GetObservable(IsVisibleProperty));
+            void UpdateButtonVisibility(object? s, AvaloniaPropertyChangedEventArgs e)
+            {
+                if (e.Property == IsVisibleProperty)
+                    button.IsVisible = !emptyStates.Any(es => es.IsVisible);
+            }
+
+            foreach (var emptyState in emptyStates)
+            {
+                emptyState.PropertyChanged += UpdateButtonVisibility;
+            }
+
+            // Set initial state
+            button.IsVisible = !emptyStates.Any(es => es.IsVisible);
+        }
+        else
+        {
+            // Fallback: bind to chart control visibility directly
+            var chartControl = FindChartControl(panel);
+            if (chartControl != null)
+            {
+                button.Bind(IsVisibleProperty, chartControl.GetObservable(IsVisibleProperty));
+            }
         }
 
         panel.Children.Add(button);
@@ -354,7 +377,17 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         if (_expandButton != null)
+        {
             _expandButton.ClearValue(IsVisibleProperty);
+
+            // Re-evaluate empty-state-based visibility after restoring the button
+            if (_sourcePanel != null)
+            {
+                var emptyStates = FindDescendants<ChartEmptyState>(_sourcePanel);
+                if (emptyStates.Count > 0)
+                    _expandButton.IsVisible = !emptyStates.Any(es => es.IsVisible);
+            }
+        }
 
         // Clear the borrowed DataContext
         if (chartArea != null)
@@ -560,6 +593,36 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Finds all descendants of type T in the logical children of a panel.
+    /// </summary>
+    private static List<T> FindDescendants<T>(Panel root) where T : Control
+    {
+        var results = new List<T>();
+        FindDescendantsRecursive(root, results);
+        return results;
+    }
+
+    private static void FindDescendantsRecursive<T>(Control control, List<T> results) where T : Control
+    {
+        if (control is T match)
+            results.Add(match);
+
+        if (control is Panel panel)
+        {
+            foreach (var child in panel.Children)
+                FindDescendantsRecursive(child, results);
+        }
+        else if (control is ContentControl cc && cc.Content is Control content)
+        {
+            FindDescendantsRecursive(content, results);
+        }
+        else if (control is Decorator decorator && decorator.Child != null)
+        {
+            FindDescendantsRecursive(decorator.Child, results);
+        }
     }
 
     #endregion
