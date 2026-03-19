@@ -195,7 +195,6 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void SkipTutorial()
     {
-        System.Diagnostics.Debug.WriteLine($"[Tutorial DEBUG] WelcomeScreenViewModel.SkipTutorial called");
         TutorialService.Instance.CompleteWelcomeTutorial();
         TutorialService.Instance.CompleteAppTour();
         TutorialService.Instance.SkipTutorial();
