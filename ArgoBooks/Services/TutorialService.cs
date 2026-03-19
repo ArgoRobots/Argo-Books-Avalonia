@@ -193,11 +193,17 @@ public class TutorialService
 
     /// <summary>
     /// Checks if the tutorial should be shown on the current company.
-    /// Returns true if no tutorial is in progress, or if we're on the same company where it was started.
+    /// Returns false if the tutorial was skipped/dismissed, if no company is set,
+    /// or if we're on a different company than where the tutorial was started.
     /// </summary>
     public bool ShouldShowTutorialOnCurrentCompany()
     {
         if (string.IsNullOrEmpty(_currentCompanyPath))
+            return false;
+
+        // If the setup checklist has been dismissed (e.g. tutorial was skipped),
+        // the tutorial is no longer active
+        if (!Settings.ShowSetupChecklist)
             return false;
 
         var tutorialCompanyPath = Settings.TutorialStartedOnCompanyPath;
@@ -307,8 +313,7 @@ public class TutorialService
         ChecklistItemCompleted?.Invoke(this, itemId);
 
         // Only show completion guidance if tutorial is active on current company
-        // and the setup checklist is actually visible (not skipped/dismissed)
-        if (ShouldShowTutorialOnCurrentCompany() && Settings.ShowSetupChecklist)
+        if (ShouldShowTutorialOnCurrentCompany())
         {
             // Show completion guidance for main tutorial tasks
             if (itemId == ChecklistItems.CreateCategory ||
