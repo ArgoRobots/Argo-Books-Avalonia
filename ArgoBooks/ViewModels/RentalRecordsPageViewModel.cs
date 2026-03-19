@@ -36,7 +36,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private decimal _totalRevenue;
 
-    public string TotalRevenueFormatted => $"${TotalRevenue:N2}";
+    public string TotalRevenueFormatted => CurrencyService.Format(TotalRevenue);
 
     #endregion
 
@@ -671,9 +671,9 @@ public partial class RentalRecordDisplayItem : ObservableObject
     public string StartDateFormatted => StartDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
     public string ReturnDateFormatted => ReturnDate?.ToString("MMM d, yyyy") ?? "-";
-    public string RateFormatted => $"${RateAmount:N2}/{RateType}";
-    public string TotalCostFormatted => $"${TotalCost:N2}";
-    public string DepositFormatted => $"${SecurityDeposit:N2}";
+    public string RateFormatted => $"{CurrencyService.Format(RateAmount)}/{RateType}";
+    public string TotalCostFormatted => CurrencyService.Format(TotalCost);
+    public string DepositFormatted => CurrencyService.Format(SecurityDeposit);
     public string DaysOverdueText => DaysOverdue > 0 ? $"{DaysOverdue} days" : "-";
     public bool CanGenerateInvoice => !Paid && !HasInvoices;
     public bool CanMarkAsPaid => !Paid && !IsActive;

@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core;
 using ArgoBooks.Helpers;
+using ArgoBooks.Services;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Utilities;
@@ -402,7 +403,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 Subtotal = order.Subtotal,
                 ShippingCost = order.ShippingCost,
                 Total = order.Total,
-                TotalDisplay = $"${order.Total:N2}",
+                TotalDisplay = CurrencyService.Format(order.Total),
                 Status = order.Status,
                 StatusDisplay = FormatStatus(order.Status),
                 ExpectedDeliveryDate = order.ExpectedDeliveryDate,

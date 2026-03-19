@@ -950,6 +950,6 @@ public class CustomerHistoryItem
     public string Status { get; set; } = string.Empty;
 
     public string DateFormatted => Date.ToString("MMM d, yyyy");
-    public string AmountFormatted => Amount < 0 ? $"-${Math.Abs(Amount):N2}" : $"${Amount:N2}";
+    public string AmountFormatted => Amount < 0 ? $"-{CurrencyService.Format(Math.Abs(Amount))}" : CurrencyService.Format(Amount);
 }
 

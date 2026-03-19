@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
+using ArgoBooks.Services;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -480,8 +481,8 @@ public partial class RentalItemDisplayItem : ObservableObject
     [ObservableProperty]
     private bool _isAvailable;
 
-    public string DailyRateFormatted => $"${DailyRate:N2}";
-    public string WeeklyRateFormatted => $"${WeeklyRate:N2}";
-    public string MonthlyRateFormatted => $"${MonthlyRate:N2}";
-    public string DepositFormatted => $"${SecurityDeposit:N2}";
+    public string DailyRateFormatted => CurrencyService.Format(DailyRate);
+    public string WeeklyRateFormatted => CurrencyService.Format(WeeklyRate);
+    public string MonthlyRateFormatted => CurrencyService.Format(MonthlyRate);
+    public string DepositFormatted => CurrencyService.Format(SecurityDeposit);
 }

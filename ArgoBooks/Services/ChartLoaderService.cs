@@ -2895,7 +2895,7 @@ public class ChartLoaderService
                 Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => $"${point.Coordinate.PrimaryValue:N2}"
+                ToolTipLabelFormatter = point => CurrencyService.Format((decimal)point.Coordinate.PrimaryValue)
             });
 
             legendItems.Add(new PieLegendItem
@@ -2920,7 +2920,7 @@ public class ChartLoaderService
                 Name = LanguageService.Instance.Translate("Other"),
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => $"${point.Coordinate.PrimaryValue:N2}"
+                ToolTipLabelFormatter = point => CurrencyService.Format((decimal)point.Coordinate.PrimaryValue)
             });
 
             var itemsText = LanguageService.Instance.Translate("items");

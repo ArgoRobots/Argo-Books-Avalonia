@@ -148,12 +148,12 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// <summary>
     /// Subtotal display string.
     /// </summary>
-    public string SubtotalDisplay => $"${CalculatedSubtotal:N2}";
+    public string SubtotalDisplay => CurrencyService.Format(CalculatedSubtotal);
 
     /// <summary>
     /// Total display string.
     /// </summary>
-    public string TotalDisplay => $"${CalculatedTotal:N2}";
+    public string TotalDisplay => CurrencyService.Format(CalculatedTotal);
 
     /// <summary>
     /// Modal title based on mode.
@@ -1092,7 +1092,7 @@ public partial class OrderLineItemViewModel : ObservableObject
     /// <summary>
     /// Total display string.
     /// </summary>
-    public string TotalDisplay => $"${Total:N2}";
+    public string TotalDisplay => CurrencyService.Format(Total);
 
     partial void OnQuantityChanged(string value)
     {
@@ -1118,8 +1118,8 @@ public class ViewLineItemDisplay
     public int QuantityReceived { get; set; }
     public decimal UnitCost { get; set; }
     public decimal Total { get; set; }
-    public string UnitCostDisplay => $"${UnitCost:N2}";
-    public string TotalDisplay => $"${Total:N2}";
+    public string UnitCostDisplay => CurrencyService.Format(UnitCost);
+    public string TotalDisplay => CurrencyService.Format(Total);
     public string QuantityDisplay => $"{QuantityReceived}/{Quantity}";
 }
 

@@ -130,8 +130,21 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     }
 
     /// <summary>
+    /// Gets the USD conversion ratio for a transaction's original currency amounts.
+    /// Returns the multiplier to convert original currency values to USD equivalents.
+    /// </summary>
+    private static decimal GetUSDRatio(Models.Transactions.Transaction txn)
+    {
+        if (txn.IsPendingConversion) return 0;
+        if (txn.Total != 0 && txn.TotalUSD > 0)
+            return txn.TotalUSD / txn.Total;
+        return 1m; // Legacy data or USD transactions
+    }
+
+    /// <summary>
     /// Groups transaction pre-tax totals by category, derived from line items' product IDs.
     /// Uses Subtotal (pre-tax) because sales tax is a liability, not revenue/expense.
+    /// All amounts are converted to USD for consistent cross-currency aggregation.
     /// </summary>
     private Dictionary<string, decimal> GroupTransactionsByCategory(
         IEnumerable<Models.Transactions.Transaction> transactions)
@@ -142,19 +155,27 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         {
             if (txn.LineItems.Count > 0)
             {
+                // Convert line item amounts to USD using the transaction's conversion ratio
+                var lineItemsTotal = txn.LineItems.Sum(li => li.Subtotal);
+                var subtotalUSD = txn.EffectiveSubtotalUSD;
+
                 foreach (var lineItem in txn.LineItems)
                 {
                     var categoryName = GetCategoryNameForProduct(lineItem.ProductId);
                     result.TryAdd(categoryName, 0);
-                    result[categoryName] += lineItem.Subtotal;
+                    // Proportionally allocate USD subtotal across line items
+                    var lineItemUSD = lineItemsTotal != 0
+                        ? Math.Round(lineItem.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                        : 0;
+                    result[categoryName] += lineItemUSD;
                 }
             }
             else
             {
-                // No line items — use the transaction amount (pre-tax) and try to infer category
+                // No line items — use the USD-converted pre-tax amount
                 var categoryName = "Uncategorized";
                 result.TryAdd(categoryName, 0);
-                result[categoryName] += txn.Amount;
+                result[categoryName] += txn.EffectiveSubtotalUSD;
             }
         }
 
@@ -637,21 +658,27 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Build a list of all ledger entries grouped by category
         var entries = new Dictionary<string, List<LedgerEntry>>();
 
-        // Revenue transactions (credits)
+        // Revenue transactions (credits) — all amounts in USD
         foreach (var rev in companyData.Revenues.Where(r => IsInDateRange(r.Date)))
         {
             if (rev.LineItems.Count > 0)
             {
+                var lineItemsTotal = rev.LineItems.Sum(li => li.Subtotal);
+                var subtotalUSD = rev.EffectiveSubtotalUSD;
+
                 foreach (var li in rev.LineItems)
                 {
                     var catName = GetCategoryNameForProduct(li.ProductId);
+                    var lineItemUSD = lineItemsTotal != 0
+                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                        : 0;
                     AddLedgerEntry(entries, catName, new LedgerEntry
                     {
                         Date = rev.Date,
                         Description = li.Description.Length > 0 ? li.Description : rev.Description,
                         Reference = rev.Id,
                         Debit = 0,
-                        Credit = li.Subtotal
+                        Credit = lineItemUSD
                     });
                 }
             }
@@ -668,20 +695,26 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
         }
 
-        // Expense transactions (debits)
+        // Expense transactions (debits) — all amounts in USD
         foreach (var exp in companyData.Expenses.Where(e => IsInDateRange(e.Date)))
         {
             if (exp.LineItems.Count > 0)
             {
+                var lineItemsTotal = exp.LineItems.Sum(li => li.Subtotal);
+                var subtotalUSD = exp.EffectiveSubtotalUSD;
+
                 foreach (var li in exp.LineItems)
                 {
                     var catName = GetCategoryNameForProduct(li.ProductId);
+                    var lineItemUSD = lineItemsTotal != 0
+                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                        : 0;
                     AddLedgerEntry(entries, catName, new LedgerEntry
                     {
                         Date = exp.Date,
                         Description = li.Description.Length > 0 ? li.Description : exp.Description,
                         Reference = exp.Id,
-                        Debit = li.Subtotal,
+                        Debit = lineItemUSD,
                         Credit = 0
                     });
                 }
@@ -1099,6 +1132,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         }
 
         // Tax collected from revenue, grouped by tax rate
+        // All amounts converted to USD for consistent cross-currency aggregation
         var filteredRevenues = companyData.Revenues
             .Where(r => IsInDateRange(r.Date))
             .ToList();
@@ -1107,6 +1141,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         var taxCollectedByRate = new Dictionary<decimal, decimal>();
         foreach (var rev in filteredRevenues)
         {
+            var usdRatio = GetUSDRatio(rev);
             if (rev.LineItems.Count > 0)
             {
                 foreach (var li in rev.LineItems)
@@ -1115,19 +1150,21 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     {
                         var rate = Math.Round(li.TaxRate, 2);
                         taxCollectedByRate.TryAdd(rate, 0);
-                        taxCollectedByRate[rate] += li.TaxAmount;
+                        taxCollectedByRate[rate] += Math.Round(li.TaxAmount * usdRatio, 2);
                     }
                 }
             }
             else if (rev.TaxRate > 0)
             {
                 var rate = Math.Round(rev.TaxRate, 2);
+                var taxAmountUSD = rev.TaxAmountUSD > 0 ? rev.TaxAmountUSD : rev.TaxAmount;
                 taxCollectedByRate.TryAdd(rate, 0);
-                taxCollectedByRate[rate] += rev.TaxAmount;
+                taxCollectedByRate[rate] += taxAmountUSD;
             }
         }
 
         // Tax paid on expenses, grouped by tax rate
+        // All amounts converted to USD for consistent cross-currency aggregation
         var filteredExpenses = companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
             .ToList();
@@ -1135,6 +1172,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         var taxPaidByRate = new Dictionary<decimal, decimal>();
         foreach (var exp in filteredExpenses)
         {
+            var usdRatio = GetUSDRatio(exp);
             if (exp.LineItems.Count > 0)
             {
                 foreach (var li in exp.LineItems)
@@ -1143,15 +1181,16 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     {
                         var rate = Math.Round(li.TaxRate, 2);
                         taxPaidByRate.TryAdd(rate, 0);
-                        taxPaidByRate[rate] += li.TaxAmount;
+                        taxPaidByRate[rate] += Math.Round(li.TaxAmount * usdRatio, 2);
                     }
                 }
             }
             else if (exp.TaxRate > 0)
             {
                 var rate = Math.Round(exp.TaxRate, 2);
+                var taxAmountUSD = exp.TaxAmountUSD > 0 ? exp.TaxAmountUSD : exp.TaxAmount;
                 taxPaidByRate.TryAdd(rate, 0);
-                taxPaidByRate[rate] += exp.TaxAmount;
+                taxPaidByRate[rate] += taxAmountUSD;
             }
         }
 

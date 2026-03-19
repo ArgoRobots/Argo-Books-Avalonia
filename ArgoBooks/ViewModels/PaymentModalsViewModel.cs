@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -329,17 +330,38 @@ public partial class PaymentModalsViewModel : ViewModelBase
             _ => PaymentMethod.Cash
         };
 
+        var parsedAmount = decimal.Parse(ModalAmount);
+        var currentCurrency = CurrencyService.CurrentCurrencyCode;
+        var paymentDate = ModalDate?.DateTime ?? DateTime.Today;
+
+        // Convert payment amount to USD for consistent reporting
+        decimal amountUSD = parsedAmount;
+        if (!string.Equals(currentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            var exchangeService = ExchangeRateService.Instance;
+            if (exchangeService != null)
+            {
+                var rate = exchangeService.GetExchangeRate(currentCurrency, "USD", paymentDate);
+                if (rate > 0)
+                {
+                    amountUSD = Math.Round(parsedAmount * rate, 2);
+                }
+            }
+        }
+
         var newPayment = new Payment
         {
             Id = newId,
             InvoiceId = ModalInvoiceId ?? string.Empty,
             CustomerId = ModalCustomerId ?? string.Empty,
-            Date = ModalDate?.DateTime ?? DateTime.Today,
-            Amount = decimal.Parse(ModalAmount),
+            Date = paymentDate,
+            Amount = parsedAmount,
             PaymentMethod = paymentMethod,
             ReferenceNumber = string.IsNullOrWhiteSpace(ModalReferenceNumber) ? null : ModalReferenceNumber.Trim(),
             Notes = ModalNotes.Trim(),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            OriginalCurrency = currentCurrency,
+            AmountUSD = amountUSD
         };
 
         companyData.Payments.Add(newPayment);
@@ -495,6 +517,23 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var newCustomerId = ModalCustomerId ?? string.Empty;
         var newDate = ModalDate?.DateTime ?? DateTime.Today;
         var newAmount = decimal.Parse(ModalAmount);
+
+        // Convert to USD for consistent reporting
+        var editCurrentCurrency = CurrencyService.CurrentCurrencyCode;
+        decimal newAmountUSD = newAmount;
+        if (!string.Equals(editCurrentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            var exchangeService = ExchangeRateService.Instance;
+            if (exchangeService != null)
+            {
+                var rate = exchangeService.GetExchangeRate(editCurrentCurrency, "USD", newDate);
+                if (rate > 0)
+                {
+                    newAmountUSD = Math.Round(newAmount * rate, 2);
+                }
+            }
+        }
+
         var newPaymentMethod = ModalPaymentMethod switch
         {
             "Cash" => PaymentMethod.Cash,
@@ -529,6 +568,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
         if (oldReferenceNumber != newReferenceNumber) changes2["Reference"] = new FieldChange { OldValue = oldReferenceNumber ?? "", NewValue = newReferenceNumber ?? "" };
         if (oldNotesVal != newNotesVal) changes2["Notes"] = new FieldChange { OldValue = oldNotesVal, NewValue = newNotesVal };
         if (changes2.Count > 0) App.EventLogService?.SetPendingChanges(changes2);
+        var oldOriginalCurrency = paymentToEdit2.OriginalCurrency;
+        var oldAmountUSD = paymentToEdit2.AmountUSD;
+
         paymentToEdit2.InvoiceId = newInvoiceId;
         paymentToEdit2.CustomerId = newCustomerId;
         paymentToEdit2.Date = newDate;
@@ -536,6 +578,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
         paymentToEdit2.PaymentMethod = newPaymentMethod;
         paymentToEdit2.ReferenceNumber = newReferenceNumber;
         paymentToEdit2.Notes = newNotesVal;
+        paymentToEdit2.OriginalCurrency = editCurrentCurrency;
+        paymentToEdit2.AmountUSD = newAmountUSD;
 
         companyData.MarkAsModified();
 
@@ -550,6 +594,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 paymentToEdit2.PaymentMethod = oldPaymentMethod;
                 paymentToEdit2.ReferenceNumber = oldReferenceNumber;
                 paymentToEdit2.Notes = oldNotesVal;
+                paymentToEdit2.OriginalCurrency = oldOriginalCurrency;
+                paymentToEdit2.AmountUSD = oldAmountUSD;
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -562,6 +608,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 paymentToEdit2.PaymentMethod = newPaymentMethod;
                 paymentToEdit2.ReferenceNumber = newReferenceNumber;
                 paymentToEdit2.Notes = newNotesVal;
+                paymentToEdit2.OriginalCurrency = editCurrentCurrency;
+                paymentToEdit2.AmountUSD = newAmountUSD;
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             }));

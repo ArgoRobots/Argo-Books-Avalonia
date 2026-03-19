@@ -142,8 +142,8 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     {
         var totalDeposit = RentalLineItems.Sum(li => decimal.TryParse(li.SecurityDeposit, out var d) ? d : 0);
         var totalAmount = RentalLineItems.Sum(li => li.Amount);
-        TotalSecurityDeposit = $"${totalDeposit:N2}";
-        TotalEstimatedAmount = $"${totalAmount:N2}";
+        TotalSecurityDeposit = CurrencyService.Format(totalDeposit);
+        TotalEstimatedAmount = CurrencyService.Format(totalAmount);
     }
 
     [RelayCommand]
@@ -207,9 +207,9 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
 
     private RentalRecord? _returningRecord;
 
-    public string ReturnRateFormatted => $"${ReturnRateAmount:N2}/{ReturnRateType}";
-    public string ReturnTotalCostFormatted => $"${ReturnTotalCost:N2}";
-    public string ReturnDepositFormatted => $"${ReturnDeposit:N2}";
+    public string ReturnRateFormatted => $"{CurrencyService.Format(ReturnRateAmount)}/{ReturnRateType}";
+    public string ReturnTotalCostFormatted => CurrencyService.Format(ReturnTotalCost);
+    public string ReturnDepositFormatted => CurrencyService.Format(ReturnDeposit);
 
     #endregion
 
@@ -271,9 +271,9 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<RentalViewLineItemDisplay> ViewLineItems { get; } = [];
 
-    public string ViewRateFormatted => $"${ViewRateAmount:N2}/{ViewRateType}";
-    public string ViewDepositFormatted => $"${ViewSecurityDeposit:N2}";
-    public string ViewTotalCostFormatted => $"${ViewTotalCost:N2}";
+    public string ViewRateFormatted => $"{CurrencyService.Format(ViewRateAmount)}/{ViewRateType}";
+    public string ViewDepositFormatted => CurrencyService.Format(ViewSecurityDeposit);
+    public string ViewTotalCostFormatted => CurrencyService.Format(ViewTotalCost);
     public string ViewStartDateFormatted => ViewStartDate.ToString("MMMM d, yyyy");
     public string ViewDueDateFormatted => ViewDueDate.ToString("MMMM d, yyyy");
     public string ViewReturnDateFormatted => ViewReturnDate?.ToString("MMMM d, yyyy") ?? "Not returned";
@@ -1455,9 +1455,9 @@ public partial class RentalModalLineItem : ObservableObject
         }
     }
 
-    public string AmountFormatted => $"${Amount:N2}";
-    public string RateAmountDisplay => decimal.TryParse(RateAmount, out var r) ? $"${r:N2}" : "-";
-    public string SecurityDepositDisplay => decimal.TryParse(SecurityDeposit, out var d) ? $"${d:N2}" : "-";
+    public string AmountFormatted => CurrencyService.Format(Amount);
+    public string RateAmountDisplay => decimal.TryParse(RateAmount, out var r) ? CurrencyService.Format(r) : "-";
+    public string SecurityDepositDisplay => decimal.TryParse(SecurityDeposit, out var d) ? CurrencyService.Format(d) : "-";
 
     partial void OnSelectedItemChanged(RentalItemOption? value)
     {
@@ -1535,7 +1535,7 @@ public class RentalViewLineItemDisplay
     public string RateType { get; set; } = string.Empty;
     public decimal RateAmount { get; set; }
     public decimal SecurityDeposit { get; set; }
-    public string RateFormatted => $"${RateAmount:N2}/{RateType}";
-    public string DepositFormatted => $"${SecurityDeposit:N2}";
-    public string AmountFormatted => $"${Quantity * RateAmount:N2}";
+    public string RateFormatted => $"{CurrencyService.Format(RateAmount)}/{RateType}";
+    public string DepositFormatted => CurrencyService.Format(SecurityDeposit);
+    public string AmountFormatted => CurrencyService.Format(Quantity * RateAmount);
 }
