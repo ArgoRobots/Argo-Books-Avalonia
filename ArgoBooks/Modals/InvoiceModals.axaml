@@ -60,7 +60,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{loc:Loc 'Invoice Preview'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Review your invoice before sending'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Review your invoice before sending'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsViewOnly}" />
                             </StackPanel>
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
                                 <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />

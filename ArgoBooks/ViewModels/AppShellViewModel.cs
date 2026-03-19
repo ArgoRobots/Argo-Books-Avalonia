@@ -810,6 +810,8 @@ public partial class AppShellViewModel : ViewModelBase
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
         UserPanelViewModel.HasPremium = hasPremium;
+        if (App.InvoiceModalsViewModel != null)
+            App.InvoiceModalsViewModel.HasPremium = hasPremium;
     }
 
     /// <summary>

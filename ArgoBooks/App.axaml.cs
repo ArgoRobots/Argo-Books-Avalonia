@@ -9,6 +9,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
@@ -54,6 +55,11 @@ public class App : Application
     /// Gets the payment portal service instance for online payment integration.
     /// </summary>
     public static PaymentPortalService? PaymentPortalService { get; private set; }
+
+    /// <summary>
+    /// Gets the invoice usage service for tracking free-tier send limits.
+    /// </summary>
+    public static InvoiceUsageService? InvoiceUsageService { get; private set; }
 
     /// <summary>
     /// Gets the license service instance for secure license storage.
@@ -267,6 +273,81 @@ public class App : Application
             && mainWindow.MessageBoxService is { } messageBoxService)
         {
             await messageBoxService.ShowWarningAsync(title, message);
+        }
+    }
+
+    private static bool _isAutoSyncing;
+    private static System.Threading.Timer? _portalSyncTimer;
+
+    /// <summary>
+    /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
+    /// Safe to call from multiple places — concurrent calls are deduplicated.
+    /// </summary>
+    internal static async Task AutoSyncPortalPaymentsAsync()
+    {
+        if (_isAutoSyncing) return;
+        _isAutoSyncing = true;
+        try
+        {
+            var portalService = PaymentPortalService;
+            var companyData = CompanyManager?.CompanyData;
+            if (portalService == null || companyData == null || !PortalSettings.IsConfigured)
+                return;
+
+            var portalSettings = companyData.Settings.PaymentPortal;
+
+            // Use force sync to also recover any payments that were previously
+            // confirmed on the server but never saved locally (e.g. due to app crash).
+            // Duplicate prevention in ProcessSyncedPayments handles efficiency.
+            var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
+
+            if (!syncResponse.Success)
+                return;
+
+            // Always advance the sync timestamp on success to avoid re-querying the same window
+            portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
+
+            if (syncResponse.Payments.Count == 0)
+                return;
+
+            var newPayments = Core.Services.PaymentPortalService.ProcessSyncedPayments(
+                syncResponse.Payments, companyData);
+
+            // Only confirm payments that were actually processed into local records.
+            // Unprocessed payments (e.g. invoice not found locally) must NOT be
+            // confirmed so the server returns them on the next sync attempt.
+            var processedPortalIds = newPayments
+                .Where(p => p.PortalPaymentId != null)
+                .Select(p => int.Parse(p.PortalPaymentId!))
+                .ToList();
+            if (processedPortalIds.Count > 0)
+            {
+                await portalService.ConfirmSyncAsync(processedPortalIds);
+            }
+
+            if (newPayments.Count > 0)
+            {
+                // Persist only the sync-related files (payments, invoices, id counters, settings)
+                // so synced payments survive restarts without triggering a full company save
+                try { await CompanyManager!.SavePaymentSyncAsync(); }
+                catch { /* non-fatal */ }
+
+                // Refresh any already-instantiated page ViewModels so the UI reflects the new data
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _paymentsPageViewModel?.RefreshPaymentsCommand.Execute(null);
+                    _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
+                    _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
+                });
+            }
+        }
+        catch
+        {
+            // Auto-sync failures are non-critical; silently ignore
+        }
+        finally
+        {
+            _isAutoSyncing = false;
         }
     }
 
@@ -707,6 +788,7 @@ public class App : Application
 
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
+            InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -1405,12 +1487,26 @@ public class App : Application
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
+            // Auto-sync online payments from the portal on company open
+            _ = AutoSyncPortalPaymentsAsync();
+
+            // Start periodic portal sync every 5 minutes
+            _portalSyncTimer?.Dispose();
+            _portalSyncTimer = new System.Threading.Timer(
+                async _ => await AutoSyncPortalPaymentsAsync(),
+                null,
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromMinutes(5));
+
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
         };
 
         CompanyManager.CompanyClosed += async (_, _) =>
         {
+            _portalSyncTimer?.Dispose();
+            _portalSyncTimer = null;
+
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
@@ -4140,7 +4236,12 @@ public class App : Application
         });
         navigationService.RegisterPage("Invoices", param =>
         {
-            _invoicesPageViewModel ??= new InvoicesPageViewModel();
+            if (_invoicesPageViewModel == null)
+            {
+                _invoicesPageViewModel = new InvoicesPageViewModel();
+                _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel?.OpenCommand.Execute(null);
+            }
+            _invoicesPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
             if (param is RentalInvoiceNavigationParameter rentalParam)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -4150,7 +4251,12 @@ public class App : Application
             }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
-        navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = _paymentsPageViewModel ??= new PaymentsPageViewModel() });
+        navigationService.RegisterPage("Payments", _ =>
+        {
+            _paymentsPageViewModel ??= new PaymentsPageViewModel();
+            _ = AutoSyncPortalPaymentsAsync();
+            return new PaymentsPage { DataContext = _paymentsPageViewModel };
+        });
 
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
@@ -4159,7 +4265,7 @@ public class App : Application
             {
                 _productsPageViewModel = new ProductsPageViewModel();
                 // Wire up upgrade request to open upgrade modal (only once)
-                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel?.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
             _productsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;

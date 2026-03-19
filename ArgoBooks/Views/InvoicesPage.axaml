@@ -88,11 +88,42 @@
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
-                <!-- Portal Not Configured Warning (shown below header bar) -->
+                <!-- Info Banners (portal warning + invoice limit) -->
                 <table:ArgoTable.InfoBannerContent>
-                    <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConfigured}"
-                                                  ConfigureCommand="{Binding OpenPortalSettingsCommand}"
-                                                  Margin="0,2,0,0" />
+                    <StackPanel>
+                        <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConfigured}"
+                                                      ConfigureCommand="{Binding OpenPortalSettingsCommand}"
+                                                      Margin="0,2,0,0" />
+                        <Border HorizontalAlignment="Center"
+                                Background="{DynamicResource WarningLightBrush}"
+                                BorderBrush="{DynamicResource WarningBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="14,8"
+                                Margin="0,8,0,8"
+                                IsVisible="{Binding ShowRemainingInvoices}">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                                          Foreground="{DynamicResource WarningBrush}"
+                                          Width="14" Height="14" />
+                                <TextBlock Text="{Binding RemainingInvoicesText}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource WarningTextBrush}" />
+                                <Button Command="{Binding UpgradeCommand}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="0"
+                                        Cursor="Hand"
+                                        IsVisible="{Binding ShowInvoiceUpgradeButton}">
+                                    <TextBlock Text="{loc:Loc Upgrade}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextDecorations="Underline" />
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </table:ArgoTable.InfoBannerContent>
 
                 <!-- Extra Buttons Content (Template Designer) -->
@@ -256,13 +287,6 @@
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.History}"
-                                                                  Width="16" Height="16" />
-                                                    </Button>
-                                                    <Button Classes="icon-button danger"
-                                                            ToolTip.Tip="{loc:Loc Delete}"
-                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                            CommandParameter="{Binding}">
-                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                 </StackPanel>

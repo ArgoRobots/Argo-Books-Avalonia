@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -108,6 +109,98 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         CurrentPage = 1;
         FilterInvoices();
+    }
+
+    #endregion
+
+    #region Plan Status and Invoice Limits
+
+    /// <summary>
+    /// Default fallback limit used when the server hasn't been reached yet.
+    /// </summary>
+    internal const int DefaultFreeInvoiceLimit = 5;
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    [ObservableProperty]
+    private int _sentInvoicesThisMonthCount;
+
+    [ObservableProperty]
+    private int _invoiceMonthlyLimit = DefaultFreeInvoiceLimit;
+
+    /// <summary>
+    /// Gets remaining invoices the user can send (on the Free plan).
+    /// </summary>
+    public int RemainingInvoices => Math.Max(0, InvoiceMonthlyLimit - SentInvoicesThisMonthCount);
+
+    /// <summary>
+    /// Gets whether the user can send more invoices.
+    /// </summary>
+    public bool CanSendInvoice => HasPremium || RemainingInvoices > 0;
+
+    /// <summary>
+    /// Gets the text showing remaining invoices for the current month.
+    /// </summary>
+    public string RemainingInvoicesText => $"{RemainingInvoices} of {InvoiceMonthlyLimit} remaining";
+
+    /// <summary>
+    /// Gets whether to show the remaining invoices label (only on Free plan).
+    /// </summary>
+    public bool ShowRemainingInvoices => !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show the upgrade button (when limit is reached).
+    /// </summary>
+    public bool ShowInvoiceUpgradeButton => !HasPremium && !CanSendInvoice;
+
+    /// <summary>
+    /// Event raised when the upgrade button is clicked.
+    /// </summary>
+    public event EventHandler? UpgradeRequested;
+
+    partial void OnSentInvoicesThisMonthCountChanged(int value) => NotifyLimitProperties();
+    partial void OnInvoiceMonthlyLimitChanged(int value) => NotifyLimitProperties();
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSendInvoice));
+        OnPropertyChanged(nameof(ShowRemainingInvoices));
+        OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
+    }
+
+    private void NotifyLimitProperties()
+    {
+        OnPropertyChanged(nameof(RemainingInvoices));
+        OnPropertyChanged(nameof(RemainingInvoicesText));
+        OnPropertyChanged(nameof(CanSendInvoice));
+        OnPropertyChanged(nameof(ShowInvoiceUpgradeButton));
+    }
+
+    [RelayCommand]
+    private void Upgrade()
+    {
+        UpgradeRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Counts non-draft, non-cancelled invoices created in the current calendar month.
+    /// </summary>
+    private void UpdateSentInvoicesCount()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Invoices == null)
+        {
+            SentInvoicesThisMonthCount = 0;
+            return;
+        }
+
+        var now = DateTime.Now;
+        SentInvoicesThisMonthCount = companyData.Invoices.Count(i =>
+            i.Status != InvoiceStatus.Draft &&
+            i.Status != InvoiceStatus.Cancelled &&
+            i.CreatedAt.Year == now.Year &&
+            i.CreatedAt.Month == now.Month);
     }
 
     #endregion
@@ -286,6 +379,32 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         {
             App.CompanyManager.CompanyDataChanged += (_, _) => LoadInvoices();
         }
+
+        // Subscribe to plan status changes so we update when user upgrades
+        App.PlanStatusChanged += (_, e) => HasPremium = e.HasPremium;
+
+        // Auto-sync online payments so invoice statuses reflect portal payments
+        _ = App.AutoSyncPortalPaymentsAsync();
+
+        // Fetch server-side usage limits (updates InvoiceMonthlyLimit + SentInvoicesThisMonthCount)
+        _ = RefreshUsageFromServerAsync();
+    }
+
+    /// <summary>
+    /// Fetches the invoice send limit and current count from the server.
+    /// </summary>
+    private async Task RefreshUsageFromServerAsync()
+    {
+        var usageService = App.InvoiceUsageService;
+        if (usageService == null || HasPremium) return;
+
+        var result = await usageService.CheckUsageAsync();
+        if (result.Success)
+        {
+            if (result.MonthlyLimit > 0)
+                InvoiceMonthlyLimit = result.MonthlyLimit;
+            SentInvoicesThisMonthCount = result.SendCount;
+        }
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -353,6 +472,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         _allInvoices.AddRange(companyData.Invoices);
         UpdateStatistics();
         FilterInvoices();
+        UpdateSentInvoicesCount();
     }
 
     private void LoadCustomerOptions()

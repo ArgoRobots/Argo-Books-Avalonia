@@ -125,8 +125,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         {
             var portalSettings = companyData.Settings.PaymentPortal;
 
-            // Pull new payments from the server
-            var syncResponse = await portalService.SyncPaymentsAsync(portalSettings.LastSyncTime);
+            // Pull new payments from the server (force=true recovers any payments that
+            // were confirmed server-side but not saved locally)
+            var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
 
             if (!syncResponse.Success)
             {
@@ -142,14 +143,24 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 var newPayments = PaymentPortalService.ProcessSyncedPayments(
                     syncResponse.Payments, companyData);
 
-                // Always confirm all payments the server sent so they aren't re-sent
-                var syncedIds = syncResponse.Payments.Select(p => p.Id).ToList();
-                await portalService.ConfirmSyncAsync(syncedIds);
+                // Only confirm payments that were actually processed locally.
+                // Skipped payments (e.g. invoice not found) stay unconfirmed so
+                // the server returns them on the next sync attempt.
+                var processedPortalIds = newPayments
+                    .Where(p => p.PortalPaymentId != null)
+                    .Select(p => int.Parse(p.PortalPaymentId!))
+                    .ToList();
+                if (processedPortalIds.Count > 0)
+                {
+                    await portalService.ConfirmSyncAsync(processedPortalIds);
+                }
 
                 if (newPayments.Count > 0)
                 {
-                    // Mark data as changed and notify other pages (e.g. invoices)
-                    App.CompanyManager?.MarkAsChanged();
+                    // Persist only the sync-related files (payments, invoices, id counters, settings)
+                    // so synced payments survive restarts without triggering a full company save
+                    try { await App.CompanyManager!.SavePaymentSyncAsync(); }
+                    catch { /* non-fatal */ }
                 }
             }
 
@@ -647,13 +658,16 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
                 PaymentMethod = payment.PaymentMethod,
-                PaymentMethodDisplay = payment.PaymentMethod.GetDisplayName(),
+                PaymentMethodDisplay = payment.Source == "Online"
+                    ? $"Payment Portal - {payment.PaymentMethod.GetDisplayName()}"
+                    : payment.PaymentMethod.GetDisplayName(),
                 Amount = payment.Amount,
                 AmountUSD = payment.EffectiveAmountUSD,
                 OriginalCurrency = payment.OriginalCurrency,
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
+                IsFromPortal = payment.Source == "Online",
             };
         }).ToList();
 
@@ -801,6 +815,9 @@ public partial class PaymentDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _notes = string.Empty;
+
+    [ObservableProperty]
+    private bool _isFromPortal;
 
     /// <summary>
     /// Gets the formatted date.

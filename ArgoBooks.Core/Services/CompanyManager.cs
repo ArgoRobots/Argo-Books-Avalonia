@@ -708,6 +708,35 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Saves only the payment-sync-related files (payments, invoices, revenues, id counters, settings)
+    /// to the temp directory and repackages the .argo file, without triggering a full company save
+    /// workflow (no CompanySaving/CompanySaved events, no MarkAsSaved).
+    /// </summary>
+    public async Task SavePaymentSyncAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
+            return;
+
+        var companyDir = GetCompanyDirectory(_currentTempDirectory);
+        await _fileService.WriteJsonAsync(companyDir, "payments.json", CompanyData.Payments, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "invoices.json", CompanyData.Invoices, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "revenues.json", CompanyData.Revenues, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "idCounters.json", CompanyData.IdCounters, cancellationToken);
+        await _fileService.WriteJsonAsync(companyDir, "appSettings.json", CompanyData.Settings, cancellationToken);
+
+        // Repackage the .argo file so changes persist across restarts
+        ReleaseFileLock();
+        try
+        {
+            await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+        }
+        finally
+        {
+            AcquireFileLock(CurrentFilePath);
+        }
+    }
+
+    /// <summary>
     /// Marks the company data as changed.
     /// </summary>
     public void MarkAsChanged()

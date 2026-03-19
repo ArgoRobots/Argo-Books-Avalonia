@@ -209,6 +209,25 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
 
+        // Block deletion if revenue is linked to a portal-published invoice
+        var companyData = App.CompanyManager?.CompanyData;
+        if (!string.IsNullOrEmpty(item.InvoiceId))
+        {
+            var linkedInvoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.InvoiceId);
+            if (linkedInvoice?.History.Any(h => h.Action == "Published to Portal") == true)
+            {
+                await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Cannot Delete Revenue".Translate(),
+                    Message = "This revenue is linked to an invoice that has been published to the payment portal and cannot be deleted.".Translate(),
+                    PrimaryButtonText = "OK".Translate(),
+                    CancelButtonText = null,
+                    IsPrimaryDestructive = false
+                });
+                return;
+            }
+        }
+
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Revenue",
@@ -219,8 +238,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         });
 
         if (result != ConfirmationResult.Primary) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
 
         var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
         if (revenue == null) return;

@@ -831,22 +831,23 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Attempts to register the company with the portal using the premium license key.
+    /// Attempts to register the company with the portal.
+    /// Premium users authenticate with license key; free users with device ID only.
     /// Returns true if registration succeeded (or was already done), false otherwise.
     /// </summary>
     private async Task<bool> TryRegisterPortalAsync(PaymentPortalService portalService)
     {
         var licenseService = App.LicenseService;
-        var licenseKey = licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = licenseService?.GetLicenseKey() ?? "";
+        var deviceId = licenseService?.GetDeviceId() ?? "";
+
+        if (string.IsNullOrEmpty(deviceId))
         {
             await ShowErrorDialogAsync(
-                "Premium License Required".Translate(),
-                "Please activate a premium license first to use portal features.".Translate());
+                "Registration Failed".Translate(),
+                "Could not identify this device. Please try again.".Translate());
             return false;
         }
-
-        var deviceId = licenseService!.GetDeviceId();
 
         IsConnectingProvider = true;
         try

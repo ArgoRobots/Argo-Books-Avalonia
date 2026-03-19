@@ -199,9 +199,12 @@ public class PaymentPortalService
 
     /// <summary>
     /// Syncs new payments from the portal. Returns payment records that haven't been synced yet.
+    /// When force is true, returns ALL payments (including already-synced) to recover
+    /// payments that were confirmed server-side but not saved locally.
     /// </summary>
     public async Task<PortalSyncResponse> SyncPaymentsAsync(
         DateTime? since = null,
+        bool force = false,
         CancellationToken cancellationToken = default)
     {
         if (!PortalSettings.IsConfigured)
@@ -217,7 +220,11 @@ public class PaymentPortalService
         try
         {
             var url = "/payments/sync";
-            if (since.HasValue)
+            if (force)
+            {
+                url += "?force=1";
+            }
+            else if (since.HasValue)
             {
                 url += $"?since={since.Value:O}";
             }
@@ -362,6 +369,14 @@ public class PaymentPortalService
             else if (totalPaid > 0)
             {
                 invoice.Status = InvoiceStatus.Partial;
+            }
+
+            // Update linked revenue records
+            var linkedRevenues = companyData.Revenues
+                .Where(r => r.InvoiceId == invoice.Id);
+            foreach (var revenue in linkedRevenues)
+            {
+                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid ? "Paid" : "Unpaid";
             }
 
             // Add history entry
@@ -536,7 +551,7 @@ public class PaymentPortalService
             var message = errorResponse?.Error ?? errorResponse?.Message
                 ?? $"Registration failed (HTTP {(int)response.StatusCode}).";
 
-            if ((int)response.StatusCode == 401)
+            if ((int)response.StatusCode == 401 && !string.IsNullOrEmpty(licenseKey))
                 message = "Invalid or expired license key. Please check your premium subscription.";
 
             return new PortalRegisterResponse { Success = false, Message = message };
