@@ -316,6 +316,10 @@ public class TutorialService
         if (settings?.Tutorial == null || settings.Tutorial.CompletedChecklistItems.Contains(itemId))
             return;
 
+        // Don't process checklist items if the tutorial was skipped
+        if (settings.Tutorial.HasSkippedTutorial)
+            return;
+
         // Check if previous items in sequence are completed
         if (!CanCompleteChecklistItem(itemId, settings.Tutorial.CompletedChecklistItems))
             return;
