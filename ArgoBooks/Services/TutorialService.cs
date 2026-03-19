@@ -307,7 +307,8 @@ public class TutorialService
         ChecklistItemCompleted?.Invoke(this, itemId);
 
         // Only show completion guidance if tutorial is active on current company
-        if (ShouldShowTutorialOnCurrentCompany())
+        // and the setup checklist is actually visible (not skipped/dismissed)
+        if (ShouldShowTutorialOnCurrentCompany() && Settings.ShowSetupChecklist)
         {
             // Show completion guidance for main tutorial tasks
             if (itemId == ChecklistItems.CreateCategory ||
