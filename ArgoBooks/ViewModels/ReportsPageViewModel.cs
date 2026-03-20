@@ -1779,7 +1779,7 @@ public partial class ReportsPageViewModel : ViewModelBase
                     }
                     catch (Exception ex)
                     {
-                        App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.General, "Failed to auto-dismiss export message");
+                        App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to auto-dismiss export message");
                     }
                 });
 

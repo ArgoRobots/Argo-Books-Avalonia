@@ -558,8 +558,11 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         if (!string.IsNullOrEmpty(ReceiptFilePath))
         {
             receipt = CreateReceipt(companyData, expenseId, "Expense", SelectedSupplier?.Name ?? "");
-            expense.ReceiptId = receipt.Id;
-            companyData.Receipts.Add(receipt);
+            if (receipt != null)
+            {
+                expense.ReceiptId = receipt.Id;
+                companyData.Receipts.Add(receipt);
+            }
         }
 
         var capturedReceipt = receipt;
@@ -670,8 +673,11 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         if (!string.IsNullOrEmpty(ReceiptFilePath) && string.IsNullOrEmpty(original.ReceiptId))
         {
             newReceipt = CreateReceipt(companyData, expense.Id, "Expense", SelectedSupplier?.Name ?? "");
-            expense.ReceiptId = newReceipt.Id;
-            companyData.Receipts.Add(newReceipt);
+            if (newReceipt != null)
+            {
+                expense.ReceiptId = newReceipt.Id;
+                companyData.Receipts.Add(newReceipt);
+            }
         }
 
         var capturedNewReceipt = newReceipt;
