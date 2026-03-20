@@ -890,7 +890,7 @@ public class InsightsService(
     private InsightItem? AnalyzeTopProducts(CompanyData companyData, AnalysisDateRange dateRange)
     {
         // Use USD-converted amounts by applying each transaction's conversion ratio to its line items
-        var productSalesData = new Dictionary<string?, (decimal Revenue, decimal Cost, decimal Quantity)>();
+        var productSalesData = new Dictionary<string, (decimal Revenue, decimal Cost, decimal Quantity)>();
 
         foreach (var s in companyData.Revenues.Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate))
         {
@@ -907,10 +907,11 @@ public class InsightsService(
                     ? Math.Round(li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0) * (subtotalUSD / lineItemsTotal), 2)
                     : li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0);
 
-                if (!productSalesData.ContainsKey(li.ProductId))
-                    productSalesData[li.ProductId] = (0, 0, 0);
-                var current = productSalesData[li.ProductId];
-                productSalesData[li.ProductId] = (current.Revenue + revenueUSD, current.Cost + costUSD, current.Quantity + li.Quantity);
+                var pid = li.ProductId ?? "";
+                if (!productSalesData.ContainsKey(pid))
+                    productSalesData[pid] = (0, 0, 0);
+                var current = productSalesData[pid];
+                productSalesData[pid] = (current.Revenue + revenueUSD, current.Cost + costUSD, current.Quantity + li.Quantity);
             }
         }
 
