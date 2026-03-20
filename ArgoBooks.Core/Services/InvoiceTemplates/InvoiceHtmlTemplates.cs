@@ -125,7 +125,7 @@ public static class InvoiceHtmlTemplates
                                 </tr>
                                 {{#ShowTaxBreakdown}}
                                 <tr>
-                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Tax ({{TaxRate}}%)</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
                                 </tr>
                                 {{/ShowTaxBreakdown}}
@@ -357,7 +357,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             {{#ShowTaxBreakdown}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Tax ({{TaxRate}}%)</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
                                             </tr>
                                             {{/ShowTaxBreakdown}}
@@ -550,7 +550,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             {{#ShowTaxBreakdown}}
                                             <tr>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Tax ({{TaxRate}}%)</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}} ({{TaxRate}}%)</td>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{TaxAmount}}</td>
                                             </tr>
                                             {{/ShowTaxBreakdown}}
@@ -736,7 +736,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             {{#ShowTaxBreakdown}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Tax ({{TaxRate}}%)</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
                                             </tr>
                                             {{/ShowTaxBreakdown}}
@@ -966,7 +966,7 @@ public static class InvoiceHtmlTemplates
                     </div>
                     {{#ShowTaxBreakdown}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
-                        <span>Tax ({{TaxRate}}%)</span>
+                        <span>{{TaxLabel}} ({{TaxRate}}%)</span>
                         <span>{{TaxAmount}}</span>
                     </div>
                     {{/ShowTaxBreakdown}}

@@ -166,7 +166,10 @@ public partial class InvoiceHtmlRenderer
         // Totals
         sb.AppendLine($"Subtotal: {currencySymbol}{invoice.Subtotal:N2}");
         if (invoice.TaxRate > 0)
-            sb.AppendLine($"Tax ({invoice.TaxRate}%): {currencySymbol}{invoice.TaxAmount:N2}");
+        {
+            var taxLabel = GetTaxLabel(companySettings.Company.Country);
+            sb.AppendLine($"{taxLabel} ({invoice.TaxRate}%): {currencySymbol}{invoice.TaxAmount:N2}");
+        }
         if (invoice.SecurityDeposit > 0)
             sb.AppendLine($"Security Deposit: {currencySymbol}{invoice.SecurityDeposit:N2}");
         if (invoice.CustomFeeAmount > 0)
@@ -277,6 +280,7 @@ public partial class InvoiceHtmlRenderer
             // Financial
             ["Subtotal"] = $"{currencySymbol}{invoice.Subtotal:N2}",
             ["TaxRate"] = invoice.TaxRate.ToString("0.##"),
+            ["TaxLabel"] = GetTaxLabel(companySettings.Company.Country),
             ["TaxAmount"] = $"{currencySymbol}{invoice.TaxAmount:N2}",
             ["ShowSecurityDeposit"] = invoice.SecurityDeposit > 0,
             ["SecurityDeposit"] = $"{currencySymbol}{invoice.SecurityDeposit:N2}",
@@ -484,6 +488,37 @@ public partial class InvoiceHtmlRenderer
     {
         var label = !string.IsNullOrWhiteSpace(invoice.CustomFeeLabel) ? invoice.CustomFeeLabel : "Fee";
         return invoice.CustomFeeIsPercent ? $"{label} ({invoice.CustomFeeAmount}%)" : label;
+    }
+
+    /// <summary>
+    /// Returns the country-appropriate tax label (e.g., "VAT", "GST/HST", "GST", "Tax", "Sales Tax")
+    /// for use on invoices.
+    /// </summary>
+    private static string GetTaxLabel(string? country)
+    {
+        var normalized = country?.Trim().ToUpperInvariant() ?? "";
+        return normalized switch
+        {
+            "UNITED KINGDOM" or "FRANCE" or "GERMANY" or "ITALY" or "SPAIN" or "NETHERLANDS"
+            or "BELGIUM" or "AUSTRIA" or "SWEDEN" or "NORWAY" or "DENMARK" or "FINLAND"
+            or "IRELAND" or "PORTUGAL" or "GREECE" or "SWITZERLAND" or "POLAND"
+            or "CZECH REPUBLIC" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
+            or "SLOVAKIA" or "SLOVENIA" or "LITHUANIA" or "LATVIA" or "ESTONIA"
+            or "LUXEMBOURG" or "MALTA" or "CYPRUS" or "SOUTH AFRICA" or "KENYA"
+            or "NIGERIA" or "GHANA" or "ZIMBABWE" or "BOTSWANA"
+            or "BANGLADESH" or "SRI LANKA" or "JAMAICA" or "TRINIDAD AND TOBAGO"
+            or "TURKEY" or "RUSSIA" or "UKRAINE" or "BRAZIL"
+            or "ARGENTINA" or "CHILE" or "COLOMBIA" or "MEXICO" or "PERU"
+            or "ISRAEL" or "UNITED ARAB EMIRATES" or "SAUDI ARABIA" or "THAILAND"
+            or "VIETNAM" or "INDONESIA" or "PHILIPPINES" or "SOUTH KOREA"
+            or "CHINA" or "TAIWAN" or "ICELAND" => "VAT",
+            "CANADA" => "GST/HST",
+            "INDIA" or "SINGAPORE" or "MALAYSIA" or "AUSTRALIA" or "NEW ZEALAND"
+            or "PAKISTAN" => "GST",
+            "JAPAN" => "Consumption Tax",
+            "UNITED STATES" or "PUERTO RICO" => "Sales Tax",
+            _ => "Tax"
+        };
     }
 
     [GeneratedRegex(@"\{\{#(\w+)\}\}([\s\S]*?)\{\{/\1\}\}", RegexOptions.Compiled)]
