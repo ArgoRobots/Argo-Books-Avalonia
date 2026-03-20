@@ -115,6 +115,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Departments");
         ShowDepartmentColumn = true;
         ShowDescriptionColumn = true;

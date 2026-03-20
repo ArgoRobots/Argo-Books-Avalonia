@@ -81,6 +81,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("LostDamaged");
         ShowIdColumn = true;
         ShowProductColumn = true;

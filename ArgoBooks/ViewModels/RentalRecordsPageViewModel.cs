@@ -150,6 +150,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("RentalRecords");
         ShowIdColumn = true;
         ShowItemColumn = true;

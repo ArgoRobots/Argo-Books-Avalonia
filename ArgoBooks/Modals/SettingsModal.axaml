@@ -26,6 +26,7 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="750"
+                MinHeight="700"
                 MaxHeight="700"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"

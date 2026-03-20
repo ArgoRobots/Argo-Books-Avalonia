@@ -705,6 +705,11 @@ public class App : Application
     private static bool _suppressSavedFeedback;
 
     /// <summary>
+    /// Suppresses the "Saved" feedback label for the next save operation.
+    /// </summary>
+    public static void SuppressNextSavedFeedback() => _suppressSavedFeedback = true;
+
+    /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
     public static ConfirmationDialogViewModel? ConfirmationDialog { get; private set; }

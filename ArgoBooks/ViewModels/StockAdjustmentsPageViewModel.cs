@@ -111,6 +111,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("StockAdjustments");
         ShowDateColumn = true;
         ShowReferenceColumn = true;

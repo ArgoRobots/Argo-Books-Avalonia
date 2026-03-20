@@ -158,6 +158,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Revenue");
         ShowIdColumn = true;
         ShowAccountantColumn = false;

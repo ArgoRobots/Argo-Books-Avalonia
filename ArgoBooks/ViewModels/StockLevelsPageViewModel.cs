@@ -98,6 +98,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("StockLevels");
         ShowProductColumn = true;
         ShowSkuColumn = true;

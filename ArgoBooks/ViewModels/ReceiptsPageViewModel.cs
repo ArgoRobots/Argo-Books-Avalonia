@@ -301,6 +301,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Receipts");
         ShowIdColumn = true;
         ShowSupplierColumn = true;

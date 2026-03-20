@@ -82,6 +82,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Suppliers");
         ShowSupplierColumn = true;
         ShowEmailColumn = true;

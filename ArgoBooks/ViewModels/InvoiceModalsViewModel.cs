@@ -1466,6 +1466,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
 
+        // Auto-save immediately so the asterisk doesn't linger
+        if (App.CompanyManager != null)
+        {
+            App.SuppressNextSavedFeedback();
+            try { await App.CompanyManager.SaveCompanyAsync(); }
+            catch { /* non-fatal */ }
+        }
+
         // Show success animation instead of closing immediately
         SuccessTitle = "Invoice Sent!".Translate();
         SuccessMessage = "Your invoice has been sent to {0}".TranslateFormat(customer.Email);
@@ -1651,9 +1659,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         CloseCreateEditModal();
 
-        // Auto-save immediately
+        // Auto-save immediately (suppress "Saved" label since this is an automatic save)
         if (App.CompanyManager != null)
         {
+            App.SuppressNextSavedFeedback();
             try { await App.CompanyManager.SaveCompanyAsync(); }
             catch { /* non-fatal */ }
         }

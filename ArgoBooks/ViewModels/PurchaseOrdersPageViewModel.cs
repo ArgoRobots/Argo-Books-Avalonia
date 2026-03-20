@@ -103,6 +103,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("PurchaseOrders");
         ShowPONumberColumn = true;
         ShowDateColumn = true;

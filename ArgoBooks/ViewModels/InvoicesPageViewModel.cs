@@ -301,6 +301,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Invoices");
         ShowIdColumn = true;
         ShowAccountantColumn = true;

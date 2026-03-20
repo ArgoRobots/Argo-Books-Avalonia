@@ -89,6 +89,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Products");
         ShowNameColumn = true;
         ShowTypeColumn = true;
