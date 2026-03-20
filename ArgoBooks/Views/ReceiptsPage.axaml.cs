@@ -62,7 +62,7 @@ public partial class ReceiptsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnScanFileRequested: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnScanFileRequested");
         }
     }
 
@@ -187,7 +187,7 @@ public partial class ReceiptsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnDrop: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnDrop");
         }
     }
 }

@@ -297,7 +297,7 @@ public partial class AnalyticsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnSaveChartImageRequested: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "OnSaveChartImageRequested");
         }
     }
 
@@ -415,7 +415,7 @@ public partial class AnalyticsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnExcelExportRequested: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "OnExcelExportRequested");
         }
     }
 

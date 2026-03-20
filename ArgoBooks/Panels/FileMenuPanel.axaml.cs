@@ -144,7 +144,7 @@ public partial class FileMenuPanel : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in DelayedCloseSubmenu: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "DelayedCloseSubmenu");
         }
     }
 

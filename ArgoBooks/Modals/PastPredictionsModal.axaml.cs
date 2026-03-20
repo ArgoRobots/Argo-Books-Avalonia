@@ -208,7 +208,7 @@ public partial class PastPredictionsModal : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnSaveChartImageRequested: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "OnSaveChartImageRequested");
         }
     }
 

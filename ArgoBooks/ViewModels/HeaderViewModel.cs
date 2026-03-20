@@ -590,7 +590,7 @@ public partial class HeaderViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in ShowToast: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "ShowToast");
         }
     }
 
@@ -690,7 +690,7 @@ public partial class HeaderViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in ShowSavedFeedback: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "ShowSavedFeedback");
         }
     }
 

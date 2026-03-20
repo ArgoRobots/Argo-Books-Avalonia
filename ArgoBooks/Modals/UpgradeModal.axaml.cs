@@ -229,7 +229,7 @@ public partial class UpgradeModal : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in PlaySuccessAnimation: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "PlaySuccessAnimation");
         }
     }
 
@@ -299,7 +299,7 @@ public partial class UpgradeModal : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in PlayContinueButtonAnimation: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "PlayContinueButtonAnimation");
         }
     }
 

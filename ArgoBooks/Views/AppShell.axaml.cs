@@ -147,7 +147,7 @@ public partial class AppShell : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnOpenFileScanRequested: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnOpenFileScanRequested");
         }
     }
 

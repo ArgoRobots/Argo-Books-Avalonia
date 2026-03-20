@@ -234,7 +234,7 @@ public static partial class NumericInputBehavior
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnIntegerPastingFromClipboard: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnIntegerPastingFromClipboard");
         }
     }
 
@@ -302,7 +302,7 @@ public static partial class NumericInputBehavior
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnDecimalPastingFromClipboard: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnDecimalPastingFromClipboard");
         }
     }
 

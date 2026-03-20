@@ -57,7 +57,7 @@ public partial class RevenuePage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnAiScanButtonClick: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnAiScanButtonClick");
         }
     }
 }

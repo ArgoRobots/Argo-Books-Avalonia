@@ -600,7 +600,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in PopulateScanResults: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "PopulateScanResults");
         }
     }
 

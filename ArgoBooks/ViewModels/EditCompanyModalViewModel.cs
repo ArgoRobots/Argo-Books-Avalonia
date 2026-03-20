@@ -278,7 +278,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in RequestClose: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "EditCompanyModal.RequestClose");
         }
     }
 

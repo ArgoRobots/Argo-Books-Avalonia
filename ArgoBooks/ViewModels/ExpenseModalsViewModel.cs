@@ -256,7 +256,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Expense.OpenDeleteConfirm");
         }
     }
 

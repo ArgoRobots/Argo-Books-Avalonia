@@ -173,7 +173,7 @@ public partial class ReportsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in TriggerInitialZoomToFit: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "TriggerInitialZoomToFit");
         }
     }
 
@@ -187,7 +187,7 @@ public partial class ReportsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in InitializeAsteriskAsync: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "InitializeAsteriskAsync");
         }
     }
 
@@ -247,7 +247,7 @@ public partial class ReportsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnTemplateLoaded: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnTemplateLoaded");
         }
     }
 
@@ -261,7 +261,7 @@ public partial class ReportsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnPreviewFitToWindowRequested: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnPreviewFitToWindowRequested");
         }
     }
 
@@ -890,7 +890,7 @@ public partial class ReportsPage : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnToggleElementPanelClick: {ex}");
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnToggleElementPanelClick");
         }
     }
 }
