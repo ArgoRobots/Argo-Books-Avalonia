@@ -15,16 +15,16 @@ public static class UrlHelper
     {
         try
         {
-            // For URLs, validate scheme to prevent command injection
-            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
-            {
-                if (uri.Scheme != "https" && uri.Scheme != "http" && uri.Scheme != "mailto" && uri.Scheme != "file")
-                    return false;
-            }
+            // Require a valid absolute URI with an allowed scheme
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return false;
+
+            if (uri.Scheme != "https" && uri.Scheme != "http" && uri.Scheme != "mailto" && uri.Scheme != "file")
+                return false;
 
             Process.Start(new ProcessStartInfo
             {
-                FileName = url,
+                FileName = uri.AbsoluteUri,
                 UseShellExecute = true
             });
             return true;

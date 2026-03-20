@@ -718,12 +718,12 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
+    private Receipt? CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
     {
+        if (string.IsNullOrEmpty(ReceiptFilePath)) return null;
+
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
-
-        if (string.IsNullOrEmpty(ReceiptFilePath)) return null!;
         var fileInfo = new FileInfo(ReceiptFilePath);
         var fileType = GetFileType(ReceiptFilePath);
 

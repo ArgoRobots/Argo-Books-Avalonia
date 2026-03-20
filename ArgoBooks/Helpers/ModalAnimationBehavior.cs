@@ -78,14 +78,15 @@ public static class ModalAnimationBehavior
         }
     }
 
-    private static readonly ConditionalWeakTable<Border, StrongBox<PropertyChangedEventHandler>> _handlers = new();
+    private record HandlerEntry(INotifyPropertyChanged ViewModel, PropertyChangedEventHandler Handler);
+    private static readonly ConditionalWeakTable<Border, HandlerEntry> _handlers = new();
 
     private static void SubscribeToViewModel(Border border, INotifyPropertyChanged vm)
     {
-        // Remove old handler if exists
-        if (_handlers.TryGetValue(border, out var oldBox))
+        // Remove old handler from the OLD ViewModel (not the new one)
+        if (_handlers.TryGetValue(border, out var oldEntry))
         {
-            vm.PropertyChanged -= oldBox.Value;
+            oldEntry.ViewModel.PropertyChanged -= oldEntry.Handler;
             _handlers.Remove(border);
         }
 
@@ -107,7 +108,7 @@ public static class ModalAnimationBehavior
         };
 
         vm.PropertyChanged += handler;
-        _handlers.AddOrUpdate(border, new StrongBox<PropertyChangedEventHandler>(handler));
+        _handlers.AddOrUpdate(border, new HandlerEntry(vm, handler));
 
         // Check initial state
         var initialProp = vm.GetType().GetProperty(propertyName);

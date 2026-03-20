@@ -209,6 +209,8 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            // Cancel close to prevent data loss if an error occurred during the closing logic
+            e.Cancel = true;
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnWindowClosing");
         }
     }

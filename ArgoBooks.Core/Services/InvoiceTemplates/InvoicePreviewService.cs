@@ -32,7 +32,7 @@ public static class InvoicePreviewService
 
             // Open in default browser
             if (openBrowser)
-                OpenUrl($"file://{filePath}");
+                OpenUrl(new Uri(filePath).AbsoluteUri);
 
             return true;
         }

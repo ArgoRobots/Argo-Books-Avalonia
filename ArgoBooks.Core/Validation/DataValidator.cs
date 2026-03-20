@@ -309,6 +309,8 @@ public partial class DataValidator(CompanyData companyData)
 
         if (string.IsNullOrWhiteSpace(payment.InvoiceId))
             result.AddError(nameof(payment.InvoiceId), "Invoice is required.");
+        else if (companyData.GetInvoice(payment.InvoiceId) == null)
+            result.AddError(nameof(payment.InvoiceId), "Invoice not found.");
 
         if (string.IsNullOrWhiteSpace(payment.CustomerId))
             result.AddError(nameof(payment.CustomerId), "Customer is required.");
