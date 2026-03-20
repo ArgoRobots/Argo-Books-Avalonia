@@ -251,6 +251,15 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     }
 
     /// <summary>
+    /// Resets all column widths to their default proportional sizes.
+    /// </summary>
+    public void ResetWidths()
+    {
+        _hasManualOverflow = false;
+        RecalculateWidths();
+    }
+
+    /// <summary>
     /// Recalculates all column widths based on available space and visibility.
     /// </summary>
     public void RecalculateWidths()

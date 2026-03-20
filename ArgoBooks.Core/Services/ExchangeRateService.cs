@@ -209,11 +209,6 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Checks if the service has a valid API key configured.
-    /// </summary>
-    public bool HasApiKey => LicenseAuthHelper.IsConfigured;
-
-    /// <summary>
     /// Gets the number of cached exchange rates.
     /// </summary>
     public int CachedRatesCount => _cache.Count;
@@ -241,7 +236,6 @@ public class ExchangeRateService
                     : $"{BaseUrl}?date={date:yyyy-MM-dd}";
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-                LicenseAuthHelper.AddAuthHeaders(request);
 
                 var response = await _httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)

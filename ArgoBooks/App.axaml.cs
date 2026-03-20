@@ -705,6 +705,11 @@ public class App : Application
     private static bool _suppressSavedFeedback;
 
     /// <summary>
+    /// Suppresses the "Saved" feedback label for the next save operation.
+    /// </summary>
+    public static void SuppressNextSavedFeedback() => _suppressSavedFeedback = true;
+
+    /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
     public static ConfirmationDialogViewModel? ConfirmationDialog { get; private set; }
@@ -1227,11 +1232,6 @@ public class App : Application
         {
             var exchangeService = new ExchangeRateService();
             await exchangeService.InitializeAsync();
-
-            if (!exchangeService.HasApiKey)
-            {
-                ErrorLogger?.LogInfo("Exchange rate service initialized without API key - currency conversion will use cached rates only");
-            }
         }
         catch (Exception ex)
         {
@@ -1692,7 +1692,9 @@ public class App : Application
         _appShellViewModel.PaymentModalsViewModel.PaymentDeleted += MarkUnsavedChanges;
 
         // Invoice modals
-        _appShellViewModel.InvoiceModalsViewModel.InvoiceSaved += MarkUnsavedChanges;
+        // Note: InvoiceSaved is not wired to MarkUnsavedChanges because both call sites
+        // (CreateAndSendInvoice, SaveInvoice) auto-save immediately, which avoids a
+        // brief asterisk flash in the window title.
         _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
 
         // Invoice template designer
@@ -2305,7 +2307,7 @@ public class App : Application
                         logo);
                     _reportsPageViewModel?.RefreshCanvas();
 
-                    // Record undo/redo action
+                    // Record undo/redo action only if non-currency fields changed
                     var newName = args.CompanyName;
                     var newBusinessType = args.BusinessType;
                     var newIndustry = args.Industry;
@@ -2314,6 +2316,19 @@ public class App : Application
                     var newCity = args.City;
                     var newAddress = args.Address;
                     var newProvinceState = args.ProvinceState;
+
+                    var hasNonCurrencyChanges = oldName != newName
+                        || oldBusinessType != newBusinessType
+                        || oldIndustry != newIndustry
+                        || oldPhone != newPhone
+                        || oldEmail != args.Email
+                        || oldCountry != newCountry
+                        || oldCity != newCity
+                        || oldAddress != newAddress
+                        || oldProvinceState != newProvinceState
+                        || oldLogoFileName != newLogoFileName;
+
+                    if (!hasNonCurrencyChanges) return;
 
                     UndoRedoManager.RecordAction(new DelegateAction(
                         $"Edit company '{newName}'",

@@ -73,6 +73,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Returns");
         ShowIdColumn = true;
         ShowProductColumn = true;

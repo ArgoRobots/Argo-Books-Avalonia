@@ -79,11 +79,17 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <controls:SearchableDropdown ItemsSource="{Binding TemplateOptions}"
-                                                                SelectedItem="{Binding SelectedTemplate}"
-                                                                DisplayMemberPath="Name"
-                                                                Placeholder="{loc:Loc 'Search templates...'}"
-                                                                ShowAddNew="False" />
+                                    <ComboBox ItemsSource="{Binding TemplateOptions}"
+                                             SelectedItem="{Binding SelectedTemplate}"
+                                             PlaceholderText="{loc:Loc 'Select template'}"
+                                             Classes="form-combobox"
+                                             HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
 
                                 <!-- Customer Selection (right) - hidden when from rental, disabled when limited edit -->

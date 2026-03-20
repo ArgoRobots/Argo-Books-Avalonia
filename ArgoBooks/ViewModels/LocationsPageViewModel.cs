@@ -90,6 +90,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Locations");
         ShowLocationColumn = true;
         ShowTypeColumn = true;

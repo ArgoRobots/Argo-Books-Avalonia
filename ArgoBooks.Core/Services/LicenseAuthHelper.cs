@@ -4,7 +4,8 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Shared helper for adding license key authentication headers to API requests.
-/// All premium API endpoints (exchange rates, AI, invoice email, telemetry) use the license key.
+/// Premium API endpoints (AI, invoice email, receipt scanning, telemetry) use the license key.
+/// Note: Exchange rates are a free feature and do NOT require a license key.
 /// </summary>
 public static class LicenseAuthHelper
 {

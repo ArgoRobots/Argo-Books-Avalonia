@@ -159,6 +159,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("Expenses");
         ShowIdColumn = true;
         ShowAccountantColumn = false;

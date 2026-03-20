@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -416,6 +417,12 @@ public partial class InvoiceHtmlRenderer
         });
     }
 
+    // Fields whose values already contain safe HTML (e.g. <br> from FormatAddress)
+    private static readonly HashSet<string> RawHtmlFields = new(StringComparer.Ordinal)
+    {
+        "CustomerAddress", "CompanyAddress"
+    };
+
     private static string ProcessVariables(string template, Dictionary<string, object?> context)
     {
         var variableRegex = VariableRegex();
@@ -426,7 +433,11 @@ public partial class InvoiceHtmlRenderer
 
             if (context.TryGetValue(name, out var value) && value != null)
             {
-                // HTML-encode all values to prevent XSS when rendering in browser
+                // Skip encoding for fields that already contain safe HTML (e.g. <br> tags)
+                if (RawHtmlFields.Contains(name))
+                    return value.ToString() ?? string.Empty;
+
+                // HTML-encode all other values to prevent XSS when rendering in browser
                 return WebUtility.HtmlEncode(value.ToString()) ?? string.Empty;
             }
 
@@ -453,8 +464,9 @@ public partial class InvoiceHtmlRenderer
         if (string.IsNullOrWhiteSpace(address))
             return null;
 
-        // Replace newlines with <br> for HTML
-        return address.Replace("\n", "<br>").Replace("\r", "");
+        // Encode each line individually then join with <br> for HTML
+        return string.Join("<br>", address.Replace("\r", "").Split('\n')
+            .Select(WebUtility.HtmlEncode));
     }
 
     private static string? FormatAddress(Models.Common.Address? address)
@@ -466,8 +478,9 @@ public partial class InvoiceHtmlRenderer
         if (string.IsNullOrWhiteSpace(formatted))
             return null;
 
-        // Replace commas with <br> for HTML display
-        return formatted.Replace(", ", "<br>");
+        // Encode each part individually then join with <br> for HTML display
+        return string.Join("<br>", formatted.Split(", ")
+            .Select(WebUtility.HtmlEncode));
     }
 
     private static decimal CalculateCustomFee(Invoice invoice)

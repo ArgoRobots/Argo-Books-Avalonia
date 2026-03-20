@@ -170,10 +170,11 @@
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
-                                                              SelectedItem="{Binding SelectedCurrency}"
-                                                              PriorityItems="{Binding PriorityCurrencies}"
-                                                              Placeholder="{loc:Loc 'Search currencies...'}" />
+                                <ComboBox ItemsSource="{Binding Currencies}"
+                                         SelectedItem="{Binding SelectedCurrency}"
+                                         Classes="form-combobox"
+                                         PlaceholderText="{loc:Loc 'Select currency'}"
+                                         HorizontalAlignment="Stretch" />
                             </StackPanel>
 
                             <!-- Company Logo -->

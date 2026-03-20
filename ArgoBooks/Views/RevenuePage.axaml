@@ -365,7 +365,7 @@
                                                             Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).MarkAsLostDamagedCommand}"
                                                             CommandParameter="{Binding}"
                                                             IsVisible="{Binding CanMarkAsLostDamaged}">
-                                                        <PathIcon Data="{x:Static icons:Icons.Info}"
+                                                        <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <!-- Undo Lost/Damaged (shown when already marked as lost/damaged) -->

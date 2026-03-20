@@ -102,6 +102,7 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ResetColumnVisibility()
     {
+        ColumnWidths.ResetWidths();
         ColumnVisibilityHelper.ResetPage("RentalInventory");
         ShowItemColumn = true;
         ShowStatusColumn = true;
