@@ -44,6 +44,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Gets revenue distribution by category (in USD).
+    /// Allocates multi-line-item transactions proportionally across categories.
     /// </summary>
     public List<ChartDataPoint> GetRevenueDistribution()
     {
@@ -52,25 +53,36 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        var sales = companyData.Revenues
-            .Where(s => s.Date >= startDate && s.Date <= endDate);
+        var categoryTotals = new Dictionary<string, decimal>();
 
-        return sales
-            .GroupBy(s =>
+        foreach (var s in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
+        {
+            if (s.LineItems.Count > 0)
             {
-                var productId = s.LineItems.FirstOrDefault()?.ProductId;
-                var product = productId != null ? companyData.GetProduct(productId) : null;
-                return product?.CategoryId ?? "Unknown";
-            })
-            .Select(g =>
-            {
-                var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";
-                return new ChartDataPoint
+                var lineItemsTotal = s.LineItems.Sum(li => li.Subtotal);
+                var subtotalUSD = s.EffectiveSubtotalUSD;
+
+                foreach (var li in s.LineItems)
                 {
-                    Label = categoryName,
-                    Value = (double)g.Sum(s => s.EffectiveSubtotalUSD)
-                };
-            })
+                    var product = li.ProductId != null ? companyData.GetProduct(li.ProductId) : null;
+                    var categoryName = product?.CategoryId != null
+                        ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
+                        : "Other";
+                    categoryTotals.TryAdd(categoryName, 0);
+                    categoryTotals[categoryName] += lineItemsTotal != 0
+                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                        : 0;
+                }
+            }
+            else
+            {
+                categoryTotals.TryAdd("Other", 0);
+                categoryTotals["Other"] += s.EffectiveSubtotalUSD;
+            }
+        }
+
+        return categoryTotals
+            .Select(kvp => new ChartDataPoint { Label = kvp.Key, Value = (double)kvp.Value })
             .OrderByDescending(p => p.Value)
             .Take(10)
             .ToList();
@@ -120,6 +132,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Gets expense distribution by category (in USD).
+    /// Allocates multi-line-item transactions proportionally across categories.
     /// </summary>
     public List<ChartDataPoint> GetExpenseDistribution()
     {
@@ -128,23 +141,36 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        return companyData.Expenses
-            .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .GroupBy(p =>
+        var categoryTotals = new Dictionary<string, decimal>();
+
+        foreach (var p in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
+        {
+            if (p.LineItems.Count > 0)
             {
-                var productId = p.LineItems.FirstOrDefault()?.ProductId;
-                var product = productId != null ? companyData.GetProduct(productId) : null;
-                return product?.CategoryId ?? "Unknown";
-            })
-            .Select(g =>
-            {
-                var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";
-                return new ChartDataPoint
+                var lineItemsTotal = p.LineItems.Sum(li => li.Subtotal);
+                var subtotalUSD = p.EffectiveSubtotalUSD;
+
+                foreach (var li in p.LineItems)
                 {
-                    Label = categoryName,
-                    Value = (double)g.Sum(p => p.EffectiveSubtotalUSD)
-                };
-            })
+                    var product = li.ProductId != null ? companyData.GetProduct(li.ProductId) : null;
+                    var categoryName = product?.CategoryId != null
+                        ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
+                        : "Other";
+                    categoryTotals.TryAdd(categoryName, 0);
+                    categoryTotals[categoryName] += lineItemsTotal != 0
+                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                        : 0;
+                }
+            }
+            else
+            {
+                categoryTotals.TryAdd("Other", 0);
+                categoryTotals["Other"] += p.EffectiveSubtotalUSD;
+            }
+        }
+
+        return categoryTotals
+            .Select(kvp => new ChartDataPoint { Label = kvp.Key, Value = (double)kvp.Value })
             .OrderByDescending(p => p.Value)
             .Take(10)
             .ToList();
@@ -768,11 +794,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             shippingCosts.AddRange(companyData.Revenues
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Select(s => s.ShippingCost));
+                .Select(s => s.EffectiveShippingCostUSD));
 
             shippingCosts.AddRange(companyData.Expenses
                 .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.ShippingCost));
+                .Select(p => p.EffectiveShippingCostUSD));
 
             return new ChartDataPoint
             {
@@ -784,7 +810,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets average shipping costs over time grouped by day.
+    /// Gets average shipping costs over time grouped by day (in USD).
     /// </summary>
     public List<ChartDataPoint> GetAverageShippingCostsDaily()
     {
@@ -800,7 +826,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var date = revenue.Date.Date;
             if (!shippingByDate.ContainsKey(date))
                 shippingByDate[date] = [];
-            shippingByDate[date].Add(revenue.ShippingCost);
+            shippingByDate[date].Add(revenue.EffectiveShippingCostUSD);
         }
 
         foreach (var purchase in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
@@ -808,7 +834,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var date = purchase.Date.Date;
             if (!shippingByDate.ContainsKey(date))
                 shippingByDate[date] = [];
-            shippingByDate[date].Add(purchase.ShippingCost);
+            shippingByDate[date].Add(purchase.EffectiveShippingCostUSD);
         }
 
         return shippingByDate
@@ -1493,7 +1519,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount),
+                    .Sum(r => r.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -1508,7 +1534,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount),
+                    .Sum(e => e.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -1547,10 +1573,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var collected = companyData.Revenues
                 .Where(r => r.Date.Date == date)
-                .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
+                .Sum(r => r.EffectiveTaxAmountUSD);
             var paid = companyData.Expenses
                 .Where(e => e.Date.Date == date)
-                .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
+                .Sum(e => e.EffectiveTaxAmountUSD);
 
             return new ChartDataPoint
             {
@@ -1579,7 +1605,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             {
                 var productId = r.LineItems.FirstOrDefault()?.ProductId;
                 var product = productId != null ? companyData.GetProduct(productId) : null;
-                return (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, product?.CategoryId);
+                return (r.EffectiveTaxAmountUSD, product?.CategoryId);
             }));
 
         allTransactions.AddRange(companyData.Expenses
@@ -1588,7 +1614,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             {
                 var productId = e.LineItems.FirstOrDefault()?.ProductId;
                 var product = productId != null ? companyData.GetProduct(productId) : null;
-                return (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, product?.CategoryId);
+                return (e.EffectiveTaxAmountUSD, product?.CategoryId);
             }));
 
         if (allTransactions.Count == 0)
@@ -1681,11 +1707,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         allTransactions.AddRange(companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-            .Select(r => (r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r.LineItems.FirstOrDefault()?.ProductId)));
+            .Select(r => (r.EffectiveTaxAmountUSD, r.LineItems.FirstOrDefault()?.ProductId)));
 
         allTransactions.AddRange(companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-            .Select(e => (e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e.LineItems.FirstOrDefault()?.ProductId)));
+            .Select(e => (e.EffectiveTaxAmountUSD, e.LineItems.FirstOrDefault()?.ProductId)));
 
         if (allTransactions.Count == 0)
             return [];
@@ -1739,7 +1765,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount),
+                    .Sum(r => r.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -1754,7 +1780,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount),
+                    .Sum(e => e.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();

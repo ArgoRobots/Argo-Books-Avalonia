@@ -355,11 +355,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         var totalCurrentAssets = cash + accountsReceivable;
         var totalAssets = totalCurrentAssets;
 
-        // Accounts Payable = purchase orders not received and not cancelled
+        // Accounts Payable = purchase orders not received and not cancelled (USD-converted)
         var accountsPayable = companyData.PurchaseOrders
             .Where(po => po.Status != PurchaseOrderStatus.Received
                          && po.Status != PurchaseOrderStatus.Cancelled)
-            .Sum(po => po.Total);
+            .Sum(po => po.EffectiveTotalUSD);
 
         // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses
         var taxCollected = companyData.Revenues
@@ -549,12 +549,13 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         // Operating Activities
         // Exclude invoice-linked revenue to avoid double counting with Payments.
-        // Uses pre-tax (subtotal) amounts, consistent with Dashboard and Income Statement.
+        // Uses post-tax (total) amounts because cash includes tax collected/paid,
+        // consistent with Balance Sheet cash calculation.
         var cashFromSales = companyData.Revenues
             .Where(r => r.PaymentStatus == "Paid"
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
-            .Sum(r => r.EffectiveSubtotalUSD);
+            .Sum(r => r.EffectiveTotalUSD);
 
         var cashFromInvoicePayments = companyData.Payments
             .Where(p => IsInDateRange(p.Date))
@@ -562,7 +563,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         var cashPaidForExpenses = companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
-            .Sum(e => e.EffectiveSubtotalUSD);
+            .Sum(e => e.EffectiveTotalUSD);
 
         var totalOperating = cashFromSales + cashFromInvoicePayments - cashPaidForExpenses;
 
@@ -1156,8 +1157,10 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else if (rev.TaxRate > 0)
             {
-                var rate = Math.Round(rev.TaxRate, 2);
-                var taxAmountUSD = rev.TaxAmountUSD > 0 ? rev.TaxAmountUSD : rev.TaxAmount;
+                // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
+                // convert to decimal form (0.08) to match LineItem.TaxRate for consistent grouping
+                var rate = Math.Round(rev.TaxRate / 100m, 4);
+                var taxAmountUSD = rev.EffectiveTaxAmountUSD;
                 taxCollectedByRate.TryAdd(rate, 0);
                 taxCollectedByRate[rate] += taxAmountUSD;
             }
@@ -1187,8 +1190,10 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else if (exp.TaxRate > 0)
             {
-                var rate = Math.Round(exp.TaxRate, 2);
-                var taxAmountUSD = exp.TaxAmountUSD > 0 ? exp.TaxAmountUSD : exp.TaxAmount;
+                // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
+                // convert to decimal form (0.08) to match LineItem.TaxRate for consistent grouping
+                var rate = Math.Round(exp.TaxRate / 100m, 4);
+                var taxAmountUSD = exp.EffectiveTaxAmountUSD;
                 taxPaidByRate.TryAdd(rate, 0);
                 taxPaidByRate[rate] += taxAmountUSD;
             }

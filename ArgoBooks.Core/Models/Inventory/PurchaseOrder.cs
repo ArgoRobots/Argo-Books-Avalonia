@@ -132,4 +132,27 @@ public class PurchaseOrder
     /// </summary>
     [JsonIgnore]
     public bool IsFullyReceived => LineItems.Count > 0 && LineItems.All(li => li.IsFullyReceived);
+
+    #region Currency Support
+
+    /// <summary>
+    /// The ISO currency code in which this PO was originally created (e.g., "USD", "EUR").
+    /// Defaults to "USD" for backward compatibility with existing data.
+    /// </summary>
+    [JsonPropertyName("originalCurrency")]
+    public string OriginalCurrency { get; set; } = "USD";
+
+    /// <summary>
+    /// The total amount converted to USD at the time of creation.
+    /// </summary>
+    [JsonPropertyName("totalUSD")]
+    public decimal TotalUSD { get; set; }
+
+    /// <summary>
+    /// Gets the effective total in USD, falling back to Total for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : Total;
+
+    #endregion
 }

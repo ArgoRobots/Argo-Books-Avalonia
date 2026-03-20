@@ -192,12 +192,19 @@ public abstract class Transaction
     public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (TotalUSD > 0 ? TotalUSD : Total);
 
     /// <summary>
+    /// Gets the effective tax amount in USD, falling back to TaxAmount only for legacy USD data.
+    /// Returns 0 for pending-conversion transactions.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveTaxAmountUSD => IsPendingConversion ? 0 : (TaxAmountUSD > 0 ? TaxAmountUSD : (TotalUSD > 0 ? 0 : TaxAmount));
+
+    /// <summary>
     /// Gets the effective pre-tax subtotal in USD (excludes tax).
     /// Tax is a liability, not revenue/expense, so this matches Income Statement treatment.
     /// Returns 0 for pending-conversion transactions.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveSubtotalUSD => IsPendingConversion ? 0 : (EffectiveTotalUSD - (TaxAmountUSD > 0 ? TaxAmountUSD : TaxAmount));
+    public decimal EffectiveSubtotalUSD => IsPendingConversion ? 0 : (EffectiveTotalUSD - EffectiveTaxAmountUSD);
 
     /// <summary>
     /// Gets the effective unit price in USD, falling back to UnitPrice for legacy data.

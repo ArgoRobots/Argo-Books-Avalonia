@@ -194,16 +194,25 @@ public class Invoice
     public decimal BalanceUSD { get; set; }
 
     /// <summary>
+    /// Whether this invoice was saved offline and is awaiting USD conversion.
+    /// When true, all Effective*USD properties return 0 to prevent wrong cross-currency aggregation.
+    /// </summary>
+    [JsonPropertyName("isPendingConversion")]
+    public bool IsPendingConversion { get; set; }
+
+    /// <summary>
     /// Gets the effective total in USD, falling back to Total for legacy data.
+    /// Returns 0 for pending-conversion invoices to avoid cross-currency contamination.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : Total;
+    public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (TotalUSD > 0 ? TotalUSD : Total);
 
     /// <summary>
     /// Gets the effective balance in USD, falling back to Balance for legacy data.
+    /// Returns 0 for pending-conversion invoices to avoid cross-currency contamination.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveBalanceUSD => BalanceUSD > 0 ? BalanceUSD : Balance;
+    public decimal EffectiveBalanceUSD => IsPendingConversion ? 0 : (BalanceUSD > 0 ? BalanceUSD : Balance);
 
     #endregion
 }
