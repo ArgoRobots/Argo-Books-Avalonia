@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
