@@ -343,9 +343,14 @@ public class PaymentPortalService
                 // Use invoice's known USD conversion ratio
                 amountUSD = Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2);
             }
+            else if (invoice.IsPendingConversion)
+            {
+                // Invoice is awaiting conversion — defer by setting AmountUSD to 0
+                amountUSD = 0m;
+            }
             else
             {
-                // Fallback: treat as USD for legacy data
+                // Fallback: treat as USD for legacy data where no conversion info is available
                 amountUSD = portalPayment.Amount;
             }
 

@@ -62,16 +62,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 var lineItemsTotal = s.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = s.EffectiveSubtotalUSD;
 
-                foreach (var li in s.LineItems)
+                if (lineItemsTotal != 0)
                 {
-                    var product = li.ProductId != null ? companyData.GetProduct(li.ProductId) : null;
-                    var categoryName = product?.CategoryId != null
-                        ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
-                        : "Other";
-                    categoryTotals.TryAdd(categoryName, 0);
-                    categoryTotals[categoryName] += lineItemsTotal != 0
-                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    foreach (var li in s.LineItems)
+                    {
+                        var product = li.ProductId != null ? companyData.GetProduct(li.ProductId) : null;
+                        var categoryName = product?.CategoryId != null
+                            ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
+                            : "Other";
+                        categoryTotals.TryAdd(categoryName, 0);
+                        categoryTotals[categoryName] += li.Subtotal / lineItemsTotal * subtotalUSD;
+                    }
+                }
+                else
+                {
+                    // Line items sum to 0 — allocate full transaction amount to "Other"
+                    categoryTotals.TryAdd("Other", 0);
+                    categoryTotals["Other"] += subtotalUSD;
                 }
             }
             else
@@ -150,16 +157,23 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 var lineItemsTotal = p.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = p.EffectiveSubtotalUSD;
 
-                foreach (var li in p.LineItems)
+                if (lineItemsTotal != 0)
                 {
-                    var product = li.ProductId != null ? companyData.GetProduct(li.ProductId) : null;
-                    var categoryName = product?.CategoryId != null
-                        ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
-                        : "Other";
-                    categoryTotals.TryAdd(categoryName, 0);
-                    categoryTotals[categoryName] += lineItemsTotal != 0
-                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    foreach (var li in p.LineItems)
+                    {
+                        var product = li.ProductId != null ? companyData.GetProduct(li.ProductId) : null;
+                        var categoryName = product?.CategoryId != null
+                            ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
+                            : "Other";
+                        categoryTotals.TryAdd(categoryName, 0);
+                        categoryTotals[categoryName] += li.Subtotal / lineItemsTotal * subtotalUSD;
+                    }
+                }
+                else
+                {
+                    // Line items sum to 0 — allocate full transaction amount to "Other"
+                    categoryTotals.TryAdd("Other", 0);
+                    categoryTotals["Other"] += subtotalUSD;
                 }
             }
             else
