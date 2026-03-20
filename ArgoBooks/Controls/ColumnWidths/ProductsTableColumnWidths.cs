@@ -330,6 +330,12 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         if (Math.Abs(delta) > 0.5) ResizeColumn(columnName, delta);
     }
 
+    public void ResetWidths()
+    {
+        _hasManualOverflow = false;
+        RecalculateWidths();
+    }
+
     public void RecalculateWidths()
     {
         if (_isUpdating) return;

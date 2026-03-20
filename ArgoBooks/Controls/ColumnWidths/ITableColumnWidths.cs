@@ -37,6 +37,11 @@ public interface ITableColumnWidths
     void AutoSizeColumn(string columnName);
 
     /// <summary>
+    /// Resets all column widths to their default proportional sizes.
+    /// </summary>
+    void ResetWidths();
+
+    /// <summary>
     /// Gets or sets the X position for the column visibility menu.
     /// </summary>
     double ColumnMenuX { get; set; }
