@@ -330,7 +330,10 @@ public class App : Application
                 // Persist only the sync-related files (payments, invoices, id counters, settings)
                 // so synced payments survive restarts without triggering a full company save
                 try { await CompanyManager!.SavePaymentSyncAsync(); }
-                catch { /* non-fatal */ }
+                catch (Exception ex)
+                {
+                    ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
+                }
 
                 // Refresh any already-instantiated page ViewModels so the UI reflects the new data
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -338,6 +341,20 @@ public class App : Application
                     _paymentsPageViewModel?.RefreshPaymentsCommand.Execute(null);
                     _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
+
+                    // Send "Payment Received" notification if enabled
+                    if (companyData.Settings.PaymentPortal.NotifyOnPayment)
+                    {
+                        var total = newPayments.Sum(p => p.Amount);
+                        var message = newPayments.Count == 1
+                            ? "{0} online payment received ({1:C})".TranslateFormat(newPayments.Count, total)
+                            : "{0} online payments received ({1:C})".TranslateFormat(newPayments.Count, total);
+
+                        AddNotification(
+                            "Payment Received".Translate(),
+                            message,
+                            NotificationType.Success);
+                    }
                 });
             }
         }
