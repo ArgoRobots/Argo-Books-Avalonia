@@ -7,12 +7,12 @@
 
 ## Executive Summary
 
-The Argo Books Avalonia application demonstrates solid engineering fundamentals with strong encryption, proper MVVM architecture, and good use of modern C#/.NET patterns. However, this audit identified **47 findings** across security, error handling, data integrity, business logic, UI patterns, and build configuration.
+The Argo Books Avalonia application demonstrates solid engineering fundamentals with strong encryption, proper MVVM architecture, and good use of modern C#/.NET patterns. However, this audit identified **53 findings** across security, error handling, data integrity, business logic, UI patterns, and build configuration.
 
 **Severity Breakdown:**
-- Critical: 8
-- High: 12
-- Medium: 17
+- Critical: 10
+- High: 14
+- Medium: 19
 - Low: 10
 
 ---
@@ -281,23 +281,92 @@ Anonymous lambda event handlers can never be unsubscribed, creating accumulating
 **Key instances:**
 - `ArgoBooks/ViewModels/InvoiceModalsViewModel.cs:381` - `item.PropertyChanged += (_, _) => UpdateTotals()` added per line item, never removed when items are deleted at line 391
 - `ArgoBooks/ViewModels/InvoiceModalsViewModel.cs:512` - `App.PlanStatusChanged += ...` in constructor, never unsubscribed
+- `ArgoBooks/ViewModels/TransactionModalsViewModelBase.cs:579, 596, 1049` - Same pattern across base class
+- `ArgoBooks/ViewModels/PurchaseOrdersModalsViewModel.cs:287, 359` - Same pattern
+- `ArgoBooks/ViewModels/RevenueModalsViewModel.cs:23` - Same pattern
 - `ArgoBooks/ViewModels/ReceiptsPageViewModel.cs:~567` - Subscribes to `item.PropertyChanged` on every `RefreshReceipts` call, accumulating subscriptions
 
-**Recommendation:** Use named handler methods and unsubscribe them when items are removed or the ViewModel is disposed.
+**Recommendation:** Use named handler methods and unsubscribe them when items are removed or the ViewModel is disposed:
+```csharp
+private void RemoveLineItem(LineItemDisplayModel? item)
+{
+    if (item != null)
+    {
+        item.PropertyChanged -= UpdateTotalsHandler; // UNSUBSCRIBE FIRST
+        LineItems.Remove(item);
+        UpdateTotals();
+    }
+}
+```
 
-### 5.2 [HIGH] Missing Event Cleanup in Code-Behind
+### 5.2 [CRITICAL] ChartExpandOverlay Event Handlers Never Unsubscribed
+
+**File:** `ArgoBooks/Controls/ChartExpandOverlay.axaml.cs:267-270`
+
+PropertyChanged handlers subscribed to `ChartEmptyState` controls are never removed when the overlay closes or page unloads. Each chart panel decoration accumulates subscriptions.
+
+### 5.3 [HIGH] Static Handler Dictionary Never Cleaned Up
+
+**File:** `ArgoBooks/Helpers/ModalAnimationBehavior.cs:80-90, 108`
+
+A `static Dictionary<Border, PropertyChangedEventHandler>` stores handlers. Entries accumulate if borders are recreated frequently. No mechanism exists to clear stale entries.
+
+**Recommendation:** Use `ConditionalWeakTable` or `WeakReference` for border keys.
+
+### 5.4 [HIGH] Missing Event Cleanup in Code-Behind (10+ files)
 
 Several views subscribe to events in `OnLoaded`/constructor without unsubscribing in `OnUnloaded`:
 
+**Views:**
 - `ArgoBooks/Views/AppShell.axaml.cs:31-35, 101`
-- `ArgoBooks/Views/ReportsPage.axaml.cs:76`
+- `ArgoBooks/Views/ReportsPage.axaml.cs:76, 105-119` - Multiple handlers subscribed, incomplete unsubscription (may unsubscribe to wrong VM instance if DataContext changed)
 - `ArgoBooks/Views/MainWindow.axaml.cs:30, 35, 254`
-- `ArgoBooks/Modals/ReceiptViewerModal.axaml.cs` - No `OnUnloaded` at all
-- `ArgoBooks/Modals/ReceiptsModals.axaml.cs` - No `OnUnloaded` at all
+- `ArgoBooks/Views/DashboardPage.axaml.cs` - DataContextChanged handler, no OnUnloaded
+- `ArgoBooks/Views/AnalyticsPage.axaml.cs` - DataContextChanged handler, no OnUnloaded
 
-### 5.3 [HIGH] Only 2 ViewModels Implement IDisposable
+**Modals (no OnUnloaded at all):**
+- `ArgoBooks/Modals/ReceiptViewerModal.axaml.cs`
+- `ArgoBooks/Modals/ReceiptsModals.axaml.cs:59-62`
+- `ArgoBooks/Modals/AppTourOverlay.axaml.cs:39`
+- `ArgoBooks/Modals/CategoriesTutorialOverlay.axaml.cs:37`
+- `ArgoBooks/Modals/ProductsTutorialOverlay.axaml.cs:37`
+- `ArgoBooks/Modals/UpgradeModal.axaml.cs:35`
+- `ArgoBooks/Modals/PasswordPromptModal.axaml.cs:29`
+- `ArgoBooks/Modals/PastPredictionsModal.axaml.cs:21`
+
+**Controls:**
+- `ArgoBooks/Controls/Header.axaml.cs:367-368` - No OnUnloaded to unsubscribe PropertyChanged
+- `ArgoBooks/Controls/ArgoTable/ArgoTable.axaml.cs:535-538` - Collection handlers not cleaned on unload
+
+**Panels (moderate risk - cleanup only on DataContext change, not unload):**
+- `ArgoBooks/Panels/CompanySwitcherPanel.axaml.cs`
+- `ArgoBooks/Panels/NotificationPanel.axaml.cs`
+- `ArgoBooks/Panels/FileMenuPanel.axaml.cs`
+- `ArgoBooks/Panels/UserPanel.axaml.cs`
+- `ArgoBooks/Panels/HelpPanel.axaml.cs`
+
+### 5.5 [HIGH] Only 2 ViewModels Implement IDisposable
 
 Despite many ViewModels holding event subscriptions, only 2 implement `IDisposable`. This means there is no cleanup path for most ViewModel event subscriptions.
+
+### 5.6 [MEDIUM] MVVM Violation - Significant Logic in ReportsPage Code-Behind
+
+**File:** `ArgoBooks/Views/ReportsPage.axaml.cs`
+
+The code-behind contains substantial logic that should be in the ViewModel or a service:
+- Zoom calculations (lines 430-462, 483-523)
+- Pan calculations (lines 593-638, 641-699)
+- Canvas refresh logic (lines 245-249)
+- Element sizing logic (lines 798-894)
+
+This makes testing difficult and tightly couples view logic to the code-behind.
+
+### 5.7 [MEDIUM] Dispatcher.UIThread.Post Without Error Handling
+
+Multiple files use `Dispatcher.UIThread.Post` without exception handling in the lambda:
+- `ArgoBooks/Views/ReportsPage.axaml.cs:447`
+- `ArgoBooks/Controls/ChartExpandOverlay.axaml.cs:121, 131`
+- `ArgoBooks/Panels/QuickActionsPanel.axaml.cs:58, 77`
 
 ---
 
@@ -363,29 +432,34 @@ The following areas demonstrate strong engineering practices:
 ## Prioritized Remediation Plan
 
 ### Phase 1 - Critical (Immediate)
-1. Add try-catch to all `async void` event handlers
-2. Fix currency fallback logic (`> 0` checks) to use nullable types
+1. Add try-catch to all `async void` event handlers (49 methods)
+2. Fix currency fallback logic (`> 0` checks) to use nullable types or `IsConverted` flag
 3. Add iteration limit to `while(true)` loop in `TableColumnWidthsBase`
-4. Fix memory leaks from anonymous event subscriptions in InvoiceModalsViewModel and ReceiptsPageViewModel
+4. Fix memory leaks from anonymous event subscriptions in InvoiceModalsViewModel, TransactionModalsViewModelBase, PurchaseOrdersModalsViewModel, RevenueModalsViewModel, and ReceiptsPageViewModel
+5. Fix ChartExpandOverlay event handler leak
 
 ### Phase 2 - High (Near-term)
-5. Add URL validation before `Process.Start` calls
-6. Implement `IDisposable` on ViewModels with event subscriptions
-7. Add missing `OnUnloaded` cleanup in view code-behind files
-8. Add validation methods for Payment, Accountant, RecurringInvoice
-9. Fix integer overflow in progress calculation
-10. Consolidate duplicate variance calculation
+6. Add URL validation before `Process.Start` calls (11 instances)
+7. Implement `IDisposable` on ViewModels with event subscriptions
+8. Add missing `OnUnloaded` cleanup in 10+ view/modal code-behind files
+9. Replace static `Dictionary<Border, ...>` with `ConditionalWeakTable` in ModalAnimationBehavior
+10. Add validation methods for Payment, Accountant, RecurringInvoice
+11. Fix integer overflow in progress calculation
+12. Consolidate duplicate variance calculation
+13. Fix `.Result` access in EditCompanyModalViewModel (use `await` instead)
 
 ### Phase 3 - Medium (Planned)
-11. Enhance path traversal protection with `Path.GetFullPath()` validation
-12. Switch to thread-safe collections or add synchronization in CompanyData
-13. Remove unused NuGet packages from Directory.Packages.props
-14. Resolve WebView2/WindowsBase version conflict
-15. Upgrade LiveCharts to stable release
-16. Add explicit `IsConverted` flag for currency conversion
+14. Enhance path traversal protection with `Path.GetFullPath()` validation
+15. Switch to thread-safe collections or add synchronization in CompanyData
+16. Remove unused NuGet packages from Directory.Packages.props
+17. Resolve WebView2/WindowsBase version conflict
+18. Upgrade LiveCharts to stable release
+19. Add explicit `IsConverted` flag for currency conversion
+20. Move ReportsPage zoom/pan logic from code-behind to ViewModel/service
+21. Add error handling to `Dispatcher.UIThread.Post` lambdas
 
 ### Phase 4 - Low (Backlog)
-17. Migrate deprecated drag-and-drop API
-18. Evaluate Excel library consolidation
-19. Set up CI/CD pipeline
-20. Make forecasting parameters configurable
+22. Migrate deprecated drag-and-drop API
+23. Evaluate Excel library consolidation
+24. Set up CI/CD pipeline
+25. Make forecasting parameters configurable
