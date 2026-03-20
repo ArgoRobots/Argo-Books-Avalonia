@@ -490,7 +490,11 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             }
             _originalCurrency = SelectedCurrency;
 
-            // Preload exchange rates for all transaction dates so display conversions are exact
+            CurrencyService.NotifyCurrencyChanged();
+
+            // Preload exchange rates for remaining transaction dates in the background.
+            // The critical rates (today + last 30 days) were already loaded during the
+            // pre-save validation. Fire-and-forget so the modal closes immediately.
             if (!string.Equals(newCurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
             {
                 var exchangeService = ExchangeRateService.Instance;
@@ -500,11 +504,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                     var transactionDates = companyData.Expenses.Select(e => e.Date)
                         .Concat(companyData.Revenues.Select(r => r.Date))
                         .Append(DateTime.Today);
-                    await exchangeService.PreloadRatesAsync(transactionDates);
+                    _ = exchangeService.PreloadRatesAsync(transactionDates);
                 }
             }
-
-            CurrencyService.NotifyCurrencyChanged();
         }
 
         CompanySaved?.Invoke(this, new CompanyEditedEventArgs
