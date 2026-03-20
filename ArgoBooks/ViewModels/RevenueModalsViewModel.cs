@@ -580,8 +580,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         if (!string.IsNullOrEmpty(ReceiptFilePath))
         {
             receipt = CreateReceipt(companyData, revenueId, "Revenue", SelectedCustomer?.Name ?? "");
-            revenue.ReceiptId = receipt.Id;
-            companyData.Receipts.Add(receipt);
+            if (receipt != null)
+            {
+                revenue.ReceiptId = receipt.Id;
+                companyData.Receipts.Add(receipt);
+            }
         }
 
         var capturedReceipt = receipt;
@@ -691,8 +694,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         if (!string.IsNullOrEmpty(ReceiptFilePath) && string.IsNullOrEmpty(original.ReceiptId))
         {
             newReceipt = CreateReceipt(companyData, revenue.Id, "Revenue", SelectedCustomer?.Name ?? "");
-            revenue.ReceiptId = newReceipt.Id;
-            companyData.Receipts.Add(newReceipt);
+            if (newReceipt != null)
+            {
+                revenue.ReceiptId = newReceipt.Id;
+                companyData.Receipts.Add(newReceipt);
+            }
         }
 
         var capturedNewReceipt = newReceipt;
