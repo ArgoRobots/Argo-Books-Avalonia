@@ -13,6 +13,7 @@ namespace ArgoBooks.Core.Services;
 public class ExchangeRateService
 {
     private const string BaseUrl = "https://argorobots.com/api/exchange-rates.php";
+    private const string BatchUrl = "https://argorobots.com/api/exchange-rates-batch.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
 
     private readonly ExchangeRateCache _cache;
@@ -42,7 +43,7 @@ public class ExchangeRateService
     public ExchangeRateService(IPlatformService platformService, HttpClient httpClient, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _httpClient = httpClient;
-        _httpClient.Timeout = TimeSpan.FromSeconds(10);
+        _httpClient.Timeout = TimeSpan.FromSeconds(120);
         _cache = new ExchangeRateCache(platformService);
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
@@ -180,49 +181,113 @@ public class ExchangeRateService
     public async Task PreloadRatesAsync(IEnumerable<DateTime> dates, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         var uniqueDates = dates.Select(d => d.Date).Distinct().ToList();
-        var loaded = 0;
         var total = uniqueDates.Count;
+        if (total == 0) return;
 
-        // Filter out already-cached dates first
+        // Filter out already-cached dates
         var datesToFetch = new List<DateTime>();
+        var cached = 0;
         foreach (var date in uniqueDates)
         {
             if (_cache.TryGetRate(BaseCurrency, "EUR", date, out _))
+                cached++;
+            else
+                datesToFetch.Add(date);
+        }
+        progress?.Report(cached * 100 / total);
+
+        if (datesToFetch.Count == 0)
+        {
+            progress?.Report(100);
+            return;
+        }
+
+        // Try batch endpoint first (one POST for all dates)
+        var fetched = await FetchBatchRatesAsync(datesToFetch, cancellationToken);
+        var failedDates = new List<DateTime>();
+
+        foreach (var date in datesToFetch)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var dateKey = date.ToString("yyyy-MM-dd");
+            if (fetched != null && fetched.TryGetValue(dateKey, out var rates))
             {
-                loaded++;
+                _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                cached++;
+                progress?.Report(cached * 100 / total);
             }
             else
             {
-                datesToFetch.Add(date);
+                failedDates.Add(date);
             }
         }
-        if (total > 0)
-            progress?.Report(loaded * 100 / total);
 
-        // Fetch uncached dates with limited concurrency
-        using var semaphore = new SemaphoreSlim(5);
-        var tasks = datesToFetch.Select(async date =>
+        // Fall back to single-date requests for any dates the batch missed
+        foreach (var date in failedDates)
         {
-            await semaphore.WaitAsync(cancellationToken);
-            try
+            cancellationToken.ThrowIfCancellationRequested();
+            var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
+            if (rates != null)
             {
-                var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
-                if (rates != null)
-                {
-                    _cache.SetRatesFromBase(rates, BaseCurrency, date);
-                }
+                _cache.SetRatesFromBase(rates, BaseCurrency, date);
             }
-            finally
-            {
-                semaphore.Release();
-                var current = Interlocked.Increment(ref loaded);
-                progress?.Report(current * 100 / total);
-            }
-        }).ToList();
-
-        await Task.WhenAll(tasks);
+            cached++;
+            progress?.Report(cached * 100 / total);
+        }
 
         await _cache.SaveAsync();
+    }
+
+    /// <summary>
+    /// Fetches exchange rates for multiple dates in a single batch request.
+    /// Returns a dictionary mapping date strings to their rate dictionaries, or null on failure.
+    /// </summary>
+    private async Task<Dictionary<string, Dictionary<string, decimal>>?> FetchBatchRatesAsync(
+        List<DateTime> dates, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
+
+        try
+        {
+            var dateStrings = dates.Select(d => d.ToString("yyyy-MM-dd")).ToList();
+            var requestBody = new { dates = dateStrings };
+            var json = JsonSerializer.Serialize(requestBody);
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(BatchUrl, content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _errorLogger?.LogError($"Batch exchange rate API returned {response.StatusCode}", ErrorCategory.Api);
+                return null;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<BatchExchangeRatesResponse>(cancellationToken: cancellationToken);
+            if (result?.Success == true && result.Results != null)
+            {
+                success = true;
+                return result.Results;
+            }
+
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Failed to fetch batch exchange rates");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.OpenExchangeRates,
+                stopwatch.ElapsedMilliseconds,
+                success);
+        }
     }
 
     /// <summary>
@@ -310,5 +375,23 @@ public class ExchangeRateService
 
         [JsonPropertyName("rates")]
         public Dictionary<string, decimal>? Rates { get; init; }
+    }
+
+    /// <summary>
+    /// Response from the batch exchange rates endpoint.
+    /// </summary>
+    private class BatchExchangeRatesResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; init; }
+
+        [JsonPropertyName("base")]
+        public string? Base { get; init; }
+
+        [JsonPropertyName("results")]
+        public Dictionary<string, Dictionary<string, decimal>>? Results { get; init; }
+
+        [JsonPropertyName("failed")]
+        public List<string>? Failed { get; init; }
     }
 }
