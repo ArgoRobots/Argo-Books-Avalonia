@@ -1,8 +1,6 @@
-using System.Linq;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
-using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
