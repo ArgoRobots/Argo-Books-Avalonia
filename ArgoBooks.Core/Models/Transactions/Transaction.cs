@@ -192,11 +192,16 @@ public abstract class Transaction
     public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (TotalUSD > 0 ? TotalUSD : Total);
 
     /// <summary>
-    /// Gets the effective tax amount in USD, falling back to TaxAmount only for legacy USD data.
+    /// Gets the effective tax amount in USD. Uses TaxAmountUSD when available,
+    /// derives from conversion ratio (TaxAmount * TotalUSD/Total) for foreign-currency
+    /// transactions missing TaxAmountUSD, or falls back to TaxAmount for legacy USD data.
     /// Returns 0 for pending-conversion transactions.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTaxAmountUSD => IsPendingConversion ? 0 : (TaxAmountUSD > 0 ? TaxAmountUSD : (TotalUSD > 0 ? 0 : TaxAmount));
+    public decimal EffectiveTaxAmountUSD => IsPendingConversion ? 0
+        : TaxAmountUSD > 0 ? TaxAmountUSD
+        : TotalUSD > 0 && Total > 0 ? Math.Round(TaxAmount * (TotalUSD / Total), 2)
+        : TaxAmount;
 
     /// <summary>
     /// Gets the effective pre-tax subtotal in USD (excludes tax).
