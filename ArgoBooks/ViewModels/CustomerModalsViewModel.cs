@@ -567,54 +567,61 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(CustomerDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null)
-            return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Customer".Translate(),
-            Message = "Are you sure you want to delete this customer?\n\n{0}".TranslateFormat(item.Name),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null)
+                return;
 
-        if (result != ConfirmationResult.Primary)
-            return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null)
+                return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Customer".Translate(),
+                Message = "Are you sure you want to delete this customer?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var customer = companyData.Customers.FirstOrDefault(c => c.Id == item.Id);
-        if (customer != null)
-        {
-            var deletedCustomer = customer;
-            App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
-            companyData.Customers.Remove(customer);
-            companyData.MarkAsModified();
+            if (result != ConfirmationResult.Primary)
+                return;
 
-            App.UndoRedoManager.RecordAction(new DelegateAction(
-                $"Delete customer '{deletedCustomer.Name}'",
-                () =>
-                {
-                    companyData.Customers.Add(deletedCustomer);
-                    companyData.MarkAsModified();
-                    CustomerDeleted?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.Customers.Remove(deletedCustomer);
-                    companyData.MarkAsModified();
-                    CustomerDeleted?.Invoke(this, EventArgs.Empty);
-                }));
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return;
+
+            var customer = companyData.Customers.FirstOrDefault(c => c.Id == item.Id);
+            if (customer != null)
+            {
+                var deletedCustomer = customer;
+                App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
+                companyData.Customers.Remove(customer);
+                companyData.MarkAsModified();
+
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Delete customer '{deletedCustomer.Name}'",
+                    () =>
+                    {
+                        companyData.Customers.Add(deletedCustomer);
+                        companyData.MarkAsModified();
+                        CustomerDeleted?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        companyData.Customers.Remove(deletedCustomer);
+                        companyData.MarkAsModified();
+                        CustomerDeleted?.Invoke(this, EventArgs.Empty);
+                    }));
+            }
+
+            CustomerDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        CustomerDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.OpenDeleteConfirm");
+        }
     }
 
     #endregion

@@ -166,7 +166,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
                 if (totalBytes > 0)
                 {
-                    var progress = (int)(receivedBytes * 100 / totalBytes);
+                    var progress = (int)((long)receivedBytes * 100 / totalBytes);
                     if (progress != lastReportedProgress)
                     {
                         lastReportedProgress = progress;
@@ -186,7 +186,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                 if (verificationResult != ValidationResult.Valid)
                 {
                     // Delete the unverified file
-                    try { File.Delete(filePath); } catch { }
+                    try { File.Delete(filePath); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                     throw new CryptographicException(
                         "Downloaded update failed Ed25519 signature verification. The file may have been tampered with.");
                 }
@@ -194,7 +194,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             else
             {
                 // SecurityMode.Strict requires a signature - reject unsigned updates
-                try { File.Delete(filePath); } catch { }
+                try { File.Delete(filePath); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                 throw new CryptographicException(
                     "Update has no signature. Unsigned updates are rejected in strict security mode.");
             }

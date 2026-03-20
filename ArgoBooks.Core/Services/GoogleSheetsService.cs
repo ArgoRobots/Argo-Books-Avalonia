@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
 
@@ -204,19 +204,7 @@ public class GoogleSheetsService
     /// </summary>
     public static bool OpenInBrowser(string url)
     {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        return UrlHelper.SafeOpenUrl(url);
     }
 
     private async Task<string?> SendExportRequestAsync(

@@ -193,103 +193,117 @@ public static partial class NumericInputBehavior
     // Paste handlers that sanitize clipboard content
     private static async void OnIntegerPastingFromClipboard(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox textBox)
-            return;
-
-        e.Handled = true;
-
-        var clipboard = TopLevel.GetTopLevel(textBox)?.Clipboard;
-        if (clipboard == null)
-            return;
-
-        var clipboardText = await clipboard.TryGetTextAsync();
-        if (string.IsNullOrEmpty(clipboardText))
-            return;
-
-        // Filter to only digits
-        var filteredText = new string(clipboardText.Where(char.IsDigit).ToArray());
-        if (string.IsNullOrEmpty(filteredText))
-            return;
-
-        // Insert the filtered text at the caret position
-        var currentText = textBox.Text ?? string.Empty;
-        var selectionStart = textBox.SelectionStart;
-        var selectionEnd = textBox.SelectionEnd;
-
-        string newText;
-        if (selectionEnd > selectionStart)
+        try
         {
-            newText = currentText.Substring(0, selectionStart) + filteredText + currentText.Substring(selectionEnd);
-        }
-        else
-        {
-            var caretIndex = textBox.CaretIndex;
-            newText = currentText.Substring(0, caretIndex) + filteredText + currentText.Substring(caretIndex);
-        }
+            if (sender is not TextBox textBox)
+                return;
 
-        textBox.Text = newText;
-        textBox.CaretIndex = selectionStart + filteredText.Length;
+            e.Handled = true;
+
+            var clipboard = TopLevel.GetTopLevel(textBox)?.Clipboard;
+            if (clipboard == null)
+                return;
+
+            var clipboardText = await clipboard.TryGetTextAsync();
+            if (string.IsNullOrEmpty(clipboardText))
+                return;
+
+            // Filter to only digits
+            var filteredText = new string(clipboardText.Where(char.IsDigit).ToArray());
+            if (string.IsNullOrEmpty(filteredText))
+                return;
+
+            // Insert the filtered text at the caret position
+            var currentText = textBox.Text ?? string.Empty;
+            var selectionStart = textBox.SelectionStart;
+            var selectionEnd = textBox.SelectionEnd;
+
+            string newText;
+            if (selectionEnd > selectionStart)
+            {
+                newText = currentText.Substring(0, selectionStart) + filteredText + currentText.Substring(selectionEnd);
+            }
+            else
+            {
+                var caretIndex = textBox.CaretIndex;
+                newText = currentText.Substring(0, caretIndex) + filteredText + currentText.Substring(caretIndex);
+            }
+
+            textBox.Text = newText;
+            textBox.CaretIndex = selectionStart + filteredText.Length;
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnIntegerPastingFromClipboard");
+        }
     }
 
     private static async void OnDecimalPastingFromClipboard(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox textBox)
-            return;
-
-        e.Handled = true;
-
-        var clipboard = TopLevel.GetTopLevel(textBox)?.Clipboard;
-        if (clipboard == null)
-            return;
-
-        var clipboardText = await clipboard.TryGetTextAsync();
-        if (string.IsNullOrEmpty(clipboardText))
-            return;
-
-        var currentText = textBox.Text ?? string.Empty;
-        var selectionStart = textBox.SelectionStart;
-        var selectionEnd = textBox.SelectionEnd;
-
-        // Check if current text (excluding selection) already has a decimal point
-        var textWithoutSelection = selectionEnd > selectionStart
-            ? currentText.Substring(0, selectionStart) + currentText.Substring(selectionEnd)
-            : currentText;
-        var hasExistingDecimal = textWithoutSelection.Contains('.');
-
-        // Filter to only digits and at most one decimal point
-        var filteredChars = new List<char>();
-        var hasDecimalInPaste = false;
-        foreach (var c in clipboardText)
+        try
         {
-            if (char.IsDigit(c))
+            if (sender is not TextBox textBox)
+                return;
+
+            e.Handled = true;
+
+            var clipboard = TopLevel.GetTopLevel(textBox)?.Clipboard;
+            if (clipboard == null)
+                return;
+
+            var clipboardText = await clipboard.TryGetTextAsync();
+            if (string.IsNullOrEmpty(clipboardText))
+                return;
+
+            var currentText = textBox.Text ?? string.Empty;
+            var selectionStart = textBox.SelectionStart;
+            var selectionEnd = textBox.SelectionEnd;
+
+            // Check if current text (excluding selection) already has a decimal point
+            var textWithoutSelection = selectionEnd > selectionStart
+                ? currentText.Substring(0, selectionStart) + currentText.Substring(selectionEnd)
+                : currentText;
+            var hasExistingDecimal = textWithoutSelection.Contains('.');
+
+            // Filter to only digits and at most one decimal point
+            var filteredChars = new List<char>();
+            var hasDecimalInPaste = false;
+            foreach (var c in clipboardText)
             {
-                filteredChars.Add(c);
+                if (char.IsDigit(c))
+                {
+                    filteredChars.Add(c);
+                }
+                else if (c == '.' && !hasDecimalInPaste && !hasExistingDecimal)
+                {
+                    filteredChars.Add(c);
+                    hasDecimalInPaste = true;
+                }
             }
-            else if (c == '.' && !hasDecimalInPaste && !hasExistingDecimal)
+
+            var filteredText = new string(filteredChars.ToArray());
+            if (string.IsNullOrEmpty(filteredText))
+                return;
+
+            // Insert the filtered text at the caret position
+            string newText;
+            if (selectionEnd > selectionStart)
             {
-                filteredChars.Add(c);
-                hasDecimalInPaste = true;
+                newText = currentText.Substring(0, selectionStart) + filteredText + currentText.Substring(selectionEnd);
             }
+            else
+            {
+                var caretIndex = textBox.CaretIndex;
+                newText = currentText.Substring(0, caretIndex) + filteredText + currentText.Substring(caretIndex);
+            }
+
+            textBox.Text = newText;
+            textBox.CaretIndex = selectionStart + filteredText.Length;
         }
-
-        var filteredText = new string(filteredChars.ToArray());
-        if (string.IsNullOrEmpty(filteredText))
-            return;
-
-        // Insert the filtered text at the caret position
-        string newText;
-        if (selectionEnd > selectionStart)
+        catch (Exception ex)
         {
-            newText = currentText.Substring(0, selectionStart) + filteredText + currentText.Substring(selectionEnd);
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnDecimalPastingFromClipboard");
         }
-        else
-        {
-            var caretIndex = textBox.CaretIndex;
-            newText = currentText.Substring(0, caretIndex) + filteredText + currentText.Substring(caretIndex);
-        }
-
-        textBox.Text = newText;
-        textBox.CaretIndex = selectionStart + filteredText.Length;
     }
 
     [GeneratedRegex(@"^[0-9]*$")]

@@ -185,11 +185,18 @@ public abstract class Transaction
     public bool IsPendingConversion { get; set; }
 
     /// <summary>
-    /// Gets the effective total in USD, falling back to Total for legacy data.
+    /// Whether this transaction's original currency is USD (including legacy data which defaults to USD).
+    /// </summary>
+    [JsonIgnore]
+    private bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Gets the effective total in USD. For USD transactions (including legacy data), returns Total directly.
+    /// For non-USD transactions, returns the converted TotalUSD value.
     /// Returns 0 for pending-conversion transactions to avoid cross-currency contamination.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (TotalUSD > 0 ? TotalUSD : Total);
+    public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : IsUSD ? Total : TotalUSD;
 
     /// <summary>
     /// Gets the effective tax amount in USD. Uses TaxAmountUSD when available,
@@ -212,18 +219,20 @@ public abstract class Transaction
     public decimal EffectiveSubtotalUSD => IsPendingConversion ? 0 : (EffectiveTotalUSD - EffectiveTaxAmountUSD);
 
     /// <summary>
-    /// Gets the effective unit price in USD, falling back to UnitPrice for legacy data.
+    /// Gets the effective unit price in USD. For USD transactions, returns UnitPrice directly.
+    /// For non-USD transactions, returns the converted UnitPriceUSD value.
     /// Returns 0 for pending-conversion transactions.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveUnitPriceUSD => IsPendingConversion ? 0 : (UnitPriceUSD > 0 ? UnitPriceUSD : UnitPrice);
+    public decimal EffectiveUnitPriceUSD => IsPendingConversion ? 0 : IsUSD ? UnitPrice : UnitPriceUSD;
 
     /// <summary>
-    /// Gets the effective shipping cost in USD, falling back to ShippingCost for legacy data.
+    /// Gets the effective shipping cost in USD. For USD transactions, returns ShippingCost directly.
+    /// For non-USD transactions, returns the converted ShippingCostUSD value.
     /// Returns 0 for pending-conversion transactions.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveShippingCostUSD => IsPendingConversion ? 0 : (ShippingCostUSD > 0 ? ShippingCostUSD : ShippingCost);
+    public decimal EffectiveShippingCostUSD => IsPendingConversion ? 0 : IsUSD ? ShippingCost : ShippingCostUSD;
 
     #endregion
 }

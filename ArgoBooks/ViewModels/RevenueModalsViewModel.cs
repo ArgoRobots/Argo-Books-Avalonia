@@ -20,11 +20,13 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     public RevenueModalsViewModel()
     {
         // Reset ModalPaid to true when opening the add modal
-        PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(IsAddEditModalOpen) && IsAddEditModalOpen && !IsEditMode)
-                ModalPaid = true;
-        };
+        PropertyChanged += OnRevenuePropertyChanged;
+    }
+
+    private void OnRevenuePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IsAddEditModalOpen) && IsAddEditModalOpen && !IsEditMode)
+            ModalPaid = true;
     }
 
     #region Abstract Property Implementations
@@ -204,80 +206,87 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     public async void OpenDeleteConfirm(RevenueDisplayItem? item)
     {
-        if (item == null) return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        // Block deletion if revenue is linked to a portal-published invoice
-        var companyData = App.CompanyManager?.CompanyData;
-        if (!string.IsNullOrEmpty(item.InvoiceId))
+        try
         {
-            var linkedInvoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.InvoiceId);
-            if (linkedInvoice?.History.Any(h => h.Action == "Published to Portal") == true)
+            if (item == null) return;
+
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
+
+            // Block deletion if revenue is linked to a portal-published invoice
+            var companyData = App.CompanyManager?.CompanyData;
+            if (!string.IsNullOrEmpty(item.InvoiceId))
             {
-                await dialog.ShowAsync(new ConfirmationDialogOptions
+                var linkedInvoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.InvoiceId);
+                if (linkedInvoice?.History.Any(h => h.Action == "Published to Portal") == true)
                 {
-                    Title = "Cannot Delete Revenue".Translate(),
-                    Message = "This revenue is linked to an invoice that has been published to the payment portal and cannot be deleted.".Translate(),
-                    PrimaryButtonText = "OK".Translate(),
-                    CancelButtonText = null,
-                    IsPrimaryDestructive = false
-                });
-                return;
+                    await dialog.ShowAsync(new ConfirmationDialogOptions
+                    {
+                        Title = "Cannot Delete Revenue".Translate(),
+                        Message = "This revenue is linked to an invoice that has been published to the payment portal and cannot be deleted.".Translate(),
+                        PrimaryButtonText = "OK".Translate(),
+                        CancelButtonText = null,
+                        IsPrimaryDestructive = false
+                    });
+                    return;
+                }
             }
-        }
 
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-        {
-            Title = "Delete Revenue",
-            Message = $"Are you sure you want to delete this revenue?\n\nID: {item.Id}\nProduct: {item.ProductDescription}\nAmount: {item.TotalFormatted}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
-            IsPrimaryDestructive = true
-        });
-
-        if (result != ConfirmationResult.Primary) return;
-
-        var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
-        if (revenue == null) return;
-
-        // Find and remove associated receipt
-        Receipt? deletedReceipt = null;
-        if (!string.IsNullOrEmpty(revenue.ReceiptId))
-        {
-            deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId);
-            if (deletedReceipt != null)
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
-                companyData?.Receipts.Remove(deletedReceipt);
-            }
-        }
-
-        var deletedRevenue = revenue;
-        App.EventLogService?.CapturePreDeletionSnapshot("Revenue", deletedRevenue.Id);
-        var capturedReceipt = deletedReceipt;
-        var action = new DelegateAction(
-            $"Delete revenue {revenue.Id}",
-            () =>
-            {
-                companyData?.Revenues.Add(deletedRevenue);
-                if (capturedReceipt != null)
-                    companyData?.Receipts.Add(capturedReceipt);
-                RaiseTransactionDeleted();
-            },
-            () =>
-            {
-                companyData?.Revenues.Remove(deletedRevenue);
-                if (capturedReceipt != null)
-                    companyData?.Receipts.Remove(capturedReceipt);
-                RaiseTransactionDeleted();
+                Title = "Delete Revenue",
+                Message = $"Are you sure you want to delete this revenue?\n\nID: {item.Id}\nProduct: {item.ProductDescription}\nAmount: {item.TotalFormatted}",
+                PrimaryButtonText = "Delete",
+                CancelButtonText = "Cancel",
+                IsPrimaryDestructive = true
             });
 
-        companyData?.Revenues.Remove(revenue);
-        App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
+            if (result != ConfirmationResult.Primary) return;
 
-        RaiseTransactionDeleted();
+            var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
+            if (revenue == null) return;
+
+            // Find and remove associated receipt
+            Receipt? deletedReceipt = null;
+            if (!string.IsNullOrEmpty(revenue.ReceiptId))
+            {
+                deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId);
+                if (deletedReceipt != null)
+                {
+                    companyData?.Receipts.Remove(deletedReceipt);
+                }
+            }
+
+            var deletedRevenue = revenue;
+            App.EventLogService?.CapturePreDeletionSnapshot("Revenue", deletedRevenue.Id);
+            var capturedReceipt = deletedReceipt;
+            var action = new DelegateAction(
+                $"Delete revenue {revenue.Id}",
+                () =>
+                {
+                    companyData?.Revenues.Add(deletedRevenue);
+                    if (capturedReceipt != null)
+                        companyData?.Receipts.Add(capturedReceipt);
+                    RaiseTransactionDeleted();
+                },
+                () =>
+                {
+                    companyData?.Revenues.Remove(deletedRevenue);
+                    if (capturedReceipt != null)
+                        companyData?.Receipts.Remove(capturedReceipt);
+                    RaiseTransactionDeleted();
+                });
+
+            companyData?.Revenues.Remove(revenue);
+            App.UndoRedoManager.RecordAction(action);
+            App.CompanyManager?.MarkAsChanged();
+
+            RaiseTransactionDeleted();
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Revenue.OpenDeleteConfirm");
+        }
     }
 
     #endregion
@@ -731,20 +740,21 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionSaved();
     }
 
-    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
+    private Receipt? CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
     {
+        if (string.IsNullOrEmpty(ReceiptFilePath)) return null;
+
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
-
-        var fileInfo = new FileInfo(ReceiptFilePath!);
-        var fileType = GetFileType(ReceiptFilePath!);
+        var fileInfo = new FileInfo(ReceiptFilePath);
+        var fileType = GetFileType(ReceiptFilePath);
 
         string? fileData = null;
         if (fileInfo.Exists)
         {
             try
             {
-                var bytes = File.ReadAllBytes(ReceiptFilePath!);
+                var bytes = File.ReadAllBytes(ReceiptFilePath);
                 fileData = Convert.ToBase64String(bytes);
             }
             catch (Exception ex)

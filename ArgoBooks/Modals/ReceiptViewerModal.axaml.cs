@@ -27,6 +27,7 @@ public partial class ReceiptViewerModal : UserControl
     private TextBlock? _zoomPercentText;
     private bool _eventsSubscribed;
     private bool _updatingSlider;
+    private ReceiptViewerModalViewModel? _subscribedVm;
 
     // Zoom settings
     private double _zoomLevel = 1.0;
@@ -66,7 +67,20 @@ public partial class ReceiptViewerModal : UserControl
         if (DataContext is ReceiptViewerModalViewModel vm && !_eventsSubscribed)
         {
             _eventsSubscribed = true;
+            _subscribedVm = vm;
             vm.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_subscribedVm != null)
+        {
+            _subscribedVm.PropertyChanged -= OnViewModelPropertyChanged;
+            _subscribedVm = null;
+            _eventsSubscribed = false;
         }
     }
 

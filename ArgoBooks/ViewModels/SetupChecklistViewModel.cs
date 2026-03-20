@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -225,17 +225,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
     [RelayCommand]
     private void OpenUpgradeUrl()
     {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://www.argorobots.com/upgrade/",
-                UseShellExecute = true
-            });
-        }
-        catch
-        {
-            // Ignore errors opening URL
-        }
+        UrlHelper.SafeOpenUrl("https://www.argorobots.com/upgrade/");
     }
 }

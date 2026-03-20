@@ -194,6 +194,12 @@ public class Invoice
     public decimal BalanceUSD { get; set; }
 
     /// <summary>
+    /// Whether this invoice's original currency is USD (including legacy data which defaults to USD).
+    /// </summary>
+    [JsonIgnore]
+    private bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Whether this invoice was saved offline and is awaiting USD conversion.
     /// When true, all Effective*USD properties return 0 to prevent wrong cross-currency aggregation.
     /// </summary>
@@ -201,18 +207,20 @@ public class Invoice
     public bool IsPendingConversion { get; set; }
 
     /// <summary>
-    /// Gets the effective total in USD, falling back to Total for legacy data.
-    /// Returns 0 for pending-conversion invoices to avoid cross-currency contamination.
+    /// Gets the effective total in USD. For USD invoices (including legacy data), returns Total directly.
+    /// For non-USD invoices, returns the converted TotalUSD value.
+    /// Returns 0 for pending-conversion invoices.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (TotalUSD > 0 ? TotalUSD : Total);
+    public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (IsUSD ? Total : TotalUSD);
 
     /// <summary>
-    /// Gets the effective balance in USD, falling back to Balance for legacy data.
-    /// Returns 0 for pending-conversion invoices to avoid cross-currency contamination.
+    /// Gets the effective balance in USD. For USD invoices (including legacy data), returns Balance directly.
+    /// For non-USD invoices, returns the converted BalanceUSD value.
+    /// Returns 0 for pending-conversion invoices.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveBalanceUSD => IsPendingConversion ? 0 : (BalanceUSD > 0 ? BalanceUSD : Balance);
+    public decimal EffectiveBalanceUSD => IsPendingConversion ? 0 : (IsUSD ? Balance : BalanceUSD);
 
     #endregion
 }

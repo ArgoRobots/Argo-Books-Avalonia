@@ -624,54 +624,61 @@ public partial class PaymentModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(PaymentDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null)
-            return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Payment".Translate(),
-            Message = "Are you sure you want to delete this payment?\n\nPayment ID: {0}\nAmount: {1}".TranslateFormat(item.Id, item.AmountFormatted),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null)
+                return;
 
-        if (result != ConfirmationResult.Primary)
-            return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null)
+                return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Payment".Translate(),
+                Message = "Are you sure you want to delete this payment?\n\nPayment ID: {0}\nAmount: {1}".TranslateFormat(item.Id, item.AmountFormatted),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var payment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
-        if (payment != null)
-        {
-            var deletedPayment = payment;
-            App.EventLogService?.CapturePreDeletionSnapshot("Payment", deletedPayment.Id);
-            companyData.Payments.Remove(payment);
-            companyData.MarkAsModified();
+            if (result != ConfirmationResult.Primary)
+                return;
 
-            App.UndoRedoManager.RecordAction(new DelegateAction(
-                $"Delete payment '{deletedPayment.Id}'",
-                () =>
-                {
-                    companyData.Payments.Add(deletedPayment);
-                    companyData.MarkAsModified();
-                    PaymentDeleted?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.Payments.Remove(deletedPayment);
-                    companyData.MarkAsModified();
-                    PaymentDeleted?.Invoke(this, EventArgs.Empty);
-                }));
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return;
+
+            var payment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
+            if (payment != null)
+            {
+                var deletedPayment = payment;
+                App.EventLogService?.CapturePreDeletionSnapshot("Payment", deletedPayment.Id);
+                companyData.Payments.Remove(payment);
+                companyData.MarkAsModified();
+
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Delete payment '{deletedPayment.Id}'",
+                    () =>
+                    {
+                        companyData.Payments.Add(deletedPayment);
+                        companyData.MarkAsModified();
+                        PaymentDeleted?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        companyData.Payments.Remove(deletedPayment);
+                        companyData.MarkAsModified();
+                        PaymentDeleted?.Invoke(this, EventArgs.Empty);
+                    }));
+            }
+
+            PaymentDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        PaymentDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payment.OpenDeleteConfirm");
+        }
     }
 
     #endregion

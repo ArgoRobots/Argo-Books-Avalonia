@@ -412,38 +412,45 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(SupplierDisplayItem? item)
     {
-        if (item == null) return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Supplier".Translate(),
-            Message = "Are you sure you want to delete this supplier?\n\n{0}".TranslateFormat(item.Name),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        var companyData = App.CompanyManager?.CompanyData;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Supplier".Translate(),
+                Message = "Are you sure you want to delete this supplier?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var supplier = companyData?.Suppliers.FirstOrDefault(s => s.Id == item.Id);
-        if (supplier == null) return;
+            if (result != ConfirmationResult.Primary) return;
 
-        var deletedSupplier = supplier;
-        App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
-        companyData?.Suppliers.Remove(supplier);
-        companyData?.MarkAsModified();
+            var companyData = App.CompanyManager?.CompanyData;
 
-        App.UndoRedoManager.RecordAction(new DelegateAction(
-            $"Delete supplier '{supplier.Name}'",
-            () => { companyData?.Suppliers.Add(deletedSupplier); companyData?.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); },
-            () => { companyData?.Suppliers.Remove(deletedSupplier); companyData?.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); }));
+            var supplier = companyData?.Suppliers.FirstOrDefault(s => s.Id == item.Id);
+            if (supplier == null) return;
 
-        SupplierDeleted?.Invoke(this, EventArgs.Empty);
+            var deletedSupplier = supplier;
+            App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
+            companyData?.Suppliers.Remove(supplier);
+            companyData?.MarkAsModified();
+
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Delete supplier '{supplier.Name}'",
+                () => { companyData?.Suppliers.Add(deletedSupplier); companyData?.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); },
+                () => { companyData?.Suppliers.Remove(deletedSupplier); companyData?.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); }));
+
+            SupplierDeleted?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Supplier.OpenDeleteConfirm");
+        }
     }
 
     #endregion

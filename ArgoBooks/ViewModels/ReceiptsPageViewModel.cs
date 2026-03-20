@@ -562,18 +562,26 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             .Take(PageSize)
             .ToList();
 
+        // Unsubscribe from previous receipt items before replacing
+        foreach (var oldItem in Receipts)
+        {
+            oldItem.PropertyChanged -= OnReceiptItemPropertyChanged;
+        }
+
         foreach (var item in pagedReceipts)
         {
-            item.PropertyChanged += (_, args) =>
-            {
-                if (args.PropertyName == nameof(ReceiptDisplayItem.IsSelected))
-                {
-                    UpdateSelectionState();
-                }
-            };
+            item.PropertyChanged += OnReceiptItemPropertyChanged;
         }
 
         Receipts.ReplaceAll(pagedReceipts);
+    }
+
+    private void OnReceiptItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ReceiptDisplayItem.IsSelected))
+        {
+            UpdateSelectionState();
+        }
     }
 
     private static bool IsImageFile(string fileType)

@@ -297,6 +297,79 @@ public partial class DataValidator(CompanyData companyData)
         return result;
     }
 
+    /// <summary>
+    /// Validates a payment.
+    /// </summary>
+    public ValidationResult ValidatePayment(Payment payment)
+    {
+        var result = new ValidationResult();
+
+        if (string.IsNullOrWhiteSpace(payment.Id))
+            result.AddError(nameof(payment.Id), "Payment ID is required.");
+
+        if (string.IsNullOrWhiteSpace(payment.InvoiceId))
+            result.AddError(nameof(payment.InvoiceId), "Invoice is required.");
+        else if (companyData.GetInvoice(payment.InvoiceId) == null)
+            result.AddError(nameof(payment.InvoiceId), "Invoice not found.");
+
+        if (string.IsNullOrWhiteSpace(payment.CustomerId))
+            result.AddError(nameof(payment.CustomerId), "Customer is required.");
+        else if (companyData.GetCustomer(payment.CustomerId) == null)
+            result.AddError(nameof(payment.CustomerId), "Customer not found.");
+
+        if (payment.Amount < 0)
+            result.AddError(nameof(payment.Amount), "Amount cannot be negative.");
+
+        if (payment.Date == default)
+            result.AddError(nameof(payment.Date), "Payment date is required.");
+
+        return result;
+    }
+
+    /// <summary>
+    /// Validates a recurring invoice.
+    /// </summary>
+    public ValidationResult ValidateRecurringInvoice(RecurringInvoice recurringInvoice)
+    {
+        var result = new ValidationResult();
+
+        if (string.IsNullOrWhiteSpace(recurringInvoice.Id))
+            result.AddError(nameof(recurringInvoice.Id), "Recurring invoice ID is required.");
+
+        if (string.IsNullOrWhiteSpace(recurringInvoice.CustomerId))
+            result.AddError(nameof(recurringInvoice.CustomerId), "Customer is required.");
+        else if (companyData.GetCustomer(recurringInvoice.CustomerId) == null)
+            result.AddError(nameof(recurringInvoice.CustomerId), "Customer not found.");
+
+        if (!Enum.IsDefined(recurringInvoice.Frequency))
+            result.AddError(nameof(recurringInvoice.Frequency), "A valid frequency is required.");
+
+        return result;
+    }
+
+    #endregion
+
+    #region Entity Validation (continued)
+
+    /// <summary>
+    /// Validates an accountant.
+    /// </summary>
+    public ValidationResult ValidateAccountant(Accountant accountant)
+    {
+        var result = new ValidationResult();
+
+        if (string.IsNullOrWhiteSpace(accountant.Id))
+            result.AddError(nameof(accountant.Id), "Accountant ID is required.");
+
+        if (string.IsNullOrWhiteSpace(accountant.Name))
+            result.AddError(nameof(accountant.Name), "Accountant name is required.");
+
+        if (!string.IsNullOrWhiteSpace(accountant.Email) && !IsValidEmail(accountant.Email))
+            result.AddError(nameof(accountant.Email), "Invalid email address format.");
+
+        return result;
+    }
+
     #endregion
 
     #region Inventory Validation

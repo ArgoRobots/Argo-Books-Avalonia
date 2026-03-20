@@ -552,54 +552,61 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(ProductDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null)
-            return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Product".Translate(),
-            Message = "Are you sure you want to delete this product?\n\n{0}".TranslateFormat(item.Name),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null)
+                return;
 
-        if (result != ConfirmationResult.Primary)
-            return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null)
+                return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Product".Translate(),
+                Message = "Are you sure you want to delete this product?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var product = companyData.Products.FirstOrDefault(p => p.Id == item.Id);
-        if (product != null)
-        {
-            var deletedProduct = product;
-            App.EventLogService?.CapturePreDeletionSnapshot("Product", deletedProduct.Id);
-            companyData.Products.Remove(product);
-            companyData.MarkAsModified();
+            if (result != ConfirmationResult.Primary)
+                return;
 
-            App.UndoRedoManager.RecordAction(new DelegateAction(
-                $"Delete product '{deletedProduct.Name}'",
-                () =>
-                {
-                    companyData.Products.Add(deletedProduct);
-                    companyData.MarkAsModified();
-                    ProductDeleted?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.Products.Remove(deletedProduct);
-                    companyData.MarkAsModified();
-                    ProductDeleted?.Invoke(this, EventArgs.Empty);
-                }));
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return;
+
+            var product = companyData.Products.FirstOrDefault(p => p.Id == item.Id);
+            if (product != null)
+            {
+                var deletedProduct = product;
+                App.EventLogService?.CapturePreDeletionSnapshot("Product", deletedProduct.Id);
+                companyData.Products.Remove(product);
+                companyData.MarkAsModified();
+
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Delete product '{deletedProduct.Name}'",
+                    () =>
+                    {
+                        companyData.Products.Add(deletedProduct);
+                        companyData.MarkAsModified();
+                        ProductDeleted?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        companyData.Products.Remove(deletedProduct);
+                        companyData.MarkAsModified();
+                        ProductDeleted?.Invoke(this, EventArgs.Empty);
+                    }));
+            }
+
+            ProductDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        ProductDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Product.OpenDeleteConfirm");
+        }
     }
 
     #endregion

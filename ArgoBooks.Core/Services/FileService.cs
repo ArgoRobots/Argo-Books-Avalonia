@@ -493,7 +493,15 @@ public class FileService(
         var invalid = Path.GetInvalidFileNameChars();
         var sanitized = new string(name.Where(c => !invalid.Contains(c)).ToArray());
         sanitized = sanitized.Replace("..", "");
-        return string.IsNullOrWhiteSpace(sanitized) ? "Company" : sanitized.Trim();
+        var result = string.IsNullOrWhiteSpace(sanitized) ? "Company" : sanitized.Trim();
+
+        // Verify the sanitized name doesn't escape the intended directory
+        var testPath = Path.Combine(Path.GetTempPath(), result);
+        var resolvedPath = Path.GetFullPath(testPath);
+        if (!resolvedPath.StartsWith(Path.GetTempPath(), StringComparison.OrdinalIgnoreCase))
+            return "Company";
+
+        return result;
     }
 
     private const int ThumbnailMaxSize = 64;

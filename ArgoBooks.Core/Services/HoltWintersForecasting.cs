@@ -542,12 +542,7 @@ public class HoltWintersForecasting
         return result;
     }
 
-    private double CalculateVariance(List<double> values)
-    {
-        if (values.Count < 2) return 0;
-        var mean = values.Average();
-        return values.Select(v => (v - mean) * (v - mean)).Sum() / (values.Count - 1);
-    }
+    private double CalculateVariance(List<double> values) => values.Variance();
 
     private double CalculateAutocorrelation(double[] values, int lag)
     {

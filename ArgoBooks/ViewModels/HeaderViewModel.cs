@@ -554,36 +554,43 @@ public partial class HeaderViewModel : ViewModelBase
     /// </summary>
     private async void ShowToast(NotificationItem notification)
     {
-        if (!_toastsEnabled)
-            return;
-
-        // Cancel and dispose any existing toast timer
-        _toastCancellationTokenSource?.Cancel();
-        _toastCancellationTokenSource?.Dispose();
-        var cts = new CancellationTokenSource();
-        _toastCancellationTokenSource = cts;
-
-        ToastNotification = notification;
-        ShowNotificationToast = true;
-
         try
         {
-            await Task.Delay(10000, cts.Token);
-            // Auto-dismiss: leave notification as unread
-            ShowNotificationToast = false;
-            // Delay clearing so the slide-out animation finishes
-            await Task.Delay(350, CancellationToken.None);
-            ToastNotification = null;
+            if (!_toastsEnabled)
+                return;
+
+            // Cancel and dispose any existing toast timer
+            _toastCancellationTokenSource?.Cancel();
+            _toastCancellationTokenSource?.Dispose();
+            var cts = new CancellationTokenSource();
+            _toastCancellationTokenSource = cts;
+
+            ToastNotification = notification;
+            ShowNotificationToast = true;
+
+            try
+            {
+                await Task.Delay(10000, cts.Token);
+                // Auto-dismiss: leave notification as unread
+                ShowNotificationToast = false;
+                // Delay clearing so the slide-out animation finishes
+                await Task.Delay(350, CancellationToken.None);
+                ToastNotification = null;
+            }
+            catch (TaskCanceledException)
+            {
+                // Toast was dismissed manually, do nothing
+            }
+            finally
+            {
+                cts.Dispose();
+                if (_toastCancellationTokenSource == cts)
+                    _toastCancellationTokenSource = null;
+            }
         }
-        catch (TaskCanceledException)
+        catch (Exception ex)
         {
-            // Toast was dismissed manually, do nothing
-        }
-        finally
-        {
-            cts.Dispose();
-            if (_toastCancellationTokenSource == cts)
-                _toastCancellationTokenSource = null;
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "ShowToast");
         }
     }
 
@@ -639,44 +646,51 @@ public partial class HeaderViewModel : ViewModelBase
     /// </summary>
     public async void ShowSavedFeedback()
     {
-        // If already showing feedback, ignore this request
-        if (ShowSavedIndicator || ShowNoChangesIndicator)
-            return;
-
-        if (HasUnsavedChanges)
+        try
         {
-            // There were changes - show "Saved"
-            HasUnsavedChanges = false;
-            ShowSavedIndicator = true;
-            SavedIndicatorOpacity = 1.0;
+            // If already showing feedback, ignore this request
+            if (ShowSavedIndicator || ShowNoChangesIndicator)
+                return;
 
-            // Wait 3 seconds then fade out
-            await Task.Delay(3000);
+            if (HasUnsavedChanges)
+            {
+                // There were changes - show "Saved"
+                HasUnsavedChanges = false;
+                ShowSavedIndicator = true;
+                SavedIndicatorOpacity = 1.0;
 
-            // Fade out by setting opacity to 0 (animation handled in XAML)
-            SavedIndicatorOpacity = 0;
+                // Wait 3 seconds then fade out
+                await Task.Delay(3000);
 
-            // Wait for fade animation
-            await Task.Delay(300);
+                // Fade out by setting opacity to 0 (animation handled in XAML)
+                SavedIndicatorOpacity = 0;
 
-            ShowSavedIndicator = false;
+                // Wait for fade animation
+                await Task.Delay(300);
+
+                ShowSavedIndicator = false;
+            }
+            else
+            {
+                // No changes - show "No changes found"
+                ShowNoChangesIndicator = true;
+                NoChangesIndicatorOpacity = 1.0;
+
+                // Wait 3 seconds then fade out
+                await Task.Delay(3000);
+
+                // Fade out
+                NoChangesIndicatorOpacity = 0;
+
+                // Wait for fade animation
+                await Task.Delay(300);
+
+                ShowNoChangesIndicator = false;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // No changes - show "No changes found"
-            ShowNoChangesIndicator = true;
-            NoChangesIndicatorOpacity = 1.0;
-
-            // Wait 3 seconds then fade out
-            await Task.Delay(3000);
-
-            // Fade out
-            NoChangesIndicatorOpacity = 0;
-
-            // Wait for fade animation
-            await Task.Delay(300);
-
-            ShowNoChangesIndicator = false;
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "ShowSavedFeedback");
         }
     }
 
