@@ -9,20 +9,6 @@ namespace ArgoBooks.Tests.Services;
 /// </summary>
 public class ExchangeRateServiceTests
 {
-    #region Constructor Tests
-
-    [Fact]
-    public void Constructor_HasApiKeyIsAlwaysTrue()
-    {
-        var httpClient = new HttpClient();
-        var service = new ExchangeRateService(new MockPlatformService(), httpClient);
-
-        // Exchange rates are a free feature - HasApiKey should always be true
-        Assert.True(service.HasApiKey);
-    }
-
-    #endregion
-
     #region GetExchangeRate Sync Tests
 
     [Fact]

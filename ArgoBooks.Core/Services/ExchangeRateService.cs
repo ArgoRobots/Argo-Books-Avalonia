@@ -209,12 +209,6 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Whether the exchange rate service is available.
-    /// Exchange rates are a free feature available to all users via the server proxy.
-    /// </summary>
-    public bool HasApiKey => true;
-
-    /// <summary>
     /// Gets the number of cached exchange rates.
     /// </summary>
     public int CachedRatesCount => _cache.Count;
