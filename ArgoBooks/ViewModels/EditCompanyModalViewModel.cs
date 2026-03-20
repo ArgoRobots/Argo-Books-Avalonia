@@ -491,22 +491,6 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             _originalCurrency = SelectedCurrency;
 
             CurrencyService.NotifyCurrencyChanged();
-
-            // Preload exchange rates for remaining transaction dates in the background.
-            // The critical rates (today + last 30 days) were already loaded during the
-            // pre-save validation. Fire-and-forget so the modal closes immediately.
-            if (!string.Equals(newCurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            {
-                var exchangeService = ExchangeRateService.Instance;
-                var companyData = App.CompanyManager?.CompanyData;
-                if (exchangeService != null && companyData != null)
-                {
-                    var transactionDates = companyData.Expenses.Select(e => e.Date)
-                        .Concat(companyData.Revenues.Select(r => r.Date))
-                        .Append(DateTime.Today);
-                    _ = exchangeService.PreloadRatesAsync(transactionDates);
-                }
-            }
         }
 
         CompanySaved?.Invoke(this, new CompanyEditedEventArgs
@@ -593,10 +577,15 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         CurrencyLoadingProgress = 30;
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Rate available - try to preload more dates in the background
+        // Preload exchange rates for all transaction dates so conversions are ready
         try
         {
-            var dates = Enumerable.Range(1, 30).Select(i => today.AddDays(-i)).ToList();
+            var dates = new List<DateTime> { today };
+            if (companyData != null)
+            {
+                dates.AddRange(companyData.Expenses.Select(e => e.Date));
+                dates.AddRange(companyData.Revenues.Select(r => r.Date));
+            }
             // Map PreloadRatesAsync progress (0-100) into our 30-100 range
             var progress = new Progress<int>(p => CurrencyLoadingProgress = 30 + (p * 70 / 100));
             await exchangeService.PreloadRatesAsync(dates, progress);
