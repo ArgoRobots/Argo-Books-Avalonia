@@ -903,9 +903,8 @@ public class InsightsService(
                 var revenueUSD = lineItemsTotal != 0
                     ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
                     : 0;
-                var costUSD = lineItemsTotal != 0 && subtotalUSD != 0
-                    ? Math.Round(li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0) * (subtotalUSD / lineItemsTotal), 2)
-                    : li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0);
+                // CostPrice is already in the company's base currency (USD), no conversion needed
+                var costUSD = li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0);
 
                 var pid = li.ProductId ?? "";
                 if (!productSalesData.ContainsKey(pid))
