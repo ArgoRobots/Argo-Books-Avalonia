@@ -502,7 +502,7 @@ public partial class InvoiceHtmlRenderer
             "UNITED KINGDOM" or "FRANCE" or "GERMANY" or "ITALY" or "SPAIN" or "NETHERLANDS"
             or "BELGIUM" or "AUSTRIA" or "SWEDEN" or "NORWAY" or "DENMARK" or "FINLAND"
             or "IRELAND" or "PORTUGAL" or "GREECE" or "SWITZERLAND" or "POLAND"
-            or "CZECH REPUBLIC" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
+            or "CZECH REPUBLIC" or "CZECHIA" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
             or "SLOVAKIA" or "SLOVENIA" or "LITHUANIA" or "LATVIA" or "ESTONIA"
             or "LUXEMBOURG" or "MALTA" or "CYPRUS" or "SOUTH AFRICA" or "KENYA"
             or "NIGERIA" or "GHANA" or "ZIMBABWE" or "BOTSWANA"
