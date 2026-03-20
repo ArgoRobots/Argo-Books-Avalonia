@@ -81,10 +81,15 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding TemplateOptions}"
                                              SelectedItem="{Binding SelectedTemplate}"
-                                             DisplayMemberPath="Name"
                                              PlaceholderText="{loc:Loc 'Select template'}"
                                              Classes="form-combobox"
-                                             HorizontalAlignment="Stretch" />
+                                             HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
 
                                 <!-- Customer Selection (right) - hidden when from rental, disabled when limited edit -->
