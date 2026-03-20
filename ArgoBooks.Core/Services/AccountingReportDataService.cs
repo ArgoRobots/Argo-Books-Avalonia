@@ -1168,7 +1168,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             {
                 // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
                 // normalize to decimal (0.08) to match LineItem.TaxRate format
-                var rate = Math.Round(rev.TaxRate / 100, 4);
+                var rate = Math.Round(rev.TaxRate / 100, 2);
                 var taxAmountUSD = rev.TaxAmountUSD > 0 ? rev.TaxAmountUSD : rev.TaxAmount;
                 taxCollectedByRate.TryAdd(rate, 0);
                 taxCollectedByRate[rate] += taxAmountUSD;
@@ -1201,7 +1201,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             {
                 // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
                 // normalize to decimal (0.08) to match LineItem.TaxRate format
-                var rate = Math.Round(exp.TaxRate / 100, 4);
+                var rate = Math.Round(exp.TaxRate / 100, 2);
                 var taxAmountUSD = exp.TaxAmountUSD > 0 ? exp.TaxAmountUSD : exp.TaxAmount;
                 taxPaidByRate.TryAdd(rate, 0);
                 taxPaidByRate[rate] += taxAmountUSD;
