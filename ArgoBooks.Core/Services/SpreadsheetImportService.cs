@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
@@ -2589,7 +2587,16 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             invoice.TaxAmount = GetDecimal(row, headers, "Tax");
             invoice.Total = GetDecimal(row, headers, "Total");
             invoice.AmountPaid = GetDecimal(row, headers, "Paid");
-            invoice.Balance = GetDecimal(row, headers, "Balance");
+            var importedBalance = GetDecimal(row, headers, "Balance");
+            // Validate balance consistency: if Total and AmountPaid are set, compute balance
+            if (invoice.Total > 0 && invoice.AmountPaid >= 0)
+            {
+                invoice.Balance = invoice.Total - invoice.AmountPaid;
+            }
+            else
+            {
+                invoice.Balance = importedBalance;
+            }
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
             // Set currency values from company settings

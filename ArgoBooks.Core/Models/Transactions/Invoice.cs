@@ -200,18 +200,27 @@ public class Invoice
     private bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Whether this invoice was saved offline and is awaiting USD conversion.
+    /// When true, all Effective*USD properties return 0 to prevent wrong cross-currency aggregation.
+    /// </summary>
+    [JsonPropertyName("isPendingConversion")]
+    public bool IsPendingConversion { get; set; }
+
+    /// <summary>
     /// Gets the effective total in USD. For USD invoices (including legacy data), returns Total directly.
     /// For non-USD invoices, returns the converted TotalUSD value.
+    /// Returns 0 for pending-conversion invoices.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTotalUSD => IsUSD ? Total : TotalUSD;
+    public decimal EffectiveTotalUSD => IsPendingConversion ? 0 : (IsUSD ? Total : TotalUSD);
 
     /// <summary>
     /// Gets the effective balance in USD. For USD invoices (including legacy data), returns Balance directly.
     /// For non-USD invoices, returns the converted BalanceUSD value.
+    /// Returns 0 for pending-conversion invoices.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveBalanceUSD => IsUSD ? Balance : BalanceUSD;
+    public decimal EffectiveBalanceUSD => IsPendingConversion ? 0 : (IsUSD ? Balance : BalanceUSD);
 
     #endregion
 }

@@ -332,6 +332,23 @@ public class PaymentPortalService
             companyData.IdCounters.Payment = nextId;
             var paymentId = $"PAY-{DateTime.Now:yyyy}-{nextId:D5}";
 
+            // Convert non-USD payment amount to USD using the invoice's conversion ratio
+            decimal amountUSD;
+            if (portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase))
+            {
+                amountUSD = portalPayment.Amount;
+            }
+            else if (invoice.TotalUSD > 0 && invoice.Total > 0)
+            {
+                // Use invoice's known USD conversion ratio
+                amountUSD = Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2);
+            }
+            else
+            {
+                // No conversion ratio available — defer by setting AmountUSD to 0
+                amountUSD = 0m;
+            }
+
             var payment = new Payment
             {
                 Id = paymentId,
@@ -344,8 +361,7 @@ public class PaymentPortalService
                 Notes = $"Online payment via {providerName}",
                 CreatedAt = DateTime.UtcNow,
                 OriginalCurrency = portalPayment.Currency,
-                AmountUSD = portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase)
-                    ? portalPayment.Amount : 0,
+                AmountUSD = amountUSD,
                 Source = "Online",
                 PortalPaymentId = portalPayment.Id.ToString()
             };
@@ -354,19 +370,31 @@ public class PaymentPortalService
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
 
-            // Update invoice balance
-            var totalPaid = companyData.Payments
+            // Update invoice balance using USD-normalized amounts to avoid currency mixing
+            var totalPaidUSD = companyData.Payments
                 .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0)
+                .Sum(p => p.EffectiveAmountUSD);
+
+            // Also track original-currency paid for display
+            var totalPaidOriginal = companyData.Payments
+                .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0
+                    && p.OriginalCurrency == invoice.OriginalCurrency)
                 .Sum(p => p.Amount);
 
-            invoice.AmountPaid = totalPaid;
-            invoice.Balance = invoice.Total - totalPaid;
+            invoice.AmountPaid = totalPaidOriginal;
+            invoice.Balance = invoice.Total - totalPaidOriginal;
+
+            // Keep USD fields in sync
+            if (invoice.TotalUSD > 0)
+            {
+                invoice.BalanceUSD = Math.Max(0, invoice.TotalUSD - totalPaidUSD);
+            }
 
             if (invoice.Balance <= 0)
             {
                 invoice.Status = InvoiceStatus.Paid;
             }
-            else if (totalPaid > 0)
+            else if (totalPaidOriginal > 0)
             {
                 invoice.Status = InvoiceStatus.Partial;
             }

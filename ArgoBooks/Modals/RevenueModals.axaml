@@ -227,7 +227,7 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                                Text="{loc:Loc 'Tax ($)'}" />
-                                    <TextBox Text="{Binding ModalTaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                    <TextBox Text="{Binding ModalTaxAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True"

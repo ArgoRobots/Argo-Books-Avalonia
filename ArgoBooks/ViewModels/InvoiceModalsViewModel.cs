@@ -1616,6 +1616,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }).ToList()
         };
 
+        // Compute and store totals on the model before setting USD fields
+        invoice.Subtotal = Subtotal;
+        invoice.TaxAmount = TaxAmount;
+        invoice.Total = Total;
+        invoice.Balance = Total; // No payments yet for a new draft
+
         // Set currency fields for multi-currency support
         var draftCurrency = CurrencyService.CurrentCurrencyCode;
         invoice.OriginalCurrency = draftCurrency;
@@ -1761,9 +1767,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             ReferenceNumber = invoice.InvoiceNumber,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
-            // Currency fields
+            // Currency fields — use EffectiveTotalUSD to avoid mixing currencies
+            // (returns 0 for pending-conversion invoices, correct USD for others)
             OriginalCurrency = invoice.OriginalCurrency,
-            TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
+            TotalUSD = invoice.EffectiveTotalUSD,
+            TaxAmountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
+                ? Math.Round(invoice.TaxAmount * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? invoice.TaxAmount : 0,
+            FeeUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
+                ? Math.Round((feeAmount + invoice.SecurityDeposit) * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.SecurityDeposit : 0,
+            DiscountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
+                ? Math.Round(discountAmount * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? discountAmount : 0
         };
 
         companyData.Revenues.Add(revenue);

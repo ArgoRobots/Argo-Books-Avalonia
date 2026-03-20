@@ -749,13 +749,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Calculate net profit
         var netProfitUSD = currentRevenueUSD - currentExpensesUSD;
         var prevProfitUSD = prevRevenueUSD - prevExpensesUSD;
-        NetProfit = FormatCurrencyFromUSD(Math.Abs(netProfitUSD), DateTime.Now);
+        NetProfit = (netProfitUSD < 0 ? "-" : "") + FormatCurrencyFromUSD(Math.Abs(netProfitUSD), DateTime.Now);
         ProfitChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevProfitUSD, netProfitUSD) : null;
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
-        // Calculate outstanding invoices (using USD)
+        // Calculate outstanding invoices (using USD), excluding Drafts to match Balance Sheet AR
         var outstandingInvoices = data.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
+            .Where(i => i.Status != InvoiceStatus.Paid
+                        && i.Status != InvoiceStatus.Cancelled
+                        && i.Status != InvoiceStatus.Draft)
             .ToList();
 
         OutstandingInvoiceCount = outstandingInvoices.Count;

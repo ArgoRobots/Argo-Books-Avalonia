@@ -172,7 +172,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private bool _hasUnitPriceError;
 
     [ObservableProperty]
-    private decimal _modalTaxRate;
+    private decimal _modalTaxAmount;
 
     [ObservableProperty]
     private decimal _modalShipping;
@@ -240,7 +240,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private DateTimeOffset? _originalModalDate;
     private string? _originalCounterpartyId;
     private string? _originalCategoryId;
-    private decimal _originalTaxRate;
+    private decimal _originalTaxAmount;
     private decimal _originalShipping;
     private decimal _originalDiscount;
     private decimal _originalFee;
@@ -255,7 +255,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         SelectedCounterparty != null ||
         SelectedCategory != null ||
         !string.IsNullOrWhiteSpace(ModalNotes) ||
-        ModalTaxRate > 0 ||
+        ModalTaxAmount > 0 ||
         ModalShipping > 0 ||
         ModalDiscount > 0 ||
         ModalFee > 0 ||
@@ -271,7 +271,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             if (ModalDate != _originalModalDate) return true;
             if (SelectedCounterparty?.Id != _originalCounterpartyId) return true;
             if (SelectedCategory?.Id != _originalCategoryId) return true;
-            if (ModalTaxRate != _originalTaxRate) return true;
+            if (ModalTaxAmount != _originalTaxAmount) return true;
             if (ModalShipping != _originalShipping) return true;
             if (ModalDiscount != _originalDiscount) return true;
             if (ModalFee != _originalFee) return true;
@@ -303,7 +303,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         _originalModalDate = ModalDate;
         _originalCounterpartyId = SelectedCounterparty?.Id;
         _originalCategoryId = SelectedCategory?.Id;
-        _originalTaxRate = ModalTaxRate;
+        _originalTaxAmount = ModalTaxAmount;
         _originalShipping = ModalShipping;
         _originalDiscount = ModalDiscount;
         _originalFee = ModalFee;
@@ -316,7 +316,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public decimal Subtotal => LineItems.Count > 0
         ? LineItems.Sum(li => li.Amount)
         : ModalQuantity * ModalUnitPrice;
-    public decimal TaxAmount => ModalTaxRate;
+    public decimal TaxAmount => ModalTaxAmount;
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
     public decimal FeeAmount => ModalFee;
@@ -331,7 +331,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     partial void OnModalQuantityChanged(decimal value) => UpdateTotals();
     partial void OnModalUnitPriceChanged(decimal value) => UpdateTotals();
-    partial void OnModalTaxRateChanged(decimal value) => UpdateTotals();
+    partial void OnModalTaxAmountChanged(decimal value) => UpdateTotals();
     partial void OnModalShippingChanged(decimal value) => UpdateTotals();
     partial void OnModalDiscountChanged(decimal value) => UpdateTotals();
     partial void OnModalFeeChanged(decimal value) => UpdateTotals();
@@ -545,14 +545,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var discountUSD = transaction.DiscountUSD > 0 ? transaction.DiscountUSD : transaction.Discount;
             var feeUSD = transaction.FeeUSD > 0 ? transaction.FeeUSD : transaction.Fee;
 
-            ModalTaxRate = CurrencyService.GetDisplayAmount(taxUSD, transaction.Date);
+            ModalTaxAmount = CurrencyService.GetDisplayAmount(taxUSD, transaction.Date);
             ModalShipping = CurrencyService.GetDisplayAmount(shippingUSD, transaction.Date);
             ModalDiscount = CurrencyService.GetDisplayAmount(discountUSD, transaction.Date);
             ModalFee = CurrencyService.GetDisplayAmount(feeUSD, transaction.Date);
         }
         else
         {
-            ModalTaxRate = transaction.TaxAmount;
+            ModalTaxAmount = transaction.TaxAmount;
             ModalShipping = transaction.ShippingCost;
             ModalDiscount = transaction.Discount;
             ModalFee = transaction.Fee;
@@ -980,7 +980,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalDescription = string.Empty;
         ModalQuantity = 1;
         ModalUnitPrice = 0;
-        ModalTaxRate = 0;
+        ModalTaxAmount = 0;
         ModalShipping = 0;
         ModalDiscount = 0;
         ModalFee = 0;

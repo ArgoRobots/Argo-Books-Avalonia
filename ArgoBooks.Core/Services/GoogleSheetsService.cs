@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;

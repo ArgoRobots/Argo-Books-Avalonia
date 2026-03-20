@@ -889,23 +889,39 @@ public class InsightsService(
 
     private InsightItem? AnalyzeTopProducts(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        var productSales = companyData.Revenues
-            .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
-            .SelectMany(s => s.LineItems)
-            .GroupBy(li => li.ProductId)
-            .Select(g => new
+        // Use USD-converted amounts by applying each transaction's conversion ratio to its line items
+        var productSalesData = new Dictionary<string, (decimal Revenue, decimal Cost, decimal Quantity)>();
+
+        foreach (var s in companyData.Revenues.Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate))
+        {
+            if (s.LineItems.Count == 0) continue;
+            var lineItemsTotal = s.LineItems.Sum(li => li.Subtotal);
+            var subtotalUSD = s.EffectiveSubtotalUSD;
+
+            foreach (var li in s.LineItems)
             {
-                ProductId = g.Key,
-                Revenue = g.Sum(li => li.Subtotal),
-                Cost = g.Sum(li => li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0)),
-                Quantity = g.Sum(li => li.Quantity)
-            })
+                var revenueUSD = lineItemsTotal != 0
+                    ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                    : 0;
+                // CostPrice is already in the company's base currency (USD), no conversion needed
+                var costUSD = li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0);
+
+                var pid = li.ProductId ?? "";
+                if (!productSalesData.ContainsKey(pid))
+                    productSalesData[pid] = (0, 0, 0);
+                var current = productSalesData[pid];
+                productSalesData[pid] = (current.Revenue + revenueUSD, current.Cost + costUSD, current.Quantity + li.Quantity);
+            }
+        }
+
+        var productSales = productSalesData
+            .Select(kvp => new { ProductId = kvp.Key, Revenue = kvp.Value.Revenue, Cost = kvp.Value.Cost, Quantity = kvp.Value.Quantity })
             .ToList();
 
         if (!productSales.Any()) return null;
 
         var topProduct = productSales
-            .Where(p => p.Cost > 0)
+            .Where(p => p.Cost > 0 && p.Revenue > 0)
             .Select(p => new { p.ProductId, p.Revenue, Margin = (p.Revenue - p.Cost) / p.Revenue * 100 })
             .OrderByDescending(p => p.Margin)
             .FirstOrDefault();

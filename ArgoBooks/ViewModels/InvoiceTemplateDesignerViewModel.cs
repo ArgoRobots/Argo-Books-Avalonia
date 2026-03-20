@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using ArgoBooks.Localization;

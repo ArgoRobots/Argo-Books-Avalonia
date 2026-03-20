@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;

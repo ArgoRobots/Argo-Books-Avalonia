@@ -453,7 +453,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = revenue.LineItems.FirstOrDefault()?.ProductId ?? "";
-        var valueLost = revenue.Total;
+        // Use pre-tax subtotal: the actual product value, not tax/shipping/fees
+        var valueLost = revenue.Subtotal > 0 ? revenue.Subtotal : revenue.Amount;
 
         var lostDamaged = new LostDamaged
         {
@@ -494,7 +495,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                     Reason = SelectedItemStatusReason ?? "Other"
                 }
             ],
-            RefundAmount = revenue.Total,
+            // Refund the product amount + tax, excluding shipping/fees
+            RefundAmount = (revenue.Subtotal > 0 ? revenue.Subtotal : revenue.Amount) + revenue.TaxAmount,
             RestockingFee = 0,
             Status = ReturnStatus.Completed,
             Notes = ItemStatusNotes,
