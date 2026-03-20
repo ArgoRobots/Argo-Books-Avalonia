@@ -177,33 +177,50 @@ public class ExchangeRateService
     /// </summary>
     /// <param name="dates">The dates to preload rates for.</param>
     /// <param name="progress">Optional progress callback.</param>
-    public async Task PreloadRatesAsync(IEnumerable<DateTime> dates, IProgress<int>? progress = null)
+    public async Task PreloadRatesAsync(IEnumerable<DateTime> dates, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         var uniqueDates = dates.Select(d => d.Date).Distinct().ToList();
         var loaded = 0;
+        var total = uniqueDates.Count;
 
+        // Filter out already-cached dates first
+        var datesToFetch = new List<DateTime>();
         foreach (var date in uniqueDates)
         {
-            // Skip if we already have rates for this date
             if (_cache.TryGetRate(BaseCurrency, "EUR", date, out _))
             {
                 loaded++;
-                progress?.Report(loaded * 100 / uniqueDates.Count);
-                continue;
             }
-
-            var rates = await FetchRatesForDateAsync(date);
-            if (rates != null)
+            else
             {
-                _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                datesToFetch.Add(date);
             }
-
-            loaded++;
-            progress?.Report(loaded * 100 / uniqueDates.Count);
-
-            // Small delay to avoid rate limiting
-            await Task.Delay(100);
         }
+        if (total > 0)
+            progress?.Report(loaded * 100 / total);
+
+        // Fetch uncached dates with limited concurrency
+        using var semaphore = new SemaphoreSlim(5);
+        var tasks = datesToFetch.Select(async date =>
+        {
+            await semaphore.WaitAsync(cancellationToken);
+            try
+            {
+                var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
+                if (rates != null)
+                {
+                    _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+                var current = Interlocked.Increment(ref loaded);
+                progress?.Report(current * 100 / total);
+            }
+        }).ToList();
+
+        await Task.WhenAll(tasks);
 
         await _cache.SaveAsync();
     }
@@ -216,10 +233,11 @@ public class ExchangeRateService
     /// <summary>
     /// Fetches exchange rates for a specific date from the API.
     /// </summary>
-    private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2)
+    private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2, CancellationToken cancellationToken = default)
     {
         for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var stopwatch = Stopwatch.StartNew();
             var success = false;
 
@@ -227,7 +245,7 @@ public class ExchangeRateService
             {
                 if (attempt > 0)
                 {
-                    await Task.Delay(1000 * attempt); // 1s, 2s backoff
+                    await Task.Delay(1000 * attempt, cancellationToken); // 1s, 2s backoff
                 }
 
                 var isToday = date.Date == DateTime.Today;
@@ -237,7 +255,7 @@ public class ExchangeRateService
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
-                var response = await _httpClient.SendAsync(request);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");

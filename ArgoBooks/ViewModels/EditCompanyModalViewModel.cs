@@ -588,7 +588,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             }
             // Map PreloadRatesAsync progress (0-100) into our 30-100 range
             var progress = new Progress<int>(p => CurrencyLoadingProgress = 30 + (p * 70 / 100));
-            await exchangeService.PreloadRatesAsync(dates, progress);
+            await exchangeService.PreloadRatesAsync(dates, progress, cancellationToken);
         }
         catch (OperationCanceledException)
         {
