@@ -208,38 +208,45 @@ public partial class DepartmentModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(DepartmentDisplayItem? item)
     {
-        if (item == null) return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Department".Translate(),
-            Message = "Are you sure you want to delete this department?\n\n{0}".TranslateFormat(item.Name),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        var companyData = App.CompanyManager?.CompanyData;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Department".Translate(),
+                Message = "Are you sure you want to delete this department?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var department = companyData?.Departments.FirstOrDefault(d => d.Id == item.Id);
-        if (department == null) return;
+            if (result != ConfirmationResult.Primary) return;
 
-        var deletedDept = department;
-        App.EventLogService?.CapturePreDeletionSnapshot("Department", deletedDept.Id);
-        companyData?.Departments.Remove(department);
-        companyData?.MarkAsModified();
+            var companyData = App.CompanyManager?.CompanyData;
 
-        App.UndoRedoManager.RecordAction(new DelegateAction(
-            $"Delete department '{deletedDept.Name}'",
-            () => { companyData?.Departments.Add(deletedDept); companyData?.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); },
-            () => { companyData?.Departments.Remove(deletedDept); companyData?.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); }));
+            var department = companyData?.Departments.FirstOrDefault(d => d.Id == item.Id);
+            if (department == null) return;
 
-        DepartmentDeleted?.Invoke(this, EventArgs.Empty);
+            var deletedDept = department;
+            App.EventLogService?.CapturePreDeletionSnapshot("Department", deletedDept.Id);
+            companyData?.Departments.Remove(department);
+            companyData?.MarkAsModified();
+
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Delete department '{deletedDept.Name}'",
+                () => { companyData?.Departments.Add(deletedDept); companyData?.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); },
+                () => { companyData?.Departments.Remove(deletedDept); companyData?.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); }));
+
+            DepartmentDeleted?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+        }
     }
 
     #endregion

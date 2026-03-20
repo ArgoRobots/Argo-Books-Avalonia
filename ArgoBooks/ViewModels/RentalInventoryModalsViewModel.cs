@@ -618,54 +618,61 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(RentalItemDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null)
-            return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Rental Item".Translate(),
-            Message = "Are you sure you want to delete this rental item?\n\n{0}".TranslateFormat(item.Name),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null)
+                return;
 
-        if (result != ConfirmationResult.Primary)
-            return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null)
+                return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Rental Item".Translate(),
+                Message = "Are you sure you want to delete this rental item?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var rentalItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == item.Id);
-        if (rentalItem != null)
-        {
-            var deletedItem = rentalItem;
-            App.EventLogService?.CapturePreDeletionSnapshot("RentalItem", deletedItem.Id);
-            companyData.RentalInventory.Remove(rentalItem);
-            companyData.MarkAsModified();
+            if (result != ConfirmationResult.Primary)
+                return;
 
-            App.UndoRedoManager.RecordAction(new DelegateAction(
-                $"Delete rental item '{deletedItem.Name}'",
-                () =>
-                {
-                    companyData.RentalInventory.Add(deletedItem);
-                    companyData.MarkAsModified();
-                    ItemDeleted?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.RentalInventory.Remove(deletedItem);
-                    companyData.MarkAsModified();
-                    ItemDeleted?.Invoke(this, EventArgs.Empty);
-                }));
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return;
+
+            var rentalItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == item.Id);
+            if (rentalItem != null)
+            {
+                var deletedItem = rentalItem;
+                App.EventLogService?.CapturePreDeletionSnapshot("RentalItem", deletedItem.Id);
+                companyData.RentalInventory.Remove(rentalItem);
+                companyData.MarkAsModified();
+
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Delete rental item '{deletedItem.Name}'",
+                    () =>
+                    {
+                        companyData.RentalInventory.Add(deletedItem);
+                        companyData.MarkAsModified();
+                        ItemDeleted?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        companyData.RentalInventory.Remove(deletedItem);
+                        companyData.MarkAsModified();
+                        ItemDeleted?.Invoke(this, EventArgs.Empty);
+                    }));
+            }
+
+            ItemDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        ItemDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+        }
     }
 
     #endregion

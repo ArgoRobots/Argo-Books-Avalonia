@@ -35,27 +35,34 @@ public partial class ReceiptsPage : UserControl
 
     private async void OnScanFileRequested(object? sender, EventArgs e)
     {
-        var viewModel = DataContext as ReceiptsPageViewModel;
-        if (viewModel == null) return;
-
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        try
         {
-            Title = "Select Receipt to Scan",
-            AllowMultiple = false,
-            FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
-        });
+            var viewModel = DataContext as ReceiptsPageViewModel;
+            if (viewModel == null) return;
 
-        if (files.Count > 0)
-        {
-            var file = files[0];
-            var path = file.TryGetLocalPath();
-            if (!string.IsNullOrEmpty(path))
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                await viewModel.HandleFileSelectedAsync(path);
+                Title = "Select Receipt to Scan",
+                AllowMultiple = false,
+                FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
+            });
+
+            if (files.Count > 0)
+            {
+                var file = files[0];
+                var path = file.TryGetLocalPath();
+                if (!string.IsNullOrEmpty(path))
+                {
+                    await viewModel.HandleFileSelectedAsync(path);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnScanFileRequested: {ex}");
         }
     }
 
@@ -157,23 +164,30 @@ public partial class ReceiptsPage : UserControl
 
     private async void OnDrop(object? sender, DragEventArgs e)
     {
-        if (DataContext is not ReceiptsPageViewModel viewModel) return;
+        try
+        {
+            if (DataContext is not ReceiptsPageViewModel viewModel) return;
 
-        viewModel.IsDragOver = false;
+            viewModel.IsDragOver = false;
 
 #pragma warning disable CS0618 // Using deprecated API until full migration path is clear
-        var files = e.Data.GetFiles();
+            var files = e.Data.GetFiles();
 #pragma warning restore CS0618
-        if (files != null)
-        {
-            var filePaths = files
-                .Select(f => f.TryGetLocalPath())
-                .Where(p => !string.IsNullOrEmpty(p))
-                .ToList();
-            if (filePaths.Count > 0)
+            if (files != null)
             {
-                await viewModel.HandleFilesDroppedAsync(filePaths!);
+                var filePaths = files
+                    .Select(f => f.TryGetLocalPath())
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .ToList();
+                if (filePaths.Count > 0)
+                {
+                    await viewModel.HandleFilesDroppedAsync(filePaths!);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnDrop: {ex}");
         }
     }
 }

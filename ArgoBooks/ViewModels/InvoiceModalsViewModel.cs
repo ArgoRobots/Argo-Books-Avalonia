@@ -351,6 +351,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         UpdateTotals();
     }
 
+    private void OnLineItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => UpdateTotals();
+
     private void UpdateTotals()
     {
         OnPropertyChanged(nameof(Subtotal));
@@ -378,7 +380,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Quantity = 1,
             UnitPrice = 0
         };
-        item.PropertyChanged += (_, _) => UpdateTotals();
+        item.PropertyChanged += OnLineItemPropertyChanged;
         LineItems.Add(item);
         UpdateTotals();
     }
@@ -388,6 +390,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         if (item != null)
         {
+            item.PropertyChanged -= OnLineItemPropertyChanged;
             LineItems.Remove(item);
             UpdateTotals();
         }
@@ -509,8 +512,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         LoadProductOptions();
 
         // Subscribe to plan status changes
-        App.PlanStatusChanged += (_, e) => HasPremium = e.HasPremium;
+        App.PlanStatusChanged += OnPlanStatusChanged;
     }
+
+    private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e) => HasPremium = e.HasPremium;
 
     private void LoadCustomerOptions(bool includeAllOption = false)
     {
@@ -661,7 +666,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             UnitPrice = totalCost,
             RentalRecordId = rental.Id
         };
-        rentalLineItem.PropertyChanged += (_, _) => UpdateTotals();
+        rentalLineItem.PropertyChanged += OnLineItemPropertyChanged;
         LineItems.Add(rentalLineItem);
 
         // Store security deposit separately (not as a line item)
@@ -703,7 +708,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 UnitPrice = li.UnitPrice,
                 RevenueRecordId = revenue.Id
             };
-            lineItem.PropertyChanged += (_, _) => UpdateTotals();
+            lineItem.PropertyChanged += OnLineItemPropertyChanged;
             LineItems.Add(lineItem);
         }
 
@@ -804,7 +809,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 Quantity = lineItem.Quantity,
                 UnitPrice = lineItem.UnitPrice
             };
-            displayItem.PropertyChanged += (_, _) => UpdateTotals();
+            displayItem.PropertyChanged += OnLineItemPropertyChanged;
             LineItems.Add(displayItem);
         }
 
@@ -831,39 +836,46 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(InvoiceDisplayItem? item)
     {
-        if (item == null) return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Invoice".Translate(),
-            Message = "Are you sure you want to delete this invoice?\n\nInvoice: {0}\nAmount: {1}".TranslateFormat(item.Id, item.TotalFormatted),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        var companyData = App.CompanyManager?.CompanyData;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Invoice".Translate(),
+                Message = "Are you sure you want to delete this invoice?\n\nInvoice: {0}\nAmount: {1}".TranslateFormat(item.Id, item.TotalFormatted),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
-        if (invoice == null) return;
+            if (result != ConfirmationResult.Primary) return;
 
-        // Clean up linked records: unlink rentals, and remove/unlink revenues
-        UnlinkInvoiceFromRentals(invoice, companyData!);
-        RemoveAutoCreatedRevenue(invoice, companyData!);
+            var companyData = App.CompanyManager?.CompanyData;
 
-        companyData?.Invoices.Remove(invoice);
-        InvoiceDeleted?.Invoke(this, EventArgs.Empty);
+            var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
+            if (invoice == null) return;
 
-        // Auto-save immediately
-        if (App.CompanyManager != null)
+            // Clean up linked records: unlink rentals, and remove/unlink revenues
+            UnlinkInvoiceFromRentals(invoice, companyData!);
+            RemoveAutoCreatedRevenue(invoice, companyData!);
+
+            companyData?.Invoices.Remove(invoice);
+            InvoiceDeleted?.Invoke(this, EventArgs.Empty);
+
+            // Auto-save immediately
+            if (App.CompanyManager != null)
+            {
+                try { await App.CompanyManager.SaveCompanyAsync(); }
+                catch { /* non-fatal */ }
+            }
+        }
+        catch (Exception ex)
         {
-            try { await App.CompanyManager.SaveCompanyAsync(); }
-            catch { /* non-fatal */ }
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
         }
     }
 
@@ -1809,6 +1821,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         CustomFeeIsPercent = false;
         DiscountAmount = 0;
         DiscountIsPercent = false;
+        foreach (var item in LineItems)
+            item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
         AddLineItem(); // Add one default line item
         HasCustomerError = false;

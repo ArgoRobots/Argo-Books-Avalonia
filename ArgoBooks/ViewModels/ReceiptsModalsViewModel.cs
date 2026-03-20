@@ -546,55 +546,62 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private async void PopulateScanResults(ReceiptScanResult result)
     {
-        ExtractedSupplier = result.SupplierName ?? string.Empty;
-        ExtractedDate = result.TransactionDate.HasValue
-            ? new DateTimeOffset(result.TransactionDate.Value)
-            : DateTimeOffset.Now;
-        ExtractedSubtotal = result.Subtotal?.ToString("F2") ?? "0.00";
-        ExtractedTax = result.TaxAmount?.ToString("F2") ?? "0.00";
-        ExtractedTotal = result.TotalAmount?.ToString("F2") ?? "0.00";
-
-        // Detect if this is a revenue or expense based on merchant name matching company name
-        DetectTransactionType(result.SupplierName);
-
-        // Set payment method if detected
-        if (!string.IsNullOrEmpty(result.PaymentMethod) && PaymentMethodOptions.Contains(result.PaymentMethod))
+        try
         {
-            SelectedPaymentMethod = result.PaymentMethod;
-        }
+            ExtractedSupplier = result.SupplierName ?? string.Empty;
+            ExtractedDate = result.TransactionDate.HasValue
+                ? new DateTimeOffset(result.TransactionDate.Value)
+                : DateTimeOffset.Now;
+            ExtractedSubtotal = result.Subtotal?.ToString("F2") ?? "0.00";
+            ExtractedTax = result.TaxAmount?.ToString("F2") ?? "0.00";
+            ExtractedTotal = result.TotalAmount?.ToString("F2") ?? "0.00";
 
-        // Confidence
-        ConfidenceScore = result.Confidence;
-        ConfidenceText = $"{result.Confidence:P0}";
-        IsHighConfidence = result.Confidence >= 0.85;
-        IsMediumConfidence = result.Confidence >= 0.6 && result.Confidence < 0.85;
-        IsLowConfidence = result.Confidence < 0.6;
+            // Detect if this is a revenue or expense based on merchant name matching company name
+            DetectTransactionType(result.SupplierName);
 
-        // Line items (filter out discounts and non-product lines)
-        LineItems.Clear();
-        foreach (var item in result.LineItems)
-        {
-            // Skip discount lines, negative-amount adjustments, and $0 items
-            if (IsDiscountLine(item) || item.TotalPrice == 0)
-                continue;
-
-            var lineItem = new ScannedLineItemViewModel
+            // Set payment method if detected
+            if (!string.IsNullOrEmpty(result.PaymentMethod) && PaymentMethodOptions.Contains(result.PaymentMethod))
             {
-                Description = CleanOcrText(item.Description),
-                Quantity = ((int)item.Quantity).ToString(),
-                UnitPrice = item.UnitPrice.ToString("F2"),
-                TotalPrice = item.TotalPrice.ToString("F2"),
-                Confidence = item.Confidence
-            };
+                SelectedPaymentMethod = result.PaymentMethod;
+            }
 
-            // Try to match to existing product
-            TryMatchProduct(lineItem, item.Description);
+            // Confidence
+            ConfidenceScore = result.Confidence;
+            ConfidenceText = $"{result.Confidence:P0}";
+            IsHighConfidence = result.Confidence >= 0.85;
+            IsMediumConfidence = result.Confidence >= 0.6 && result.Confidence < 0.85;
+            IsLowConfidence = result.Confidence < 0.6;
 
-            LineItems.Add(lineItem);
+            // Line items (filter out discounts and non-product lines)
+            LineItems.Clear();
+            foreach (var item in result.LineItems)
+            {
+                // Skip discount lines, negative-amount adjustments, and $0 items
+                if (IsDiscountLine(item) || item.TotalPrice == 0)
+                    continue;
+
+                var lineItem = new ScannedLineItemViewModel
+                {
+                    Description = CleanOcrText(item.Description),
+                    Quantity = ((int)item.Quantity).ToString(),
+                    UnitPrice = item.UnitPrice.ToString("F2"),
+                    TotalPrice = item.TotalPrice.ToString("F2"),
+                    Confidence = item.Confidence
+                };
+
+                // Try to match to existing product
+                TryMatchProduct(lineItem, item.Description);
+
+                LineItems.Add(lineItem);
+            }
+
+            // Get AI suggestions for supplier and category
+            await GetAiSuggestionsAsync(result);
         }
-
-        // Get AI suggestions for supplier and category
-        await GetAiSuggestionsAsync(result);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in PopulateScanResults: {ex}");
+        }
     }
 
     [RelayCommand]

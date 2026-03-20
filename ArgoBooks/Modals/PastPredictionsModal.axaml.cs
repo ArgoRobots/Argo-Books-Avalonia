@@ -13,6 +13,7 @@ namespace ArgoBooks.Modals;
 public partial class PastPredictionsModal : UserControl
 {
     private CartesianChart? _accuracyChart;
+    private PastPredictionsModalViewModel? _subscribedVm;
 
     public PastPredictionsModal()
     {
@@ -25,8 +26,19 @@ public partial class PastPredictionsModal : UserControl
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        // Unsubscribe from old ViewModel
+        if (_subscribedVm != null)
+        {
+            _subscribedVm.SaveChartImageRequested -= OnSaveChartImageRequested;
+            _subscribedVm.GoogleSheetsExportRequested -= OnGoogleSheetsExportRequested;
+            _subscribedVm.ExcelExportRequested -= OnExcelExportRequested;
+            _subscribedVm = null;
+        }
+
+        // Subscribe to new ViewModel
         if (ViewModel != null)
         {
+            _subscribedVm = ViewModel;
             ViewModel.SaveChartImageRequested += OnSaveChartImageRequested;
             ViewModel.GoogleSheetsExportRequested += OnGoogleSheetsExportRequested;
             ViewModel.ExcelExportRequested += OnExcelExportRequested;
@@ -78,12 +90,15 @@ public partial class PastPredictionsModal : UserControl
     {
         base.OnUnloaded(e);
 
-        if (ViewModel != null)
+        if (_subscribedVm != null)
         {
-            ViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
-            ViewModel.GoogleSheetsExportRequested -= OnGoogleSheetsExportRequested;
-            ViewModel.ExcelExportRequested -= OnExcelExportRequested;
+            _subscribedVm.SaveChartImageRequested -= OnSaveChartImageRequested;
+            _subscribedVm.GoogleSheetsExportRequested -= OnGoogleSheetsExportRequested;
+            _subscribedVm.ExcelExportRequested -= OnExcelExportRequested;
+            _subscribedVm = null;
         }
+
+        DataContextChanged -= OnDataContextChanged;
     }
 
     /// <summary>
@@ -170,24 +185,31 @@ public partial class PastPredictionsModal : UserControl
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, EventArgs e)
     {
-        if (_accuracyChart == null) return;
-        if (ViewModel == null || !ViewModel.HasChartData) return;
-
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        // Ensure the chart has been rendered with valid dimensions
-        if (_accuracyChart.Bounds.Width <= 0 || _accuracyChart.Bounds.Height <= 0)
+        try
         {
-            // Force a layout pass before export
-            _accuracyChart.InvalidateMeasure();
-            _accuracyChart.InvalidateArrange();
-        }
+            if (_accuracyChart == null) return;
+            if (ViewModel == null || !ViewModel.HasChartData) return;
 
-        await ChartImageExportService.SaveChartAsImageAsync(
-            topLevel,
-            _accuracyChart,
-            ChartImageExportService.CreateSafeFileName("Prediction_Accuracy"));
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            // Ensure the chart has been rendered with valid dimensions
+            if (_accuracyChart.Bounds.Width <= 0 || _accuracyChart.Bounds.Height <= 0)
+            {
+                // Force a layout pass before export
+                _accuracyChart.InvalidateMeasure();
+                _accuracyChart.InvalidateArrange();
+            }
+
+            await ChartImageExportService.SaveChartAsImageAsync(
+                topLevel,
+                _accuracyChart,
+                ChartImageExportService.CreateSafeFileName("Prediction_Accuracy"));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnSaveChartImageRequested: {ex}");
+        }
     }
 
     /// <summary>

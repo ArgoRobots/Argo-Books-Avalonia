@@ -176,6 +176,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
     }
 
+    private void OnOrderLineItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => UpdateCalculatedTotals();
+
     private void UpdateCalculatedTotals()
     {
         OnPropertyChanged(nameof(CalculatedSubtotal));
@@ -284,7 +286,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 Quantity = lineItem.Quantity.ToString(),
                 UnitCost = lineItem.UnitCost.ToString("F2")
             };
-            vm.PropertyChanged += (_, _) => UpdateCalculatedTotals();
+            vm.PropertyChanged += OnOrderLineItemPropertyChanged;
             LineItems.Add(vm);
         }
         UpdateCalculatedTotals();
@@ -356,7 +358,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private void AddLineItem()
     {
         var vm = new OrderLineItemViewModel();
-        vm.PropertyChanged += (_, _) => UpdateCalculatedTotals();
+        vm.PropertyChanged += OnOrderLineItemPropertyChanged;
         LineItems.Add(vm);
         UpdateCalculatedTotals();
     }
@@ -368,6 +370,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private void RemoveLineItem(OrderLineItemViewModel? item)
     {
         if (item == null) return;
+        item.PropertyChanged -= OnOrderLineItemPropertyChanged;
         LineItems.Remove(item);
         UpdateCalculatedTotals();
     }
@@ -605,6 +608,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         Notes = string.Empty;
         AddModalError = null;
         HasSupplierError = false;
+        foreach (var li in LineItems)
+            li.PropertyChanged -= OnOrderLineItemPropertyChanged;
         LineItems.Clear();
         IsEditMode = false;
         EditingOrderId = null;
@@ -840,46 +845,53 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// </summary>
     public async void OpenDeleteConfirm(PurchaseOrderDisplayItem item)
     {
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Purchase Order".Translate(),
-            Message = "Are you sure you want to delete this purchase order?\n\nPO #: {0}\nTotal: {1}".TranslateFormat(item.PoNumber, item.TotalDisplay),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-
-        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
-        if (order == null) return;
-
-        companyData?.PurchaseOrders.Remove(order);
-        companyData?.MarkAsModified();
-
-        // Record undo action
-        var orderPoNumber = item.PoNumber;
-        App.UndoRedoManager.RecordAction(new DelegateAction(
-            $"Delete order '{orderPoNumber}'",
-            () =>
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
-                companyData?.PurchaseOrders.Add(order);
-                companyData?.MarkAsModified();
-                OrderDeleted?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                companyData?.PurchaseOrders.Remove(order);
-                companyData?.MarkAsModified();
-                OrderDeleted?.Invoke(this, EventArgs.Empty);
-            }));
+                Title = "Delete Purchase Order".Translate(),
+                Message = "Are you sure you want to delete this purchase order?\n\nPO #: {0}\nTotal: {1}".TranslateFormat(item.PoNumber, item.TotalDisplay),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        OrderDeleted?.Invoke(this, EventArgs.Empty);
+            if (result != ConfirmationResult.Primary) return;
+
+            var companyData = App.CompanyManager?.CompanyData;
+
+            var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
+            if (order == null) return;
+
+            companyData?.PurchaseOrders.Remove(order);
+            companyData?.MarkAsModified();
+
+            // Record undo action
+            var orderPoNumber = item.PoNumber;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Delete order '{orderPoNumber}'",
+                () =>
+                {
+                    companyData?.PurchaseOrders.Add(order);
+                    companyData?.MarkAsModified();
+                    OrderDeleted?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    companyData?.PurchaseOrders.Remove(order);
+                    companyData?.MarkAsModified();
+                    OrderDeleted?.Invoke(this, EventArgs.Empty);
+                }));
+
+            OrderDeleted?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+        }
     }
 
     #endregion

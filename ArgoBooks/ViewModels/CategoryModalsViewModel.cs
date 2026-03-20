@@ -352,96 +352,103 @@ public partial class CategoryModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(CategoryDisplayItem? item)
     {
-        if (item == null) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-
-        var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
-        if (category == null) return;
-
-        var children = companyData?.Categories.Where(c => c.ParentId == category.Id).ToList();
-        var hasChildren = children?.Count > 0;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        // If category has children, ask about subcategories
-        var deleteSubcategories = false;
-        if (hasChildren)
+        try
         {
-            var subResult = await dialog.ShowAsync(new ConfirmationDialogOptions
+            if (item == null) return;
+
+            var companyData = App.CompanyManager?.CompanyData;
+
+            var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
+            if (category == null) return;
+
+            var children = companyData?.Categories.Where(c => c.ParentId == category.Id).ToList();
+            var hasChildren = children?.Count > 0;
+
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
+
+            // If category has children, ask about subcategories
+            var deleteSubcategories = false;
+            if (hasChildren)
             {
-                Title = "Delete Category".Translate(),
-                Message = "This category has {0} subcategories.\n\nDo you want to delete them as well, or move them to the top level?".TranslateFormat(children?.Count ?? 0),
-                PrimaryButtonText = "Delete All".Translate(),
-                SecondaryButtonText = "Move to Top Level".Translate(),
-                CancelButtonText = "Cancel".Translate(),
-                IsPrimaryDestructive = true
-            });
+                var subResult = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Delete Category".Translate(),
+                    Message = "This category has {0} subcategories.\n\nDo you want to delete them as well, or move them to the top level?".TranslateFormat(children?.Count ?? 0),
+                    PrimaryButtonText = "Delete All".Translate(),
+                    SecondaryButtonText = "Move to Top Level".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
 
-            if (subResult == ConfirmationResult.Cancel || subResult == ConfirmationResult.None)
-                return;
+                if (subResult == ConfirmationResult.Cancel || subResult == ConfirmationResult.None)
+                    return;
 
-            deleteSubcategories = subResult == ConfirmationResult.Primary;
+                deleteSubcategories = subResult == ConfirmationResult.Primary;
+            }
+            else
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Delete Category".Translate(),
+                    Message = "Are you sure you want to delete this category?\n\n{0}".TranslateFormat(item.Name),
+                    PrimaryButtonText = "Delete".Translate(),
+                    CancelButtonText = "Cancel".Translate(),
+                    IsPrimaryDestructive = true
+                });
+
+                if (result != ConfirmationResult.Primary)
+                    return;
+            }
+
+            var childOriginalParents = children?.ToDictionary(c => c.Id, c => c.ParentId);
+            var deletedChildren = new List<Category>();
+            var shouldDeleteSubcategories = deleteSubcategories;
+
+            if (shouldDeleteSubcategories)
+            {
+                deletedChildren.AddRange(children ?? []);
+                foreach (var child in children ?? []) companyData?.Categories.Remove(child);
+            }
+            else
+            {
+                foreach (var child in children ?? []) child.ParentId = null;
+            }
+
+            var deletedCategory = category;
+            App.EventLogService?.CapturePreDeletionSnapshot("Category", deletedCategory.Id);
+            companyData?.Categories.Remove(category);
+            companyData?.MarkAsModified();
+
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Delete category '{deletedCategory.Name}'",
+                () =>
+                {
+                    companyData?.Categories.Add(deletedCategory);
+                    if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Add(child); }
+                    else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                        child?.ParentId = kvp.Value;
+                    } }
+                    companyData?.MarkAsModified();
+                    CategoryDeleted?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Remove(child); }
+                    else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                        child?.ParentId = null;
+                    } }
+                    companyData?.Categories.Remove(deletedCategory);
+                    companyData?.MarkAsModified();
+                    CategoryDeleted?.Invoke(this, EventArgs.Empty);
+                }));
+
+            CategoryDeleted?.Invoke(this, EventArgs.Empty);
         }
-        else
+        catch (Exception ex)
         {
-            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Delete Category".Translate(),
-                Message = "Are you sure you want to delete this category?\n\n{0}".TranslateFormat(item.Name),
-                PrimaryButtonText = "Delete".Translate(),
-                CancelButtonText = "Cancel".Translate(),
-                IsPrimaryDestructive = true
-            });
-
-            if (result != ConfirmationResult.Primary)
-                return;
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
         }
-
-        var childOriginalParents = children?.ToDictionary(c => c.Id, c => c.ParentId);
-        var deletedChildren = new List<Category>();
-        var shouldDeleteSubcategories = deleteSubcategories;
-
-        if (shouldDeleteSubcategories)
-        {
-            deletedChildren.AddRange(children ?? []);
-            foreach (var child in children ?? []) companyData?.Categories.Remove(child);
-        }
-        else
-        {
-            foreach (var child in children ?? []) child.ParentId = null;
-        }
-        
-        var deletedCategory = category;
-        App.EventLogService?.CapturePreDeletionSnapshot("Category", deletedCategory.Id);
-        companyData?.Categories.Remove(category);
-        companyData?.MarkAsModified();
-
-        App.UndoRedoManager.RecordAction(new DelegateAction(
-            $"Delete category '{deletedCategory.Name}'",
-            () =>
-            {
-                companyData?.Categories.Add(deletedCategory);
-                if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Add(child); }
-                else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
-                    child?.ParentId = kvp.Value;
-                } }
-                companyData?.MarkAsModified();
-                CategoryDeleted?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Remove(child); }
-                else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
-                    child?.ParentId = null;
-                } }
-                companyData?.Categories.Remove(deletedCategory);
-                companyData?.MarkAsModified();
-                CategoryDeleted?.Invoke(this, EventArgs.Empty);
-            }));
-
-        CategoryDeleted?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion

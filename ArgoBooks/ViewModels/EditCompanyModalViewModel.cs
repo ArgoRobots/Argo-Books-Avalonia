@@ -272,7 +272,14 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// </summary>
     public async void RequestClose()
     {
-        await RequestCloseAsync();
+        try
+        {
+            await RequestCloseAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in RequestClose: {ex}");
+        }
     }
 
     /// <summary>
@@ -348,7 +355,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         var minimumDisplayTask = Task.Delay(1000);
         await Task.WhenAll(preloadTask, minimumDisplayTask);
 
-        var success = preloadTask.Result;
+        var success = await preloadTask;
         IsSavingCurrency = false;
 
         if (!success)

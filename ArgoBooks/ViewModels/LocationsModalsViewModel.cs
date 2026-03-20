@@ -435,52 +435,59 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     public async void OpenDeleteConfirm(LocationDisplayItem? item)
     {
-        if (item == null) return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Location".Translate(),
-            Message = "Are you sure you want to delete this location?\n\n{0}".TranslateFormat(item.Name),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Location".Translate(),
+                Message = "Are you sure you want to delete this location?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var location = companyData.Locations.FirstOrDefault(l => l.Id == item.Id);
-        if (location != null)
-        {
-            var deletedLocation = location;
-            App.EventLogService?.CapturePreDeletionSnapshot("Location", deletedLocation.Id);
-            companyData.Locations.Remove(location);
-            companyData.MarkAsModified();
+            if (result != ConfirmationResult.Primary) return;
 
-            // Record undo action
-            App.UndoRedoManager.RecordAction(new DelegateAction(
-                $"Delete location '{deletedLocation.Name}'",
-                () =>
-                {
-                    companyData.Locations.Add(deletedLocation);
-                    companyData.MarkAsModified();
-                    LocationDeleted?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.Locations.Remove(deletedLocation);
-                    companyData.MarkAsModified();
-                    LocationDeleted?.Invoke(this, EventArgs.Empty);
-                }));
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return;
+
+            var location = companyData.Locations.FirstOrDefault(l => l.Id == item.Id);
+            if (location != null)
+            {
+                var deletedLocation = location;
+                App.EventLogService?.CapturePreDeletionSnapshot("Location", deletedLocation.Id);
+                companyData.Locations.Remove(location);
+                companyData.MarkAsModified();
+
+                // Record undo action
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Delete location '{deletedLocation.Name}'",
+                    () =>
+                    {
+                        companyData.Locations.Add(deletedLocation);
+                        companyData.MarkAsModified();
+                        LocationDeleted?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        companyData.Locations.Remove(deletedLocation);
+                        companyData.MarkAsModified();
+                        LocationDeleted?.Invoke(this, EventArgs.Empty);
+                    }));
+            }
+
+            LocationDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        LocationDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+        }
     }
 
     #endregion

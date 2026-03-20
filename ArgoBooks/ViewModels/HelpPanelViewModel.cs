@@ -1,5 +1,4 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -99,26 +98,7 @@ public partial class HelpPanelViewModel : ViewModelBase
     /// </summary>
     private static void OpenUrl(string url)
     {
-        try
-        {
-            // Cross-platform URL opening
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", url);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", url);
-            }
-        }
-        catch
-        {
-            // Silently fail if browser cannot be opened
-        }
+        UrlHelper.SafeOpenUrl(url);
     }
 
     #endregion

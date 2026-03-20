@@ -136,9 +136,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     private static decimal GetUSDRatio(Models.Transactions.Transaction txn)
     {
         if (txn.IsPendingConversion) return 0;
-        if (txn.Total != 0 && txn.TotalUSD > 0)
+        if (string.Equals(txn.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+            return 1m; // Already in USD (including legacy data)
+        if (txn.Total != 0)
             return txn.TotalUSD / txn.Total;
-        return 1m; // Legacy data or USD transactions
+        return 0m; // Zero-amount non-USD transaction
     }
 
     /// <summary>

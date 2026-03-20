@@ -234,20 +234,27 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public async void ShowSavedFeedback()
     {
-        HasUnsavedChanges = false;
-        ShowSavedIndicator = true;
-        SavedIndicatorOpacity = 1.0;
+        try
+        {
+            HasUnsavedChanges = false;
+            ShowSavedIndicator = true;
+            SavedIndicatorOpacity = 1.0;
 
-        // Wait 3 seconds then fade out
-        await Task.Delay(3000);
+            // Wait 3 seconds then fade out
+            await Task.Delay(3000);
 
-        // Fade out by setting opacity to 0 (animation handled in XAML)
-        SavedIndicatorOpacity = 0;
+            // Fade out by setting opacity to 0 (animation handled in XAML)
+            SavedIndicatorOpacity = 0;
 
-        // Wait for fade animation
-        await Task.Delay(300);
+            // Wait for fade animation
+            await Task.Delay(300);
 
-        ShowSavedIndicator = false;
+            ShowSavedIndicator = false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in ShowSavedFeedback: {ex}");
+        }
     }
 
     /// <summary>

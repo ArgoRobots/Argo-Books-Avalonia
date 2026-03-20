@@ -123,24 +123,31 @@ public partial class AppShell : UserControl
     /// </summary>
     private async void OnOpenFileScanRequested(object? sender, EventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        try
         {
-            Title = "Select Receipt to Scan",
-            AllowMultiple = false,
-            FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
-        });
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
 
-        if (files.Count > 0)
-        {
-            var file = files[0];
-            var path = file.TryGetLocalPath();
-            if (!string.IsNullOrEmpty(path) && App.ReceiptsModalsViewModel != null)
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                await App.ReceiptsModalsViewModel.OpenScanModalAsync(path);
+                Title = "Select Receipt to Scan",
+                AllowMultiple = false,
+                FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
+            });
+
+            if (files.Count > 0)
+            {
+                var file = files[0];
+                var path = file.TryGetLocalPath();
+                if (!string.IsNullOrEmpty(path) && App.ReceiptsModalsViewModel != null)
+                {
+                    await App.ReceiptsModalsViewModel.OpenScanModalAsync(path);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnOpenFileScanRequested: {ex}");
         }
     }
 

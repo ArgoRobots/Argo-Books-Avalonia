@@ -283,15 +283,22 @@ public partial class AnalyticsPage : UserControl
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, SaveChartImageEventArgs e)
     {
-        if (_clickedChart == null) return;
+        try
+        {
+            if (_clickedChart == null) return;
 
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
 
-        await ChartImageExportService.SaveChartAsImageAsync(
-            topLevel,
-            _clickedChart,
-            ChartImageExportService.CreateSafeFileName(_clickedChartName));
+            await ChartImageExportService.SaveChartAsImageAsync(
+                topLevel,
+                _clickedChart,
+                ChartImageExportService.CreateSafeFileName(_clickedChartName));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnSaveChartImageRequested: {ex}");
+        }
     }
 
     /// <summary>
@@ -299,6 +306,8 @@ public partial class AnalyticsPage : UserControl
     /// </summary>
     private async void OnExcelExportRequested(object? sender, ExcelExportEventArgs e)
     {
+        try
+        {
         // Get the top-level window for the file picker
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
@@ -402,6 +411,11 @@ public partial class AnalyticsPage : UserControl
                     CancelButtonText = null
                 });
             }
+        }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnExcelExportRequested: {ex}");
         }
     }
 

@@ -336,6 +336,8 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     partial void OnModalDiscountChanged(decimal value) => UpdateTotals();
     partial void OnModalFeeChanged(decimal value) => UpdateTotals();
 
+    private void OnLineItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => UpdateTotals();
+
     protected void UpdateTotals()
     {
         OnPropertyChanged(nameof(Subtotal));
@@ -576,7 +578,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     Quantity = li.Quantity,
                     UnitPrice = unitPrice
                 };
-                lineItem.PropertyChanged += (_, _) => UpdateTotals();
+                lineItem.PropertyChanged += OnLineItemPropertyChanged;
                 LineItems.Add(lineItem);
             }
         }
@@ -593,7 +595,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 Quantity = transaction.Quantity,
                 UnitPrice = unitPrice
             };
-            lineItem.PropertyChanged += (_, _) => UpdateTotals();
+            lineItem.PropertyChanged += OnLineItemPropertyChanged;
             LineItems.Add(lineItem);
         }
         UpdateTotals();
@@ -984,6 +986,8 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalFee = 0;
         SelectedPaymentMethod = "Cash";
         ModalNotes = string.Empty;
+        foreach (var li in LineItems)
+            li.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
         AddLineItem();
         ReceiptFileName = "No receipt attached";
@@ -1046,7 +1050,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected void AddLineItem()
     {
         var lineItem = new TLineItem();
-        lineItem.PropertyChanged += (_, _) => UpdateTotals();
+        lineItem.PropertyChanged += OnLineItemPropertyChanged;
         LineItems.Add(lineItem);
         UpdateTotals();
     }
@@ -1056,6 +1060,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     {
         if (item != null && LineItems.Count > 1)
         {
+            item.PropertyChanged -= OnLineItemPropertyChanged;
             LineItems.Remove(item);
             UpdateTotals();
         }

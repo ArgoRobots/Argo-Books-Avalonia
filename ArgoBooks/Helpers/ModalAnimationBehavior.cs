@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -77,14 +78,14 @@ public static class ModalAnimationBehavior
         }
     }
 
-    private static readonly Dictionary<Border, PropertyChangedEventHandler> _handlers = new();
+    private static readonly ConditionalWeakTable<Border, StrongBox<PropertyChangedEventHandler>> _handlers = new();
 
     private static void SubscribeToViewModel(Border border, INotifyPropertyChanged vm)
     {
         // Remove old handler if exists
-        if (_handlers.TryGetValue(border, out var oldHandler))
+        if (_handlers.TryGetValue(border, out var oldBox))
         {
-            vm.PropertyChanged -= oldHandler;
+            vm.PropertyChanged -= oldBox.Value;
             _handlers.Remove(border);
         }
 
@@ -106,7 +107,7 @@ public static class ModalAnimationBehavior
         };
 
         vm.PropertyChanged += handler;
-        _handlers[border] = handler;
+        _handlers.AddOrUpdate(border, new StrongBox<PropertyChangedEventHandler>(handler));
 
         // Check initial state
         var initialProp = vm.GetType().GetProperty(propertyName);

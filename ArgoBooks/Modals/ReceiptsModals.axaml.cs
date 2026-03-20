@@ -22,6 +22,7 @@ public partial class ReceiptsModals : UserControl
     private const double MaxZoom = 4.0;
     private const double ZoomStep = 0.25;
     private bool _updatingSlider;
+    private ReceiptsModalsViewModel? _subscribedVm;
 
     // Panning (right-click or middle-click drag)
     private bool _isPanning;
@@ -58,7 +59,19 @@ public partial class ReceiptsModals : UserControl
         // Subscribe to ViewModel to fit image when scan results arrive
         if (DataContext is ReceiptsModalsViewModel vm)
         {
+            _subscribedVm = vm;
             vm.PropertyChanged += OnScanViewModelPropertyChanged;
+        }
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_subscribedVm != null)
+        {
+            _subscribedVm.PropertyChanged -= OnScanViewModelPropertyChanged;
+            _subscribedVm = null;
         }
     }
 

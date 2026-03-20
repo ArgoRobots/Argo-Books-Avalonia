@@ -131,50 +131,64 @@ public partial class ReportsPage : UserControl
 
     private async void TriggerInitialZoomToFit()
     {
-        if (_designCanvas == null) return;
-
-        // Hide canvas during initial load to prevent flash of unzoomed content
-        _designCanvas.Opacity = 0;
-
-        // Wait for layout to stabilize - the ScrollViewer inside the canvas
-        // needs time for its Viewport to be calculated
-        var tcs = new TaskCompletionSource<bool>();
-
-        void OnLayoutUpdated(object? sender, EventArgs args)
+        try
         {
+            if (_designCanvas == null) return;
+
+            // Hide canvas during initial load to prevent flash of unzoomed content
+            _designCanvas.Opacity = 0;
+
+            // Wait for layout to stabilize - the ScrollViewer inside the canvas
+            // needs time for its Viewport to be calculated
+            var tcs = new TaskCompletionSource<bool>();
+
+            void OnLayoutUpdated(object? sender, EventArgs args)
+            {
+                if (_designCanvas.Bounds is { Width: > 0, Height: > 0 })
+                {
+                    _designCanvas.LayoutUpdated -= OnLayoutUpdated;
+                    tcs.TrySetResult(true);
+                }
+            }
+
             if (_designCanvas.Bounds is { Width: > 0, Height: > 0 })
             {
-                _designCanvas.LayoutUpdated -= OnLayoutUpdated;
                 tcs.TrySetResult(true);
             }
-        }
+            else
+            {
+                _designCanvas.LayoutUpdated += OnLayoutUpdated;
+            }
 
-        if (_designCanvas.Bounds is { Width: > 0, Height: > 0 })
+            // Wait for layout to complete
+            await tcs.Task;
+
+            // Additional delay to ensure ScrollViewer's Viewport is calculated
+            await Task.Delay(50);
+
+            _designCanvas?.ZoomToFit();
+
+            // Show canvas after zoom is applied
+            _designCanvas?.Opacity = 1;
+        }
+        catch (Exception ex)
         {
-            tcs.TrySetResult(true);
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in TriggerInitialZoomToFit: {ex}");
         }
-        else
-        {
-            _designCanvas.LayoutUpdated += OnLayoutUpdated;
-        }
-
-        // Wait for layout to complete
-        await tcs.Task;
-
-        // Additional delay to ensure ScrollViewer's Viewport is calculated
-        await Task.Delay(50);
-
-        _designCanvas?.ZoomToFit();
-
-        // Show canvas after zoom is applied
-        _designCanvas?.Opacity = 1;
     }
 
     private async void InitializeAsteriskAsync()
     {
-        // Wait a moment for all initialization to complete before allowing asterisk to show
-        await Task.Delay(100);
-        _isAsteriskInitialized = true;
+        try
+        {
+            // Wait a moment for all initialization to complete before allowing asterisk to show
+            await Task.Delay(100);
+            _isAsteriskInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in InitializeAsteriskAsync: {ex}");
+        }
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -217,24 +231,38 @@ public partial class ReportsPage : UserControl
 
     private async void OnTemplateLoaded(object? sender, EventArgs e)
     {
-        if (_designCanvas == null) return;
+        try
+        {
+            if (_designCanvas == null) return;
 
-        // Hide canvas during template load to prevent flash of unzoomed content
-        _designCanvas.Opacity = 0;
+            // Hide canvas during template load to prevent flash of unzoomed content
+            _designCanvas.Opacity = 0;
 
-        // Wait a frame for layout to complete before fitting to window
-        await Task.Delay(50);
-        _designCanvas.ZoomToFit();
+            // Wait a frame for layout to complete before fitting to window
+            await Task.Delay(50);
+            _designCanvas.ZoomToFit();
 
-        // Show canvas after zoom is applied
-        _designCanvas.Opacity = 1;
+            // Show canvas after zoom is applied
+            _designCanvas.Opacity = 1;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnTemplateLoaded: {ex}");
+        }
     }
 
     private async void OnPreviewFitToWindowRequested(object? sender, EventArgs e)
     {
-        // Wait for the preview image to be rendered and layout to complete
-        await Task.Delay(100);
-        PreviewZoomToFit();
+        try
+        {
+            // Wait for the preview image to be rendered and layout to complete
+            await Task.Delay(100);
+            PreviewZoomToFit();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnPreviewFitToWindowRequested: {ex}");
+        }
     }
 
     private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
@@ -835,27 +863,34 @@ public partial class ReportsPage : UserControl
     /// </summary>
     private async void OnToggleElementPanelClick(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is not ReportsPageViewModel vm || _elementToolbox == null) return;
-
-        vm.IsElementPanelExpanded = !vm.IsElementPanelExpanded;
-
-        // Animate width
-        var targetWidth = vm.IsElementPanelExpanded ? 160.0 : 40.0;
-        var startWidth = _elementToolbox.Width;
-        if (double.IsNaN(startWidth)) startWidth = vm.IsElementPanelExpanded ? 40.0 : 160.0;
-
-        const int steps = 10;
-        const int delayMs = 16;
-
-        for (int i = 1; i <= steps; i++)
+        try
         {
-            double t = i / (double)steps;
-            double easeOut = 1 - Math.Pow(1 - t, 3);
-            _elementToolbox.Width = startWidth + (targetWidth - startWidth) * easeOut;
-            await Task.Delay(delayMs);
-        }
+            if (DataContext is not ReportsPageViewModel vm || _elementToolbox == null) return;
 
-        // Ensure final state
-        _elementToolbox.Width = targetWidth;
+            vm.IsElementPanelExpanded = !vm.IsElementPanelExpanded;
+
+            // Animate width
+            var targetWidth = vm.IsElementPanelExpanded ? 160.0 : 40.0;
+            var startWidth = _elementToolbox.Width;
+            if (double.IsNaN(startWidth)) startWidth = vm.IsElementPanelExpanded ? 40.0 : 160.0;
+
+            const int steps = 10;
+            const int delayMs = 16;
+
+            for (int i = 1; i <= steps; i++)
+            {
+                double t = i / (double)steps;
+                double easeOut = 1 - Math.Pow(1 - t, 3);
+                _elementToolbox.Width = startWidth + (targetWidth - startWidth) * easeOut;
+                await Task.Delay(delayMs);
+            }
+
+            // Ensure final state
+            _elementToolbox.Width = targetWidth;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnToggleElementPanelClick: {ex}");
+        }
     }
 }

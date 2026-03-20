@@ -12,6 +12,7 @@ namespace ArgoBooks.Modals;
 public partial class PasswordPromptModal : UserControl
 {
     private bool _eventsSubscribed;
+    private PasswordPromptModalViewModel? _subscribedVm;
 
     public PasswordPromptModal()
     {
@@ -25,8 +26,22 @@ public partial class PasswordPromptModal : UserControl
         if (DataContext is PasswordPromptModalViewModel vm && !_eventsSubscribed)
         {
             _eventsSubscribed = true;
+            _subscribedVm = vm;
             vm.FocusPasswordRequested += OnFocusPasswordRequested;
             vm.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_subscribedVm != null)
+        {
+            _subscribedVm.FocusPasswordRequested -= OnFocusPasswordRequested;
+            _subscribedVm.PropertyChanged -= OnViewModelPropertyChanged;
+            _subscribedVm = null;
+            _eventsSubscribed = false;
         }
     }
 

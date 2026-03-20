@@ -347,6 +347,7 @@ public partial class Header : UserControl
     private TextBlock? _asterisk;
     private readonly StackPanel? _saveButtonContainer;
     private bool _isInitialized;
+    private HeaderViewModel? _subscribedVm;
 
     public Header()
     {
@@ -357,15 +358,36 @@ public partial class Header : UserControl
 
     private async void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        // Wait a moment for all initialization to complete
-        await Task.Delay(100);
-
-        _isInitialized = true;
-
-        if (DataContext is HeaderViewModel vm)
+        try
         {
-            vm.PropertyChanged += OnViewModelPropertyChanged;
+            // Wait a moment for all initialization to complete
+            await Task.Delay(100);
+
+            _isInitialized = true;
+
+            if (DataContext is HeaderViewModel vm)
+            {
+                _subscribedVm = vm;
+                vm.PropertyChanged += OnViewModelPropertyChanged;
+            }
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OnLoaded: {ex}");
+        }
+    }
+
+    protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_subscribedVm != null)
+        {
+            _subscribedVm.PropertyChanged -= OnViewModelPropertyChanged;
+            _subscribedVm = null;
+        }
+
+        Loaded -= OnLoaded;
     }
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

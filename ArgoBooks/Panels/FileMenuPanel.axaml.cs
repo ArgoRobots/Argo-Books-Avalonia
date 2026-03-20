@@ -128,16 +128,23 @@ public partial class FileMenuPanel : UserControl
 
     private async void DelayedCloseSubmenu()
     {
-        await Task.Delay(100);
-        if (!_isOverSubmenu && !_isOverRecentButton)
+        try
         {
-            Dispatcher.UIThread.Post(() =>
+            await Task.Delay(100);
+            if (!_isOverSubmenu && !_isOverRecentButton)
             {
-                if (DataContext is FileMenuPanelViewModel vm)
+                Dispatcher.UIThread.Post(() =>
                 {
-                    vm.IsRecentSubmenuOpen = false;
-                }
-            });
+                    if (DataContext is FileMenuPanelViewModel vm)
+                    {
+                        vm.IsRecentSubmenuOpen = false;
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in DelayedCloseSubmenu: {ex}");
         }
     }
 

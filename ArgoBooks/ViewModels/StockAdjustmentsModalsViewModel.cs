@@ -379,75 +379,82 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// </summary>
     public async void OpenDeleteConfirm(StockAdjustmentDisplayItem item)
     {
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Stock Adjustment".Translate(),
-            Message = "Are you sure you want to delete this stock adjustment?\n\nProduct: {0}\nQuantity: {1}".TranslateFormat(item.ProductName, item.Quantity),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Stock Adjustment".Translate(),
+                Message = "Are you sure you want to delete this stock adjustment?\n\nProduct: {0}\nQuantity: {1}".TranslateFormat(item.ProductName, item.Quantity),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
 
-        var companyData = App.CompanyManager?.CompanyData;
+            if (result != ConfirmationResult.Primary) return;
 
-        var adjustment = companyData?.StockAdjustments.FirstOrDefault(a => a.Id == item.Id);
-        if (adjustment == null) return;
+            var companyData = App.CompanyManager?.CompanyData;
 
-        // Find the inventory item and reverse the adjustment
-        var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == adjustment.InventoryItemId);
+            var adjustment = companyData?.StockAdjustments.FirstOrDefault(a => a.Id == item.Id);
+            if (adjustment == null) return;
 
-        // Store values for undo
-        var oldInventoryStock = inventoryItem?.InStock;
-        var oldInventoryStatus = inventoryItem?.Status;
+            // Find the inventory item and reverse the adjustment
+            var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == adjustment.InventoryItemId);
 
-        // Reverse the adjustment on inventory if item still exists
-        if (inventoryItem != null)
-        {
-            inventoryItem.InStock = adjustment.PreviousStock;
-            inventoryItem.Status = inventoryItem.CalculateStatus();
-            inventoryItem.LastUpdated = DateTime.UtcNow;
+            // Store values for undo
+            var oldInventoryStock = inventoryItem?.InStock;
+            var oldInventoryStatus = inventoryItem?.Status;
+
+            // Reverse the adjustment on inventory if item still exists
+            if (inventoryItem != null)
+            {
+                inventoryItem.InStock = adjustment.PreviousStock;
+                inventoryItem.Status = inventoryItem.CalculateStatus();
+                inventoryItem.LastUpdated = DateTime.UtcNow;
+            }
+
+            // Remove the adjustment record
+            companyData?.StockAdjustments.Remove(adjustment);
+            companyData?.MarkAsModified();
+
+            // Record undo action
+            var adjustmentProductName = item.ProductName;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Delete adjustment for '{adjustmentProductName}'",
+                () =>
+                {
+                    // Undo: restore the adjustment
+                    companyData?.StockAdjustments.Add(adjustment);
+                    if (inventoryItem != null && oldInventoryStock.HasValue)
+                    {
+                        inventoryItem.InStock = oldInventoryStock.Value;
+                        inventoryItem.Status = oldInventoryStatus ?? inventoryItem.CalculateStatus();
+                    }
+                    companyData?.MarkAsModified();
+                    AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    // Redo: delete again
+                    companyData?.StockAdjustments.Remove(adjustment);
+                    if (inventoryItem != null)
+                    {
+                        inventoryItem.InStock = adjustment.PreviousStock;
+                        inventoryItem.Status = inventoryItem.CalculateStatus();
+                    }
+                    companyData?.MarkAsModified();
+                    AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
+                }));
+
+            // Notify
+            AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        // Remove the adjustment record
-        companyData?.StockAdjustments.Remove(adjustment);
-        companyData?.MarkAsModified();
-
-        // Record undo action
-        var adjustmentProductName = item.ProductName;
-        App.UndoRedoManager.RecordAction(new DelegateAction(
-            $"Delete adjustment for '{adjustmentProductName}'",
-            () =>
-            {
-                // Undo: restore the adjustment
-                companyData?.StockAdjustments.Add(adjustment);
-                if (inventoryItem != null && oldInventoryStock.HasValue)
-                {
-                    inventoryItem.InStock = oldInventoryStock.Value;
-                    inventoryItem.Status = oldInventoryStatus ?? inventoryItem.CalculateStatus();
-                }
-                companyData?.MarkAsModified();
-                AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                // Redo: delete again
-                companyData?.StockAdjustments.Remove(adjustment);
-                if (inventoryItem != null)
-                {
-                    inventoryItem.InStock = adjustment.PreviousStock;
-                    inventoryItem.Status = inventoryItem.CalculateStatus();
-                }
-                companyData?.MarkAsModified();
-                AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
-            }));
-
-        // Notify
-        AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+        }
     }
 
     #endregion

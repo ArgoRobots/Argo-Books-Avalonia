@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -245,18 +245,7 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
     {
         var url = _updateService?.AvailableUpdate?.ReleaseNotesUrl ?? "https://argorobots.com/whats-new/";
 
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-        }
-        catch
-        {
-            // Ignore errors opening URL
-        }
+        UrlHelper.SafeOpenUrl(url);
     }
 
     /// <summary>

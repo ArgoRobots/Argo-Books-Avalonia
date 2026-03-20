@@ -186,7 +186,14 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     public async void RequestClose()
     {
-        await RequestCloseAsync();
+        try
+        {
+            await RequestCloseAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in RequestClose: {ex}");
+        }
     }
 
     private async Task RequestCloseAsync()

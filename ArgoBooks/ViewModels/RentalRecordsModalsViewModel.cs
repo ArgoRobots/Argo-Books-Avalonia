@@ -807,99 +807,106 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
 
     public async void OpenDeleteConfirm(RentalRecordDisplayItem? record)
     {
-        if (record == null)
-            return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null)
-            return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Rental Record".Translate(),
-            Message = "Are you sure you want to delete this rental record?\n\nRecord ID: {0}".TranslateFormat(record.Id),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (record == null)
+                return;
 
-        if (result != ConfirmationResult.Primary)
-            return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null)
+                return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
-
-        var rentalRecord = companyData.Rentals.FirstOrDefault(r => r.Id == record.Id);
-        if (rentalRecord != null)
-        {
-            var deletedRecord = rentalRecord;
-            var wasActive = rentalRecord.Status == RentalStatus.Active || rentalRecord.Status == RentalStatus.Overdue;
-
-            // Capture inventory state and restore if active
-            var inventorySnapshot = new Dictionary<string, (int Available, int Rented)>();
-            if (wasActive)
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
-                var effectiveItems = GetEffectiveLineItems(rentalRecord);
-                foreach (var li in effectiveItems)
+                Title = "Delete Rental Record".Translate(),
+                Message = "Are you sure you want to delete this rental record?\n\nRecord ID: {0}".TranslateFormat(record.Id),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary)
+                return;
+
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return;
+
+            var rentalRecord = companyData.Rentals.FirstOrDefault(r => r.Id == record.Id);
+            if (rentalRecord != null)
+            {
+                var deletedRecord = rentalRecord;
+                var wasActive = rentalRecord.Status == RentalStatus.Active || rentalRecord.Status == RentalStatus.Overdue;
+
+                // Capture inventory state and restore if active
+                var inventorySnapshot = new Dictionary<string, (int Available, int Rented)>();
+                if (wasActive)
                 {
-                    var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
-                    if (item != null)
+                    var effectiveItems = GetEffectiveLineItems(rentalRecord);
+                    foreach (var li in effectiveItems)
                     {
-                        if (!inventorySnapshot.ContainsKey(item.Id))
-                            inventorySnapshot[item.Id] = (item.AvailableQuantity, item.RentedQuantity);
-                        item.AvailableQuantity += li.Quantity;
-                        item.RentedQuantity -= li.Quantity;
+                        var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
+                        if (item != null)
+                        {
+                            if (!inventorySnapshot.ContainsKey(item.Id))
+                                inventorySnapshot[item.Id] = (item.AvailableQuantity, item.RentedQuantity);
+                            item.AvailableQuantity += li.Quantity;
+                            item.RentedQuantity -= li.Quantity;
+                        }
                     }
                 }
+
+                companyData.Rentals.Remove(rentalRecord);
+                companyData.MarkAsModified();
+
+                var savedSnapshot = inventorySnapshot;
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Delete rental '{deletedRecord.Id}'",
+                    () =>
+                    {
+                        companyData.Rentals.Add(deletedRecord);
+                        if (wasActive)
+                        {
+                            foreach (var (id, (avail, rented)) in savedSnapshot)
+                            {
+                                var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == id);
+                                if (item != null)
+                                {
+                                    item.AvailableQuantity = avail;
+                                    item.RentedQuantity = rented;
+                                }
+                            }
+                        }
+                        companyData.MarkAsModified();
+                        RecordDeleted?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        companyData.Rentals.Remove(deletedRecord);
+                        if (wasActive)
+                        {
+                            var effectiveItems = GetEffectiveLineItems(deletedRecord);
+                            foreach (var li in effectiveItems)
+                            {
+                                var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
+                                if (item != null)
+                                {
+                                    item.AvailableQuantity += li.Quantity;
+                                    item.RentedQuantity -= li.Quantity;
+                                }
+                            }
+                        }
+                        companyData.MarkAsModified();
+                        RecordDeleted?.Invoke(this, EventArgs.Empty);
+                    }));
             }
 
-            companyData.Rentals.Remove(rentalRecord);
-            companyData.MarkAsModified();
-
-            var savedSnapshot = inventorySnapshot;
-            App.UndoRedoManager.RecordAction(new DelegateAction(
-                $"Delete rental '{deletedRecord.Id}'",
-                () =>
-                {
-                    companyData.Rentals.Add(deletedRecord);
-                    if (wasActive)
-                    {
-                        foreach (var (id, (avail, rented)) in savedSnapshot)
-                        {
-                            var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == id);
-                            if (item != null)
-                            {
-                                item.AvailableQuantity = avail;
-                                item.RentedQuantity = rented;
-                            }
-                        }
-                    }
-                    companyData.MarkAsModified();
-                    RecordDeleted?.Invoke(this, EventArgs.Empty);
-                },
-                () =>
-                {
-                    companyData.Rentals.Remove(deletedRecord);
-                    if (wasActive)
-                    {
-                        var effectiveItems = GetEffectiveLineItems(deletedRecord);
-                        foreach (var li in effectiveItems)
-                        {
-                            var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
-                            if (item != null)
-                            {
-                                item.AvailableQuantity += li.Quantity;
-                                item.RentedQuantity -= li.Quantity;
-                            }
-                        }
-                    }
-                    companyData.MarkAsModified();
-                    RecordDeleted?.Invoke(this, EventArgs.Empty);
-                }));
+            RecordDeleted?.Invoke(this, EventArgs.Empty);
         }
-
-        RecordDeleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception in OpenDeleteConfirm: {ex}");
+        }
     }
 
     #endregion

@@ -1768,12 +1768,19 @@ public partial class ReportsPageViewModel : ViewModelBase
                 // Auto-dismiss success message after 5 seconds
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(5000);
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    try
                     {
-                        if (ExportMessage == "Export completed successfully!")
-                            ExportMessage = string.Empty;
-                    });
+                        await Task.Delay(5000);
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            if (ExportMessage == "Export completed successfully!")
+                                ExportMessage = string.Empty;
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.General, "Failed to auto-dismiss export message");
+                    }
                 });
 
                 // Save export settings for next time
