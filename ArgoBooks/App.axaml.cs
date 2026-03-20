@@ -2300,7 +2300,7 @@ public class App : Application
                         logo);
                     _reportsPageViewModel?.RefreshCanvas();
 
-                    // Record undo/redo action
+                    // Record undo/redo action only if non-currency fields changed
                     var newName = args.CompanyName;
                     var newBusinessType = args.BusinessType;
                     var newIndustry = args.Industry;
@@ -2309,6 +2309,19 @@ public class App : Application
                     var newCity = args.City;
                     var newAddress = args.Address;
                     var newProvinceState = args.ProvinceState;
+
+                    var hasNonCurrencyChanges = oldName != newName
+                        || oldBusinessType != newBusinessType
+                        || oldIndustry != newIndustry
+                        || oldPhone != newPhone
+                        || oldEmail != args.Email
+                        || oldCountry != newCountry
+                        || oldCity != newCity
+                        || oldAddress != newAddress
+                        || oldProvinceState != newProvinceState
+                        || oldLogoFileName != newLogoFileName;
+
+                    if (!hasNonCurrencyChanges) return;
 
                     UndoRedoManager.RecordAction(new DelegateAction(
                         $"Edit company '{newName}'",
