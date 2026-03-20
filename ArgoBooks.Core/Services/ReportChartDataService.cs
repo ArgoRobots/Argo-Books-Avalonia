@@ -1633,15 +1633,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var allBrackets = new[] { "0%", "1-5%", "6-10%", "11-15%", "16-20%", "20%+" };
 
-        // TaxRate is stored as a decimal (e.g., 0.08 for 8%), convert to percentage for bucketing
+        // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%) by ViewModels
         var revenueRates = companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate)
-            .Select(r => r.TaxRate * 100)
+            .Select(r => r.TaxRate)
             .ToList();
 
         var expenseRates = companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate)
-            .Select(e => e.TaxRate * 100)
+            .Select(e => e.TaxRate)
             .ToList();
 
         if (revenueRates.Count == 0 && expenseRates.Count == 0)
