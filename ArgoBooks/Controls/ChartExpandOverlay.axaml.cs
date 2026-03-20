@@ -43,6 +43,7 @@ public partial class ChartExpandOverlay : UserControl
     private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
     private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, CornerRadius origCornerRadius, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
     private readonly List<(PieChart chart, Thickness origMargin)> _originalPieChartMargins = new();
+    private readonly List<(ChartEmptyState emptyState, EventHandler<AvaloniaPropertyChangedEventArgs> handler)> _emptyStateSubscriptions = new();
 
     // Zoom and granularity state for fullscreen mode
     private Action? _zoomUnsubscriber;
@@ -73,6 +74,11 @@ public partial class ChartExpandOverlay : UserControl
     {
         if (_pageContentControl != null)
             _pageContentControl.PropertyChanged -= OnPageContentPropertyChanged;
+
+        foreach (var (emptyState, handler) in _emptyStateSubscriptions)
+            emptyState.PropertyChanged -= handler;
+        _emptyStateSubscriptions.Clear();
+
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -267,6 +273,7 @@ public partial class ChartExpandOverlay : UserControl
             foreach (var emptyState in emptyStates)
             {
                 emptyState.PropertyChanged += UpdateButtonVisibility;
+                _emptyStateSubscriptions.Add((emptyState, UpdateButtonVisibility));
             }
 
             // Set initial state

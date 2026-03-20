@@ -186,7 +186,14 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     public async void RequestClose()
     {
-        await RequestCloseAsync();
+        try
+        {
+            await RequestCloseAsync();
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "CreateCompany.RequestClose");
+        }
     }
 
     private async Task RequestCloseAsync()

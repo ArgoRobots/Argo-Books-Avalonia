@@ -300,7 +300,8 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
             var columnWidths = new Dictionary<string, double>();
             var remaining = availableForProportional;
 
-            while (true)
+            const int maxIterations = 100;
+            for (var iteration = 0; iteration < maxIterations; iteration++)
             {
                 var unlocked = proportionalCols.Where(c => !locked.Contains(c.Name)).ToList();
                 if (unlocked.Count == 0) break;

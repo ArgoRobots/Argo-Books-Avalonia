@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArgoBooks.Helpers;
@@ -20,6 +21,21 @@ public partial class CategoriesTutorialOverlay : UserControl
 
         DataContextChanged += OnDataContextChanged;
         PropertyChanged += OnPropertyChanged;
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_viewModel != null)
+        {
+            _viewModel.HighlightAreaChanged -= OnHighlightAreaChanged;
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel = null;
+        }
+
+        DataContextChanged -= OnDataContextChanged;
+        PropertyChanged -= OnPropertyChanged;
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)

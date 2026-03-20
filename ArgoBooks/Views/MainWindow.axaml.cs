@@ -122,87 +122,96 @@ public partial class MainWindow : Window
 
     private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
-        // If we've already confirmed closing and done telemetry upload, just save window state
-        if (_isClosingConfirmed)
+        try
         {
-            SaveWindowState();
-            return;
-        }
-
-        // Check for unsaved changes in the reports page first
-        if (App.HasReportsPageUnsavedChanges)
-        {
-            e.Cancel = true;
-
-            var shouldContinue = await App.ConfirmReportsUnsavedChangesAsync();
-            if (!shouldContinue)
+            // If we've already confirmed closing and done telemetry upload, just save window state
+            if (_isClosingConfirmed)
             {
-                return; // User cancelled, don't close
-            }
-
-            // User confirmed, check for other unsaved changes before closing
-            var hasAppUnsavedChanges = App.UndoRedoManager.IsAtSavedState == false;
-            if (!hasAppUnsavedChanges)
-            {
-                // No other unsaved changes, do telemetry upload and close
-                await EndTelemetryAndCloseAsync();
+                SaveWindowState();
                 return;
             }
-            // Fall through to handle app-level unsaved changes
-        }
 
-        // Check for unsaved changes - use UndoRedoManager's saved state tracking
-        // which correctly handles undo back to original state
-        var hasUnsavedChanges = !App.UndoRedoManager.IsAtSavedState;
-        if (hasUnsavedChanges)
-        {
-            // Cancel the close event to show dialog
-            e.Cancel = true;
-
-            // Show unsaved changes dialog
-            if (DataContext is MainWindowViewModel { UnsavedChangesDialogViewModel: not null } viewModel)
+            // Check for unsaved changes in the reports page first
+            if (App.HasReportsPageUnsavedChanges)
             {
-                var result = await viewModel.UnsavedChangesDialogViewModel.ShowSimpleAsync(
-                    "Unsaved Changes".Translate(),
-                    "You have unsaved changes. Would you like to save them before closing?".Translate());
+                e.Cancel = true;
 
-                switch (result)
+                var shouldContinue = await App.ConfirmReportsUnsavedChangesAsync();
+                if (!shouldContinue)
                 {
-                    case UnsavedChangesResult.Save:
-                        // Save and close
-                        if (App.CompanyManager != null)
-                        {
-                            // Sample company cannot be saved directly - redirect to Save As
-                            if (App.CompanyManager.IsSampleCompany)
-                            {
-                                var saved = await App.SaveCompanyAsFromWindowAsync();
-                                if (!saved) return; // User cancelled Save As, don't close
-                            }
-                            else
-                            {
-                                await App.CompanyManager.SaveCompanyAsync();
-                            }
-                        }
-                        await EndTelemetryAndCloseAsync();
-                        break;
+                    return; // User cancelled, don't close
+                }
 
-                    case UnsavedChangesResult.DontSave:
-                        // Close without saving
-                        await EndTelemetryAndCloseAsync();
-                        break;
+                // User confirmed, check for other unsaved changes before closing
+                var hasAppUnsavedChanges = App.UndoRedoManager.IsAtSavedState == false;
+                if (!hasAppUnsavedChanges)
+                {
+                    // No other unsaved changes, do telemetry upload and close
+                    await EndTelemetryAndCloseAsync();
+                    return;
+                }
+                // Fall through to handle app-level unsaved changes
+            }
 
-                    case UnsavedChangesResult.Cancel:
-                    case UnsavedChangesResult.None:
-                        // Don't close
-                        break;
+            // Check for unsaved changes - use UndoRedoManager's saved state tracking
+            // which correctly handles undo back to original state
+            var hasUnsavedChanges = !App.UndoRedoManager.IsAtSavedState;
+            if (hasUnsavedChanges)
+            {
+                // Cancel the close event to show dialog
+                e.Cancel = true;
+
+                // Show unsaved changes dialog
+                if (DataContext is MainWindowViewModel { UnsavedChangesDialogViewModel: not null } viewModel)
+                {
+                    var result = await viewModel.UnsavedChangesDialogViewModel.ShowSimpleAsync(
+                        "Unsaved Changes".Translate(),
+                        "You have unsaved changes. Would you like to save them before closing?".Translate());
+
+                    switch (result)
+                    {
+                        case UnsavedChangesResult.Save:
+                            // Save and close
+                            if (App.CompanyManager != null)
+                            {
+                                // Sample company cannot be saved directly - redirect to Save As
+                                if (App.CompanyManager.IsSampleCompany)
+                                {
+                                    var saved = await App.SaveCompanyAsFromWindowAsync();
+                                    if (!saved) return; // User cancelled Save As, don't close
+                                }
+                                else
+                                {
+                                    await App.CompanyManager.SaveCompanyAsync();
+                                }
+                            }
+                            await EndTelemetryAndCloseAsync();
+                            break;
+
+                        case UnsavedChangesResult.DontSave:
+                            // Close without saving
+                            await EndTelemetryAndCloseAsync();
+                            break;
+
+                        case UnsavedChangesResult.Cancel:
+                        case UnsavedChangesResult.None:
+                            // Don't close
+                            break;
+                    }
                 }
             }
+            else
+            {
+                // No unsaved changes, do telemetry upload and close
+                e.Cancel = true;
+                await EndTelemetryAndCloseAsync();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // No unsaved changes, do telemetry upload and close
+            // Cancel close to prevent data loss if an error occurred during the closing logic
             e.Cancel = true;
-            await EndTelemetryAndCloseAsync();
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "OnWindowClosing");
         }
     }
 

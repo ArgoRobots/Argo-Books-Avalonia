@@ -97,6 +97,8 @@ public partial class UpgradeModal : UserControl
 
     private async void PlaySuccessAnimation()
     {
+        try
+        {
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
             // Animate the glow first
@@ -224,10 +226,17 @@ public partial class UpgradeModal : UserControl
                       await textSlideAnimation.RunAsync(SuccessTextPanel);  // Run on control
             }
         });
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "PlaySuccessAnimation");
+        }
     }
 
     private async void PlayContinueButtonAnimation()
     {
+        try
+        {
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
             if (ContinueButtonPanel != null)
@@ -287,6 +296,11 @@ public partial class UpgradeModal : UserControl
                 await slideAnimation.RunAsync(ContinueButtonPanel);
             }
         });
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "PlayContinueButtonAnimation");
+        }
     }
 
     private bool _isFormatting;

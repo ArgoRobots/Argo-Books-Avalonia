@@ -1,5 +1,4 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services.InvoiceTemplates;
 
@@ -33,7 +32,7 @@ public static class InvoicePreviewService
 
             // Open in default browser
             if (openBrowser)
-                OpenUrl($"file://{filePath}");
+                OpenUrl(new Uri(filePath).AbsoluteUri);
 
             return true;
         }
@@ -80,45 +79,9 @@ public static class InvoicePreviewService
 
     /// <summary>
     /// Opens a URL in the default browser (cross-platform).
-    /// Uses argument arrays instead of shell interpretation to prevent command injection.
     /// </summary>
     private static void OpenUrl(string url)
     {
-        try
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // Use cmd /c start with empty title ("") and the URL as a separate argument
-                // to prevent shell metacharacter injection
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "cmd",
-                    ArgumentList = { "/c", "start", "", url },
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", [url]);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", [url]);
-            }
-            else
-            {
-                // Fallback for unknown platforms
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = url,
-                    UseShellExecute = true
-                });
-            }
-        }
-        catch
-        {
-            // Silently fail if unable to open browser
-        }
+        UrlHelper.SafeOpenUrl(url);
     }
 }

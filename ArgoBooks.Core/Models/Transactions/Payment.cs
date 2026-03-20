@@ -94,10 +94,12 @@ public class Payment
     public decimal AmountUSD { get; set; }
 
     /// <summary>
-    /// Gets the effective amount in USD, falling back to Amount for legacy data.
+    /// Gets the effective amount in USD. For USD payments (including legacy data), returns Amount directly.
+    /// For non-USD payments, returns the converted AmountUSD value.
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveAmountUSD => AmountUSD > 0 ? AmountUSD : Amount;
+    public decimal EffectiveAmountUSD =>
+        string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? Amount : AmountUSD;
 
     #endregion
 }

@@ -140,15 +140,22 @@ public partial class DashboardPage : UserControl
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, SaveChartImageEventArgs e)
     {
-        if (_clickedChart == null) return;
+        try
+        {
+            if (_clickedChart == null) return;
 
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
 
-        await ChartImageExportService.SaveChartAsImageAsync(
-            topLevel,
-            _clickedChart,
-            ChartImageExportService.CreateSafeFileName(_clickedChartName));
+            await ChartImageExportService.SaveChartAsImageAsync(
+                topLevel,
+                _clickedChart,
+                ChartImageExportService.CreateSafeFileName(_clickedChartName));
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "OnSaveChartImageRequested");
+        }
     }
 
     /// <summary>
@@ -156,31 +163,33 @@ public partial class DashboardPage : UserControl
     /// </summary>
     private async void OnExcelExportRequested(object? sender, ExcelExportEventArgs e)
     {
-        // Get the top-level window for the file picker
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        // Create safe filename from chart title
-        var safeName = string.Join("_", e.ChartTitle.Split(Path.GetInvalidFileNameChars()));
-        safeName = safeName.Replace(" ", "_");
-        var suggestedFileName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
-
-        // Show save file dialog
-        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Export Chart to Excel",
-            SuggestedFileName = suggestedFileName,
-            DefaultExtension = "xlsx",
-            FileTypeChoices =
-            [
-                new FilePickerFileType("Excel Workbook") { Patterns = ["*.xlsx"] }
-            ]
-        });
-
-        if (file == null) return;
-
         try
         {
+            // Get the top-level window for the file picker
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            // Create safe filename from chart title
+            var safeName = string.Join("_", e.ChartTitle.Split(Path.GetInvalidFileNameChars()));
+            safeName = safeName.Replace(" ", "_");
+            var suggestedFileName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
+
+            // Show save file dialog
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Chart to Excel",
+                SuggestedFileName = suggestedFileName,
+                DefaultExtension = "xlsx",
+                FileTypeChoices =
+                [
+                    new FilePickerFileType("Excel Workbook") { Patterns = ["*.xlsx"] }
+                ]
+            });
+
+            if (file == null) return;
+
+            try
+            {
             var filePath = file.Path.LocalPath;
 
             // Map chart style to Excel chart type
@@ -259,6 +268,11 @@ public partial class DashboardPage : UserControl
                     CancelButtonText = null
                 });
             }
+        }
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "OnExcelExportRequested");
         }
     }
 

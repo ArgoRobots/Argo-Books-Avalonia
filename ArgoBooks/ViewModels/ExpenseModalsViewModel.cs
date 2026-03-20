@@ -194,63 +194,70 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     public async void OpenDeleteConfirm(ExpenseDisplayItem? item)
     {
-        if (item == null) return;
-
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        try
         {
-            Title = "Delete Expense".Translate(),
-            Message = "Are you sure you want to delete this expense?\n\nID: {0}\nProduct: {1}\nAmount: {2}".TranslateFormat(item.Id, item.ProductDescription, item.TotalFormatted),
-            PrimaryButtonText = "Delete".Translate(),
-            CancelButtonText = "Cancel".Translate(),
-            IsPrimaryDestructive = true
-        });
+            if (item == null) return;
 
-        if (result != ConfirmationResult.Primary) return;
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
 
-        var companyData = App.CompanyManager?.CompanyData;
-
-        var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == item.Id);
-        if (expense == null) return;
-
-        // Find and remove associated receipt
-        Receipt? deletedReceipt = null;
-        if (!string.IsNullOrEmpty(expense.ReceiptId))
-        {
-            deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
-            if (deletedReceipt != null)
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
-                companyData?.Receipts.Remove(deletedReceipt);
-            }
-        }
-
-        var deletedExpense = expense;
-        App.EventLogService?.CapturePreDeletionSnapshot("Expense", deletedExpense.Id);
-        var capturedReceipt = deletedReceipt;
-        var action = new DelegateAction(
-            $"Delete expense {expense.Id}",
-            () =>
-            {
-                companyData?.Expenses.Add(deletedExpense);
-                if (capturedReceipt != null)
-                    companyData?.Receipts.Add(capturedReceipt);
-                RaiseTransactionDeleted();
-            },
-            () =>
-            {
-                companyData?.Expenses.Remove(deletedExpense);
-                if (capturedReceipt != null)
-                    companyData?.Receipts.Remove(capturedReceipt);
-                RaiseTransactionDeleted();
+                Title = "Delete Expense".Translate(),
+                Message = "Are you sure you want to delete this expense?\n\nID: {0}\nProduct: {1}\nAmount: {2}".TranslateFormat(item.Id, item.ProductDescription, item.TotalFormatted),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
             });
 
-        companyData?.Expenses.Remove(expense);
-        App.UndoRedoManager.RecordAction(action);
-        App.CompanyManager?.MarkAsChanged();
+            if (result != ConfirmationResult.Primary) return;
 
-        RaiseTransactionDeleted();
+            var companyData = App.CompanyManager?.CompanyData;
+
+            var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == item.Id);
+            if (expense == null) return;
+
+            // Find and remove associated receipt
+            Receipt? deletedReceipt = null;
+            if (!string.IsNullOrEmpty(expense.ReceiptId))
+            {
+                deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
+                if (deletedReceipt != null)
+                {
+                    companyData?.Receipts.Remove(deletedReceipt);
+                }
+            }
+
+            var deletedExpense = expense;
+            App.EventLogService?.CapturePreDeletionSnapshot("Expense", deletedExpense.Id);
+            var capturedReceipt = deletedReceipt;
+            var action = new DelegateAction(
+                $"Delete expense {expense.Id}",
+                () =>
+                {
+                    companyData?.Expenses.Add(deletedExpense);
+                    if (capturedReceipt != null)
+                        companyData?.Receipts.Add(capturedReceipt);
+                    RaiseTransactionDeleted();
+                },
+                () =>
+                {
+                    companyData?.Expenses.Remove(deletedExpense);
+                    if (capturedReceipt != null)
+                        companyData?.Receipts.Remove(capturedReceipt);
+                    RaiseTransactionDeleted();
+                });
+
+            companyData?.Expenses.Remove(expense);
+            App.UndoRedoManager.RecordAction(action);
+            App.CompanyManager?.MarkAsChanged();
+
+            RaiseTransactionDeleted();
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Expense.OpenDeleteConfirm");
+        }
     }
 
     #endregion
@@ -711,20 +718,21 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
+    private Receipt? CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
     {
+        if (string.IsNullOrEmpty(ReceiptFilePath)) return null;
+
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
-
-        var fileInfo = new FileInfo(ReceiptFilePath!);
-        var fileType = GetFileType(ReceiptFilePath!);
+        var fileInfo = new FileInfo(ReceiptFilePath);
+        var fileType = GetFileType(ReceiptFilePath);
 
         string? fileData = null;
         if (fileInfo.Exists)
         {
             try
             {
-                var bytes = File.ReadAllBytes(ReceiptFilePath!);
+                var bytes = File.ReadAllBytes(ReceiptFilePath);
                 fileData = Convert.ToBase64String(bytes);
             }
             catch (Exception ex)

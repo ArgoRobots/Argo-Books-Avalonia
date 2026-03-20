@@ -1,9 +1,9 @@
-using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -167,18 +167,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     private static void OpenUrl(string url)
     {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-        }
-        catch
-        {
-            // Ignore errors opening URL
-        }
+        UrlHelper.SafeOpenUrl(url);
     }
 
     [RelayCommand]
