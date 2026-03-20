@@ -1692,7 +1692,9 @@ public class App : Application
         _appShellViewModel.PaymentModalsViewModel.PaymentDeleted += MarkUnsavedChanges;
 
         // Invoice modals
-        _appShellViewModel.InvoiceModalsViewModel.InvoiceSaved += MarkUnsavedChanges;
+        // Note: InvoiceSaved is not wired to MarkUnsavedChanges because both call sites
+        // (CreateAndSendInvoice, SaveInvoice) auto-save immediately, which avoids a
+        // brief asterisk flash in the window title.
         _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
 
         // Invoice template designer
