@@ -149,10 +149,17 @@ public class PurchaseOrder
     public decimal TotalUSD { get; set; }
 
     /// <summary>
-    /// Gets the effective total in USD, falling back to Total for legacy data.
+    /// Whether this PO's original currency is USD (including legacy data which defaults to USD).
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : Total;
+    private bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Gets the effective total in USD. For USD POs (including legacy data), returns Total directly.
+    /// For non-USD POs, returns TotalUSD (or 0 if conversion data is missing).
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : IsUSD ? Total : 0;
 
     #endregion
 }

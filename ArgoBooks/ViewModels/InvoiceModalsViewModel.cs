@@ -1767,18 +1767,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             ReferenceNumber = invoice.InvoiceNumber,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
-            // Currency fields — propagate all USD amounts from the invoice
+            // Currency fields — use EffectiveTotalUSD to avoid mixing currencies
+            // (returns 0 for pending-conversion invoices, correct USD for others)
             OriginalCurrency = invoice.OriginalCurrency,
-            TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total,
-            TaxAmountUSD = invoice.TotalUSD > 0 && invoice.Total > 0
-                ? Math.Round(invoice.TaxAmount * (invoice.TotalUSD / invoice.Total), 2)
-                : invoice.TaxAmount,
-            FeeUSD = invoice.TotalUSD > 0 && invoice.Total > 0
-                ? Math.Round((feeAmount + invoice.SecurityDeposit) * (invoice.TotalUSD / invoice.Total), 2)
-                : feeAmount + invoice.SecurityDeposit,
-            DiscountUSD = invoice.TotalUSD > 0 && invoice.Total > 0
-                ? Math.Round(discountAmount * (invoice.TotalUSD / invoice.Total), 2)
-                : discountAmount
+            TotalUSD = invoice.EffectiveTotalUSD,
+            TaxAmountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
+                ? Math.Round(invoice.TaxAmount * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? invoice.TaxAmount : 0,
+            FeeUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
+                ? Math.Round((feeAmount + invoice.SecurityDeposit) * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.SecurityDeposit : 0,
+            DiscountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
+                ? Math.Round(discountAmount * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? discountAmount : 0
         };
 
         companyData.Revenues.Add(revenue);
