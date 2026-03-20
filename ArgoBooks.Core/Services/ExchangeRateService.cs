@@ -209,9 +209,10 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Checks if the service has a valid API key configured.
+    /// Whether the exchange rate service is available.
+    /// Exchange rates are a free feature available to all users via the server proxy.
     /// </summary>
-    public bool HasApiKey => LicenseAuthHelper.IsConfigured;
+    public bool HasApiKey => true;
 
     /// <summary>
     /// Gets the number of cached exchange rates.
@@ -241,7 +242,6 @@ public class ExchangeRateService
                     : $"{BaseUrl}?date={date:yyyy-MM-dd}";
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-                LicenseAuthHelper.AddAuthHeaders(request);
 
                 var response = await _httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)

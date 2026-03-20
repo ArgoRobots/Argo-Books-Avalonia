@@ -1227,11 +1227,6 @@ public class App : Application
         {
             var exchangeService = new ExchangeRateService();
             await exchangeService.InitializeAsync();
-
-            if (!exchangeService.HasApiKey)
-            {
-                ErrorLogger?.LogInfo("Exchange rate service initialized without API key - currency conversion will use cached rates only");
-            }
         }
         catch (Exception ex)
         {
