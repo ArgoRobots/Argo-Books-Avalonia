@@ -448,7 +448,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         {
             data.Rows.Add(new AccountingRow
             {
-                Label = "Sales Tax Payable",
+                Label = t.TaxPayableLabel,
                 Values = [FormatCurrencyWithSign(salesTaxPayable)],
                 IndentLevel = 1,
                 RowType = AccountingRowType.DataRow
@@ -959,6 +959,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         public string ExpensesCategory { get; set; } = "Expenses";
         public string PaymentsReceivedCategory { get; set; } = "Payments Received";
 
+        // Balance Sheet
+        public string TaxPayableLabel { get; set; } = "Sales Tax Payable";
+
         // Tax Summary
         public string TaxCollectedHeader { get; set; } = "TAX COLLECTED";
         public string TaxCollectedLineFormat { get; set; } = "Tax Collected at {0}%";
@@ -993,7 +996,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             "FRANCE" or "GERMANY" or "ITALY" or "SPAIN" or "NETHERLANDS"
             or "BELGIUM" or "AUSTRIA" or "SWEDEN" or "NORWAY" or "DENMARK"
             or "FINLAND" or "PORTUGAL" or "GREECE" or "SWITZERLAND" or "POLAND"
-            or "CZECH REPUBLIC" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
+            or "CZECH REPUBLIC" or "CZECHIA" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
             or "SLOVAKIA" or "SLOVENIA" or "LITHUANIA" or "LATVIA" or "ESTONIA"
             or "LUXEMBOURG" or "MALTA" or "CYPRUS" or "ICELAND"
             or "TURKEY" or "RUSSIA" or "UKRAINE" or "BRAZIL" or "ARGENTINA"
@@ -1011,19 +1014,22 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             "UNITED KINGDOM" or "FRANCE" or "GERMANY" or "ITALY" or "SPAIN" or "NETHERLANDS"
             or "BELGIUM" or "AUSTRIA" or "SWEDEN" or "NORWAY" or "DENMARK" or "FINLAND"
             or "IRELAND" or "PORTUGAL" or "GREECE" or "SWITZERLAND" or "POLAND"
-            or "CZECH REPUBLIC" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
+            or "CZECH REPUBLIC" or "CZECHIA" or "HUNGARY" or "ROMANIA" or "BULGARIA" or "CROATIA"
             or "SLOVAKIA" or "SLOVENIA" or "LITHUANIA" or "LATVIA" or "ESTONIA"
             or "LUXEMBOURG" or "MALTA" or "CYPRUS" or "SOUTH AFRICA" or "KENYA"
-            or "NIGERIA" or "TURKEY" or "RUSSIA" or "UKRAINE" or "BRAZIL"
+            or "NIGERIA" or "GHANA" or "ZIMBABWE" or "BOTSWANA"
+            or "BANGLADESH" or "SRI LANKA" or "JAMAICA" or "TRINIDAD AND TOBAGO"
+            or "TURKEY" or "RUSSIA" or "UKRAINE" or "BRAZIL"
             or "ARGENTINA" or "CHILE" or "COLOMBIA" or "MEXICO" or "PERU"
             or "ISRAEL" or "UNITED ARAB EMIRATES" or "SAUDI ARABIA" or "THAILAND"
             or "VIETNAM" or "INDONESIA" or "PHILIPPINES" or "SOUTH KOREA"
             or "CHINA" or "TAIWAN" or "ICELAND" => TaxSystem.VAT,
 
             "CANADA" => TaxSystem.GstHst,
-            "INDIA" or "SINGAPORE" or "MALAYSIA" or "AUSTRALIA" or "NEW ZEALAND" => TaxSystem.GST,
+            "INDIA" or "SINGAPORE" or "MALAYSIA" or "AUSTRALIA" or "NEW ZEALAND"
+            or "PAKISTAN" => TaxSystem.GST,
             "JAPAN" => TaxSystem.JCT,
-            "UNITED STATES" => TaxSystem.SalesTax,
+            "UNITED STATES" or "PUERTO RICO" => TaxSystem.SalesTax,
 
             _ => TaxSystem.Tax
         };
@@ -1058,6 +1064,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         switch (taxSystem)
         {
             case TaxSystem.VAT:
+                terms.TaxPayableLabel = "VAT Payable";
                 terms.TaxCollectedHeader = "VAT COLLECTED";
                 terms.TaxCollectedLineFormat = "VAT Collected at {0}%";
                 terms.TaxCollectedTotal = "Total VAT Collected";
@@ -1067,6 +1074,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 terms.NetTaxLabel = "NET VAT PAYABLE";
                 break;
             case TaxSystem.GstHst:
+                terms.TaxPayableLabel = "GST/HST Payable";
                 terms.TaxCollectedHeader = "GST/HST COLLECTED";
                 terms.TaxCollectedLineFormat = "GST/HST Collected at {0}%";
                 terms.TaxCollectedTotal = "Total GST/HST Collected";
@@ -1076,6 +1084,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 terms.NetTaxLabel = "NET GST/HST PAYABLE";
                 break;
             case TaxSystem.GST:
+                terms.TaxPayableLabel = "GST Payable";
                 terms.TaxCollectedHeader = "GST COLLECTED";
                 terms.TaxCollectedLineFormat = "GST Collected at {0}%";
                 terms.TaxCollectedTotal = "Total GST Collected";
@@ -1085,6 +1094,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 terms.NetTaxLabel = "NET GST PAYABLE";
                 break;
             case TaxSystem.JCT:
+                terms.TaxPayableLabel = "Consumption Tax Payable";
                 terms.TaxCollectedHeader = "CONSUMPTION TAX COLLECTED";
                 terms.TaxCollectedLineFormat = "Consumption Tax at {0}%";
                 terms.TaxCollectedTotal = "Total Consumption Tax Collected";
@@ -1156,7 +1166,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else if (rev.TaxRate > 0)
             {
-                var rate = Math.Round(rev.TaxRate, 2);
+                // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
+                // normalize to decimal (0.08) to match LineItem.TaxRate format
+                var rate = Math.Round(rev.TaxRate / 100, 2);
                 var taxAmountUSD = rev.TaxAmountUSD > 0 ? rev.TaxAmountUSD : rev.TaxAmount;
                 taxCollectedByRate.TryAdd(rate, 0);
                 taxCollectedByRate[rate] += taxAmountUSD;
@@ -1187,7 +1199,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else if (exp.TaxRate > 0)
             {
-                var rate = Math.Round(exp.TaxRate, 2);
+                // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
+                // normalize to decimal (0.08) to match LineItem.TaxRate format
+                var rate = Math.Round(exp.TaxRate / 100, 2);
                 var taxAmountUSD = exp.TaxAmountUSD > 0 ? exp.TaxAmountUSD : exp.TaxAmount;
                 taxPaidByRate.TryAdd(rate, 0);
                 taxPaidByRate[rate] += taxAmountUSD;
