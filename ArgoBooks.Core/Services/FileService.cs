@@ -281,6 +281,7 @@ public class FileService(
             LostDamaged = await ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken) ?? [],
             Receipts = await ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken) ?? [],
             ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? [],
+            InvoiceTemplates = await ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken) ?? [],
             EventLog = await ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? [],
             PendingConversions = await ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken) ?? []
         };
@@ -325,6 +326,7 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "lostDamaged.json", data.LostDamaged, cancellationToken);
         await WriteJsonAsync(companyDirectory, "receipts.json", data.Receipts, cancellationToken);
         await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "invoiceTemplates.json", data.InvoiceTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
         await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
 
