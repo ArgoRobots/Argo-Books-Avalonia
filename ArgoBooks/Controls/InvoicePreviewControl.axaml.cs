@@ -648,6 +648,33 @@ public partial class InvoicePreviewControl : UserControl
 #endif
     }
 
+    /// <summary>
+    /// Captures the current WebView2 content as a PNG screenshot and returns it as base64.
+    /// Returns null on non-Windows platforms or if the WebView is not initialized.
+    /// </summary>
+    public async Task<string?> CaptureScreenshotBase64Async()
+    {
+#if WINDOWS
+        if (_isWebViewDisposed || !_isWebViewInitialized || _webView?.CoreWebView2 == null)
+            return null;
+
+        try
+        {
+            using var stream = new MemoryStream();
+            await _webView.CoreWebView2.CapturePreviewAsync(
+                Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, stream);
+            return Convert.ToBase64String(stream.ToArray());
+        }
+        catch
+        {
+            return null;
+        }
+#else
+        await Task.CompletedTask;
+        return null;
+#endif
+    }
+
     private void OpenInBrowserButton_Click(object? sender, RoutedEventArgs e)
     {
         OpenInBrowserCommand?.Execute(null);

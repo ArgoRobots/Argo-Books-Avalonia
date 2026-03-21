@@ -18,6 +18,7 @@
     <UserControl.Resources>
         <local:EqualConverter x:Key="EqualConverter" />
         <local:HexColorToBrushConverter x:Key="HexToBrush" />
+        <local:Base64ToImageConverter x:Key="Base64ToImage" />
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -143,15 +144,25 @@
                                                             </MenuItem>
                                                         </ContextMenu>
                                                     </Border.ContextMenu>
-                                                    <Grid RowDefinitions="140,Auto">
-                                                        <!-- Mini Invoice Preview -->
+                                                    <Grid RowDefinitions="160,Auto">
+                                                        <!-- Thumbnail Preview -->
+                                                        <Border Grid.Row="0"
+                                                                Background="{DynamicResource SurfaceBrush}"
+                                                                CornerRadius="8,8,0,0"
+                                                                ClipToBounds="True">
+                                                            <!-- Saved thumbnail screenshot -->
+                                                            <Image Source="{Binding ThumbnailBase64, Converter={StaticResource Base64ToImage}}"
+                                                                   Stretch="UniformToFill"
+                                                                   VerticalAlignment="Top" />
+                                                        </Border>
+                                                        <!-- Color fallback when no thumbnail -->
                                                         <Border Grid.Row="0"
                                                                 Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}"
                                                                 CornerRadius="8,8,0,0"
                                                                 ClipToBounds="True"
-                                                                Padding="16,12">
+                                                                Padding="16,12"
+                                                                IsVisible="{Binding ThumbnailBase64, Converter={x:Static StringConverters.IsNullOrEmpty}}">
                                                             <Grid RowDefinitions="Auto,8,Auto,8,Auto,*">
-                                                                <!-- Header bar -->
                                                                 <Border Grid.Row="0"
                                                                         Background="{Binding PrimaryColor, Converter={StaticResource HexToBrush}}"
                                                                         CornerRadius="3"
@@ -164,24 +175,16 @@
                                                                                VerticalAlignment="Center"
                                                                                Margin="8,0" />
                                                                 </Border>
-                                                                <!-- Address lines -->
                                                                 <StackPanel Grid.Row="2" Spacing="3">
                                                                     <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
                                                                             CornerRadius="2" Height="4" Width="80" HorizontalAlignment="Left" Opacity="0.6" />
                                                                     <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
                                                                             CornerRadius="2" Height="4" Width="60" HorizontalAlignment="Left" Opacity="0.6" />
                                                                 </StackPanel>
-                                                                <!-- Table header -->
                                                                 <Border Grid.Row="4"
                                                                         Background="{Binding AccentColor, Converter={StaticResource HexToBrush}}"
-                                                                        CornerRadius="2"
-                                                                        Height="10"
-                                                                        Opacity="0.3"
-                                                                        HorizontalAlignment="Stretch" />
-                                                                <!-- Table rows -->
+                                                                        CornerRadius="2" Height="10" Opacity="0.3" HorizontalAlignment="Stretch" />
                                                                 <StackPanel Grid.Row="5" Spacing="4" Margin="0,4,0,0">
-                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
-                                                                            CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
                                                                     <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
                                                                             CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
                                                                     <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
@@ -557,7 +560,8 @@
                                 <!-- Preview container using InvoicePreviewControl -->
                                 <!-- IsVisible bound to IsPreviewVisible so WebView is destroyed when modal
                                      closes or when confirmation dialog appears (native WebView airspace issue) -->
-                                <controls:InvoicePreviewControl Grid.Row="1"
+                                <controls:InvoicePreviewControl x:Name="PreviewControl"
+                                                                Grid.Row="1"
                                                                 Grid.RowSpan="2"
                                                                 Html="{Binding PreviewHtml}"
                                                                 OpenInBrowserCommand="{Binding PreviewInBrowserCommand}"
@@ -571,23 +575,32 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,1,0,0"
                                 IsVisible="{Binding !IsTemplateListMode}">
-                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                                <!-- Fullscreen toggle -->
+                            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                                <!-- Back to template list -->
                                 <Button Grid.Column="0"
                                         Classes="icon-button"
+                                        ToolTip.Tip="{loc:Loc 'Back to Templates'}"
+                                        Command="{Binding BackToTemplateListCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.ArrowBack}"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <!-- Fullscreen toggle -->
+                                <Button Grid.Column="1"
+                                        Classes="icon-button"
                                         ToolTip.Tip="{loc:Loc 'Toggle Fullscreen (F)'}"
+                                        Margin="4,0,0,0"
                                         Command="{Binding ToggleFullscreenCommand}">
                                     <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                               Width="16" Height="16" />
                                 </Button>
-                                <TextBlock Grid.Column="1"
+                                <TextBlock Grid.Column="2"
                                            Text="{Binding ValidationMessage}"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            FontSize="13"
                                            Margin="12,0,0,0"
                                            VerticalAlignment="Center"
                                            IsVisible="{Binding HasValidationMessage}" />
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
                                             Content="{loc:Loc Cancel}"
                                             Command="{Binding RequestCloseCommand}" />
