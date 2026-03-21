@@ -8,7 +8,9 @@
              x:Class="ArgoBooks.Modals.CurrencyLoadingModal"
              x:CompileBindings="False">
 
-    <controls:ModalOverlay IsOpen="{Binding ShowCurrencyLoading}">
+    <controls:ModalOverlay IsOpen="{Binding ShowCurrencyLoading}"
+                           CloseOnBackdropClick="False"
+                           CloseOnEscape="False">
         <controls:ModalOverlay.ModalContent>
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"

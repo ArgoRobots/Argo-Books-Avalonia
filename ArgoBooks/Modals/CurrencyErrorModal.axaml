@@ -9,7 +9,9 @@
              x:Class="ArgoBooks.Modals.CurrencyErrorModal"
              x:CompileBindings="False">
 
-    <controls:ModalOverlay IsOpen="{Binding HasCurrencyError}">
+    <controls:ModalOverlay IsOpen="{Binding HasCurrencyError}"
+                           CloseOnBackdropClick="False"
+                           CloseOnEscape="False">
         <controls:ModalOverlay.ModalContent>
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
