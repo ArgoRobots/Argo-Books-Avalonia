@@ -101,6 +101,11 @@ public partial class ColumnVisibilityMenu : UserControl
         CloseCommand = new RelayCommand(() => IsOpen = false);
     }
 
+    private void OnResetButtonClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        IsOpen = false;
+    }
+
     /// <summary>
     /// Shows the column visibility menu at the specified pointer position.
     /// Call this from the table header's PointerPressed event.
