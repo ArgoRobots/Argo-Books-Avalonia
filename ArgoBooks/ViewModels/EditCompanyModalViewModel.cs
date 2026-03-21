@@ -69,6 +69,16 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSavingCurrency;
 
+    [ObservableProperty]
+    private int _currencyLoadingProgress;
+
+    /// <summary>
+    /// True when loading exchange rates for the first time (not during retry).
+    /// </summary>
+    public bool ShowCurrencyLoading => IsSavingCurrency && !HasCurrencyError;
+
+    private CancellationTokenSource? _currencyLoadingCts;
+
     /// <summary>
     /// Priority/common currencies shown at the top of the dropdown.
     /// </summary>
@@ -321,6 +331,12 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CancelCurrencyLoading()
+    {
+        _currencyLoadingCts?.Cancel();
+    }
+
+    [RelayCommand]
     private void DismissCurrencyError()
     {
         HasCurrencyError = false;
@@ -346,14 +362,34 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
         // Keep the modal open but switch to loading state
         CurrencyErrorMessage = string.Empty;
+        _currencyLoadingCts?.Cancel();
+        _currencyLoadingCts = new CancellationTokenSource();
+        CurrencyLoadingProgress = 0;
         IsSavingCurrency = true;
 
-        // Run the preload and a minimum display time in parallel so the spinner is always visible
-        var preloadTask = PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode);
-        var minimumDisplayTask = Task.Delay(1000);
-        await Task.WhenAll(preloadTask, minimumDisplayTask);
+        bool success;
+        try
+        {
+            // Run the preload and a minimum display time in parallel so the spinner is always visible
+            var preloadTask = PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode, _currencyLoadingCts.Token);
+            var minimumDisplayTask = Task.Delay(1000, _currencyLoadingCts.Token);
+            await Task.WhenAll(preloadTask, minimumDisplayTask);
+            success = await preloadTask;
+        }
+        catch (OperationCanceledException)
+        {
+            IsSavingCurrency = false;
+            HasCurrencyError = false;
+            SelectedCurrency = _originalCurrency;
+            _pendingCurrencyCode = null;
+            return;
+        }
+        finally
+        {
+            _currencyLoadingCts?.Dispose();
+            _currencyLoadingCts = null;
+        }
 
-        var success = await preloadTask;
         IsSavingCurrency = false;
 
         if (!success)
@@ -402,8 +438,28 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
             // Preload exchange rates for the new currency
             var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
+            _currencyLoadingCts?.Cancel();
+            _currencyLoadingCts = new CancellationTokenSource();
+            CurrencyLoadingProgress = 0;
             IsSavingCurrency = true;
-            var success = await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
+
+            bool success;
+            try
+            {
+                success = await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode, _currencyLoadingCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                IsSavingCurrency = false;
+                SelectedCurrency = _originalCurrency;
+                return;
+            }
+            finally
+            {
+                _currencyLoadingCts?.Dispose();
+                _currencyLoadingCts = null;
+            }
+
             IsSavingCurrency = false;
 
             if (!success)
@@ -434,20 +490,6 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             }
             _originalCurrency = SelectedCurrency;
 
-            // Preload exchange rates for all transaction dates so display conversions are exact
-            if (!string.Equals(newCurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            {
-                var exchangeService = ExchangeRateService.Instance;
-                var companyData = App.CompanyManager?.CompanyData;
-                if (exchangeService != null && companyData != null)
-                {
-                    var transactionDates = companyData.Expenses.Select(e => e.Date)
-                        .Concat(companyData.Revenues.Select(r => r.Date))
-                        .Append(DateTime.Today);
-                    await exchangeService.PreloadRatesAsync(transactionDates);
-                }
-            }
-
             CurrencyService.NotifyCurrencyChanged();
         }
 
@@ -473,11 +515,13 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// Preloads exchange rates for the selected currency.
     /// Returns true if successful, false if exchange rates could not be fetched.
     /// </summary>
-    private async Task<bool> PreloadExchangeRatesForCurrencyAsync(string currencyCode)
+    private async Task<bool> PreloadExchangeRatesForCurrencyAsync(string currencyCode, CancellationToken cancellationToken = default)
     {
         // Skip if USD (no conversion needed)
         if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
             return true;
+
+        CurrencyLoadingProgress = 0;
 
         var exchangeService = ExchangeRateService.Instance;
         if (exchangeService == null)
@@ -491,6 +535,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         var hasTransactions = companyData != null &&
             (companyData.Expenses.Any() || companyData.Revenues.Any());
+
+        CurrencyLoadingProgress = 10;
+        cancellationToken.ThrowIfCancellationRequested();
 
         // Check connectivity first
         var connectivityService = new ConnectivityService();
@@ -508,9 +555,12 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             return true;
         }
 
+        CurrencyLoadingProgress = 20;
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Try to get exchange rate for today
         var today = DateTime.Today;
-        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true);
+        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true, cancellationToken: cancellationToken);
 
         if (rate <= 0)
         {
@@ -524,17 +574,32 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             return true;
         }
 
-        // Rate available - try to preload more dates in the background
+        CurrencyLoadingProgress = 30;
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Preload exchange rates for all transaction dates so conversions are ready
         try
         {
-            var dates = Enumerable.Range(1, 30).Select(i => today.AddDays(-i)).ToList();
-            await exchangeService.PreloadRatesAsync(dates);
+            var dates = new List<DateTime> { today };
+            if (companyData != null)
+            {
+                dates.AddRange(companyData.Expenses.Select(e => e.Date));
+                dates.AddRange(companyData.Revenues.Select(r => r.Date));
+            }
+            // Map PreloadRatesAsync progress (0-100) into our 30-100 range
+            var progress = new Progress<int>(p => CurrencyLoadingProgress = 30 + (p * 70 / 100));
+            await exchangeService.PreloadRatesAsync(dates, progress, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch
         {
             // Preloading additional dates failed, but we have today's rate so it's OK
         }
 
+        CurrencyLoadingProgress = 100;
         return true;
     }
 
@@ -590,6 +655,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     partial void OnProvinceStateChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(HasChanges));
     partial void OnSelectedCurrencyChanged(string value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnIsSavingCurrencyChanged(bool value) => OnPropertyChanged(nameof(ShowCurrencyLoading));
+    partial void OnHasCurrencyErrorChanged(bool value) => OnPropertyChanged(nameof(ShowCurrencyLoading));
 
     /// <summary>
     /// Event raised when the company is saved.

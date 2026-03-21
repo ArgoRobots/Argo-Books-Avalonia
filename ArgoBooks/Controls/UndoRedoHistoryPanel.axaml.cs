@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -10,6 +11,8 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class UndoRedoHistoryPanel : UserControl
 {
+    private PropertyChangedEventHandler? _propertyChangedHandler;
+
     public UndoRedoHistoryPanel()
     {
         InitializeComponent();
@@ -21,14 +24,26 @@ public partial class UndoRedoHistoryPanel : UserControl
 
         if (DataContext is UndoRedoHistoryPanelViewModel vm)
         {
-            vm.PropertyChanged += (_, args) =>
+            _propertyChangedHandler = (_, args) =>
             {
                 if (args.PropertyName == nameof(vm.IsOpen) && vm.IsOpen)
                 {
                     AnimateOpen();
                 }
             };
+            vm.PropertyChanged += _propertyChangedHandler;
         }
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        if (DataContext is UndoRedoHistoryPanelViewModel vm && _propertyChangedHandler != null)
+        {
+            vm.PropertyChanged -= _propertyChangedHandler;
+            _propertyChangedHandler = null;
+        }
+
+        base.OnUnloaded(e);
     }
 
     private void AnimateOpen()

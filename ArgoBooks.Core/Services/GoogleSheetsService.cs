@@ -132,6 +132,9 @@ public class GoogleSheetsService
         string companyName,
         CancellationToken cancellationToken = default)
     {
+        if (data.Count == 0)
+            return null;
+
         var seriesNames = data.First().Value.Keys.ToList();
         var orderedSeriesNames = seriesNames.OrderBy(x => x.Contains("Sales")).ToList();
 

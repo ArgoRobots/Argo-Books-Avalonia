@@ -13,6 +13,7 @@ namespace ArgoBooks.Core.Services;
 public class ExchangeRateService
 {
     private const string BaseUrl = "https://argorobots.com/api/exchange-rates.php";
+    private const string BatchUrl = "https://argorobots.com/api/exchange-rates-batch.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
 
     private readonly ExchangeRateCache _cache;
@@ -42,7 +43,7 @@ public class ExchangeRateService
     public ExchangeRateService(IPlatformService platformService, HttpClient httpClient, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _httpClient = httpClient;
-        _httpClient.Timeout = TimeSpan.FromSeconds(10);
+        _httpClient.Timeout = TimeSpan.FromSeconds(120);
         _cache = new ExchangeRateCache(platformService);
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
@@ -69,7 +70,7 @@ public class ExchangeRateService
     /// <param name="date">The date for the historical rate.</param>
     /// <param name="fetchIfMissing">Whether to fetch from API if not cached.</param>
     /// <returns>The exchange rate, or -1 if unavailable.</returns>
-    public async Task<decimal> GetExchangeRateAsync(string fromCurrency, string toCurrency, DateTime date, bool fetchIfMissing = true)
+    public async Task<decimal> GetExchangeRateAsync(string fromCurrency, string toCurrency, DateTime date, bool fetchIfMissing = true, CancellationToken cancellationToken = default)
     {
         // Same currency - rate is always 1
         if (string.Equals(fromCurrency, toCurrency, StringComparison.OrdinalIgnoreCase))
@@ -89,7 +90,7 @@ public class ExchangeRateService
         // Fetch from API if allowed
         if (fetchIfMissing)
         {
-            var rates = await FetchRatesForDateAsync(date);
+            var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
             if (rates != null)
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
@@ -177,35 +178,116 @@ public class ExchangeRateService
     /// </summary>
     /// <param name="dates">The dates to preload rates for.</param>
     /// <param name="progress">Optional progress callback.</param>
-    public async Task PreloadRatesAsync(IEnumerable<DateTime> dates, IProgress<int>? progress = null)
+    public async Task PreloadRatesAsync(IEnumerable<DateTime> dates, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         var uniqueDates = dates.Select(d => d.Date).Distinct().ToList();
-        var loaded = 0;
+        var total = uniqueDates.Count;
+        if (total == 0) return;
 
+        // Filter out already-cached dates
+        var datesToFetch = new List<DateTime>();
+        var cached = 0;
         foreach (var date in uniqueDates)
         {
-            // Skip if we already have rates for this date
             if (_cache.TryGetRate(BaseCurrency, "EUR", date, out _))
-            {
-                loaded++;
-                progress?.Report(loaded * 100 / uniqueDates.Count);
-                continue;
-            }
+                cached++;
+            else
+                datesToFetch.Add(date);
+        }
+        progress?.Report(cached * 100 / total);
 
-            var rates = await FetchRatesForDateAsync(date);
+        if (datesToFetch.Count == 0)
+        {
+            progress?.Report(100);
+            return;
+        }
+
+        // Try batch endpoint first (one POST for all dates)
+        var fetched = await FetchBatchRatesAsync(datesToFetch, cancellationToken);
+        var failedDates = new List<DateTime>();
+
+        foreach (var date in datesToFetch)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var dateKey = date.ToString("yyyy-MM-dd");
+            if (fetched != null && fetched.TryGetValue(dateKey, out var rates))
+            {
+                _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                cached++;
+                progress?.Report(cached * 100 / total);
+            }
+            else
+            {
+                failedDates.Add(date);
+            }
+        }
+
+        // Fall back to single-date requests for any dates the batch missed
+        foreach (var date in failedDates)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
             if (rates != null)
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
             }
-
-            loaded++;
-            progress?.Report(loaded * 100 / uniqueDates.Count);
-
-            // Small delay to avoid rate limiting
-            await Task.Delay(100);
+            cached++;
+            progress?.Report(cached * 100 / total);
         }
 
         await _cache.SaveAsync();
+    }
+
+    /// <summary>
+    /// Fetches exchange rates for multiple dates in a single batch request.
+    /// Returns a dictionary mapping date strings to their rate dictionaries, or null on failure.
+    /// </summary>
+    private async Task<Dictionary<string, Dictionary<string, decimal>>?> FetchBatchRatesAsync(
+        List<DateTime> dates, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
+
+        try
+        {
+            var dateStrings = dates.Select(d => d.ToString("yyyy-MM-dd")).ToList();
+            var requestBody = new { dates = dateStrings };
+            var json = JsonSerializer.Serialize(requestBody);
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.PostAsync(BatchUrl, content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _errorLogger?.LogError($"Batch exchange rate API returned {response.StatusCode}", ErrorCategory.Api);
+                return null;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<BatchExchangeRatesResponse>(cancellationToken: cancellationToken);
+            if (result?.Success == true && result.Results != null)
+            {
+                success = true;
+                return result.Results;
+            }
+
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Failed to fetch batch exchange rates");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.OpenExchangeRates,
+                stopwatch.ElapsedMilliseconds,
+                success);
+        }
     }
 
     /// <summary>
@@ -216,10 +298,11 @@ public class ExchangeRateService
     /// <summary>
     /// Fetches exchange rates for a specific date from the API.
     /// </summary>
-    private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2)
+    private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2, CancellationToken cancellationToken = default)
     {
         for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var stopwatch = Stopwatch.StartNew();
             var success = false;
 
@@ -227,7 +310,7 @@ public class ExchangeRateService
             {
                 if (attempt > 0)
                 {
-                    await Task.Delay(1000 * attempt); // 1s, 2s backoff
+                    await Task.Delay(1000 * attempt, cancellationToken); // 1s, 2s backoff
                 }
 
                 var isToday = date.Date == DateTime.Today;
@@ -237,7 +320,7 @@ public class ExchangeRateService
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
-                var response = await _httpClient.SendAsync(request);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
@@ -292,5 +375,23 @@ public class ExchangeRateService
 
         [JsonPropertyName("rates")]
         public Dictionary<string, decimal>? Rates { get; init; }
+    }
+
+    /// <summary>
+    /// Response from the batch exchange rates endpoint.
+    /// </summary>
+    private class BatchExchangeRatesResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; init; }
+
+        [JsonPropertyName("base")]
+        public string? Base { get; init; }
+
+        [JsonPropertyName("results")]
+        public Dictionary<string, Dictionary<string, decimal>>? Results { get; init; }
+
+        [JsonPropertyName("failed")]
+        public List<string>? Failed { get; init; }
     }
 }
