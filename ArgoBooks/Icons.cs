@@ -233,9 +233,6 @@ public static class Icons
     /// <summary>Fingerprint icon.</summary>
     public const string Fingerprint = "M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.43.21.67-.09.18-.26.28-.44.28zM3.5 9.72a.499.499 0 0 1-.41-.79c.99-1.4 2.25-2.5 3.75-3.27C9.98 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.25a.5.5 0 0 1-.12.7.5.5 0 0 1-.7-.12 9.388 9.388 0 0 0-3.39-2.94c-2.87-1.47-6.54-1.47-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.14-.23.21-.39.21zm6.25 12.07a.47.47 0 0 1-.35-.15c-.87-.87-1.34-1.43-2.01-2.64-.69-1.23-1.05-2.73-1.05-4.34 0-2.97 2.54-5.39 5.66-5.39s5.66 2.42 5.66 5.39c0 .28-.22.5-.5.5s-.5-.22-.5-.5c0-2.42-2.09-4.39-4.66-4.39-2.57 0-4.66 1.97-4.66 4.39 0 1.44.32 2.77.93 3.85.64 1.15 1.08 1.64 1.85 2.42.19.2.19.51 0 .71-.11.1-.24.15-.37.15zm7.17-1.85c-1.19 0-2.24-.3-3.1-.89-1.49-1.01-2.38-2.65-2.38-4.39 0-.28.22-.5.5-.5s.5.22.5.5c0 1.41.72 2.74 1.94 3.56.71.48 1.54.71 2.54.71.24 0 .64-.03 1.04-.1.27-.05.53.13.58.41.05.27-.13.53-.41.58-.57.11-1.07.12-1.21.12zM14.91 22c-.04 0-.09-.01-.13-.02-1.59-.44-2.63-1.03-3.72-2.1a7.297 7.297 0 0 1-2.17-5.22c0-1.62 1.38-2.94 3.08-2.94 1.7 0 3.08 1.32 3.08 2.94 0 1.07.93 1.94 2.08 1.94s2.08-.87 2.08-1.94c0-3.77-3.25-6.83-7.25-6.83-2.84 0-5.44 1.58-6.61 4.03-.39.81-.59 1.76-.59 2.8 0 .78.07 2.01.67 3.61.1.26-.03.55-.29.64-.26.1-.55-.04-.64-.29a11.14 11.14 0 0 1-.73-3.96c0-1.2.23-2.29.68-3.24 1.33-2.79 4.28-4.6 7.51-4.6 4.55 0 8.25 3.51 8.25 7.83 0 1.62-1.38 2.94-3.08 2.94s-3.08-1.32-3.08-2.94c0-1.07-.93-1.94-2.08-1.94s-2.08.87-2.08 1.94c0 1.71.66 3.31 1.87 4.51.95.94 1.86 1.46 3.27 1.85.27.07.42.35.35.61-.05.23-.26.38-.47.38z";
 
-    /// <summary>Logout/sign out icon.</summary>
-    public const string Logout = "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z";
-
     #endregion
 
     #region Help & Support
@@ -277,12 +274,6 @@ public static class Icons
     #endregion
 
     #region Email & Communication
-
-    /// <summary>Send/paper plane icon for sending emails.</summary>
-    public const string Send = "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z";
-
-    /// <summary>Email/envelope icon.</summary>
-    public const string Email = "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z";
 
     /// <summary>Warning/alert triangle icon.</summary>
     public const string Warning = "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z";
@@ -378,12 +369,6 @@ public static class Icons
     /// <summary>2x2 grid layout icon.</summary>
     public const string Grid2x2 = "M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z";
 
-    /// <summary>Bar chart (alternate style).</summary>
-    public const string BarChartAlt = "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z";
-
-    /// <summary>Line chart with data points.</summary>
-    public const string LineChart = "M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z";
-
     /// <summary>Detailed grid layout icon.</summary>
     public const string GridDetailed = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z";
 
@@ -423,9 +408,6 @@ public static class Icons
     /// <summary>Smiley/AI insights face icon.</summary>
     public const string SmartInsights = "M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z";
 
-    /// <summary>Robot/AI face icon.</summary>
-    public const string Robot = "M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z";
-
     /// <summary>Key/password icon.</summary>
     public const string Key = "M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z";
 
@@ -434,9 +416,6 @@ public static class Icons
 
     /// <summary>Fullscreen with frame border.</summary>
     public const string FullscreenAlt = "M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z";
-
-    /// <summary>Speaker/volume icon.</summary>
-    public const string Volume = "M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z";
 
     /// <summary>Dashboard grid layout icon.</summary>
     public const string DashboardGrid = "M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z";
@@ -449,9 +428,6 @@ public static class Icons
 
     /// <summary>Copy/duplicate pages icon.</summary>
     public const string Copy = "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z";
-
-    /// <summary>Table with horizontal rows icon.</summary>
-    public const string TableRows = "M21 3H3C1.9 3 1 3.9 1 5v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v2H5zm0-4h14v2H5zm0-4h14v2H5z";
 
     /// <summary>Plus in rounded box icon.</summary>
     public const string AddBox = "M19 3H5c-1.11 0-2 .89-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z";
@@ -486,59 +462,8 @@ public static class Icons
     /// <summary>Indent left/decrease indent.</summary>
     public const string IndentLeft = "M11 8v3H1v2h10v3l4-4-4-4zM19 4h2v16h-2V4z";
 
-    /// <summary>Pie chart icon.</summary>
-    public const string PieChart = "M21,11H13V3A8,8 0 0,1 21,11M19,13A8,8 0 0,1 3,11A8,8 0 0,1 11,3V13H19Z";
-
-    /// <summary>Image gallery/stack icon.</summary>
-    public const string ImageGallery = "M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z";
-
-    /// <summary>Globe/world map icon (MDI style).</summary>
-    public const string GlobeAlt = "M17.9,17.39C17.64,16.59 16.89,16 16,16H15V13A1,1 0 0,0 14,12H8V10H10A1,1 0 0,0 11,9V7H13A2,2 0 0,0 15,5V4.59C17.93,5.77 20,8.64 20,12C20,14.08 19.2,15.97 17.9,17.39M11,19.93C7.05,19.44 4,16.08 4,12C4,11.38 4.08,10.79 4.21,10.21L9,15V16A2,2 0 0,0 11,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z";
-
-    /// <summary>List with bullet items (MDI style).</summary>
-    public const string ListAlt = "M3,13H5V11H3V13M3,17H5V15H3V17M3,9H5V7H3V9M7,13H21V11H7V13M7,17H21V15H7V17M7,7V9H21V7H7Z";
-
-    /// <summary>Chevron left (MDI style).</summary>
-    public const string ChevronLeftAlt = "M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z";
-
-    /// <summary>Chevron right (MDI style).</summary>
-    public const string ChevronRightAlt = "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z";
-
-    /// <summary>Minus icon (MDI style).</summary>
-    public const string MinusAlt = "M19,13H5V11H19V13Z";
-
     /// <summary>Plus/add icon (MDI style).</summary>
     public const string AddAlt = "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
-
-    /// <summary>Notepad document (MDI style).</summary>
-    public const string NotepadAlt = "M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z";
-
-    /// <summary>Text heading (T format).</summary>
-    public const string Heading = "M5,4V7H10.5V19H13.5V7H19V4H5Z";
-
-    /// <summary>Table with grid cells.</summary>
-    public const string TableGrid = "M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z";
-
-    /// <summary>Calendar icon (MDI style).</summary>
-    public const string CalendarAlt = "M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1";
-
-    /// <summary>Refresh/reload icon (MDI style).</summary>
-    public const string RefreshMdi = "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z";
-
-    /// <summary>Warning circle (MDI style).</summary>
-    public const string WarningCircleMdi = "M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z";
-
-    /// <summary>Stacked layers icon.</summary>
-    public const string Layers = "M2,2H16V16H2V2M14,14V4H4V14H14M22,8V22H8V20H20V8H22Z";
-
-    /// <summary>Stacked layers icon (alternate).</summary>
-    public const string LayersAlt = "M4,4H16V16H4V4M6,6V14H14V6H6M20,8V20H8V18H18V8H20Z";
-
-    /// <summary>QR code icon.</summary>
-    public const string QrCode = "M2,2H11V11H2V2M9,4H4V9H9V4M22,13V22H13V13H22M20,15H15V20H20V15M16,8V11H13V8H16M8,16H11V13H8V16Z";
-
-    /// <summary>Square/rectangle shape.</summary>
-    public const string Square = "M6,6H18V18H6V6M8,8V16H16V8H8Z";
 
     /// <summary>Download to file icon.</summary>
     public const string DownloadFile = "M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z";
