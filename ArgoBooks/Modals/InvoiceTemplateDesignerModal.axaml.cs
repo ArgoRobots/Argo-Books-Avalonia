@@ -1,4 +1,7 @@
+using ArgoBooks.Core.Models.Invoices;
+using ArgoBooks.ViewModels;
 using Avalonia.Controls;
+using Avalonia.Input;
 
 namespace ArgoBooks.Modals;
 
@@ -11,5 +14,17 @@ public partial class InvoiceTemplateDesignerModal : UserControl
     public InvoiceTemplateDesignerModal()
     {
         InitializeComponent();
+    }
+
+    private void OnTemplateCardPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+            return;
+
+        if (sender is Border { DataContext: InvoiceTemplate template }
+            && DataContext is InvoiceTemplateDesignerViewModel vm)
+        {
+            vm.EditTemplateCommand.Execute(template);
+        }
     }
 }

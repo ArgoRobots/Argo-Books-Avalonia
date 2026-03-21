@@ -17,6 +17,7 @@
 
     <UserControl.Resources>
         <local:EqualConverter x:Key="EqualConverter" />
+        <local:HexColorToBrushConverter x:Key="HexToBrush" />
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -45,6 +46,9 @@
         </Style>
         <Style Selector="Button.property-tab-button.selected /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.template-card:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 
@@ -103,61 +107,119 @@
                               IsVisible="{Binding IsTemplateListMode}">
                             <Grid RowDefinitions="*,Auto">
                                 <ScrollViewer Grid.Row="0" Padding="24,16">
-                                    <StackPanel Spacing="8">
-                                        <ItemsControl ItemsSource="{Binding CustomTemplates}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Padding="16,12"
-                                                            Background="{DynamicResource SurfaceAltBrush}"
-                                                            CornerRadius="8"
-                                                            BorderBrush="{DynamicResource BorderBrush}"
-                                                            BorderThickness="1"
-                                                            Margin="0,0,0,4">
-                                                        <Grid ColumnDefinitions="*,Auto,Auto">
-                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                    <TextBlock Text="{Binding Name}"
-                                                                               FontSize="14"
-                                                                               FontWeight="SemiBold"
-                                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                                    <Border Background="{DynamicResource PrimaryBrush}"
-                                                                            CornerRadius="4"
-                                                                            Padding="6,2"
-                                                                            IsVisible="{Binding IsDefault}"
-                                                                            VerticalAlignment="Center">
-                                                                        <TextBlock Text="{loc:Loc Default}"
-                                                                                   FontSize="11"
-                                                                                   Foreground="White" />
-                                                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding CustomTemplates}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="220"
+                                                        Margin="0,0,16,16"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="8"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1"
+                                                        Classes="template-card"
+                                                        Cursor="Hand"
+                                                        PointerPressed="OnTemplateCardPressed">
+                                                    <Border.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="{loc:Loc Edit}"
+                                                                      Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).EditTemplateCommand}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Icon>
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}" Width="14" Height="14" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="{loc:Loc Delete}"
+                                                                      Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Icon>
+                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}" Width="14" Height="14"
+                                                                              Foreground="{DynamicResource ErrorBrush}" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                        </ContextMenu>
+                                                    </Border.ContextMenu>
+                                                    <Grid RowDefinitions="140,Auto">
+                                                        <!-- Mini Invoice Preview -->
+                                                        <Border Grid.Row="0"
+                                                                Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}"
+                                                                CornerRadius="8,8,0,0"
+                                                                ClipToBounds="True"
+                                                                Padding="16,12">
+                                                            <Grid RowDefinitions="Auto,8,Auto,8,Auto,*">
+                                                                <!-- Header bar -->
+                                                                <Border Grid.Row="0"
+                                                                        Background="{Binding PrimaryColor, Converter={StaticResource HexToBrush}}"
+                                                                        CornerRadius="3"
+                                                                        Height="22"
+                                                                        HorizontalAlignment="Stretch">
+                                                                    <TextBlock Text="INVOICE"
+                                                                               FontSize="7"
+                                                                               FontWeight="Bold"
+                                                                               Foreground="White"
+                                                                               VerticalAlignment="Center"
+                                                                               Margin="8,0" />
+                                                                </Border>
+                                                                <!-- Address lines -->
+                                                                <StackPanel Grid.Row="2" Spacing="3">
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="2" Height="4" Width="80" HorizontalAlignment="Left" Opacity="0.6" />
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="2" Height="4" Width="60" HorizontalAlignment="Left" Opacity="0.6" />
                                                                 </StackPanel>
-                                                                <TextBlock Text="{Binding BaseTemplate}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                            </StackPanel>
-                                                            <Button Grid.Column="1"
-                                                                    Classes="icon-button"
-                                                                    ToolTip.Tip="{loc:Loc Edit}"
-                                                                    Margin="8,0"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).EditTemplateCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                          Width="16" Height="16" />
-                                                            </Button>
-                                                            <Button Grid.Column="2"
-                                                                    Classes="icon-button"
-                                                                    ToolTip.Tip="{loc:Loc Delete}"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                          Width="16" Height="16"
-                                                                          Foreground="{DynamicResource ErrorBrush}" />
-                                                            </Button>
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
+                                                                <!-- Table header -->
+                                                                <Border Grid.Row="4"
+                                                                        Background="{Binding AccentColor, Converter={StaticResource HexToBrush}}"
+                                                                        CornerRadius="2"
+                                                                        Height="10"
+                                                                        Opacity="0.3"
+                                                                        HorizontalAlignment="Stretch" />
+                                                                <!-- Table rows -->
+                                                                <StackPanel Grid.Row="5" Spacing="4" Margin="0,4,0,0">
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
+                                                                    <Border Background="{Binding PrimaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" Width="50" HorizontalAlignment="Right" Opacity="0.7" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                        <!-- Card Info -->
+                                                        <StackPanel Grid.Row="1" Margin="12,10,12,12" Spacing="4">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding Name}"
+                                                                           FontSize="13"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <Border Grid.Column="1"
+                                                                        Background="{DynamicResource PrimaryBrush}"
+                                                                        CornerRadius="4"
+                                                                        Padding="6,2"
+                                                                        IsVisible="{Binding IsDefault}"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock Text="{loc:Loc Default}"
+                                                                               FontSize="10"
+                                                                               Foreground="White" />
+                                                                </Border>
+                                                            </Grid>
+                                                            <TextBlock Text="{Binding BaseTemplate}"
+                                                                       FontSize="11"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </ScrollViewer>
 
                                 <!-- Delete Confirmation -->
