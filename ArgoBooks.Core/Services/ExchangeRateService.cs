@@ -70,7 +70,7 @@ public class ExchangeRateService
     /// <param name="date">The date for the historical rate.</param>
     /// <param name="fetchIfMissing">Whether to fetch from API if not cached.</param>
     /// <returns>The exchange rate, or -1 if unavailable.</returns>
-    public async Task<decimal> GetExchangeRateAsync(string fromCurrency, string toCurrency, DateTime date, bool fetchIfMissing = true)
+    public async Task<decimal> GetExchangeRateAsync(string fromCurrency, string toCurrency, DateTime date, bool fetchIfMissing = true, CancellationToken cancellationToken = default)
     {
         // Same currency - rate is always 1
         if (string.Equals(fromCurrency, toCurrency, StringComparison.OrdinalIgnoreCase))
@@ -90,7 +90,7 @@ public class ExchangeRateService
         // Fetch from API if allowed
         if (fetchIfMissing)
         {
-            var rates = await FetchRatesForDateAsync(date);
+            var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
             if (rates != null)
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
@@ -255,7 +255,7 @@ public class ExchangeRateService
             var json = JsonSerializer.Serialize(requestBody);
             using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(BatchUrl, content, cancellationToken);
+            using var response = await _httpClient.PostAsync(BatchUrl, content, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 _errorLogger?.LogError($"Batch exchange rate API returned {response.StatusCode}", ErrorCategory.Api);

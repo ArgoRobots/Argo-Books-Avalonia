@@ -560,7 +560,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
         // Try to get exchange rate for today
         var today = DateTime.Today;
-        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true);
+        var rate = await exchangeService.GetExchangeRateAsync(currencyCode, "USD", today, fetchIfMissing: true, cancellationToken: cancellationToken);
 
         if (rate <= 0)
         {
