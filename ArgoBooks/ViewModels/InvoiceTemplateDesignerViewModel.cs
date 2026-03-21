@@ -295,7 +295,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     #region Collections
 
-    public ObservableCollection<InvoiceTemplate> SavedTemplates { get; } = [];
+    public ObservableCollection<InvoiceTemplate> DefaultTemplates { get; } = [];
+    public ObservableCollection<InvoiceTemplate> CustomTemplates { get; } = [];
 
     public ObservableCollection<InvoiceTemplateType> BaseTemplateOptions { get; } =
     [
@@ -332,13 +333,17 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     private void LoadSavedTemplates()
     {
-        SavedTemplates.Clear();
+        DefaultTemplates.Clear();
+        CustomTemplates.Clear();
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
         foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))
         {
-            SavedTemplates.Add(template);
+            if (template.Id.StartsWith("default-"))
+                DefaultTemplates.Add(template);
+            else
+                CustomTemplates.Add(template);
         }
     }
 

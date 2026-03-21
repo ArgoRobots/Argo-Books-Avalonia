@@ -103,60 +103,109 @@
                               IsVisible="{Binding IsTemplateListMode}">
                             <Grid RowDefinitions="*,Auto">
                                 <ScrollViewer Grid.Row="0" Padding="24,16">
-                                    <StackPanel Spacing="8">
-                                        <ItemsControl ItemsSource="{Binding SavedTemplates}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Padding="16,12"
-                                                            Background="{DynamicResource SurfaceAltBrush}"
-                                                            CornerRadius="8"
-                                                            BorderBrush="{DynamicResource BorderBrush}"
-                                                            BorderThickness="1"
-                                                            Margin="0,0,0,4">
-                                                        <Grid ColumnDefinitions="*,Auto,Auto">
-                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Spacing="16">
+                                        <!-- Built-in Templates Section -->
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="{loc:Loc 'Built-in Templates'}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ItemsControl ItemsSource="{Binding DefaultTemplates}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Padding="16,12"
+                                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                                CornerRadius="8"
+                                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                                BorderThickness="1"
+                                                                Margin="0,0,0,4">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
                                                                     <TextBlock Text="{Binding Name}"
                                                                                FontSize="14"
                                                                                FontWeight="SemiBold"
                                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                                    <Border Background="{DynamicResource PrimaryBrush}"
-                                                                            CornerRadius="4"
-                                                                            Padding="6,2"
-                                                                            IsVisible="{Binding IsDefault}"
-                                                                            VerticalAlignment="Center">
-                                                                        <TextBlock Text="{loc:Loc Default}"
-                                                                                   FontSize="11"
-                                                                                   Foreground="White" />
-                                                                    </Border>
+                                                                    <TextBlock Text="{Binding BaseTemplate}"
+                                                                               FontSize="12"
+                                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                                                 </StackPanel>
-                                                                <TextBlock Text="{Binding BaseTemplate}"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                            </StackPanel>
-                                                            <Button Grid.Column="1"
-                                                                    Classes="icon-button"
-                                                                    ToolTip.Tip="{loc:Loc Edit}"
-                                                                    Margin="8,0"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).EditTemplateCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Edit}"
-                                                                          Width="16" Height="16" />
-                                                            </Button>
-                                                            <Button Grid.Column="2"
-                                                                    Classes="icon-button"
-                                                                    ToolTip.Tip="{loc:Loc Delete}"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                          Width="16" Height="16"
-                                                                          Foreground="{DynamicResource ErrorBrush}" />
-                                                            </Button>
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                                                <Button Grid.Column="1"
+                                                                        Classes="icon-button"
+                                                                        ToolTip.Tip="{loc:Loc Edit}"
+                                                                        Margin="8,0"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).EditTemplateCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+
+                                        <!-- Custom Templates Section -->
+                                        <StackPanel Spacing="8"
+                                                    IsVisible="{Binding CustomTemplates.Count}">
+                                            <TextBlock Text="{loc:Loc 'My Templates'}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ItemsControl ItemsSource="{Binding CustomTemplates}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Padding="16,12"
+                                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                                CornerRadius="8"
+                                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                                BorderThickness="1"
+                                                                Margin="0,0,0,4">
+                                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                        <TextBlock Text="{Binding Name}"
+                                                                                   FontSize="14"
+                                                                                   FontWeight="SemiBold"
+                                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                        <Border Background="{DynamicResource PrimaryBrush}"
+                                                                                CornerRadius="4"
+                                                                                Padding="6,2"
+                                                                                IsVisible="{Binding IsDefault}"
+                                                                                VerticalAlignment="Center">
+                                                                            <TextBlock Text="{loc:Loc Default}"
+                                                                                       FontSize="11"
+                                                                                       Foreground="White" />
+                                                                        </Border>
+                                                                    </StackPanel>
+                                                                    <TextBlock Text="{Binding BaseTemplate}"
+                                                                               FontSize="12"
+                                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                                </StackPanel>
+                                                                <Button Grid.Column="1"
+                                                                        Classes="icon-button"
+                                                                        ToolTip.Tip="{loc:Loc Edit}"
+                                                                        Margin="8,0"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).EditTemplateCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <Button Grid.Column="2"
+                                                                        Classes="icon-button"
+                                                                        ToolTip.Tip="{loc:Loc Delete}"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                              Width="16" Height="16"
+                                                                              Foreground="{DynamicResource ErrorBrush}" />
+                                                                </Button>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
                                     </StackPanel>
                                 </ScrollViewer>
 
