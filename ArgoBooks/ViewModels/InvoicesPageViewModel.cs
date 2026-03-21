@@ -792,7 +792,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenTemplateDesigner()
     {
-        App.InvoiceTemplateDesignerViewModel?.OpenCreateModal();
+        App.InvoiceTemplateDesignerViewModel?.OpenTemplateList();
     }
 
     #endregion

@@ -35,6 +35,15 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private bool _isEditMode;
 
     [ObservableProperty]
+    private bool _isTemplateListMode;
+
+    [ObservableProperty]
+    private string _templateToDelete = string.Empty;
+
+    [ObservableProperty]
+    private bool _isDeleteConfirmOpen;
+
+    [ObservableProperty]
     private string _modalTitle = "Create Invoice Template";
 
     [ObservableProperty]
@@ -286,6 +295,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     #region Collections
 
+    public ObservableCollection<InvoiceTemplate> SavedTemplates { get; } = [];
+
     public ObservableCollection<InvoiceTemplateType> BaseTemplateOptions { get; } =
     [
         InvoiceTemplateType.Professional,
@@ -304,6 +315,87 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         "system-ui, -apple-system, sans-serif",
         "'Courier New', Courier, monospace"
     ];
+
+    #endregion
+
+    #region Template List
+
+    public void OpenTemplateList()
+    {
+        LoadSavedTemplates();
+        IsTemplateListMode = true;
+        IsDeleteConfirmOpen = false;
+        ModalTitle = "Invoice Templates".Translate();
+        IsOpen = true;
+        IsPreviewVisible = false;
+    }
+
+    private void LoadSavedTemplates()
+    {
+        SavedTemplates.Clear();
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))
+        {
+            SavedTemplates.Add(template);
+        }
+    }
+
+    [RelayCommand]
+    private void EditTemplate(InvoiceTemplate? template)
+    {
+        if (template == null) return;
+        IsTemplateListMode = false;
+        OpenEditModal(template);
+    }
+
+    [RelayCommand]
+    private void OpenDeleteTemplate(InvoiceTemplate? template)
+    {
+        if (template == null) return;
+        TemplateToDelete = template.Id;
+        IsDeleteConfirmOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseDeleteConfirm()
+    {
+        IsDeleteConfirmOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmDeleteTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateToDelete)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var template = companyData?.InvoiceTemplates.FirstOrDefault(t => t.Id == TemplateToDelete);
+        if (template != null)
+        {
+            companyData!.InvoiceTemplates.Remove(template);
+            App.CompanyManager?.MarkAsChanged();
+            LoadSavedTemplates();
+        }
+
+        IsDeleteConfirmOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CreateNewFromList()
+    {
+        IsTemplateListMode = false;
+        _suppressUndoRecording = true;
+        ResetForm();
+        _suppressUndoRecording = false;
+        _undoRedoManager.Clear();
+        IsEditMode = false;
+        ModalTitle = "Create Invoice Template".Translate();
+        UpdatePreview();
+        IsPreviewVisible = true;
+    }
 
     #endregion
 
@@ -329,6 +421,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         _suppressUndoRecording = false;
         _undoRedoManager.Clear();
         IsEditMode = true;
+        IsTemplateListMode = false;
         ModalTitle = $"Edit Template: {template.Name}".Translate();
         UpdatePreview();
         IsOpen = true;
@@ -369,6 +462,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private void Close()
     {
         IsPreviewVisible = false;
+        IsTemplateListMode = false;
+        IsDeleteConfirmOpen = false;
         IsOpen = false;
         IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
