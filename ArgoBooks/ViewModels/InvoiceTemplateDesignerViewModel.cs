@@ -381,8 +381,26 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         var template = companyData?.InvoiceTemplates.FirstOrDefault(t => t.Id == TemplateToDelete);
         if (template != null)
         {
+            var deletedTemplate = template;
             companyData!.InvoiceTemplates.Remove(template);
             App.CompanyManager?.MarkAsChanged();
+
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Delete invoice template '{deletedTemplate.Name}'",
+                () =>
+                {
+                    companyData.InvoiceTemplates.Add(deletedTemplate);
+                    companyData.MarkAsModified();
+                    TemplateSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    companyData.InvoiceTemplates.Remove(deletedTemplate);
+                    companyData.MarkAsModified();
+                    TemplateSaved?.Invoke(this, EventArgs.Empty);
+                }));
+
+            TemplateSaved?.Invoke(this, EventArgs.Empty);
             LoadSavedTemplates();
         }
 
@@ -523,6 +541,12 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             var template = companyData.GetInvoiceTemplate(_editingTemplateId);
             if (template != null)
             {
+                // Capture snapshot before editing for undo
+                var oldSnapshot = template.Clone();
+                var oldDefaults = companyData.InvoiceTemplates
+                    .Where(t => t.Id != template.Id && t.IsDefault)
+                    .Select(t => t.Id).ToList();
+
                 UpdateTemplateFromForm(template);
                 if (thumbnail != null) template.ThumbnailBase64 = thumbnail;
 
@@ -534,6 +558,32 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                         t.IsDefault = false;
                     }
                 }
+
+                var newSnapshot = template.Clone();
+                var templateToUndo = template;
+
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Edit invoice template '{newSnapshot.Name}'",
+                    () =>
+                    {
+                        RestoreTemplateFromSnapshot(templateToUndo, oldSnapshot);
+                        // Restore previous default flags
+                        foreach (var t in companyData.InvoiceTemplates.Where(t => t.Id != templateToUndo.Id))
+                            t.IsDefault = oldDefaults.Contains(t.Id);
+                        companyData.MarkAsModified();
+                        TemplateSaved?.Invoke(this, EventArgs.Empty);
+                    },
+                    () =>
+                    {
+                        RestoreTemplateFromSnapshot(templateToUndo, newSnapshot);
+                        if (newSnapshot.IsDefault)
+                        {
+                            foreach (var t in companyData.InvoiceTemplates.Where(t => t.Id != templateToUndo.Id))
+                                t.IsDefault = false;
+                        }
+                        companyData.MarkAsModified();
+                        TemplateSaved?.Invoke(this, EventArgs.Empty);
+                    }));
             }
         }
         else
@@ -556,6 +606,22 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             }
 
             companyData.InvoiceTemplates.Add(template);
+
+            var templateToUndo = template;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Add invoice template '{template.Name}'",
+                () =>
+                {
+                    companyData.InvoiceTemplates.Remove(templateToUndo);
+                    companyData.MarkAsModified();
+                    TemplateSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    companyData.InvoiceTemplates.Add(templateToUndo);
+                    companyData.MarkAsModified();
+                    TemplateSaved?.Invoke(this, EventArgs.Empty);
+                }));
         }
 
         App.CompanyManager?.MarkAsChanged();
@@ -993,6 +1059,39 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         template.ShowPaymentInstructions = ShowPaymentInstructions;
         template.ShowDueDateProminent = ShowDueDateProminent;
         template.UpdatedAt = DateTime.UtcNow;
+    }
+
+    private static void RestoreTemplateFromSnapshot(InvoiceTemplate target, InvoiceTemplate snapshot)
+    {
+        target.Name = snapshot.Name;
+        target.BaseTemplate = snapshot.BaseTemplate;
+        target.IsDefault = snapshot.IsDefault;
+        target.PrimaryColor = snapshot.PrimaryColor;
+        target.SecondaryColor = snapshot.SecondaryColor;
+        target.AccentColor = snapshot.AccentColor;
+        target.HeaderColor = snapshot.HeaderColor;
+        target.TextColor = snapshot.TextColor;
+        target.BackgroundColor = snapshot.BackgroundColor;
+        target.FontFamily = snapshot.FontFamily;
+        target.LogoBase64 = snapshot.LogoBase64;
+        target.LogoWidth = snapshot.LogoWidth;
+        target.HeaderText = snapshot.HeaderText;
+        target.FooterText = snapshot.FooterText;
+        target.PaymentInstructions = snapshot.PaymentInstructions;
+        target.DefaultNotes = snapshot.DefaultNotes;
+        target.ShowLogo = snapshot.ShowLogo;
+        target.ShowCompanyAddress = snapshot.ShowCompanyAddress;
+        target.ShowCompanyPhone = snapshot.ShowCompanyPhone;
+        target.ShowCompanyCity = snapshot.ShowCompanyCity;
+        target.ShowCompanyProvinceState = snapshot.ShowCompanyProvinceState;
+        target.ShowCompanyCountry = snapshot.ShowCompanyCountry;
+        target.ShowTaxBreakdown = snapshot.ShowTaxBreakdown;
+        target.ShowItemDescriptions = snapshot.ShowItemDescriptions;
+        target.ShowNotes = snapshot.ShowNotes;
+        target.ShowPaymentInstructions = snapshot.ShowPaymentInstructions;
+        target.ShowDueDateProminent = snapshot.ShowDueDateProminent;
+        target.ThumbnailBase64 = snapshot.ThumbnailBase64;
+        target.UpdatedAt = snapshot.UpdatedAt;
     }
 
     private void LoadTemplate(InvoiceTemplate template)
