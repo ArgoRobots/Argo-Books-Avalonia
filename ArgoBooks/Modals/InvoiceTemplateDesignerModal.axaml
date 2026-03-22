@@ -17,6 +17,8 @@
 
     <UserControl.Resources>
         <local:EqualConverter x:Key="EqualConverter" />
+        <local:HexColorToBrushConverter x:Key="HexToBrush" />
+        <local:Base64ToImageConverter x:Key="Base64ToImage" />
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -45,6 +47,9 @@
         </Style>
         <Style Selector="Button.property-tab-button.selected /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.template-card:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 
@@ -76,12 +81,19 @@
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Customize your invoice template'}"
                                                FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               IsVisible="{Binding !IsTemplateListMode}" />
+                                    <TextBlock Text="{loc:Loc 'Manage your invoice templates'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               IsVisible="{Binding IsTemplateListMode}" />
                                 </StackPanel>
-                                <controls:UndoRedoButtonGroup Grid.Column="1"
-                                                              DataContext="{Binding UndoRedoViewModel}"
-                                                              Margin="0,0,12,0"
-                                                              VerticalAlignment="Center" />
+                                <Panel Grid.Column="1"
+                                       IsVisible="{Binding !IsTemplateListMode}">
+                                    <controls:UndoRedoButtonGroup DataContext="{Binding UndoRedoViewModel}"
+                                                                  Margin="0,0,12,0"
+                                                                  VerticalAlignment="Center" />
+                                </Panel>
                                 <Button Grid.Column="2"
                                         Classes="icon-button"
                                         Command="{Binding RequestCloseCommand}">
@@ -91,8 +103,190 @@
                             </Grid>
                         </Border>
 
+                        <!-- Template List (shown when IsTemplateListMode) -->
+                        <Grid Grid.Row="1" Grid.RowSpan="2"
+                              IsVisible="{Binding IsTemplateListMode}">
+                            <Grid RowDefinitions="*,Auto">
+                                <ScrollViewer Grid.Row="0" Padding="24,16">
+                                    <ItemsControl ItemsSource="{Binding CustomTemplates}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="220"
+                                                        Margin="0,0,16,16"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="8"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1"
+                                                        Classes="template-card"
+                                                        Cursor="Hand"
+                                                        PointerPressed="OnTemplateCardPressed">
+                                                    <Border.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="{loc:Loc Edit}"
+                                                                      Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).EditTemplateCommand}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Icon>
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}" Width="14" Height="14" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="{loc:Loc Delete}"
+                                                                      Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Icon>
+                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}" Width="14" Height="14"
+                                                                              Foreground="{DynamicResource ErrorBrush}" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                        </ContextMenu>
+                                                    </Border.ContextMenu>
+                                                    <Grid RowDefinitions="160,Auto">
+                                                        <!-- Thumbnail Preview -->
+                                                        <Border Grid.Row="0"
+                                                                Background="{DynamicResource SurfaceBrush}"
+                                                                CornerRadius="8,8,0,0"
+                                                                ClipToBounds="True">
+                                                            <!-- Saved thumbnail screenshot -->
+                                                            <Image Source="{Binding ThumbnailBase64, Converter={StaticResource Base64ToImage}}"
+                                                                   Stretch="UniformToFill"
+                                                                   VerticalAlignment="Top" />
+                                                        </Border>
+                                                        <!-- Color fallback when no thumbnail -->
+                                                        <Border Grid.Row="0"
+                                                                Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}"
+                                                                CornerRadius="8,8,0,0"
+                                                                ClipToBounds="True"
+                                                                Padding="16,12"
+                                                                IsVisible="{Binding ThumbnailBase64, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                                            <Grid RowDefinitions="Auto,8,Auto,8,Auto,*">
+                                                                <Border Grid.Row="0"
+                                                                        Background="{Binding PrimaryColor, Converter={StaticResource HexToBrush}}"
+                                                                        CornerRadius="3"
+                                                                        Height="22"
+                                                                        HorizontalAlignment="Stretch">
+                                                                    <TextBlock Text="INVOICE"
+                                                                               FontSize="7"
+                                                                               FontWeight="Bold"
+                                                                               Foreground="White"
+                                                                               VerticalAlignment="Center"
+                                                                               Margin="8,0" />
+                                                                </Border>
+                                                                <StackPanel Grid.Row="2" Spacing="3">
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="2" Height="4" Width="80" HorizontalAlignment="Left" Opacity="0.6" />
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="2" Height="4" Width="60" HorizontalAlignment="Left" Opacity="0.6" />
+                                                                </StackPanel>
+                                                                <Border Grid.Row="4"
+                                                                        Background="{Binding AccentColor, Converter={StaticResource HexToBrush}}"
+                                                                        CornerRadius="2" Height="10" Opacity="0.3" HorizontalAlignment="Stretch" />
+                                                                <StackPanel Grid.Row="5" Spacing="4" Margin="0,4,0,0">
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
+                                                                    <Border Background="{Binding SecondaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" HorizontalAlignment="Stretch" Opacity="0.3" />
+                                                                    <Border Background="{Binding PrimaryColor, Converter={StaticResource HexToBrush}}"
+                                                                            CornerRadius="1" Height="6" Width="50" HorizontalAlignment="Right" Opacity="0.7" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                        <!-- Card Info -->
+                                                        <StackPanel Grid.Row="1" Margin="12,10,12,12" Spacing="4">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding Name}"
+                                                                           FontSize="13"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <Border Grid.Column="1"
+                                                                        Background="{DynamicResource PrimaryBrush}"
+                                                                        CornerRadius="4"
+                                                                        Padding="6,2"
+                                                                        IsVisible="{Binding IsDefault}"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock Text="{loc:Loc Default}"
+                                                                               FontSize="10"
+                                                                               Foreground="White" />
+                                                                </Border>
+                                                            </Grid>
+                                                            <TextBlock Text="{Binding BaseTemplate}"
+                                                                       FontSize="11"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+
+                                <!-- Delete Confirmation -->
+                                <Border Grid.Row="0"
+                                        IsVisible="{Binding IsDeleteConfirmOpen}"
+                                        Background="#80000000"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalAlignment="Stretch">
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            CornerRadius="12"
+                                            Padding="24"
+                                            MaxWidth="400"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            BoxShadow="0 4 16 0 #40000000">
+                                        <StackPanel Spacing="16">
+                                            <TextBlock Text="{loc:Loc 'Delete Template?'}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'This template will be permanently deleted. This action cannot be undone.'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                                                <Button Classes="secondary-button"
+                                                        Content="{loc:Loc Cancel}"
+                                                        Command="{Binding CloseDeleteConfirmCommand}" />
+                                                <Button Classes="danger-button"
+                                                        Content="{loc:Loc Delete}"
+                                                        Command="{Binding ConfirmDeleteTemplateCommand}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Border>
+
+                                <!-- Footer with Create New button -->
+                                <Border Grid.Row="1"
+                                        Padding="24,16"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,1,0,0">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <Button Grid.Column="1"
+                                                Classes="secondary-button"
+                                                Content="{loc:Loc Close}"
+                                                Margin="0,0,12,0"
+                                                Command="{Binding RequestCloseCommand}" />
+                                        <Button Grid.Column="2"
+                                                Classes="primary-button"
+                                                Command="{Binding CreateNewFromListCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <PathIcon Data="{x:Static icons:Icons.Add}"
+                                                          Width="14" Height="14" />
+                                                <TextBlock Text="{loc:Loc 'Create Template'}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
                         <!-- Content -->
-                        <Grid Grid.Row="1" ColumnDefinitions="350,*">
+                        <Grid Grid.Row="1" ColumnDefinitions="350,*"
+                              IsVisible="{Binding !IsTemplateListMode}">
                             <!-- Left Panel: Settings -->
                             <Border Grid.Column="0"
                                     BorderBrush="{DynamicResource BorderBrush}"
@@ -366,7 +560,8 @@
                                 <!-- Preview container using InvoicePreviewControl -->
                                 <!-- IsVisible bound to IsPreviewVisible so WebView is destroyed when modal
                                      closes or when confirmation dialog appears (native WebView airspace issue) -->
-                                <controls:InvoicePreviewControl Grid.Row="1"
+                                <controls:InvoicePreviewControl x:Name="PreviewControl"
+                                                                Grid.Row="1"
                                                                 Grid.RowSpan="2"
                                                                 Html="{Binding PreviewHtml}"
                                                                 OpenInBrowserCommand="{Binding PreviewInBrowserCommand}"
@@ -374,28 +569,38 @@
                             </Grid>
                         </Grid>
 
-                        <!-- Footer -->
+                        <!-- Footer (designer mode only) -->
                         <Border Grid.Row="2"
                                 Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,1,0,0">
-                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                                <!-- Fullscreen toggle -->
+                                BorderThickness="0,1,0,0"
+                                IsVisible="{Binding !IsTemplateListMode}">
+                            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                                <!-- Back to template list -->
                                 <Button Grid.Column="0"
                                         Classes="icon-button"
+                                        ToolTip.Tip="{loc:Loc 'Back to Templates'}"
+                                        Command="{Binding BackToTemplateListCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.ArrowBack}"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <!-- Fullscreen toggle -->
+                                <Button Grid.Column="1"
+                                        Classes="icon-button"
                                         ToolTip.Tip="{loc:Loc 'Toggle Fullscreen (F)'}"
+                                        Margin="4,0,0,0"
                                         Command="{Binding ToggleFullscreenCommand}">
                                     <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                               Width="16" Height="16" />
                                 </Button>
-                                <TextBlock Grid.Column="1"
+                                <TextBlock Grid.Column="2"
                                            Text="{Binding ValidationMessage}"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            FontSize="13"
                                            Margin="12,0,0,0"
                                            VerticalAlignment="Center"
                                            IsVisible="{Binding HasValidationMessage}" />
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
                                             Content="{loc:Loc Cancel}"
                                             Command="{Binding RequestCloseCommand}" />

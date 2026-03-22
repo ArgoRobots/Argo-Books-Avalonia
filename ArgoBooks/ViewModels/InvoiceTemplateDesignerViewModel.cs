@@ -21,6 +21,11 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     public event EventHandler? ModalClosed;
     public event EventHandler? BrowseLogoRequested;
 
+    /// <summary>
+    /// Function to capture a screenshot of the current preview. Set by the view.
+    /// </summary>
+    public Func<Task<string?>>? CapturePreviewFunc { get; set; }
+
     #endregion
 
     #region Modal State
@@ -33,6 +38,15 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isEditMode;
+
+    [ObservableProperty]
+    private bool _isTemplateListMode;
+
+    [ObservableProperty]
+    private string _templateToDelete = string.Empty;
+
+    [ObservableProperty]
+    private bool _isDeleteConfirmOpen;
 
     [ObservableProperty]
     private string _modalTitle = "Create Invoice Template";
@@ -286,6 +300,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     #region Collections
 
+    public ObservableCollection<InvoiceTemplate> CustomTemplates { get; } = [];
+
     public ObservableCollection<InvoiceTemplateType> BaseTemplateOptions { get; } =
     [
         InvoiceTemplateType.Professional,
@@ -304,6 +320,89 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         "system-ui, -apple-system, sans-serif",
         "'Courier New', Courier, monospace"
     ];
+
+    #endregion
+
+    #region Template List
+
+    public void OpenTemplateList()
+    {
+        LoadSavedTemplates();
+        IsTemplateListMode = true;
+        IsDeleteConfirmOpen = false;
+        ModalTitle = "Invoice Templates".Translate();
+        IsOpen = true;
+        IsPreviewVisible = false;
+    }
+
+    private void LoadSavedTemplates()
+    {
+        CustomTemplates.Clear();
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        foreach (var template in companyData.InvoiceTemplates
+                     .Where(t => !t.Id.StartsWith("default-"))
+                     .OrderBy(t => t.Name))
+        {
+            CustomTemplates.Add(template);
+        }
+    }
+
+    [RelayCommand]
+    private void EditTemplate(InvoiceTemplate? template)
+    {
+        if (template == null) return;
+        IsTemplateListMode = false;
+        OpenEditModal(template);
+    }
+
+    [RelayCommand]
+    private void OpenDeleteTemplate(InvoiceTemplate? template)
+    {
+        if (template == null) return;
+        TemplateToDelete = template.Id;
+        IsDeleteConfirmOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseDeleteConfirm()
+    {
+        IsDeleteConfirmOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmDeleteTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateToDelete)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var template = companyData?.InvoiceTemplates.FirstOrDefault(t => t.Id == TemplateToDelete);
+        if (template != null)
+        {
+            companyData!.InvoiceTemplates.Remove(template);
+            App.CompanyManager?.MarkAsChanged();
+            LoadSavedTemplates();
+        }
+
+        IsDeleteConfirmOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CreateNewFromList()
+    {
+        IsTemplateListMode = false;
+        _suppressUndoRecording = true;
+        ResetForm();
+        _suppressUndoRecording = false;
+        _undoRedoManager.Clear();
+        IsEditMode = false;
+        ModalTitle = "Create Invoice Template".Translate();
+        UpdatePreview();
+        IsPreviewVisible = true;
+    }
 
     #endregion
 
@@ -329,6 +428,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         _suppressUndoRecording = false;
         _undoRedoManager.Clear();
         IsEditMode = true;
+        IsTemplateListMode = false;
         ModalTitle = $"Edit Template: {template.Name}".Translate();
         UpdatePreview();
         IsOpen = true;
@@ -369,6 +469,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private void Close()
     {
         IsPreviewVisible = false;
+        IsTemplateListMode = false;
+        IsDeleteConfirmOpen = false;
         IsOpen = false;
         IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
@@ -381,7 +483,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Save()
+    private async Task Save()
     {
         // Validation
         if (string.IsNullOrWhiteSpace(TemplateName))
@@ -394,6 +496,27 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
+        // Check for duplicate name (exclude the template being edited)
+        var duplicateName = companyData.InvoiceTemplates
+            .Where(t => !t.Id.StartsWith("default-"))
+            .Any(t => t.Id != _editingTemplateId
+                       && string.Equals(t.Name, TemplateName.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (duplicateName)
+        {
+            ValidationMessage = "A template with this name already exists. Please choose a different name.".Translate();
+            HasValidationMessage = true;
+            return;
+        }
+
+        // Capture thumbnail from the live preview before saving
+        string? thumbnail = null;
+        if (CapturePreviewFunc != null)
+        {
+            try { thumbnail = await CapturePreviewFunc(); }
+            catch { /* Ignore capture failures */ }
+        }
+
         if (IsEditMode)
         {
             // Update existing template
@@ -401,6 +524,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             if (template != null)
             {
                 UpdateTemplateFromForm(template);
+                if (thumbnail != null) template.ThumbnailBase64 = thumbnail;
 
                 // If this is being set as default, unset others
                 if (template.IsDefault)
@@ -419,6 +543,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             var template = new InvoiceTemplate { Id = id };
             UpdateTemplateFromForm(template);
             template.CreatedAt = DateTime.UtcNow;
+            if (thumbnail != null) template.ThumbnailBase64 = thumbnail;
 
             // If this is being set as default or is the first template, handle defaults
             if (template.IsDefault || companyData.InvoiceTemplates.Count == 0)
@@ -436,7 +561,23 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
         _undoRedoManager.MarkSaved();
         TemplateSaved?.Invoke(this, EventArgs.Empty);
-        Close();
+        OpenTemplateList();
+    }
+
+    [RelayCommand]
+    private async Task BackToTemplateList()
+    {
+        if (HasUnsavedChanges)
+        {
+            IsPreviewVisible = false;
+            if (!await ConfirmDiscardEditsAsync())
+            {
+                IsPreviewVisible = true;
+                return;
+            }
+        }
+
+        OpenTemplateList();
     }
 
     [RelayCommand]

@@ -192,6 +192,12 @@ public class InvoiceTemplate
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// Base64-encoded PNG thumbnail of the template preview.
+    /// </summary>
+    [JsonPropertyName("thumbnailBase64")]
+    public string? ThumbnailBase64 { get; set; }
+
+    /// <summary>
     /// Creates a deep copy of this template.
     /// </summary>
     public InvoiceTemplate Clone()
@@ -228,7 +234,8 @@ public class InvoiceTemplate
             ShowPaymentInstructions = ShowPaymentInstructions,
             ShowDueDateProminent = ShowDueDateProminent,
             CreatedAt = CreatedAt,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            ThumbnailBase64 = ThumbnailBase64
         };
     }
 }

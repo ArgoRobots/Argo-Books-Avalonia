@@ -25,6 +25,7 @@
                     <Button Grid.Column="1"
                             Classes="reset-columns-button"
                             Command="{Binding ResetCommand, RelativeSource={RelativeSource AncestorType=controls:ColumnVisibilityMenu}}"
+                            Click="OnResetButtonClick"
                             ToolTip.Tip="{loc:Loc 'Reset to Default'}">
                         <PathIcon Data="{x:Static icons:Icons.Refresh}"
                                   Width="14" Height="14" />

@@ -564,16 +564,30 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         TemplateOptions.Clear();
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.InvoiceTemplates == null || companyData.InvoiceTemplates.Count == 0)
+        if (companyData == null) return;
+
+        // Ensure default templates are always present
+        if (companyData.InvoiceTemplates.Count == 0)
         {
-            // Create default templates if none exist
             var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
             foreach (var template in defaultTemplates)
             {
-                TemplateOptions.Add(template);
+                companyData.InvoiceTemplates.Add(template);
             }
-            SelectedTemplate = TemplateOptions.FirstOrDefault(t => t.IsDefault) ?? TemplateOptions.FirstOrDefault();
-            return;
+            App.CompanyManager?.MarkAsChanged();
+        }
+        else
+        {
+            // Ensure base templates haven't been lost (e.g. only custom templates exist)
+            var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
+            foreach (var defaultTemplate in defaultTemplates)
+            {
+                if (companyData.InvoiceTemplates.All(t => t.Id != defaultTemplate.Id))
+                {
+                    companyData.InvoiceTemplates.Add(defaultTemplate);
+                    App.CompanyManager?.MarkAsChanged();
+                }
+            }
         }
 
         foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))

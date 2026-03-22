@@ -7,44 +7,6 @@ using Avalonia.Media;
 namespace ArgoBooks.Converters;
 
 /// <summary>
-/// Converter that returns PrimaryBrush if value equals CompareValue, otherwise BorderBrush.
-/// </summary>
-public class ThemeBorderBrushConverter : IValueConverter
-{
-    /// <summary>
-    /// The value to compare against.
-    /// </summary>
-    public string? CompareValue { get; set; }
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        bool isSelected = false;
-        if (value is string stringValue)
-        {
-            isSelected = string.Equals(stringValue, CompareValue, StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Get the appropriate brush from Application resources
-        if (Application.Current?.Resources != null)
-        {
-            var resourceKey = isSelected ? "PrimaryBrush" : "BorderBrush";
-            if (Application.Current.Resources.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource))
-            {
-                return resource;
-            }
-        }
-
-        // Fallback colors
-        return isSelected
-            ? new SolidColorBrush(Color.Parse(AppColors.Primary))
-            : new SolidColorBrush(Color.Parse(AppColors.ChartGrid));
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>
 /// Multi-value converter that returns PrimaryBrush if the selected theme matches the compare value.
 /// Binds to both SelectedTheme and SelectedAccentColor so it updates when either changes.
 /// Values[0] = SelectedTheme, Values[1] = SelectedAccentColor (used to trigger re-evaluation).
