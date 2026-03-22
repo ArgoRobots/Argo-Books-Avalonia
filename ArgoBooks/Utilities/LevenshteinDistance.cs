@@ -80,23 +80,6 @@ public static class LevenshteinDistance
     }
 
     /// <summary>
-    /// Checks if the target string contains the source as a substring (case-insensitive).
-    /// </summary>
-    /// <param name="source">The search term.</param>
-    /// <param name="target">The string to search in.</param>
-    /// <returns>True if target contains source.</returns>
-    public static bool ContainsSubstring(string source, string target)
-    {
-        if (string.IsNullOrEmpty(source))
-            return true;
-
-        if (string.IsNullOrEmpty(target))
-            return false;
-
-        return target.Contains(source, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
     /// Computes a combined search score that prioritizes:
     /// 1. Exact matches (highest)
     /// 2. Prefix matches (high)
