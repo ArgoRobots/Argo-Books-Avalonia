@@ -7,16 +7,6 @@ using Avalonia.Media;
 namespace ArgoBooks.Converters;
 
 /// <summary>
-/// Multi-value converter that returns true if both values are equal (object reference or Equals).
-/// Used for comparing items in lists to a highlighted/selected item.
-/// </summary>
-public class ObjectEqualsMultiConverter : IMultiValueConverter
-{
-    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        => values.Count >= 2 && ConverterUtils.AreEqual(values[0], values[1]);
-}
-
-/// <summary>
 /// Multi-value converter that returns a highlight brush if both values are equal, otherwise transparent.
 /// Used for visual highlighting of selected items in lists. Matches the menu-item focus style.
 /// </summary>

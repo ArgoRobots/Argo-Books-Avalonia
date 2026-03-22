@@ -4,7 +4,7 @@ using Xunit;
 namespace ArgoBooks.Tests.Converters;
 
 /// <summary>
-/// Tests for PageEqualsConverter and PageActiveBackgroundConverter.
+/// Tests for PageEqualsConverter.
 /// </summary>
 public class PageConvertersTests
 {
@@ -73,12 +73,6 @@ public class PageConvertersTests
     public void PageEquals_Instance_ReturnsSameInstance()
     {
         Assert.Same(PageEqualsConverter.Instance, PageEqualsConverter.Instance);
-    }
-
-    [Fact]
-    public void PageActiveBackground_Instance_ReturnsSameInstance()
-    {
-        Assert.Same(PageActiveBackgroundConverter.Instance, PageActiveBackgroundConverter.Instance);
     }
 
     #endregion
