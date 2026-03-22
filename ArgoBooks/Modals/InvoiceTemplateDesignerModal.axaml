@@ -118,6 +118,7 @@
                               IsVisible="{Binding IsTemplateListMode}">
                             <Grid RowDefinitions="*,Auto">
                                 <ScrollViewer Grid.Row="0" Padding="24,16">
+                                  <Panel>
                                     <ItemsControl ItemsSource="{Binding CustomTemplates}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
@@ -253,6 +254,7 @@
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center" />
                                     </StackPanel>
+                                  </Panel>
                                 </ScrollViewer>
 
                                 <!-- Delete Confirmation -->
