@@ -73,8 +73,18 @@
                                 Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                <StackPanel Grid.Column="0">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <!-- Back to template list (designer mode only) -->
+                                <Button Grid.Column="0"
+                                        Classes="icon-button"
+                                        ToolTip.Tip="{loc:Loc 'Back to Templates'}"
+                                        Margin="0,0,8,0"
+                                        IsVisible="{Binding !IsTemplateListMode}"
+                                        Command="{Binding BackToTemplateListCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.ArrowBack}"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <StackPanel Grid.Column="1">
                                     <TextBlock Text="{Binding ModalTitle}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
@@ -88,13 +98,13 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                IsVisible="{Binding IsTemplateListMode}" />
                                 </StackPanel>
-                                <Panel Grid.Column="1"
+                                <Panel Grid.Column="2"
                                        IsVisible="{Binding !IsTemplateListMode}">
                                     <controls:UndoRedoButtonGroup DataContext="{Binding UndoRedoViewModel}"
                                                                   Margin="0,0,12,0"
                                                                   VerticalAlignment="Center" />
                                 </Panel>
-                                <Button Grid.Column="2"
+                                <Button Grid.Column="3"
                                         Classes="icon-button"
                                         Command="{Binding RequestCloseCommand}">
                                     <PathIcon Data="{x:Static icons:Icons.Close}"
@@ -155,6 +165,19 @@
                                                                    Stretch="UniformToFill"
                                                                    VerticalAlignment="Top" />
                                                         </Border>
+                                                        <!-- Delete button overlay -->
+                                                        <Button Grid.Row="0"
+                                                                Classes="icon-button danger"
+                                                                Width="28" Height="28"
+                                                                Margin="0,6,6,0"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Top"
+                                                                ToolTip.Tip="{loc:Loc Delete}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                      Width="14" Height="14" />
+                                                        </Button>
                                                         <!-- Color fallback when no thumbnail -->
                                                         <Border Grid.Row="0"
                                                                 Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}"
@@ -575,32 +598,23 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,1,0,0"
                                 IsVisible="{Binding !IsTemplateListMode}">
-                            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
-                                <!-- Back to template list -->
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                <!-- Fullscreen toggle -->
                                 <Button Grid.Column="0"
                                         Classes="icon-button"
-                                        ToolTip.Tip="{loc:Loc 'Back to Templates'}"
-                                        Command="{Binding BackToTemplateListCommand}">
-                                    <PathIcon Data="{x:Static icons:Icons.ArrowBack}"
-                                              Width="16" Height="16" />
-                                </Button>
-                                <!-- Fullscreen toggle -->
-                                <Button Grid.Column="1"
-                                        Classes="icon-button"
                                         ToolTip.Tip="{loc:Loc 'Toggle Fullscreen (F)'}"
-                                        Margin="4,0,0,0"
                                         Command="{Binding ToggleFullscreenCommand}">
                                     <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                               Width="16" Height="16" />
                                 </Button>
-                                <TextBlock Grid.Column="2"
+                                <TextBlock Grid.Column="1"
                                            Text="{Binding ValidationMessage}"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            FontSize="13"
                                            Margin="12,0,0,0"
                                            VerticalAlignment="Center"
                                            IsVisible="{Binding HasValidationMessage}" />
-                                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="12">
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
                                             Content="{loc:Loc Cancel}"
                                             Command="{Binding RequestCloseCommand}" />
