@@ -302,6 +302,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     public ObservableCollection<InvoiceTemplate> CustomTemplates { get; } = [];
 
+    [ObservableProperty]
+    private bool _hasNoCustomTemplates;
+
     public ObservableCollection<InvoiceTemplateType> BaseTemplateOptions { get; } =
     [
         InvoiceTemplateType.Professional,
@@ -339,7 +342,11 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         CustomTemplates.Clear();
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
+        if (companyData == null)
+        {
+            HasNoCustomTemplates = true;
+            return;
+        }
 
         foreach (var template in companyData.InvoiceTemplates
                      .Where(t => !t.Id.StartsWith("default-"))
@@ -347,6 +354,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         {
             CustomTemplates.Add(template);
         }
+
+        HasNoCustomTemplates = CustomTemplates.Count == 0;
     }
 
     [RelayCommand]

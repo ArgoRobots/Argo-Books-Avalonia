@@ -165,19 +165,6 @@
                                                                    Stretch="UniformToFill"
                                                                    VerticalAlignment="Top" />
                                                         </Border>
-                                                        <!-- Delete button overlay -->
-                                                        <Button Grid.Row="0"
-                                                                Classes="icon-button danger"
-                                                                Width="28" Height="28"
-                                                                Margin="0,6,6,0"
-                                                                HorizontalAlignment="Right"
-                                                                VerticalAlignment="Top"
-                                                                ToolTip.Tip="{loc:Loc Delete}"
-                                                                Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                      Width="14" Height="14" />
-                                                        </Button>
                                                         <!-- Color fallback when no thumbnail -->
                                                         <Border Grid.Row="0"
                                                                 Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}"
@@ -218,34 +205,54 @@
                                                             </Grid>
                                                         </Border>
                                                         <!-- Card Info -->
-                                                        <StackPanel Grid.Row="1" Margin="12,10,12,12" Spacing="4">
-                                                            <Grid ColumnDefinitions="*,Auto">
-                                                                <TextBlock Grid.Column="0"
-                                                                           Text="{Binding Name}"
+                                                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,10,8,8">
+                                                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Name}"
                                                                            FontSize="13"
                                                                            FontWeight="SemiBold"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis" />
-                                                                <Border Grid.Column="1"
-                                                                        Background="{DynamicResource PrimaryBrush}"
-                                                                        CornerRadius="4"
-                                                                        Padding="6,2"
-                                                                        IsVisible="{Binding IsDefault}"
-                                                                        VerticalAlignment="Center">
-                                                                    <TextBlock Text="{loc:Loc Default}"
-                                                                               FontSize="10"
-                                                                               Foreground="White" />
-                                                                </Border>
-                                                            </Grid>
-                                                            <TextBlock Text="{Binding BaseTemplate}"
-                                                                       FontSize="11"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                        </StackPanel>
+                                                                <TextBlock Text="{Binding BaseTemplate}"
+                                                                           FontSize="11"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                            </StackPanel>
+                                                            <Button Grid.Column="1"
+                                                                    Classes="icon-button danger"
+                                                                    Width="28" Height="28"
+                                                                    VerticalAlignment="Bottom"
+                                                                    ToolTip.Tip="{loc:Loc Delete}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceTemplateDesignerViewModel)DataContext).OpenDeleteTemplateCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                          Width="14" Height="14" />
+                                                            </Button>
+                                                        </Grid>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+
+                                    <!-- Empty state -->
+                                    <StackPanel IsVisible="{Binding HasNoCustomTemplates}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Spacing="8"
+                                                Margin="0,40">
+                                        <PathIcon Data="{x:Static icons:Icons.Invoices}"
+                                                  Width="40" Height="40"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  HorizontalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'No templates yet'}"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'Create a template to customize your invoices.'}"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
                                 </ScrollViewer>
 
                                 <!-- Delete Confirmation -->
