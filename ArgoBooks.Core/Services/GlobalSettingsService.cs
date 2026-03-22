@@ -6,7 +6,7 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Service for managing global and company settings.
 /// </summary>
-public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
+public class GlobalSettingsService : IGlobalSettingsService
 {
     private const string GlobalSettingsFileName = "settings.json";
     private const string CompanySettingsFileName = "settings.json";

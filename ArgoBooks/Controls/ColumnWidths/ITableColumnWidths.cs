@@ -51,35 +51,3 @@ public interface ITableColumnWidths
     /// </summary>
     double ColumnMenuY { get; set; }
 }
-
-/// <summary>
-/// Interface for ViewModels that have table column widths.
-/// </summary>
-public interface ITablePageViewModel
-{
-    /// <summary>
-    /// Gets the column widths manager for this page.
-    /// </summary>
-    ITableColumnWidths ColumnWidths { get; }
-}
-
-/// <summary>
-/// Interface for ViewModels that have a column visibility menu.
-/// </summary>
-public interface IColumnMenuViewModel : ITablePageViewModel
-{
-    /// <summary>
-    /// Gets or sets whether the column menu is open.
-    /// </summary>
-    bool IsColumnMenuOpen { get; set; }
-
-    /// <summary>
-    /// Gets or sets the X position of the column menu.
-    /// </summary>
-    double ColumnMenuX { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Y position of the column menu.
-    /// </summary>
-    double ColumnMenuY { get; set; }
-}

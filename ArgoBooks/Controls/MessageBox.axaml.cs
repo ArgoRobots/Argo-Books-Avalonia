@@ -1,8 +1,6 @@
-using System.Globalization;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data.Converters;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.Input;
 
@@ -266,36 +264,6 @@ public partial class MessageBox : UserControl
     /// Event raised when a result is selected.
     /// </summary>
     public event EventHandler<MessageBoxResultEventArgs>? ResultSelected;
-
-    #endregion
-
-    #region Converters
-
-    /// <summary>
-    /// Converter to get CSS class for message type.
-    /// </summary>
-    public static readonly IMultiValueConverter MessageTypeClassConverter = new MessageTypeToClassConverter();
-
-    private class MessageTypeToClassConverter : IMultiValueConverter
-    {
-        public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values.Count == 0 || values[0] is not MessageBoxType messageType)
-                return new Classes("info");
-
-            var className = messageType switch
-            {
-                MessageBoxType.Info => "info",
-                MessageBoxType.Success => "success",
-                MessageBoxType.Warning => "warning",
-                MessageBoxType.Error => "error",
-                MessageBoxType.Question => "question",
-                _ => "info"
-            };
-
-            return new Classes(className);
-        }
-    }
 
     #endregion
 

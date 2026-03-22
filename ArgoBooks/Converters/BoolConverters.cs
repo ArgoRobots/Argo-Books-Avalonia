@@ -207,28 +207,6 @@ public static class BoolConverters
 }
 
 /// <summary>
-/// Converter that converts a bool to one of two strings based on the parameter.
-/// Parameter format: "TrueValue;FalseValue"
-/// </summary>
-public class BoolToStringConverter : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is not bool boolValue || parameter is not string paramString)
-            return string.Empty;
-
-        var parts = paramString.Split(';');
-        if (parts.Length != 2)
-            return string.Empty;
-
-        return boolValue ? parts[0] : parts[1];
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>
 /// Converter that returns one of two colors based on a boolean value.
 /// </summary>
 public class BoolToColorConverter : IValueConverter
@@ -270,92 +248,6 @@ public class BoolToColorConverter : IValueConverter
         }
 
         return new SolidColorBrush(Color.Parse(AppColors.ChartAxis));
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>
-/// Converter that returns tab button background based on active state.
-/// Active = primary color, Inactive = transparent.
-/// </summary>
-public class BoolToTabBackgroundConverter : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is not bool isActive)
-            return Brushes.Transparent;
-
-        if (isActive)
-        {
-            if (Application.Current?.Resources != null &&
-                Application.Current.Resources.TryGetResource("PrimaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
-                resource is IBrush brush)
-            {
-                return brush;
-            }
-            return new SolidColorBrush(Color.Parse(AppColors.Primary));
-        }
-        return Brushes.Transparent;
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>
-/// Converter that returns tab button foreground based on active state.
-/// Active = white, Inactive = secondary text color.
-/// </summary>
-public class BoolToTabForegroundConverter : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is not bool isActive)
-            return GetDefaultTextBrush();
-
-        if (isActive)
-        {
-            return Brushes.White;
-        }
-        return GetDefaultTextBrush();
-    }
-
-    private static IBrush GetDefaultTextBrush()
-    {
-        if (Application.Current?.Resources != null &&
-            Application.Current.Resources.TryGetResource("TextSecondaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
-            resource is IBrush brush)
-        {
-            return brush;
-        }
-        return new SolidColorBrush(Color.Parse(AppColors.GrayMedium));
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>
-/// Converter that returns the parameter when the bool matches the expected value.
-/// </summary>
-public class BoolToParameterConverter : IValueConverter
-{
-    private readonly bool _returnWhen;
-
-    public BoolToParameterConverter(bool returnWhen)
-    {
-        _returnWhen = returnWhen;
-    }
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is bool boolValue && boolValue == _returnWhen)
-        {
-            return parameter;
-        }
-        return null;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -530,21 +422,3 @@ public class FullscreenMinMaxConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>
-/// Multi-value converter that returns one of two brushes based on a boolean condition.
-/// Values[0] = bool condition, Values[1] = brush when true, Values[2] = brush when false.
-/// </summary>
-public class ConditionalBrushMultiConverter : IMultiValueConverter
-{
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (values.Count < 3)
-            return Brushes.Transparent;
-
-        var condition = values[0] is bool b && b;
-        var trueBrush = values[1] as IBrush ?? Brushes.Transparent;
-        var falseBrush = values[2] as IBrush ?? Brushes.Transparent;
-
-        return condition ? trueBrush : falseBrush;
-    }
-}

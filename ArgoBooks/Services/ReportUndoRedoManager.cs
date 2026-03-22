@@ -403,32 +403,6 @@ public class ZOrderChangeAction(
 }
 
 /// <summary>
-/// Action for changing a property value in report configuration.
-/// </summary>
-public class ReportPropertyChangeAction<T>(
-    string propertyName,
-    T oldValue,
-    T newValue,
-    Action<T> setter,
-    Action? onChanged = null)
-    : IReportUndoableAction
-{
-    public string Description => "Change {0}".TranslateFormat(propertyName);
-
-    public void Undo()
-    {
-        setter(oldValue);
-        onChanged?.Invoke();
-    }
-
-    public void Redo()
-    {
-        setter(newValue);
-        onChanged?.Invoke();
-    }
-}
-
-/// <summary>
 /// Action for changing an element property value.
 /// </summary>
 public class ElementPropertyChangeAction(
