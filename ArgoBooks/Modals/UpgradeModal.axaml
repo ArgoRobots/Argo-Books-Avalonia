@@ -173,6 +173,9 @@
                                                            VerticalAlignment="Bottom"
                                                            Margin="0,0,0,5" />
                                             </StackPanel>
+                                            <TextBlock Text="{Binding PremiumYearlyText}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text="{loc:Loc 'Unlock the full power of Argo Books'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />

@@ -77,6 +77,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _premiumBillingPeriod = "/month";
 
+    [ObservableProperty]
+    private string _premiumYearlyText = "or $100/year (save $20)";
+
     private bool _hasFetchedPricing;
 
     #endregion
@@ -395,6 +398,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
             {
                 PremiumMonthlyPrice = pricing.Premium.PriceDisplay;
                 PremiumBillingPeriod = pricing.Premium.BillingPeriod;
+                if (pricing.Premium.YearlyPriceDisplay is not null && pricing.Premium.YearlySavingsDisplay is not null)
+                {
+                    PremiumYearlyText = $"or {pricing.Premium.YearlyPriceDisplay}/year (save {pricing.Premium.YearlySavingsDisplay})";
+                }
             }
 
             _hasFetchedPricing = true;
@@ -427,6 +434,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         [JsonPropertyName("billing_period")]
         public string BillingPeriod { get; init; } = "/month";
+
+        [JsonPropertyName("yearly_price_display")]
+        public string? YearlyPriceDisplay { get; init; }
+
+        [JsonPropertyName("yearly_savings_display")]
+        public string? YearlySavingsDisplay { get; init; }
     }
 
     #endregion
