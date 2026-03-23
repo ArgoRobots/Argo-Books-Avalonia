@@ -81,6 +81,127 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Premium Teaser
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    /// <summary>
+    /// Shows the teaser overlay when the user doesn't have premium.
+    /// </summary>
+    public bool ShowTeaser => !HasPremium;
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowTeaser));
+        if (value)
+        {
+            // Switched to premium — load real data
+            _ = RefreshInsightsAsync();
+        }
+        else
+        {
+            // Switched to free — populate sample data for teaser
+            PopulateSampleData();
+        }
+    }
+
+    [RelayCommand]
+    private void Upgrade()
+    {
+        App.OpenUpgradeModal();
+    }
+
+    /// <summary>
+    /// Populates the page with realistic-looking sample data for the teaser.
+    /// </summary>
+    private void PopulateSampleData()
+    {
+        HasInsufficientData = false;
+
+        TotalInsights = "12";
+        TrendsDetected = "5";
+        AnomaliesDetected = "2";
+        Opportunities = "3";
+
+        ForecastedRevenue = "$24,800";
+        RevenueGrowthValue = 12.4;
+        RevenueGrowth = "12.4%";
+        ForecastedExpenses = "$18,200";
+        ExpenseGrowthValue = -3.1;
+        ExpenseGrowth = "3.1%";
+        ForecastedProfit = "$6,600";
+        ProfitGrowthValue = 28.7;
+        ProfitGrowth = "28.7%";
+        ForecastedCustomers = "47";
+        CustomerGrowthValue = 8.2;
+        CustomerGrowth = "8.2%";
+
+        PredictionConfidence = "82% High";
+        DataMonthsNote = "Based on 14 months of data using Linear Regression";
+        ForecastMethod = "Linear Regression";
+        RevenueRange = "Range: $21,400 - $28,200";
+        ExpensesRange = string.Empty;
+        HasAccuracyData = true;
+        HistoricalAccuracy = "79%";
+        AccuracyDescription = string.Empty;
+        ValidatedForecastsNote = "Based on 8 validated forecasts";
+        HasSeasonalPattern = true;
+        SeasonalPatternDescription = "Revenue peaks in Q4 with 18% above average";
+        TrendDirection = "Up";
+
+        RevenueTrends.Clear();
+        RevenueTrends.Add(new InsightItemViewModel
+        {
+            Title = "Consistent Monthly Growth",
+            Description = "Revenue has increased by an average of 8.3% month-over-month for the past quarter.",
+            Recommendation = "Consider increasing inventory to meet growing demand.",
+            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Success)),
+            IsLastItem = false
+        });
+        RevenueTrends.Add(new InsightItemViewModel
+        {
+            Title = "Top Category Performance",
+            Description = "Services revenue outpacing product sales by 2.1x this quarter.",
+            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Primary)),
+            IsLastItem = true
+        });
+
+        Anomalies.Clear();
+        Anomalies.Add(new InsightItemViewModel
+        {
+            Title = "Unusual Expense Spike",
+            Description = "Office supplies spending was 340% above the 3-month average in the last period.",
+            Recommendation = "Review recent purchases for potential billing errors.",
+            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Warning)),
+            IsLastItem = true
+        });
+
+        Recommendations.Clear();
+        Recommendations.Add(new InsightItemViewModel
+        {
+            Title = "Optimize Payment Terms",
+            Description = "32% of invoices are paid late. Offering early payment discounts could improve cash flow.",
+            Recommendation = "Consider a 2% discount for payments within 10 days.",
+            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Primary)),
+            IsLastItem = false
+        });
+        Recommendations.Add(new InsightItemViewModel
+        {
+            Title = "Reduce Supplier Costs",
+            Description = "3 suppliers have increased prices by over 10% this year. Alternatives may be available.",
+            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Violet)),
+            IsLastItem = true
+        });
+
+        OnPropertyChanged(nameof(HasNoRevenueTrends));
+        OnPropertyChanged(nameof(HasNoAnomalies));
+        OnPropertyChanged(nameof(HasNoForecasts));
+        OnPropertyChanged(nameof(HasNoRecommendations));
+    }
+
+    #endregion
+
     #region Statistics
 
     [ObservableProperty]
@@ -462,9 +583,13 @@ public partial class InsightsPageViewModel : ViewModelBase
         _forecastAccuracyService = new ForecastAccuracyService();
         _mlForecastingService = new LocalMLForecastingService();
 
-        // Initialize date range and load insights
+        App.PlanStatusChanged += OnPlanStatusChanged;
         UpdateDateRangeFromSelection();
-        _ = RefreshInsightsAsync();
+
+        if (HasPremium)
+            _ = RefreshInsightsAsync();
+        else
+            PopulateSampleData();
     }
 
     /// <summary>
@@ -479,9 +604,18 @@ public partial class InsightsPageViewModel : ViewModelBase
         _forecastAccuracyService = forecastAccuracyService ?? new ForecastAccuracyService();
         _mlForecastingService = mlForecastingService ?? new LocalMLForecastingService();
 
-        // Initialize date range and load insights
+        App.PlanStatusChanged += OnPlanStatusChanged;
         UpdateDateRangeFromSelection();
-        _ = RefreshInsightsAsync();
+
+        if (HasPremium)
+            _ = RefreshInsightsAsync();
+        else
+            PopulateSampleData();
+    }
+
+    private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
+    {
+        HasPremium = e.HasPremium;
     }
 
     /// <summary>
@@ -489,6 +623,8 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     private async Task RefreshForecastAsync()
     {
+        if (!HasPremium) return;
+
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
         {
@@ -519,7 +655,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshInsightsAsync()
     {
-        if (IsRefreshing) return;
+        if (IsRefreshing || !HasPremium) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         var companySettings = App.CompanyManager?.CurrentCompanySettings;

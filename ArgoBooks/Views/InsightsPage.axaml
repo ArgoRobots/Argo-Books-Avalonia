@@ -22,12 +22,21 @@
         <Style Selector="Border.insight-item.last-item">
             <Setter Property="BorderThickness" Value="0" />
         </Style>
+        <Style Selector="ScrollViewer.teaser-blur">
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <ImmutableBlurEffect Radius="6" />
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Styles>
 
     <Panel>
     <!-- Main Content -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
+                  HorizontalScrollBarVisibility="Disabled"
+                  IsHitTestVisible="{Binding !ShowTeaser}"
+                  Classes.teaser-blur="{Binding ShowTeaser}">
         <Grid RowDefinitions="Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
@@ -600,6 +609,94 @@
             </Grid>
         </Grid>
     </ScrollViewer>
+
+    <!-- Premium Teaser Overlay (shown for free users) -->
+    <Panel IsVisible="{Binding ShowTeaser}">
+        <!-- Semi-transparent overlay to darken blurred content -->
+        <Border Background="#20000000"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" />
+
+        <!-- CTA Card -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="16"
+                Padding="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="420"
+                MaxWidth="500"
+                BoxShadow="0 8 32 0 #40000000">
+            <StackPanel Spacing="20" HorizontalAlignment="Center">
+                <!-- Icon -->
+                <Border Width="64" Height="64"
+                        CornerRadius="32"
+                        Background="{DynamicResource PrimaryLightBrush}"
+                        HorizontalAlignment="Center">
+                    <PathIcon Data="{x:Static icons:Icons.Insights}"
+                              Width="28" Height="28"
+                              Foreground="{DynamicResource PrimaryBrush}" />
+                </Border>
+
+                <!-- Title -->
+                <TextBlock Text="{loc:Loc 'Unlock Predictive Analytics'}"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center" />
+
+                <!-- Feature list -->
+                <StackPanel Spacing="10" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'AI-powered revenue forecasting'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'Anomaly detection &amp; alerts'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'Actionable business recommendations'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'Seasonal pattern recognition'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Upgrade Button -->
+                <Button Classes="primary-button"
+                        HorizontalAlignment="Center"
+                        Padding="32,12"
+                        Command="{Binding UpgradeCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{x:Static icons:Icons.Star}"
+                                  Width="16" Height="16" />
+                        <TextBlock Text="{loc:Loc 'Upgrade to Premium'}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Panel>
 
     <!-- Backtest Loading Overlay -->
     <Border IsVisible="{Binding IsRunningBacktest}"

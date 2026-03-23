@@ -145,7 +145,7 @@ public partial class SidebarViewModel : ViewModelBase
         MainItems.Add(CreateItem("Dashboard", "Dashboard", Icons.Dashboard));
         MainItems.Add(CreateItem("Analytics", "Analytics", Icons.Analytics));
         _insightsItem = CreateItem("Insights", "Insights", Icons.Insights);
-        _insightsItem.IsVisible = HasPremium; // Hide by default unless premium
+        _insightsItem.BadgeText = HasPremium ? null : "PRO";
         MainItems.Add(_insightsItem);
         MainItems.Add(CreateItem("Reports", "Reports", Icons.Reports));
 
@@ -240,7 +240,8 @@ public partial class SidebarViewModel : ViewModelBase
     /// </summary>
     partial void OnHasPremiumChanged(bool value)
     {
-        _insightsItem?.IsVisible = value;
+        if (_insightsItem != null)
+            _insightsItem.BadgeText = value ? null : "PRO";
         // Payments page is always visible (free tier can receive online payments)
     }
 
