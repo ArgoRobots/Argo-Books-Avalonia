@@ -108,13 +108,26 @@
                                           Width="14" Height="14" />
                                 <TextBlock Text="{Binding RemainingInvoicesText}"
                                            FontSize="13"
-                                           Foreground="{DynamicResource WarningTextBrush}" />
+                                           Foreground="{DynamicResource WarningTextBrush}"
+                                           IsVisible="{Binding !ShowInvoiceUpgradeButton}" />
+                                <TextBlock Text="{loc:Loc 'Invoice limit reached — upgrade for unlimited invoices'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource WarningTextBrush}"
+                                           IsVisible="{Binding ShowInvoiceUpgradeButton}" />
+                                <Button Command="{Binding UpgradeCommand}"
+                                        Classes="primary-button"
+                                        Padding="12,4"
+                                        IsVisible="{Binding ShowInvoiceUpgradeButton}">
+                                    <TextBlock Text="{loc:Loc 'Upgrade Now'}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold" />
+                                </Button>
                                 <Button Command="{Binding UpgradeCommand}"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Padding="0"
                                         Cursor="Hand"
-                                        IsVisible="{Binding ShowInvoiceUpgradeButton}">
+                                        IsVisible="{Binding !ShowInvoiceUpgradeButton}">
                                     <TextBlock Text="{loc:Loc Upgrade}"
                                                FontSize="13"
                                                FontWeight="SemiBold"

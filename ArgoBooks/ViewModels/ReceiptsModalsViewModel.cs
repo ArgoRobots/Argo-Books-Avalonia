@@ -478,19 +478,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
                 if (!usageCheck.CanScan)
                 {
-                    HasScanError = true;
-                    if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
-                    {
-                        ScanErrorMessage = usageCheck.ErrorMessage;
-                    }
-                    else
-                    {
-                        ScanErrorMessage = "Monthly scan limit reached ({0}/{1}).\n\nYour limit resets on {2}.\n\nUpgrade to Premium for more scans.".TranslateFormat(
-                            usageCheck.ScanCount,
-                            usageCheck.MonthlyLimit,
-                            usageCheck.ResetsAt ?? "the 1st of next month");
-                    }
                     IsScanning = false;
+                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                        usageCheck.ScanCount,
+                        usageCheck.MonthlyLimit,
+                        usageCheck.ResetsAt);
                     return;
                 }
             }

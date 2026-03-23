@@ -559,6 +559,14 @@ public class App : Application
         PlanStatusChanged?.Invoke(null, new PlanStatusChangedEventArgs(hasPremium));
     }
 
+    /// <summary>
+    /// Opens the upgrade modal from anywhere in the app.
+    /// </summary>
+    public static void OpenUpgradeModal()
+    {
+        _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+    }
+
     #endregion
 
     #region Shared Table Column Widths
@@ -3128,21 +3136,10 @@ public class App : Application
         if (!usageCheck.CanImport)
         {
             _mainWindowViewModel?.HideLoading();
-            if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
-            {
-                await ShowErrorMessageBoxAsync(
-                    "AI Import Limit".Translate(),
-                    usageCheck.ErrorMessage);
-            }
-            else
-            {
-                await ShowErrorMessageBoxAsync(
-                    "AI Import Limit Reached".Translate(),
-                    "Monthly AI import limit reached ({0}/{1}).\n\nYour limit resets on {2}.\n\nUpgrade to Premium for more imports.".TranslateFormat(
-                        usageCheck.ImportCount,
-                        usageCheck.MonthlyLimit,
-                        usageCheck.ResetsAt ?? "the 1st of next month"));
-            }
+            await ViewModels.UpgradePromptHelper.ShowAiImportLimitPromptAsync(
+                usageCheck.ImportCount,
+                usageCheck.MonthlyLimit,
+                usageCheck.ResetsAt);
             return;
         }
 
