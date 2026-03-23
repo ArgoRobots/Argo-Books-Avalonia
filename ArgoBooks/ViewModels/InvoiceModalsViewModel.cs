@@ -1210,7 +1210,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (!usage.CanSend)
                 {
                     var limit = usage.MonthlyLimit > 0 ? usage.MonthlyLimit : InvoicesPageViewModel.DefaultFreeInvoiceLimit;
-                    await ShowSendErrorAsync($"You've reached the free plan limit of {limit} invoices this month. Upgrade to Premium for unlimited invoices.".Translate());
+                    await UpgradePromptHelper.ShowInvoiceLimitPromptAsync(limit);
                     return;
                 }
             }

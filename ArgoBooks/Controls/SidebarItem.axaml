@@ -32,7 +32,7 @@
 
             <!-- Badge -->
             <Border Grid.Column="2"
-                    Background="{DynamicResource DangerBrush}"
+                    Background="{DynamicResource PrimaryBrush}"
                     CornerRadius="10"
                     Padding="6,2"
                     Margin="8,0,0,0"
