@@ -22,21 +22,14 @@
         <Style Selector="Border.insight-item.last-item">
             <Setter Property="BorderThickness" Value="0" />
         </Style>
-        <Style Selector="ScrollViewer.teaser-blur">
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <ImmutableBlurEffect Radius="6" />
-                </Setter.Value>
-            </Setter>
-        </Style>
     </UserControl.Styles>
 
     <Panel>
     <!-- Main Content -->
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
+    <ScrollViewer x:Name="ContentScrollViewer"
+                  VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
-                  IsHitTestVisible="{Binding !ShowTeaser}"
-                  Classes.teaser-blur="{Binding ShowTeaser}">
+                  IsHitTestVisible="{Binding !ShowTeaser}">
         <Grid RowDefinitions="Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
