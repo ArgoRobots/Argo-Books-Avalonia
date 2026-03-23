@@ -173,9 +173,16 @@
                                                            VerticalAlignment="Bottom"
                                                            Margin="0,0,0,5" />
                                             </StackPanel>
-                                            <TextBlock Text="{Binding PremiumYearlyText}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <TextBlock Text="{Binding PremiumYearlyPrice}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding PremiumYearlySavings}"
+                                                           FontSize="13"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource SuccessBrush}" />
+                                            </StackPanel>
                                             <TextBlock Text="{loc:Loc 'Unlock the full power of Argo Books'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
