@@ -50,7 +50,7 @@
                     </Border>
 
                     <!-- Body -->
-                    <ScrollViewer Grid.Row="1">
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
                             <!-- Free Plan -->
                             <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">

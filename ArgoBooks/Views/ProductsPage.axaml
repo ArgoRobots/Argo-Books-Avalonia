@@ -84,14 +84,17 @@
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
                                           Foreground="{DynamicResource WarningBrush}"
-                                          Width="14" Height="14" />
+                                          Width="14" Height="14"
+                                          VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding RemainingProductsText}"
                                            FontSize="13"
                                            Foreground="{DynamicResource WarningTextBrush}"
+                                           VerticalAlignment="Center"
                                            IsVisible="{Binding !ShowUpgradeButton}" />
                                 <TextBlock Text="{loc:Loc 'Product limit reached — upgrade for unlimited products'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource WarningTextBrush}"
+                                           VerticalAlignment="Center"
                                            IsVisible="{Binding ShowUpgradeButton}" />
                                 <Button Command="{Binding UpgradeCommand}"
                                         Classes="primary-button"

@@ -105,14 +105,17 @@
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
                                           Foreground="{DynamicResource WarningBrush}"
-                                          Width="14" Height="14" />
+                                          Width="14" Height="14"
+                                          VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding RemainingInvoicesText}"
                                            FontSize="13"
                                            Foreground="{DynamicResource WarningTextBrush}"
+                                           VerticalAlignment="Center"
                                            IsVisible="{Binding !ShowInvoiceUpgradeButton}" />
                                 <TextBlock Text="{loc:Loc 'Invoice limit reached — upgrade for unlimited invoices'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource WarningTextBrush}"
+                                           VerticalAlignment="Center"
                                            IsVisible="{Binding ShowInvoiceUpgradeButton}" />
                                 <Button Command="{Binding UpgradeCommand}"
                                         Classes="primary-button"
