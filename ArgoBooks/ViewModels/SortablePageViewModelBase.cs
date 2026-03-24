@@ -122,11 +122,6 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     /// </summary>
     public bool CanGoToNextPage => CurrentPage < TotalPages;
 
-    partial void OnTotalPagesChanged(int value)
-    {
-        NotifyPaginationChanged();
-    }
-
     partial void OnCurrentPageChanged(int value)
     {
         NotifyPaginationChanged();
