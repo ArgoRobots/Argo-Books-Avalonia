@@ -540,6 +540,8 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
         else if (change.Property == TotalPagesProperty)
         {
             RaisePropertyChanged(nameof(ShowPageNumbers));
+            RaisePropertyChanged(nameof(CanGoToPreviousPage));
+            RaisePropertyChanged(nameof(CanGoToNextPage));
             UpdatePageNumbers();
         }
         else if (change.Property == CurrentPageProperty)
