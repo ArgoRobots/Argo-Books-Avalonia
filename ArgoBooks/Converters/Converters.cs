@@ -37,8 +37,8 @@ public static class Converters
     public static readonly IValueConverter ConfidenceLevelToColor =
         new FuncValueConverter<string, Color>(level => level switch
         {
-            "High" => Color.Parse(AppColors.SuccessText),
-            "Medium" => Color.Parse(AppColors.WarningText),
+            "High" => Color.Parse(AppColors.SuccessDark),
+            "Medium" => Color.Parse(AppColors.WarningDark),
             "Low" => Color.Parse(AppColors.Error),
             _ => Color.Parse(AppColors.GrayText)
         });
