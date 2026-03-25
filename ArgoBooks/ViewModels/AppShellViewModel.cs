@@ -812,6 +812,9 @@ public partial class AppShellViewModel : ViewModelBase
         UserPanelViewModel.HasPremium = hasPremium;
         if (App.InvoiceModalsViewModel != null)
             App.InvoiceModalsViewModel.HasPremium = hasPremium;
+
+        // Notify lazily-created page ViewModels (e.g., InsightsPageViewModel)
+        App.RaisePlanStatusChanged(hasPremium);
     }
 
     /// <summary>

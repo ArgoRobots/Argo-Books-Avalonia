@@ -4227,7 +4227,12 @@ public class App : Application
             }
             return new AnalyticsPage { DataContext = _analyticsPageViewModel };
         });
-        navigationService.RegisterPage("Insights", _ => new InsightsPage { DataContext = _insightsPageViewModel ??= new InsightsPageViewModel() });
+        navigationService.RegisterPage("Insights", _ =>
+        {
+            _insightsPageViewModel ??= new InsightsPageViewModel();
+            _insightsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            return new InsightsPage { DataContext = _insightsPageViewModel };
+        });
         navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = _reportsPageViewModel ??= new ReportsPageViewModel() });
 
         // Transactions Section
