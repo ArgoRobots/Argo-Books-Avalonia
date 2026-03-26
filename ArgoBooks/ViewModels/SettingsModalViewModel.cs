@@ -779,7 +779,12 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        HasPortalLogo = true;
+        // If we already have the image loaded (e.g., from a recent upload), keep it
+        if (PortalLogoSource != null)
+        {
+            HasPortalLogo = true;
+            return;
+        }
 
         try
         {
@@ -787,11 +792,13 @@ public partial class SettingsModalViewModel : ViewModelBase
             var imageBytes = await httpClient.GetByteArrayAsync(logoUrl);
             using var stream = new MemoryStream(imageBytes);
             PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(stream);
+            HasPortalLogo = true;
         }
         catch
         {
-            // Failed to load image — still show HasPortalLogo since URL exists
+            // Download failed — don't show an empty gray box
             PortalLogoSource = null;
+            HasPortalLogo = false;
         }
     }
 
