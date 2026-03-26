@@ -40,8 +40,7 @@ After building the solution, press F5 to run the application in Debug mode, or `
 ## Publishing
 
 1. Update the version number in Directory.Build.props.
-2. Set ARGO_ENV in the .env to production.
-3. Rebuild the app.
+2. Build the app in Release configuration.
 
 ### Windows
 The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/).
