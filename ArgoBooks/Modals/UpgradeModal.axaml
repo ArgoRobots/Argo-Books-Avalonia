@@ -51,255 +51,182 @@
 
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Margin="24" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
-                            <!-- Free Plan -->
-                            <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">
-                                <Grid RowDefinitions="Auto,*,Auto">
-                                    <!-- Plan Header -->
-                                    <StackPanel Grid.Row="0" Spacing="4">
-                                        <TextBlock Text="{loc:Loc Free}"
-                                                   FontSize="16"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="$0"
-                                                       FontSize="28"
-                                                       FontWeight="Bold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text=" forever"
-                                                       FontSize="13"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       VerticalAlignment="Bottom"
-                                                       Margin="0,0,0,5" />
-                                        </StackPanel>
-                                        <TextBlock Text="{loc:Loc 'Current Plan'}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </StackPanel>
+                        <Panel>
+                            <!-- Offline Message -->
+                            <StackPanel IsVisible="{Binding IsOffline}"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Spacing="12"
+                                        Margin="48">
+                                <PathIcon Data="{x:Static local:Icons.WifiOff}"
+                                          Width="48" Height="48"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'No Connection'}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'Unable to load plan details. Please check your internet connection and try again.'}"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="360" />
+                            </StackPanel>
 
-                                    <!-- Features -->
-                                    <StackPanel Grid.Row="1" Spacing="0" Margin="0,16,0,0" VerticalAlignment="Top">
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Up to 10 products'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Unlimited transactions'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Real-time analytics'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Receipt management'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc '5 invoices / month'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item" BorderThickness="0">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'AI spreadsheet import (100/month)'}" />
-                                            </Grid>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- Current Plan Label -->
-                                    <TextBlock Grid.Row="2"
-                                               Text="{loc:Loc 'Current Plan'}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,16,0,0" />
-                                </Grid>
-                            </Border>
-
-                            <!-- Premium Plan -->
-                            <Border Classes="plan-card" Width="340">
-                                <Grid RowDefinitions="Auto,*,Auto">
-                                    <!-- Plan Header -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="4">
-                                            <TextBlock Text="{loc:Loc Premium}"
+                            <!-- Plan Cards (hidden when offline) -->
+                            <StackPanel Margin="24" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16"
+                                        IsVisible="{Binding !IsOffline}">
+                                <!-- Free Plan -->
+                                <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">
+                                    <Grid RowDefinitions="Auto,*,Auto">
+                                        <!-- Plan Header -->
+                                        <StackPanel Grid.Row="0" Spacing="4">
+                                            <TextBlock Text="{loc:Loc Free}"
                                                        FontSize="16"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding PremiumMonthlyPrice}"
+                                                <TextBlock Text="$0"
                                                            FontSize="28"
                                                            FontWeight="Bold"
-                                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                                <TextBlock Text="{Binding PremiumBillingPeriod}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text=" forever"
                                                            FontSize="13"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            VerticalAlignment="Bottom"
                                                            Margin="0,0,0,5" />
                                             </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="{Binding PremiumYearlyPrice}"
-                                                           FontSize="13"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Text="{Binding PremiumYearlySavings}"
-                                                           FontSize="13"
-                                                           FontWeight="Bold"
-                                                           Foreground="{DynamicResource SuccessBrush}" />
-                                            </StackPanel>
-                                            <TextBlock Text="{loc:Loc 'Unlock the full power of Argo Books'}"
+                                            <TextBlock Text="{loc:Loc 'Current Plan'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
-                                        <!-- Active Badge (when has Premium) -->
-                                        <Border Grid.Column="1"
-                                                Background="{DynamicResource SuccessBrush}"
-                                                CornerRadius="4"
-                                                Padding="8,4"
-                                                VerticalAlignment="Top"
-                                                IsVisible="{Binding ShowPremiumActive}">
-                                            <TextBlock Text="{loc:Loc Active}"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="White" />
-                                        </Border>
+
+                                        <!-- Features (from API) -->
+                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding FreePlanFeatures}" Margin="0,16,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Classes="feature-item">
+                                                        <Grid ColumnDefinitions="Auto,*">
+                                                            <PathIcon Grid.Column="0"
+                                                                      Data="{x:Static local:Icons.Check}"
+                                                                      Width="14" Height="14"
+                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      Margin="0,0,10,0" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding}" />
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Current Plan Label -->
+                                        <TextBlock Grid.Row="2"
+                                                   Text="{loc:Loc 'Current Plan'}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,16,0,0" />
                                     </Grid>
+                                </Border>
 
-                                    <!-- Features -->
-                                    <StackPanel Grid.Row="1" Spacing="0" Margin="0,16,0,16" VerticalAlignment="Top">
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Everything in Free'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Unlimited products'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Biometric login security'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Unlimited invoices &amp; payments'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'AI receipt scanning (500/month)'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Predictive analytics'}" />
-                                            </Grid>
-                                        </Border>
-                                        <Border Classes="feature-item" BorderThickness="0">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <PathIcon Grid.Column="0"
-                                                          Data="{x:Static local:Icons.Check}"
-                                                          Width="14" Height="14"
-                                                          Foreground="{DynamicResource SuccessBrush}"
-                                                          Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Priority support'}" />
-                                            </Grid>
-                                        </Border>
-                                    </StackPanel>
+                                <!-- Premium Plan -->
+                                <Border Classes="plan-card" Width="340">
+                                    <Grid RowDefinitions="Auto,*,Auto">
+                                        <!-- Plan Header -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                <TextBlock Text="{loc:Loc Premium}"
+                                                           FontSize="16"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding PremiumMonthlyPrice}"
+                                                               FontSize="28"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource PrimaryBrush}" />
+                                                    <TextBlock Text="{Binding PremiumBillingPeriod}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               VerticalAlignment="Bottom"
+                                                               Margin="0,0,0,5" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{Binding PremiumYearlyPrice}"
+                                                               FontSize="13"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBlock Text="{Binding PremiumYearlySavings}"
+                                                               FontSize="13"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource SuccessBrush}" />
+                                                </StackPanel>
+                                                <TextBlock Text="{loc:Loc 'Unlock the full power of Argo Books'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <!-- Active Badge (when has Premium) -->
+                                            <Border Grid.Column="1"
+                                                    Background="{DynamicResource SuccessBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8,4"
+                                                    VerticalAlignment="Top"
+                                                    IsVisible="{Binding ShowPremiumActive}">
+                                                <TextBlock Text="{loc:Loc Active}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White" />
+                                            </Border>
+                                        </Grid>
 
-                                    <StackPanel Grid.Row="2" Spacing="8">
-                                        <!-- Select Premium Button (only when doesn't have Premium) -->
-                                        <Button Classes="primary-button"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"
-                                                Command="{Binding SelectPremiumCommand}"
-                                                Content="{loc:Loc 'Select Premium'}"
-                                                IsVisible="{Binding ShowSelectPremium}" />
-                                        <Button Classes="secondary-button"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"
-                                                Command="{Binding CancelSubscriptionCommand}"
-                                                Content="{loc:Loc 'Manage Subscription'}"
-                                                IsVisible="{Binding ShowCancelPremium}" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
+                                        <!-- Features (from API) -->
+                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding PremiumPlanFeatures}" Margin="0,16,0,16">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Classes="feature-item">
+                                                        <Grid ColumnDefinitions="Auto,*">
+                                                            <PathIcon Grid.Column="0"
+                                                                      Data="{x:Static local:Icons.Check}"
+                                                                      Width="14" Height="14"
+                                                                      Foreground="{DynamicResource SuccessBrush}"
+                                                                      Margin="0,0,10,0" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding}" />
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <StackPanel Grid.Row="2" Spacing="8">
+                                            <!-- Select Premium Button (only when doesn't have Premium) -->
+                                            <Button Classes="primary-button"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Center"
+                                                    Command="{Binding SelectPremiumCommand}"
+                                                    Content="{loc:Loc 'Select Premium'}"
+                                                    IsVisible="{Binding ShowSelectPremium}" />
+                                            <Button Classes="secondary-button"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Center"
+                                                    Command="{Binding CancelSubscriptionCommand}"
+                                                    Content="{loc:Loc 'Manage Subscription'}"
+                                                    IsVisible="{Binding ShowCancelPremium}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Panel>
                     </ScrollViewer>
 
                     <!-- Footer -->
                     <Border Grid.Row="2"
                             Padding="24,20"
                             BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
+                            BorderThickness="0,1,0,0"
+                            IsVisible="{Binding !IsOffline}">
                         <Button Classes="primary-button"
                                 HorizontalAlignment="Right"
                                 HorizontalContentAlignment="Center"
