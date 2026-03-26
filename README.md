@@ -39,6 +39,8 @@ After building the solution, press F5 to run the application in Debug mode, or `
 
 ## Publishing
 
+Update the version number in Directory.Build.props, then rebuild the app.
+
 ### Windows
 The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/).
 
