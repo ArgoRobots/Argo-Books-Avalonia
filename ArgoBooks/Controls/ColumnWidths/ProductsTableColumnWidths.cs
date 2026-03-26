@@ -224,7 +224,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
         var totalCurrentWidth = _columns.Values
             .Where(IsColumnVisible)
-            .Sum(c => c.CurrentWidth) + 24;
+            .Sum(c => c.CurrentWidth) + 48;
 
         if (_hasManualOverflow)
         {
@@ -266,7 +266,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         if (columnIndex < 0) return 0;
 
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
-        double maxTotalWidth = _availableWidth - 24;
+        double maxTotalWidth = _availableWidth - 48;
 
         var newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, col.CurrentWidth + delta));
         var actualDelta = newColWidth - col.CurrentWidth;
@@ -308,7 +308,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
     private void UpdateScrollState(List<string> visibleColumns)
     {
-        double totalWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth) + 24;
+        double totalWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth) + 48;
         if (totalWidth > _availableWidth + 1)
         {
             _hasManualOverflow = true;
@@ -318,7 +318,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         else
         {
             NeedsHorizontalScroll = false;
-            MinimumTotalWidth = _columns.Values.Where(IsColumnVisible).Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 24;
+            MinimumTotalWidth = _columns.Values.Where(IsColumnVisible).Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
         }
     }
 
@@ -346,11 +346,11 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
             var visibleColumns = _columns.Values.Where(IsColumnVisible).ToList();
             if (visibleColumns.Count == 0) return;
 
-            double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 24;
+            double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
 
             if (_hasManualOverflow)
             {
-                double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 24;
+                double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
                 if (totalWidth + 50 > _availableWidth) { MinimumTotalWidth = totalWidth; NeedsHorizontalScroll = true; return; }
                 _hasManualOverflow = false;
             }
@@ -360,7 +360,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
             double fixedTotal = visibleColumns.Where(c => c.IsFixed).Sum(c => c.FixedWidth);
             double totalStars = visibleColumns.Where(c => !c.IsFixed).Sum(c => GetColumnStarValue(c));
-            double availableForProportional = Math.Max(100, _availableWidth - fixedTotal - 24);
+            double availableForProportional = Math.Max(100, _availableWidth - fixedTotal - 48);
 
             if (NeedsHorizontalScroll)
             {
