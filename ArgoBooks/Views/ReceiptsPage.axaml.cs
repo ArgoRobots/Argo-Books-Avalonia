@@ -68,17 +68,25 @@ public partial class ReceiptsPage : UserControl
 
     private void OnReceiptCardPressed(object? sender, PointerPressedEventArgs e)
     {
-        // Ignore if clicking on checkbox
-        if (e.Source is CheckBox) return;
-
         if (sender is Border { DataContext: ReceiptDisplayItem receipt })
         {
             if (DataContext is ReceiptsPageViewModel viewModel)
             {
-                // In selection mode, toggle selection instead of opening preview
-                if (viewModel.IsSelectionMode)
+                var props = e.GetCurrentPoint(null).Properties;
+                if (!props.IsLeftButtonPressed) return;
+
+                var keyMods = e.KeyModifiers;
+                if (keyMods.HasFlag(KeyModifiers.Control) || keyMods.HasFlag(KeyModifiers.Shift))
                 {
+                    // Ctrl/Shift+click: toggle selection
                     viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
+                    e.Handled = true;
+                }
+                else if (viewModel.IsSelectionMode)
+                {
+                    // Already in selection mode: toggle selection
+                    viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
+                    e.Handled = true;
                 }
                 else
                 {
@@ -97,12 +105,29 @@ public partial class ReceiptsPage : UserControl
         {
             if (DataContext is ReceiptsPageViewModel viewModel)
             {
-                // In selection mode, toggle selection
-                if (viewModel.IsSelectionMode)
+                var keyMods = e.KeyModifiers;
+                if (keyMods.HasFlag(KeyModifiers.Control) || keyMods.HasFlag(KeyModifiers.Shift))
                 {
                     viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
+                    e.Handled = true;
+                }
+                else if (viewModel.IsSelectionMode)
+                {
+                    viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
+                    e.Handled = true;
                 }
             }
+        }
+    }
+
+    private void OnTableBackgroundPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Only handle clicks directly on the background panel, not on child receipt cards
+        if (e.Source is not Panel) return;
+
+        if (DataContext is ReceiptsPageViewModel viewModel && viewModel.IsSelectionMode)
+        {
+            viewModel.ExitSelectionModeCommand.Execute(null);
         }
     }
 
