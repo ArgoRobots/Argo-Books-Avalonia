@@ -33,7 +33,41 @@ public static class ApiConfig
 
     private static bool ResolveSandbox()
     {
+        // Check DotEnv (.env next to binary) and system environment variables
         var env = DotEnv.Get(EnvVar);
-        return string.Equals(env, SandboxValue, StringComparison.OrdinalIgnoreCase);
+        if (string.Equals(env, SandboxValue, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Also check .env in the current working directory (useful when running
+        // from an IDE where the working directory is the repo/project root,
+        // which is different from the binary output directory)
+        var cwd = Directory.GetCurrentDirectory();
+        var cwdEnvPath = Path.Combine(cwd, ".env");
+        if (File.Exists(cwdEnvPath))
+        {
+            try
+            {
+                foreach (var line in File.ReadLines(cwdEnvPath))
+                {
+                    var trimmed = line.Trim();
+                    if (trimmed.StartsWith('#') || !trimmed.Contains('='))
+                        continue;
+
+                    var sep = trimmed.IndexOf('=');
+                    var key = trimmed[..sep].Trim();
+                    var value = trimmed[(sep + 1)..].Trim().Trim('"', '\'');
+
+                    if (string.Equals(key, EnvVar, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(value, SandboxValue, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+            }
+            catch
+            {
+                // Best-effort — ignore read errors
+            }
+        }
+
+        return false;
     }
 }
