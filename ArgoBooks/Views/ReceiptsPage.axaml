@@ -214,7 +214,7 @@
                                             Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1"
+                                            BorderThickness="2"
                                             Cursor="Hand"
                                             Classes="receipt-card"
                                             Classes.selected="{Binding IsSelected}"
@@ -452,6 +452,13 @@
                                                             <PathIcon Data="{x:Static icons:Icons.ExportData}"
                                                                       Width="16" Height="16" />
                                                         </Button>
+                                                        <Button Classes="icon-button"
+                                                                ToolTip.Tip="{loc:Loc 'Delete'}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).DeleteReceiptCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
                                                     </StackPanel>
                                                 </table:ArgoTableCell.CellContent>
                                             </table:ArgoTableCell>
@@ -554,7 +561,6 @@
         <!-- Receipt card selected state -->
         <Style Selector="Border.receipt-card.selected">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
         </Style>
 
         <!-- Receipt row selected state -->

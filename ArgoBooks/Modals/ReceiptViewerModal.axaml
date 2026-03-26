@@ -120,8 +120,7 @@
                                 ToolTip.Tip="{loc:Loc 'Delete'}"
                                 Command="{Binding DeleteCommand}">
                             <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                      Width="16" Height="16"
-                                      Foreground="{DynamicResource ErrorBrush}" />
+                                      Width="16" Height="16" />
                         </Button>
 
                         <!-- Center: Zoom Controls -->
