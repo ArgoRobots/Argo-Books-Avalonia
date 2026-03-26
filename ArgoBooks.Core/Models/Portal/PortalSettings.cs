@@ -12,7 +12,7 @@ public class PortalSettings
     /// <summary>
     /// The payment portal API base URL.
     /// </summary>
-    public const string ApiBaseUrl = "https://argorobots.com/api/portal";
+    public static string ApiBaseUrl => $"{ApiConfig.BaseUrl}/api/portal";
 
     /// <summary>
     /// Environment variable name for the portal API key (per-company, obtained during registration).

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Platform;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -153,7 +154,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void OpenHelp()
     {
-        UrlHelper.SafeOpenUrl("https://argorobots.com/contact-us/");
+        UrlHelper.SafeOpenUrl($"{ApiConfig.BaseUrl}/contact-us/");
         OpenHelpRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -163,7 +164,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void OpenWhatsNew()
     {
-        UrlHelper.SafeOpenUrl("https://argorobots.com/whats-new/");
+        UrlHelper.SafeOpenUrl($"{ApiConfig.BaseUrl}/whats-new/");
         OpenWhatsNewRequested?.Invoke(this, EventArgs.Empty);
     }
 

@@ -12,8 +12,8 @@ namespace ArgoBooks.Core.Services;
 public class LicenseService
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-    private const string LicenseValidateUrl = "https://argorobots.com/api/license/validate.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static string LicenseValidateUrl => $"{ApiConfig.BaseUrl}/api/license/validate.php";
+    private static string ApiHostUrl => ApiConfig.BaseUrl;
 
     private readonly IEncryptionService _encryptionService;
     private readonly IGlobalSettingsService _settingsService;

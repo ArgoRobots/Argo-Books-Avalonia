@@ -9,7 +9,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class InvoiceUsageService
 {
-    private const string UsageApiUrl = "https://argorobots.com/api/invoice/usage.php";
+    private static string UsageApiUrl => $"{ApiConfig.BaseUrl}/api/invoice/usage.php";
     private const int DefaultFreeLimit = 5;
 
     private readonly HttpClient _httpClient;

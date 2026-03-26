@@ -10,7 +10,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class AzureReceiptScannerService : IReceiptScannerService
 {
-    private const string ScanEndpoint = "https://argorobots.com/api/receipt/scan.php";
+    private static string ScanEndpoint => $"{ApiConfig.BaseUrl}/api/receipt/scan.php";
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;

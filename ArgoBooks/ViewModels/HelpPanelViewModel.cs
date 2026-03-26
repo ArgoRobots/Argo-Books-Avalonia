@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Platform;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -47,28 +48,28 @@ public partial class HelpPanelViewModel : ViewModelBase
     private void OpenWhatsNew()
     {
         Close();
-        OpenUrl("https://argorobots.com/whats-new/");
+        OpenUrl($"{ApiConfig.BaseUrl}/whats-new/");
     }
 
     [RelayCommand]
     private void OpenDocumentation()
     {
         Close();
-        OpenUrl("https://argorobots.com/documentation/");
+        OpenUrl($"{ApiConfig.BaseUrl}/documentation/");
     }
 
     [RelayCommand]
     private void OpenCommunity()
     {
         Close();
-        OpenUrl("https://argorobots.com/community/");
+        OpenUrl($"{ApiConfig.BaseUrl}/community/");
     }
 
     [RelayCommand]
     private void OpenSupport()
     {
         Close();
-        OpenUrl("https://argorobots.com/contact-us/");
+        OpenUrl($"{ApiConfig.BaseUrl}/contact-us/");
     }
 
     [RelayCommand]

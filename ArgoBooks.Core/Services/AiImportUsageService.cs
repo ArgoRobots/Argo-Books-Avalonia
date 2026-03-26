@@ -9,8 +9,8 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class AiImportUsageService
 {
-    private const string UsageApiUrl = "https://argorobots.com/api/ai-import/usage.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static string UsageApiUrl => $"{ApiConfig.BaseUrl}/api/ai-import/usage.php";
+    private static string ApiHostUrl => ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
