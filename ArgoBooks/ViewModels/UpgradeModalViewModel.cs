@@ -16,12 +16,12 @@ namespace ArgoBooks.ViewModels;
 public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-    private const string LicenseRedeemUrl = "https://argorobots.com/api/license/redeem.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static readonly string LicenseRedeemUrl = $"{ApiConfig.BaseUrl}/api/license/redeem.php";
+    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
-    private const string PricingApiUrl = "https://argorobots.com/api/pricing/plans.php";
-    private const string PremiumUpgradeUrl = "https://argorobots.com/pricing/";
-    private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
+    private static readonly string PricingApiUrl = $"{ApiConfig.BaseUrl}/api/pricing/plans.php";
+    private static readonly string PremiumUpgradeUrl = $"{ApiConfig.BaseUrl}/pricing/";
+    private static readonly string CancelSubscriptionUrl = $"{ApiConfig.BaseUrl}/community/users/subscription.php";
 
     [ObservableProperty]
     private bool _isOpen;

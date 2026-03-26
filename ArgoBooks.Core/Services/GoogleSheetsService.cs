@@ -10,7 +10,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class GoogleSheetsService
 {
-    private const string ExportEndpoint = "https://argorobots.com/api/google/sheets/export.php";
+    private static readonly string ExportEndpoint = $"{ApiConfig.BaseUrl}/api/google/sheets/export.php";
 
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;

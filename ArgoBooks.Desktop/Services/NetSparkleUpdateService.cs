@@ -17,7 +17,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     /// <summary>
     /// AppCast URL — separate from the WinForms app since version tracks diverge.
     /// </summary>
-    private const string AppCastUrl = "https://argorobots.com/avalonia-update.xml";
+    private static readonly string AppCastUrl = $"{ApiConfig.BaseUrl}/avalonia-update.xml";
 
     /// <summary>
     /// Download timeout for the update package.

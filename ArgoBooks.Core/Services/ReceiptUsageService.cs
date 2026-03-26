@@ -9,8 +9,8 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ReceiptUsageService : IReceiptUsageService
 {
-    private const string UsageApiUrl = "https://argorobots.com/api/receipt/usage.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/receipt/usage.php";
+    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
