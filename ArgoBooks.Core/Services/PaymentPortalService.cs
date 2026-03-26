@@ -134,6 +134,7 @@ public class PaymentPortalService
                 Notes = invoice.Notes,
                 Status = invoice.Status.ToString().ToLowerInvariant(),
                 SendEmail = !string.IsNullOrWhiteSpace(customer.Email),
+                PassProcessingFee = template?.PassProcessingFee ?? true,
                 LineItems = invoice.LineItems.Select(li => new PortalLineItem
                 {
                     Description = li.Description,
@@ -332,16 +333,19 @@ public class PaymentPortalService
             companyData.IdCounters.Payment = nextId;
             var paymentId = $"PAY-{DateTime.Now:yyyy}-{nextId:D5}";
 
+            // The invoice amount is the total charged minus any processing fee
+            var invoiceAmount = portalPayment.Amount - portalPayment.ProcessingFee;
+
             // Convert non-USD payment amount to USD using the invoice's conversion ratio
             decimal amountUSD;
             if (portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase))
             {
-                amountUSD = portalPayment.Amount;
+                amountUSD = invoiceAmount;
             }
             else if (invoice.TotalUSD > 0 && invoice.Total > 0)
             {
                 // Use invoice's known USD conversion ratio
-                amountUSD = Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2);
+                amountUSD = Math.Round(invoiceAmount * (invoice.TotalUSD / invoice.Total), 2);
             }
             else
             {
@@ -349,16 +353,21 @@ public class PaymentPortalService
                 amountUSD = 0m;
             }
 
+            // Build payment notes with fee info if applicable
+            var notes = portalPayment.ProcessingFee > 0
+                ? $"Online payment via {providerName} (processing fee: {portalPayment.Currency} {portalPayment.ProcessingFee:N2})"
+                : $"Online payment via {providerName}";
+
             var payment = new Payment
             {
                 Id = paymentId,
                 InvoiceId = portalPayment.InvoiceId,
                 CustomerId = invoice.CustomerId,
                 Date = portalPayment.CreatedAt,
-                Amount = portalPayment.Amount,
+                Amount = invoiceAmount,
                 PaymentMethod = method,
                 ReferenceNumber = portalPayment.ReferenceNumber,
-                Notes = $"Online payment via {providerName}",
+                Notes = notes,
                 CreatedAt = DateTime.UtcNow,
                 OriginalCurrency = portalPayment.Currency,
                 AmountUSD = amountUSD,
