@@ -252,8 +252,11 @@
                                                                   IsVisible="{Binding IsPdf}" />
                                                     </Panel>
 
-                                                    <!-- Checkbox (top-left) -->
+                                                    <!-- Checkbox (top-left) - visible on hover or in selection mode -->
                                                     <CheckBox IsChecked="{Binding IsSelected}"
+                                                              Classes="card-checkbox"
+                                                              Classes.force-visible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).IsSelectionMode}"
+                                                              Classes.checked-visible="{Binding IsSelected}"
                                                               HorizontalAlignment="Left"
                                                               VerticalAlignment="Top"
                                                               Margin="12,12,0,0" />
@@ -554,6 +557,24 @@
         </Style>
         <Style Selector="Button.view-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+        </Style>
+
+        <!-- Card checkbox: hidden by default, shown on hover, selection mode, or when checked -->
+        <Style Selector="CheckBox.card-checkbox">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Border.receipt-card:pointerover CheckBox.card-checkbox">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="IsHitTestVisible" Value="True" />
+        </Style>
+        <Style Selector="CheckBox.card-checkbox.force-visible">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="IsHitTestVisible" Value="True" />
+        </Style>
+        <Style Selector="CheckBox.card-checkbox.checked-visible">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="IsHitTestVisible" Value="True" />
         </Style>
 
         <!-- Receipt card selected state -->
