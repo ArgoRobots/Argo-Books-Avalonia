@@ -262,12 +262,13 @@ public partial class TranslationGenerator
             foreach (Match match in constStringMatches)
             {
                 var text = match.Groups[1].Value;
-                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code)
+                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code, not an SVG path)
                 if (!string.IsNullOrEmpty(text) && text.Length > 1 &&
                     !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
                     !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
                     !text.StartsWith("{") &&
-                    !text.StartsWith('#'))
+                    !text.StartsWith('#') &&
+                    !IsSvgPathData(text))
                 {
                     AddString(strings, text);
                 }
@@ -344,6 +345,32 @@ public partial class TranslationGenerator
         {
             AddString(strings, text);
         }
+    }
+
+    /// <summary>
+    /// Returns true if the text looks like SVG path data (e.g., "M10 20v-6h4v6...").
+    /// </summary>
+    private static bool IsSvgPathData(string text)
+    {
+        // SVG paths start with M/m (moveto) and contain path commands like v, h, l, z, a, c, s, q, etc.
+        if (text.Length < 3 || (text[0] != 'M' && text[0] != 'm'))
+            return false;
+
+        // Check if the string is predominantly SVG path commands and numbers
+        var svgCommandChars = 0;
+        var totalChars = 0;
+        foreach (var c in text)
+        {
+            if (c == ' ' || c == ',')
+                continue;
+            totalChars++;
+            if (char.IsDigit(c) || c == '-' || c == '.' ||
+                "MmZzLlHhVvCcSsQqTtAa".Contains(c))
+                svgCommandChars++;
+        }
+
+        // If >90% of non-space characters are SVG path chars, it's likely SVG path data
+        return totalChars > 0 && (double)svgCommandChars / totalChars > 0.9;
     }
 
     /// <summary>
