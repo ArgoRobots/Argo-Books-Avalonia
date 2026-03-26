@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Helpers;
@@ -825,6 +826,82 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             receipt.IsSelected = false;
         }
         UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelected()
+    {
+        var selectedReceipts = Receipts.Where(r => r.IsSelected).ToList();
+        if (selectedReceipts.Count == 0) return;
+
+        try
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
+
+            var message = selectedReceipts.Count == 1
+                ? "Are you sure you want to delete this receipt?\n\nID: {0}\nSupplier: {1}".TranslateFormat(selectedReceipts[0].Id, selectedReceipts[0].Supplier)
+                : "Are you sure you want to delete {0} receipts?".TranslateFormat(selectedReceipts.Count);
+
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Receipts".Translate(),
+                Message = message,
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null) return;
+
+            // Find actual Receipt objects to delete
+            var receiptsToDelete = new List<Receipt>();
+            foreach (var displayItem in selectedReceipts)
+            {
+                var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == displayItem.Id);
+                if (receipt != null)
+                {
+                    App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
+                    receiptsToDelete.Add(receipt);
+                }
+            }
+
+            if (receiptsToDelete.Count == 0) return;
+
+            // Remove all receipts
+            foreach (var receipt in receiptsToDelete)
+            {
+                companyData.Receipts.Remove(receipt);
+            }
+
+            // Record undo/redo action
+            var capturedReceipts = receiptsToDelete.ToList();
+            var action = new DelegateAction(
+                $"Delete {capturedReceipts.Count} receipt(s)",
+                () =>
+                {
+                    foreach (var r in capturedReceipts)
+                        companyData.Receipts.Add(r);
+                },
+                () =>
+                {
+                    foreach (var r in capturedReceipts)
+                        companyData.Receipts.Remove(r);
+                });
+
+            App.UndoRedoManager.RecordAction(action);
+            App.CompanyManager?.MarkAsChanged();
+
+            // Exit selection mode and reload
+            IsSelectionMode = false;
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Receipt.DeleteSelected");
+        }
     }
 
     #endregion
