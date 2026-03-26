@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Helpers;
@@ -808,6 +809,105 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task DeleteReceipt(ReceiptDisplayItem? item)
+    {
+        if (item == null) return;
+
+        try
+        {
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null) return;
+
+            var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == item.Id);
+            if (receipt == null) return;
+
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
+
+            var isLinked = !string.IsNullOrEmpty(receipt.TransactionId);
+            var message = "Are you sure you want to delete this receipt?\n\nID: {0}\nSupplier: {1}".TranslateFormat(item.Id, item.Supplier);
+            if (isLinked)
+            {
+                message += "\n\n" + "This receipt is linked to a {0} transaction ({1}). The receipt will be removed from the transaction.".TranslateFormat(
+                    receipt.TransactionType, receipt.TransactionId);
+            }
+
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Receipt".Translate(),
+                Message = message,
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+
+            App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
+
+            string? linkedTransactionId = null;
+            string? linkedTransactionType = null;
+            if (isLinked)
+            {
+                linkedTransactionId = receipt.TransactionId;
+                linkedTransactionType = receipt.TransactionType;
+
+                if (receipt.TransactionType == "Expense")
+                {
+                    var expense = companyData.Expenses.FirstOrDefault(e => e.Id == receipt.TransactionId);
+                    if (expense != null) expense.ReceiptId = null;
+                }
+                else if (receipt.TransactionType == "Revenue")
+                {
+                    var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == receipt.TransactionId);
+                    if (revenue != null) revenue.ReceiptId = null;
+                }
+            }
+
+            companyData.Receipts.Remove(receipt);
+
+            var deletedReceipt = receipt;
+            var action = new DelegateAction(
+                $"Delete receipt {deletedReceipt.Id}",
+                () =>
+                {
+                    companyData.Receipts.Add(deletedReceipt);
+                    if (linkedTransactionType == "Expense")
+                    {
+                        var expense = companyData.Expenses.FirstOrDefault(e => e.Id == linkedTransactionId);
+                        if (expense != null) expense.ReceiptId = deletedReceipt.Id;
+                    }
+                    else if (linkedTransactionType == "Revenue")
+                    {
+                        var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == linkedTransactionId);
+                        if (revenue != null) revenue.ReceiptId = deletedReceipt.Id;
+                    }
+                },
+                () =>
+                {
+                    companyData.Receipts.Remove(deletedReceipt);
+                    if (linkedTransactionType == "Expense")
+                    {
+                        var expense = companyData.Expenses.FirstOrDefault(e => e.Id == linkedTransactionId);
+                        if (expense != null) expense.ReceiptId = null;
+                    }
+                    else if (linkedTransactionType == "Revenue")
+                    {
+                        var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == linkedTransactionId);
+                        if (revenue != null) revenue.ReceiptId = null;
+                    }
+                });
+
+            App.UndoRedoManager.RecordAction(action);
+            App.CompanyManager?.MarkAsChanged();
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Receipt.DeleteReceipt");
+        }
+    }
+
+    [RelayCommand]
     private void SelectAll()
     {
         foreach (var receipt in Receipts)
@@ -825,6 +925,135 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             receipt.IsSelected = false;
         }
         UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelected()
+    {
+        var selectedReceipts = Receipts.Where(r => r.IsSelected).ToList();
+        if (selectedReceipts.Count == 0) return;
+
+        try
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog == null) return;
+
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null) return;
+
+            // Check how many are linked to transactions
+            var linkedCount = selectedReceipts.Count(r => !string.IsNullOrEmpty(r.TransactionId));
+
+            var message = selectedReceipts.Count == 1
+                ? "Are you sure you want to delete this receipt?\n\nID: {0}\nSupplier: {1}".TranslateFormat(selectedReceipts[0].Id, selectedReceipts[0].Supplier)
+                : "Are you sure you want to delete {0} receipts?".TranslateFormat(selectedReceipts.Count);
+
+            if (linkedCount > 0)
+            {
+                message += "\n\n" + "{0} of the selected receipts are linked to transactions. The receipts will be removed from those transactions.".TranslateFormat(linkedCount);
+            }
+
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Receipts".Translate(),
+                Message = message,
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+
+            // Find actual Receipt objects to delete and track transaction links for undo
+            var receiptsToDelete = new List<Receipt>();
+            var transactionLinks = new List<(string TransactionId, string TransactionType, string ReceiptId)>();
+
+            foreach (var displayItem in selectedReceipts)
+            {
+                var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == displayItem.Id);
+                if (receipt == null) continue;
+
+                App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
+                receiptsToDelete.Add(receipt);
+
+                // Unlink from transaction
+                if (!string.IsNullOrEmpty(receipt.TransactionId))
+                {
+                    transactionLinks.Add((receipt.TransactionId, receipt.TransactionType, receipt.Id));
+
+                    if (receipt.TransactionType == "Expense")
+                    {
+                        var expense = companyData.Expenses.FirstOrDefault(e => e.Id == receipt.TransactionId);
+                        if (expense != null) expense.ReceiptId = null;
+                    }
+                    else if (receipt.TransactionType == "Revenue")
+                    {
+                        var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == receipt.TransactionId);
+                        if (revenue != null) revenue.ReceiptId = null;
+                    }
+                }
+            }
+
+            if (receiptsToDelete.Count == 0) return;
+
+            // Remove all receipts
+            foreach (var receipt in receiptsToDelete)
+            {
+                companyData.Receipts.Remove(receipt);
+            }
+
+            // Record undo/redo action
+            var capturedReceipts = receiptsToDelete.ToList();
+            var capturedLinks = transactionLinks.ToList();
+            var action = new DelegateAction(
+                $"Delete {capturedReceipts.Count} receipt(s)",
+                () =>
+                {
+                    foreach (var r in capturedReceipts)
+                        companyData.Receipts.Add(r);
+                    foreach (var link in capturedLinks)
+                    {
+                        if (link.TransactionType == "Expense")
+                        {
+                            var expense = companyData.Expenses.FirstOrDefault(e => e.Id == link.TransactionId);
+                            if (expense != null) expense.ReceiptId = link.ReceiptId;
+                        }
+                        else if (link.TransactionType == "Revenue")
+                        {
+                            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == link.TransactionId);
+                            if (revenue != null) revenue.ReceiptId = link.ReceiptId;
+                        }
+                    }
+                },
+                () =>
+                {
+                    foreach (var r in capturedReceipts)
+                        companyData.Receipts.Remove(r);
+                    foreach (var link in capturedLinks)
+                    {
+                        if (link.TransactionType == "Expense")
+                        {
+                            var expense = companyData.Expenses.FirstOrDefault(e => e.Id == link.TransactionId);
+                            if (expense != null) expense.ReceiptId = null;
+                        }
+                        else if (link.TransactionType == "Revenue")
+                        {
+                            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == link.TransactionId);
+                            if (revenue != null) revenue.ReceiptId = null;
+                        }
+                    }
+                });
+
+            App.UndoRedoManager.RecordAction(action);
+            App.CompanyManager?.MarkAsChanged();
+
+            // Exit selection mode and reload
+            IsSelectionMode = false;
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Receipt.DeleteSelected");
+        }
     }
 
     #endregion

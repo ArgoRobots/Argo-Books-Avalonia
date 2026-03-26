@@ -20,7 +20,7 @@
     <Panel>
     <Grid RowDefinitions="*">
         <!-- Main Content -->
-        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+        <Grid Grid.Row="0" RowDefinitions="Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'Total Receipts'}"
@@ -41,8 +41,66 @@
                                    IconColor="Info" />
             </controls:StatCardsRow>
 
+            <!-- Selection Mode Action Bar -->
+            <Border Grid.Row="1"
+                    Classes="selection-mode"
+                    IsVisible="{Binding IsSelectionMode}"
+                    CornerRadius="8"
+                    Padding="16,10"
+                    Margin="0,0,0,12">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Left: Selection count and close -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <Button Classes="icon-button"
+                                Command="{Binding ExitSelectionModeCommand}"
+                                ToolTip.Tip="{loc:Loc 'Exit Selection'}">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="14" Height="14" />
+                        </Button>
+                        <TextBlock Text="{Binding SelectedCount, StringFormat='{}{0} selected'}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Right: Action buttons -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                        <Button Classes="secondary-button"
+                                Command="{Binding SelectAllCommand}"
+                                ToolTip.Tip="{loc:Loc 'Select All'}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <PathIcon Data="{x:Static icons:Icons.Check}"
+                                          Width="14" Height="14" />
+                                <TextBlock Text="{loc:Loc 'Select All'}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="secondary-button"
+                                Command="{Binding ExportSelectedCommand}"
+                                IsEnabled="{Binding HasSelectedReceipts}"
+                                ToolTip.Tip="{loc:Loc 'Export Selected'}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <PathIcon Data="{x:Static icons:Icons.ExportData}"
+                                          Width="14" Height="14" />
+                                <TextBlock Text="{loc:Loc 'Export'}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="danger-button"
+                                Command="{Binding DeleteSelectedCommand}"
+                                IsEnabled="{Binding HasSelectedReceipts}"
+                                ToolTip.Tip="{loc:Loc 'Delete Selected'}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                          Width="14" Height="14" />
+                                <TextBlock Text="{loc:Loc 'Delete'}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <!-- Main Content Card using ArgoTable -->
-            <table:ArgoTable Grid.Row="1"
+            <table:ArgoTable Grid.Row="2"
                                 Title="{loc:Loc 'Receipt Archive'}"
                                 ItemsSource="{Binding Receipts}"
                                 SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
@@ -138,7 +196,8 @@
 
                 <!-- Table Rows Content -->
                 <table:ArgoTable.RowsContent>
-                    <Panel>
+                    <Panel Background="Transparent"
+                           PointerPressed="OnTableBackgroundPressed">
                         <!-- Grid View -->
                         <ItemsControl ItemsSource="{Binding Receipts}"
                                       IsVisible="{Binding IsGridView}"
@@ -155,14 +214,15 @@
                                             Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1"
+                                            BorderThickness="2"
+                                            ClipToBounds="True"
                                             Cursor="Hand"
                                             Classes="receipt-card"
                                             Classes.selected="{Binding IsSelected}"
                                             PointerPressed="OnReceiptCardPressed">
                                         <Border.Styles>
                                             <Style Selector="Border.receipt-card:pointerover:not(.selected)">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource TextTertiaryBrush}" />
                                             </Style>
                                         </Border.Styles>
                                         <Grid RowDefinitions="Auto,Auto">
@@ -193,12 +253,6 @@
                                                                   Foreground="{DynamicResource ErrorBrush}"
                                                                   IsVisible="{Binding IsPdf}" />
                                                     </Panel>
-
-                                                    <!-- Checkbox (top-left) -->
-                                                    <CheckBox IsChecked="{Binding IsSelected}"
-                                                              HorizontalAlignment="Left"
-                                                              VerticalAlignment="Top"
-                                                              Margin="12,12,0,0" />
 
                                                     <!-- AI Badge (top-right) -->
                                                     <Border Background="{DynamicResource PurpleLightBrush}"
@@ -399,6 +453,13 @@
                                                             <PathIcon Data="{x:Static icons:Icons.ExportData}"
                                                                       Width="16" Height="16" />
                                                         </Button>
+                                                        <Button Classes="icon-button"
+                                                                ToolTip.Tip="{loc:Loc 'Delete'}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).DeleteReceiptCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
                                                     </StackPanel>
                                                 </table:ArgoTableCell.CellContent>
                                             </table:ArgoTableCell>
@@ -501,7 +562,6 @@
         <!-- Receipt card selected state -->
         <Style Selector="Border.receipt-card.selected">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
         </Style>
 
         <!-- Receipt row selected state -->
