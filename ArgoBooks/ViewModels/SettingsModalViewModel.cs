@@ -689,7 +689,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     public async Task UploadPortalLogoFromFileAsync(string filePath)
     {
         var portalService = App.PaymentPortalService;
-        if (portalService == null || !PortalSettings.IsConfigured) return;
+        if (portalService == null) return;
+
+        // If no API key exists, try to auto-register first
+        if (!PortalSettings.IsConfigured)
+        {
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
 
         IsUploadingPortalLogo = true;
         try
@@ -731,7 +738,14 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (!await EnsurePortalAuthenticatedAsync()) return;
 
         var portalService = App.PaymentPortalService;
-        if (portalService == null || !PortalSettings.IsConfigured) return;
+        if (portalService == null) return;
+
+        // If no API key exists, try to auto-register first
+        if (!PortalSettings.IsConfigured)
+        {
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
 
         IsUploadingPortalLogo = true;
         try
