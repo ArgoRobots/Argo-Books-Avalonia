@@ -215,6 +215,7 @@
                                             CornerRadius="8"
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="2"
+                                            ClipToBounds="True"
                                             Cursor="Hand"
                                             Classes="receipt-card"
                                             Classes.selected="{Binding IsSelected}"
