@@ -222,7 +222,7 @@
                                             PointerPressed="OnReceiptCardPressed">
                                         <Border.Styles>
                                             <Style Selector="Border.receipt-card:pointerover:not(.selected)">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource TextTertiaryBrush}" />
                                             </Style>
                                         </Border.Styles>
                                         <Grid RowDefinitions="Auto,Auto">

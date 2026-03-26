@@ -92,6 +92,8 @@ public partial class ReceiptsPage : UserControl
                 {
                     viewModel.OpenPreviewCommand.Execute(receipt);
                 }
+
+                e.Handled = true;
             }
         }
     }
@@ -109,22 +111,21 @@ public partial class ReceiptsPage : UserControl
                 if (keyMods.HasFlag(KeyModifiers.Control) || keyMods.HasFlag(KeyModifiers.Shift))
                 {
                     viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
-                    e.Handled = true;
                 }
                 else if (viewModel.IsSelectionMode)
                 {
                     viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
-                    e.Handled = true;
                 }
+
+                e.Handled = true;
             }
         }
     }
 
     private void OnTableBackgroundPressed(object? sender, PointerPressedEventArgs e)
     {
-        // Only handle clicks directly on the background panel, not on child receipt cards
-        if (e.Source is not Panel) return;
-
+        // If the click was on a receipt card or its children, the card handler will handle it
+        // This only fires for clicks on the empty background area
         if (DataContext is ReceiptsPageViewModel viewModel && viewModel.IsSelectionMode)
         {
             viewModel.ExitSelectionModeCommand.Execute(null);
