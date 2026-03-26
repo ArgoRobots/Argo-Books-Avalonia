@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Platform;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
+using ApiConfig = ArgoBooks.Core.Services.ApiConfig;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -50,6 +50,8 @@ public partial class WelcomeScreenViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _appVersion = AppInfo.Version;
+
+    public bool IsSandboxMode => ApiConfig.IsSandbox;
 
     /// <summary>
     /// Default constructor for design-time.
