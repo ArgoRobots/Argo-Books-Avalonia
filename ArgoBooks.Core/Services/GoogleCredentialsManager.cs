@@ -10,7 +10,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public static class GoogleCredentialsManager
 {
-    private static string AuthEndpoint => $"{ApiConfig.BaseUrl}/api/google/auth.php";
+    private static readonly string AuthEndpoint = $"{ApiConfig.BaseUrl}/api/google/auth.php";
 
     /// <summary>
     /// Checks if Google API access is configured (always true — free feature).

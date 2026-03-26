@@ -12,7 +12,7 @@ public class InvoiceEmailSettings
     /// <summary>
     /// The invoice email API endpoint URL.
     /// </summary>
-    public static string ApiEndpoint => $"{ApiConfig.BaseUrl}/api/invoice/send-email.php";
+    public static readonly string ApiEndpoint = $"{ApiConfig.BaseUrl}/api/invoice/send-email.php";
 
     /// <summary>
     /// Default "From" name for invoice emails.

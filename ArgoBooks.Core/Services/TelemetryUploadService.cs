@@ -10,7 +10,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class TelemetryUploadService : ITelemetryUploadService
 {
-    private static string UploadUrl => $"{ApiConfig.BaseUrl}/api/data/upload.php";
+    private static readonly string UploadUrl = $"{ApiConfig.BaseUrl}/api/data/upload.php";
     private const string UserAgentPrefix = "ArgoSalesTracker";
     private const int MaxRetries = 3;
     private const int BatchSize = 500;

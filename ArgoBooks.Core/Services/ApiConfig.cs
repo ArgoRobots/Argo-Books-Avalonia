@@ -17,15 +17,16 @@ public static class ApiConfig
     private const string SandboxHost = "https://dev.argorobots.com";
 
     /// <summary>
+    /// True when running against the sandbox/dev environment.
+    /// Computed once at startup.
+    /// </summary>
+    public static bool IsSandbox { get; } = ResolveSandbox();
+
+    /// <summary>
     /// The base URL for all API calls (e.g. "https://argorobots.com" or "https://dev.argorobots.com").
     /// Determined once at startup from the ARGO_ENV environment variable.
     /// </summary>
-    public static string BaseUrl { get; } = ResolveSandbox() ? SandboxHost : ProductionHost;
-
-    /// <summary>
-    /// True when running against the sandbox/dev environment.
-    /// </summary>
-    public static bool IsSandbox { get; } = ResolveSandbox();
+    public static string BaseUrl { get; } = IsSandbox ? SandboxHost : ProductionHost;
 
     /// <summary>
     /// Maximum parent directories to search upward from the binary for a .env file.
@@ -40,21 +41,26 @@ public static class ApiConfig
         if (string.Equals(env, SandboxValue, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        // 2. Walk upward from the binary directory to find a .env file
-        //    (covers the solution root during IDE development)
+        // 2. In debug builds only, walk upward from the binary/working directory
+        //    to find a .env file at the solution root. This extended search is
+        //    restricted to debug builds to preserve DotEnv's security constraints
+        //    in production (which limits search to 1 parent directory).
+#if DEBUG
         if (FindEnvValueUpward(AppDomain.CurrentDomain.BaseDirectory))
             return true;
 
-        // 3. Also try from the current working directory (may differ from binary dir)
         var cwd = Directory.GetCurrentDirectory();
         if (cwd != AppDomain.CurrentDomain.BaseDirectory && FindEnvValueUpward(cwd))
             return true;
+#endif
 
         return false;
     }
 
+#if DEBUG
     /// <summary>
     /// Searches upward from the given directory for a .env file containing ARGO_ENV=sandbox.
+    /// Only available in debug builds.
     /// </summary>
     private static bool FindEnvValueUpward(string startDir)
     {
@@ -97,4 +103,5 @@ public static class ApiConfig
 
         return false;
     }
+#endif
 }

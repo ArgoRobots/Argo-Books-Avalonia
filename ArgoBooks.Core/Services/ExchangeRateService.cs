@@ -12,8 +12,8 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ExchangeRateService
 {
-    private static string BaseUrl => $"{ApiConfig.BaseUrl}/api/exchange-rates.php";
-    private static string BatchUrl => $"{ApiConfig.BaseUrl}/api/exchange-rates-batch.php";
+    private static readonly string BaseUrl = $"{ApiConfig.BaseUrl}/api/exchange-rates.php";
+    private static readonly string BatchUrl = $"{ApiConfig.BaseUrl}/api/exchange-rates-batch.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
 
     private readonly ExchangeRateCache _cache;

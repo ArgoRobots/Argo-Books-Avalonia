@@ -43,7 +43,7 @@ public partial class LanguageService
     private readonly string _cacheDirectory;
 
     // Download URL template (version will be inserted)
-    private static string DownloadUrlTemplate => $"{ArgoBooks.Core.Services.ApiConfig.BaseUrl}/resources/downloads/{{0}}/languages/{{1}}.json";
+    private static readonly string DownloadUrlTemplate = $"{ArgoBooks.Core.Services.ApiConfig.BaseUrl}/resources/downloads/{{0}}/languages/{{1}}.json";
 
     /// <summary>
     /// Gets the current language name (e.g., "English", "French").
