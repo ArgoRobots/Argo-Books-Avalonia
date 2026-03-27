@@ -527,6 +527,57 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     [ObservableProperty]
+    private string _portalCompanyName = string.Empty;
+
+    private bool _isUpdatingPortalCompanyName;
+    private CancellationTokenSource? _portalCompanyNameCts;
+
+    /// <summary>
+    /// Called when PortalCompanyName changes — sends the updated name to the portal server.
+    /// </summary>
+    partial void OnPortalCompanyNameChanged(string value)
+    {
+        if (_isLoadingPortalSettings) return;
+
+        // Debounce: cancel any pending update and schedule a new one
+        _portalCompanyNameCts?.Cancel();
+        _portalCompanyNameCts = new CancellationTokenSource();
+        var token = _portalCompanyNameCts.Token;
+
+        _ = UpdatePortalCompanyNameAsync(value, token);
+    }
+
+    private async Task UpdatePortalCompanyNameAsync(string name, CancellationToken cancellationToken)
+    {
+        // Debounce: wait 600ms before sending the request
+        try { await Task.Delay(600, cancellationToken); }
+        catch (TaskCanceledException) { return; }
+
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        _isUpdatingPortalCompanyName = true;
+        try
+        {
+            await portalService.UpdateCompanyNameAsync(name.Trim(), cancellationToken);
+        }
+        catch (TaskCanceledException)
+        {
+            // Debounce cancelled, ignore
+        }
+        catch
+        {
+            // Silently fail — user can retry
+        }
+        finally
+        {
+            _isUpdatingPortalCompanyName = false;
+        }
+    }
+
+    [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
 
     partial void OnHasPortalLogoChanged(bool value) => OnPropertyChanged(nameof(PortalLogoButtonText));
@@ -1040,9 +1091,15 @@ public partial class SettingsModalViewModel : ViewModelBase
                 PaymentProviderService.NotifyProvidersChanged();
             }
 
-            // Load portal logo from server
+            // Load portal company name and logo from server
             if (status.Success)
             {
+                if (!string.IsNullOrEmpty(status.Company?.Name))
+                {
+                    _isLoadingPortalSettings = true;
+                    PortalCompanyName = status.Company.Name;
+                    _isLoadingPortalSettings = false;
+                }
                 await LoadPortalLogoFromUrlAsync(status.Company?.LogoUrl);
             }
         }

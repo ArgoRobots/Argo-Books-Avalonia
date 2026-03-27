@@ -737,6 +737,21 @@
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
+                                <!-- Portal Company Name -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{loc:Loc 'Company Name'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'The name displayed on your customer-facing payment portal.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
+                                             Watermark="{loc:Loc 'Enter company name'}"
+                                             MaxLength="255"
+                                             Padding="10,8" />
+                                </StackPanel>
+
                                 <!-- Portal Logo -->
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="{loc:Loc 'Portal Logo'}"

@@ -612,6 +612,58 @@ public class PaymentPortalService : IDisposable
 
     #endregion
 
+    #region Company Name
+
+    /// <summary>
+    /// Updates the company display name on the payment portal.
+    /// </summary>
+    public async Task<PortalCompanyNameResponse> UpdateCompanyNameAsync(
+        string companyName,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalCompanyNameResponse { Success = false, Message = "Portal not configured." };
+        }
+
+        try
+        {
+            var json = JsonSerializer.Serialize(new { companyName }, SerializeOptions);
+            using var request = CreateRequest(HttpMethod.Put, "/company-name");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalCompanyNameResponse>(content) ?? new PortalCompanyNameResponse
+                {
+                    Success = true,
+                    CompanyName = companyName,
+                    Message = "Company name updated."
+                };
+            }
+
+            var errorResponse = DeserializeResponse<PortalCompanyNameResponse>(content);
+            return errorResponse ?? new PortalCompanyNameResponse
+            {
+                Success = false,
+                Message = $"Update failed with status {(int)response.StatusCode}"
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalCompanyNameResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new PortalCompanyNameResponse { Success = false, Message = $"Network error: {ex.Message}" };
+        }
+    }
+
+    #endregion
+
     #region Company Logo
 
     /// <summary>
