@@ -1016,10 +1016,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             var status = await portalService.CheckStatusAsync();
             if (status.Success && status.ConnectedProviders != null)
             {
-                // Only treat a provider as connected if the server also returns a valid email,
-                // which confirms the OAuth flow actually completed (not just initiated).
-                StripeConnected = status.ConnectedProviders.StripeConnected
-                    && !string.IsNullOrEmpty(status.ConnectedProviders.StripeEmail);
+                // Stripe Express accounts may not have an email, so just check the connected flag.
+                // PayPal and Square require a valid email to confirm OAuth completed.
+                StripeConnected = status.ConnectedProviders.StripeConnected;
                 StripeEmail = status.ConnectedProviders.StripeEmail;
                 PaypalConnected = status.ConnectedProviders.PaypalConnected
                     && !string.IsNullOrEmpty(status.ConnectedProviders.PaypalEmail);
@@ -1088,7 +1087,12 @@ public partial class SettingsModalViewModel : ViewModelBase
                         _ => null
                     };
 
-                    if (connected && !string.IsNullOrEmpty(email))
+                    // Require connected flag. For Stripe, the account ID alone
+                    // is sufficient (Express accounts may not have an email).
+                    // For PayPal and Square, also require a valid email.
+                    var needsEmail = provider != "stripe";
+
+                    if (connected && (!needsEmail || !string.IsNullOrEmpty(email)))
                     {
                         // Dispatch property updates to the UI thread to ensure bindings refresh
                         Dispatcher.UIThread.Post(() =>
