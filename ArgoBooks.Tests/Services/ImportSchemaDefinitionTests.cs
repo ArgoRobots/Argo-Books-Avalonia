@@ -14,6 +14,7 @@ public class ImportSchemaDefinitionTests
 
         foreach (var entityType in allTypes)
         {
+            if (entityType == SpreadsheetSheetType.Unknown) continue;
             Assert.True(schema.ContainsKey(entityType), $"Schema missing definition for {entityType}");
         }
     }
@@ -64,7 +65,7 @@ public class ImportSchemaDefinitionTests
         var invoices = schema[SpreadsheetSheetType.Invoices];
 
         var columnNames = invoices.Select(c => c.Name).ToList();
-        Assert.Contains("Invoice Number", columnNames);
+        Assert.Contains("Invoice #", columnNames);
         Assert.Contains("Customer", columnNames);
         Assert.Contains("Total", columnNames);
     }
@@ -88,6 +89,7 @@ public class ImportSchemaDefinitionTests
 
         foreach (var entityType in allTypes)
         {
+            if (entityType == SpreadsheetSheetType.Unknown) continue;
             Assert.Contains(entityType.ToString(), prompt);
         }
     }

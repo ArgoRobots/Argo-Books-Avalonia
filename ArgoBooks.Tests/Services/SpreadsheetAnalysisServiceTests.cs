@@ -69,13 +69,12 @@ public class SpreadsheetAnalysisServiceTests
             warnings = new[] { "Some columns could not be mapped" }
         });
 
-        // Use reflection to access ParseAnalysisResponse since it's private
-        var service = new SpreadsheetAnalysisService(new MockOpenAiService());
+        // ParseAnalysisResponse is internal static
         var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         Assert.NotNull(method);
-        var result = method!.Invoke(service, [json, "test.xlsx"]) as SpreadsheetAnalysisResult;
+        var result = method!.Invoke(null, [json]) as SpreadsheetAnalysisResult;
 
         Assert.NotNull(result);
         Assert.Single(result!.Sheets);
@@ -111,11 +110,10 @@ public class SpreadsheetAnalysisServiceTests
 
         var wrappedJson = $"```json\n{innerJson}\n```";
 
-        var service = new SpreadsheetAnalysisService(new MockOpenAiService());
         var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-        var result = method!.Invoke(service, [wrappedJson, "test.xlsx"]) as SpreadsheetAnalysisResult;
+        var result = method!.Invoke(null, [wrappedJson]) as SpreadsheetAnalysisResult;
 
         Assert.NotNull(result);
         Assert.Single(result!.Sheets);
@@ -125,11 +123,10 @@ public class SpreadsheetAnalysisServiceTests
     [Fact]
     public void ParseAnalysisResponse_MalformedJson_ReturnsNull()
     {
-        var service = new SpreadsheetAnalysisService(new MockOpenAiService());
         var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-        var result = method!.Invoke(service, ["not valid json at all", "test.xlsx"]) as SpreadsheetAnalysisResult;
+        var result = method!.Invoke(null, ["not valid json at all"]) as SpreadsheetAnalysisResult;
 
         Assert.Null(result);
     }
