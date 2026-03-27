@@ -529,8 +529,9 @@ public partial class InvoiceHtmlRenderer
     }
 
     /// <summary>
-    /// Calculate the payment processing fee (2.90% + $0.30 CAD equivalent).
-    /// Matches the server-side calculate_invoice_processing_fee() in config/pricing.php.
+    /// Calculate the payment processing fee (2.90% + $0.30 flat).
+    /// The $0.30 is applied in the invoice's currency here; the server-side
+    /// calculate_invoice_processing_fee() in config/pricing.php converts from CAD.
     /// </summary>
     private static decimal CalculateProcessingFee(decimal amount)
     {

@@ -978,6 +978,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     partial void OnPassProcessingFeeChanged(bool oldValue, bool newValue)
     {
         RecordChange("Toggle processing fee", v => PassProcessingFee = v, oldValue, newValue);
+        UpdatePreview();
     }
 
     partial void OnLogoBase64Changed(string? oldValue, string? newValue)

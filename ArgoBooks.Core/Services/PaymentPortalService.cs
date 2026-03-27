@@ -334,7 +334,7 @@ public class PaymentPortalService
             var paymentId = $"PAY-{DateTime.Now:yyyy}-{nextId:D5}";
 
             // The invoice amount is the total charged minus any processing fee
-            var invoiceAmount = portalPayment.Amount - portalPayment.ProcessingFee;
+            var invoiceAmount = Math.Max(0m, portalPayment.Amount - portalPayment.ProcessingFee);
 
             // Convert non-USD payment amount to USD using the invoice's conversion ratio
             decimal amountUSD;
