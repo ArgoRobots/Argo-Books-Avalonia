@@ -758,7 +758,7 @@
                                                     Background="{DynamicResource SurfaceBrush}"
                                                     IsVisible="{Binding HasPortalLogo}">
                                                 <Image Source="{Binding PortalLogoSource}"
-                                                       Stretch="UniformToFill" />
+                                                       Stretch="Uniform" />
                                             </Border>
                                             <!-- No logo placeholder -->
                                             <TextBlock Grid.Column="0"

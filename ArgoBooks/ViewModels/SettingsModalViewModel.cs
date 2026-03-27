@@ -689,7 +689,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     public async Task UploadPortalLogoFromFileAsync(string filePath)
     {
         var portalService = App.PaymentPortalService;
-        if (portalService == null || !PortalSettings.IsConfigured) return;
+        if (portalService == null) return;
+
+        // If no API key exists, try to auto-register first
+        if (!PortalSettings.IsConfigured)
+        {
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
 
         IsUploadingPortalLogo = true;
         try
@@ -731,7 +738,14 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (!await EnsurePortalAuthenticatedAsync()) return;
 
         var portalService = App.PaymentPortalService;
-        if (portalService == null || !PortalSettings.IsConfigured) return;
+        if (portalService == null) return;
+
+        // If no API key exists, try to auto-register first
+        if (!PortalSettings.IsConfigured)
+        {
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
 
         IsUploadingPortalLogo = true;
         try
@@ -765,7 +779,12 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        HasPortalLogo = true;
+        // If we already have the image loaded (e.g., from a recent upload), keep it
+        if (PortalLogoSource != null)
+        {
+            HasPortalLogo = true;
+            return;
+        }
 
         try
         {
@@ -773,11 +792,13 @@ public partial class SettingsModalViewModel : ViewModelBase
             var imageBytes = await httpClient.GetByteArrayAsync(logoUrl);
             using var stream = new MemoryStream(imageBytes);
             PortalLogoSource = new Avalonia.Media.Imaging.Bitmap(stream);
+            HasPortalLogo = true;
         }
         catch
         {
-            // Failed to load image — still show HasPortalLogo since URL exists
+            // Download failed — don't show an empty gray box
             PortalLogoSource = null;
+            HasPortalLogo = false;
         }
     }
 
@@ -995,10 +1016,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             var status = await portalService.CheckStatusAsync();
             if (status.Success && status.ConnectedProviders != null)
             {
-                // Only treat a provider as connected if the server also returns a valid email,
-                // which confirms the OAuth flow actually completed (not just initiated).
-                StripeConnected = status.ConnectedProviders.StripeConnected
-                    && !string.IsNullOrEmpty(status.ConnectedProviders.StripeEmail);
+                // Stripe Express accounts may not have an email, so just check the connected flag.
+                // PayPal and Square require a valid email to confirm OAuth completed.
+                StripeConnected = status.ConnectedProviders.StripeConnected;
                 StripeEmail = status.ConnectedProviders.StripeEmail;
                 PaypalConnected = status.ConnectedProviders.PaypalConnected
                     && !string.IsNullOrEmpty(status.ConnectedProviders.PaypalEmail);
@@ -1067,7 +1087,12 @@ public partial class SettingsModalViewModel : ViewModelBase
                         _ => null
                     };
 
-                    if (connected && !string.IsNullOrEmpty(email))
+                    // Require connected flag. For Stripe, the account ID alone
+                    // is sufficient (Express accounts may not have an email).
+                    // For PayPal and Square, also require a valid email.
+                    var needsEmail = provider != "stripe";
+
+                    if (connected && (!needsEmail || !string.IsNullOrEmpty(email)))
                     {
                         // Dispatch property updates to the UI thread to ensure bindings refresh
                         Dispatcher.UIThread.Post(() =>
