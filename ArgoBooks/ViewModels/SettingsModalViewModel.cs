@@ -1039,6 +1039,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         _isLoadingPortalSettings = true;
+        PortalCompanyName = string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
             ? "Manual"
@@ -1046,6 +1047,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         _previousSyncInterval = PortalSyncInterval;
         _isLoadingPortalSettings = false;
 
+        // Reset all portal UI state so stale data from a previous company doesn't leak
+        PortalLogoSource = null;
+        HasPortalLogo = false;
         StripeConnected = settings.ConnectedAccounts.StripeConnected;
         StripeEmail = settings.ConnectedAccounts.StripeEmail;
         PaypalConnected = settings.ConnectedAccounts.PaypalConnected;
