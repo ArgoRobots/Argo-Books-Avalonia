@@ -141,8 +141,20 @@
                                 <controls:CountryInput x:Name="CountryInput" SelectedCountryName="{Binding Country, Mode=TwoWay}" />
                             </StackPanel>
 
-                            <!-- City -->
+                            <!-- Province / State -->
                             <StackPanel Grid.Row="4" Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Province / State'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Classes="form-input"
+                                         Text="{Binding ProvinceState, Mode=TwoWay}"
+                                         Watermark="{loc:Loc 'Enter province or state'}"
+                                         MaxLength="100" />
+                            </StackPanel>
+
+                            <!-- City -->
+                            <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
                                 <TextBlock Text="{loc:Loc City}"
                                            FontSize="13"
                                            FontWeight="Medium"
@@ -154,7 +166,7 @@
                             </StackPanel>
 
                             <!-- Address -->
-                            <StackPanel Grid.Row="6" Grid.Column="0" Spacing="6">
+                            <StackPanel Grid.Row="6" Grid.Column="2" Spacing="6">
                                 <TextBlock Text="{loc:Loc Address}"
                                            FontSize="13"
                                            FontWeight="Medium"
@@ -163,18 +175,6 @@
                                          Text="{Binding Address, Mode=TwoWay}"
                                          Watermark="{loc:Loc 'Enter address'}"
                                          MaxLength="200" />
-                            </StackPanel>
-
-                            <!-- Province / State -->
-                            <StackPanel Grid.Row="6" Grid.Column="2" Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Province / State'}"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Classes="form-input"
-                                         Text="{Binding ProvinceState, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter province or state'}"
-                                         MaxLength="100" />
                             </StackPanel>
 
                             <!-- Company Logo -->
