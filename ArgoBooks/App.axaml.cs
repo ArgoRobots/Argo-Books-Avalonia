@@ -1513,11 +1513,16 @@ public class App : Application
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
             // Migrate: if a legacy .env API key exists but the company has no persisted key,
-            // adopt the .env key as this company's key (one-time migration).
+            // adopt the .env key — but only if this company actually has portal activity
+            // (connected providers or a portal URL), so we don't assign the key to the wrong company.
             var portalSettings = CompanyManager.CompanyData?.Settings.PaymentPortal;
             if (portalSettings != null
                 && string.IsNullOrEmpty(portalSettings.PersistedApiKey)
-                && DotEnv.HasValue(PortalSettings.ApiKeyEnvVar))
+                && DotEnv.HasValue(PortalSettings.ApiKeyEnvVar)
+                && (portalSettings.ConnectedAccounts.StripeConnected
+                    || portalSettings.ConnectedAccounts.PaypalConnected
+                    || portalSettings.ConnectedAccounts.SquareConnected
+                    || !string.IsNullOrEmpty(portalSettings.PortalUrl)))
             {
                 portalSettings.PersistedApiKey = DotEnv.Get(PortalSettings.ApiKeyEnvVar);
             }
