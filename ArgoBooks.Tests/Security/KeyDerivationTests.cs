@@ -13,7 +13,7 @@ public class KeyDerivationTests
     [Fact]
     public void Iterations_HasExpectedValue()
     {
-        Assert.Equal(100_000, KeyDerivation.Iterations);
+        Assert.Equal(600_000, KeyDerivation.Iterations);
     }
 
     [Fact]

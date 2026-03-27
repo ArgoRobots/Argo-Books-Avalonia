@@ -1,3 +1,4 @@
+using System.Net;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -88,7 +89,7 @@ public class ExchangeRateServiceTests
     [Fact]
     public async Task ConvertAsync_UnavailableRate_ReturnsOriginalAmount()
     {
-        var httpClient = new HttpClient();
+        var httpClient = new HttpClient(new FailingHttpHandler());
         var service = new ExchangeRateService(new MockPlatformService(), httpClient);
 
         var result = await service.ConvertAsync(100m, "USD", "EUR", DateTime.Today);
@@ -99,6 +100,12 @@ public class ExchangeRateServiceTests
     #endregion
 
     #region Mock Classes
+
+    private class FailingHttpHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
+    }
 
     private class MockPlatformService : IPlatformService
     {
