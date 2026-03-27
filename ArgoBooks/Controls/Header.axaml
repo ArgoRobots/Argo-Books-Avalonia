@@ -204,14 +204,6 @@
                               Width="20" Height="20" />
                 </Button>
 
-                <!-- User Menu (temporarily commented out)
-                <Button Classes="header-icon"
-                        Command="{Binding OpenUserMenuCommand}"
-                        ToolTip.Tip="{Binding UserDisplayName}">
-                    <PathIcon Data="{x:Static icons:Icons.Employees}"
-                              Width="22" Height="22" />
-                </Button>
-                -->
             </StackPanel>
         </Panel>
     </Border>

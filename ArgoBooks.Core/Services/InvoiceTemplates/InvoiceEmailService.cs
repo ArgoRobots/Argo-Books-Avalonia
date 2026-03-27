@@ -12,6 +12,17 @@ namespace ArgoBooks.Core.Services.InvoiceTemplates;
 /// </summary>
 public class InvoiceEmailService : IDisposable
 {
+    private static readonly JsonSerializerOptions SerializeOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
+
+    private static readonly JsonSerializerOptions DeserializeOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly HttpClient _httpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(30)
@@ -138,11 +149,7 @@ public class InvoiceEmailService : IDisposable
         InvoiceEmailSettings emailSettings,
         CancellationToken cancellationToken = default)
     {
-        var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
-        });
+        var json = JsonSerializer.Serialize(request, SerializeOptions);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InvoiceEmailSettings.ApiEndpoint);
         httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -157,10 +164,7 @@ public class InvoiceEmailService : IDisposable
         {
             try
             {
-                var result = JsonSerializer.Deserialize<InvoiceEmailResponse>(responseContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var result = JsonSerializer.Deserialize<InvoiceEmailResponse>(responseContent, DeserializeOptions);
 
                 return result ?? new InvoiceEmailResponse
                 {
@@ -184,10 +188,7 @@ public class InvoiceEmailService : IDisposable
         // Try to parse error response
         try
         {
-            var errorResult = JsonSerializer.Deserialize<InvoiceEmailResponse>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var errorResult = JsonSerializer.Deserialize<InvoiceEmailResponse>(responseContent, DeserializeOptions);
 
             return errorResult ?? new InvoiceEmailResponse
             {

@@ -13,6 +13,8 @@ namespace ArgoBooks.Modals;
 /// </summary>
 public partial class InvoiceTemplateDesignerModal : UserControl
 {
+    private InvoiceTemplateDesignerViewModel? _previousViewModel;
+
     public InvoiceTemplateDesignerModal()
     {
         InitializeComponent();
@@ -22,6 +24,11 @@ public partial class InvoiceTemplateDesignerModal : UserControl
     {
         base.OnDataContextChanged(e);
 
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.CapturePreviewFunc = null;
+        }
+
         if (DataContext is InvoiceTemplateDesignerViewModel vm)
         {
             var previewControl = this.FindControl<InvoicePreviewControl>("PreviewControl");
@@ -29,6 +36,11 @@ public partial class InvoiceTemplateDesignerModal : UserControl
             {
                 vm.CapturePreviewFunc = previewControl.CaptureScreenshotBase64Async;
             }
+            _previousViewModel = vm;
+        }
+        else
+        {
+            _previousViewModel = null;
         }
     }
 
@@ -40,7 +52,22 @@ public partial class InvoiceTemplateDesignerModal : UserControl
         if (sender is Border { DataContext: InvoiceTemplate template }
             && DataContext is InvoiceTemplateDesignerViewModel vm)
         {
-            vm.EditTemplateCommand.Execute(template);
+            if (vm.EditTemplateCommand.CanExecute(template))
+                vm.EditTemplateCommand.Execute(template);
+        }
+    }
+
+    private void OnTemplateCardKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter && e.Key != Key.Space)
+            return;
+
+        if (sender is Border { DataContext: InvoiceTemplate template }
+            && DataContext is InvoiceTemplateDesignerViewModel vm)
+        {
+            if (vm.EditTemplateCommand.CanExecute(template))
+                vm.EditTemplateCommand.Execute(template);
+            e.Handled = true;
         }
     }
 }

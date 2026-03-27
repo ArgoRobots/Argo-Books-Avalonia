@@ -990,8 +990,8 @@ public class SpreadsheetImportService
                 {
                     if (!string.IsNullOrEmpty(recurring.CustomerId))
                         EnsureCustomerExists(data, recurring.CustomerId);
-                    if (string.IsNullOrEmpty(recurring.Status))
-                        recurring.Status = "Active";
+                    if (recurring.Status == default)
+                        recurring.Status = RecurringInvoiceStatus.Active;
                     var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == recurring.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.RecurringInvoices.Remove(existing);
@@ -3246,10 +3246,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             recurring.Description = GetString(row, headers, "Description");
             recurring.Frequency = ParseEnum(GetString(row, headers, "Frequency"), Frequency.Monthly);
             recurring.NextInvoiceDate = GetDateTime(row, headers, "Next Date");
-            recurring.Status = GetString(row, headers, "Status");
+            recurring.Status = ParseEnum(GetString(row, headers, "Status"), RecurringInvoiceStatus.Active);
 
-            if (string.IsNullOrEmpty(recurring.Status))
-                recurring.Status = "Active";
+            if (recurring.Status == default)
+                recurring.Status = RecurringInvoiceStatus.Active;
 
             if (existing == null)
                 data.RecurringInvoices.Add(recurring);

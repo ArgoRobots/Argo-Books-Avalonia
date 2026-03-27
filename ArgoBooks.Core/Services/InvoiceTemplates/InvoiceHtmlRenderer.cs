@@ -143,7 +143,7 @@ public partial class InvoiceHtmlRenderer
         // Bill to
         sb.AppendLine("BILL TO:");
         sb.AppendLine(customer?.Name ?? "Unknown Customer");
-        var customerAddress = customer?.Address.ToString();
+        var customerAddress = customer?.Address?.ToString();
         if (!string.IsNullOrWhiteSpace(customerAddress))
             sb.AppendLine(customerAddress);
         if (!string.IsNullOrWhiteSpace(customer?.Email))
@@ -221,7 +221,7 @@ public partial class InvoiceHtmlRenderer
         string currencySymbol,
         bool lockAspectRatio)
     {
-        var isOverdue = invoice.DueDate.Date < DateTime.Today &&
+        var isOverdue = invoice.DueDate.Date < DateTime.UtcNow.Date &&
                         invoice.Balance > 0;
 
         var context = new Dictionary<string, object?>

@@ -92,9 +92,6 @@ public partial class Header : UserControl
     public static readonly StyledProperty<ICommand?> OpenSettingsCommandProperty =
         AvaloniaProperty.Register<Header, ICommand?>(nameof(OpenSettingsCommand));
 
-    public static readonly StyledProperty<ICommand?> OpenUserMenuCommandProperty =
-        AvaloniaProperty.Register<Header, ICommand?>(nameof(OpenUserMenuCommand));
-
     #endregion
 
     #region Properties
@@ -335,13 +332,6 @@ public partial class Header : UserControl
 
     /// <summary>
     /// Gets or sets the open user menu command.
-    /// </summary>
-    public ICommand? OpenUserMenuCommand
-    {
-        get => GetValue(OpenUserMenuCommandProperty);
-        set => SetValue(OpenUserMenuCommandProperty, value);
-    }
-
     #endregion
 
     private TextBlock? _asterisk;
