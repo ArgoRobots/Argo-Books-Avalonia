@@ -55,18 +55,31 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="16" Margin="24,16">
-                        <!-- Company Name (full width) -->
-                        <StackPanel Spacing="6">
-                            <TextBlock FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                            </TextBlock>
-                            <TextBox Classes="form-input"
-                                     Text="{Binding CompanyName, Mode=TwoWay}"
-                                     Watermark="{loc:Loc 'Enter company name'}"
-                                     MaxLength="100" />
-                        </StackPanel>
+                        <!-- Company Name and Default Currency (side by side) -->
+                        <Grid ColumnDefinitions="*,16,*">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                </TextBlock>
+                                <TextBox Classes="form-input"
+                                         Text="{Binding CompanyName, Mode=TwoWay}"
+                                         Watermark="{loc:Loc 'Enter company name'}"
+                                         MaxLength="100" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Default Currency'}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding Currencies}"
+                                         SelectedItem="{Binding SelectedCurrency}"
+                                         Classes="form-combobox"
+                                         PlaceholderText="{loc:Loc 'Select currency'}"
+                                         HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Grid>
 
                         <!-- Two column layout for fields -->
                         <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto,16,Auto,16,Auto">
@@ -164,21 +177,8 @@
                                          MaxLength="100" />
                             </StackPanel>
 
-                            <!-- Default Currency -->
-                            <StackPanel Grid.Row="8" Grid.Column="0" Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Default Currency'}"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding Currencies}"
-                                         SelectedItem="{Binding SelectedCurrency}"
-                                         Classes="form-combobox"
-                                         PlaceholderText="{loc:Loc 'Select currency'}"
-                                         HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
                             <!-- Company Logo -->
-                            <StackPanel Grid.Row="8" Grid.Column="2" Spacing="6">
+                            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Company Logo'}"
                                            FontSize="13"
                                            FontWeight="Medium"
