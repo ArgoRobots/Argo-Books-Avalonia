@@ -378,15 +378,6 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the user menu.
-    /// </summary>
-    [RelayCommand]
-    private void OpenUserMenu()
-    {
-        OpenUserMenuRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
     /// Toggles the sidebar collapsed state.
     /// </summary>
     [RelayCommand]
@@ -437,11 +428,6 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when notifications panel should be opened.
     /// </summary>
     public event EventHandler? OpenNotificationsRequested;
-
-    /// <summary>
-    /// Event raised when user menu panel should be opened.
-    /// </summary>
-    public event EventHandler? OpenUserMenuRequested;
 
     /// <summary>
     /// Event raised when file menu should be opened.
