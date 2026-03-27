@@ -89,9 +89,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     private bool _hasFetchedPlans;
 
-    public ObservableCollection<string> FreePlanFeatures { get; } = new(DefaultFreeFeatures);
+    public ObservableCollection<string> FreePlanFeatures { get; } = new(TranslateDefaults(DefaultFreeFeatures));
 
-    public ObservableCollection<string> PremiumPlanFeatures { get; } = new(DefaultPremiumFeatures);
+    public ObservableCollection<string> PremiumPlanFeatures { get; } = new(TranslateDefaults(DefaultPremiumFeatures));
 
     private static readonly string[] DefaultFreeFeatures =
     [
@@ -113,6 +113,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
         "Predictive analytics",
         "Priority support"
     ];
+
+    private static IEnumerable<string> TranslateDefaults(string[] features)
+        => features.Select(f => f.Translate());
 
     #endregion
 
@@ -166,6 +169,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private void Open()
     {
         IsOpen = true;
+
+        // Retry fetching plans if the previous attempt failed (e.g. was offline at startup)
+        if (!_hasFetchedPlans || IsOffline)
+        {
+            _ = FetchPlansAsync();
+        }
     }
 
     [RelayCommand]
@@ -442,14 +451,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 {
                     FreePlanFeatures.Clear();
                     foreach (var feature in apiResponse.Plans.Free.Features)
-                        FreePlanFeatures.Add(feature.DisplayText);
+                        FreePlanFeatures.Add(feature.DisplayText.Translate());
                 }
 
                 if (apiResponse.Plans.Premium?.Features is { Count: > 0 })
                 {
                     PremiumPlanFeatures.Clear();
                     foreach (var feature in apiResponse.Plans.Premium.Features)
-                        PremiumPlanFeatures.Add(feature.DisplayText);
+                        PremiumPlanFeatures.Add(feature.DisplayText.Translate());
                 }
             }
 
@@ -457,27 +466,22 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            var isConnectivityError = ex is HttpRequestException
+            // HttpRequestException with a status code means the server responded (not a connectivity issue)
+            var isConnectivityError = ex is HttpRequestException { StatusCode: null }
                 || (ex is TaskCanceledException tce && (tce.InnerException is TimeoutException || tce.CancellationToken != default));
 
             if (isConnectivityError)
             {
                 IsOffline = true;
+                // Don't set _hasFetchedPlans so Open() will retry when the modal is opened
             }
             else
             {
-                // Non-connectivity error (e.g. bad JSON) — show plans with defaults, don't mark offline
+                // Server error or bad JSON — show plans with defaults, don't mark offline
                 IsOffline = false;
+                _hasFetchedPlans = true;
                 App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch plans from API");
             }
-
-            if (!_hasFetchedPlans && isConnectivityError)
-            {
-                // First fetch failed due to connectivity — keep offline state
-                // so the modal shows the offline message
-            }
-
-            _hasFetchedPlans = true;
         }
     }
 
