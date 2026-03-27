@@ -212,7 +212,7 @@ public class InvoiceTemplate
     {
         return new InvoiceTemplate
         {
-            Id = Id,
+            Id = $"custom-{Guid.NewGuid():N}",
             Name = Name,
             BaseTemplate = BaseTemplate,
             IsDefault = IsDefault,
@@ -242,7 +242,7 @@ public class InvoiceTemplate
             ShowPaymentInstructions = ShowPaymentInstructions,
             ShowDueDateProminent = ShowDueDateProminent,
             PassProcessingFee = PassProcessingFee,
-            CreatedAt = CreatedAt,
+            CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             ThumbnailBase64 = ThumbnailBase64
         };

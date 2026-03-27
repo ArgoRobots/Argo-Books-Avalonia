@@ -64,6 +64,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private readonly UndoRedoManager _undoRedoManager = new();
     private bool _suppressUndoRecording;
 
+    // Cached services
+    private readonly InvoiceEmailService _emailService = new();
+
     public UndoRedoButtonGroupViewModel UndoRedoViewModel { get; }
 
     public bool HasUnsavedChanges => !_undoRedoManager.IsAtSavedState;
@@ -402,13 +405,13 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 () =>
                 {
                     companyData.InvoiceTemplates.Add(deletedTemplate);
-                    companyData.MarkAsModified();
+                    App.CompanyManager?.MarkAsChanged();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
                     companyData.InvoiceTemplates.Remove(deletedTemplate);
-                    companyData.MarkAsModified();
+                    App.CompanyManager?.MarkAsChanged();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 }));
 
@@ -459,7 +462,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         _undoRedoManager.Clear();
         IsEditMode = true;
         IsTemplateListMode = false;
-        ModalTitle = $"Edit Template: {template.Name}".Translate();
+        ModalTitle = "Edit Template: {0}".TranslateFormat(template.Name);
         UpdatePreview();
         IsOpen = true;
         IsPreviewVisible = true;
@@ -1008,8 +1011,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         var template = BuildTemplateFromForm();
         var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
-        var emailService = new InvoiceEmailService();
-        PreviewHtml = emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);
+        PreviewHtml = _emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);
     }
 
     private InvoiceTemplate BuildTemplateFromForm()

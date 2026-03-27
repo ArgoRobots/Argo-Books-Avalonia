@@ -58,17 +58,17 @@ public class LineItem
     /// Calculated subtotal (quantity * unitPrice - discount).
     /// </summary>
     [JsonPropertyName("subtotal")]
-    public decimal Subtotal => (Quantity * UnitPrice) - Discount;
+    public decimal Subtotal => Math.Round(Math.Max(0, (Quantity * UnitPrice) - Discount), 2);
 
     /// <summary>
     /// Calculated tax amount.
     /// </summary>
     [JsonPropertyName("taxAmount")]
-    public decimal TaxAmount => Subtotal * TaxRate;
+    public decimal TaxAmount => Math.Round(Subtotal * TaxRate, 2);
 
     /// <summary>
     /// Calculated total amount including tax.
     /// </summary>
     [JsonPropertyName("amount")]
-    public decimal Amount => Subtotal + TaxAmount;
+    public decimal Amount => Math.Round(Subtotal + TaxAmount, 2);
 }

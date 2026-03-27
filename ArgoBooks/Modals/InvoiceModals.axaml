@@ -672,7 +672,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= HISTORY MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}"
+                               ClosingCommand="{Binding CloseHistoryModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"

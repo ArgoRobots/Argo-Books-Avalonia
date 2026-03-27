@@ -675,7 +675,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var rentalLineItem = new LineItemDisplayModel
         {
             SelectedProduct = matchedProduct,
-            Description = $"Rental: {itemName} ({rental.RateType} @ ${rental.RateAmount:N2} x {rental.Quantity})",
+            Description = $"Rental: {itemName} ({rental.RateType} @ {CurrencyService.Format(rental.RateAmount)} x {rental.Quantity})",
             Quantity = 1,
             UnitPrice = totalCost,
             RentalRecordId = rental.Id
@@ -884,7 +884,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             if (App.CompanyManager != null)
             {
                 try { await App.CompanyManager.SaveCompanyAsync(); }
-                catch { /* non-fatal */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Save failed: {ex.Message}"); }
             }
         }
         catch (Exception ex)
@@ -1000,7 +1000,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             historyEntries.Add(new InvoiceHistoryDisplayItem
             {
                 ActionType = "Payment",
-                Description = $"Payment of ${payment.Amount:N2} received via {payment.PaymentMethod}",
+                Description = $"Payment of {CurrencyService.Format(payment.Amount)} received via {payment.PaymentMethod}",
                 DateTime = payment.Date
             });
         }
@@ -1242,7 +1242,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Prevent sending invoices with a total of $0 or less
         if (Total <= 0)
         {
-            await ShowSendErrorAsync("Cannot send an invoice for $0 or less.".Translate());
+            await ShowSendErrorAsync("Cannot send an invoice for {0}0 or less.".TranslateFormat(CurrencyService.CurrentSymbol));
             return;
         }
 
@@ -1485,7 +1485,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             App.SuppressNextSavedFeedback();
             try { await App.CompanyManager.SaveCompanyAsync(); }
-            catch { /* non-fatal */ }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Save failed: {ex.Message}"); }
         }
 
         // Show success animation instead of closing immediately
@@ -1604,14 +1604,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        // Generate invoice ID
-        var nextNumber = (companyData.Invoices.Count) + 1;
-        var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
+        // Generate invoice ID using IdGenerator
+        var idGenerator = new IdGenerator(companyData);
+        var invoiceId = idGenerator.NextInvoiceId();
+        var invoiceNumber = idGenerator.NextInvoiceNumber();
 
         var invoice = new Invoice
         {
             Id = invoiceId,
-            InvoiceNumber = invoiceId,
+            InvoiceNumber = invoiceNumber,
             CustomerId = SelectedCustomer!.Id!,
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
@@ -1678,7 +1679,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             App.SuppressNextSavedFeedback();
             try { await App.CompanyManager.SaveCompanyAsync(); }
-            catch { /* non-fatal */ }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Save failed: {ex.Message}"); }
         }
     }
 
@@ -1837,7 +1838,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 // Auto-created from the invoice → remove entirely
                 companyData.Revenues.Remove(revenue);
-                companyData.IdCounters.Revenue = Math.Max(0, companyData.IdCounters.Revenue - 1);
             }
         }
     }

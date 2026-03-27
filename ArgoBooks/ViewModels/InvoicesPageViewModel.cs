@@ -561,9 +561,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            var status = Enum.Parse<InvoiceStatus>(FilterStatus);
-            filtered = filtered.Where(i => i.Status == status ||
-                (FilterStatus == "Overdue" && i.IsOverdue)).ToList();
+            if (Enum.TryParse<InvoiceStatus>(FilterStatus, out var status))
+            {
+                filtered = filtered.Where(i => i.Status == status ||
+                    (FilterStatus == "Overdue" && i.IsOverdue)).ToList();
+            }
         }
 
         // Apply customer filter
@@ -573,11 +575,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }
 
         // Apply amount filter
-        if (decimal.TryParse(FilterAmountMin, out var minAmount))
+        if (decimal.TryParse(FilterAmountMin, System.Globalization.CultureInfo.InvariantCulture, out var minAmount))
         {
             filtered = filtered.Where(i => i.Total >= minAmount).ToList();
         }
-        if (decimal.TryParse(FilterAmountMax, out var maxAmount))
+        if (decimal.TryParse(FilterAmountMax, System.Globalization.CultureInfo.InvariantCulture, out var maxAmount))
         {
             filtered = filtered.Where(i => i.Total <= maxAmount).ToList();
         }
@@ -637,7 +639,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }).ToList();
 
         // Apply sorting (only if not searching, since search has its own relevance sorting)
-        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
+        if (string.IsNullOrWhiteSpace(SearchQuery))
         {
             displayItems = displayItems.ApplySort(
                 SortColumn,

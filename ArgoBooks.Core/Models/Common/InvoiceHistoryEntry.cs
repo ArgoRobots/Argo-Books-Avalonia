@@ -16,7 +16,7 @@ public class InvoiceHistoryEntry
     /// When the action occurred.
     /// </summary>
     [JsonPropertyName("timestamp")]
-    public DateTime Timestamp { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Additional details about the action.

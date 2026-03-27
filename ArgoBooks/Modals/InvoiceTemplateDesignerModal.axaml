@@ -135,7 +135,9 @@
                                                         BorderThickness="1"
                                                         Classes="template-card"
                                                         Cursor="Hand"
-                                                        PointerPressed="OnTemplateCardPressed">
+                                                        Focusable="True"
+                                                        PointerPressed="OnTemplateCardPressed"
+                                                        KeyDown="OnTemplateCardKeyDown">
                                                     <Border.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Header="{loc:Loc Edit}"
@@ -418,13 +420,13 @@
 
                                                 <!-- Text Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="Text Color" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Text Color'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding TextColor, Mode=TwoWay}" />
                                                 </Grid>
 
                                                 <!-- Background Color -->
                                                 <Grid ColumnDefinitions="*,150">
-                                                    <TextBlock Grid.Column="0" Text="Background" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc 'Background'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding BackgroundColor, Mode=TwoWay}" />
                                                 </Grid>
                                             </StackPanel>

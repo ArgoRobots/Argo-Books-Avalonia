@@ -71,7 +71,7 @@ public class RecurringInvoice
     /// Status of the recurring invoice.
     /// </summary>
     [JsonPropertyName("status")]
-    public string Status { get; set; } = "Active";
+    public RecurringInvoiceStatus Status { get; set; } = RecurringInvoiceStatus.Active;
 
     /// <summary>
     /// Additional notes.
@@ -95,6 +95,6 @@ public class RecurringInvoice
     /// Whether the recurring schedule is active.
     /// </summary>
     [JsonIgnore]
-    public bool IsActive => Status == "Active" &&
-                           (EndDate == null || DateTime.Today <= EndDate.Value.Date);
+    public bool IsActive => Status == RecurringInvoiceStatus.Active &&
+                           (EndDate == null || DateTime.UtcNow.Date <= EndDate.Value.Date);
 }
