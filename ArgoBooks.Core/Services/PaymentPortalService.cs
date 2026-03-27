@@ -390,9 +390,14 @@ public class PaymentPortalService : IDisposable
                 .Sum(p => p.EffectiveAmountUSD);
 
             // Also track original-currency paid for display
+            // Normalize currency comparison: treat null/empty as "USD" and compare case-insensitively
+            var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency;
             var totalPaidOriginal = companyData.Payments
                 .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0
-                    && p.OriginalCurrency == invoice.OriginalCurrency)
+                    && string.Equals(
+                        string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
+                        invoiceCurrency,
+                        StringComparison.OrdinalIgnoreCase))
                 .Sum(p => p.Amount);
 
             invoice.AmountPaid = totalPaidOriginal;
