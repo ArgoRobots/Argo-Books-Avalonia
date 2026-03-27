@@ -1093,6 +1093,11 @@ public class App : Application
                     // Validate license online in the background
                     _ = ValidateLicenseOnStartupAsync();
                 }
+                else
+                {
+                    // Fetch plan details from API so the upgrade modal is ready
+                    _ = _appShellViewModel.UpgradeModalViewModel.FetchPlansAsync();
+                }
             }
 
             // Check for updates in the background (desktop only)
