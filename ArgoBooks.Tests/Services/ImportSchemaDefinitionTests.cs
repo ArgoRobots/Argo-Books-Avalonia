@@ -66,7 +66,7 @@ public class ImportSchemaDefinitionTests
 
         var columnNames = invoices.Select(c => c.Name).ToList();
         Assert.Contains("Invoice #", columnNames);
-        Assert.Contains("Customer", columnNames);
+        Assert.Contains("Customer ID", columnNames);
         Assert.Contains("Total", columnNames);
     }
 
