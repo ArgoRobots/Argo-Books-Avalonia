@@ -529,7 +529,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _portalCompanyName = string.Empty;
 
-    private bool _isUpdatingPortalCompanyName;
     private CancellationTokenSource? _portalCompanyNameCts;
 
     /// <summary>
@@ -558,7 +557,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         var portalService = App.PaymentPortalService;
         if (portalService == null || !PortalSettings.IsConfigured) return;
 
-        _isUpdatingPortalCompanyName = true;
         try
         {
             await portalService.UpdateCompanyNameAsync(name.Trim(), cancellationToken);
@@ -570,10 +568,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch
         {
             // Silently fail — user can retry
-        }
-        finally
-        {
-            _isUpdatingPortalCompanyName = false;
         }
     }
 
