@@ -1512,6 +1512,19 @@ public class App : Application
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
+            // Migrate: if a legacy .env API key exists but the company has no persisted key,
+            // adopt the .env key as this company's key (one-time migration).
+            var portalSettings = CompanyManager.CompanyData?.Settings.PaymentPortal;
+            if (portalSettings != null
+                && string.IsNullOrEmpty(portalSettings.PersistedApiKey)
+                && DotEnv.HasValue(PortalSettings.ApiKeyEnvVar))
+            {
+                portalSettings.PersistedApiKey = DotEnv.Get(PortalSettings.ApiKeyEnvVar);
+            }
+
+            // Load this company's portal API key into the process-level cache
+            PortalSettings.ActivateApiKey(portalSettings);
+
             // Auto-sync online payments from the portal on company open
             await AutoSyncPortalPaymentsAsync();
 
@@ -1529,6 +1542,9 @@ public class App : Application
 
         CompanyManager.CompanyClosed += async (_, _) =>
         {
+            // Clear the portal API key so a new company starts fresh
+            PortalSettings.DeactivateApiKey();
+
             _portalSyncTimer?.Dispose();
             _portalSyncTimer = null;
 

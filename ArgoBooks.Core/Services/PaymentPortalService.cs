@@ -579,7 +579,7 @@ public class PaymentPortalService : IDisposable
                 var result = DeserializeResponse<PortalRegisterResponse>(content);
                 if (result != null && !string.IsNullOrEmpty(result.ApiKey))
                 {
-                    // Persist the API key to .env
+                    // Activate the key for immediate use
                     DotEnv.Set(PortalSettings.ApiKeyEnvVar, result.ApiKey);
                     return result;
                 }

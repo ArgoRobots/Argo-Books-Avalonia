@@ -925,6 +925,12 @@ public partial class SettingsModalViewModel : ViewModelBase
             var result = await portalService.RegisterCompanyAsync(licenseKey, deviceId, companyName, ownerEmail);
             if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
             {
+                // Persist the API key in the per-company .argo file
+                var portalSettings = companyData?.Settings.PaymentPortal;
+                if (portalSettings != null)
+                {
+                    portalSettings.PersistedApiKey = result.ApiKey;
+                }
                 return true;
             }
 
