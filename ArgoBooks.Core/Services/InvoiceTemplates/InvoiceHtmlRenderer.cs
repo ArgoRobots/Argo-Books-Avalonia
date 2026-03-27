@@ -294,6 +294,16 @@ public partial class InvoiceHtmlRenderer
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
 
+            // Processing fee (calculated at render time, shown on portal invoices)
+            ["ShowProcessingFee"] = template.PassProcessingFee && invoice.Balance > 0,
+            ["ProcessingFeeLabel"] = "Processing fee",
+            ["ProcessingFeeAmount"] = template.PassProcessingFee && invoice.Balance > 0
+                ? $"{currencySymbol}{CalculateProcessingFee(invoice.Balance):N2}"
+                : "",
+            ["AmountToPay"] = template.PassProcessingFee && invoice.Balance > 0
+                ? $"{currencySymbol}{invoice.Balance + CalculateProcessingFee(invoice.Balance):N2}"
+                : "",
+
             // Notes
             ["Notes"] = invoice.Notes,
 
@@ -501,6 +511,18 @@ public partial class InvoiceHtmlRenderer
     {
         var label = !string.IsNullOrWhiteSpace(invoice.CustomFeeLabel) ? invoice.CustomFeeLabel : "Fee";
         return invoice.CustomFeeIsPercent ? $"{label} ({invoice.CustomFeeAmount}%)" : label;
+    }
+
+    /// <summary>
+    /// Calculate the payment processing fee (2.90% + $0.30 CAD equivalent).
+    /// Matches the server-side calculate_invoice_processing_fee() in config/pricing.php.
+    /// </summary>
+    private static decimal CalculateProcessingFee(decimal amount)
+    {
+        if (amount <= 0) return 0m;
+        const decimal percent = 2.90m;
+        const decimal fixedFee = 0.30m;
+        return Math.Round(amount * percent / 100m + fixedFee, 2);
     }
 
     /// <summary>

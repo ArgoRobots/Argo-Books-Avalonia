@@ -164,6 +164,19 @@ public static class InvoiceHtmlTemplates
                                     <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: {{HeaderColor}}; text-align: right;">{{Balance}}</td>
                                 </tr>
                                 {{/AmountPaid}}
+                                {{#ShowProcessingFee}}
+                                <tr>
+                                    <td colspan="2" style="border-top: 1px dashed #d1d5db; padding-top: 8px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; font-size: 13px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
+                                    <td style="padding: 6px 0; font-size: 13px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 16px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
+                                    <td style="padding: 8px 0; font-size: 16px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                </tr>
+                                {{/ShowProcessingFee}}
                             </table>
                         </td>
                     </tr>
@@ -396,6 +409,19 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 6px 0; font-size: 17px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{Balance}}</td>
                                             </tr>
                                             {{/AmountPaid}}
+                                            {{#ShowProcessingFee}}
+                                            <tr>
+                                                <td colspan="2" style="border-top: 1px dashed #d1d5db; padding-top: 6px;"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 12px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
+                                                <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                            </tr>
+                                            {{/ShowProcessingFee}}
                                         </table>
                                     </td>
                                 </tr>
@@ -576,6 +602,16 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">TOTAL</td>
                                                 <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;">{{Total}}</td>
                                             </tr>
+                                            {{#ShowProcessingFee}}
+                                            <tr>
+                                                <td style="padding: 8px 15px; font-size: 12px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
+                                                <td style="padding: 8px 15px; font-size: 12px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                            </tr>
+                                            <tr style="background-color: {{SecondaryColor}};">
+                                                <td style="padding: 10px 15px; font-size: 14px; font-weight: bold; color: {{TextColor}};">Amount to Pay</td>
+                                                <td style="padding: 10px 15px; font-size: 14px; font-weight: bold; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                            </tr>
+                                            {{/ShowProcessingFee}}
                                         </table>
                                     </td>
                                 </tr>
@@ -775,6 +811,19 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{HeaderColor}}; text-align: right;">{{Balance}}</td>
                                             </tr>
                                             {{/AmountPaid}}
+                                            {{#ShowProcessingFee}}
+                                            <tr>
+                                                <td colspan="2" style="border-top: 1px dashed #d1d5db; padding-top: 6px;"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 12px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
+                                                <td style="padding: 6px 0; font-size: 12px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                            </tr>
+                                            {{/ShowProcessingFee}}
                                         </table>
                                     </td>
                                 </tr>
@@ -1002,6 +1051,16 @@ public static class InvoiceHtmlTemplates
                         <span style="color: {{HeaderColor}};">{{Balance}}</span>
                     </div>
                     {{/AmountPaid}}
+                    {{#ShowProcessingFee}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; color: #9ca3af; border-top: 1px dashed #d1d5db; margin-top: 6px; padding-top: 8px;">
+                        <span>{{ProcessingFeeLabel}}</span>
+                        <span>{{ProcessingFeeAmount}}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 16px; font-weight: 700; color: {{TextColor}};">
+                        <span>Amount to Pay</span>
+                        <span style="color: {{HeaderColor}};">{{AmountToPay}}</span>
+                    </div>
+                    {{/ShowProcessingFee}}
                 </div>
             </div>
 
