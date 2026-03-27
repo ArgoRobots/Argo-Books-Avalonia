@@ -166,9 +166,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private void Open()
     {
         IsOpen = true;
-
-        // Fetch plans from API in the background when modal opens
-        _ = FetchPlansAsync();
     }
 
     [RelayCommand]
@@ -416,8 +413,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
     /// Fetches plan details and pricing from the website API.
     /// Updates features lists and pricing from the server so the app stays in sync.
     /// Sets IsOffline if the API is unreachable.
+    /// Called once on app startup for free-tier users.
     /// </summary>
-    private async Task FetchPlansAsync()
+    public async Task FetchPlansAsync()
     {
         try
         {
