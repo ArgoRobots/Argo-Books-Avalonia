@@ -296,7 +296,7 @@ public partial class InvoiceHtmlRenderer
 
             // Processing fee (calculated at render time, shown on portal invoices)
             ["ShowProcessingFee"] = template.PassProcessingFee && invoice.Balance > 0,
-            ["ProcessingFeeLabel"] = "Processing fee",
+            ["ProcessingFeeLabel"] = BuildProcessingFeeLabel(companySettings),
             ["ProcessingFeeAmount"] = template.PassProcessingFee && invoice.Balance > 0
                 ? $"{currencySymbol}{CalculateProcessingFee(invoice.Balance):N2}"
                 : "",
@@ -511,6 +511,21 @@ public partial class InvoiceHtmlRenderer
     {
         var label = !string.IsNullOrWhiteSpace(invoice.CustomFeeLabel) ? invoice.CustomFeeLabel : "Fee";
         return invoice.CustomFeeIsPercent ? $"{label} ({invoice.CustomFeeAmount}%)" : label;
+    }
+
+    private static string BuildProcessingFeeLabel(CompanySettings companySettings)
+    {
+        var providers = new List<string>();
+        var accounts = companySettings.PaymentPortal?.ConnectedAccounts;
+        if (accounts != null)
+        {
+            if (accounts.StripeConnected) providers.Add("Stripe");
+            if (accounts.PaypalConnected) providers.Add("PayPal");
+            if (accounts.SquareConnected) providers.Add("Square");
+        }
+
+        var providerName = providers.Count > 0 ? string.Join(" / ", providers) : "Payment";
+        return $"{providerName} processing fee";
     }
 
     /// <summary>

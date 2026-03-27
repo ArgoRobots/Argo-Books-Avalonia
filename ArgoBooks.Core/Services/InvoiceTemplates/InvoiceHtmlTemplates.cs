@@ -149,8 +149,8 @@ public static class InvoiceHtmlTemplates
                                 {{/ShowDiscount}}
                                 {{#ShowProcessingFee}}
                                 <tr>
-                                    <td style="padding: 8px 0; font-size: 14px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{ProcessingFeeAmount}}</td>
                                 </tr>
                                 {{/ShowProcessingFee}}
                                 <tr>
@@ -395,8 +395,8 @@ public static class InvoiceHtmlTemplates
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{ProcessingFeeAmount}}</td>
                                             </tr>
                                             {{/ShowProcessingFee}}
                                             <tr>
@@ -602,8 +602,8 @@ public static class InvoiceHtmlTemplates
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
                                             <tr>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: #9ca3af; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeLabel}}</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: #9ca3af; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeLabel}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeAmount}}</td>
                                             </tr>
                                             {{/ShowProcessingFee}}
                                             {{#ShowProcessingFee}}
@@ -802,8 +802,8 @@ public static class InvoiceHtmlTemplates
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #9ca3af;">{{ProcessingFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #9ca3af; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{ProcessingFeeAmount}}</td>
                                             </tr>
                                             {{/ShowProcessingFee}}
                                             <tr>
@@ -1045,7 +1045,7 @@ public static class InvoiceHtmlTemplates
                     </div>
                     {{/ShowDiscount}}
                     {{#ShowProcessingFee}}
-                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: #9ca3af;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>{{ProcessingFeeLabel}}</span>
                         <span>{{ProcessingFeeAmount}}</span>
                     </div>
