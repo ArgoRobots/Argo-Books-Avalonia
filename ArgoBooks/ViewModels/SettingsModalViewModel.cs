@@ -537,9 +537,40 @@ public partial class SettingsModalViewModel : ViewModelBase
     partial void OnPortalCompanyNameChanged(string value)
     {
         if (_isLoadingPortalSettings) return;
+        if (!HasPassword || _isPortalAuthenticated)
+        {
+            ScheduleCompanyNameUpdate(value);
+            return;
+        }
 
-        // Debounce: cancel any pending update and schedule a new one
-        _portalCompanyNameCts?.Cancel();
+        // Revert and request auth
+        _ = RevertAndAuthPortalCompanyNameAsync(value);
+    }
+
+    private async Task RevertAndAuthPortalCompanyNameAsync(string attemptedValue)
+    {
+        _isLoadingPortalSettings = true;
+        PortalCompanyName = string.Empty;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalCompanyName = attemptedValue;
+            _isLoadingPortalSettings = false;
+            ScheduleCompanyNameUpdate(attemptedValue);
+        }
+    }
+
+    private void ScheduleCompanyNameUpdate(string value)
+    {
+        // Debounce: cancel and dispose any pending update, then schedule a new one
+        var previousCts = _portalCompanyNameCts;
+        if (previousCts != null)
+        {
+            previousCts.Cancel();
+            previousCts.Dispose();
+        }
         _portalCompanyNameCts = new CancellationTokenSource();
         var token = _portalCompanyNameCts.Token;
 
@@ -1037,6 +1068,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
+
+        // Cancel any pending company name update from a previous company
+        var previousCts = _portalCompanyNameCts;
+        if (previousCts != null)
+        {
+            previousCts.Cancel();
+            previousCts.Dispose();
+            _portalCompanyNameCts = null;
+        }
 
         _isLoadingPortalSettings = true;
         PortalCompanyName = string.Empty;

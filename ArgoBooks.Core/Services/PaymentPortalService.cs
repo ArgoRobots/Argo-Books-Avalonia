@@ -579,8 +579,8 @@ public class PaymentPortalService : IDisposable
                 var result = DeserializeResponse<PortalRegisterResponse>(content);
                 if (result != null && !string.IsNullOrEmpty(result.ApiKey))
                 {
-                    // Activate the key for immediate use
-                    DotEnv.Set(PortalSettings.ApiKeyEnvVar, result.ApiKey);
+                    // Activate the key in-memory for immediate use (persisted to .argo by caller)
+                    DotEnv.SetInMemory(PortalSettings.ApiKeyEnvVar, result.ApiKey);
                     return result;
                 }
 

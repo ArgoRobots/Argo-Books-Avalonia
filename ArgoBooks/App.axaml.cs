@@ -1515,6 +1515,7 @@ public class App : Application
             // Migrate: if a legacy .env API key exists but the company has no persisted key,
             // adopt the .env key — but only if this company actually has portal activity
             // (connected providers or a portal URL), so we don't assign the key to the wrong company.
+            // Best-effort: persists to .argo on next save; re-runs harmlessly if the save doesn't happen.
             var portalSettings = CompanyManager.CompanyData?.Settings.PaymentPortal;
             if (portalSettings != null
                 && string.IsNullOrEmpty(portalSettings.PersistedApiKey)

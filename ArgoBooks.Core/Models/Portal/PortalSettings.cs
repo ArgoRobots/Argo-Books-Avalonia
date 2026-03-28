@@ -46,7 +46,7 @@ public class PortalSettings
     {
         var key = settings?.PersistedApiKey;
         if (!string.IsNullOrEmpty(key))
-            DotEnv.Set(ApiKeyEnvVar, key);
+            DotEnv.SetInMemory(ApiKeyEnvVar, key);
         else
             DotEnv.Unset(ApiKeyEnvVar);
     }
