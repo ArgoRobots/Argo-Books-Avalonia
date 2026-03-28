@@ -20,16 +20,45 @@ public class PortalSettings
     public const string ApiKeyEnvVar = "PAYMENT_PORTAL_API_KEY";
 
     /// <summary>
-    /// Gets the portal API key from .env file.
+    /// Gets the active portal API key (from DotEnv, which is loaded per-company).
     /// </summary>
     [JsonIgnore]
     public static string ApiKey => DotEnv.Get(ApiKeyEnvVar);
 
     /// <summary>
-    /// Whether the portal API is configured (API key is present in .env).
+    /// Whether the portal API is configured (API key is present).
     /// </summary>
     [JsonIgnore]
     public static bool IsConfigured => DotEnv.HasValue(ApiKeyEnvVar);
+
+    /// <summary>
+    /// Per-company API key persisted in the .argo file.
+    /// On company open this is loaded into DotEnv so that the static ApiKey property works.
+    /// </summary>
+    [JsonPropertyName("apiKey")]
+    public string? PersistedApiKey { get; set; }
+
+    /// <summary>
+    /// Loads this company's API key into the process-level DotEnv cache.
+    /// Call on company open.
+    /// </summary>
+    public static void ActivateApiKey(PortalSettings? settings)
+    {
+        var key = settings?.PersistedApiKey;
+        if (!string.IsNullOrEmpty(key))
+            DotEnv.SetInMemory(ApiKeyEnvVar, key);
+        else
+            DotEnv.Unset(ApiKeyEnvVar);
+    }
+
+    /// <summary>
+    /// Clears the API key from the process-level DotEnv cache.
+    /// Call on company close.
+    /// </summary>
+    public static void DeactivateApiKey()
+    {
+        DotEnv.Unset(ApiKeyEnvVar);
+    }
 
     /// <summary>
     /// Auto-sync interval in minutes. 0 = manual sync only.

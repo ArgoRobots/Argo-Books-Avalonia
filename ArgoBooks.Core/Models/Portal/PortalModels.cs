@@ -387,3 +387,18 @@ public class PortalLogoResponse
     [JsonPropertyName("timestamp")]
     public string? Timestamp { get; set; }
 }
+
+/// <summary>
+/// Response from updating the company name on the portal.
+/// </summary>
+public class PortalCompanyNameResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("companyName")]
+    public string? CompanyName { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+}

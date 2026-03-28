@@ -527,6 +527,82 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     [ObservableProperty]
+    private string _portalCompanyName = string.Empty;
+
+    private CancellationTokenSource? _portalCompanyNameCts;
+
+    /// <summary>
+    /// Called when PortalCompanyName changes — sends the updated name to the portal server.
+    /// </summary>
+    partial void OnPortalCompanyNameChanged(string value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (!HasPassword || _isPortalAuthenticated)
+        {
+            ScheduleCompanyNameUpdate(value);
+            return;
+        }
+
+        // Revert and request auth
+        _ = RevertAndAuthPortalCompanyNameAsync(value);
+    }
+
+    private async Task RevertAndAuthPortalCompanyNameAsync(string attemptedValue)
+    {
+        _isLoadingPortalSettings = true;
+        PortalCompanyName = string.Empty;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalCompanyName = attemptedValue;
+            _isLoadingPortalSettings = false;
+            ScheduleCompanyNameUpdate(attemptedValue);
+        }
+    }
+
+    private void ScheduleCompanyNameUpdate(string value)
+    {
+        // Debounce: cancel and dispose any pending update, then schedule a new one
+        var previousCts = _portalCompanyNameCts;
+        if (previousCts != null)
+        {
+            previousCts.Cancel();
+            previousCts.Dispose();
+        }
+        _portalCompanyNameCts = new CancellationTokenSource();
+        var token = _portalCompanyNameCts.Token;
+
+        _ = UpdatePortalCompanyNameAsync(value, token);
+    }
+
+    private async Task UpdatePortalCompanyNameAsync(string name, CancellationToken cancellationToken)
+    {
+        // Debounce: wait 600ms before sending the request
+        try { await Task.Delay(600, cancellationToken); }
+        catch (TaskCanceledException) { return; }
+
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        try
+        {
+            await portalService.UpdateCompanyNameAsync(name.Trim(), cancellationToken);
+        }
+        catch (TaskCanceledException)
+        {
+            // Debounce cancelled, ignore
+        }
+        catch
+        {
+            // Silently fail — user can retry
+        }
+    }
+
+    [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
 
     partial void OnHasPortalLogoChanged(bool value) => OnPropertyChanged(nameof(PortalLogoButtonText));
@@ -880,6 +956,12 @@ public partial class SettingsModalViewModel : ViewModelBase
             var result = await portalService.RegisterCompanyAsync(licenseKey, deviceId, companyName, ownerEmail);
             if (result.Success && !string.IsNullOrEmpty(result.ApiKey))
             {
+                // Persist the API key in the per-company .argo file
+                var portalSettings = companyData?.Settings.PaymentPortal;
+                if (portalSettings != null)
+                {
+                    portalSettings.PersistedApiKey = result.ApiKey;
+                }
                 return true;
             }
 
@@ -987,7 +1069,17 @@ public partial class SettingsModalViewModel : ViewModelBase
         var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
+        // Cancel any pending company name update from a previous company
+        var previousCts = _portalCompanyNameCts;
+        if (previousCts != null)
+        {
+            previousCts.Cancel();
+            previousCts.Dispose();
+            _portalCompanyNameCts = null;
+        }
+
         _isLoadingPortalSettings = true;
+        PortalCompanyName = string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
             ? "Manual"
@@ -995,6 +1087,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         _previousSyncInterval = PortalSyncInterval;
         _isLoadingPortalSettings = false;
 
+        // Reset all portal UI state so stale data from a previous company doesn't leak
+        PortalLogoSource = null;
+        HasPortalLogo = false;
         StripeConnected = settings.ConnectedAccounts.StripeConnected;
         StripeEmail = settings.ConnectedAccounts.StripeEmail;
         PaypalConnected = settings.ConnectedAccounts.PaypalConnected;
@@ -1040,9 +1135,15 @@ public partial class SettingsModalViewModel : ViewModelBase
                 PaymentProviderService.NotifyProvidersChanged();
             }
 
-            // Load portal logo from server
+            // Load portal company name and logo from server
             if (status.Success)
             {
+                if (!string.IsNullOrEmpty(status.Company?.Name))
+                {
+                    _isLoadingPortalSettings = true;
+                    PortalCompanyName = status.Company.Name;
+                    _isLoadingPortalSettings = false;
+                }
                 await LoadPortalLogoFromUrlAsync(status.Company?.LogoUrl);
             }
         }

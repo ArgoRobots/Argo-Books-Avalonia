@@ -1512,6 +1512,25 @@ public class App : Application
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
+            // Migrate: if a legacy .env API key exists but the company has no persisted key,
+            // adopt the .env key — but only if this company actually has portal activity
+            // (connected providers or a portal URL), so we don't assign the key to the wrong company.
+            // Best-effort: persists to .argo on next save; re-runs harmlessly if the save doesn't happen.
+            var portalSettings = CompanyManager.CompanyData?.Settings.PaymentPortal;
+            if (portalSettings != null
+                && string.IsNullOrEmpty(portalSettings.PersistedApiKey)
+                && DotEnv.HasValue(PortalSettings.ApiKeyEnvVar)
+                && (portalSettings.ConnectedAccounts.StripeConnected
+                    || portalSettings.ConnectedAccounts.PaypalConnected
+                    || portalSettings.ConnectedAccounts.SquareConnected
+                    || !string.IsNullOrEmpty(portalSettings.PortalUrl)))
+            {
+                portalSettings.PersistedApiKey = DotEnv.Get(PortalSettings.ApiKeyEnvVar);
+            }
+
+            // Load this company's portal API key into the process-level cache
+            PortalSettings.ActivateApiKey(portalSettings);
+
             // Auto-sync online payments from the portal on company open
             await AutoSyncPortalPaymentsAsync();
 
@@ -1529,6 +1548,9 @@ public class App : Application
 
         CompanyManager.CompanyClosed += async (_, _) =>
         {
+            // Clear the portal API key so a new company starts fresh
+            PortalSettings.DeactivateApiKey();
+
             _portalSyncTimer?.Dispose();
             _portalSyncTimer = null;
 

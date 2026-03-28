@@ -139,6 +139,19 @@ public static class DotEnv
     }
 
     /// <summary>
+    /// Sets an environment variable in-memory only (no disk write).
+    /// Use for transient/per-session values that should not persist across app restarts.
+    /// </summary>
+    /// <param name="key">The variable name.</param>
+    /// <param name="value">The value to set.</param>
+    public static void SetInMemory(string key, string value)
+    {
+        if (!_isLoaded) Load();
+        EnvVars[key] = value;
+        Environment.SetEnvironmentVariable(key, value);
+    }
+
+    /// <summary>
     /// Sets an environment variable in the .env file. Creates the file if it doesn't exist.
     /// Updates the in-memory cache and process environment variable immediately.
     /// </summary>
