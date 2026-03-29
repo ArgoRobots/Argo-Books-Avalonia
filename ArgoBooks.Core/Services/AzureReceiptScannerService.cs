@@ -29,7 +29,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => _licenseService?.GetLicenseKey() != null;
+    public bool IsConfigured => _licenseService?.GetLicenseKey() != null || _licenseService?.GetDeviceId() != null;
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
@@ -40,9 +40,10 @@ public class AzureReceiptScannerService : IReceiptScannerService
         try
         {
             var licenseKey = _licenseService?.GetLicenseKey();
-            if (string.IsNullOrEmpty(licenseKey))
+            var deviceId = _licenseService?.GetDeviceId();
+            if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
             {
-                return ReceiptScanResult.Failed("No active license key found. Please activate your premium subscription.");
+                return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
 
             // Validate file size (4MB limit)
@@ -67,8 +68,15 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
             using var request = new HttpRequestMessage(HttpMethod.Post, ScanEndpoint);
             request.Content = content;
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", licenseKey);
-            request.Headers.Add("X-License-Key", licenseKey);
+            if (!string.IsNullOrEmpty(licenseKey))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", licenseKey);
+                request.Headers.Add("X-License-Key", licenseKey);
+            }
+            if (!string.IsNullOrEmpty(deviceId))
+            {
+                request.Headers.Add("X-Device-Id", deviceId);
+            }
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
 
