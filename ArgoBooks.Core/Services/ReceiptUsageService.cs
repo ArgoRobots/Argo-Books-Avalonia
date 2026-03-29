@@ -44,13 +44,14 @@ public class ReceiptUsageService : IReceiptUsageService
     /// <inheritdoc />
     public async Task<UsageCheckResult> CheckUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new UsageCheckResult
             {
                 CanScan = false,
-                ErrorMessage = "No license key found. Please activate your license.",
+                ErrorMessage = "No license key or device ID found.",
                 ScanCount = 0,
                 MonthlyLimit = 0,
                 Remaining = 0
@@ -164,13 +165,14 @@ public class ReceiptUsageService : IReceiptUsageService
     /// <inheritdoc />
     public async Task<UsageIncrementResult> IncrementUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new UsageIncrementResult
             {
                 Success = false,
-                ErrorMessage = "No license key found"
+                ErrorMessage = "No license key or device ID found"
             };
         }
 
@@ -273,9 +275,11 @@ public class ReceiptUsageService : IReceiptUsageService
 
     private async Task<UsageApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)
     {
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
         var requestBody = new
         {
             license_key = licenseKey,
+            device_id = deviceId,
             action
         };
 

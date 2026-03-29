@@ -81,7 +81,7 @@ public static class UpgradePromptHelper
         {
             Title = "Scan Limit Reached".Translate(),
             Message = string.Format(
-                "You've used all {0} of your {1} receipt scans this month. Your limit resets on {2}.\n\nUpgrade to Premium for 500 scans per month, unlimited invoices, and predictive analytics.".Translate(),
+                "You've used all {0} of your {1} receipt scans this month. Your limit resets on {2}.\n\nUpgrade to Premium for 500 scans per month, unlimited invoices, predictive analytics, and more.".Translate(),
                 scanCount, monthlyLimit, resetDate),
             PrimaryButtonText = "Upgrade Now".Translate(),
             CancelButtonText = "Maybe Later".Translate(),

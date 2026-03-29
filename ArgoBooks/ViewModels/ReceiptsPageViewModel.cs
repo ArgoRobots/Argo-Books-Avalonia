@@ -345,14 +345,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(filePath)) return;
 
-        if (!HasPremium)
-        {
-            await App.ShowWarningMessageBoxAsync(
-                Loc.Tr("Premium Feature"),
-                Loc.Tr("AI Receipt Scanning requires a Premium subscription."));
-            return;
-        }
-
         await App.ReceiptsModalsViewModel!.OpenScanModalAsync(filePath);
     }
 

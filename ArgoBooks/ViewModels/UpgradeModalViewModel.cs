@@ -100,7 +100,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
         "Real-time analytics",
         "Receipt management",
         "5 invoices / month",
-        "AI spreadsheet import (100/month)"
+        "AI spreadsheet import (100/month)",
+        "AI receipt scanning (5/month)"
     ];
 
     private static readonly string[] DefaultPremiumFeatures =
