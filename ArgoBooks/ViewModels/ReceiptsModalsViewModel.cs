@@ -507,7 +507,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 {
                     ScansUsed = incrementResult.ScanCount;
                     ScansRemaining = incrementResult.Remaining;
-                    IsNearLimit = incrementResult.Remaining <= 50 && incrementResult.Remaining > 0;
+                    IsNearLimit = incrementResult.MonthlyLimit > 0 && incrementResult.Remaining > 0 && incrementResult.Remaining <= incrementResult.MonthlyLimit / 10;
                 }
             }
 
@@ -533,7 +533,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ScansRemaining = usageCheck.Remaining;
         UsageTier = usageCheck.Tier;
         ResetsAt = usageCheck.ResetsAt;
-        IsNearLimit = usageCheck.Remaining <= 50 && usageCheck.Remaining > 0;
+        IsNearLimit = usageCheck.MonthlyLimit > 0 && usageCheck.Remaining > 0 && usageCheck.Remaining <= usageCheck.MonthlyLimit / 10;
     }
 
     private async void PopulateScanResults(ReceiptScanResult result)
