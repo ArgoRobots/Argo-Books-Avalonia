@@ -325,12 +325,35 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _supplierErrorMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _hasValidationMessage;
+
     partial void OnSelectedSupplierChanged(SupplierOption? value)
     {
         if (value != null)
         {
             HasSupplierError = false;
             SupplierErrorMessage = string.Empty;
+            ClearValidationMessageIfNoErrors();
+        }
+    }
+
+    partial void OnHasTotalErrorChanged(bool value)
+    {
+        if (!value) ClearValidationMessageIfNoErrors();
+    }
+
+    partial void OnHasLineItemsErrorChanged(bool value)
+    {
+        if (!value) ClearValidationMessageIfNoErrors();
+    }
+
+    private void ClearValidationMessageIfNoErrors()
+    {
+        if (!HasTotalError && !HasSupplierError && !HasLineItemsError &&
+            LineItems.All(li => !li.HasProductError))
+        {
+            HasValidationMessage = false;
         }
     }
 
@@ -371,6 +394,26 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     #endregion
 
     #region AI Scan Commands
+
+    /// <summary>
+    /// Checks whether the user can scan a receipt. If the limit is reached,
+    /// shows the upgrade prompt and returns false.
+    /// Call this before opening a file picker.
+    /// </summary>
+    public async Task<bool> CanScanOrShowLimitAsync()
+    {
+        _usageService ??= CreateUsageService();
+        var usageCheck = await _usageService.CheckUsageAsync();
+        if (!usageCheck.CanScan)
+        {
+            await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                usageCheck.ScanCount,
+                usageCheck.MonthlyLimit,
+                usageCheck.ResetsAt);
+            return false;
+        }
+        return true;
+    }
 
     /// <summary>
     /// Opens the scan review modal and starts scanning.
@@ -507,7 +550,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 {
                     ScansUsed = incrementResult.ScanCount;
                     ScansRemaining = incrementResult.Remaining;
-                    IsNearLimit = incrementResult.Remaining <= 50 && incrementResult.Remaining > 0;
+                    IsNearLimit = incrementResult.MonthlyLimit > 0 && incrementResult.Remaining > 0 && incrementResult.Remaining <= incrementResult.MonthlyLimit / 10;
                 }
             }
 
@@ -533,7 +576,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ScansRemaining = usageCheck.Remaining;
         UsageTier = usageCheck.Tier;
         ResetsAt = usageCheck.ResetsAt;
-        IsNearLimit = usageCheck.Remaining <= 50 && usageCheck.Remaining > 0;
+        IsNearLimit = usageCheck.MonthlyLimit > 0 && usageCheck.Remaining > 0 && usageCheck.Remaining <= usageCheck.MonthlyLimit / 10;
     }
 
     private async void PopulateScanResults(ReceiptScanResult result)
@@ -584,6 +627,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 // Try to match to existing product
                 TryMatchProduct(lineItem, item.Description);
 
+                lineItem.OnProductErrorCleared = ClearValidationMessageIfNoErrors;
                 LineItems.Add(lineItem);
             }
 
@@ -645,7 +689,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             UnitPrice = "0.00",
             TotalPrice = "0.00",
             Confidence = 1.0,
-            IsManuallyAdded = true
+            IsManuallyAdded = true,
+            OnProductErrorCleared = ClearValidationMessageIfNoErrors
         });
     }
 
@@ -662,6 +707,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private async Task CreateTransactionAsync()
     {
         // Validate
+        HasValidationMessage = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasLineItemsError = false;
@@ -709,6 +755,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             }
         }
 
+        HasValidationMessage = hasErrors;
         if (hasErrors)
             return;
 
@@ -1474,6 +1521,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedPaymentMethod = "Cash";
         Notes = string.Empty;
         IsRevenue = false;
+        HasValidationMessage = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasLineItemsError = false;
@@ -1595,6 +1643,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 /// </summary>
 public partial class ScannedLineItemViewModel : ObservableObject
 {
+    /// <summary>
+    /// Callback invoked when a product error is cleared.
+    /// </summary>
+    public Action? OnProductErrorCleared { get; set; }
+
     [ObservableProperty]
     private ProductOption? _selectedProduct;
 
@@ -1647,6 +1700,7 @@ public partial class ScannedLineItemViewModel : ObservableObject
             HasProductError = false;
             ProductErrorMessage = string.Empty;
             ShowCreateProductSuggestion = false;
+            OnProductErrorCleared?.Invoke();
         }
         RecalculateTotal();
     }

@@ -225,8 +225,7 @@
                         <!-- Scan Receipt -->
                         <Button Classes="quick-action-compact" Margin="6" Width="165"
                                 Command="{Binding ScanReceiptCommand}"
-                                IsVisible="{Binding ShowScanReceipt}"
-                                IsEnabled="{Binding HasPremium}">
+                                IsVisible="{Binding ShowScanReceipt}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
                                     <PathIcon Data="{x:Static local:Icons.ScanReceipt}"

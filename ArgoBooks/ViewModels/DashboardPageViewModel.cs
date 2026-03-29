@@ -1267,10 +1267,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     [RelayCommand]
-    private void ScanReceipt()
+    private async Task ScanReceipt()
     {
+        if (App.ReceiptsModalsViewModel == null) return;
+        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
+
         App.NavigationService?.NavigateTo("Receipts");
-        // Note: Scan modal requires a file path, so just navigate to receipts page
     }
 
     [RelayCommand]
