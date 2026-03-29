@@ -334,6 +334,26 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             HasSupplierError = false;
             SupplierErrorMessage = string.Empty;
+            ClearValidationMessageIfNoErrors();
+        }
+    }
+
+    partial void OnHasTotalErrorChanged(bool value)
+    {
+        if (!value) ClearValidationMessageIfNoErrors();
+    }
+
+    partial void OnHasLineItemsErrorChanged(bool value)
+    {
+        if (!value) ClearValidationMessageIfNoErrors();
+    }
+
+    private void ClearValidationMessageIfNoErrors()
+    {
+        if (!HasTotalError && !HasSupplierError && !HasLineItemsError &&
+            LineItems.All(li => !li.HasProductError))
+        {
+            HasValidationMessage = false;
         }
     }
 
@@ -587,6 +607,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 // Try to match to existing product
                 TryMatchProduct(lineItem, item.Description);
 
+                lineItem.OnProductErrorCleared = ClearValidationMessageIfNoErrors;
                 LineItems.Add(lineItem);
             }
 
@@ -648,7 +669,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             UnitPrice = "0.00",
             TotalPrice = "0.00",
             Confidence = 1.0,
-            IsManuallyAdded = true
+            IsManuallyAdded = true,
+            OnProductErrorCleared = ClearValidationMessageIfNoErrors
         });
     }
 
@@ -1601,6 +1623,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 /// </summary>
 public partial class ScannedLineItemViewModel : ObservableObject
 {
+    /// <summary>
+    /// Callback invoked when a product error is cleared.
+    /// </summary>
+    public Action? OnProductErrorCleared { get; set; }
+
     [ObservableProperty]
     private ProductOption? _selectedProduct;
 
@@ -1653,6 +1680,7 @@ public partial class ScannedLineItemViewModel : ObservableObject
             HasProductError = false;
             ProductErrorMessage = string.Empty;
             ShowCreateProductSuggestion = false;
+            OnProductErrorCleared?.Invoke();
         }
         RecalculateTotal();
     }
