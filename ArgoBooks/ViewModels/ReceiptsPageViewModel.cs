@@ -344,8 +344,10 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     public async Task HandleFileSelectedAsync(string filePath)
     {
         if (string.IsNullOrEmpty(filePath)) return;
+        if (App.ReceiptsModalsViewModel == null) return;
+        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
 
-        await App.ReceiptsModalsViewModel!.OpenScanModalAsync(filePath);
+        await App.ReceiptsModalsViewModel.OpenScanModalAsync(filePath);
     }
 
     /// <summary>
@@ -655,8 +657,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     #region Action Commands
 
     [RelayCommand]
-    private void AiScanReceipt()
+    private async Task AiScanReceipt()
     {
+        if (App.ReceiptsModalsViewModel == null) return;
+        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
+
         // Trigger file picker in the view
         ScanFileRequested?.Invoke(this, EventArgs.Empty);
     }

@@ -396,6 +396,26 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     #region AI Scan Commands
 
     /// <summary>
+    /// Checks whether the user can scan a receipt. If the limit is reached,
+    /// shows the upgrade prompt and returns false.
+    /// Call this before opening a file picker.
+    /// </summary>
+    public async Task<bool> CanScanOrShowLimitAsync()
+    {
+        _usageService ??= CreateUsageService();
+        var usageCheck = await _usageService.CheckUsageAsync();
+        if (!usageCheck.CanScan)
+        {
+            await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                usageCheck.ScanCount,
+                usageCheck.MonthlyLimit,
+                usageCheck.ResetsAt);
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
     /// Opens the scan review modal and starts scanning.
     /// </summary>
     public async Task OpenScanModalAsync(string filePath)
