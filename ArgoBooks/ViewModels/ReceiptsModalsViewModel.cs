@@ -325,6 +325,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _supplierErrorMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _hasValidationMessage;
+
     partial void OnSelectedSupplierChanged(SupplierOption? value)
     {
         if (value != null)
@@ -662,6 +665,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private async Task CreateTransactionAsync()
     {
         // Validate
+        HasValidationMessage = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasLineItemsError = false;
@@ -709,6 +713,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             }
         }
 
+        HasValidationMessage = hasErrors;
         if (hasErrors)
             return;
 
@@ -1474,6 +1479,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedPaymentMethod = "Cash";
         Notes = string.Empty;
         IsRevenue = false;
+        HasValidationMessage = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasLineItemsError = false;
