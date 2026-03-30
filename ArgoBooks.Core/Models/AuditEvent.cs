@@ -92,24 +92,6 @@ public class AuditEvent
     [JsonIgnore]
     public bool IsSaved { get; set; }
 
-    /// <summary>
-    /// The ID of the accountant who performed this action.
-    /// Currently unused — reserved for future multi-accountant support.
-    /// </summary>
-    /// <remarks>
-    /// FUTURE: When multi-accountant support is added, populate this from the currently
-    /// logged-in accountant's session. This enables per-accountant audit filtering,
-    /// permission enforcement, and conflict detection during sync.
-    /// </remarks>
-    [JsonPropertyName("accountantId")]
-    public string? AccountantId { get; set; }
-
-    /// <summary>
-    /// The display name of the accountant who performed this action.
-    /// Currently unused — reserved for future multi-accountant support.
-    /// </summary>
-    [JsonPropertyName("accountantName")]
-    public string? AccountantName { get; set; }
 }
 
 /// <summary>

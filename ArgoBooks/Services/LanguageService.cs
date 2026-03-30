@@ -625,65 +625,6 @@ public partial class LanguageService
         }
     }
 
-    /// <summary>
-    /// Adds or updates a translation in the cache (for admin/generator use).
-    /// </summary>
-    /// <param name="isoCode">The language ISO code.</param>
-    /// <param name="key">The translation key.</param>
-    /// <param name="value">The translated value.</param>
-    public void SetTranslation(string isoCode, string key, string value)
-    {
-        if (isoCode == "en")
-        {
-            _englishCache[key] = value;
-        }
-        else
-        {
-            EnsureLanguageLoaded(isoCode);
-            _currentLanguageCache[key] = value;
-        }
-    }
-
-    /// <summary>
-    /// Saves all translations to disk (for admin/generator use).
-    /// </summary>
-    public async Task SaveAllTranslationsAsync()
-    {
-        try
-        {
-            var options = new JsonSerializerOptions { WriteIndented = true };
-
-            // Save English cache
-            if (_englishCache.Count > 0)
-            {
-                await File.WriteAllTextAsync(GetLanguageFilePath("en"), JsonSerializer.Serialize(_englishCache, options));
-            }
-
-            // Save current language cache
-            if (_currentLoadedIsoCode != "" && _currentLoadedIsoCode != "en" && _currentLanguageCache.Count > 0)
-            {
-                await File.WriteAllTextAsync(GetLanguageFilePath(_currentLoadedIsoCode), JsonSerializer.Serialize(_currentLanguageCache, options));
-            }
-        }
-        catch (Exception ex)
-        {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save translations");
-        }
-    }
-
-    /// <summary>
-    /// Gets all translations for a language (for admin/generator use).
-    /// </summary>
-    /// <param name="isoCode">The language ISO code.</param>
-    /// <returns>Dictionary of key-value translation pairs.</returns>
-    public IReadOnlyDictionary<string, string> GetTranslations(string isoCode)
-    {
-        if (isoCode == "en")
-            return _englishCache;
-
-        EnsureLanguageLoaded(isoCode);
-        return _currentLanguageCache;
-    }
 }
 
 /// <summary>
