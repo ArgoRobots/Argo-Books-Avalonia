@@ -40,7 +40,7 @@ public class InsightsData
     /// <summary>
     /// When the insights were generated.
     /// </summary>
-    public DateTime GeneratedAt { get; set; } = DateTime.Now;
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Whether there is sufficient data to generate meaningful insights.

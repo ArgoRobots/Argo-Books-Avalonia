@@ -1201,29 +1201,37 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         ChartSettingsShared.DateRangeChanged += OnChartSettingsDateRangeChanged;
 
         // Subscribe to theme changes to reload charts with new colors
-        ThemeService.Instance.ThemeChanged += (_, _) =>
-        {
-            LoadAllCharts();
-            NotifyAllChartTitlesChanged();
-        };
+        ThemeService.Instance.ThemeChanged += OnThemeChanged;
 
         // Subscribe to date format changes to refresh charts
-        DateFormatService.DateFormatChanged += (_, _) =>
-        {
-            LoadAllCharts();
-        };
+        DateFormatService.DateFormatChanged += OnDateFormatChanged;
 
         // Subscribe to max pie slices changes to refresh pie charts
-        ChartSettingsService.MaxPieSlicesChanged += (_, _) =>
-        {
-            LoadAllCharts();
-        };
+        ChartSettingsService.MaxPieSlicesChanged += OnMaxPieSlicesChanged;
 
         // Subscribe to currency changes to refresh all monetary displays
-        CurrencyService.CurrencyChanged += (_, _) =>
-        {
-            LoadAllCharts();
-        };
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
+    }
+
+    private void OnThemeChanged(object? sender, ThemeMode e)
+    {
+        LoadAllCharts();
+        NotifyAllChartTitlesChanged();
+    }
+
+    private void OnDateFormatChanged(object? sender, EventArgs e)
+    {
+        LoadAllCharts();
+    }
+
+    private void OnMaxPieSlicesChanged(object? sender, EventArgs e)
+    {
+        LoadAllCharts();
+    }
+
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        LoadAllCharts();
     }
 
     private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
@@ -1563,6 +1571,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from chart settings events
         ChartSettingsShared.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
         ChartSettingsShared.DateRangeChanged -= OnChartSettingsDateRangeChanged;
+
+        // Unsubscribe from theme, date format, pie slices, and currency changes
+        ThemeService.Instance.ThemeChanged -= OnThemeChanged;
+        DateFormatService.DateFormatChanged -= OnDateFormatChanged;
+        ChartSettingsService.MaxPieSlicesChanged -= OnMaxPieSlicesChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
 
         // Zoom handlers are managed by ChartExpandOverlay (fullscreen only)
     }

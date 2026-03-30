@@ -396,17 +396,32 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         }
 
         // Subscribe to currency changes to refresh currency display
-        CurrencyService.CurrencyChanged += (_, _) =>
-        {
-            UpdateStatistics();
-            FilterPayments();
-        };
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
 
         // Subscribe to payment provider changes so portal state updates immediately
-        PaymentProviderService.ProvidersChanged += (_, _) =>
-        {
-            InitializePortalState();
-        };
+        PaymentProviderService.ProvidersChanged += OnProvidersChanged;
+    }
+
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        UpdateStatistics();
+        FilterPayments();
+    }
+
+    private void OnProvidersChanged(object? sender, EventArgs e)
+    {
+        InitializePortalState();
+    }
+
+    /// <summary>
+    /// Cleans up event subscriptions.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
+        PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
     }
 
     /// <summary>

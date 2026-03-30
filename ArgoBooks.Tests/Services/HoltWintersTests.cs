@@ -243,15 +243,15 @@ public class HoltWintersTests
     }
 
     [Fact]
-    public void DetectSeasonLength_VeryShortData_ReturnsZeroWhenNoCandidateFits()
+    public void DetectSeasonLength_VeryShortData_ReturnsSafeFallbackWhenNoCandidateFits()
     {
         var data = new List<decimal> { 100, 110, 120 };
         var candidates = new[] { 12, 4, 6 };
 
         var detected = _forecasting.DetectSeasonLength(data, candidates);
 
-        // With data.Count / 2 = 1, no candidates fit, returns default (0)
-        Assert.Equal(0, detected);
+        // With data.Count / 2 = 1, no candidates fit, returns last candidate as safe fallback
+        Assert.Equal(6, detected);
     }
 
     [Fact]

@@ -58,7 +58,7 @@ public class LicenseService
         _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
         _connectivityService = connectivityService ?? throw new ArgumentNullException(nameof(connectivityService));
         _errorLogger = errorLogger;
-        Instance = this;
+        Instance ??= this;
     }
 
     /// <summary>

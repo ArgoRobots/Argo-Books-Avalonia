@@ -226,14 +226,24 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
 
         // Subscribe to date format changes to refresh date display
-        DateFormatService.DateFormatChanged += (_, _) => FilterRevenue();
+        DateFormatService.DateFormatChanged += OnDateFormatChanged;
 
         // Subscribe to currency changes to refresh currency display
-        CurrencyService.CurrencyChanged += (_, _) =>
-        {
-            UpdateStatistics();
-            FilterRevenue();
-        };
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
+    }
+
+    private void OnDateFormatChanged(object? sender, EventArgs e) => FilterRevenue();
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        UpdateStatistics();
+        FilterRevenue();
+    }
+
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        DateFormatService.DateFormatChanged -= OnDateFormatChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
     }
 
     private void InitializeColumnVisibility()
@@ -363,7 +373,17 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private void FilterRevenue()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        var filtered = _allRevenue.ToList();
+
+        var lostDamagedIds = new HashSet<string>(
+            companyData?.LostDamaged.Select(ld => ld.InventoryItemId ?? "") ?? []);
+        var returnedIds = new HashSet<string>(
+            companyData?.Returns
+                .Where(r => r.Status == ReturnStatus.Completed)
+                .Select(r => r.OriginalTransactionId ?? "") ?? []);
+        var returnIds = new HashSet<string>(
+            companyData?.Returns.Select(r => r.OriginalTransactionId ?? "") ?? []);
+
+        IEnumerable<Revenue> filtered = _allRevenue;
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -386,13 +406,13 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(s => GetStatusDisplay(s, companyData) == FilterStatus).ToList();
+            filtered = filtered.Where(s => GetStatusDisplay(s, lostDamagedIds, returnedIds, returnIds) == FilterStatus);
         }
 
         // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
-            filtered = filtered.Where(s => s.CustomerId == FilterCustomerId).ToList();
+            filtered = filtered.Where(s => s.CustomerId == FilterCustomerId);
         }
 
         // Apply category filter (via line item product category)
@@ -403,31 +423,34 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 var productId = s.LineItems.FirstOrDefault()?.ProductId;
                 var product = productId != null ? companyData?.GetProduct(productId) : null;
                 return product?.CategoryId == FilterCategoryId;
-            }).ToList();
+            });
         }
 
         // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
-            filtered = filtered.Where(s => s.Total >= minAmount).ToList();
+            filtered = filtered.Where(s => s.Total >= minAmount);
         }
         if (decimal.TryParse(FilterAmountMax, out var maxAmount))
         {
-            filtered = filtered.Where(s => s.Total <= maxAmount).ToList();
+            filtered = filtered.Where(s => s.Total <= maxAmount);
         }
 
         // Apply date filter
         if (FilterDateFrom.HasValue)
         {
-            filtered = filtered.Where(s => s.Date >= FilterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(s => s.Date >= FilterDateFrom.Value.DateTime);
         }
         if (FilterDateTo.HasValue)
         {
-            filtered = filtered.Where(s => s.Date <= FilterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(s => s.Date <= FilterDateTo.Value.DateTime);
         }
 
+        // Materialize filtered results
+        var filteredList = filtered.ToList();
+
         // Create display items
-        var displayItems = filtered.Select(revenue =>
+        var displayItems = filteredList.Select(revenue =>
         {
             var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");
             var productId = revenue.LineItems.FirstOrDefault()?.ProductId;
@@ -435,7 +458,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
-            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, companyData);
+            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds, returnIds);
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
@@ -534,30 +557,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         return (firstName, $" +{remaining} more");
     }
 
-    private static string GetStatusDisplay(Revenue revenue, Core.Data.CompanyData? companyData)
+    private static string GetStatusDisplay(Revenue revenue, HashSet<string> lostDamagedIds, HashSet<string> returnedIds, HashSet<string> returnIds)
     {
-        // Check for lost/damaged related to this revenue
-        var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == revenue.Id);
-        if (relatedLostDamaged != null)
-        {
-            return "Lost / Damaged";
-        }
-
-        // Check for returns related to this revenue
-        var relatedReturn = companyData?.Returns.FirstOrDefault(r => r.OriginalTransactionId == revenue.Id);
-
-        if (relatedReturn is { Status: ReturnStatus.Completed })
-        {
-            return "Returned";
-        }
-
-        // Check if unpaid
-        if (revenue.PaymentStatus != "Paid")
-        {
-            return "Unpaid";
-        }
-
-        // Default status
+        if (lostDamagedIds.Contains(revenue.Id)) return "Lost / Damaged";
+        if (returnedIds.Contains(revenue.Id)) return "Returned";
+        if (revenue.PaymentStatus != "Paid") return "Unpaid";
         return "Completed";
     }
 
@@ -682,6 +686,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
             var tempPath = Path.Combine(tempDir, receipt.FileName);
+            if (File.Exists(tempPath))
+                return tempPath;
             var bytes = Convert.FromBase64String(receipt.FileData);
             File.WriteAllBytes(tempPath, bytes);
             return tempPath;

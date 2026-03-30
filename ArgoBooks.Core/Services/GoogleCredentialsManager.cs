@@ -11,6 +11,7 @@ namespace ArgoBooks.Core.Services;
 public static class GoogleCredentialsManager
 {
     private static readonly string AuthEndpoint = $"{ApiConfig.BaseUrl}/api/google/auth.php";
+    private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     /// <summary>
     /// Checks if Google API access is configured (always true — free feature).
@@ -23,7 +24,6 @@ public static class GoogleCredentialsManager
     /// </summary>
     public static async Task<string?> InitiateAuthAsync(CancellationToken cancellationToken = default)
     {
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         var requestBody = new { action = "initiate" };
         var json = JsonSerializer.Serialize(requestBody);
 
@@ -31,7 +31,7 @@ public static class GoogleCredentialsManager
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         AddAuthHeaders(request);
 
-        var response = await httpClient.SendAsync(request, cancellationToken);
+        var response = await SharedHttpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return null;
 
@@ -53,7 +53,6 @@ public static class GoogleCredentialsManager
     /// </summary>
     public static async Task<bool> CheckAuthStatusAsync(CancellationToken cancellationToken = default)
     {
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         var requestBody = new { action = "status" };
         var json = JsonSerializer.Serialize(requestBody);
 
@@ -61,7 +60,7 @@ public static class GoogleCredentialsManager
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         AddAuthHeaders(request);
 
-        var response = await httpClient.SendAsync(request, cancellationToken);
+        var response = await SharedHttpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return false;
 
@@ -83,7 +82,6 @@ public static class GoogleCredentialsManager
     /// </summary>
     public static async Task<bool> RevokeAuthAsync(CancellationToken cancellationToken = default)
     {
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         var requestBody = new { action = "revoke" };
         var json = JsonSerializer.Serialize(requestBody);
 
@@ -91,7 +89,7 @@ public static class GoogleCredentialsManager
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         AddAuthHeaders(request);
 
-        var response = await httpClient.SendAsync(request, cancellationToken);
+        var response = await SharedHttpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return false;
 

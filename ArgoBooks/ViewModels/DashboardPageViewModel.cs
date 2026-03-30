@@ -482,27 +482,33 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ChartSettings.DateRangeChanged += OnChartSettingsDateRangeChanged;
 
         // Subscribe to theme changes to reload charts with new colors
-        ThemeService.Instance.ThemeChanged += (_, _) =>
-        {
-            LoadDashboardData();
-            // Notify chart titles to recreate LabelVisuals with the new theme's text color.
-            // Without this, titles whose backing string hasn't changed won't re-evaluate
-            // the computed LabelVisual and will keep the previous theme's paint color.
-            OnPropertyChanged(nameof(ProfitsChartTitleVisual));
-            OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
-        };
+        ThemeService.Instance.ThemeChanged += OnThemeChanged;
 
         // Subscribe to date format changes to refresh charts and transaction dates
-        DateFormatService.DateFormatChanged += (_, _) =>
-        {
-            LoadDashboardData();
-        };
+        DateFormatService.DateFormatChanged += OnDateFormatChanged;
 
         // Subscribe to currency changes to refresh all monetary displays
-        CurrencyService.CurrencyChanged += (_, _) =>
-        {
-            LoadDashboardData();
-        };
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
+    }
+
+    private void OnThemeChanged(object? sender, ThemeMode e)
+    {
+        LoadDashboardData();
+        // Notify chart titles to recreate LabelVisuals with the new theme's text color.
+        // Without this, titles whose backing string hasn't changed won't re-evaluate
+        // the computed LabelVisual and will keep the previous theme's paint color.
+        OnPropertyChanged(nameof(ProfitsChartTitleVisual));
+        OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
+    }
+
+    private void OnDateFormatChanged(object? sender, EventArgs e)
+    {
+        LoadDashboardData();
+    }
+
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        LoadDashboardData();
     }
 
     private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
@@ -598,6 +604,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from chart settings events
         ChartSettings.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
         ChartSettings.DateRangeChanged -= OnChartSettingsDateRangeChanged;
+
+        // Unsubscribe from theme, date format, and currency changes
+        ThemeService.Instance.ThemeChanged -= OnThemeChanged;
+        DateFormatService.DateFormatChanged -= OnDateFormatChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
 
         // Unsubscribe from language changes
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;

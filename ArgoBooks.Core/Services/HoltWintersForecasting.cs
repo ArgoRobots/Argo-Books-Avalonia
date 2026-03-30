@@ -255,7 +255,11 @@ public class HoltWintersForecasting
     /// </summary>
     public int DetectSeasonLength(List<decimal> data, int[] candidateLengths)
     {
-        if (data.Count < 24) return candidateLengths.FirstOrDefault(l => l <= data.Count / 2);
+        if (data.Count < 24)
+        {
+            var candidate = candidateLengths.FirstOrDefault(l => l <= data.Count / 2);
+            return candidate > 0 ? candidate : candidateLengths[^1];
+        }
 
         var values = data.Select(d => (double)d).ToArray();
         var bestLength = candidateLengths[0];

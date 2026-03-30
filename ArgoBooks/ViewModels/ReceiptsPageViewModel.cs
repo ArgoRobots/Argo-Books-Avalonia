@@ -632,6 +632,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
             var tempPath = Path.Combine(tempDir, receipt.FileName);
+            if (File.Exists(tempPath))
+                return tempPath;
             var bytes = Convert.FromBase64String(receipt.FileData);
             File.WriteAllBytes(tempPath, bytes);
             return tempPath;

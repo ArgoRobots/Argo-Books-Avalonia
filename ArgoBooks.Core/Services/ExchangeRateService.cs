@@ -20,6 +20,7 @@ public class ExchangeRateService
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _isInitialized;
 
     /// <summary>
@@ -57,9 +58,17 @@ public class ExchangeRateService
     public async Task InitializeAsync()
     {
         if (_isInitialized) return;
-
-        await _cache.LoadAsync();
-        _isInitialized = true;
+        await _initLock.WaitAsync();
+        try
+        {
+            if (_isInitialized) return;
+            await _cache.LoadAsync();
+            _isInitialized = true;
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     /// <summary>
@@ -320,7 +329,7 @@ public class ExchangeRateService
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
-                var response = await _httpClient.SendAsync(request, cancellationToken);
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");

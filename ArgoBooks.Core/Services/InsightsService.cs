@@ -34,7 +34,7 @@ public class InsightsService(
         {
             var insights = new InsightsData
             {
-                GeneratedAt = DateTime.Now
+                GeneratedAt = DateTime.UtcNow
             };
 
             // Check for sufficient data
@@ -269,7 +269,7 @@ public class InsightsService(
     {
         // Get monthly revenue data for ML analysis
         var monthlyData = allSales
-            .Where(s => s.Date >= DateTime.Now.AddMonths(-12))
+            .Where(s => s.Date >= DateTime.UtcNow.AddMonths(-12))
             .GroupBy(s => new { s.Date.Year, s.Date.Month })
             .OrderBy(g => g.Key.Year)
             .ThenBy(g => g.Key.Month)
@@ -312,7 +312,7 @@ public class InsightsService(
 
         // Fallback to simple analysis if no strong ML pattern detected
         var monthlyByMonth = allSales
-            .Where(s => s.Date >= DateTime.Now.AddMonths(-12))
+            .Where(s => s.Date >= DateTime.UtcNow.AddMonths(-12))
             .GroupBy(s => s.Date.Month)
             .Select(g => new { Month = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD) })
             .OrderByDescending(x => x.Total)
@@ -1089,7 +1089,7 @@ public class InsightsService(
     private List<decimal> GetMonthlyTotals<T>(List<T> transactions, Func<T, decimal> amountSelector)
         where T : Transaction
     {
-        var cutoff = DateTime.Now.AddMonths(-24);
+        var cutoff = DateTime.UtcNow.AddMonths(-24);
         var monthlyAmounts = transactions
             .Where(t => t.Date >= cutoff)
             .GroupBy(t => new DateTime(t.Date.Year, t.Date.Month, 1))
@@ -1099,7 +1099,7 @@ public class InsightsService(
             return new List<decimal>();
 
         var startMonth = monthlyAmounts.Keys.Min();
-        var endMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var endMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
 
         return InterpolateMonthlyGaps(monthlyAmounts, startMonth, endMonth);
     }
@@ -1174,7 +1174,7 @@ public class InsightsService(
 
     private List<int> GetMonthlyNewCustomers(CompanyData companyData)
     {
-        var cutoff = DateTime.Now.AddMonths(-24);
+        var cutoff = DateTime.UtcNow.AddMonths(-24);
         var firstPurchaseByCustomer = companyData.Revenues
             .GroupBy(s => s.CustomerId)
             .Select(g => new { CustomerId = g.Key, FirstPurchase = g.Min(s => s.Date) })
@@ -1190,7 +1190,7 @@ public class InsightsService(
 
         // Build a continuous monthly series with zero-fill for missing months
         var startMonth = monthlyCounts.Keys.Min();
-        var endMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var endMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
 
         var result = new List<int>();
         var current = startMonth;

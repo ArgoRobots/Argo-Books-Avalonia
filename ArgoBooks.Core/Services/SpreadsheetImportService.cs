@@ -753,7 +753,7 @@ public class SpreadsheetImportService
                     if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
                     {
                         data.IdCounters.Revenue++;
-                        var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
+                        var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
                         var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
 
                         data.Revenues.Add(new Revenue
@@ -773,8 +773,8 @@ public class SpreadsheetImportService
                             Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                             InvoiceId = invoice.Id,
                             ReferenceNumber = invoice.InvoiceNumber,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
                             OriginalCurrency = invoice.OriginalCurrency,
                             TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
                         });
@@ -2084,12 +2084,12 @@ public class SpreadsheetImportService
     {
         var headers = new List<string>();
         var row = worksheet.Row(headerRow);
+        var lastColumn = worksheet.LastColumnUsed()?.ColumnNumber() ?? 0;
 
-        for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
+        for (int col = 1; col <= lastColumn; col++)
         {
             var cell = row.Cell(col);
-            if (cell.IsEmpty()) break;
-            headers.Add(cell.GetString().Trim());
+            headers.Add(cell.IsEmpty() ? "" : cell.GetString().Trim());
         }
 
         return headers;
@@ -2612,7 +2612,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
             {
                 data.IdCounters.Revenue++;
-                var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
+                var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
                 var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
 
                 data.Revenues.Add(new Revenue
@@ -2632,8 +2632,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                     InvoiceId = invoice.Id,
                     ReferenceNumber = invoice.InvoiceNumber,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                     OriginalCurrency = invoice.OriginalCurrency,
                     TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
                 });
