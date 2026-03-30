@@ -196,6 +196,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService? _scannerService;
     private IReceiptUsageService? _usageService;
+
+    /// <summary>
+    /// Invalidates cached scan services so the next scan attempt picks up
+    /// current license/usage state. Call after plan status changes (upgrade/downgrade).
+    /// </summary>
+    public void InvalidateScanServices()
+    {
+        _usageService?.InvalidateCache();
+        _usageService = null;
+        _scannerService = null;
+    }
     private byte[]? _currentImageData;
     private string? _currentFileName;
 
@@ -222,15 +233,50 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasScanResult;
 
+    [ObservableProperty]
+    private bool _isFullscreen;
+
     /// <summary>
     /// Gets the modal width based on current state.
     /// Narrower for loading/error states, wider for results.
+    /// NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalWidth => HasScanResult ? 1100 : 480;
+    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult ? 1100 : 480);
+
+    /// <summary>
+    /// Gets the modal height. NaN when fullscreen (stretches to fill).
+    /// </summary>
+    public double ModalHeight => IsFullscreen ? double.NaN : 850;
+
+    /// <summary>
+    /// Gets the modal margin. Zero when fullscreen, auto-centered otherwise.
+    /// </summary>
+    public Avalonia.Thickness ModalMargin => IsFullscreen ? new Avalonia.Thickness(8) : new Avalonia.Thickness(0);
+
+    /// <summary>
+    /// Gets modal horizontal alignment. Stretch when fullscreen.
+    /// </summary>
+    public Avalonia.Layout.HorizontalAlignment ModalHorizontalAlignment =>
+        IsFullscreen ? Avalonia.Layout.HorizontalAlignment.Stretch : Avalonia.Layout.HorizontalAlignment.Center;
+
+    /// <summary>
+    /// Gets modal vertical alignment. Stretch when fullscreen.
+    /// </summary>
+    public Avalonia.Layout.VerticalAlignment ModalVerticalAlignment =>
+        IsFullscreen ? Avalonia.Layout.VerticalAlignment.Stretch : Avalonia.Layout.VerticalAlignment.Center;
 
     partial void OnHasScanResultChanged(bool value)
     {
         OnPropertyChanged(nameof(ModalWidth));
+    }
+
+    partial void OnIsFullscreenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
+        OnPropertyChanged(nameof(ModalMargin));
+        OnPropertyChanged(nameof(ModalHorizontalAlignment));
+        OnPropertyChanged(nameof(ModalVerticalAlignment));
     }
 
     [ObservableProperty]
@@ -247,6 +293,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _extractedTax = string.Empty;
+
+    [ObservableProperty]
+    private string _extractedDiscount = string.Empty;
 
     [ObservableProperty]
     private string _extractedTotal = string.Empty;
@@ -314,6 +363,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string _totalErrorMessage = string.Empty;
 
     [ObservableProperty]
+    private bool _hasUnmatchedProducts;
+
+    [ObservableProperty]
+    private bool _hasTotalMismatchWarning;
+
+    [ObservableProperty]
+    private string _totalMismatchWarningMessage = string.Empty;
+
+    [ObservableProperty]
     private bool _hasLineItemsError;
 
     [ObservableProperty]
@@ -337,6 +395,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ClearValidationMessageIfNoErrors();
         }
     }
+
+    partial void OnExtractedTotalChanged(string value) => ValidateTotals();
+    partial void OnExtractedSubtotalChanged(string value) => ValidateTotals();
+    partial void OnExtractedTaxChanged(string value) => ValidateTotals();
+    partial void OnExtractedDiscountChanged(string value) => ValidateTotals();
 
     partial void OnHasTotalErrorChanged(bool value)
     {
@@ -607,6 +670,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             IsMediumConfidence = result.Confidence >= 0.6 && result.Confidence < 0.85;
             IsLowConfidence = result.Confidence < 0.6;
 
+            // Use discount from scanner if available, fall back to line-item heuristic
+            var discountTotal = result.Discount ?? result.LineItems
+                .Where(IsDiscountLine)
+                .Sum(item => Math.Abs(item.TotalPrice));
+            ExtractedDiscount = discountTotal > 0 ? discountTotal.ToString("F2") : "0.00";
+
             // Line items (filter out discounts and non-product lines)
             LineItems.Clear();
             foreach (var item in result.LineItems)
@@ -628,8 +697,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 TryMatchProduct(lineItem, item.Description);
 
                 lineItem.OnProductErrorCleared = ClearValidationMessageIfNoErrors;
+                lineItem.OnTotalPriceEdited = ValidateTotals;
                 LineItems.Add(lineItem);
             }
+
+            UpdateHasUnmatchedProducts();
+            ValidateTotals();
 
             // Get AI suggestions for supplier and category
             await GetAiSuggestionsAsync(result);
@@ -644,16 +717,23 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CloseScanReviewModal()
     {
         IsScanReviewModalOpen = false;
+        IsFullscreen = false;
         ResetScanModal();
     }
 
+    [RelayCommand]
+    private void ToggleFullscreen()
+    {
+        IsFullscreen = !IsFullscreen;
+    }
+
     /// <summary>
-    /// Requests to close the scan review modal, showing confirmation if a receipt has been scanned.
+    /// Requests to close the scan review modal, showing confirmation if scanning or data is present.
     /// </summary>
     [RelayCommand]
     private async Task RequestCloseScanReviewModalAsync()
     {
-        if (HasScanResult)
+        if (HasScanResult || IsScanning)
         {
             if (!await ConfirmDiscardNewAsync()) return;
         }
@@ -690,7 +770,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TotalPrice = "0.00",
             Confidence = 1.0,
             IsManuallyAdded = true,
-            OnProductErrorCleared = ClearValidationMessageIfNoErrors
+            OnProductErrorCleared = ClearValidationMessageIfNoErrors,
+            OnTotalPriceEdited = ValidateTotals
         });
     }
 
@@ -700,6 +781,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (item != null)
         {
             LineItems.Remove(item);
+            ValidateTotals();
         }
     }
 
@@ -775,6 +857,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Parse values
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var taxAmount);
+        decimal.TryParse(ExtractedDiscount, out var discount);
 
         // Create line items
         var lineItems = LineItems.Select(li =>
@@ -803,12 +886,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (IsRevenue)
         {
             // Create revenue transaction
-            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, lineItems);
+            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
         }
         else
         {
             // Create expense transaction
-            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, lineItems);
+            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
         }
 
         App.CompanyManager?.MarkAsChanged();
@@ -817,7 +900,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
-        decimal total, decimal subtotal, decimal taxAmount, List<LineItem> lineItems)
+        decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
     {
         companyData.IdCounters.Expense++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
@@ -834,6 +917,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Amount = subtotal > 0 ? subtotal : total,
             TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
             TaxAmount = taxAmount,
+            Discount = discount,
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = Notes,
@@ -926,7 +1010,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     private void CreateRevenueTransaction(CompanyData companyData, string receiptId, string? fileData,
-        decimal total, decimal subtotal, decimal taxAmount, List<LineItem> lineItems)
+        decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
     {
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
@@ -944,6 +1028,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Subtotal = subtotal > 0 ? subtotal : total,
             TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
             TaxAmount = taxAmount,
+            Discount = discount,
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             PaymentStatus = "Paid",
@@ -1121,6 +1206,20 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         lineItem.ShowCreateProductSuggestion = false;
 
         companyData.MarkAsModified();
+        UpdateHasUnmatchedProducts();
+    }
+
+    /// <summary>
+    /// Creates products for all unmatched line items at once.
+    /// </summary>
+    [RelayCommand]
+    private void CreateAllSuggestedProducts()
+    {
+        var unmatched = LineItems.Where(li => li.ShowCreateProductSuggestion).ToList();
+        foreach (var lineItem in unmatched)
+        {
+            CreateSuggestedProduct(lineItem);
+        }
     }
 
     /// <summary>
@@ -1132,7 +1231,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (lineItem != null)
         {
             lineItem.ShowCreateProductSuggestion = false;
+            UpdateHasUnmatchedProducts();
         }
+    }
+
+    private void UpdateHasUnmatchedProducts()
+    {
+        HasUnmatchedProducts = LineItems.Any(li => li.ShowCreateProductSuggestion);
     }
 
     [RelayCommand]
@@ -1233,6 +1338,34 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             ShowCreateSupplierSuggestion = true;
             SuggestedSupplierName = ToTitleCase(suggestion.NewSupplier.Name);
+        }
+    }
+
+    private void ValidateTotals()
+    {
+        HasTotalMismatchWarning = false;
+        TotalMismatchWarningMessage = string.Empty;
+
+        decimal.TryParse(ExtractedTotal, out var total);
+        if (total == 0) return;
+
+        decimal.TryParse(ExtractedSubtotal, out var subtotal);
+        decimal.TryParse(ExtractedTax, out var tax);
+        decimal.TryParse(ExtractedDiscount, out var discount);
+
+        var lineItemSum = LineItems
+            .Sum(li => decimal.TryParse(li.TotalPrice, out var p) ? p : 0);
+
+        // Check line items + tax - discount against total
+        var expectedTotal = lineItemSum + tax - discount;
+        var diff = Math.Abs(expectedTotal - total);
+
+        if (diff > 0.02m)
+        {
+            HasTotalMismatchWarning = true;
+            TotalMismatchWarningMessage = string.Format(
+                "Line items ({0:C}) + tax ({1:C}) - discount ({2:C}) = {3:C}, but total is {4:C}. Some items may be incorrect.".Translate(),
+                lineItemSum, tax, discount, expectedTotal, total);
         }
     }
 
@@ -1504,12 +1637,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsScanning = false;
         HasScanError = false;
         HasScanResult = false;
+        IsFullscreen = false;
         ScanErrorMessage = string.Empty;
         ReceiptImagePath = null;
         ExtractedSupplier = string.Empty;
         ExtractedDate = DateTimeOffset.Now;
         ExtractedSubtotal = string.Empty;
         ExtractedTax = string.Empty;
+        ExtractedDiscount = string.Empty;
         ExtractedTotal = string.Empty;
         ConfidenceScore = 0;
         ConfidenceText = string.Empty;
@@ -1526,6 +1661,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasSupplierError = false;
         HasLineItemsError = false;
         LineItemsErrorMessage = string.Empty;
+        HasTotalMismatchWarning = false;
+        TotalMismatchWarningMessage = string.Empty;
         _currentImageData = null;
         _currentFileName = null;
 
@@ -1581,7 +1718,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService CreateScannerService()
     {
-        return new AzureReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
+        return new OpenAiReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
     }
 
     private IReceiptUsageService CreateUsageService()
@@ -1647,6 +1784,13 @@ public partial class ScannedLineItemViewModel : ObservableObject
     /// Callback invoked when a product error is cleared.
     /// </summary>
     public Action? OnProductErrorCleared { get; set; }
+
+    /// <summary>
+    /// Callback invoked when the total price changes so the parent can revalidate totals.
+    /// </summary>
+    public Action? OnTotalPriceEdited { get; set; }
+
+    partial void OnTotalPriceChanged(string value) => OnTotalPriceEdited?.Invoke();
 
     [ObservableProperty]
     private ProductOption? _selectedProduct;

@@ -41,6 +41,11 @@ public class ReceiptScanResult
     public decimal? TotalAmount { get; set; }
 
     /// <summary>
+    /// Extracted discount amount (coupons, promos, loyalty discounts).
+    /// </summary>
+    public decimal? Discount { get; set; }
+
+    /// <summary>
     /// Extracted line items from the receipt.
     /// </summary>
     public List<ScannedLineItem> LineItems { get; set; } = [];

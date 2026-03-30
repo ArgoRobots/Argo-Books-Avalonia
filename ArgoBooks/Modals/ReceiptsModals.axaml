@@ -12,6 +12,42 @@
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
 
+    <UserControl.Styles>
+        <!-- Suggestion card TextBox: override ALL states via #PART_BorderElement to beat BaseStyles specificity -->
+        <Style Selector="TextBox.suggestion-input">
+            <Setter Property="Foreground" Value="#5C4813" />
+            <Setter Property="CaretBrush" Value="#5C4813" />
+            <Setter Property="SelectionBrush" Value="#40C9A227" />
+            <Setter Property="SelectionForegroundBrush" Value="#5C4813" />
+            <Setter Property="BorderBrush" Value="#C9A227" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#C9A227" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input:pointerover">
+            <Setter Property="BorderBrush" Value="#A6841E" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#10C9A227" />
+            <Setter Property="BorderBrush" Value="#A6841E" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input:focus">
+            <Setter Property="BorderBrush" Value="#A6841E" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#10C9A227" />
+            <Setter Property="BorderBrush" Value="#A6841E" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input:focus-within">
+            <Setter Property="BorderBrush" Value="#A6841E" />
+        </Style>
+        <Style Selector="TextBox.suggestion-input:focus-within /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#10C9A227" />
+            <Setter Property="BorderBrush" Value="#A6841E" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
         <!-- Filter Modal -->
         <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
@@ -181,10 +217,11 @@
         <controls:ModalOverlay IsOpen="{Binding IsScanReviewModalOpen}"
                                ClosingCommand="{Binding RequestCloseScanReviewModalCommand}">
             <controls:ModalOverlay.ModalContent>
-                <Border HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="{Binding ModalWidth}"
-                    MaxHeight="850"
+                <Border Width="{Binding ModalWidth}"
+                    Height="{Binding ModalHeight}"
+                    Margin="{Binding ModalMargin}"
+                    HorizontalAlignment="{Binding ModalHorizontalAlignment}"
+                    VerticalAlignment="{Binding ModalVerticalAlignment}"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
@@ -475,8 +512,8 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- Subtotal and Tax Row -->
-                                        <Grid ColumnDefinitions="*,16,*">
+                                        <!-- Subtotal, Tax, and Discount Row -->
+                                        <Grid ColumnDefinitions="*,16,*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Subtotal'}"
                                                            FontSize="13"
@@ -499,8 +536,32 @@
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
                                             </StackPanel>
+                                            <StackPanel Grid.Column="4" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Discount'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ExtractedDiscount}"
+                                                         Watermark="0.00"
+                                                         Classes="form-input"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
+                                            </StackPanel>
                                         </Grid>
                                     </StackPanel>
+
+                                    <!-- Total Mismatch Warning -->
+                                    <Border IsVisible="{Binding HasTotalMismatchWarning}"
+                                            Background="#33FFA500"
+                                            BorderBrush="#FFA500"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12,8">
+                                        <TextBlock Text="{Binding TotalMismatchWarningMessage}"
+                                                   FontSize="12"
+                                                   Foreground="#FFA500"
+                                                   TextWrapping="Wrap" />
+                                    </Border>
 
                                     <!-- Line Items Section -->
                                     <StackPanel Spacing="12">
@@ -521,6 +582,28 @@
                                             </Button>
                                         </Grid>
 
+                                        <!-- Create All Suggested Products banner -->
+                                        <Border IsVisible="{Binding HasUnmatchedProducts}"
+                                                Background="{DynamicResource WarningLightBrush}"
+                                                CornerRadius="6"
+                                                Padding="10,8">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{loc:Loc 'Some items don\'t match existing products.'}"
+                                                           FontSize="12"
+                                                           Foreground="#5C4813"
+                                                           VerticalAlignment="Center" />
+                                                <Button Grid.Column="1"
+                                                        Command="{Binding CreateAllSuggestedProductsCommand}"
+                                                        Classes="primary-button"
+                                                        Padding="12,4"
+                                                        FontSize="12"
+                                                        VerticalContentAlignment="Center">
+                                                    <TextBlock Text="{loc:Loc 'Create All Suggested Products'}" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
                                         <!-- Line Items Header -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="6"
@@ -531,10 +614,12 @@
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 <TextBlock Grid.Column="1" Text="{loc:Loc 'Quantity'}" FontSize="12" FontWeight="Medium"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           HorizontalAlignment="Center" />
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,0,8,0" />
                                                 <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Price'}" FontSize="12" FontWeight="Medium"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           HorizontalAlignment="Center" />
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,0,8,0" />
                                                 <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            HorizontalAlignment="Right"
@@ -558,45 +643,59 @@
                                                                     Placeholder="{loc:Loc 'Search for a product...'}"
                                                                     ShowAddNew="False"
                                                                     EmptyMessage="{loc:Loc 'No products found.'}"
-                                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                    EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).NavigateToCreateProductCommand}"
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />
                                                                 <!-- Create Product Suggestion -->
                                                                 <Border IsVisible="{Binding ShowCreateProductSuggestion}"
                                                                         Background="{DynamicResource WarningLightBrush}"
                                                                         CornerRadius="6"
-                                                                        Padding="8"
+                                                                        Padding="8,6"
                                                                         Margin="0,4,0,0">
-                                                                    <Grid ColumnDefinitions="*,Auto,Auto">
-                                                                        <StackPanel Grid.Column="0" Spacing="2">
-                                                                            <TextBlock Text="{loc:Loc 'Suggested product:'}"
-                                                                                       FontSize="11"
-                                                                                       Foreground="#92400E" />
-                                                                            <TextBlock Text="{Binding SuggestedProductName}"
-                                                                                       FontSize="12"
-                                                                                       FontWeight="SemiBold"
-                                                                                       Foreground="#78350F" />
-                                                                        </StackPanel>
-                                                                        <Button Grid.Column="1"
+                                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+                                                                        <TextBlock Grid.Column="0"
+                                                                                   Text="{loc:Loc 'Suggested:'}"
+                                                                                   FontSize="11"
+                                                                                   Foreground="#5C4813"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Margin="0,0,6,0" />
+                                                                        <TextBox Grid.Column="1"
+                                                                                 Text="{Binding SuggestedProductName, Mode=TwoWay}"
+                                                                                 Classes="suggestion-input"
+                                                                                 FontSize="12"
+                                                                                 FontWeight="SemiBold"
+                                                                                 Padding="4,1"
+                                                                                 MinHeight="0"
+                                                                                 Height="26"
+                                                                                 VerticalContentAlignment="Center"
+                                                                                 VerticalAlignment="Center"
+                                                                                 BorderThickness="1"
+                                                                                 CornerRadius="4" />
+                                                                        <Button Grid.Column="2"
                                                                                 Content="{loc:Loc 'Create'}"
                                                                                 Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).CreateSuggestedProductCommand}"
                                                                                 CommandParameter="{Binding}"
                                                                                 Classes="primary-button"
-                                                                                Padding="10,4"
-                                                                                Margin="8,0,0,0"
+                                                                                Padding="10,0"
+                                                                                Height="26"
+                                                                                MinHeight="0"
+                                                                                VerticalContentAlignment="Center"
+                                                                                VerticalAlignment="Center"
+                                                                                Margin="6,0,0,0"
                                                                                 FontSize="11" />
-                                                                        <Button Grid.Column="2"
+                                                                        <Button Grid.Column="3"
                                                                                 Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).DismissProductSuggestionCommand}"
                                                                                 CommandParameter="{Binding}"
                                                                                 Background="Transparent"
                                                                                 BorderThickness="0"
-                                                                                Padding="8,4"
-                                                                                Margin="4,0,0,0"
+                                                                                Padding="4"
+                                                                                Height="26"
+                                                                                MinHeight="0"
+                                                                                VerticalAlignment="Center"
+                                                                                Margin="2,0,0,0"
                                                                                 Cursor="Hand">
                                                                             <PathIcon Data="{x:Static icons:Icons.Close}"
-                                                                                      Width="14" Height="14"
-                                                                                      Foreground="#92400E" />
+                                                                                      Width="12" Height="12"
+                                                                                      Foreground="#5C4813" />
                                                                         </Button>
                                                                     </Grid>
                                                                 </Border>
@@ -752,8 +851,6 @@
                                                     Placeholder="{loc:Loc 'Search for a supplier...'}"
                                                     ShowAddNew="False"
                                                     EmptyMessage="{loc:Loc 'No suppliers found.'}"
-                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                    EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
                                                     HasError="{Binding HasSupplierError}"
                                                     ErrorMessage="{Binding SupplierErrorMessage}"
                                                     IsEnabled="{Binding !IsLoadingAiSuggestions}" />
@@ -761,34 +858,51 @@
                                                 <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
                                                         Background="{DynamicResource WarningLightBrush}"
                                                         CornerRadius="6"
-                                                        Padding="10">
-                                                    <Grid ColumnDefinitions="*,Auto,Auto">
-                                                        <StackPanel Grid.Column="0" Spacing="2">
-                                                            <TextBlock Text="{loc:Loc 'Suggested supplier:'}"
-                                                                       FontSize="11"
-                                                                       Foreground="#92400E" />
-                                                            <TextBlock Text="{Binding SuggestedSupplierName}"
-                                                                       FontSize="12"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="#78350F" />
-                                                        </StackPanel>
-                                                        <Button Grid.Column="1"
+                                                        Padding="8,6"
+                                                        Margin="0,4,0,0">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{loc:Loc 'Suggested:'}"
+                                                                   FontSize="11"
+                                                                   Foreground="#5C4813"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="0,0,6,0" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Text="{Binding SuggestedSupplierName, Mode=TwoWay}"
+                                                                 Classes="suggestion-input"
+                                                                 FontSize="12"
+                                                                 FontWeight="SemiBold"
+                                                                 Padding="4,1"
+                                                                 MinHeight="0"
+                                                                 Height="26"
+                                                                 VerticalContentAlignment="Center"
+                                                                 VerticalAlignment="Center"
+                                                                 BorderThickness="1"
+                                                                 CornerRadius="4" />
+                                                        <Button Grid.Column="2"
                                                                 Content="{loc:Loc 'Create'}"
                                                                 Command="{Binding CreateSuggestedSupplierCommand}"
                                                                 Classes="primary-button"
-                                                                Padding="10,4"
-                                                                Margin="8,0,0,0"
+                                                                Padding="10,0"
+                                                                Height="26"
+                                                                MinHeight="0"
+                                                                VerticalContentAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Margin="6,0,0,0"
                                                                 FontSize="11" />
-                                                        <Button Grid.Column="2"
+                                                        <Button Grid.Column="3"
                                                                 Command="{Binding DismissSupplierSuggestionCommand}"
                                                                 Background="Transparent"
                                                                 BorderThickness="0"
-                                                                Padding="8,4"
-                                                                Margin="4,0,0,0"
+                                                                Padding="4"
+                                                                Height="26"
+                                                                MinHeight="0"
+                                                                VerticalAlignment="Center"
+                                                                Margin="2,0,0,0"
                                                                 Cursor="Hand">
                                                             <PathIcon Data="{x:Static icons:Icons.Close}"
-                                                                      Width="14" Height="14"
-                                                                      Foreground="#92400E" />
+                                                                      Width="12" Height="12"
+                                                                      Foreground="#5C4813" />
                                                         </Button>
                                                     </Grid>
                                                 </Border>
@@ -838,14 +952,24 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0"
                             IsVisible="{Binding HasScanResult}">
-                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                            <TextBlock Grid.Column="0"
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                            <!-- Fullscreen toggle -->
+                            <Button Grid.Column="0"
+                                    Classes="icon-button"
+                                    ToolTip.Tip="{loc:Loc 'Toggle Fullscreen (F)'}"
+                                    Command="{Binding ToggleFullscreenCommand}">
+                                <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
+                                          Width="16" Height="16" />
+                            </Button>
+                            <TextBlock Grid.Column="1"
                                        Text="{loc:Loc 'Please enter all required fields'}"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        FontSize="13"
+                                       Margin="12,0,0,0"
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding HasValidationMessage}" />
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                        Margin="12,0,0,0"
                                         IsVisible="{Binding !HasValidationMessage}">
                                 <PathIcon Data="{x:Static icons:Icons.Info}"
                                           Width="16" Height="16"
@@ -855,12 +979,12 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
-                            <Button Grid.Column="2"
+                            <Button Grid.Column="3"
                                     Content="{loc:Loc Cancel}"
                                     Classes="secondary-button"
                                     Margin="0,0,12,0"
                                     Command="{Binding RequestCloseScanReviewModalCommand}" />
-                            <Button Grid.Column="3"
+                            <Button Grid.Column="4"
                                     Classes="primary-button"
                                     Command="{Binding CreateTransactionCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">

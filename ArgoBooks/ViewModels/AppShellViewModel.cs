@@ -779,6 +779,9 @@ public partial class AppShellViewModel : ViewModelBase
         if (App.InvoiceModalsViewModel != null)
             App.InvoiceModalsViewModel.HasPremium = hasPremium;
 
+        // Invalidate cached receipt scan services so upgraded license takes effect immediately
+        ReceiptsModalsViewModel.InvalidateScanServices();
+
         // Notify lazily-created page ViewModels (e.g., InsightsPageViewModel)
         App.RaisePlanStatusChanged(hasPremium);
     }

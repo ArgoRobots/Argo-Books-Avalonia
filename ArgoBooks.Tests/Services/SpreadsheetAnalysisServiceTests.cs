@@ -31,6 +31,14 @@ public class SpreadsheetAnalysisServiceTests
             LastUserPrompt = userPrompt;
             return Task.FromResult(ResponseToReturn);
         }
+
+        public Task<string?> SendVisionChatAsync(
+            string systemPrompt, string userPrompt,
+            string base64Image, string mimeType,
+            int maxTokens = 4000, double temperature = 0.1,
+            string? model = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<string?>(null);
     }
 
     [Fact]

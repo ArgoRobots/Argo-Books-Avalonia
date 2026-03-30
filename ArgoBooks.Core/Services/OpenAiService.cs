@@ -54,7 +54,7 @@ public class OpenAiService : IOpenAiService
                 prompt,
                 500,
                 0.3,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -96,7 +96,7 @@ public class OpenAiService : IOpenAiService
 
         try
         {
-            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken);
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken: cancellationToken);
             if (!string.IsNullOrEmpty(response))
                 success = true;
             return response;
@@ -105,6 +105,49 @@ public class OpenAiService : IOpenAiService
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.OpenAI,
+                stopwatch.ElapsedMilliseconds,
+                success,
+                model,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> SendVisionChatAsync(
+        string systemPrompt,
+        string userPrompt,
+        string base64Image,
+        string mimeType,
+        int maxTokens = 4000,
+        double temperature = 0.1,
+        string? model = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+            return null;
+
+        var stopwatch = Stopwatch.StartNew();
+        model ??= DefaultModel;
+        var success = false;
+
+        try
+        {
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, base64Image, mimeType, model, cancellationToken);
+            if (!string.IsNullOrEmpty(response))
+                success = true;
+            return response;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI Vision API call failed");
             return null;
         }
         finally
@@ -189,16 +232,15 @@ Respond with JSON only.";
         string userPrompt,
         int maxTokens = 500,
         double temperature = 0.3,
+        string? base64Image = null,
+        string? mimeType = null,
+        string? model = null,
         CancellationToken cancellationToken = default)
     {
-        var requestBody = new
-        {
-            systemPrompt,
-            userPrompt,
-            model = DefaultModel,
-            maxTokens,
-            temperature
-        };
+        var effectiveModel = model ?? DefaultModel;
+        object requestBody = base64Image != null
+            ? new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, base64Image, mimeType }
+            : new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature };
 
         var json = JsonSerializer.Serialize(requestBody);
 
