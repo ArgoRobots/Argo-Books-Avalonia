@@ -748,8 +748,8 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
                                              Watermark="{loc:Loc 'Enter company name'}"
-                                             MaxLength="255"
-                                             Padding="10,8" />
+                                             Classes="form-input"
+                                             MaxLength="255" />
                                 </StackPanel>
 
                                 <!-- Portal Logo -->

@@ -78,6 +78,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding ReasonOptions}"
                                           SelectedItem="{Binding FilterReason}"
+                                          Classes="form-combobox"
                                           HorizontalAlignment="Stretch">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
@@ -316,6 +317,7 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding UndoReturnReason, Mode=TwoWay}"
                                          Watermark="{loc:Loc 'Enter reason for undoing this return...'}"
+                                         Classes="form-input"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"

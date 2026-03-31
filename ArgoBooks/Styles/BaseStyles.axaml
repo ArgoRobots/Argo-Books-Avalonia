@@ -56,6 +56,9 @@
         <x:Double x:Key="FormControlHeightCompact">36</x:Double>
         <x:Double x:Key="FormControlHeightSmall">32</x:Double>
 
+        <!-- Form Control Corner Radius (unified across all form controls) -->
+        <CornerRadius x:Key="FormControlCornerRadius">6</CornerRadius>
+
         <!-- Animation Colors (must be defined locally for StaticResource in animations) -->
         <Color x:Key="HighlightAnimationColor">#3060A5FA</Color>
     </Styles.Resources>
@@ -236,7 +239,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -257,7 +260,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -268,7 +271,7 @@
     <Style Selector="DatePicker.form-datepicker">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="MinWidth" Value="0" />
     </Style>
@@ -276,7 +279,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="MinWidth" Value="0" />
     </Style>
@@ -292,7 +295,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="8,6" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -312,7 +315,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="8,6" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -324,14 +327,14 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
     </Style>
     <Style Selector="NumericUpDown.form-numericupdown">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
     </Style>
 
@@ -340,7 +343,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
         <Setter Property="ShowButtonSpinner" Value="False" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />

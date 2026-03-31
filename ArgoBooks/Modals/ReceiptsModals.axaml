@@ -12,39 +12,21 @@
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
 
+    <!-- Design-time DataContext for Avalonia previewer in Rider/VS -->
+    <Design.DataContext>
+        <x:Static Member="vm:ReceiptsModalsViewModel.DesignInstance" />
+    </Design.DataContext>
+
     <UserControl.Styles>
         <!-- Suggestion card TextBox: override ALL states via #PART_BorderElement to beat BaseStyles specificity -->
         <Style Selector="TextBox.suggestion-input">
             <Setter Property="Foreground" Value="#5C4813" />
             <Setter Property="CaretBrush" Value="#5C4813" />
-            <Setter Property="SelectionBrush" Value="#40C9A227" />
-            <Setter Property="SelectionForegroundBrush" Value="#5C4813" />
             <Setter Property="BorderBrush" Value="#C9A227" />
         </Style>
         <Style Selector="TextBox.suggestion-input /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="#C9A227" />
-        </Style>
-        <Style Selector="TextBox.suggestion-input:pointerover">
-            <Setter Property="BorderBrush" Value="#A6841E" />
-        </Style>
-        <Style Selector="TextBox.suggestion-input:pointerover /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="#10C9A227" />
-            <Setter Property="BorderBrush" Value="#A6841E" />
-        </Style>
-        <Style Selector="TextBox.suggestion-input:focus">
-            <Setter Property="BorderBrush" Value="#A6841E" />
-        </Style>
-        <Style Selector="TextBox.suggestion-input:focus /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="#10C9A227" />
-            <Setter Property="BorderBrush" Value="#A6841E" />
-        </Style>
-        <Style Selector="TextBox.suggestion-input:focus-within">
-            <Setter Property="BorderBrush" Value="#A6841E" />
-        </Style>
-        <Style Selector="TextBox.suggestion-input:focus-within /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="#10C9A227" />
-            <Setter Property="BorderBrush" Value="#A6841E" />
         </Style>
     </UserControl.Styles>
 
@@ -228,6 +210,7 @@
                     <Border.Transitions>
                         <Transitions>
                             <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseInOut" />
+                            <DoubleTransition Property="Height" Duration="0:0:0.2" Easing="CubicEaseInOut" />
                         </Transitions>
                     </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
@@ -425,56 +408,48 @@
                                     <!-- Confidence Score -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
-                                            Padding="16">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="{loc:Loc 'Extraction Confidence'}"
-                                                           FontSize="13"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                                                    <TextBlock Text="{Binding ConfidenceText}"
-                                                               FontSize="24"
-                                                               FontWeight="Bold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <Border Background="{DynamicResource SuccessLightBrush}"
-                                                            CornerRadius="4"
-                                                            Padding="8,4"
-                                                            VerticalAlignment="Center"
-                                                            IsVisible="{Binding IsHighConfidence}">
-                                                        <TextBlock Text="{loc:Loc 'High'}"
-                                                                   FontSize="12"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="#16A34A" />
-                                                    </Border>
-                                                    <Border Background="{DynamicResource WarningLightBrush}"
-                                                            CornerRadius="4"
-                                                            Padding="8,4"
-                                                            VerticalAlignment="Center"
-                                                            IsVisible="{Binding IsMediumConfidence}">
-                                                        <TextBlock Text="{loc:Loc 'Medium'}"
-                                                                   FontSize="12"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="#CA8A04" />
-                                                    </Border>
-                                                    <Border Background="{DynamicResource ErrorLightBrush}"
-                                                            CornerRadius="4"
-                                                            Padding="8,4"
-                                                            VerticalAlignment="Center"
-                                                            IsVisible="{Binding IsLowConfidence}">
-                                                        <TextBlock Text="{loc:Loc 'Low - Review Carefully'}"
-                                                                   FontSize="12"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{DynamicResource ErrorBrush}" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <PathIcon Grid.Column="1"
-                                                      Data="{x:Static icons:Icons.Check}"
-                                                      Width="24" Height="24"
-                                                      Foreground="#16A34A"
-                                                      VerticalAlignment="Center"
-                                                      IsVisible="{Binding IsHighConfidence}" />
-                                        </Grid>
+                                            Padding="12,8">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Extraction Confidence'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding ConfidenceText}"
+                                                       FontSize="16"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <Border Background="{DynamicResource SuccessLightBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8,3"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsHighConfidence}">
+                                                <TextBlock Text="{loc:Loc 'High'}"
+                                                           FontSize="12"
+                                                           FontWeight="Medium"
+                                                           Foreground="#16A34A" />
+                                            </Border>
+                                            <Border Background="{DynamicResource WarningLightBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8,3"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsMediumConfidence}">
+                                                <TextBlock Text="{loc:Loc 'Medium'}"
+                                                           FontSize="12"
+                                                           FontWeight="Medium"
+                                                           Foreground="#CA8A04" />
+                                            </Border>
+                                            <Border Background="{DynamicResource ErrorLightBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8,3"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsLowConfidence}">
+                                                <TextBlock Text="{loc:Loc 'Low - Review Carefully'}"
+                                                           FontSize="12"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource ErrorBrush}" />
+                                            </Border>
+                                        </StackPanel>
                                     </Border>
 
                                     <!-- Basic Info -->
@@ -637,6 +612,7 @@
                                                         <Grid ColumnDefinitions="*,70,80,100,40" RowDefinitions="Auto,Auto">
                                                             <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,0">
                                                                 <controls:SearchableDropdown
+                                                                    Classes="compact"
                                                                     ItemsSource="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).ProductOptions}"
                                                                     SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                                     DisplayMemberPath="Name"
@@ -702,6 +678,7 @@
                                                             </StackPanel>
                                                             <TextBox Grid.Column="1" Grid.Row="0"
                                                                      Text="{Binding Quantity}"
+                                                                     Classes="form-input-compact"
                                                                      HorizontalContentAlignment="Center"
                                                                      VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
@@ -709,6 +686,7 @@
                                                                      MaxLength="7" />
                                                             <TextBox Grid.Column="2" Grid.Row="0"
                                                                      Text="{Binding UnitPrice}"
+                                                                     Classes="form-input-compact"
                                                                      HorizontalContentAlignment="Center"
                                                                      VerticalAlignment="Top"
                                                                      Margin="0,0,8,0"
@@ -937,7 +915,7 @@
                                                      Classes="form-input"
                                                      AcceptsReturn="True"
                                                      TextWrapping="Wrap"
-                                                     Height="60"
+                                                     Height="80"
                                                      MaxLength="500" />
                                         </StackPanel>
                                     </StackPanel>

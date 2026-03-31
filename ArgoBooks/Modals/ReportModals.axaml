@@ -137,7 +137,7 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                         <TextBox Text="{Binding RenameTemplateNewName}"
                                  Watermark="{loc:Loc 'Template name...'}"
-                                 Padding="12,10"
+                                 Classes="form-input"
                                  x:Name="RenameTemplateTextBox"
                                  KeyDown="OnRenameTemplateKeyDown"
                                  MaxLength="100" />
