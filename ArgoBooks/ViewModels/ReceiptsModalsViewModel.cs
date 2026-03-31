@@ -20,6 +20,39 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ReceiptsModalsViewModel : ViewModelBase
 {
+    /// <summary>
+    /// Design-time instance for Avalonia previewer in Rider/VS.
+    /// Provides sample data so the scan review modal is visible in the preview.
+    /// </summary>
+    public static ReceiptsModalsViewModel DesignInstance { get; } = CreateDesignInstance();
+
+    private static ReceiptsModalsViewModel CreateDesignInstance()
+    {
+        var sampleProduct = new ProductOption { Id = "1", Name = "Classico Traditional Pizza Sauce", UnitPrice = 11.88m };
+        var sampleSupplier = new SupplierOption { Id = "1", Name = "Independent Grocer" };
+
+        var vm = new ReceiptsModalsViewModel
+        {
+            IsScanReviewModalOpen = true,
+            HasScanResult = true,
+            IsHighConfidence = true,
+            ConfidenceText = "95%",
+            ExtractedTotal = "25.74",
+            ExtractedSubtotal = "22.86",
+            ExtractedTax = "2.88",
+            ExtractedDiscount = "0.00",
+            ExtractedSupplier = "Independent Grocer",
+            SelectedPaymentMethod = "Debit Card"
+        };
+        vm.ProductOptions.Add(sampleProduct);
+        vm.SupplierOptions.Add(sampleSupplier);
+        vm.SelectedSupplier = sampleSupplier;
+        vm.LineItems.Add(new ScannedLineItemViewModel { Description = "CLSO TRAD PZA S MRJ", Quantity = "1", UnitPrice = "11.88", TotalPrice = "11.88", SelectedProduct = sampleProduct });
+        vm.LineItems.Add(new ScannedLineItemViewModel { Description = "CLSO SORNT ONION MRJ", Quantity = "1", UnitPrice = "2.97", TotalPrice = "2.97", ShowCreateProductSuggestion = true, SuggestedProductName = "Clso Sornt Onion" });
+        vm.LineItems.Add(new ScannedLineItemViewModel { Description = "UH SOYA SCE MRJ", Quantity = "1", UnitPrice = "4.79", TotalPrice = "4.79" });
+        return vm;
+    }
+
     #region Events
 
     /// <summary>
@@ -241,12 +274,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// Narrower for loading/error states, wider for results.
     /// NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult ? 1100 : 480);
+    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult ? 1100 : 520);
 
     /// <summary>
     /// Gets the modal height. NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalHeight => IsFullscreen ? double.NaN : 850;
+    public double ModalHeight => IsFullscreen ? double.NaN : (HasScanResult ? 850 : 400);
 
     /// <summary>
     /// Gets the modal margin. Zero when fullscreen, auto-centered otherwise.
@@ -268,6 +301,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnHasScanResultChanged(bool value)
     {
         OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
     }
 
     partial void OnIsFullscreenChanged(bool value)
