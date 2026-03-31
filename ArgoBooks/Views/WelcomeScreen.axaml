@@ -41,15 +41,10 @@
                 <StackPanel HorizontalAlignment="Center"
                             Margin="0,0,0,48">
                     <!-- App Logo -->
-                    <Border Width="80" Height="80"
-                            CornerRadius="16"
-                            Background="{DynamicResource PrimaryBrush}"
-                            HorizontalAlignment="Center"
-                            Margin="0,0,0,24">
-                        <PathIcon Data="{x:Static icons:Icons.DocumentNotes}"
-                                  Width="40" Height="40"
-                                  Foreground="White" />
-                    </Border>
+                    <Image Source="avares://ArgoBooks/Assets/Argo Books icon.png"
+                           Width="80" Height="80"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,24" />
 
                     <!-- Welcome Text -->
                     <TextBlock Text="{loc:Loc 'Welcome to Argo Books'}"
