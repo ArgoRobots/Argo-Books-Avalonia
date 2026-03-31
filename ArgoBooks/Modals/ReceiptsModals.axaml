@@ -572,6 +572,8 @@
                                                         Classes="primary-button"
                                                         Padding="12,4"
                                                         FontSize="12"
+                                                        MinHeight="0"
+                                                        Height="28"
                                                         VerticalContentAlignment="Center">
                                                     <TextBlock Text="{loc:Loc 'Create All Suggested Products'}" />
                                                 </Button>

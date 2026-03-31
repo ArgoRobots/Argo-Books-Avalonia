@@ -20,12 +20,22 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
+        <!-- Default MinHeight for borders (set via styles so compact variant can override) -->
+        <Style Selector="Border#EmptyStateBorder">
+            <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+        </Style>
+        <Style Selector="Border#DropdownBorder">
+            <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+        </Style>
         <!-- Compact variant: reduce MinHeight for line-item contexts -->
         <Style Selector="controls|SearchableDropdown.compact Border#EmptyStateBorder">
             <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
         </Style>
         <Style Selector="controls|SearchableDropdown.compact Border#DropdownBorder">
             <Setter Property="MinHeight" Value="{StaticResource FormControlHeightCompact}" />
+        </Style>
+        <Style Selector="controls|SearchableDropdown.compact TextBox#SearchTextBox">
+            <Setter Property="Padding" Value="8,4" />
         </Style>
     </UserControl.Styles>
 
@@ -51,7 +61,6 @@
                 Background="{DynamicResource SurfaceAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 Padding="8,6"
-                MinHeight="{StaticResource FormControlHeight}"
                 IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
@@ -71,7 +80,6 @@
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                MinHeight="{StaticResource FormControlHeight}"
                 Classes.error="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                 Classes.focused="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                 IsVisible="{Binding !ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
