@@ -1179,6 +1179,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CreateSuggestedProduct(ScannedLineItemViewModel? lineItem)
     {
+        CreateSuggestedProductCore(lineItem);
+        UpdateHasUnmatchedProducts();
+    }
+
+    private void CreateSuggestedProductCore(ScannedLineItemViewModel? lineItem)
+    {
         if (lineItem == null || string.IsNullOrEmpty(lineItem.SuggestedProductName))
             return;
 
@@ -1240,7 +1246,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         lineItem.ShowCreateProductSuggestion = false;
 
         companyData.MarkAsModified();
-        UpdateHasUnmatchedProducts();
     }
 
     /// <summary>
@@ -1252,8 +1257,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var unmatched = LineItems.Where(li => li.ShowCreateProductSuggestion).ToList();
         foreach (var lineItem in unmatched)
         {
-            CreateSuggestedProduct(lineItem);
+            CreateSuggestedProductCore(lineItem);
         }
+        UpdateHasUnmatchedProducts();
     }
 
     /// <summary>

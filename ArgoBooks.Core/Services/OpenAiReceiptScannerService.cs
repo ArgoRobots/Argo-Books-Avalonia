@@ -78,8 +78,7 @@ Rules:
 
             // Re-encode non-JPEG formats (BMP/PNG/TIFF) as JPEG to reduce payload size
             // without any resolution or quality loss. Never downscale — preserve full resolution.
-            var ext = Path.GetExtension(fileName).ToLowerInvariant();
-            if (ext is ".bmp" or ".tiff" or ".tif" or ".png")
+            if (extension is ".bmp" or ".tiff" or ".tif" or ".png")
             {
                 imageData = ReencodeAsJpeg(imageData);
                 fileName = Path.ChangeExtension(fileName, ".jpg");
@@ -175,15 +174,7 @@ Rules:
     {
         try
         {
-            // Clean up response - strip markdown code blocks if present
-            var cleanResponse = response.Trim();
-            if (cleanResponse.StartsWith("```"))
-            {
-                var startIndex = cleanResponse.IndexOf('\n') + 1;
-                var endIndex = cleanResponse.LastIndexOf("```", StringComparison.Ordinal);
-                if (endIndex > startIndex)
-                    cleanResponse = cleanResponse[startIndex..endIndex].Trim();
-            }
+            var cleanResponse = JsonResponseHelper.StripMarkdownCodeBlock(response);
 
             using var doc = JsonDocument.Parse(cleanResponse);
             var root = doc.RootElement;

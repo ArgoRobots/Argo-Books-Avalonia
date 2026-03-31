@@ -652,18 +652,8 @@ IMPORTANT:
         }
     }
 
-    private static string CleanJsonResponse(string response)
-    {
-        var cleaned = response.Trim();
-        if (cleaned.StartsWith("```"))
-        {
-            var startIndex = cleaned.IndexOf('\n') + 1;
-            var endIndex = cleaned.LastIndexOf("```", StringComparison.Ordinal);
-            if (endIndex > startIndex)
-                cleaned = cleaned[startIndex..endIndex].Trim();
-        }
-        return cleaned;
-    }
+    private static string CleanJsonResponse(string response) =>
+        JsonResponseHelper.StripMarkdownCodeBlock(response);
 
     private static string GetString(JsonElement el, string prop)
     {

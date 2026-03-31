@@ -273,17 +273,7 @@ Respond with JSON only.";
     {
         try
         {
-            // Clean up response - remove markdown code blocks if present
-            var cleanResponse = response.Trim();
-            if (cleanResponse.StartsWith("```"))
-            {
-                var startIndex = cleanResponse.IndexOf('\n') + 1;
-                var endIndex = cleanResponse.LastIndexOf("```", StringComparison.Ordinal);
-                if (endIndex > startIndex)
-                {
-                    cleanResponse = cleanResponse[startIndex..endIndex].Trim();
-                }
-            }
+            var cleanResponse = JsonResponseHelper.StripMarkdownCodeBlock(response);
 
             using var doc = JsonDocument.Parse(cleanResponse);
             var root = doc.RootElement;

@@ -161,9 +161,11 @@ public class OpenAiReceiptScannerServiceTests
         var result = OpenAiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(3.50m, result.Discount);
+        // Discount sums the "discount" field (3.50) + negative line item (3.50)
+        Assert.Equal(7.00m, result.Discount);
         Assert.Equal(23.50m, result.TotalAmount);
-        Assert.Equal(2, result.LineItems.Count);
+        // Negative line items are moved to discount, so only 1 product line item remains
+        Assert.Single(result.LineItems);
     }
 
     [Fact]
