@@ -153,6 +153,9 @@ public partial class HeaderViewModel : ViewModelBase
     private bool _hasUnsavedChanges;
 
     [ObservableProperty]
+    private bool _showSavingIndicator;
+
+    [ObservableProperty]
     private bool _showSavedIndicator;
 
     [ObservableProperty]
@@ -393,6 +396,8 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
+        if (HasUnsavedChanges)
+            ShowSavingIndicator = true;
         SaveRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -634,6 +639,8 @@ public partial class HeaderViewModel : ViewModelBase
     {
         try
         {
+            ShowSavingIndicator = false;
+
             // If already showing feedback, ignore this request
             if (ShowSavedIndicator || ShowNoChangesIndicator)
                 return;

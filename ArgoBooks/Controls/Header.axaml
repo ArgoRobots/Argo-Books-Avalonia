@@ -122,6 +122,13 @@
                                 </TextBlock.Transitions>
                             </TextBlock>
 
+                            <!-- "Saving..." indicator (shown while save is in progress) -->
+                            <TextBlock Text="{loc:Loc 'Saving...'}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding ShowSavingIndicator}" />
+
                             <!-- "Saved" indicator (temporary, shows when save clicked with changes) -->
                             <TextBlock Text="{loc:Loc Saved}"
                                        FontSize="12"

@@ -933,6 +933,7 @@ public class App : Application
                     }
                     catch (Exception ex)
                     {
+                        _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                         ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company on close");
                         await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
                     }
@@ -1812,12 +1813,14 @@ public class App : Application
                     return;
                 }
 
+                _appShellViewModel.HeaderViewModel.ShowSavingIndicator = true;
                 try
                 {
                     await CompanyManager.SaveCompanyAsync();
                 }
                 catch (Exception ex)
                 {
+                    _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                     ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company");
                     await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
                 }
