@@ -209,8 +209,7 @@
                     BoxShadow="0 8 32 0 #40000000">
                     <Border.Transitions>
                         <Transitions>
-                            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseInOut" />
-                            <DoubleTransition Property="Height" Duration="0:0:0.2" Easing="CubicEaseInOut" />
+                            <ThicknessTransition Property="Margin" Duration="0:0:0.2" Easing="CubicEaseInOut" />
                         </Transitions>
                     </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">

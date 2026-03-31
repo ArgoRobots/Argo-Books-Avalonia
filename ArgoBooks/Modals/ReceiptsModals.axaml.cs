@@ -77,11 +77,23 @@ public partial class ReceiptsModals : UserControl
 
     private void OnScanViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ReceiptsModalsViewModel.HasScanResult) &&
-            sender is ReceiptsModalsViewModel { HasScanResult: true })
+        if (sender is not ReceiptsModalsViewModel vm) return;
+
+        if (e.PropertyName == nameof(ReceiptsModalsViewModel.HasScanResult) && vm.HasScanResult)
         {
             // Reset zoom and fit when results first appear
             _scanZoomLevel = 1.0;
+            _ = FitScanPreviewAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptsModalsViewModel.IsScanReviewModalOpen) && vm.IsScanReviewModalOpen && vm.HasScanResult)
+        {
+            // Fit to window when modal re-opens with existing results
+            _scanZoomLevel = 1.0;
+            _ = FitScanPreviewAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptsModalsViewModel.IsFullscreen))
+        {
+            // Re-fit after fullscreen toggle changes viewport size
             _ = FitScanPreviewAfterLayoutAsync();
         }
     }
