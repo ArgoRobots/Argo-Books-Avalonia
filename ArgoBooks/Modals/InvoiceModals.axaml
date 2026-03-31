@@ -210,7 +210,7 @@
                                                                    VerticalAlignment="Stretch"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
-                                                                   Value="{Binding UnitPrice, Mode=TwoWay}"
+                                                                   Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
                                                                    Minimum="0"
                                                                    Maximum="999999999"
                                                                    FormatString="N2"
