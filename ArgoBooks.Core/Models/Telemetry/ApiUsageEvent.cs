@@ -15,7 +15,7 @@ public class ApiUsageEvent : TelemetryEvent
     public ApiName ApiName { get; set; }
 
     /// <summary>
-    /// Specific model used (for AI APIs like OpenAI).
+    /// Specific model used (for AI APIs like Gemini).
     /// </summary>
     public string? Model { get; set; }
 
@@ -41,9 +41,9 @@ public class ApiUsageEvent : TelemetryEvent
 public enum ApiName
 {
     /// <summary>
-    /// OpenAI API for AI features.
+    /// Gemini API for AI features.
     /// </summary>
-    OpenAI,
+    Gemini,
 
     /// <summary>
     /// Open Exchange Rates API for currency conversion.

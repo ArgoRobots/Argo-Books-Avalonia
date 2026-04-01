@@ -4,17 +4,17 @@ using Xunit;
 namespace ArgoBooks.Tests.Services;
 
 /// <summary>
-/// Tests for the OpenAiService class.
+/// Tests for the GeminiService class.
 /// </summary>
-public class OpenAiServiceTests
+public class GeminiServiceTests
 {
     #region IsConfigured Tests
 
     [Fact]
     public void IsConfigured_WithoutApiKey_ReturnsFalse()
     {
-        // Unless OPENAI_API_KEY is set in the environment, IsConfigured should reflect the env state
-        var service = new OpenAiService();
+        // Unless API key is set in the environment, IsConfigured should reflect the env state
+        var service = new GeminiService();
 
         // We can't guarantee false here since the env might have the key,
         // but we can verify it doesn't throw
@@ -28,7 +28,7 @@ public class OpenAiServiceTests
     [Fact]
     public async Task GetSupplierCategorySuggestionAsync_WithNullRequest_HandlesGracefully()
     {
-        var service = new OpenAiService();
+        var service = new GeminiService();
 
         // When not configured, should return null without throwing
         if (!service.IsConfigured)

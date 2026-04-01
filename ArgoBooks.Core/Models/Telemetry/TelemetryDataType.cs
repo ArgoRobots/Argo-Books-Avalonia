@@ -16,7 +16,7 @@ public enum TelemetryDataType
     Export,
 
     /// <summary>
-    /// API usage events (OpenAI, Exchange Rates, etc.).
+    /// API usage events (Gemini, Exchange Rates, etc.).
     /// </summary>
     ApiUsage,
 

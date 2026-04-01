@@ -84,16 +84,16 @@ public class SpreadsheetImportService
 {
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
-    private readonly IOpenAiService? _openAiService;
+    private readonly IGeminiService? _geminiService;
 
     /// <summary>
     /// Creates a new SpreadsheetImportService.
     /// </summary>
-    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IOpenAiService? openAiService = null)
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IGeminiService? geminiService = null)
     {
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
-        _openAiService = openAiService;
+        _geminiService = geminiService;
     }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
@@ -2431,7 +2431,7 @@ public class SpreadsheetImportService
 
 
         // Try AI categorization if the service is available
-        if (_openAiService?.IsConfigured == true)
+        if (_geminiService?.IsConfigured == true)
         {
             try
             {
@@ -2459,7 +2459,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
   {{ ""productName"": ""..."", ""categoryName"": ""..."" }}
 ]";
 
-                var response = await _openAiService.SendChatAsync(
+                var response = await _geminiService.SendChatAsync(
                     "You are a helpful assistant that categorizes business products. Always respond with valid JSON only, no markdown.",
                     prompt,
                     maxTokens: Math.Max(500, uncategorized.Count * 50),

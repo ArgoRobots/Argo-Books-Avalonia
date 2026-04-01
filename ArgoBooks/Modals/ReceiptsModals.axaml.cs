@@ -189,7 +189,7 @@ public partial class ReceiptsModals : UserControl
         var scaleX = viewportWidth / imageWidth;
         var scaleY = viewportHeight / imageHeight;
 
-        _scanZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
+        _scanZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), 0.01, MaxZoom);
         ApplyScanZoom();
     }
 

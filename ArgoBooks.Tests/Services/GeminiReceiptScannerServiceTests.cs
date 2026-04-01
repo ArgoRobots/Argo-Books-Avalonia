@@ -4,16 +4,16 @@ using Xunit;
 namespace ArgoBooks.Tests.Services;
 
 /// <summary>
-/// Tests for the OpenAiReceiptScannerService class.
+/// Tests for the GeminiReceiptScannerService class.
 /// </summary>
-public class OpenAiReceiptScannerServiceTests
+public class GeminiReceiptScannerServiceTests
 {
     #region IsConfigured Tests
 
     [Fact]
     public void IsConfigured_WithoutLicenseService_ReturnsFalse()
     {
-        var service = new OpenAiReceiptScannerService();
+        var service = new GeminiReceiptScannerService();
 
         Assert.False(service.IsConfigured);
     }
@@ -25,7 +25,7 @@ public class OpenAiReceiptScannerServiceTests
     [Fact]
     public async Task ValidateConfigurationAsync_WithoutLicenseService_ReturnsFalse()
     {
-        var service = new OpenAiReceiptScannerService();
+        var service = new GeminiReceiptScannerService();
 
         var result = await service.ValidateConfigurationAsync();
 
@@ -39,7 +39,7 @@ public class OpenAiReceiptScannerServiceTests
     [Fact]
     public async Task ScanReceiptFromFileAsync_FileNotFound_ReturnsFailedResult()
     {
-        var service = new OpenAiReceiptScannerService();
+        var service = new GeminiReceiptScannerService();
 
         var result = await service.ScanReceiptFromFileAsync("/nonexistent/file.jpg");
 
@@ -71,7 +71,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Walmart", result.SupplierName);
@@ -108,7 +108,7 @@ public class OpenAiReceiptScannerServiceTests
         ```
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Target", result.SupplierName);
@@ -125,7 +125,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.False(result.IsSuccess);
         Assert.Equal("Not a valid receipt", result.ErrorMessage);
@@ -134,7 +134,7 @@ public class OpenAiReceiptScannerServiceTests
     [Fact]
     public void ParseResponse_MalformedJson_ReturnsFailedResult()
     {
-        var result = OpenAiReceiptScannerService.ParseResponse("this is not json at all");
+        var result = GeminiReceiptScannerService.ParseResponse("this is not json at all");
 
         Assert.False(result.IsSuccess);
         Assert.Contains("Failed to parse", result.ErrorMessage);
@@ -158,7 +158,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         // Discount sums the "discount" field (3.50) + negative line item (3.50)
@@ -182,7 +182,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.SupplierName);
@@ -203,7 +203,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.LineItems);
@@ -226,7 +226,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2.69m, result.TaxAmount);
@@ -245,7 +245,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(5.50m, result.TaxAmount);
@@ -269,7 +269,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3.99m, result.Discount);
@@ -288,7 +288,7 @@ public class OpenAiReceiptScannerServiceTests
         }
         """;
 
-        var result = OpenAiReceiptScannerService.ParseResponse(json);
+        var result = GeminiReceiptScannerService.ParseResponse(json);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(5.00m, result.Discount);

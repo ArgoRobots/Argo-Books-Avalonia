@@ -3173,8 +3173,8 @@ public class App : Application
             return;
         }
 
-        var openAiService = new OpenAiService(ErrorLogger, TelemetryManager);
-        if (!openAiService.IsConfigured)
+        var geminiService = new GeminiService(ErrorLogger, TelemetryManager);
+        if (!geminiService.IsConfigured)
         {
             _mainWindowViewModel?.HideLoading();
             await ShowErrorMessageBoxAsync(
@@ -3183,8 +3183,8 @@ public class App : Application
             return;
         }
 
-        var analysisService = new SpreadsheetAnalysisService(openAiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
-        var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, openAiService);
+        var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
+        var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, geminiService);
 
         var analysisProgress = new Progress<(string detail, double percent)>(p =>
         {

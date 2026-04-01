@@ -356,7 +356,7 @@
                                                                         VerticalAlignment="Center">
                                                     <Image x:Name="ScanPreviewImage"
                                                            Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                           Stretch="Uniform" />
+                                                           Stretch="None" />
                                                 </LayoutTransformControl>
                                             </ScrollViewer>
                                         </Border>
@@ -373,7 +373,7 @@
                                                           Width="14" Height="14" />
                                             </Button>
                                             <Slider x:Name="ScanPreviewZoomSlider"
-                                                    Minimum="0.25"
+                                                    Minimum="0.01"
                                                     Maximum="4.0"
                                                     Width="80"
                                                     VerticalAlignment="Center"

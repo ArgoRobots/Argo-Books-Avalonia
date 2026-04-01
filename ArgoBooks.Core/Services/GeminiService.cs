@@ -8,12 +8,12 @@ using ArgoBooks.Core.Models.Telemetry;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// OpenAI API service for AI-powered supplier and category suggestions.
+/// Gemini API service for AI-powered supplier and category suggestions.
 /// Routes requests through the argorobots.com server proxy.
 /// </summary>
-public class OpenAiService : IOpenAiService, IDisposable
+public class GeminiService : IGeminiService, IDisposable
 {
-    private const string DefaultModel = "gpt-4o-mini";
+    private const string DefaultModel = "gemini-2.5-flash";
     private static readonly string ApiEndpoint = $"{ApiConfig.BaseUrl}/api/ai/completions.php";
 
     private readonly HttpClient _httpClient;
@@ -21,9 +21,9 @@ public class OpenAiService : IOpenAiService, IDisposable
     private readonly ITelemetryManager? _telemetryManager;
 
     /// <summary>
-    /// Creates a new instance of the OpenAI service.
+    /// Creates a new instance of the Gemini service.
     /// </summary>
-    public OpenAiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public GeminiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _httpClient = new HttpClient();
         _errorLogger = errorLogger;
@@ -64,14 +64,14 @@ public class OpenAiService : IOpenAiService, IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini API call failed");
             return null;
         }
         finally
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenAI,
+                ApiName.Gemini,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 model,
@@ -104,14 +104,14 @@ public class OpenAiService : IOpenAiService, IDisposable
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini API call failed");
             return null;
         }
         finally
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenAI,
+                ApiName.Gemini,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 model,
@@ -147,14 +147,14 @@ public class OpenAiService : IOpenAiService, IDisposable
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI Vision API call failed");
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini Vision API call failed");
             return null;
         }
         finally
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenAI,
+                ApiName.Gemini,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 model,
@@ -386,7 +386,7 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse OpenAI response");
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse Gemini response");
             return null;
         }
     }

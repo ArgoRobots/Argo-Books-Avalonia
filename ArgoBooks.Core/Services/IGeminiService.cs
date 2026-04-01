@@ -3,9 +3,9 @@ using ArgoBooks.Core.Models.AI;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Service interface for OpenAI API interactions.
+/// Service interface for Gemini API interactions.
 /// </summary>
-public interface IOpenAiService
+public interface IGeminiService
 {
     /// <summary>
     /// Whether the service is configured with valid API credentials.
@@ -23,7 +23,7 @@ public interface IOpenAiService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sends a generic chat completion request to the OpenAI API.
+    /// Sends a generic chat completion request to the Gemini API.
     /// </summary>
     /// <param name="systemPrompt">The system prompt.</param>
     /// <param name="userPrompt">The user prompt.</param>

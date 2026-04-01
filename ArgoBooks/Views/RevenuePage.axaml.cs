@@ -36,7 +36,6 @@ public partial class RevenuePage : UserControl
         try
         {
             if (App.ReceiptsModalsViewModel == null) return;
-            if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
 
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;

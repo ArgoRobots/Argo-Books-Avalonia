@@ -198,6 +198,12 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [ObservableProperty]
     private string _receiptFileName = "No receipt attached";
 
+    [ObservableProperty]
+    private bool _hasTotalMismatchWarning;
+
+    [ObservableProperty]
+    private string _totalMismatchWarningMessage = string.Empty;
+
     protected string? ReceiptFilePath;
 
     // Save error state for offline USD conversion failures
@@ -352,6 +358,33 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         OnPropertyChanged(nameof(ShippingAmountFormatted));
         OnPropertyChanged(nameof(FeeAmountFormatted));
         OnPropertyChanged(nameof(TotalFormatted));
+    }
+
+    /// <summary>
+    /// Compares the recomputed total against the stored transaction total
+    /// and shows a warning if they don't match (e.g. from AI receipt scan data).
+    /// </summary>
+    protected void ValidateTotalMismatch(decimal storedTotal)
+    {
+        HasTotalMismatchWarning = false;
+        TotalMismatchWarningMessage = string.Empty;
+
+        if (storedTotal == 0) return;
+
+        var diff = Math.Abs(Total - storedTotal);
+        if (diff > 0.02m)
+        {
+            HasTotalMismatchWarning = true;
+            TotalMismatchWarningMessage = string.Format(
+                "Line items ({0}) + tax ({1}) + shipping ({2}) + fee ({3}) - discount ({4}) = {5}, but the stored total is {6}. Some values may be incorrect.".Translate(),
+                CurrencyService.Format(Subtotal),
+                CurrencyService.Format(TaxAmount),
+                CurrencyService.Format(ShippingAmount),
+                CurrencyService.Format(FeeAmount),
+                CurrencyService.Format(DiscountAmount),
+                CurrencyService.Format(Total),
+                CurrencyService.Format(storedTotal));
+        }
     }
 
     #endregion
@@ -622,6 +655,12 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         }
 
         ClearValidationErrors();
+
+        // Check if stored total matches recomputed total (catches AI receipt scan mismatches)
+        var storedTotal = needsConversion
+            ? CurrencyService.GetDisplayAmount(transaction.TotalUSD > 0 ? transaction.TotalUSD : transaction.Total, transaction.Date)
+            : transaction.Total;
+        ValidateTotalMismatch(storedTotal);
 
         // Capture original values for change detection
         CaptureOriginalValues();
@@ -1012,6 +1051,8 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         HasSaveError = false;
         SaveErrorMessage = string.Empty;
         IsSavingTransaction = false;
+        HasTotalMismatchWarning = false;
+        TotalMismatchWarningMessage = string.Empty;
     }
 
     #endregion

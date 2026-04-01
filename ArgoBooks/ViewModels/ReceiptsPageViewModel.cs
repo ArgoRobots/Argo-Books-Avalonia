@@ -3,6 +3,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
@@ -345,7 +346,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(filePath)) return;
         if (App.ReceiptsModalsViewModel == null) return;
-        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
 
         await App.ReceiptsModalsViewModel.OpenScanModalAsync(filePath);
     }
@@ -631,11 +631,10 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             // Create temp file from Base64 data stored in company file
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, receipt.FileName);
-            if (File.Exists(tempPath))
-                return tempPath;
+            var tempPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
             var bytes = Convert.FromBase64String(receipt.FileData);
-            File.WriteAllBytes(tempPath, bytes);
+            var oriented = ReceiptImageHelper.FixOrientation(bytes);
+            File.WriteAllBytes(tempPath, oriented);
             return tempPath;
         }
         catch
@@ -662,9 +661,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     private async Task AiScanReceipt()
     {
         if (App.ReceiptsModalsViewModel == null) return;
-        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
 
-        // Trigger file picker in the view
+        // Trigger file picker in the view — usage limit is checked after modal opens
         ScanFileRequested?.Invoke(this, EventArgs.Empty);
     }
 

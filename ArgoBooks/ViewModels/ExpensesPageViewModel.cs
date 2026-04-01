@@ -2,6 +2,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Helpers;
@@ -675,11 +676,12 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         {
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, receipt.FileName);
+            var tempPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
             if (File.Exists(tempPath))
                 return tempPath;
             var bytes = Convert.FromBase64String(receipt.FileData);
-            File.WriteAllBytes(tempPath, bytes);
+            var oriented = ReceiptImageHelper.FixOrientation(bytes);
+            File.WriteAllBytes(tempPath, oriented);
             return tempPath;
         }
         catch

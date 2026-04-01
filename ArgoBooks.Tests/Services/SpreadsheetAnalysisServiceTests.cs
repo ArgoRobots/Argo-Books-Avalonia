@@ -9,9 +9,9 @@ namespace ArgoBooks.Tests.Services;
 public class SpreadsheetAnalysisServiceTests
 {
     /// <summary>
-    /// Mock OpenAI service for testing analysis without real API calls.
+    /// Mock Gemini service for testing analysis without real API calls.
     /// </summary>
-    private class MockOpenAiService : IOpenAiService
+    private class MockGeminiService : IGeminiService
     {
         public bool IsConfigured => true;
         public string? LastSystemPrompt { get; private set; }
@@ -44,7 +44,7 @@ public class SpreadsheetAnalysisServiceTests
     [Fact]
     public async Task AnalyzeAsync_WithNullResponse_ReturnsNull()
     {
-        var mock = new MockOpenAiService { ResponseToReturn = null };
+        var mock = new MockGeminiService { ResponseToReturn = null };
         var service = new SpreadsheetAnalysisService(mock);
 
         // This will return null since there's no real file, but tests the null response path

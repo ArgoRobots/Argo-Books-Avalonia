@@ -5,7 +5,7 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Shared image compression and format utilities for receipt scanning services.
 /// </summary>
-internal static class ReceiptImageHelper
+public static class ReceiptImageHelper
 {
     /// <summary>
     /// Compresses an image to fit within the max file size for scanning.
@@ -79,8 +79,41 @@ internal static class ReceiptImageHelper
     }
 
     /// <summary>
+    /// Applies EXIF orientation correction so the image displays right-side up.
+    /// Returns the original bytes if no rotation is needed or the format is unsupported.
+    /// </summary>
+    public static byte[] FixOrientation(byte[] imageData)
+    {
+        using var codec = SKCodec.Create(new MemoryStream(imageData));
+        if (codec == null)
+            return imageData;
+
+        var origin = codec.EncodedOrigin;
+        if (origin == SKEncodedOrigin.TopLeft)
+            return imageData; // Already correct
+
+        using var original = SKBitmap.Decode(imageData);
+        if (original == null)
+            return imageData;
+
+        var swapDims = origin is SKEncodedOrigin.LeftBottom or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightBottom;
+        var outWidth = swapDims ? original.Height : original.Width;
+        var outHeight = swapDims ? original.Width : original.Height;
+
+        using var surface = SKSurface.Create(new SKImageInfo(outWidth, outHeight));
+        var canvas = surface.Canvas;
+        ApplyExifTransform(canvas, origin, original.Width, original.Height, outWidth, outHeight);
+        canvas.DrawBitmap(original, 0, 0);
+
+        using var snapshot = surface.Snapshot();
+        using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 90);
+        return encoded.ToArray();
+    }
+
+    /// <summary>
     /// Preprocesses a receipt image to improve OCR accuracy.
-    /// Applies grayscale, contrast boost, light denoise, and sharpening.
+    /// Applies EXIF orientation fix, contrast boost, and sharpening.
     /// PDFs are returned unchanged.
     /// </summary>
     internal static byte[] PreprocessForOcr(byte[] imageData, string fileName)
@@ -89,33 +122,41 @@ internal static class ReceiptImageHelper
         if (extension == ".pdf")
             return imageData;
 
+        // Use SKCodec to read EXIF orientation, then decode with correct rotation applied.
+        using var codec = SKCodec.Create(new MemoryStream(imageData));
+        if (codec == null)
+            return imageData;
+
+        var origin = codec.EncodedOrigin;
         using var original = SKBitmap.Decode(imageData);
         if (original == null)
             return imageData;
 
-        // Apply grayscale + contrast boost as a combined color matrix.
-        // Grayscale uses standard luminance weights (0.2126 R, 0.7152 G, 0.0722 B).
-        // Contrast multiplier of 1.5 with a bias shift keeps midtones centered.
-        const float contrast = 1.5f;
-        const float contrastBias = (1f - contrast) / 2f;
-        float[] grayscaleContrast =
-        [
-            0.2126f * contrast, 0.2126f * contrast, 0.2126f * contrast, 0, 0,
-            0.7152f * contrast, 0.7152f * contrast, 0.7152f * contrast, 0, 0,
-            0.0722f * contrast, 0.0722f * contrast, 0.0722f * contrast, 0, 0,
-            0,                  0,                  0,                  1, 0,
-            contrastBias,       contrastBias,       contrastBias,       0, 1
-        ];
-        var colorFilter = SKColorFilter.CreateColorMatrix(grayscaleContrast);
+        // Determine output dimensions — swap width/height for 90°/270° rotations.
+        var swapDims = origin is SKEncodedOrigin.LeftBottom or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightBottom;
+        var outWidth = swapDims ? original.Height : original.Width;
+        var outHeight = swapDims ? original.Width : original.Height;
 
-        // Light Gaussian blur (sigma 0.5) to reduce speckle noise,
-        // then sharpen via unsharp-mask convolution to restore text edges.
-        var denoiseFilter = SKImageFilter.CreateBlur(0.5f, 0.5f);
+        // Mild contrast boost (1.2x) to help faded thermal receipts.
+        // Keeps color intact — GPT-4o vision uses color to parse receipts.
+        const float contrast = 1.2f;
+        const float bias = (1f - contrast) / 2f;
+        float[] contrastMatrix =
+        [
+            contrast, 0,        0,        0, bias,
+            0,        contrast, 0,        0, bias,
+            0,        0,        contrast, 0, bias,
+            0,        0,        0,        1, 0
+        ];
+        var colorFilter = SKColorFilter.CreateColorMatrix(contrastMatrix);
+
+        // Light sharpen to improve text edge clarity for blurry phone photos.
         var sharpenKernel = new float[]
         {
-             0, -1,  0,
-            -1,  5, -1,
-             0, -1,  0
+             0, -0.5f,  0,
+            -0.5f,  3, -0.5f,
+             0, -0.5f,  0
         };
         var sharpenFilter = SKImageFilter.CreateMatrixConvolution(
             new SKSizeI(3, 3),
@@ -124,11 +165,12 @@ internal static class ReceiptImageHelper
             bias: 0f,
             kernelOffset: new SKPointI(1, 1),
             tileMode: SKShaderTileMode.Clamp,
-            convolveAlpha: false,
-            input: denoiseFilter);
+            convolveAlpha: false);
 
-        using var surface = SKSurface.Create(new SKImageInfo(original.Width, original.Height));
+        using var surface = SKSurface.Create(new SKImageInfo(outWidth, outHeight));
         var canvas = surface.Canvas;
+
+        ApplyExifTransform(canvas, origin, original.Width, original.Height, outWidth, outHeight);
 
         using var paint = new SKPaint();
         paint.ColorFilter = colorFilter;
@@ -136,6 +178,7 @@ internal static class ReceiptImageHelper
         canvas.DrawBitmap(original, 0, 0, paint);
 
         using var snapshot = surface.Snapshot();
+        // Match original file size — use quality 85 to avoid inflating compressed JPEGs.
         using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 95);
         return encoded.ToArray();
     }
@@ -153,5 +196,39 @@ internal static class ReceiptImageHelper
         using var canvas = new SKCanvas(resized);
         canvas.DrawBitmap(source, new SKRect(0, 0, width, height));
         return resized;
+    }
+
+    private static void ApplyExifTransform(SKCanvas canvas, SKEncodedOrigin origin,
+        int srcWidth, int srcHeight, int outWidth, int outHeight)
+    {
+        switch (origin)
+        {
+            case SKEncodedOrigin.TopRight:
+                canvas.Scale(-1, 1, outWidth / 2f, 0);
+                break;
+            case SKEncodedOrigin.BottomRight:
+                canvas.RotateDegrees(180, outWidth / 2f, outHeight / 2f);
+                break;
+            case SKEncodedOrigin.BottomLeft:
+                canvas.Scale(1, -1, 0, outHeight / 2f);
+                break;
+            case SKEncodedOrigin.LeftTop:
+                canvas.RotateDegrees(90, 0, 0);
+                canvas.Scale(1, -1, srcHeight / 2f, 0);
+                break;
+            case SKEncodedOrigin.RightTop:
+                canvas.Translate(outWidth, 0);
+                canvas.RotateDegrees(90);
+                break;
+            case SKEncodedOrigin.RightBottom:
+                canvas.Translate(outWidth, 0);
+                canvas.RotateDegrees(90);
+                canvas.Scale(1, -1, 0, srcWidth / 2f);
+                break;
+            case SKEncodedOrigin.LeftBottom:
+                canvas.Translate(0, outHeight);
+                canvas.RotateDegrees(270);
+                break;
+        }
     }
 }

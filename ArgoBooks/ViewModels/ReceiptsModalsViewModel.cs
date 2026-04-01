@@ -561,25 +561,22 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         LoadSupplierOptions();
         LoadProductOptions();
 
-        // Set the image path for preview
-        if (!string.IsNullOrEmpty(tempFilePath) && File.Exists(tempFilePath))
-        {
-            ReceiptImagePath = tempFilePath;
-        }
-        else
-        {
-            // Create temp file for preview
-            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "ScanPreview");
-            Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, fileName);
-            await File.WriteAllBytesAsync(tempPath, imageData);
-            ReceiptImagePath = tempPath;
-        }
-
+        // Show modal immediately with loading state
         IsScanReviewModalOpen = true;
         IsScanning = true;
         HasScanError = false;
         HasScanResult = false;
+
+        // Fix EXIF orientation off the UI thread, then set preview
+        _ = Task.Run(() => ReceiptImageHelper.FixOrientation(imageData)).ContinueWith(async t =>
+        {
+            var orientedData = t.Result;
+            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "ScanPreview");
+            Directory.CreateDirectory(tempDir);
+            var previewPath = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
+            await File.WriteAllBytesAsync(previewPath, orientedData);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
+        }, TaskScheduler.Default);
 
         // Start scanning
         await ScanReceiptAsync();
@@ -914,7 +911,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         string? fileData = null;
         if (_currentImageData != null)
         {
-            fileData = Convert.ToBase64String(_currentImageData);
+            var imageBytes = _currentImageData;
+            fileData = await Task.Run(() =>
+            {
+                var orientedData = ReceiptImageHelper.FixOrientation(imageBytes);
+                return Convert.ToBase64String(orientedData);
+            });
         }
 
         if (IsRevenue)
@@ -1249,9 +1251,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private async Task GetAiSuggestionsAsync(ReceiptScanResult result)
     {
-        var openAiService = new OpenAiService(App.ErrorLogger, App.TelemetryManager);
+        var geminiService = new GeminiService(App.ErrorLogger, App.TelemetryManager);
 
-        if (!openAiService.IsConfigured)
+        if (!geminiService.IsConfigured)
         {
             // Fall back to basic matching
             TryBasicSupplierMatch(result.SupplierName);
@@ -1291,7 +1293,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     }).ToList()
             };
 
-            var suggestion = await openAiService.GetSupplierCategorySuggestionAsync(request);
+            var suggestion = await geminiService.GetSupplierCategorySuggestionAsync(request);
 
             if (suggestion != null)
             {
@@ -1714,7 +1716,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService CreateScannerService()
     {
-        return new OpenAiReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
+        return new GeminiReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
     }
 
     private IReceiptUsageService CreateUsageService()

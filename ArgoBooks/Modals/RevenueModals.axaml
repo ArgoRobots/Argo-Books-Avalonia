@@ -335,6 +335,19 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Total Mismatch Warning -->
+                            <Border IsVisible="{Binding HasTotalMismatchWarning}"
+                                    Background="#33FFA500"
+                                    BorderBrush="#FFA500"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="12,8">
+                                <TextBlock Text="{Binding TotalMismatchWarningMessage}"
+                                           FontSize="12"
+                                           Foreground="#FFA500"
+                                           TextWrapping="Wrap" />
+                            </Border>
+
                             <!-- Saving/Loading State -->
                             <Border Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"

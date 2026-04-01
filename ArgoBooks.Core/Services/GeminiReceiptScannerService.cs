@@ -5,16 +5,15 @@ using SkiaSharp;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Receipt scanning service using GPT-4o-mini vision through the argorobots.com proxy.
-/// Replaces Azure Document Intelligence with better product name extraction and discount support.
+/// Receipt scanning service using Gemini 2.5 Flash vision through the argorobots.com proxy.
 /// </summary>
-public class OpenAiReceiptScannerService(
+public class GeminiReceiptScannerService(
     LicenseService? licenseService = null,
     IErrorLogger? errorLogger = null,
     ITelemetryManager? telemetryManager = null)
     : IReceiptScannerService, IDisposable
 {
-    private readonly OpenAiService _openAiService = new(errorLogger, telemetryManager);
+    private readonly GeminiService _geminiService = new(errorLogger, telemetryManager);
 
     private const string SystemPrompt = @"You are a receipt data extraction system. You must extract EVERY item and ALL data from the receipt image into structured JSON. Be thorough — missing items is unacceptable.
 
@@ -46,11 +45,11 @@ Rules:
 9. DATE — YYYY-MM-DD format. Best guess if only partial date is visible.
 10. CURRENCY — Infer the currency from location clues on the receipt: store address, city, province/state, country name, language, tax labels (e.g. GST/PST = CAD, VAT/TVA = EUR/GBP, IVA = EUR/MXN), and currency symbols ($ is ambiguous, £ = GBP, € = EUR, ¥ = JPY/CNY). Map the identified country to its ISO 4217 currency code. Default to ""USD"" only if there are genuinely no location or currency clues.
 11. PAYMENT METHOD — One of ""Credit Card"", ""Debit Card"", ""Cash"", ""Check"", or null. ""MASTERCARD"", ""VISA"", ""AMEX"" = ""Credit Card"". ""INTERAC"", ""DEBIT"" = ""Debit Card"".
-12. QUANTITY — Default to 1 if not shown. For weighted items (e.g. ""1.340 kg @ $1.92/kg""), use the weight as quantity and per-unit rate as unitPrice.
+12. QUANTITY — Default to 1. For weighted/per-unit items (e.g. ""1.340 kg @ $1.92/kg  2.57""), the rate line is NOT a separate line item. Use the FINAL COMPUTED PRICE on the right (2.57) as both unitPrice and totalPrice, and set quantity to 1. Ignore the per-unit rate and weight — the user only cares about the amount paid. These rate lines often contain ""@"", ""/"", ""kg"", ""lb"", ""per"", or appear indented below the product name.
 13. SUPPLIER - This is often the largest and boldest text on the receipt, and usually at the very top.
 14. SPATIAL ALIGNMENT — Grocery receipts use a two-column layout: product name on the LEFT, its price on the RIGHT of the SAME row. Match each product name to the price that is horizontally aligned with it, NOT the price on the row above or below. Characters on the same printed line share the same vertical position even if there is a large horizontal gap between the name and the price. If a line has only a name with no price on its right, it is likely a description or category header — do not assign it a price from an adjacent row. IMPORTANT: The receipt photo may be tilted or at an angle. Mentally straighten the image first, then read each row. Two items at the same vertical position on a tilted receipt will appear at slightly different heights in the photo — follow the angle of the printed text lines, not strict horizontal.
 15. CROSS-CHECK — After extracting all items, count the number of distinct price values visible on the right side of the receipt and compare to the number of line items you extracted. If you have fewer line items than prices, you missed an item — re-scan. Every price on the receipt must be accounted for as either a line item, a tax, a discount, or a total/subtotal.
-16. ARITHMETIC VERIFICATION — After extraction, sum all lineItems[].totalPrice values. This sum MUST equal the subtotal. If it does not, one or more numbers are wrong. Go back to the receipt image and re-read every price character by character until the sum matches. Common OCR mistakes: 3↔8, 5↔6, 1↔7, 0↔6, missing decimal points, swapped digits (e.g. 4.59 read as 4.95). Also verify: subtotal + sum(taxes[].amount) - sum(discounts[].amount) = totalAmount. If this does not balance, re-examine the tax and discount amounts. Do NOT return results where the math does not add up — keep re-reading until it does, or lower your confidence below 0.5 if the receipt is too damaged to reconcile.";
+16. DIGIT ACCURACY — Pay close attention to easily confused digits: 3↔8, 5↔6, 1↔7, 0↔6, swapped digits. When uncertain, look at the digit shape carefully before committing to a value.";
 
     /// <inheritdoc />
     public bool IsConfigured => licenseService?.GetLicenseKey() != null || licenseService?.GetDeviceId() != null;
@@ -70,7 +69,7 @@ Rules:
                 return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
 
-            // PDF is not supported by GPT vision
+            // PDF is not supported by vision APIs
             var extension = Path.GetExtension(fileName).ToLowerInvariant();
             if (extension == ".pdf")
             {
@@ -98,15 +97,15 @@ Rules:
             // Convert to base64 for vision API
             var base64Image = Convert.ToBase64String(imageData);
 
-            // Call GPT-4o vision for scanning on receipts
-            var response = await _openAiService.SendVisionChatAsync(
+            // Call Gemini 2.5 Flash vision for receipt scanning
+            var response = await _geminiService.SendVisionChatAsync(
                 SystemPrompt,
                 "Extract all data from this receipt image. Respond with JSON only.",
                 base64Image,
                 mimeType,
-                maxTokens: 4000,
-                temperature: 0.1,
-                model: "gpt-4o",
+                maxTokens: 8000,
+                temperature: 0.0,
+                model: "gemini-2.5-flash",
                 cancellationToken: cancellationToken);
 
             if (string.IsNullOrEmpty(response))
@@ -115,8 +114,10 @@ Rules:
             }
 
             var result = ParseResponse(response);
-            if (result.IsSuccess)
+            if (result.IsSuccess && result.LineItems.Count > 0)
             {
+                // Verification pass: ask the model to find any items it missed
+                result = await VerifyAndFillMissingItemsAsync(result, base64Image, mimeType, cancellationToken);
                 success = true;
                 _ = telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, cancellationToken: cancellationToken);
             }
@@ -140,7 +141,7 @@ Rules:
         {
             stopwatch.Stop();
             _ = telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenAI,
+                ApiName.Gemini,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 cancellationToken: cancellationToken);
@@ -171,6 +172,104 @@ Rules:
     public Task<bool> ValidateConfigurationAsync()
     {
         return Task.FromResult(IsConfigured);
+    }
+
+    private const string VerificationPrompt = @"You previously extracted these line items from a receipt image. Look at the receipt again carefully and check if ANY items were missed.
+
+Extracted items:
+{0}
+
+Look at EVERY price on the right side of the receipt. If any product with a price was NOT included in the list above, return ONLY the missing items in this JSON format. Use ""insertAfter"" to indicate where the item belongs — set it to the number of the item it should appear after (based on receipt order), or 0 if it should be first:
+{{""missingItems"": [{{""insertAfter"": 3, ""description"": ""Product Name"", ""quantity"": 1, ""unitPrice"": 0.00, ""totalPrice"": 0.00, ""confidence"": 0.9}}]}}
+
+If nothing was missed, return: {{""missingItems"": []}}";
+
+    /// <summary>
+    /// Sends the receipt image back with the extracted items and asks the model to find anything missed.
+    /// </summary>
+    private async Task<ReceiptScanResult> VerifyAndFillMissingItemsAsync(
+        ReceiptScanResult result, string base64Image, string mimeType, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var itemList = string.Join("\n", result.LineItems.Select((li, i) =>
+                $"{i + 1}. {li.Description} — {li.TotalPrice:F2}"));
+
+            var prompt = string.Format(VerificationPrompt, itemList);
+
+            var verifyResponse = await _geminiService.SendVisionChatAsync(
+                "You are a receipt verification system. Check if any line items were missed. Return JSON only.",
+                prompt,
+                base64Image,
+                mimeType,
+                maxTokens: 4000,
+                temperature: 0.0,
+                model: "gemini-2.5-flash",
+                cancellationToken: cancellationToken);
+
+            if (string.IsNullOrEmpty(verifyResponse))
+                return result;
+
+            var cleaned = JsonResponseHelper.StripMarkdownCodeBlock(verifyResponse);
+            using var doc = JsonDocument.Parse(cleaned);
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("missingItems", out var missingItems) || missingItems.ValueKind != JsonValueKind.Array)
+                return result;
+
+            // Collect missing items with their insertion positions, then insert
+            // in reverse order so earlier insertions don't shift later indices
+            var toInsert = new List<(int position, ScannedLineItem item)>();
+
+            foreach (var item in missingItems.EnumerateArray())
+            {
+                var lineItem = new ScannedLineItem();
+                var hasData = false;
+
+                if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
+                {
+                    lineItem.Description = desc.GetString() ?? "";
+                    hasData = true;
+                }
+
+                if (item.TryGetProperty("quantity", out var qty) && qty.ValueKind == JsonValueKind.Number)
+                    lineItem.Quantity = qty.GetDecimal();
+
+                if (item.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind == JsonValueKind.Number)
+                    lineItem.UnitPrice = unitPrice.GetDecimal();
+
+                if (item.TryGetProperty("totalPrice", out var totalPrice) && totalPrice.ValueKind == JsonValueKind.Number)
+                {
+                    lineItem.TotalPrice = totalPrice.GetDecimal();
+                    hasData = true;
+                }
+
+                if (item.TryGetProperty("confidence", out var conf) && conf.ValueKind == JsonValueKind.Number)
+                    lineItem.Confidence = conf.GetDouble();
+
+                if (!hasData || lineItem.TotalPrice < 0) continue;
+
+                var insertAfter = 0;
+                if (item.TryGetProperty("insertAfter", out var pos) && pos.ValueKind == JsonValueKind.Number)
+                    insertAfter = pos.GetInt32();
+
+                // Clamp to valid range
+                var insertIndex = Math.Clamp(insertAfter, 0, result.LineItems.Count);
+                toInsert.Add((insertIndex, lineItem));
+            }
+
+            // Insert in reverse order of position so indices stay stable
+            foreach (var (position, lineItem) in toInsert.OrderByDescending(x => x.position))
+            {
+                result.LineItems.Insert(position, lineItem);
+            }
+        }
+        catch
+        {
+            // Verification is best-effort — don't fail the whole scan
+        }
+
+        return result;
     }
 
     // IMPORTANT: Make this internal so tests can call it
@@ -329,6 +428,6 @@ Rules:
 
     public void Dispose()
     {
-        _openAiService.Dispose();
+        _geminiService.Dispose();
     }
 }
