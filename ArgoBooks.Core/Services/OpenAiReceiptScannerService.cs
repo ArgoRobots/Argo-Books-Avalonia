@@ -49,7 +49,8 @@ Rules:
 12. QUANTITY — Default to 1 if not shown. For weighted items (e.g. ""1.340 kg @ $1.92/kg""), use the weight as quantity and per-unit rate as unitPrice.
 13. SUPPLIER - This is often the largest and boldest text on the receipt, and usually at the very top.
 14. SPATIAL ALIGNMENT — Grocery receipts use a two-column layout: product name on the LEFT, its price on the RIGHT of the SAME row. Match each product name to the price that is horizontally aligned with it, NOT the price on the row above or below. Characters on the same printed line share the same vertical position even if there is a large horizontal gap between the name and the price. If a line has only a name with no price on its right, it is likely a description or category header — do not assign it a price from an adjacent row. IMPORTANT: The receipt photo may be tilted or at an angle. Mentally straighten the image first, then read each row. Two items at the same vertical position on a tilted receipt will appear at slightly different heights in the photo — follow the angle of the printed text lines, not strict horizontal.
-15. CROSS-CHECK — After extracting all items, count the number of distinct price values visible on the right side of the receipt and compare to the number of line items you extracted. If you have fewer line items than prices, you missed an item — re-scan. Every price on the receipt must be accounted for as either a line item, a tax, a discount, or a total/subtotal.";
+15. CROSS-CHECK — After extracting all items, count the number of distinct price values visible on the right side of the receipt and compare to the number of line items you extracted. If you have fewer line items than prices, you missed an item — re-scan. Every price on the receipt must be accounted for as either a line item, a tax, a discount, or a total/subtotal.
+16. ARITHMETIC VERIFICATION — After extraction, sum all lineItems[].totalPrice values. This sum MUST equal the subtotal. If it does not, one or more numbers are wrong. Go back to the receipt image and re-read every price character by character until the sum matches. Common OCR mistakes: 3↔8, 5↔6, 1↔7, 0↔6, missing decimal points, swapped digits (e.g. 4.59 read as 4.95). Also verify: subtotal + sum(taxes[].amount) - sum(discounts[].amount) = totalAmount. If this does not balance, re-examine the tax and discount amounts. Do NOT return results where the math does not add up — keep re-reading until it does, or lower your confidence below 0.5 if the receipt is too damaged to reconcile.";
 
     /// <inheritdoc />
     public bool IsConfigured => licenseService?.GetLicenseKey() != null || licenseService?.GetDeviceId() != null;
@@ -76,12 +77,15 @@ Rules:
                 return ReceiptScanResult.Failed("PDF receipt scanning is not supported. Please convert to JPEG or PNG.");
             }
 
+            // Preprocess image to improve OCR accuracy (grayscale, contrast, sharpen)
+            imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
+            fileName = Path.ChangeExtension(fileName, ".jpg");
+
             // Re-encode non-JPEG formats (BMP/PNG/TIFF) as JPEG to reduce payload size
             // without any resolution or quality loss. Never downscale — preserve full resolution.
             if (extension is ".bmp" or ".tiff" or ".tif" or ".png")
             {
                 imageData = ReencodeAsJpeg(imageData);
-                fileName = Path.ChangeExtension(fileName, ".jpg");
             }
 
             // Validate file type

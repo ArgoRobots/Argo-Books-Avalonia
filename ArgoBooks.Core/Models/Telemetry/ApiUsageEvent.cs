@@ -56,9 +56,9 @@ public enum ApiName
     GoogleSheets,
 
     /// <summary>
-    /// Azure Document Intelligence for receipt scanning.
+    /// Server proxy for GPT-4o receipt scanning.
     /// </summary>
-    AzureDocumentIntelligence,
+    ReceiptScanProxy,
 
     /// <summary>
     /// Microsoft Translator API.

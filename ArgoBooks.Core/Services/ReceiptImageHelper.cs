@@ -78,6 +78,68 @@ internal static class ReceiptImageHelper
         };
     }
 
+    /// <summary>
+    /// Preprocesses a receipt image to improve OCR accuracy.
+    /// Applies grayscale, contrast boost, light denoise, and sharpening.
+    /// PDFs are returned unchanged.
+    /// </summary>
+    internal static byte[] PreprocessForOcr(byte[] imageData, string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        if (extension == ".pdf")
+            return imageData;
+
+        using var original = SKBitmap.Decode(imageData);
+        if (original == null)
+            return imageData;
+
+        // Apply grayscale + contrast boost as a combined color matrix.
+        // Grayscale uses standard luminance weights (0.2126 R, 0.7152 G, 0.0722 B).
+        // Contrast multiplier of 1.5 with a bias shift keeps midtones centered.
+        const float contrast = 1.5f;
+        const float contrastBias = (1f - contrast) / 2f;
+        float[] grayscaleContrast =
+        [
+            0.2126f * contrast, 0.2126f * contrast, 0.2126f * contrast, 0, 0,
+            0.7152f * contrast, 0.7152f * contrast, 0.7152f * contrast, 0, 0,
+            0.0722f * contrast, 0.0722f * contrast, 0.0722f * contrast, 0, 0,
+            0,                  0,                  0,                  1, 0,
+            contrastBias,       contrastBias,       contrastBias,       0, 1
+        ];
+        var colorFilter = SKColorFilter.CreateColorMatrix(grayscaleContrast);
+
+        // Light Gaussian blur (sigma 0.5) to reduce speckle noise,
+        // then sharpen via unsharp-mask convolution to restore text edges.
+        var denoiseFilter = SKImageFilter.CreateBlur(0.5f, 0.5f);
+        var sharpenKernel = new float[]
+        {
+             0, -1,  0,
+            -1,  5, -1,
+             0, -1,  0
+        };
+        var sharpenFilter = SKImageFilter.CreateMatrixConvolution(
+            new SKSizeI(3, 3),
+            sharpenKernel,
+            gain: 1f,
+            bias: 0f,
+            kernelOffset: new SKPointI(1, 1),
+            tileMode: SKShaderTileMode.Clamp,
+            convolveAlpha: false,
+            input: denoiseFilter);
+
+        using var surface = SKSurface.Create(new SKImageInfo(original.Width, original.Height));
+        var canvas = surface.Canvas;
+
+        using var paint = new SKPaint();
+        paint.ColorFilter = colorFilter;
+        paint.ImageFilter = sharpenFilter;
+        canvas.DrawBitmap(original, 0, 0, paint);
+
+        using var snapshot = surface.Snapshot();
+        using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 95);
+        return encoded.ToArray();
+    }
+
     internal static byte[] EncodeAsJpeg(SKBitmap bitmap, int quality)
     {
         using var image = SKImage.FromBitmap(bitmap);

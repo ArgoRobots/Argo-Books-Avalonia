@@ -4,16 +4,16 @@ using Xunit;
 namespace ArgoBooks.Tests.Services;
 
 /// <summary>
-/// Tests for the AzureReceiptScannerService class.
+/// Tests for the ProxyReceiptScannerService class.
 /// </summary>
-public class AzureReceiptScannerServiceTests
+public class ProxyReceiptScannerServiceTests
 {
     #region IsConfigured Tests
 
     [Fact]
     public void IsConfigured_WithoutLicenseService_ReturnsFalse()
     {
-        var service = new AzureReceiptScannerService();
+        var service = new ProxyReceiptScannerService();
 
         Assert.False(service.IsConfigured);
     }
@@ -25,7 +25,7 @@ public class AzureReceiptScannerServiceTests
     [Fact]
     public async Task ValidateConfigurationAsync_WithoutLicenseService_ReturnsFalse()
     {
-        var service = new AzureReceiptScannerService();
+        var service = new ProxyReceiptScannerService();
 
         var result = await service.ValidateConfigurationAsync();
 
@@ -39,7 +39,7 @@ public class AzureReceiptScannerServiceTests
     [Fact]
     public async Task ScanReceiptFromFileAsync_FileNotFound_ReturnsFailedResult()
     {
-        var service = new AzureReceiptScannerService();
+        var service = new ProxyReceiptScannerService();
 
         var result = await service.ScanReceiptFromFileAsync("/nonexistent/file.jpg");
 

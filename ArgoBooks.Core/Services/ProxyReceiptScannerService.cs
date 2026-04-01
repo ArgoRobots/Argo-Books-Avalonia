@@ -6,9 +6,9 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Receipt scanning service that proxies requests through the argorobots.com server.
-/// The server handles communication with Azure Document Intelligence.
+/// The server handles receipt scanning via GPT-4o vision.
 /// </summary>
-public class AzureReceiptScannerService : IReceiptScannerService, IDisposable
+public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
 {
     private static readonly string ScanEndpoint = $"{ApiConfig.BaseUrl}/api/receipt/scan.php";
 
@@ -20,7 +20,7 @@ public class AzureReceiptScannerService : IReceiptScannerService, IDisposable
     /// <summary>
     /// Creates a new instance of the receipt scanner service.
     /// </summary>
-    public AzureReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public ProxyReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for Azure processing
         _licenseService = licenseService;
@@ -45,6 +45,9 @@ public class AzureReceiptScannerService : IReceiptScannerService, IDisposable
             {
                 return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
+
+            // Preprocess image to improve OCR accuracy (grayscale, contrast, sharpen)
+            imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
 
             // Compress image if needed to fit within the size limit
             const int maxFileSizeBytes = 4 * 1024 * 1024;
@@ -127,7 +130,7 @@ public class AzureReceiptScannerService : IReceiptScannerService, IDisposable
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.AzureDocumentIntelligence,
+                ApiName.ReceiptScanProxy,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 cancellationToken: cancellationToken);
