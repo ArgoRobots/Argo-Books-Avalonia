@@ -224,9 +224,9 @@ public class LicenseService
             var deviceId = GetDeviceId();
             var requestBody = new { license_key = licenseKey, device_id = deviceId };
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await HttpClient.PostAsync(LicenseValidateUrl, content, cancellationToken);
+            using var response = await HttpClient.PostAsync(LicenseValidateUrl, content, cancellationToken);
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
             var result = JsonSerializer.Deserialize<LicenseValidateResponse>(responseJson);
 

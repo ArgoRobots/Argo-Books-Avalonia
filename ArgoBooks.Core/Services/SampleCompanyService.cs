@@ -340,7 +340,11 @@ public class SampleCompanyService
 
         var today = referenceDate;
         var maxId = data.Rentals
-            .Select(r => int.TryParse(r.Id.Replace("RNT-", ""), out var n) ? n : 0)
+            .Select(r =>
+            {
+                var parts = r.Id.Split('-');
+                return parts.Length > 0 && int.TryParse(parts[^1], out var n) ? n : 0;
+            })
             .DefaultIfEmpty(0)
             .Max();
 
@@ -492,6 +496,10 @@ public class SampleCompanyService
         dates.AddRange(data.Expenses.Select(p => p.Date));
         dates.AddRange(data.Returns.Select(r => r.ReturnDate));
         dates.AddRange(data.LostDamaged.Select(ld => ld.DateDiscovered));
+        dates.AddRange(data.Invoices.Select(i => i.IssueDate));
+        dates.AddRange(data.Payments.Select(p => p.Date));
+        dates.AddRange(data.Rentals.Select(r => r.StartDate));
+        dates.AddRange(data.PurchaseOrders.Select(po => po.OrderDate));
 
         return dates.Count > 0 ? dates.Max() : DateTime.MinValue;
     }

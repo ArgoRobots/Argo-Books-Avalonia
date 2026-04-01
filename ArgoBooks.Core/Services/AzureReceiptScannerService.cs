@@ -8,7 +8,7 @@ namespace ArgoBooks.Core.Services;
 /// Receipt scanning service that proxies requests through the argorobots.com server.
 /// The server handles communication with Azure Document Intelligence.
 /// </summary>
-public class AzureReceiptScannerService : IReceiptScannerService
+public class AzureReceiptScannerService : IReceiptScannerService, IDisposable
 {
     private static readonly string ScanEndpoint = $"{ApiConfig.BaseUrl}/api/receipt/scan.php";
 
@@ -237,4 +237,8 @@ public class AzureReceiptScannerService : IReceiptScannerService
         return result;
     }
 
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+    }
 }

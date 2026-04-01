@@ -46,7 +46,7 @@ public class InventoryItem
     /// <summary>
     /// Quantity available for sale.
     /// </summary>
-    [JsonPropertyName("available")]
+    [JsonIgnore]
     public int Available => InStock - Reserved;
 
     /// <summary>

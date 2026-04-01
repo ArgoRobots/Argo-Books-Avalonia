@@ -571,23 +571,15 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             () =>
             {
                 companyData.Expenses.Remove(expense);
-                companyData.IdCounters.Expense--;
                 if (capturedReceipt != null)
-                {
                     companyData.Receipts.Remove(capturedReceipt);
-                    companyData.IdCounters.Receipt--;
-                }
                 RaiseTransactionSaved();
             },
             () =>
             {
                 companyData.Expenses.Add(expense);
-                companyData.IdCounters.Expense++;
                 if (capturedReceipt != null)
-                {
                     companyData.Receipts.Add(capturedReceipt);
-                    companyData.IdCounters.Receipt++;
-                }
                 RaiseTransactionSaved();
             });
 
@@ -687,10 +679,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             {
                 RestoreTransactionState(expense, original);
                 if (capturedNewReceipt != null)
-                {
                     companyData.Receipts.Remove(capturedNewReceipt);
-                    companyData.IdCounters.Receipt--;
-                }
                 RaiseTransactionSaved();
             },
             () =>
@@ -714,7 +703,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 {
                     expense.ReceiptId = capturedNewReceipt.Id;
                     companyData.Receipts.Add(capturedNewReceipt);
-                    companyData.IdCounters.Receipt++;
                 }
                 RaiseTransactionSaved();
             });

@@ -401,11 +401,13 @@ public class CompanyManager : IDisposable
                 ReleaseFileLock();
                 try
                 {
-                    if (!File.Exists(PendingRenamePath))
+                    if (File.Exists(PendingRenamePath))
                     {
-                        File.Move(CurrentFilePath, PendingRenamePath);
-                        CurrentFilePath = PendingRenamePath;
+                        throw new IOException($"Cannot rename: a file already exists at '{PendingRenamePath}'.");
                     }
+
+                    File.Move(CurrentFilePath, PendingRenamePath);
+                    CurrentFilePath = PendingRenamePath;
                 }
                 finally
                 {
@@ -841,7 +843,17 @@ public class CompanyManager : IDisposable
     private static string GetCompanyDirectory(string tempDirectory)
     {
         var subdirs = Directory.GetDirectories(tempDirectory);
-        return subdirs.Length > 0 ? subdirs[0] : tempDirectory;
+        if (subdirs.Length == 0) return tempDirectory;
+        if (subdirs.Length == 1) return subdirs[0];
+
+        // Multiple subdirectories: pick the one that contains company data files
+        // (exclude known non-company directories like "receipts")
+        var companyDir = subdirs.FirstOrDefault(d =>
+            File.Exists(Path.Combine(d, "settings.json")) ||
+            File.Exists(Path.Combine(d, "revenues.json")) ||
+            File.Exists(Path.Combine(d, "expenses.json")));
+
+        return companyDir ?? subdirs[0];
     }
 
     public void Dispose()
@@ -849,6 +861,7 @@ public class CompanyManager : IDisposable
         if (_isDisposed) return;
 
         ReleaseFileLock();
+        _saveLock.Dispose();
         _currentPassword = null;
 
         // Clean up temp directory
@@ -875,7 +888,7 @@ public class CompanyManager : IDisposable
         ReleaseFileLock();
         try
         {
-            _fileLock = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None);
+            _fileLock = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
         catch (Exception ex)
         {

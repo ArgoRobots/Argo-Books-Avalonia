@@ -990,25 +990,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 companyData.Expenses.Remove(capturedExpense);
                 companyData.Receipts.Remove(capturedReceipt);
-                companyData.IdCounters.Expense--;
-                companyData.IdCounters.Receipt--;
 
                 // Also undo auto-created entities
                 foreach (var product in capturedProducts)
-                {
                     companyData.Products?.Remove(product);
-                    companyData.IdCounters.Product--;
-                }
                 if (capturedCategory != null)
-                {
                     companyData.Categories.Remove(capturedCategory);
-                    companyData.IdCounters.Category--;
-                }
                 if (capturedSupplier != null)
-                {
                     companyData.Suppliers.Remove(capturedSupplier);
-                    companyData.IdCounters.Supplier--;
-                }
 
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
@@ -1016,25 +1005,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 // Re-add auto-created entities
                 if (capturedSupplier != null)
-                {
                     companyData.Suppliers.Add(capturedSupplier);
-                    companyData.IdCounters.Supplier++;
-                }
                 if (capturedCategory != null)
-                {
                     companyData.Categories.Add(capturedCategory);
-                    companyData.IdCounters.Category++;
-                }
                 foreach (var product in capturedProducts)
-                {
                     companyData.Products?.Add(product);
-                    companyData.IdCounters.Product++;
-                }
 
                 companyData.Expenses.Add(capturedExpense);
                 companyData.Receipts.Add(capturedReceipt);
-                companyData.IdCounters.Expense++;
-                companyData.IdCounters.Receipt++;
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
@@ -1102,25 +1080,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 companyData.Revenues.Remove(capturedRevenue);
                 companyData.Receipts.Remove(capturedReceipt);
-                companyData.IdCounters.Revenue--;
-                companyData.IdCounters.Receipt--;
 
                 // Also undo auto-created entities
                 foreach (var product in capturedProducts)
-                {
                     companyData.Products?.Remove(product);
-                    companyData.IdCounters.Product--;
-                }
                 if (capturedCategory != null)
-                {
                     companyData.Categories.Remove(capturedCategory);
-                    companyData.IdCounters.Category--;
-                }
                 if (capturedSupplier != null)
-                {
                     companyData.Suppliers.Remove(capturedSupplier);
-                    companyData.IdCounters.Supplier--;
-                }
 
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
@@ -1128,25 +1095,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 // Re-add auto-created entities
                 if (capturedSupplier != null)
-                {
                     companyData.Suppliers.Add(capturedSupplier);
-                    companyData.IdCounters.Supplier++;
-                }
                 if (capturedCategory != null)
-                {
                     companyData.Categories.Add(capturedCategory);
-                    companyData.IdCounters.Category++;
-                }
                 foreach (var product in capturedProducts)
-                {
                     companyData.Products?.Add(product);
-                    companyData.IdCounters.Product++;
-                }
 
                 companyData.Revenues.Add(capturedRevenue);
                 companyData.Receipts.Add(capturedReceipt);
-                companyData.IdCounters.Revenue++;
-                companyData.IdCounters.Receipt++;
                 ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 

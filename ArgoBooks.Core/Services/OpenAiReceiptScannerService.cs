@@ -12,7 +12,7 @@ public class OpenAiReceiptScannerService(
     LicenseService? licenseService = null,
     IErrorLogger? errorLogger = null,
     ITelemetryManager? telemetryManager = null)
-    : IReceiptScannerService
+    : IReceiptScannerService, IDisposable
 {
     private readonly OpenAiService _openAiService = new(errorLogger, telemetryManager);
 
@@ -321,5 +321,10 @@ Rules:
             return imageData;
 
         return ReceiptImageHelper.EncodeAsJpeg(original, 100);
+    }
+
+    public void Dispose()
+    {
+        _openAiService.Dispose();
     }
 }

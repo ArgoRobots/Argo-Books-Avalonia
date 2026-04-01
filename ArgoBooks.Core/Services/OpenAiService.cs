@@ -11,7 +11,7 @@ namespace ArgoBooks.Core.Services;
 /// OpenAI API service for AI-powered supplier and category suggestions.
 /// Routes requests through the argorobots.com server proxy.
 /// </summary>
-public class OpenAiService : IOpenAiService
+public class OpenAiService : IOpenAiService, IDisposable
 {
     private const string DefaultModel = "gpt-4o-mini";
     private static readonly string ApiEndpoint = $"{ApiConfig.BaseUrl}/api/ai/completions.php";
@@ -401,5 +401,10 @@ Respond with JSON only.";
         // Catch compound vague names like "general expenses", "other purchases", "miscellaneous items"
         var words = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return words.Length >= 1 && words.All(w => vagueExact.Contains(w));
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
     }
 }

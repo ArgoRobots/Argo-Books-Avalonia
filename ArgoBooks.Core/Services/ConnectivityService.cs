@@ -55,9 +55,14 @@ public class ConnectivityService : IConnectivityService
                 // Try next URL
                 continue;
             }
+            catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Caller cancelled — stop immediately
+                return false;
+            }
             catch (TaskCanceledException)
             {
-                // Timeout or cancellation, try next URL
+                // Timeout, try next URL
                 continue;
             }
             catch (Exception)
