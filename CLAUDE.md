@@ -45,7 +45,7 @@ File-based, not database. Company data lives in encrypted `.argo` files (AES-256
 
 ### Service Layer (ArgoBooks.Core/Services/)
 
-Core business services include: `CompanyManager` (file lifecycle), `EncryptionService` (AES-256), `SpreadsheetImportService`/`SpreadsheetExportService` (Excel/CSV), `OpenAiService` (AI matching), `AzureReceiptScannerService` (OCR), `InsightsService` (analytics), `ReportRenderer` (PDF via QuestPDF), `LicenseService`, `PaymentPortalService`.
+Core business services include: `CompanyManager` (file lifecycle), `EncryptionService` (AES-256), `SpreadsheetImportService`/`SpreadsheetExportService` (Excel/CSV), `OpenAiService` (AI matching), `ProxyReceiptScannerService` (OCR), `InsightsService` (analytics), `ReportRenderer` (PDF via QuestPDF), `LicenseService`, `PaymentPortalService`.
 
 UI services in `ArgoBooks/Services/` handle navigation, theming, localization, undo/redo, modals, and chart loading.
 

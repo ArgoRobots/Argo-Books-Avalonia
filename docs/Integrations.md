@@ -6,16 +6,9 @@ Argo Books integrates with external services to provide AI-powered features and 
 
 ![Integrations Overview](diagrams/integrations/integrations-overview.svg)
 
-## Azure Receipt Scanning
-
-AI-powered optical character recognition (OCR) for receipt processing.
-
-![Integrations Overview](diagrams/integrations/receipts.svg
-)
-
 ## OpenAI Integration
 
-AI-powered supplier and category matching for receipt processing.
+AI-powered receipt scanning via GPT-4o vision, plus supplier and category matching for receipt processing.
 
 ![Integrations Overview](diagrams/integrations/open-ai.svg
 )
