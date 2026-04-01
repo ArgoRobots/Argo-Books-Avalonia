@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -106,8 +107,8 @@ public partial class ReceiptViewerModal : UserControl
         if (_zoomTransformControl != null)
             _zoomTransformControl.Opacity = 0;
 
-        // Wait for layout to complete and image to load
-        await Task.Delay(100);
+        // Wait for layout and rendering passes to complete
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         ZoomToFit();
 
         if (_zoomTransformControl != null)

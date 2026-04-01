@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
@@ -350,8 +351,8 @@ public partial class Header : UserControl
     {
         try
         {
-            // Wait a moment for all initialization to complete
-            await Task.Delay(100);
+            // Wait for layout and rendering passes to complete
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
             _isInitialized = true;
 

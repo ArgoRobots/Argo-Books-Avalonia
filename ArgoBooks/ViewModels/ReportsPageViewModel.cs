@@ -7,6 +7,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
@@ -447,8 +448,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             customTemplate.IsSelected = customTemplate.Name == templateName;
         }
 
-        // Wait briefly for template to load asynchronously
-        await Task.Delay(50);
+        // Wait for template to load
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
         // Set the report name to the template name
         ReportName = templateName;
@@ -1726,7 +1727,7 @@ public partial class ReportsPageViewModel : ViewModelBase
                     try
                     {
                         await Task.Delay(5000);
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        Dispatcher.UIThread.Post(() =>
                         {
                             if (ExportMessage == "Export completed successfully!")
                                 ExportMessage = string.Empty;
@@ -2609,7 +2610,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 var config = await _templateStorage.LoadTemplateAsync(templateName);
                 // Update configuration and page settings on UI thread
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                await Dispatcher.UIThread.InvokeAsync(async () =>
                 {
                     if (config == null)
                     {

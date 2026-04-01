@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 
 namespace ArgoBooks.Views;
 
@@ -163,8 +164,8 @@ public partial class ReportsPage : UserControl
             // Wait for layout to complete
             await tcs.Task;
 
-            // Additional delay to ensure ScrollViewer's Viewport is calculated
-            await Task.Delay(50);
+            // Wait for ScrollViewer's Viewport to be calculated
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
             _designCanvas?.ZoomToFit();
 
@@ -181,8 +182,8 @@ public partial class ReportsPage : UserControl
     {
         try
         {
-            // Wait a moment for all initialization to complete before allowing asterisk to show
-            await Task.Delay(100);
+            // Wait for layout and rendering passes to complete before allowing asterisk to show
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
             _isAsteriskInitialized = true;
         }
         catch (Exception ex)
@@ -238,8 +239,8 @@ public partial class ReportsPage : UserControl
             // Hide canvas during template load to prevent flash of unzoomed content
             _designCanvas.Opacity = 0;
 
-            // Wait a frame for layout to complete before fitting to window
-            await Task.Delay(50);
+            // Wait for layout to complete before fitting to window
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
             _designCanvas.ZoomToFit();
 
             // Show canvas after zoom is applied
@@ -255,8 +256,8 @@ public partial class ReportsPage : UserControl
     {
         try
         {
-            // Wait for the preview image to be rendered and layout to complete
-            await Task.Delay(100);
+            // Wait for layout and rendering passes to complete
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
             PreviewZoomToFit();
         }
         catch (Exception ex)
@@ -472,7 +473,7 @@ public partial class ReportsPage : UserControl
         vm.ZoomLevel = newZoom;
 
         // Post the offset adjustment to run after layout has updated
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        Dispatcher.UIThread.Post(() =>
         {
             // Calculate new offset to keep the same content point under cursor
             var newOffsetX = unscaledX * newZoom - viewportPoint.X;
@@ -486,7 +487,7 @@ public partial class ReportsPage : UserControl
                 Math.Clamp(newOffsetX, 0, maxX),
                 Math.Clamp(newOffsetY, 0, maxY)
             );
-        }, Avalonia.Threading.DispatcherPriority.Render);
+        }, DispatcherPriority.Render);
     }
 
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)

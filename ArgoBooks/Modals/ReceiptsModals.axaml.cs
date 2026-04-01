@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -100,8 +101,8 @@ public partial class ReceiptsModals : UserControl
 
     private async Task FitScanPreviewAfterLayoutAsync()
     {
-        // Wait for layout to settle after results state becomes visible
-        await Task.Delay(150);
+        // Wait for layout and rendering passes to complete
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         ScanPreviewFitToWindow();
     }
 
