@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core;
@@ -43,7 +44,7 @@ public class ChartLoaderService
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
-        return new SolidColorPaint(textColor) { FontFamily = "Segoe UI" };
+        return new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") };
     }
 
     // Maximum length for legend labels to prevent overflow
@@ -82,7 +83,7 @@ public class ChartLoaderService
             Text = translatedText,
             TextSize = 16,
             Padding = new Padding(15, 12),
-            Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
+            Paint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
         };
     }
 
