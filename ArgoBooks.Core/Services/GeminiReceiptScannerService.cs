@@ -76,7 +76,7 @@ Rules:
                 return ReceiptScanResult.Failed("PDF receipt scanning is not supported. Please convert to JPEG or PNG.");
             }
 
-            // Preprocess image to improve OCR accuracy (grayscale, contrast, sharpen)
+            // Preprocess image to improve OCR accuracy (contrast, sharpen)
             imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
             fileName = Path.ChangeExtension(fileName, ".jpg");
 

@@ -139,7 +139,7 @@ public static class ReceiptImageHelper
         var outHeight = swapDims ? original.Width : original.Height;
 
         // Mild contrast boost (1.2x) to help faded thermal receipts.
-        // Keeps color intact — GPT-4o vision uses color to parse receipts.
+        // Keeps color intact — vision models use color to parse receipts.
         const float contrast = 1.2f;
         const float bias = (1f - contrast) / 2f;
         float[] contrastMatrix =
@@ -178,7 +178,7 @@ public static class ReceiptImageHelper
         canvas.DrawBitmap(original, 0, 0, paint);
 
         using var snapshot = surface.Snapshot();
-        // Match original file size — use quality 85 to avoid inflating compressed JPEGs.
+        // Match original file size — use quality 95 to avoid inflating compressed JPEGs.
         using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 95);
         return encoded.ToArray();
     }

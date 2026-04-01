@@ -614,7 +614,7 @@ public class CompanyManager : IDisposable
 
     /// <summary>
     /// Extracts the company logo from a .argo file without fully opening it.
-    /// Returns null for encrypted files or files without a logo.
+    /// Returns null for files without a logo.
     /// </summary>
     public Task<byte[]?> ExtractLogoFromFileAsync(string filePath, CancellationToken cancellationToken = default)
     {

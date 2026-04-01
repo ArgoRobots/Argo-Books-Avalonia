@@ -320,7 +320,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     private bool _isDragOver;
 
     [ObservableProperty]
-    private bool _isAzureConfigured;
+    private bool _isScannerConfigured;
 
     /// <summary>
     /// Event raised when a file needs to be scanned via file picker.
@@ -330,13 +330,12 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     partial void OnHasPremiumChanged(bool value)
     {
-        CheckAzureConfiguration();
+        CheckScannerConfiguration();
     }
 
-    private void CheckAzureConfiguration()
+    private void CheckScannerConfiguration()
     {
-        // Check if portal is configured (receipt scanning goes through server proxy)
-        IsAzureConfigured = PortalSettings.IsConfigured;
+        IsScannerConfigured = PortalSettings.IsConfigured;
     }
 
     /// <summary>
@@ -378,7 +377,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     public ReceiptsPageViewModel()
     {
         LoadReceipts();
-        CheckAzureConfiguration();
+        CheckScannerConfiguration();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;

@@ -56,7 +56,7 @@ public enum ApiName
     GoogleSheets,
 
     /// <summary>
-    /// Server proxy for GPT-4o receipt scanning.
+    /// Server proxy for receipt scanning.
     /// </summary>
     ReceiptScanProxy,
 

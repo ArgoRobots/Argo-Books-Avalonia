@@ -65,7 +65,7 @@ public static class DotEnv
     private const int MaxParentSearchDepth = 1;
 
     /// <summary>
-    /// Finds the .env file by searching the application directory and one level up.
+    /// Finds the .env file by searching the application directory and up to one parent directory.
     /// Limited to prevent an attacker from injecting a .env file in a distant parent directory.
     /// </summary>
     private static string? FindEnvFile()

@@ -6,7 +6,7 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Receipt scanning service that proxies requests through the argorobots.com server.
-/// The server handles receipt scanning via GPT-4o vision.
+/// The server handles receipt scanning via Gemini 2.5 Flash vision.
 /// </summary>
 public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
 {
@@ -22,7 +22,7 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
     /// </summary>
     public ProxyReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for Azure processing
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for server-side processing
         _licenseService = licenseService;
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
@@ -46,7 +46,7 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
                 return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
 
-            // Preprocess image to improve OCR accuracy (grayscale, contrast, sharpen)
+            // Preprocess image to improve OCR accuracy (contrast, sharpen)
             imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
 
             // Compress image if needed to fit within the size limit

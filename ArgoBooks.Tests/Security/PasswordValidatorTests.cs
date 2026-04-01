@@ -482,7 +482,7 @@ public class PasswordValidatorTests
     }
 
     [Fact]
-    public void GetStrengthScore_MaxPossibleScore_Is100()
+    public void GetStrengthScore_AllCharacterTypes_WithRepeatingPenalty_Scores80()
     {
         // A very long password with all character types but repeating 'X's trigger -10 penalty
         // 15+ chars = 30 (length cap) + 10 + 15 + 15 + 20 - 10 (repeating) = 80

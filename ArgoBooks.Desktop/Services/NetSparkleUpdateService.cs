@@ -57,9 +57,8 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     {
         _errorLogger = errorLogger;
 
-        // Use Ed25519 with Strict mode — all updates must have valid signatures.
-        // This prevents man-in-the-middle attacks from installing unsigned/tampered updates.
-        // TODO: For now use Unsafe until we can configure it properly
+        // TODO: Switch to SecurityMode.Strict once Ed25519 signing is configured.
+        // Currently using Unsafe mode — updates are not signature-verified.
         _sparkle = new SparkleUpdater(AppCastUrl, new Ed25519Checker(SecurityMode.Unsafe))
         {
             UIFactory = null, // We use our own UI
