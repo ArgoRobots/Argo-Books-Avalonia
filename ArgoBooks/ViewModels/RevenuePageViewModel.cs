@@ -380,8 +380,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             companyData?.Returns
                 .Where(r => r.Status == ReturnStatus.Completed)
                 .Select(r => r.OriginalTransactionId) ?? []);
-        var returnIds = new HashSet<string>(
-            companyData?.Returns.Select(r => r.OriginalTransactionId) ?? []);
 
         IEnumerable<Revenue> filtered = _allRevenue;
 
@@ -406,7 +404,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(s => GetStatusDisplay(s, lostDamagedIds, returnedIds, returnIds) == FilterStatus);
+            filtered = filtered.Where(s => GetStatusDisplay(s, lostDamagedIds, returnedIds) == FilterStatus);
         }
 
         // Apply customer filter
@@ -458,7 +456,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
-            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds, returnIds);
+            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds);
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
@@ -557,7 +555,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         return (firstName, $" +{remaining} more");
     }
 
-    private static string GetStatusDisplay(Revenue revenue, HashSet<string> lostDamagedIds, HashSet<string> returnedIds, HashSet<string> returnIds)
+    private static string GetStatusDisplay(Revenue revenue, HashSet<string> lostDamagedIds, HashSet<string> returnedIds)
     {
         if (lostDamagedIds.Contains(revenue.Id)) return "Lost / Damaged";
         if (returnedIds.Contains(revenue.Id)) return "Returned";
