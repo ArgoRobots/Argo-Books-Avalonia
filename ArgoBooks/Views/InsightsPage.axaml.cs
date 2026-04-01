@@ -18,7 +18,7 @@ public partial class InsightsPage : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
-    private void OnDataContextChanged(object? sender, System.EventArgs e)
+    private void OnDataContextChanged(object? sender, EventArgs e)
     {
         if (DataContext is InsightsPageViewModel vm)
         {

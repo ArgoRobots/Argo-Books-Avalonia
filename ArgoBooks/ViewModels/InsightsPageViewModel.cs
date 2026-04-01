@@ -156,14 +156,14 @@ public partial class InsightsPageViewModel : ViewModelBase
             Title = "Consistent Monthly Growth",
             Description = "Revenue has increased by an average of 8.3% month-over-month for the past quarter.",
             Recommendation = "Consider increasing inventory to meet growing demand.",
-            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Success)),
+            StatusColor = new SolidColorBrush(Color.Parse(AppColors.Success)),
             IsLastItem = false
         });
         RevenueTrends.Add(new InsightItemViewModel
         {
             Title = "Top Category Performance",
             Description = "Services revenue outpacing product sales by 2.1x this quarter.",
-            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Primary)),
+            StatusColor = new SolidColorBrush(Color.Parse(AppColors.Primary)),
             IsLastItem = true
         });
 
@@ -173,7 +173,7 @@ public partial class InsightsPageViewModel : ViewModelBase
             Title = "Unusual Expense Spike",
             Description = "Office supplies spending was 340% above the 3-month average in the last period.",
             Recommendation = "Review recent purchases for potential billing errors.",
-            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Warning)),
+            StatusColor = new SolidColorBrush(Color.Parse(AppColors.Warning)),
             IsLastItem = true
         });
 
@@ -183,14 +183,14 @@ public partial class InsightsPageViewModel : ViewModelBase
             Title = "Optimize Payment Terms",
             Description = "32% of invoices are paid late. Offering early payment discounts could improve cash flow.",
             Recommendation = "Consider a 2% discount for payments within 10 days.",
-            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Primary)),
+            StatusColor = new SolidColorBrush(Color.Parse(AppColors.Primary)),
             IsLastItem = false
         });
         Recommendations.Add(new InsightItemViewModel
         {
             Title = "Reduce Supplier Costs",
             Description = "3 suppliers have increased prices by over 10% this year. Alternatives may be available.",
-            StatusColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(AppColors.Violet)),
+            StatusColor = new SolidColorBrush(Color.Parse(AppColors.Violet)),
             IsLastItem = true
         });
 

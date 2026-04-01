@@ -3166,7 +3166,7 @@ public class App : Application
         if (!usageCheck.CanImport)
         {
             _mainWindowViewModel?.HideLoading();
-            await ViewModels.UpgradePromptHelper.ShowAiImportLimitPromptAsync(
+            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(
                 usageCheck.ImportCount,
                 usageCheck.MonthlyLimit,
                 usageCheck.ResetsAt);
