@@ -248,8 +248,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     public bool IsTemplatesTabSelected => Step1TabIndex == 0;
     public bool IsChartsTabSelected => Step1TabIndex == 1;
 
-    partial void OnStep1TabIndexChanged(int _)
+    partial void OnStep1TabIndexChanged(int value)
     {
+        _ = value;
         OnPropertyChanged(nameof(IsTemplatesTabSelected));
         OnPropertyChanged(nameof(IsChartsTabSelected));
 
@@ -741,8 +742,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public bool CanGoToNextPage => CurrentDesignerPage < Configuration.PageCount;
 
-    partial void OnCurrentDesignerPageChanged(int _)
+    partial void OnCurrentDesignerPageChanged(int value)
     {
+        _ = value;
         OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
         OnPropertyChanged(nameof(CanGoToPreviousPage));
         OnPropertyChanged(nameof(CanGoToNextPage));
@@ -981,8 +983,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         NotifySelectionChanged();
     }
 
-    partial void OnConfigurationChanged(ReportConfiguration _)
+    partial void OnConfigurationChanged(ReportConfiguration value)
     {
+        _ = value;
         UpdateCanvasDimensions();
     }
 
