@@ -2579,15 +2579,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         foreach (var chart in lossCharts) AvailableCharts.Add(chart);
 
         // Create category groups for grouped display
-        ChartCategories.Add(new ChartCategoryGroup("Revenue", revenueColor, revenueCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Expenses", expenseColor, expenseCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Financial", financialColor, financialCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Transactions", transactionColor, transactionCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Geographic", geographicColor, geographicCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Personnel", accountantColor, accountantCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Customers", customerColor, customerCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Returns", returnColor, returnCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Losses", lossColor, lossCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Revenue", revenueCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Expenses", expenseCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Financial", financialCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Transactions", transactionCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Geographic", geographicCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Personnel", accountantCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Customers", customerCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Returns", returnCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Losses", lossCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
     }
 
     private void LoadTemplate(string templateName)
@@ -2916,7 +2916,7 @@ public partial class ChartOption(
 /// </summary>
 public class ChartCategoryGroup : ObservableObject
 {
-    public ChartCategoryGroup(string name, string _, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
+    public ChartCategoryGroup(string name, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
     {
         Name = name;
         Charts = charts;
