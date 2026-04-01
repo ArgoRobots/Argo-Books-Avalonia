@@ -379,9 +379,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var returnedIds = new HashSet<string>(
             companyData?.Returns
                 .Where(r => r.Status == ReturnStatus.Completed)
-                .Select(r => r.OriginalTransactionId ?? "") ?? []);
+                .Select(r => r.OriginalTransactionId) ?? []);
         var returnIds = new HashSet<string>(
-            companyData?.Returns.Select(r => r.OriginalTransactionId ?? "") ?? []);
+            companyData?.Returns.Select(r => r.OriginalTransactionId) ?? []);
 
         IEnumerable<Revenue> filtered = _allRevenue;
 
