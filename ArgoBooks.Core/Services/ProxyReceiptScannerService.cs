@@ -32,6 +32,10 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
     public bool IsConfigured => _licenseService?.GetLicenseKey() != null || _licenseService?.GetDeviceId() != null;
 
     /// <inheritdoc />
+    public Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, bool skipPreprocessing, CancellationToken cancellationToken = default)
+        => ScanReceiptAsync(imageData, fileName, cancellationToken);
+
+    /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();

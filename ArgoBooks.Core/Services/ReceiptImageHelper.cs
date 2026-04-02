@@ -116,7 +116,7 @@ public static class ReceiptImageHelper
     /// Applies EXIF orientation fix, contrast boost, and sharpening.
     /// PDFs are returned unchanged.
     /// </summary>
-    internal static byte[] PreprocessForOcr(byte[] imageData, string fileName)
+    public static byte[] PreprocessForOcr(byte[] imageData, string fileName)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         if (extension == ".pdf")

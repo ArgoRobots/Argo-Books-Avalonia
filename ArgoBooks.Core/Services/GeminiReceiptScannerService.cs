@@ -38,7 +38,7 @@ Rules:
 2. TAX — Return EACH tax line separately in the ""taxes"" array. Do NOT sum them — list every individual tax with its label and amount. Common tax labels: GST, G-GST, PST, P-PST, HST, QST, TVQ, TPS, VAT, state tax, county tax, city tax, sales tax, excise tax. If there is only one tax line, still return it as a single-element array.
 3. PRODUCT NAMES — Transcribe EXACTLY as printed on the receipt, character by character. Do NOT normalize, expand abbreviations, correct spelling, or rename items. Keep the original abbreviations and casing. If a character is hard to read, use your best guess but do not substitute a different word. Only remove SKU codes, barcodes, and internal item numbers that are clearly not part of the product name.
 4. MONETARY VALUES — All as numbers. Use 0.00 for missing values, null for unknown fields.
-5. CONFIDENCE — 0.0-1.0, your certainty of the overall extraction accuracy.
+5. CONFIDENCE — Both the overall ""confidence"" and each line item's ""confidence"" must be 0.0-1.0. Be STRICT and CONSERVATIVE with line item confidence: if the text is blurry, smudged, faded, partially obscured, wrinkled, or if ANY digit or character in the description or price required guessing, the confidence MUST be below 0.85. Use 0.5-0.7 for items where you are genuinely unsure about the price or name. Only use 0.9+ when the text is crisp and completely unambiguous. Do NOT default to high confidence — earn it.
 6. PRICES vs DISCOUNTS — When a product has two numbers near it (a price and a discount/savings below it), the product's line item should use the FULL PRICE (the larger, positive number), not the discounted price. The discount is a separate entry in the ""discounts"" array.
 7. DISCOUNTS — ANY line on the receipt with a negative amount or a minus sign is a discount. This includes lines labeled ""Member Pricing"", ""Member Discount"", ""SAVE"", ""OFF"", ""DISCOUNT"", coupons, promos, loyalty savings, price reductions, markdowns, or any other negative adjustment. Return EACH one separately in the ""discounts"" array with the label and amount as a positive number. Do NOT include discounts as line items — they belong only in the ""discounts"" array. Do NOT skip or ignore negative amounts.
 8. ERROR — If the image is not a receipt or is completely unreadable, return: {""error"": ""Not a valid receipt"", ""confidence"": 0.0}
@@ -56,6 +56,13 @@ Rules:
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
+        => await ScanReceiptAsync(imageData, fileName, skipPreprocessing: false, cancellationToken);
+
+    /// <summary>
+    /// Scans a receipt image. Set <paramref name="skipPreprocessing"/> to true if the caller
+    /// has already run <see cref="ReceiptImageHelper.PreprocessForOcr"/> on the image data.
+    /// </summary>
+    public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, bool skipPreprocessing, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
         var success = false;
@@ -76,15 +83,12 @@ Rules:
                 return ReceiptScanResult.Failed("PDF receipt scanning is not supported. Please convert to JPEG or PNG.");
             }
 
-            // Preprocess image to improve OCR accuracy (contrast, sharpen)
-            imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
-            fileName = Path.ChangeExtension(fileName, ".jpg");
-
-            // Re-encode non-JPEG formats (BMP/PNG/TIFF) as JPEG to reduce payload size
-            // without any resolution or quality loss. Never downscale — preserve full resolution.
-            if (extension is ".bmp" or ".tiff" or ".tif" or ".png")
+            if (!skipPreprocessing)
             {
-                imageData = ReencodeAsJpeg(imageData);
+                // Preprocess image to improve OCR accuracy (contrast, sharpen).
+                // PreprocessForOcr already outputs JPEG, so no additional re-encoding needed.
+                imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
+                fileName = Path.ChangeExtension(fileName, ".jpg");
             }
 
             // Validate file type
@@ -116,8 +120,12 @@ Rules:
             var result = ParseResponse(response);
             if (result.IsSuccess && result.LineItems.Count > 0)
             {
-                // Verification pass: ask the model to find any items it missed
-                result = await VerifyAndFillMissingItemsAsync(result, base64Image, mimeType, cancellationToken);
+                // Only run the verification pass for long receipts or low-confidence scans
+                // where missed items are more likely. Skipping it saves ~15-30s.
+                if (result.LineItems.Count >= 15 || result.Confidence < 0.8)
+                {
+                    result = await VerifyAndFillMissingItemsAsync(result, base64Image, mimeType, cancellationToken);
+                }
                 success = true;
                 _ = telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, cancellationToken: cancellationToken);
             }
@@ -211,6 +219,7 @@ If nothing was missed, return: {{""missingItems"": []}}";
                 return result;
 
             var cleaned = JsonResponseHelper.StripMarkdownCodeBlock(verifyResponse);
+            cleaned = JsonResponseHelper.SanitizeJsonNumbers(cleaned);
             using var doc = JsonDocument.Parse(cleaned);
             var root = doc.RootElement;
 
@@ -278,6 +287,7 @@ If nothing was missed, return: {{""missingItems"": []}}";
         try
         {
             var cleanResponse = JsonResponseHelper.StripMarkdownCodeBlock(response);
+            cleanResponse = JsonResponseHelper.SanitizeJsonNumbers(cleanResponse);
 
             using var doc = JsonDocument.Parse(cleanResponse);
             var root = doc.RootElement;
@@ -411,19 +421,6 @@ If nothing was missed, return: {{""missingItems"": []}}";
         {
             return ReceiptScanResult.Failed("Failed to process the scan result.");
         }
-    }
-
-    /// <summary>
-    /// Re-encodes an image as high-quality JPEG at full resolution.
-    /// Used to convert BMP/PNG/TIFF to a smaller format without any quality or resolution loss.
-    /// </summary>
-    private static byte[] ReencodeAsJpeg(byte[] imageData)
-    {
-        using var original = SKBitmap.Decode(imageData);
-        if (original == null)
-            return imageData;
-
-        return ReceiptImageHelper.EncodeAsJpeg(original, 100);
     }
 
     public void Dispose()

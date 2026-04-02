@@ -1,10 +1,29 @@
+using System.Text.RegularExpressions;
+
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Shared utilities for cleaning LLM JSON responses.
 /// </summary>
-internal static class JsonResponseHelper
+internal static partial class JsonResponseHelper
 {
+    /// <summary>
+    /// Matches numbers with thousand-separator commas in JSON values (e.g. 1,999 or 12,345.67).
+    /// Only matches when preceded by a JSON value context (colon or array start) to avoid
+    /// stripping commas that are actual JSON delimiters.
+    /// </summary>
+    [GeneratedRegex(@"(?<=[:,\[]\s*)(\d{1,3})(,\d{3})+(?=\.\d|\s*[,\]\}])")]
+    private static partial Regex ThousandSeparatorRegex();
+
+    /// <summary>
+    /// Removes thousand-separator commas from numeric values in JSON so the parser doesn't choke.
+    /// For example, "totalPrice": 1,999.99 becomes "totalPrice": 1999.99.
+    /// </summary>
+    internal static string SanitizeJsonNumbers(string json)
+    {
+        return ThousandSeparatorRegex().Replace(json, m => m.Value.Replace(",", ""));
+    }
+
     /// <summary>
     /// Strips markdown code block fences (```json ... ```) from an LLM response,
     /// returning clean JSON suitable for parsing.

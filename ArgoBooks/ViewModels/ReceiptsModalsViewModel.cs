@@ -529,6 +529,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
         }
 
+        // Show modal immediately in loading state before reading the file
+        ResetScanModal();
+        IsScanReviewModalOpen = true;
+        IsScanning = true;
+        HasScanError = false;
+        HasScanResult = false;
+
         try
         {
             _currentImageData = await File.ReadAllBytesAsync(filePath);
@@ -537,13 +544,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Error".Translate(),
-                Message = "Failed to read file: {0}".TranslateFormat(ex.Message),
-                PrimaryButtonText = "OK".Translate(),
-                CancelButtonText = null
-            }) ?? Task.CompletedTask);
+            IsScanning = false;
+            HasScanError = true;
+            ScanErrorMessage = "Failed to read file: {0}".TranslateFormat(ex.Message);
         }
     }
 
@@ -558,27 +561,37 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _currentImageData = imageData;
         _currentFileName = fileName;
 
-        LoadSupplierOptions();
-        LoadProductOptions();
-
         // Show modal immediately with loading state
         IsScanReviewModalOpen = true;
         IsScanning = true;
         HasScanError = false;
         HasScanResult = false;
 
-        // Fix EXIF orientation off the UI thread, then set preview
-        _ = Task.Run(() => ReceiptImageHelper.FixOrientation(imageData)).ContinueWith(async t =>
+        // Yield to let the UI render the modal and start the spinner before doing sync work
+        await Task.Delay(1);
+
+        LoadSupplierOptions();
+        LoadProductOptions();
+
+        // Preprocess the image once on a background thread (EXIF fix + contrast + sharpen).
+        // The result is used for both the preview image and the API call, avoiding
+        // a redundant FixOrientation decode/encode cycle.
+        var preprocessedData = await Task.Run(() =>
+            ReceiptImageHelper.PreprocessForOcr(imageData, fileName));
+        _currentImageData = preprocessedData;
+        _currentFileName = Path.ChangeExtension(fileName, ".jpg");
+
+        // Write preview image to disk off the UI thread
+        _ = Task.Run(async () =>
         {
-            var orientedData = t.Result;
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "ScanPreview");
             Directory.CreateDirectory(tempDir);
             var previewPath = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
-            await File.WriteAllBytesAsync(previewPath, orientedData);
+            await File.WriteAllBytesAsync(previewPath, preprocessedData);
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
-        }, TaskScheduler.Default);
+        });
 
-        // Start scanning
+        // Start scanning (image is already preprocessed)
         await ScanReceiptAsync();
     }
 
@@ -626,7 +639,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             ScanningMessage = "Analyzing receipt with AI...".Translate();
 
-            var result = await _scannerService.ScanReceiptAsync(_currentImageData, _currentFileName);
+            // Run API call off the UI thread to keep the spinner smooth.
+            // Image is already preprocessed in OpenScanModalWithDataAsync, so skip it here.
+            var imageData = _currentImageData;
+            var fileName = _currentFileName;
+            var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true));
 
             if (!result.IsSuccess)
             {
@@ -735,8 +752,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             UpdateHasUnmatchedProducts();
             ValidateTotals();
 
-            // Get AI suggestions for supplier and category
-            await GetAiSuggestionsAsync(result);
+            // Fire AI suggestions in the background — don't block showing scan results
+            _ = GetAiSuggestionsAsync(result);
         }
         catch (Exception ex)
         {
@@ -1808,8 +1825,17 @@ public partial class ScannedLineItemViewModel : ObservableObject
     [ObservableProperty]
     private double _confidence = 1.0;
 
+    /// <summary>
+    /// Whether this line item has low confidence and should show a warning icon.
+    /// </summary>
+    public bool IsLowConfidence => Confidence < 0.85 && !IsManuallyAdded;
+
+    partial void OnConfidenceChanged(double value) => OnPropertyChanged(nameof(IsLowConfidence));
+
     [ObservableProperty]
     private bool _isManuallyAdded;
+
+    partial void OnIsManuallyAddedChanged(bool value) => OnPropertyChanged(nameof(IsLowConfidence));
 
     [ObservableProperty]
     private bool _hasProductError;
