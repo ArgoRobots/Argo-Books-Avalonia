@@ -1,6 +1,5 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
-using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -29,17 +28,10 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ChartExpandOverlay : UserControl
 {
-    // LiveChartsCore's GeoMap stores its core chart engine in a private readonly
-    // field named "_core". Its DetachedFromVisualTree handler calls _core.Unload(),
-    // which throws NullReferenceException after the first unload because there is no
-    // AttachedToVisualTree handler to reinitialize state. We temporarily null this
-    // field during reparenting so the handler short-circuits (it checks for null).
-    private static readonly FieldInfo? s_geoMapCoreField =
-        typeof(GeoMap).GetField("_core", BindingFlags.NonPublic | BindingFlags.Instance);
-
     private Panel? _sourcePanel;
     private Button? _expandButton;
     private readonly List<Control> _movedChildren = new();
+    private readonly List<(GeoMap original, GeoMap copy)> _geoMapCopies = new();
     private ContentControl? _pageContentControl;
     private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
     private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, CornerRadius origCornerRadius, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
@@ -323,20 +315,38 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea != null)
             chartArea.DataContext = sourcePanel.DataContext;
 
-        // Move all children except the expand button to the overlay
+        // Move all children except the expand button to the overlay.
+        // GeoMaps cannot be reparented because LiveCharts' DetachedFromVisualTree
+        // handler calls CoreChart.Unload() which permanently breaks the control.
+        // Instead, we hide original GeoMaps and create fresh copies in the overlay.
+        _geoMapCopies.Clear();
         foreach (var child in sourcePanel.Children.ToList())
         {
-            if (child != expandButton)
-                _movedChildren.Add(child);
-        }
+            if (child == expandButton) continue;
 
-        foreach (var child in _movedChildren)
-        {
-            SuppressGeoMapCoreDuringReparent(child, () =>
+            if (child is GeoMap originalGeo)
             {
+                // Only copy the currently visible GeoMap
+                if (!originalGeo.IsVisible) continue;
+
+                originalGeo.IsVisible = false;
+                var copy = new GeoMap
+                {
+                    Series = originalGeo.Series,
+                    MapProjection = originalGeo.MapProjection,
+                    Tag = originalGeo.Tag,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                };
+                _geoMapCopies.Add((originalGeo, copy));
+                contentPanel.Children.Add(copy);
+            }
+            else
+            {
+                _movedChildren.Add(child);
                 sourcePanel.Children.Remove(child);
                 contentPanel.Children.Add(child);
-            });
+            }
         }
 
         // Hide the expand button while overlay is open
@@ -373,14 +383,20 @@ public partial class ChartExpandOverlay : UserControl
         // Restore original sizes before reparenting back
         RestoreChartElements();
 
+        // Remove GeoMap copies from overlay and restore originals
+        foreach (var (original, copy) in _geoMapCopies)
+        {
+            contentPanel.Children.Remove(copy);
+            original.ClearValue(IsVisibleProperty);
+        }
+        _geoMapCopies.Clear();
+
+        // Return non-GeoMap children to the source panel
         var insertIndex = 0;
         foreach (var child in _movedChildren)
         {
-            SuppressGeoMapCoreDuringReparent(child, () =>
-            {
-                contentPanel.Children.Remove(child);
-                _sourcePanel!.Children.Insert(insertIndex, child);
-            });
+            contentPanel.Children.Remove(child);
+            _sourcePanel!.Children.Insert(insertIndex, child);
             insertIndex++;
         }
 
@@ -751,49 +767,6 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         return "Chart";
-    }
-
-    #endregion
-
-    #region GeoMap Reparenting Workaround
-
-    /// <summary>
-    /// Temporarily nulls the GeoMap's internal <c>_core</c> field so that its
-    /// <c>DetachedFromVisualTree</c> handler skips <c>GeoMapChart.Unload()</c>
-    /// during a reparent operation. The field is restored after the action.
-    /// For non-GeoMap controls the action runs directly.
-    /// </summary>
-    private static void SuppressGeoMapCoreDuringReparent(Control child, Action reparent)
-    {
-        if (child is not GeoMap || s_geoMapCoreField == null)
-        {
-            reparent();
-            return;
-        }
-
-        object? savedCore = null;
-        try
-        {
-            savedCore = s_geoMapCoreField.GetValue(child);
-            s_geoMapCoreField.SetValue(child, null);
-        }
-        catch
-        {
-            // Reflection may fail on some runtimes; fall through to direct call.
-        }
-
-        try
-        {
-            reparent();
-        }
-        finally
-        {
-            if (savedCore != null)
-            {
-                try { s_geoMapCoreField.SetValue(child, savedCore); }
-                catch { /* best effort */ }
-            }
-        }
     }
 
     #endregion
