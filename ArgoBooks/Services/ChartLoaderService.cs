@@ -171,6 +171,23 @@ public class ChartLoaderService
     };
 
     /// <summary>
+    /// Reverse mapping from ISO 3166-1 alpha-3 codes to display names for Excel export.
+    /// </summary>
+    private static readonly Dictionary<string, string> IsoCodeToDisplayName = BuildIsoCodeToDisplayName();
+
+    private static Dictionary<string, string> BuildIsoCodeToDisplayName()
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, code) in CountryNameToIsoCode)
+        {
+            // Prefer the longest name (most descriptive) for each code
+            if (!result.TryGetValue(code, out var existing) || name.Length > existing.Length)
+                result[code] = name;
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
     /// </summary>
     private static string GetCountryIsoCode(string? countryName)
@@ -179,6 +196,18 @@ public class ChartLoaderService
             return string.Empty;
 
         return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Converts geomap data (ISO codes to values) into display names for Excel export.
+    /// </summary>
+    public static Dictionary<string, double> ConvertGeoMapDataForExport(Dictionary<string, double> isoCodeData)
+    {
+        return isoCodeData
+            .Where(kvp => kvp.Value > 0)
+            .ToDictionary(
+                kvp => IsoCodeToDisplayName.TryGetValue(kvp.Key, out var name) ? name : kvp.Key.ToUpperInvariant(),
+                kvp => kvp.Value);
     }
 
     /// <summary>

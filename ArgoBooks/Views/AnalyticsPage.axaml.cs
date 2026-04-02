@@ -346,7 +346,17 @@ public partial class AnalyticsPage : UserControl
             };
 
             // Export based on chart type
-            if (e.IsMultiSeries)
+            if (e.IsRegionMap)
+            {
+                // Region Map chart (geographic heat map)
+                await ChartExcelExportService.ExportRegionMapChartAsync(
+                    filePath,
+                    e.ChartTitle,
+                    e.RegionMapData,
+                    valueHeader: "Amount",
+                    isCurrency: true);
+            }
+            else if (e.IsMultiSeries)
             {
                 // Multi-series chart (e.g., Revenue vs Expenses)
                 var seriesData = new Dictionary<string, double[]>

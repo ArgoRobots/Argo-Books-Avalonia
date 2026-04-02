@@ -1446,6 +1446,29 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
+        // Handle GeoMap (Region Map) export
+        if (SelectedChartDataType == ChartDataType.WorldMap)
+        {
+            var data = _companyManager?.CompanyData;
+            if (data == null) return;
+
+            var isoData = IsMapModeOrigin
+                ? ChartLoaderService.LoadWorldMapDataBySupplier(data, StartDate, EndDate)
+                : ChartLoaderService.LoadWorldMapData(data, StartDate, EndDate);
+
+            if (isoData.Count == 0) return;
+
+            var displayData = ChartLoaderService.ConvertGeoMapDataForExport(isoData);
+            var mapTitle = IsMapModeOrigin ? "Countries of Origin" : "Countries of Destination";
+
+            ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
+            {
+                ChartTitle = mapTitle,
+                RegionMapData = displayData
+            });
+            return;
+        }
+
         var exportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
         if (exportData == null || exportData.Labels.Length == 0)
         {

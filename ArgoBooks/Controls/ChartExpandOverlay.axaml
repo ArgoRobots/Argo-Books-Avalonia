@@ -122,6 +122,7 @@
                                                MenuY="{Binding ChartContextMenuY}"
                                                ShowResetZoom="{Binding ShowChartResetZoom}"
                                                ShowExportOptions="{Binding ShowChartExportOptions}"
+                                               ShowGoogleSheetsExport="{Binding ShowGoogleSheetsExport}"
                                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                                ExportToExcelCommand="{Binding ExportToExcelCommand}"

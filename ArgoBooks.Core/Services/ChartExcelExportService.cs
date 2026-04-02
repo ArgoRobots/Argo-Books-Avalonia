@@ -1,5 +1,7 @@
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
+using OfficeOpenXml.Drawing.Chart.ChartEx;
+using OfficeOpenXml.Drawing.Chart.Style;
 using OfficeOpenXml.Style;
 
 namespace ArgoBooks.Core.Services;
@@ -305,6 +307,87 @@ public class ChartExcelExportService
             chart.DataLabel.ShowPercent = true;
             chart.DataLabel.ShowCategory = true;
             chart.DataLabel.ShowValue = false;
+
+            // Save the file
+            package.SaveAs(new FileInfo(filePath));
+        });
+    }
+
+    /// <summary>
+    /// Exports region map (geographic heat map) data to an Excel file with an embedded Region Map chart.
+    /// </summary>
+    /// <param name="filePath">The path to save the Excel file.</param>
+    /// <param name="chartTitle">The title of the chart.</param>
+    /// <param name="regionData">Dictionary of country display name to heat value.</param>
+    /// <param name="valueHeader">Header for the value column.</param>
+    /// <param name="isCurrency">Whether to format values as currency.</param>
+    public static async Task ExportRegionMapChartAsync(
+        string filePath,
+        string chartTitle,
+        Dictionary<string, double> regionData,
+        string valueHeader = "Amount",
+        bool isCurrency = true)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(regionData);
+
+        if (regionData.Count == 0)
+            return;
+
+        await Task.Run(() =>
+        {
+            using var package = new ExcelPackage();
+            var worksheetName = TruncateSheetName(chartTitle);
+            var worksheet = package.Workbook.Worksheets.Add(worksheetName);
+
+            // Add headers
+            worksheet.Cells[1, 1].Value = "Country";
+            worksheet.Cells[1, 2].Value = valueHeader;
+            FormatHeaderRow(worksheet, 1, 2);
+
+            // Sort data by value descending
+            var sortedData = regionData
+                .OrderByDescending(kvp => kvp.Value)
+                .ToList();
+
+            var valueFormat = isCurrency ? CurrencyFormat : NumberFormat;
+
+            // Add data
+            for (int i = 0; i < sortedData.Count; i++)
+            {
+                worksheet.Cells[i + 2, 1].Value = sortedData[i].Key;
+                worksheet.Cells[i + 2, 2].Value = sortedData[i].Value;
+                worksheet.Cells[i + 2, 2].Style.Numberformat.Format = valueFormat;
+            }
+
+            // Add total row
+            var totalRow = sortedData.Count + 2;
+            worksheet.Cells[totalRow, 1].Value = "Total";
+            worksheet.Cells[totalRow, 1].Style.Font.Bold = true;
+            worksheet.Cells[totalRow, 2].Formula = $"SUM(B2:B{sortedData.Count + 1})";
+            worksheet.Cells[totalRow, 2].Style.Font.Bold = true;
+            worksheet.Cells[totalRow, 2].Style.Numberformat.Format = valueFormat;
+
+            // Auto-fit columns
+            worksheet.Cells.AutoFitColumns();
+
+            // Create embedded Region Map chart
+            var chart = worksheet.Drawings.AddRegionMapChart(chartTitle);
+            chart.SetPosition(0, 0, 3, 0);
+            chart.SetSize(ChartWidth, ChartHeight);
+            chart.Title.Text = chartTitle;
+
+            // Add series referencing the worksheet data
+            var serie = chart.Series.Add(
+                worksheet.Cells[2, 2, sortedData.Count + 1, 2],  // Values
+                worksheet.Cells[2, 1, sortedData.Count + 1, 1]); // Country labels
+            serie.HeaderAddress = worksheet.Cells[1, 2];
+            serie.ColorBy = eColorBy.Value;
+            serie.ProjectionType = eProjectionType.Mercator;
+            serie.RegionLableLayout = eRegionLabelLayout.BestFitOnly;
+
+            // Apply chart style
+            chart.StyleManager.SetChartStyle(ePresetChartStyle.RegionMapChartStyle2);
 
             // Save the file
             package.SaveAs(new FileInfo(filePath));

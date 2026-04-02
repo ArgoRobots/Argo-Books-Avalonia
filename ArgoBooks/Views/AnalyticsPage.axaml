@@ -536,12 +536,14 @@
                                     <lvc:GeoMap Series="{Binding OriginGeoMapSeries}"
                                                 MapProjection="Mercator"
                                                 IsVisible="{Binding IsMapModeOrigin}"
+                                                Tag="{x:Static enums:ChartDataType.WorldMap}"
                                                 PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased" />
                                     <!-- Destination GeoMap (customer countries from sales) -->
                                     <lvc:GeoMap Series="{Binding DestinationGeoMapSeries}"
                                                 MapProjection="Mercator"
                                                 IsVisible="{Binding IsMapModeDestination}"
+                                                Tag="{x:Static enums:ChartDataType.WorldMap}"
                                                 PointerPressed="OnChartPointerPressed"
                                                     PointerReleased="OnChartPointerReleased" />
                                     <!-- No data message for Origin (only show when in origin mode AND no data) -->
@@ -1895,6 +1897,7 @@
                                MenuY="{Binding ChartContextMenuY}"
                                ShowResetZoom="{Binding ShowChartResetZoom}"
                                ShowExportOptions="{Binding ShowChartExportOptions}"
+                               ShowGoogleSheetsExport="{Binding ShowGoogleSheetsExport}"
                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                ExportToExcelCommand="{Binding ExportToExcelCommand}"

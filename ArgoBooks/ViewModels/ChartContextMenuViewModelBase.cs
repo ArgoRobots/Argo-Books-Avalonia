@@ -28,6 +28,9 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     [ObservableProperty]
     private bool _showChartExportOptions = true;
 
+    [ObservableProperty]
+    private bool _showGoogleSheetsExport = true;
+
     /// <summary>
     /// Gets or sets the chart data type of the currently selected chart for context menu operations.
     /// </summary>
@@ -72,7 +75,8 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
         ChartContextMenuY = adjustedY;
         SelectedChartDataType = chartDataType;
         ShowChartResetZoom = !isPieChart && !isGeoMap;
-        ShowChartExportOptions = !isGeoMap;
+        ShowChartExportOptions = true;
+        ShowGoogleSheetsExport = !isGeoMap;
         IsChartContextMenuOpen = true;
     }
 

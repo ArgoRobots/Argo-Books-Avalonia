@@ -1650,6 +1650,16 @@ public class ExcelExportEventArgs : EventArgs
     /// Returns true if this is a distribution/pie chart.
     /// </summary>
     public bool IsDistribution => ChartType == ChartType.Distribution;
+
+    /// <summary>
+    /// Returns true if this is a region map chart (geographic heat map).
+    /// </summary>
+    public bool IsRegionMap => RegionMapData.Count > 0;
+
+    /// <summary>
+    /// Gets or sets the region map data (country display name to value).
+    /// </summary>
+    public Dictionary<string, double> RegionMapData { get; set; } = [];
 }
 
 /// <summary>
