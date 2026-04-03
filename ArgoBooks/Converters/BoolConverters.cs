@@ -133,10 +133,10 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal margin.
-    /// Fullscreen = 24px vertical margin only (width is fixed), Normal = 0.
+    /// Fullscreen = 40px top margin (clears title bar) + 24px bottom, Normal = 0.
     /// </summary>
     public static readonly IValueConverter ToFullscreenMargin =
-        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 24, 0, 24) : new Thickness(0));
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 40, 0, 24) : new Thickness(0));
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal max width.
